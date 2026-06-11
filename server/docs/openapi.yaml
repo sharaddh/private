@@ -1,0 +1,296 @@
+openapi: 3.0.3
+info:
+  title: KMJ Optical ERP API
+  version: 0.1.0
+  description: OpenAPI spec for core KMJ ERP endpoints (auth, customers, orders, bills, payments, inventory, delivery)
+servers:
+  - url: http://localhost:4000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Customer:
+      type: object
+      properties:
+        _id:
+          type: string
+        customerId:
+          type: string
+        name:
+          type: string
+        mobile:
+          type: string
+        city:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Order:
+      type: object
+      properties:
+        _id:
+          type: string
+        customerId:
+          type: string
+        frame:
+          type: string
+        lens:
+          type: string
+        status:
+          type: string
+    Bill:
+      type: object
+      properties:
+        _id:
+          type: string
+        billNumber:
+          type: string
+        totalAmount:
+          type: number
+    Payment:
+      type: object
+      properties:
+        _id:
+          type: string
+        amount:
+          type: number
+        paymentMode:
+          type: string
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+
+  /api/auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access: { type: string }
+                  refresh: { type: string }
+
+  /api/customers:
+    get:
+      summary: List customers
+      security: []
+      responses:
+        '200':
+          description: list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+    post:
+      summary: Create customer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                mobile: { type: string }
+      responses:
+        '200': { description: created }
+
+  /api/customers/{id}:
+    get:
+      summary: Get customer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+  /api/orders:
+    get:
+      summary: List orders
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create order
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId: { type: string }
+                frame: { type: string }
+                lens: { type: string }
+      responses:
+        '200': { description: created }
+
+  /api/orders/{id}:
+    get:
+      summary: Get order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+
+  /api/bills:
+    get:
+      summary: List bills
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create bill
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId: { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200': { description: created }
+
+  /api/bills/{id}:
+    get:
+      summary: Get bill
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+
+  /api/payments:
+    get:
+      summary: List payments
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create payment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId: { type: string }
+                amount: { type: number }
+      responses:
+        '200': { description: created }
+
+  /api/inventory:
+    get:
+      summary: List inventory
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create inventory item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sku: { type: string }
+                brand: { type: string }
+      responses:
+        '200': { description: created }
+
+  /api/inventory/{id}/stock:
+    put:
+      summary: Adjust stock
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity: { type: number }
+      responses:
+        '200': { description: updated }
+
+  /api/delivery:
+    get:
+      summary: List deliveries
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create delivery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customerId: { type: string }
+                orderId: { type: string }
+      responses:
+        '200': { description: created }
+
+  /api/delivery/{id}:
+    get:
+      summary: Get delivery
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+
+security:
+  - bearerAuth: []
