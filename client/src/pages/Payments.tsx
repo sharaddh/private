@@ -1,45 +1,105 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
+import Form, { Input, Select } from "../components/Form";
+import Table from "../components/Table";
 
 export default function Payments() {
   const [list, setList] = useState<any[]>([]);
-  const [form, setForm] = useState({ customerId: "", billId: "", amount: 0, paymentMode: "Cash" });
+  const [form, setForm] = useState({
+    customerId: "",
+    billId: "",
+    amount: 0,
+    paymentMode: "Cash",
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  function fetchPayments() {
     api.get("/api/payments").then((d) => {
       if (d.success) setList(d.data || []);
     });
-  }, []);
+  }
 
-  async function submit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const res = await api.post("/api/payments", form);
-    if (res.success) setList((s) => [res.data, ...s]);
+    setIsLoading(true);
+    try {
+      const res = await api.post("/api/payments", form);
+      if (res.success) {
+        setList([res.data, ...list]);
+        setForm({
+          customerId: "",
+          billId: "",
+          amount: 0,
+          paymentMode: "Cash",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Payments</h2>
-      <form onSubmit={submit} className="mb-4 grid grid-cols-2 gap-2">
-        <input value={form.customerId} onChange={(e)=>setForm({...form, customerId:e.target.value})} placeholder="Customer ID" className="border p-2" />
-        <input value={form.billId} onChange={(e)=>setForm({...form, billId:e.target.value})} placeholder="Bill ID" className="border p-2" />
-        <input type="number" value={form.amount} onChange={(e)=>setForm({...form, amount: Number(e.target.value)})} placeholder="Amount" className="border p-2" />
-        <select value={form.paymentMode} onChange={(e)=>setForm({...form, paymentMode:e.target.value})} className="border p-2">
-          <option>Cash</option>
-          <option>UPI</option>
-          <option>Card</option>
-          <option>Bank Transfer</option>
-        </select>
-        <button type="submit" className="col-span-2 bg-blue-600 text-white p-2">Record Payment</button>
-      </form>
+    <div className="space-y-6">
+      <Form onSubmit={handleSubmit} title="Record Payment" submitLabel="Record Payment" isLoading={isLoading}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Customer ID"
+            placeholder="Enter customer ID"
+            value={form.customerId}
+            onChange={(e) => setForm({ ...form, customerId: e.target.value })}
+            required
+          />
+          <Input
+            label="Bill ID"
+            placeholder="Enter bill ID"
+            value={form.billId}
+            onChange={(e) => setForm({ ...form, billId: e.target.value })}
+            required
+          />
+          <Input
+            label="Amount"
+            type="number"
+            placeholder="0.00"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+            step="0.01"
+            required
+          />
+          <Select
+            label="Payment Mode"
+            options={[
+              { value: "Cash", label: "Cash" },
+              { value: "UPI", label: "UPI" },
+              { value: "Card", label: "Card" },
+              { value: "Bank Transfer", label: "Bank Transfer" },
+            ]}
+            value={form.paymentMode}
+            onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}
+          />
+        </div>
+      </Form>
 
-      <ul>
-        {list.map((p) => (
-          <li key={p._id} className="py-2 border-b">
-            {p.amount} - <small>{p.paymentMode}</small>
-          </li>
-        ))}
-      </ul>
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Payments ({list.length})</h2>
+        <Table
+          columns={[
+            { key: "customerId", label: "Customer ID" },
+            { key: "billId", label: "Bill ID" },
+            { key: "amount", label: "Amount" },
+            { key: "paymentMode", label: "Payment Mode" },
+          ]}
+          data={list}
+          actions={(row) => (
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+              {row.paymentMode}
+            </span>
+          )}
+        />
+      </div>
     </div>
   );
 }
