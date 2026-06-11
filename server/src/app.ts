@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
+import { audit } from "./middleware/audit";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(audit);
 
 app.use(
   rateLimit({
@@ -22,5 +24,11 @@ app.use(
 app.use("/api", routes);
 
 app.get("/", (req, res) => res.json({ success: true, message: "KMJ ERP API" }));
+
+// Global error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error(err);
+  res.status(500).json({ success: false, message: "Internal Server Error" });
+});
 
 export default app;
