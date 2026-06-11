@@ -3,6 +3,7 @@ import { Payment } from "../models/payment";
 import { Bill } from "../models/bill";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { audit } from "../middleware/audit";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const payment = new Payment({ ...p, paymentDate: p.paymentDate ? new Date(p.paymentDate) : undefined } as any);

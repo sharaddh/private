@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Delivery } from "../models/delivery";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { audit } from "../middleware/audit";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const d = new Delivery({ ...p, expectedDeliveryDate: p.expectedDeliveryDate ? new Date(p.expectedDeliveryDate) : undefined } as any);

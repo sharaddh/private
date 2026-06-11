@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Inventory } from "../models/inventory";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { audit } from "../middleware/audit";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const item = new Inventory(p as any);
@@ -23,7 +24,7 @@ router.post("/", authenticate, async (req, res) => {
   }
 });
 
-router.put("/:id/stock", authenticate, async (req, res) => {
+router.put("/:id/stock", authenticate, audit, async (req, res) => {
   try {
     const qty = Number(req.body.quantity || 0);
     const it = await Inventory.findById(req.params.id);
