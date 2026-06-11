@@ -6,6 +6,8 @@ import Bills from "./pages/Bills";
 import Payments from "./pages/Payments";
 import InventoryPage from "./pages/InventoryPage";
 import Delivery from "./pages/Delivery";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
@@ -31,6 +33,8 @@ export default function App() {
           <Link to="/delivery" className="mr-4">
             Delivery
           </Link>
+          <Link to="/login" className="mr-4">Login</Link>
+          <Link to="/register" className="mr-4">Register</Link>
         </nav>
       </header>
 
@@ -42,6 +46,8 @@ export default function App() {
           <Route path="/payments" element={<Payments />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/delivery" element={<Delivery />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route index element={<div>Welcome to KMJ ERP</div>} />
         </Routes>
       </main>
