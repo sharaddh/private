@@ -1,27 +1,64 @@
-# KMJ ERP - Client
+# KMJ Optical ERP - Client
 
-Quick start:
+React-based frontend for the KMJ Optical ERP system, built with TypeScript, Vite, and Tailwind CSS.
 
-```
-cd client
+## Quick Start
+
+```bash
 npm install
 npm run dev
 ```
 
-Set `VITE_API_URL` in `.env` or use a proxy during development.
-# React + Vite
+The application will run at `http://localhost:5173`
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Scripts
 
-Currently, two official plugins are available:
+- `npm run dev` - Start development server with HMR
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Configuration
 
-## React Compiler
+Set `VITE_API_URL` in `.env` to point to your backend API:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+VITE_API_URL=http://localhost:5000/api
+```
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **React 18.2** - UI framework
+- **TypeScript** - Type safety
+- **Vite 4.5** - Build tool
+- **React Router 6** - Routing
+- **Tailwind CSS 3** - Styling
+
+## Pages
+
+- `/login` - User login
+- `/register` - New user registration
+- `/customers` - Customer management
+- `/orders` - Order management
+- `/bills` - Billing system
+- `/payments` - Payment tracking
+- `/inventory` - Inventory management
+- `/delivery` - Delivery tracking
+
+## Project Structure
+
+```
+src/
+├── pages/           # Page components
+├── App.tsx          # Main application component
+├── main.tsx         # Entry point
+├── api.ts           # API client integration
+├── App.css          # Global styles
+└── index.css        # Tailwind styles
+```
+
+## Development
+
+- All files use TypeScript (.tsx)
+- Styling is done with Tailwind CSS utility classes
+- API calls are managed through `api.ts`
+- React Router v6 handles navigation
