@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Delivery } from "../models/delivery";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 

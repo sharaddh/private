@@ -2,17 +2,18 @@ import { Router } from "express";
 import { Payment } from "../models/payment";
 import { Bill } from "../models/bill";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-const createSchema = z.object({ customerId: z.string(), billId: z.string().optional(), amount: z.number(), paymentMode: z.string().optional(), paymentDate: z.string().optional() });
+const createSchema = z.object({ customerId: z.string(), billId: z.string().optional(), amount: z.number().min(0.01), paymentMode: z.string().optional(), paymentDate: z.string().optional() });
 
 router.get("/", async (req, res) => {
   const list = await Payment.find().limit(200);
   res.json({ success: true, data: list });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const payment = new Payment({ ...p, paymentDate: p.paymentDate ? new Date(p.paymentDate) : undefined } as any);

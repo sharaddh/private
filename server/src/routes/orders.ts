@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Order } from "../models/order";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const order = new Order(p as any);

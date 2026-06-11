@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { Inventory } from "../models/inventory";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-const createSchema = z.object({ sku: z.string(), category: z.string().optional(), brand: z.string().optional(), model: z.string().optional(), color: z.string().optional(), size: z.string().optional(), quantity: z.number().optional(), purchasePrice: z.number().optional(), sellingPrice: z.number().optional() });
+const createSchema = z.object({ sku: z.string().min(1), category: z.string().optional(), brand: z.string().optional(), model: z.string().optional(), color: z.string().optional(), size: z.string().optional(), quantity: z.number().optional(), purchasePrice: z.number().optional(), sellingPrice: z.number().optional() });
 
 router.get("/", async (req, res) => {
   const list = await Inventory.find().limit(200);
   res.json({ success: true, data: list });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const item = new Inventory(p as any);
@@ -22,7 +23,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id/stock", async (req, res) => {
+router.put("/:id/stock", authenticate, async (req, res) => {
   try {
     const qty = Number(req.body.quantity || 0);
     const it = await Inventory.findById(req.params.id);
