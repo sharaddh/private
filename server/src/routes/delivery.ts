@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const d = new Delivery({ ...p, expectedDeliveryDate: p.expectedDeliveryDate ? new Date(p.expectedDeliveryDate) : undefined } as any);
