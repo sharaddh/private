@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { connect } from "mongoose";
-import { MONGO_URI } from "../../config";
+import { MONGO_URI } from "../config";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
