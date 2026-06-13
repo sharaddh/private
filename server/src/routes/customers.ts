@@ -6,15 +6,34 @@ const router = Router();
 
 const createCustomerSchema = z.object({
   name: z.string().min(1),
+  email: z.string().email().optional(),
   mobile: z.string().optional(),
-  city: z.string().optional()
+  alternateMobile: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  age: z.number().int().positive().optional(),
+  gender: z.enum(["Male", "Female", "Other"]).optional(),
+  tags: z.preprocess(
+    (value) => {
+      if (typeof value === "string") {
+        return value
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+      }
+      return value;
+    },
+    z.array(z.string()).optional()
+  )
 });
 
 router.get("/", async (req, res) => {
   const q = (req.query.q as string) || "";
   const customers = await Customer.find(
     q ? { $or: [{ name: new RegExp(q, "i") }, { mobile: new RegExp(q, "i") }] } : {}
-  ).limit(50);
+  )
+    .sort({ createdAt: -1 })
+    .limit(100);
   res.json({ success: true, data: customers });
 });
 

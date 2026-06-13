@@ -13,7 +13,17 @@ type Customer = {
 
 export default function Customers() {
   const [list, setList] = useState<Customer[]>([]);
-  const [form, setForm] = useState({ name: "", email: "", mobile: "", address: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    alternateMobile: "",
+    address: "",
+    city: "",
+    age: "",
+    gender: "",
+    tags: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,10 +46,35 @@ export default function Customers() {
     setError("");
 
     try {
-      const res = await api.post("/api/customers", form);
+      const payload = {
+        name: form.name,
+        email: form.email || undefined,
+        mobile: form.mobile || undefined,
+        alternateMobile: form.alternateMobile || undefined,
+        address: form.address || undefined,
+        city: form.city || undefined,
+        age: form.age ? Number(form.age) : undefined,
+        gender: form.gender || undefined,
+        tags: form.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      };
+
+      const res = await api.post("/api/customers", payload);
       if (res.success) {
         setList([res.data, ...list]);
-        setForm({ name: "", email: "", mobile: "", address: "" });
+        setForm({
+          name: "",
+          email: "",
+          mobile: "",
+          alternateMobile: "",
+          address: "",
+          city: "",
+          age: "",
+          gender: "",
+          tags: "",
+        });
       } else {
         setError(res.message || "Unable to add customer.");
       }
@@ -53,7 +88,7 @@ export default function Customers() {
   return (
     <div className="space-y-6">
       <Form onSubmit={handleSubmit} title="Add New Customer" submitLabel="Add Customer" isLoading={isLoading}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Customer Name"
             placeholder="Enter customer name"
@@ -75,10 +110,42 @@ export default function Customers() {
             onChange={(e) => setForm({ ...form, mobile: e.target.value })}
           />
           <Input
+            label="Alternate Mobile"
+            placeholder="Alternate mobile"
+            value={form.alternateMobile}
+            onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })}
+          />
+          <Input
+            label="City"
+            placeholder="City"
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+          />
+          <Input
+            label="Age"
+            type="number"
+            placeholder="Age"
+            value={form.age}
+            onChange={(e) => setForm({ ...form, age: e.target.value })}
+            min="0"
+          />
+          <Input
             label="Address"
             placeholder="Customer address"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
+          <Input
+            label="Gender"
+            placeholder="Male / Female / Other"
+            value={form.gender}
+            onChange={(e) => setForm({ ...form, gender: e.target.value })}
+          />
+          <Input
+            label="Tags"
+            placeholder="tag1, tag2"
+            value={form.tags}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
           />
         </div>
       </Form>
@@ -98,9 +165,16 @@ export default function Customers() {
             { key: "name", label: "Name" },
             { key: "email", label: "Email" },
             { key: "mobile", label: "Mobile" },
-            { key: "address", label: "Address" },
+            { key: "alternateMobile", label: "Alt Mobile" },
+            { key: "city", label: "City" },
+            { key: "age", label: "Age" },
+            { key: "gender", label: "Gender" },
+            { key: "tags", label: "Tags" },
           ]}
-          data={list}
+          data={list.map((customer) => ({
+            ...customer,
+            tags: customer.tags?.join(", ") || "",
+          }))}
           actions={(row) => (
             <button className="text-blue-600 hover:text-blue-800">Edit</button>
           )}
