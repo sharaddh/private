@@ -6,7 +6,7 @@ import { audit } from "../middleware/audit";
 
 const router = Router();
 
-const createSchema = z.object({ customerId: z.string(), orderId: z.string().optional(), expectedDeliveryDate: z.string().optional(), status: z.string().optional() });
+const createSchema = z.object({ customerId: z.string(), orderId: z.string().optional(), address: z.string().optional(), expectedDeliveryDate: z.string().optional(), status: z.string().optional() });
 
 router.get("/", async (req, res) => {
   const list = await Delivery.find().limit(200);
@@ -16,7 +16,10 @@ router.get("/", async (req, res) => {
 router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
-    const d = new Delivery({ ...p, expectedDeliveryDate: p.expectedDeliveryDate ? new Date(p.expectedDeliveryDate) : undefined } as any);
+    const d = new Delivery({
+      ...p,
+      expectedDeliveryDate: p.expectedDeliveryDate ? new Date(p.expectedDeliveryDate) : undefined,
+    } as any);
     await d.save();
     res.json({ success: true, data: d });
   } catch (err: any) {
