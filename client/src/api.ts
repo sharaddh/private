@@ -7,23 +7,58 @@ function getToken() {
 function buildHeaders(isJson = true) {
   const headers: Record<string, string> = {};
   if (isJson) headers["Content-Type"] = "application/json";
-  const t = getToken();
-  if (t) headers["Authorization"] = `Bearer ${t}`;
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 }
 
+async function request(path: string, init: RequestInit = {}) {
+  const res = await fetch(`${API_URL}${path}`, init);
+  const text = await res.text();
+  let payload: any = {};
+
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = { success: false, message: text || res.statusText };
+  }
+
+  if (!res.ok) {
+    return {
+      success: false,
+      message: payload?.message || res.statusText,
+      ...payload,
+    };
+  }
+
+  return payload;
+}
+
 export async function get(path: string) {
-  const res = await fetch(`${API_URL}${path}`, { headers: buildHeaders(false) });
-  return res.json();
+  return request(path, { headers: buildHeaders(false) });
 }
 
 export async function post(path: string, body: any) {
-  const res = await fetch(`${API_URL}${path}`, {
+  return request(path, {
     method: "POST",
     headers: buildHeaders(true),
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
-  return res.json();
+}
+
+export async function put(path: string, body: any) {
+  return request(path, {
+    method: "PUT",
+    headers: buildHeaders(true),
+    body: JSON.stringify(body),
+  });
+}
+
+export async function del(path: string) {
+  return request(path, {
+    method: "DELETE",
+    headers: buildHeaders(false),
+  });
 }
 
 export function setToken(token: string) {
@@ -34,4 +69,4 @@ export function clearToken() {
   localStorage.removeItem("accessToken");
 }
 
-export default { get, post, setToken, clearToken };
+export default { get, post, put, del, setToken, clearToken };

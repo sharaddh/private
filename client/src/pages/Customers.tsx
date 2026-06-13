@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import api from "../api";
 import Form, { Input } from "../components/Form";
 import Table from "../components/Table";
 
@@ -14,34 +15,36 @@ export default function Customers() {
   const [list, setList] = useState<Customer[]>([]);
   const [form, setForm] = useState({ name: "", email: "", mobile: "", address: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-  function fetchCustomers() {
-    fetch((import.meta.env.VITE_API_URL || "") + "/api/customers")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setList(d.data || []);
-      })
-      .catch(() => {});
+  async function fetchCustomers() {
+    const res = await api.get("/api/customers");
+    if (res.success) {
+      setList(res.data || []);
+    } else {
+      setError(res.message || "Unable to load customers.");
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/customers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      }).then((r) => r.json());
+    setError("");
 
+    try {
+      const res = await api.post("/api/customers", form);
       if (res.success) {
         setList([res.data, ...list]);
         setForm({ name: "", email: "", mobile: "", address: "" });
+      } else {
+        setError(res.message || "Unable to add customer.");
       }
+    } catch (err) {
+      setError("Unable to add customer. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -80,8 +83,16 @@ export default function Customers() {
         </div>
       </Form>
 
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Customers ({list.length})</h2>
+      {error && <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3">{error}</div>}
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Customers</h2>
+            <p className="text-sm text-gray-500">Manage customer profiles and contact details.</p>
+          </div>
+          <div className="text-sm text-gray-600">Total: {list.length}</div>
+        </div>
         <Table
           columns={[
             { key: "name", label: "Name" },

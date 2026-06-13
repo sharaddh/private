@@ -52,7 +52,7 @@ export default function InventoryPage() {
     if (!adjust.id) return;
     setIsLoading(true);
     try {
-      const res = await api.post(`/api/inventory/${adjust.id}/stock`, { quantity: adjust.qty });
+      const res = await api.put(`/api/inventory/${adjust.id}/stock`, { quantity: adjust.qty });
       if (res.success) {
         fetchInventory();
         setAdjust({ id: "", qty: 0 });
