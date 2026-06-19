@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, Eye } from "lucide-react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
 interface EyeSet { dv?: EyeData; nv?: EyeData; pc?: EyeData; }
+interface FormState {
+  customerId: string; visitId: string; pd: string; notes: string;
+  rightEye: EyeSet; leftEye: EyeSet;
+}
+
+const emptyEye: EyeData = {};
+const emptySet: EyeSet = { dv: {}, nv: {}, pc: {} };
 
 export default function Prescriptions() {
   const [list, setList] = useState<any[]>([]);
@@ -12,10 +19,10 @@ export default function Prescriptions() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [selected, setSelected] = useState<any>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     customerId: "", visitId: "", pd: "", notes: "",
-    rightEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
-    leftEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
+    rightEye: { dv: {}, nv: {}, pc: {} },
+    leftEye: { dv: {}, nv: {}, pc: {} },
   });
   const [visits, setVisits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,15 +40,17 @@ export default function Prescriptions() {
     }
   }, [form.customerId]);
 
-  const emptyEye = () => ({ sph: undefined, cyl: undefined, axis: undefined, va: undefined });
+  function updateEye(side: "rightEye" | "leftEye", type: "dv" | "nv" | "pc", field: keyof EyeData, value: string) {
+    setForm((prev) => {
+      const eyeSet = { ...prev[side] };
+      eyeSet[type] = { ...eyeSet[type], [field]: value === "" ? undefined : field === "va" ? value : Number(value) };
+      return { ...prev, [side]: eyeSet };
+    });
+  }
 
   function openCreate() {
     setEditing(null);
-    setForm({
-      customerId: "", visitId: "", pd: "", notes: "",
-      rightEye: { dv: emptyEye(), nv: emptyEye(), pc: emptyEye() },
-      leftEye: { dv: emptyEye(), nv: emptyEye(), pc: emptyEye() },
-    });
+    setForm({ customerId: "", visitId: "", pd: "", notes: "", rightEye: { ...emptySet }, leftEye: { ...emptySet } });
     setShowForm(true);
   }
 
@@ -51,14 +60,14 @@ export default function Prescriptions() {
       customerId: p.customerId || "", visitId: p.visitId || "",
       pd: p.pd || "", notes: p.notes || "",
       rightEye: {
-        dv: p.rightEye?.dv || emptyEye(),
-        nv: p.rightEye?.nv || emptyEye(),
-        pc: p.rightEye?.pc || emptyEye(),
+        dv: { ...emptyEye, ...p.rightEye?.dv },
+        nv: { ...emptyEye, ...p.rightEye?.nv },
+        pc: { ...emptyEye, ...p.rightEye?.pc },
       },
       leftEye: {
-        dv: p.leftEye?.dv || emptyEye(),
-        nv: p.leftEye?.nv || emptyEye(),
-        pc: p.leftEye?.pc || emptyEye(),
+        dv: { ...emptyEye, ...p.leftEye?.dv },
+        nv: { ...emptyEye, ...p.leftEye?.nv },
+        pc: { ...emptyEye, ...p.leftEye?.pc },
       },
     });
     setShowForm(true);
@@ -71,6 +80,8 @@ export default function Prescriptions() {
       const payload = {
         ...form,
         visitId: form.visitId || undefined,
+        rightEye: { dv: cleanEye(form.rightEye.dv), nv: cleanEye(form.rightEye.nv), pc: cleanEye(form.rightEye.pc) },
+        leftEye: { dv: cleanEye(form.leftEye.dv), nv: cleanEye(form.leftEye.nv), pc: cleanEye(form.leftEye.pc) },
       };
       const res = editing
         ? await api.put(`/api/prescriptions/${editing._id}`, payload)
@@ -83,6 +94,15 @@ export default function Prescriptions() {
     } finally { setIsLoading(false); }
   }
 
+  function cleanEye(e: any): EyeData {
+    const out: EyeData = {};
+    if (e.sph !== undefined && e.sph !== "") out.sph = Number(e.sph);
+    if (e.cyl !== undefined && e.cyl !== "") out.cyl = Number(e.cyl);
+    if (e.axis !== undefined && e.axis !== "") out.axis = Number(e.axis);
+    if (e.va) out.va = e.va;
+    return out;
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Delete this prescription?")) return;
     const res = await api.del(`/api/prescriptions/${id}`);
@@ -90,77 +110,36 @@ export default function Prescriptions() {
   }
 
   function renderEyeBlock(label: string, data: EyeData) {
+    if (!data || (!data.sph && !data.cyl && !data.axis && !data.va)) return null;
     return (
       <div className="text-xs text-gray-600 mb-1 p-1.5 bg-gray-50 rounded-lg">
         <span className="font-semibold text-gray-700">{label}: </span>
-        SPH: {data?.sph ?? "—"} | CYL: {data?.cyl ?? "—"} | AXIS: {data?.axis ?? "—"}
-        {data?.va ? ` | VA: ${data.va}` : ""}
+        {data.sph !== undefined ? `SPH: ${data.sph}` : ""}
+        {data.cyl !== undefined ? ` | CYL: ${data.cyl}` : ""}
+        {data.axis !== undefined ? ` | AXIS: ${data.axis}` : ""}
+        {data.va ? ` | VA: ${data.va}` : ""}
       </div>
     );
   }
 
-  function renderEyeInputs(prefix: string, data: EyeData) {
+  function EyeInputGroup({ side, type, label }: { side: "rightEye" | "leftEye"; type: "dv" | "nv" | "pc"; label: string }) {
+    const data = form[side][type] || {};
     return (
-      <div className="grid grid-cols-4 gap-2 text-xs">
-        <div>
-          <label className="text-gray-500">SPH</label>
-          <input type="number" step="0.25" className="input-field py-1.5 text-xs" value={data?.sph ?? ""}
-            onChange={(e) => {
-              const v = e.target.value ? Number(e.target.value) : undefined;
-              const path = prefix.split(".");
-              setForm((prev: any) => {
-                const upd = { ...prev };
-                let obj = upd;
-                for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-                obj[path[path.length - 1]] = { ...obj[path[path.length - 1]], sph: v };
-                return upd;
-              });
-            }} />
-        </div>
-        <div>
-          <label className="text-gray-500">CYL</label>
-          <input type="number" step="0.25" className="input-field py-1.5 text-xs" value={data?.cyl ?? ""}
-            onChange={(e) => {
-              const v = e.target.value ? Number(e.target.value) : undefined;
-              const path = prefix.split(".");
-              setForm((prev: any) => {
-                const upd = { ...prev };
-                let obj = upd;
-                for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-                obj[path[path.length - 1]] = { ...obj[path[path.length - 1]], cyl: v };
-                return upd;
-              });
-            }} />
-        </div>
-        <div>
-          <label className="text-gray-500">AXIS</label>
-          <input type="number" className="input-field py-1.5 text-xs" value={data?.axis ?? ""}
-            onChange={(e) => {
-              const v = e.target.value ? Number(e.target.value) : undefined;
-              const path = prefix.split(".");
-              setForm((prev: any) => {
-                const upd = { ...prev };
-                let obj = upd;
-                for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-                obj[path[path.length - 1]] = { ...obj[path[path.length - 1]], axis: v };
-                return upd;
-              });
-            }} />
-        </div>
-        <div>
-          <label className="text-gray-500">VA</label>
-          <input className="input-field py-1.5 text-xs" value={data?.va ?? ""}
-            onChange={(e) => {
-              const v = e.target.value || undefined;
-              const path = prefix.split(".");
-              setForm((prev: any) => {
-                const upd = { ...prev };
-                let obj = upd;
-                for (let i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-                obj[path[path.length - 1]] = { ...obj[path[path.length - 1]], va: v };
-                return upd;
-              });
-            }} />
+      <div>
+        <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {(["sph", "cyl", "axis", "va"] as (keyof EyeData)[]).map((field) => (
+            <div key={field}>
+              <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
+              <input
+                type={field === "va" ? "text" : "number"}
+                step={field === "va" ? undefined : "0.25"}
+                className="input-field py-1.5 text-xs"
+                value={data[field] ?? ""}
+                onChange={(e) => updateEye(side, type, field, e.target.value)}
+              />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -195,18 +174,23 @@ export default function Prescriptions() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-xs font-semibold text-gray-700 mb-1">Right Eye</p>
-                {p.rightEye?.dv && renderEyeBlock("DV", p.rightEye.dv)}
-                {p.rightEye?.nv && renderEyeBlock("NV", p.rightEye.nv)}
-                {p.rightEye?.pc && renderEyeBlock("PC", p.rightEye.pc)}
+                {renderEyeBlock("DV", p.rightEye?.dv)}
+                {renderEyeBlock("NV", p.rightEye?.nv)}
+                {renderEyeBlock("PC", p.rightEye?.pc)}
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-700 mb-1">Left Eye</p>
-                {p.leftEye?.dv && renderEyeBlock("DV", p.leftEye.dv)}
-                {p.leftEye?.nv && renderEyeBlock("NV", p.leftEye.nv)}
-                {p.leftEye?.pc && renderEyeBlock("PC", p.leftEye.pc)}
+                {renderEyeBlock("DV", p.leftEye?.dv)}
+                {renderEyeBlock("NV", p.leftEye?.nv)}
+                {renderEyeBlock("PC", p.leftEye?.pc)}
               </div>
             </div>
-            {p.pd && <p className="text-xs text-gray-500 mt-2">PD: {p.pd}</p>}
+            {(p.pd || p.notes) && (
+              <div className="mt-2 text-xs text-gray-500">
+                {p.pd && <span>PD: {p.pd} </span>}
+                {p.notes && <span>Notes: {p.notes}</span>}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -234,40 +218,18 @@ export default function Prescriptions() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="border border-gray-200 rounded-xl p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Right Eye</h4>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Distance Vision (DV)</p>
-                  {renderEyeInputs("rightEye.dv", form.rightEye.dv || {})}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Near Vision (NV)</p>
-                  {renderEyeInputs("rightEye.nv", form.rightEye.nv || {})}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Peripheral Curve (PC)</p>
-                  {renderEyeInputs("rightEye.pc", form.rightEye.pc || {})}
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-gray-700">Right Eye</h4>
+              <EyeInputGroup side="rightEye" type="dv" label="Distance Vision (DV)" />
+              <EyeInputGroup side="rightEye" type="nv" label="Near Vision (NV)" />
+              <EyeInputGroup side="rightEye" type="pc" label="Peripheral Curve (PC)" />
             </div>
-            <div className="border border-gray-200 rounded-xl p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Left Eye</h4>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Distance Vision (DV)</p>
-                  {renderEyeInputs("leftEye.dv", form.leftEye.dv || {})}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Near Vision (NV)</p>
-                  {renderEyeInputs("leftEye.nv", form.leftEye.nv || {})}
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Peripheral Curve (PC)</p>
-                  {renderEyeInputs("leftEye.pc", form.leftEye.pc || {})}
-                </div>
-              </div>
+            <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-gray-700">Left Eye</h4>
+              <EyeInputGroup side="leftEye" type="dv" label="Distance Vision (DV)" />
+              <EyeInputGroup side="leftEye" type="nv" label="Near Vision (NV)" />
+              <EyeInputGroup side="leftEye" type="pc" label="Peripheral Curve (PC)" />
             </div>
           </div>
 
@@ -296,15 +258,15 @@ export default function Prescriptions() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Right Eye</h4>
-                {selected.rightEye?.dv && renderEyeBlock("DV", selected.rightEye.dv)}
-                {selected.rightEye?.nv && renderEyeBlock("NV", selected.rightEye.nv)}
-                {selected.rightEye?.pc && renderEyeBlock("PC", selected.rightEye.pc)}
+                {renderEyeBlock("DV", selected.rightEye?.dv)}
+                {renderEyeBlock("NV", selected.rightEye?.nv)}
+                {renderEyeBlock("PC", selected.rightEye?.pc)}
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Left Eye</h4>
-                {selected.leftEye?.dv && renderEyeBlock("DV", selected.leftEye.dv)}
-                {selected.leftEye?.nv && renderEyeBlock("NV", selected.leftEye.nv)}
-                {selected.leftEye?.pc && renderEyeBlock("PC", selected.leftEye.pc)}
+                {renderEyeBlock("DV", selected.leftEye?.dv)}
+                {renderEyeBlock("NV", selected.leftEye?.nv)}
+                {renderEyeBlock("PC", selected.leftEye?.pc)}
               </div>
             </div>
             {selected.pd && <p className="text-sm text-gray-600">PD: {selected.pd}</p>}
