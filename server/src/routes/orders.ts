@@ -40,4 +40,24 @@ router.get("/:id", async (req, res) => {
   res.json({ success: true, data: o });
 });
 
+router.put("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const o = await Order.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    if (!o) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, data: o });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const o = await Order.findByIdAndDelete(req.params.id);
+    if (!o) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, message: "Deleted" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 export default router;

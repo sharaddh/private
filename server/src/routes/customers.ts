@@ -54,4 +54,25 @@ router.get("/:id", async (req, res) => {
   res.json({ success: true, data: c });
 });
 
+router.put("/:id", async (req, res) => {
+  try {
+    const parsed = createCustomerSchema.partial().parse(req.body);
+    const c = await Customer.findByIdAndUpdate(req.params.id, { $set: parsed }, { new: true });
+    if (!c) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, data: c });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const c = await Customer.findByIdAndDelete(req.params.id);
+    if (!c) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, message: "Deleted" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 export default router;
