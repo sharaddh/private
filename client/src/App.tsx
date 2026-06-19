@@ -14,6 +14,7 @@ import Delivery from "./pages/Delivery";
 import Pickup from "./pages/Pickup";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Workspace from "./pages/Workspace";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/delivery" element={<Delivery />} />
         <Route path="/pickup" element={<Pickup />} />
+        <Route path="/workspace" element={<Workspace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Login />} />

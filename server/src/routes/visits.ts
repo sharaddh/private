@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Visit } from "../models/visit";
 import { Customer } from "../models/customer";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const customer = await Customer.findById(p.customerId);
@@ -53,7 +54,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
     const v = await Visit.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!v) return res.status(404).json({ success: false, message: "Not found" });
@@ -63,7 +64,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
     const v = await Visit.findByIdAndDelete(req.params.id);
     if (!v) return res.status(404).json({ success: false, message: "Not found" });

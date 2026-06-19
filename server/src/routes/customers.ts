@@ -4,6 +4,7 @@ import { Order } from "../models/order";
 import { Prescription } from "../models/prescription";
 import { Visit } from "../models/visit";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: customers });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const parsed = createCustomerSchema.parse(req.body);
     const customer = new Customer({ ...parsed, customerId: `CUST-${Date.now()}` });
@@ -97,7 +98,7 @@ router.get("/:id", async (req, res) => {
   res.json({ success: true, data: c });
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
     const parsed = createCustomerSchema.partial().parse(req.body);
     const c = await Customer.findByIdAndUpdate(req.params.id, { $set: parsed }, { new: true });
@@ -108,7 +109,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
     const c = await Customer.findByIdAndDelete(req.params.id);
     if (!c) return res.status(404).json({ success: false, message: "Not found" });

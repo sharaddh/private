@@ -3,6 +3,7 @@ import { Prescription } from "../models/prescription";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
     const customer = await Customer.findById(p.customerId);
@@ -61,7 +62,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
     const p = await Prescription.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!p) return res.status(404).json({ success: false, message: "Not found" });
@@ -71,7 +72,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
     const p = await Prescription.findByIdAndDelete(req.params.id);
     if (!p) return res.status(404).json({ success: false, message: "Not found" });

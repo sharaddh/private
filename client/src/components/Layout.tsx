@@ -4,10 +4,11 @@ import { clearToken, get } from "../api";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, Eye, ClipboardList, BarChart3, Settings, LogOut,
-  Menu, X, ChevronRight, UserCircle, Search, Phone, User, Hand
+  Menu, X, ChevronRight, UserCircle, Search, Phone, User, Hand, PlusCircle
 } from "lucide-react";
 
 const menuItems = [
+  { path: "/workspace", label: "New Visit", icon: PlusCircle },
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/customers", label: "Customers", icon: Users },
   { path: "/visits", label: "Visits", icon: ClipboardList },
