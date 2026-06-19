@@ -29,6 +29,11 @@ const createCustomerSchema = z.object({
 
 router.get("/", async (req, res) => {
   const q = (req.query.q as string) || "";
+  const phone = req.query.phone as string;
+  if (phone) {
+    const customer = await Customer.findOne({ mobile: phone });
+    return res.json({ success: true, data: customer ? [customer] : [] });
+  }
   const customers = await Customer.find(
     q ? { $or: [{ name: new RegExp(q, "i") }, { mobile: new RegExp(q, "i") }] } : {}
   )
