@@ -67,6 +67,42 @@ export default function Workspace() {
   const [billTax, setBillTax] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
 
+  // Inventory suggestions
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionsForIdx, setSuggestionsForIdx] = useState<number | null>(null);
+  const searchTimer = useRef<any>(null);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
+  function searchInventory(query: string, idx: number) {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (query.length < 2) { setSuggestions([]); setSuggestionsForIdx(null); return; }
+    searchTimer.current = setTimeout(async () => {
+      const res = await api.get(`/api/inventory?q=${encodeURIComponent(query)}`);
+      if (res.success) {
+        setSuggestions(res.data || []);
+        setSuggestionsForIdx(res.data.length > 0 ? idx : null);
+      }
+    }, 300);
+  }
+
+  function applySuggestion(idx: number, item: any) {
+    updateBillItem(idx, "description", item.brand && item.model ? `${item.brand} ${item.model}` : item.sku);
+    updateBillItem(idx, "price", item.sellingPrice || 0);
+    setSuggestions([]);
+    setSuggestionsForIdx(null);
+  }
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node)) {
+        setSuggestions([]);
+        setSuggestionsForIdx(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   // Step 5: Payment
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMode, setPaymentMode] = useState("Cash");
@@ -365,6 +401,66 @@ export default function Workspace() {
     setBillItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
   }
 
+  function printReceipt() {
+    const bill = success?.bill;
+    const customer = success?.customer;
+    const payment = success?.payment;
+    if (!bill) return;
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(`
+      <html><head><title>Receipt ${bill.billNumber}</title>
+      <style>body{font-family:system-ui;padding:40px;max-width:680px;margin:auto;color:#1a1a1a}
+        .header{text-align:center;margin-bottom:32px;border-bottom:2px solid #1a1a1a;padding-bottom:16px}
+        .header h1{margin:0;font-size:22px}.header p{margin:4px 0;color:#555;font-size:13px}
+        .info{display:flex;justify-content:space-between;margin-bottom:24px;font-size:13px}
+        .info div{line-height:1.6}table{width:100%;border-collapse:collapse;margin-bottom:24px}
+        th,td{border:1px solid #ddd;padding:10px 12px;text-align:left;font-size:13px}
+        th{background:#f5f5f5;font-weight:600}
+        .right{text-align:right}.totals{text-align:right;font-size:14px;line-height:1.8}
+        .totals .grand{font-size:18px;font-weight:bold;border-top:2px solid #1a1a1a;padding-top:8px}
+        .footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #ddd;font-size:12px;color:#888}
+      </style></head><body>
+      <div class="header">
+        <h1>KMJ Optical</h1>
+        <p>${bill.billNumber || ""}</p>
+        <p>Date: ${new Date(bill.createdAt || Date.now()).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+      </div>
+      <div class="info">
+        <div>
+          <strong>Customer</strong>
+          <p>${customer?.name || ""}</p>
+          <p>${customer?.mobile || ""}</p>
+          ${customer?.address ? `<p>${customer.address}</p>` : ""}
+        </div>
+        ${payment ? `<div style="text-align:right">
+          <strong>Payment</strong>
+          <p>Mode: ${payment.paymentMode || "Cash"}</p>
+          <p>Date: ${new Date(payment.paymentDate || Date.now()).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+        </div>` : ""}
+      </div>
+      <table>
+        <tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+        ${(bill.items || []).map((it: any) => `
+          <tr><td>${it.description || ""}</td><td>${it.quantity || 1}</td>
+          <td class="right">₹${(it.unitPrice || 0).toFixed(2)}</td>
+          <td class="right">₹${((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td></tr>
+        `).join("")}
+      </table>
+      <div class="totals">
+        <p>Subtotal: ₹${(bill.subtotal || 0).toFixed(2)}</p>
+        ${bill.discount ? `<p>Discount: -₹${bill.discount.toFixed(2)}</p>` : ""}
+        ${bill.tax ? `<p>Tax: +₹${bill.tax.toFixed(2)}</p>` : ""}
+        <p class="grand">Total: ₹${(bill.totalAmount || 0).toFixed(2)}</p>
+        ${bill.advancePaid ? `<p>Paid: ₹${bill.advancePaid.toFixed(2)}</p>` : ""}
+        ${bill.pendingAmount > 0 ? `<p style="color:#d97706">Pending: ₹${bill.pendingAmount.toFixed(2)}</p>` : ""}
+      </div>
+      <div class="footer">Thank you for your business!</div>
+      <script>window.print()</script></body></html>
+    `);
+    w.document.close();
+  }
+
   if (step === "done" && success) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 pt-8">
@@ -410,8 +506,8 @@ export default function Workspace() {
           </div>
 
           <div className="flex gap-3 justify-center">
-            <button onClick={() => { if (success.bill) window.open(`/bills`, "_blank"); }} className="btn-secondary flex items-center gap-2">
-              <Printer size={16} /> View Bill
+            <button onClick={printReceipt} className="btn-secondary flex items-center gap-2">
+              <Printer size={16} /> Print Receipt
             </button>
             <button onClick={resetAll} className="btn-primary flex items-center gap-2">
               <Plus size={16} /> New Transaction
@@ -688,10 +784,24 @@ export default function Workspace() {
 
           <div className="space-y-3 mb-4">
             {billItems.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-start bg-gray-50 p-3 rounded-xl">
-                <div className="flex-1">
-                  <input className="input-field text-sm" placeholder="Item description" value={item.description}
-                    onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
+              <div key={idx} className="flex gap-2 items-start bg-gray-50 p-3 rounded-xl relative">
+                <div className="flex-1 relative">
+                  <input className="input-field text-sm" placeholder="Item description (start typing for suggestions)" value={item.description}
+                    onChange={(e) => { updateBillItem(idx, "description", e.target.value); searchInventory(e.target.value, idx); }} />
+                  {suggestionsForIdx === idx && suggestions.length > 0 && (
+                    <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {suggestions.map((inv: any) => (
+                        <button key={inv._id} type="button" onClick={() => applySuggestion(idx, inv)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 text-left border-b border-gray-100 last:border-0">
+                          <div>
+                            <p className="font-medium text-gray-900">{inv.brand && inv.model ? `${inv.brand} ${inv.model}` : inv.sku}</p>
+                            <p className="text-xs text-gray-400">{inv.category || ""}{inv.color ? ` | ${inv.color}` : ""}</p>
+                          </div>
+                          <span className="font-semibold text-indigo-600">₹{inv.sellingPrice || 0}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="w-20">
                   <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
