@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList, ShoppingCart, FileText, Clock } from "lucide-react";
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -38,12 +38,21 @@ export default function CustomerDetail() {
     );
   }
 
+  // Build timeline from all data
+  const timeline: any[] = [];
+  visits.forEach((v: any) => timeline.push({ date: v.visitDate, type: "Visit", data: v, icon: "ClipboardList" }));
+  prescriptions.forEach((p: any) => timeline.push({ date: p.createdAt, type: "Prescription", data: p, icon: "Eye" }));
+  orders.forEach((o: any) => timeline.push({ date: o.createdAt, type: "Order", data: o, icon: "ShoppingCart" }));
+  bills.forEach((b: any) => timeline.push({ date: b.createdAt, type: "Bill", data: b, icon: "FileText" }));
+  timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   const tabs = [
     { key: "overview", label: "Overview", icon: Eye },
     { key: "visits", label: `Visits (${visits.length})`, icon: ClipboardList },
     { key: "prescriptions", label: `Prescriptions (${prescriptions.length})`, icon: Eye },
     { key: "bills", label: `Bills (${bills.length})`, icon: DollarSign },
     { key: "orders", label: `Orders (${orders.length})`, icon: ClipboardList },
+    { key: "timeline", label: "Timeline", icon: Eye },
   ] as const;
 
   return (
@@ -251,6 +260,72 @@ export default function CustomerDetail() {
                     }`}>{o.status || "Draft"}</span>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "timeline" && (
+          <div className="card">
+            {timeline.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">No activity yet.</p>
+            ) : (
+              <div className="relative">
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200" />
+                <div className="space-y-0">
+                  {timeline.map((item, idx) => {
+                    const colors: Record<string, string> = {
+                      Visit: "bg-blue-500", Prescription: "bg-purple-500",
+                      Order: "bg-amber-500", Bill: "bg-emerald-500",
+                    };
+                    const labels: Record<string, string> = {
+                      Visit: "Visit", Prescription: "Prescription",
+                      Order: "Order", Bill: "Bill",
+                    };
+                    return (
+                      <div key={idx} className="relative pl-12 pb-6">
+                        <div className={`absolute left-3.5 w-4 h-4 rounded-full border-2 border-white ${colors[item.type] || "bg-gray-400"} shadow`} />
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full text-white ${colors[item.type] || "bg-gray-400"}`}>
+                              {labels[item.type] || item.type}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(item.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                            </span>
+                          </div>
+                          {item.type === "Visit" && (
+                            <p className="text-sm text-gray-700">
+                              {item.data.doctorName ? `Dr. ${item.data.doctorName}` : "Visit"} {item.data.remarks ? `— ${item.data.remarks}` : ""}
+                            </p>
+                          )}
+                          {item.type === "Prescription" && (
+                            <div className="text-sm text-gray-700">
+                              {item.data.rightEye?.dv?.sph != null && <span>RE: {item.data.rightEye.dv.sph}  </span>}
+                              {item.data.leftEye?.dv?.sph != null && <span>LE: {item.data.leftEye.dv.sph}</span>}
+                              {item.data.notes && <p className="text-xs text-gray-500 mt-1">{item.data.notes}</p>}
+                            </div>
+                          )}
+                          {item.type === "Order" && (
+                            <p className="text-sm text-gray-700">
+                              {[item.data.frame, item.data.lens].filter(Boolean).join(" / ") || "Order"}
+                              <span className={`ml-2 badge ${
+                                item.data.status === "Delivered" ? "badge-green" :
+                                item.data.status === "Ready" ? "badge-blue" : "badge-yellow"
+                              }`}>{item.data.status || "Draft"}</span>
+                            </p>
+                          )}
+                          {item.type === "Bill" && (
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm text-gray-700">{item.data.billNumber}</p>
+                              <p className="text-sm font-semibold text-emerald-600">₹{(item.data.totalAmount || 0).toLocaleString()}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
