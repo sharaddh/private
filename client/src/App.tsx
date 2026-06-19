@@ -11,6 +11,7 @@ import Bills from "./pages/Bills";
 import Payments from "./pages/Payments";
 import InventoryPage from "./pages/InventoryPage";
 import Delivery from "./pages/Delivery";
+import Pickup from "./pages/Pickup";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/payments" element={<Payments />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/delivery" element={<Delivery />} />
+        <Route path="/pickup" element={<Pickup />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Login />} />

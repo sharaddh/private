@@ -5,7 +5,8 @@ import {
   Search, UserPlus, Phone, User, Eye, ShoppingCart,
   CreditCard, Truck, Check, ChevronRight, ChevronLeft, Save,
   X, Plus, Printer, ArrowRight, AlertCircle, MessageCircle,
-  RotateCcw, Clock, DollarSign, Edit3, Info, RefreshCw
+  RotateCcw, Clock, DollarSign, Edit3, Info, RefreshCw,
+  Calendar, Tag, Repeat, FileText, History, EyeOff
 } from "lucide-react";
 
 type Step = "customer" | "examination" | "order" | "billing" | "payment" | "done";
@@ -14,10 +15,13 @@ interface CustomerData {
   _id?: string; name: string; mobile: string; email?: string;
   address?: string; city?: string; age?: number; gender?: string;
   totalVisits?: number; totalSpent?: number; pendingAmount?: number; lastVisit?: string;
+  createdAt?: string;
 }
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
 interface EyeSet { dv?: EyeData; nv?: EyeData; pc?: EyeData; }
+
+interface BillItem { description: string; qty: number; price: number; }
 
 export default function Workspace() {
   const navigate = useNavigate();
@@ -26,6 +30,9 @@ export default function Workspace() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<any>(null);
+
+  // Customer summary cache for rich card
+  const [customerSummary, setCustomerSummary] = useState<any>(null);
 
   // Step 1: Customer search + selection
   const [phoneSearch, setPhoneSearch] = useState("");
@@ -40,6 +47,8 @@ export default function Workspace() {
   // Step 2: Examination
   const [visitDoctor, setVisitDoctor] = useState("");
   const [visitRemarks, setVisitRemarks] = useState("");
+  const [visitShop, setVisitShop] = useState("");
+  const [prevPrescription, setPrevPrescription] = useState<any>(null);
   const [prescription, setPrescription] = useState({
     rightEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
     leftEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
@@ -49,20 +58,34 @@ export default function Workspace() {
 
   // Step 3: Order
   const [orderFrame, setOrderFrame] = useState("");
+  const [orderFrameBrand, setOrderFrameBrand] = useState("");
+  const [orderFrameModel, setOrderFrameModel] = useState("");
+  const [orderFrameColor, setOrderFrameColor] = useState("");
+  const [orderFrameSize, setOrderFrameSize] = useState("");
+  const [orderFramePrice, setOrderFramePrice] = useState(0);
   const [orderLens, setOrderLens] = useState("");
+  const [orderLensBrand, setOrderLensBrand] = useState("");
+  const [orderLensType, setOrderLensType] = useState("Single Vision");
+  const [orderLensIndex, setOrderLensIndex] = useState("");
+  const [orderLensPrice, setOrderLensPrice] = useState(0);
   const [orderCoating, setOrderCoating] = useState("");
-  const [orderAccessories, setOrderAccessories] = useState("");
+  const [orderCoatingPrice, setOrderCoatingPrice] = useState(0);
+  const [orderAccessories, setOrderAccessories] = useState<{ name: string; price: number }[]>([]);
+  const [showAddAccessory, setShowAddAccessory] = useState(false);
+  const [newAccName, setNewAccName] = useState("");
+  const [newAccPrice, setNewAccPrice] = useState(0);
   const [orderQty, setOrderQty] = useState(1);
   const [orderDeliveryDate, setOrderDeliveryDate] = useState("");
   const [useOrder, setUseOrder] = useState(true);
 
   // Step 4: Billing
-  const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([
+  const [billItems, setBillItems] = useState<BillItem[]>([
     { description: "", qty: 1, price: 0 },
   ]);
   const [billDiscount, setBillDiscount] = useState(0);
   const [billTax, setBillTax] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
+  const [showBillPreview, setShowBillPreview] = useState(false);
 
   // Inventory suggestions
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -70,15 +93,21 @@ export default function Workspace() {
   const searchTimer = useRef<any>(null);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-  // Step 5: Payment
-  const [paymentAmount, setPaymentAmount] = useState(0);
-  const [paymentMode, setPaymentMode] = useState("Cash");
-  const [paymentNotes, setPaymentNotes] = useState("");
+  // Step 5: Payment (multiple payments)
+  const [payments, setPayments] = useState<{ amount: number; mode: string; notes: string }[]>([
+    { amount: 0, mode: "Cash", notes: "" },
+  ]);
+  const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
 
   // Step 6: Delivery
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [useDelivery, setUseDelivery] = useState(false);
+
+  // Lab processing fields
+  const [labAssigned, setLabAssigned] = useState("");
+  const [labExpectedDate, setLabExpectedDate] = useState("");
+  const [labRemarks, setLabRemarks] = useState("");
 
   useEffect(() => { phoneRef.current?.focus(); }, []);
 
@@ -107,9 +136,10 @@ export default function Workspace() {
 
   const subtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const totalAmount = subtotal - billDiscount + billTax;
-  const pendingAmt = totalAmount - advancePaid;
+  const pendingAmt = totalAmount - advancePaid - totalPaid;
+  const accessoriesTotal = orderAccessories.reduce((s, a) => s + a.price, 0);
 
-  // Load previous data for returning customer
+  // Load previous prescription + order data for returning customer
   async function loadPreviousData(customerId: string) {
     const [visitsRes, prescRes, ordersRes] = await Promise.all([
       api.get(`/api/visits?customerId=${customerId}`),
@@ -120,9 +150,11 @@ export default function Workspace() {
       const last = visitsRes.data[0];
       setVisitDoctor(last.doctorName || "");
       setVisitRemarks(last.remarks || "");
+      setVisitShop(last.shop || "");
     }
     if (prescRes.success && prescRes.data.length > 0) {
       const prev = prescRes.data[0];
+      setPrevPrescription(prev);
       setPrescription({
         rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
         leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
@@ -132,11 +164,65 @@ export default function Workspace() {
     if (ordersRes.success && ordersRes.data.length > 0) {
       const last = ordersRes.data[0];
       setOrderFrame(last.frame || "");
+      setOrderFrameBrand(last.frameBrand || "");
+      setOrderFrameModel(last.frameModel || "");
+      setOrderFrameColor(last.frameColor || "");
+      setOrderFrameSize(last.frameSize || "");
+      setOrderFramePrice(last.framePrice || 0);
       setOrderLens(last.lens || "");
+      setOrderLensBrand(last.lensBrand || "");
+      setOrderLensType(last.lensType || "Single Vision");
+      setOrderLensIndex(last.lensIndex || "");
+      setOrderLensPrice(last.lensPrice || 0);
       setOrderCoating(last.coating || "");
-      if (last.accessories) setOrderAccessories(last.accessories.join(", "));
+      setOrderCoatingPrice(last.coatingPrice || 0);
+      if (last.accessories) setOrderAccessories(last.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
+      setOrderQty(last.quantity || 1);
       setUseOrder(true);
     }
+  }
+
+  // Repeat Last Order — copies everything from last order into current form
+  function repeatLastOrder(summary: any) {
+    const o = summary?.lastOrder;
+    if (!o) return;
+    setOrderFrame(o.frame || "");
+    setOrderFrameBrand(o.frameBrand || "");
+    setOrderFrameModel(o.frameModel || "");
+    setOrderFrameColor(o.frameColor || "");
+    setOrderFrameSize(o.frameSize || "");
+    setOrderFramePrice(o.framePrice || 0);
+    setOrderLens(o.lens || "");
+    setOrderLensBrand(o.lensBrand || "");
+    setOrderLensType(o.lensType || "Single Vision");
+    setOrderLensIndex(o.lensIndex || "");
+    setOrderLensPrice(o.lensPrice || 0);
+    setOrderCoating(o.coating || "");
+    setOrderCoatingPrice(o.coatingPrice || 0);
+    if (o.accessories) setOrderAccessories(o.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
+    setOrderQty(o.quantity || 1);
+    setUseOrder(true);
+    // Copy pricing into bill
+    const items: BillItem[] = [];
+    if (o.frame) items.push({ description: `Frame - ${o.frame}`, qty: 1, price: o.framePrice || 0 });
+    if (o.lens) items.push({ description: `Lens - ${o.lens}`, qty: 1, price: o.lensPrice || 0 });
+    if (o.coating) items.push({ description: `Coating - ${o.coating}`, qty: 1, price: o.coatingPrice || 0 });
+    if (o.accessories) {
+      const accs = o.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a);
+      accs.forEach((a: any) => items.push({ description: a.name, qty: 1, price: a.price || 0 }));
+    }
+    if (items.length > 0) setBillItems(items);
+    // Copy prescription
+    const p = summary?.lastPrescription;
+    if (p) {
+      setPrevPrescription(p);
+      setPrescription({
+        rightEye: p.rightEye || { dv: {}, nv: {}, pc: {} },
+        leftEye: p.leftEye || { dv: {}, nv: {}, pc: {} },
+        pd: p.pd || "", notes: p.notes || "",
+      });
+    }
+    setStep("order");
   }
 
   async function searchCustomer() {
@@ -169,6 +255,7 @@ export default function Workspace() {
       _id: c._id, name: c.name, mobile: c.mobile || "", email: c.email || "",
       address: c.address || "", city: c.city || "", age: c.age, gender: c.gender || "",
       totalVisits: c.totalVisits, totalSpent: c.totalSpent, pendingAmount: c.pendingAmount, lastVisit: c.lastVisit,
+      createdAt: c.createdAt,
     });
     setCustomerForm({
       name: c.name, mobile: c.mobile || "", email: c.email || "",
@@ -177,6 +264,10 @@ export default function Workspace() {
     setDeliveryAddress(c.address || deliveryAddress);
     setIsNewCustomer(false);
     loadPreviousData(c._id);
+    // Fetch rich summary
+    api.get(`/api/customers/summary/${c._id}`).then((r) => {
+      if (r.success) setCustomerSummary(r.data);
+    });
   }
 
   function handlePhoneKeyDown(e: React.KeyboardEvent) {
@@ -231,10 +322,17 @@ export default function Workspace() {
 
       if (useOrder && (orderFrame || orderLens)) {
         payload.order = {
-          frame: orderFrame || undefined, lens: orderLens || undefined,
-          coating: orderCoating || undefined,
-          accessories: orderAccessories ? orderAccessories.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          frame: orderFrame || undefined, frameBrand: orderFrameBrand || undefined,
+          frameModel: orderFrameModel || undefined, frameColor: orderFrameColor || undefined,
+          frameSize: orderFrameSize || undefined, framePrice: orderFramePrice || 0,
+          lens: orderLens || undefined, lensBrand: orderLensBrand || undefined,
+          lensType: orderLensType || undefined, lensIndex: orderLensIndex || undefined,
+          lensPrice: orderLensPrice || 0,
+          coating: orderCoating || undefined, coatingPrice: orderCoatingPrice || 0,
+          accessories: orderAccessories.map((a) => a.name),
           quantity: orderQty, deliveryDate: orderDeliveryDate || undefined,
+          labAssigned: labAssigned || undefined, labExpectedDate: labExpectedDate || undefined,
+          labRemarks: labRemarks || undefined,
         };
       }
 
@@ -246,8 +344,14 @@ export default function Workspace() {
         };
       }
 
-      if (paymentAmount > 0) {
-        payload.payment = { amount: paymentAmount, paymentMode, notes: paymentNotes || undefined };
+      const validPayments = payments.filter((p) => p.amount > 0);
+      if (validPayments.length > 0) {
+        payload.payment = {
+          amount: totalPaid,
+          paymentMode: validPayments[0].mode,
+          notes: validPayments.map((p) => p.notes).filter(Boolean).join("; ") || undefined,
+          entries: validPayments,
+        };
       }
 
       if (useDelivery && deliveryAddress) {
@@ -290,18 +394,36 @@ export default function Workspace() {
 
   function resetAll() {
     setStep("customer"); setPhoneSearch(""); setSelectedCustomer(null); setIsNewCustomer(false);
-    setSearchResults([]); setSearched(false);
+    setSearchResults([]); setSearched(false); setCustomerSummary(null);
     setCustomerForm({ name: "", mobile: "", email: "", address: "", city: "", age: undefined, gender: "" });
-    setVisitDoctor(""); setVisitRemarks("");
+    setVisitDoctor(""); setVisitRemarks(""); setVisitShop(""); setPrevPrescription(null);
     setPrescription({ rightEye: { dv: {}, nv: {}, pc: {} }, leftEye: { dv: {}, nv: {}, pc: {} }, pd: "", notes: "" });
-    setOrderFrame(""); setOrderLens(""); setOrderCoating(""); setOrderAccessories(""); setOrderQty(1); setOrderDeliveryDate("");
+    setOrderFrame(""); setOrderFrameBrand(""); setOrderFrameModel(""); setOrderFrameColor(""); setOrderFrameSize(""); setOrderFramePrice(0);
+    setOrderLens(""); setOrderLensBrand(""); setOrderLensType("Single Vision"); setOrderLensIndex(""); setOrderLensPrice(0);
+    setOrderCoating(""); setOrderCoatingPrice(0);
+    setOrderAccessories([]); setOrderQty(1); setOrderDeliveryDate("");
     setUseOrder(true);
     setBillItems([{ description: "", qty: 1, price: 0 }]);
-    setBillDiscount(0); setBillTax(0); setAdvancePaid(0);
-    setPaymentAmount(0); setPaymentMode("Cash"); setPaymentNotes("");
+    setBillDiscount(0); setBillTax(0); setAdvancePaid(0); setShowBillPreview(false);
+    setPayments([{ amount: 0, mode: "Cash", notes: "" }]);
     setDeliveryAddress(""); setDeliveryDate(""); setUseDelivery(false);
+    setLabAssigned(""); setLabExpectedDate(""); setLabRemarks("");
     setError(""); setSuccess(null); setUsePrescription(true);
     phoneRef.current?.focus();
+  }
+
+  function getPrevValue(side: string, type: string, field: string): string {
+    if (!prevPrescription) return "";
+    const val = prevPrescription[side]?.[type]?.[field];
+    return val !== undefined && val !== 0 && val !== "" ? String(val) : "";
+  }
+
+  function isChanged(side: string, type: string, field: string): boolean {
+    if (!prevPrescription) return false;
+    const prev = prevPrescription[side]?.[type]?.[field];
+    const curr = prescription[side as "rightEye" | "leftEye"]?.[type as "dv" | "nv" | "pc"]?.[field as "sph" | "cyl" | "axis" | "va"];
+    if (field === "va") return prev !== curr && curr !== undefined && curr !== "";
+    return Number(prev) !== Number(curr) && curr !== undefined && curr !== "";
   }
 
   function renderEyeFields(side: "rightEye" | "leftEye", label: string) {
@@ -315,15 +437,20 @@ export default function Workspace() {
               {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
             </p>
             <div className="grid grid-cols-4 gap-1.5">
-              {(["sph", "cyl", "axis", "va"] as const).map((field) => (
-                <div key={field}>
-                  <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
-                  <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                    className="input-field py-1.5 text-xs"
-                    value={data[type]?.[field] ?? ""}
-                    onChange={(e) => updateEye(side, type, field, e.target.value)} />
-                </div>
-              ))}
+              {(["sph", "cyl", "axis", "va"] as const).map((field) => {
+                const changed = isChanged(side, type, field);
+                const prevVal = getPrevValue(side, type, field);
+                return (
+                  <div key={field}>
+                    <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
+                    <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
+                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 bg-amber-50 ring-1 ring-amber-300" : ""}`}
+                      value={data[type]?.[field] ?? ""}
+                      onChange={(e) => updateEye(side, type, field, e.target.value)} />
+                    {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -351,7 +478,7 @@ export default function Workspace() {
   const steps = [
     { key: "customer", label: "Customer", icon: User },
     { key: "examination", label: "Prescription", icon: Eye },
-    { key: "order", label: "Purchase", icon: ShoppingCart },
+    { key: "order", label: "Products", icon: ShoppingCart },
     { key: "billing", label: "Bill", icon: DollarSign },
     { key: "payment", label: "Payment", icon: CreditCard },
   ] as const;
@@ -363,7 +490,7 @@ export default function Workspace() {
       case "examination": return true;
       case "order": return true;
       case "billing": return billItems.some((i) => i.description && i.price > 0);
-      case "payment": return paymentAmount >= 0;
+      case "payment": return totalPaid > 0;
       default: return true;
     }
   }
@@ -533,107 +660,277 @@ export default function Workspace() {
 
       {/* ===== STEP 1: CUSTOMER SEARCH ===== */}
       {step === "customer" && (
-        <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Find Customer</h2>
-          <p className="text-sm text-gray-500 mb-5">Enter phone number to search existing customers or add new.</p>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-4">
+            <div className="card">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Find Customer</h2>
+              <p className="text-sm text-gray-500 mb-5">Enter phone number to search existing customers or add new.</p>
 
-          <div className="flex gap-3 mb-5">
-            <div className="relative flex-1">
-              <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input ref={phoneRef} type="tel" placeholder="Enter phone number..."
-                value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
-                onKeyDown={handlePhoneKeyDown} className="input-field pl-10 text-lg" />
-            </div>
-            <button onClick={searchCustomer} className="btn-primary px-6"><Search size={18} /></button>
-          </div>
+              <div className="flex gap-3 mb-5">
+                <div className="relative flex-1">
+                  <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input ref={phoneRef} type="tel" placeholder="Enter phone number..."
+                    value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
+                    onKeyDown={handlePhoneKeyDown} className="input-field pl-10 text-lg" />
+                </div>
+                <button onClick={searchCustomer} className="btn-primary px-6"><Search size={18} /></button>
+              </div>
 
-          {/* Multi-customer search results */}
-          {searched && searchResults.length > 0 && (
-            <div className="space-y-3 mb-4">
-              <p className="text-sm font-medium text-gray-500">{searchResults.length} customer(s) found</p>
-              {searchResults.map((c: any) => (
-                <div key={c._id}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer"
-                  onClick={() => selectCustomer(c)}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
-                      {c.name?.charAt(0)?.toUpperCase() || "?"}
+              {/* Multi-customer search results */}
+              {searched && !selectedCustomer && searchResults.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  <p className="text-sm font-medium text-gray-500">{searchResults.length} customer(s) found</p>
+                  {searchResults.map((c: any) => (
+                    <div key={c._id}
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer"
+                      onClick={() => selectCustomer(c)}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{c.name}</p>
+                          <p className="text-sm text-gray-500">{c.mobile}</p>
+                          {c.lastVisit && <p className="text-xs text-gray-400">Last visit: {c.lastVisit}</p>}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">{c.totalVisits || 0} visits</p>
+                        {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 font-medium">₹{c.pendingAmount} due</p>}
+                        <span className="text-indigo-600 text-sm font-medium mt-1 inline-block">Select →</span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
+                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 rounded-xl hover:bg-indigo-50">
+                    <UserPlus size={16} /> Add new customer with this number
+                  </button>
+                </div>
+              )}
+
+              {/* Add new customer form */}
+              {searched && !selectedCustomer && searchResults.length === 0 && isNewCustomer && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm font-medium text-amber-800 mb-3">New customer — fill in the details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                      <input className="input-field" placeholder="Full name" value={customerForm.name}
+                        onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{c.name}</p>
-                      <p className="text-sm text-gray-500">{c.mobile}</p>
-                      {c.lastVisit && <p className="text-xs text-gray-400">Last visit: {c.lastVisit}</p>}
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                      <input className="input-field" value={customerForm.mobile} disabled />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                      <input className="input-field" placeholder="email@example.com" value={customerForm.email || ""}
+                        onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Age</label>
+                      <input type="number" className="input-field" placeholder="Age" value={customerForm.age ?? ""}
+                        onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Gender</label>
+                      <select className="input-field" value={customerForm.gender || ""}
+                        onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
+                        <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">City</label>
+                      <input className="input-field" placeholder="City" value={customerForm.city || ""}
+                        onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                      <input className="input-field" placeholder="Address" value={customerForm.address || ""}
+                        onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">{c.totalVisits || 0} visits</p>
-                    {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 font-medium">₹{c.pendingAmount} due</p>}
-                    <span className="text-indigo-600 text-sm font-medium mt-1 inline-block">Select →</span>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button onClick={() => { if (selectedCustomer || isNewCustomer) setStep("examination"); else searchCustomer(); }}
+                  disabled={!canProceed()} className="btn-primary flex items-center gap-2">
+                  Start New Visit <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Rich Customer Card */}
+            {selectedCustomer && customerSummary && (
+              <div className="card">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                      {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h3>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
+                        <span>{selectedCustomer.gender || "—"}</span>
+                        {selectedCustomer.age && <span>• {selectedCustomer.age} yrs</span>}
+                        <span>•</span>
+                        <span><Phone size={12} className="inline" /> {selectedCustomer.mobile}</span>
+                        <span>•</span>
+                        <span className="text-indigo-600 font-medium">ID: {customerSummary.customer?.customerId || ""}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`badge ${selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0 ? "badge-yellow" : "badge-green"}`}>
+                    {selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0 ? `₹${selectedCustomer.pendingAmount} Due` : "Cleared"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900">{selectedCustomer.totalVisits || 0}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Visits</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-indigo-600">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Revenue</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-amber-600">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Pending</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-sm font-bold text-gray-700">
+                      {selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                    </p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Since</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {/* Add new customer (no results or clicked add new) */}
-          {searched && searchResults.length === 0 && isNewCustomer && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-              <p className="text-sm font-medium text-amber-800 mb-3">New customer — fill in the details</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-                  <input className="input-field" placeholder="Full name" value={customerForm.name}
-                    onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
+                {/* Last Order Info */}
+                {customerSummary.lastOrder && (
+                  <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl p-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Last Purchase</p>
+                        <p className="font-medium text-gray-900">
+                          {customerSummary.lastOrder.frame && `Frame: ${customerSummary.lastOrder.frame}`}
+                          {customerSummary.lastOrder.frame && customerSummary.lastOrder.lens && " | "}
+                          {customerSummary.lastOrder.lens && `Lens: ${customerSummary.lastOrder.lens}`}
+                        </p>
+                      </div>
+                      <span className={`badge ${
+                        customerSummary.lastOrder.status === "Delivered" ? "badge-green" :
+                        customerSummary.lastOrder.status === "Ready" ? "badge-blue" :
+                        customerSummary.lastOrder.status === "In Lab" ? "badge-yellow" : "badge-gray"
+                      }`}>{customerSummary.lastOrder.status || "Draft"}</span>
+                    </div>
+                    {customerSummary.lastPrescription?.rightEye?.dv?.sph != null && (
+                      <p className="text-xs text-gray-400 mt-1">Last Rx: {customerSummary.lastPrescription.rightEye.dv.sph} / {customerSummary.lastPrescription.leftEye?.dv?.sph || ""}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setStep("examination")} className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2">
+                    <Eye size={15} /> New Visit
+                  </button>
+                  <button onClick={() => navigate(`/customers/${selectedCustomer._id}`)} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
+                    <History size={15} /> Full History
+                  </button>
+                  {customerSummary.lastOrder && (
+                    <button onClick={() => repeatLastOrder(customerSummary)} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
+                      <Repeat size={15} /> Repeat Last Order
+                    </button>
+                  )}
+                  {selectedCustomer.mobile && (
+                    <button onClick={() => window.open(`https://wa.me/91${selectedCustomer.mobile.replace(/\D/g, "")}?text=Hi ${selectedCustomer.name}, this is KMJ Optical.`, "_blank")}
+                      className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
+                      <MessageCircle size={15} /> WhatsApp
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
-                  <input className="input-field" value={customerForm.mobile} disabled />
+              </div>
+            )}
+
+            {/* Customer Timeline */}
+            {customerSummary?.recentOrders && customerSummary.recentOrders.length > 0 && (
+              <div className="card">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Clock size={14} /> Recent Activity</h3>
+                <div className="space-y-2">
+                  {(customerSummary.recentOrders || []).slice(0, 5).map((o: any) => (
+                    <div key={o._id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                      <div>
+                        <p className="text-sm text-gray-800">
+                          {o.frame || ""}{o.frame && o.lens ? " + " : ""}{o.lens || ""}{o.coating ? " + " + o.coating : ""}
+                        </p>
+                        <p className="text-xs text-gray-400">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}</p>
+                      </div>
+                      <span className={`badge ${
+                        o.status === "Delivered" ? "badge-green" :
+                        o.status === "Ready" ? "badge-blue" :
+                        o.status === "In Lab" ? "badge-yellow" : "badge-gray"
+                      }`}>{o.status || "Draft"}</span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-                  <input className="input-field" placeholder="email@example.com" value={customerForm.email || ""}
-                    onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
+              </div>
+            )}
+          </div>
+
+          {/* Right sidebar - Customer Info when selected */}
+          {selectedCustomer && customerSummary && (
+            <div className="w-72 hidden lg:block space-y-4">
+              <div className="card">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Last Prescription</h3>
+                {customerSummary.lastPrescription ? (
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-400">Right Eye</p>
+                      <p className="font-medium">
+                        {customerSummary.lastPrescription.rightEye?.dv?.sph != null
+                          ? `SPH ${customerSummary.lastPrescription.rightEye.dv.sph}`
+                          : "—"}
+                        {customerSummary.lastPrescription.rightEye?.dv?.cyl != null
+                          ? ` CYL ${customerSummary.lastPrescription.rightEye.dv.cyl}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">Left Eye</p>
+                      <p className="font-medium">
+                        {customerSummary.lastPrescription.leftEye?.dv?.sph != null
+                          ? `SPH ${customerSummary.lastPrescription.leftEye.dv.sph}`
+                          : "—"}
+                        {customerSummary.lastPrescription.leftEye?.dv?.cyl != null
+                          ? ` CYL ${customerSummary.lastPrescription.leftEye.dv.cyl}`
+                          : ""}
+                      </p>
+                    </div>
+                    {customerSummary.lastPrescription.pd && <p className="text-xs text-gray-500">PD: {customerSummary.lastPrescription.pd}</p>}
+                  </div>
+                ) : <p className="text-sm text-gray-400">No previous prescription</p>}
+              </div>
+
+              {customerSummary.lastVisit && (
+                <div className="card">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Last Visit</h3>
+                  <p className="text-sm">{customerSummary.lastVisit.doctorName ? `Dr. ${customerSummary.lastVisit.doctorName}` : "—"}</p>
+                  <p className="text-xs text-gray-400">{new Date(customerSummary.lastVisit.visitDate || customerSummary.lastVisit.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                  {customerSummary.lastVisit.remarks && <p className="text-xs text-gray-500 mt-1">{customerSummary.lastVisit.remarks}</p>}
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Age</label>
-                  <input type="number" className="input-field" placeholder="Age" value={customerForm.age ?? ""}
-                    onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Gender</label>
-                  <select className="input-field" value={customerForm.gender || ""}
-                    onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
-                    <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">City</label>
-                  <input className="input-field" placeholder="City" value={customerForm.city || ""}
-                    onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
-                  <input className="input-field" placeholder="Address" value={customerForm.address || ""}
-                    onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
+              )}
+
+              <div className="card">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quick Stats</h3>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between"><span className="text-gray-500">In Lab</span><span className="font-medium">{customerSummary.labOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Ready</span><span className="font-medium">{customerSummary.readyOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Total Spent</span><span className="font-medium">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</span></div>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Add new button when results exist but user may want different customer */}
-          {searched && searchResults.length > 0 && (
-            <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm mb-4">
-              <UserPlus size={16} /> Add new customer with this number
-            </button>
-          )}
-
-          <div className="flex justify-end mt-4">
-            <button onClick={() => { if (selectedCustomer || isNewCustomer) setStep("examination"); else searchCustomer(); }}
-              disabled={!canProceed()} className="btn-primary flex items-center gap-2">
-              Continue <ArrowRight size={16} />
-            </button>
-          </div>
         </div>
       )}
 
@@ -654,18 +951,32 @@ export default function Workspace() {
 
           {usePrescription && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Doctor Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Date</label>
+                  <input type="date" className="input-field" defaultValue={new Date().toISOString().split("T")[0]} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Doctor</label>
                   <input className="input-field" placeholder="Doctor's name" value={visitDoctor}
                     onChange={(e) => setVisitDoctor(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop</label>
+                  <input className="input-field" placeholder="Shop/location" value={visitShop}
+                    onChange={(e) => setVisitShop(e.target.value)} />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes / Remarks</label>
                   <input className="input-field" placeholder="Any remarks" value={visitRemarks}
                     onChange={(e) => setVisitRemarks(e.target.value)} />
                 </div>
               </div>
+              {prevPrescription && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-4 flex items-center gap-2 text-sm text-amber-700">
+                  <Info size={14} /> Previous values are pre-filled. Changed fields are highlighted in amber.
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {renderEyeFields("rightEye", "Right Eye")}
                 {renderEyeFields("leftEye", "Left Eye")}
@@ -696,63 +1007,195 @@ export default function Workspace() {
         </div>
       )}
 
-      {/* ===== STEP 3: ORDER (PURCHASE) ===== */}
+      {/* ===== STEP 3: PRODUCTS (ORDER) ===== */}
       {step === "order" && (
-        <div className="card">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Purchase Details</h2>
-              <p className="text-sm text-gray-500">Specify frame, lens, coating, and accessories.</p>
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-4">
+            <div className="card">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Products</h2>
+                  <p className="text-sm text-gray-500">Select frame, lens, coating, and accessories.</p>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" checked={!useOrder} onChange={(e) => setUseOrder(!e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  No items
+                </label>
+              </div>
+
+              {useOrder && (
+                <div className="space-y-6">
+                  {/* Frame Section */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Tag size={14} /> Frame</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                        <input className="input-field" placeholder="e.g. RayBan" value={orderFrameBrand}
+                          onChange={(e) => setOrderFrameBrand(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Model</label>
+                        <input className="input-field" placeholder="e.g. RB2180" value={orderFrameModel}
+                          onChange={(e) => setOrderFrameModel(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                        <input className="input-field" placeholder="e.g. Black" value={orderFrameColor}
+                          onChange={(e) => setOrderFrameColor(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Size</label>
+                        <input className="input-field" placeholder="e.g. 52-18" value={orderFrameSize}
+                          onChange={(e) => setOrderFrameSize(e.target.value)} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Frame (summary)</label>
+                        <input className="input-field" placeholder="Frame description" value={orderFrame}
+                          onChange={(e) => setOrderFrame(e.target.value)} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Frame Price (₹)</label>
+                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
+                          onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lens Section */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Eye size={14} /> Lens</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                        <input className="input-field" placeholder="Lens brand" value={orderLensBrand}
+                          onChange={(e) => setOrderLensBrand(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                        <select className="input-field" value={orderLensType}
+                          onChange={(e) => setOrderLensType(e.target.value)}>
+                          <option>Single Vision</option>
+                          <option>Bifocal</option>
+                          <option>Progressive</option>
+                          <option>Blue Cut</option>
+                          <option>Photochromic</option>
+                          <option>Polarized</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Index</label>
+                        <input className="input-field" placeholder="e.g. 1.56" value={orderLensIndex}
+                          onChange={(e) => setOrderLensIndex(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Lens (summary)</label>
+                        <input className="input-field" placeholder="e.g. Anti-glare" value={orderLens}
+                          onChange={(e) => setOrderLens(e.target.value)} />
+                      </div>
+                      <div className="col-span-2 md:col-span-4">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Lens Price (₹)</label>
+                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderLensPrice}
+                          onChange={(e) => setOrderLensPrice(Number(e.target.value))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Coating Section */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Coating</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                        <input className="input-field" placeholder="e.g. Blue Cut AR" value={orderCoating}
+                          onChange={(e) => setOrderCoating(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Price (₹)</label>
+                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderCoatingPrice}
+                          onChange={(e) => setOrderCoatingPrice(Number(e.target.value))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Accessories Section */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Accessories</h3>
+                    {orderAccessories.map((acc, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2 items-center">
+                        <input className="input-field flex-1" placeholder="Item name" value={acc.name}
+                          onChange={(e) => {
+                            const updated = [...orderAccessories];
+                            updated[idx] = { ...updated[idx], name: e.target.value };
+                            setOrderAccessories(updated);
+                          }} />
+                        <input type="number" min="0" className="input-field w-24" placeholder="Price" value={acc.price}
+                          onChange={(e) => {
+                            const updated = [...orderAccessories];
+                            updated[idx] = { ...updated[idx], price: Number(e.target.value) };
+                            setOrderAccessories(updated);
+                          }} />
+                        <button onClick={() => setOrderAccessories(orderAccessories.filter((_, i) => i !== idx))}
+                          className="p-2 hover:bg-red-50 rounded-lg text-red-400"><X size={15} /></button>
+                      </div>
+                    ))}
+                    <button onClick={() => setOrderAccessories([...orderAccessories, { name: "", price: 0 }])}
+                      className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                      <Plus size={14} /> Add Accessory
+                    </button>
+                  </div>
+
+                  {/* Quantity & Delivery */}
+                  <div className="border-t border-gray-100 pt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Quantity</label>
+                      <input type="number" min="1" className="input-field" value={orderQty}
+                        onChange={(e) => setOrderQty(Number(e.target.value))} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Expected Delivery</label>
+                      <input type="date" className="input-field" value={orderDeliveryDate}
+                        onChange={(e) => setOrderDeliveryDate(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+                <button onClick={() => setStep("examination")} className="btn-secondary flex items-center gap-2">
+                  <ChevronLeft size={16} /> Back
+                </button>
+                <button onClick={() => setStep("billing")} className="btn-primary flex items-center gap-2">
+                  Continue to Bill <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input type="checkbox" checked={!useOrder} onChange={(e) => setUseOrder(!e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-              No items
-            </label>
           </div>
 
-          {useOrder && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Frame Brand / Model</label>
-                <input className="input-field" placeholder="e.g. RayBan RB2180" value={orderFrame}
-                  onChange={(e) => setOrderFrame(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Lens Type</label>
-                <input className="input-field" placeholder="e.g. Anti-glare 1.56" value={orderLens}
-                  onChange={(e) => setOrderLens(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Coating</label>
-                <input className="input-field" placeholder="e.g. Blue Cut" value={orderCoating}
-                  onChange={(e) => setOrderCoating(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
-                <input type="number" min="1" className="input-field" value={orderQty}
-                  onChange={(e) => setOrderQty(Number(e.target.value))} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Accessories</label>
-                <input className="input-field" placeholder="Comma separated (case, cloth, cleaner)" value={orderAccessories}
-                  onChange={(e) => setOrderAccessories(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Date</label>
-                <input type="date" className="input-field" value={orderDeliveryDate}
-                  onChange={(e) => setOrderDeliveryDate(e.target.value)} />
+          {/* Live Order Summary sidebar */}
+          <div className="w-72 hidden lg:block">
+            <div className="card sticky top-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Summary</h3>
+              <div className="space-y-2 text-sm">
+                {useOrder && orderFrame && (
+                  <div className="flex justify-between"><span className="text-gray-600">Frame</span><span className="font-medium">₹{orderFramePrice.toFixed(0)}</span></div>
+                )}
+                {useOrder && orderLens && (
+                  <div className="flex justify-between"><span className="text-gray-600">Lens</span><span className="font-medium">₹{orderLensPrice.toFixed(0)}</span></div>
+                )}
+                {useOrder && orderCoating && (
+                  <div className="flex justify-between"><span className="text-gray-600">Coating</span><span className="font-medium">₹{orderCoatingPrice.toFixed(0)}</span></div>
+                )}
+                {orderAccessories.filter((a) => a.name).map((a, i) => (
+                  <div key={i} className="flex justify-between"><span className="text-gray-600">{a.name}</span><span className="font-medium">₹{a.price.toFixed(0)}</span></div>
+                ))}
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <div className="flex justify-between font-bold text-gray-900"><span>Subtotal</span><span>₹{(orderFramePrice + orderLensPrice + orderCoatingPrice + accessoriesTotal).toFixed(0)}</span></div>
+                  <div className="flex justify-between text-gray-500 text-xs mt-1"><span>Qty</span><span>{orderQty}</span></div>
+                </div>
               </div>
             </div>
-          )}
-
-          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
-            <button onClick={() => setStep("examination")} className="btn-secondary flex items-center gap-2">
-              <ChevronLeft size={16} /> Back
-            </button>
-            <button onClick={() => setStep("billing")} className="btn-primary flex items-center gap-2">
-              Continue to Bill <ChevronRight size={16} />
-            </button>
           </div>
         </div>
       )}
@@ -801,14 +1244,14 @@ export default function Workspace() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Discount (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billDiscount}
                 onChange={(e) => setBillDiscount(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Tax (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Tax / GST (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billTax}
                 onChange={(e) => setBillTax(Number(e.target.value))} />
             </div>
@@ -816,6 +1259,11 @@ export default function Workspace() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Advance Paid (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={advancePaid}
                 onChange={(e) => setAdvancePaid(Number(e.target.value))} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Expected Delivery</label>
+              <input type="date" className="input-field" value={orderDeliveryDate}
+                onChange={(e) => setOrderDeliveryDate(e.target.value)} />
             </div>
           </div>
 
@@ -832,10 +1280,15 @@ export default function Workspace() {
 
           <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
             <button onClick={() => setStep("order")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
-            <button onClick={() => { setPaymentAmount(advancePaid > 0 ? advancePaid : totalAmount); setStep("payment"); }}
-              className="btn-primary flex items-center gap-2">
-              Continue to Payment <ArrowRight size={16} />
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowBillPreview(true)} className="btn-secondary flex items-center gap-2">
+                <Eye size={16} /> Preview Bill
+              </button>
+              <button onClick={() => setStep("payment")}
+                className="btn-primary flex items-center gap-2">
+                Continue to Payment <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -844,37 +1297,92 @@ export default function Workspace() {
       {step === "payment" && (
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-1">Payment</h2>
-          <p className="text-sm text-gray-500 mb-5">Complete transaction.</p>
+          <p className="text-sm text-gray-500 mb-5">Collect payment and complete the transaction.</p>
 
-          <div className="bg-gray-50 rounded-xl p-6 mb-5 text-center">
-            <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-            <p className="text-4xl font-bold text-gray-900">₹{totalAmount.toFixed(2)}</p>
-            {pendingAmt > 0 && <p className="text-sm text-amber-600 mt-1">Pending: ₹{pendingAmt.toFixed(2)}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Amount</label>
-              <input type="number" step="0.01" className="input-field text-lg font-bold" value={paymentAmount}
-                onChange={(e) => setPaymentAmount(Number(e.target.value))} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode</label>
-              <div className="grid grid-cols-2 gap-2">
-                {["Cash", "UPI", "Card", "Bank Transfer"].map((mode) => (
-                  <button key={mode} onClick={() => setPaymentMode(mode)}
-                    className={`py-2.5 px-4 rounded-xl text-sm font-medium border transition-all ${
-                      paymentMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                    }`}>{mode}</button>
-                ))}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-5">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+                <p className="text-2xl font-bold text-gray-900">₹{totalAmount.toFixed(0)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Advance</p>
+                <p className="text-2xl font-bold text-emerald-600">₹{advancePaid.toFixed(0)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Balance</p>
+                <p className="text-2xl font-bold text-amber-600">₹{Math.max(0, pendingAmt).toFixed(0)}</p>
               </div>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
-              <input className="input-field" placeholder="Payment notes" value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)} />
-            </div>
           </div>
+
+          {/* Multiple payments */}
+          <div className="space-y-3 mb-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-700">Payments ({payments.length})</h3>
+              <p className="text-sm font-medium text-emerald-600">Total: ₹{totalPaid.toFixed(0)}</p>
+            </div>
+            {payments.map((p, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-gray-500">#{idx + 1}</span>
+                  <div className="flex-1" />
+                  <button onClick={() => { if (payments.length > 1) setPayments(payments.filter((_, i) => i !== idx)); }}
+                    className="p-1 hover:bg-red-50 rounded text-red-400"><X size={14} /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Amount</label>
+                    <input type="number" step="0.01" className="input-field text-sm font-medium" value={p.amount}
+                      onChange={(e) => {
+                        const updated = [...payments];
+                        updated[idx] = { ...updated[idx], amount: Number(e.target.value) };
+                        setPayments(updated);
+                      }} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Mode</label>
+                    <div className="grid grid-cols-2 gap-1">
+                      {["Cash", "UPI", "Card"].map((mode) => (
+                        <button key={mode} onClick={() => {
+                          const updated = [...payments];
+                          updated[idx] = { ...updated[idx], mode };
+                          setPayments(updated);
+                        }}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-all ${
+                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200"
+                          }`}>{mode}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Notes</label>
+                    <input className="input-field text-xs" placeholder="Optional" value={p.notes}
+                      onChange={(e) => {
+                        const updated = [...payments];
+                        updated[idx] = { ...updated[idx], notes: e.target.value };
+                        setPayments(updated);
+                      }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setPayments([...payments, { amount: 0, mode: "Cash", notes: "" }])}
+              className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              <Plus size={14} /> Add Another Payment
+            </button>
+          </div>
+
+          {/* Balance status */}
+          {totalPaid > 0 && (
+            <div className={`rounded-xl p-3 mb-5 text-center text-sm font-medium ${
+              totalPaid + advancePaid >= totalAmount ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+            }`}>
+              {totalPaid + advancePaid >= totalAmount
+                ? "✓ Full payment received"
+                : `Pending collection: ₹${Math.max(0, pendingAmt).toFixed(0)}`}
+            </div>
+          )}
 
           {/* Delivery section */}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
@@ -904,11 +1412,63 @@ export default function Workspace() {
 
           <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
             <button onClick={() => setStep("billing")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
-            <button onClick={saveTransaction} disabled={saving || paymentAmount <= 0}
+            <button onClick={saveTransaction} disabled={saving || totalPaid <= 0}
               className="btn-success flex items-center gap-2 px-8 py-3 text-base">
               {saving ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
-              : <><Save size={18} /> Complete Transaction</>}
+              : <><Save size={18} /> Save & Generate Order</>}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DIGITAL BILL PREVIEW MODAL ===== */}
+      {showBillPreview && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowBillPreview(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900">Digital Bill Preview</h2>
+              <button onClick={() => setShowBillPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+            </div>
+
+            <div className="text-center mb-6">
+              <h3 className="font-bold text-xl">KMJ Optical</h3>
+              <p className="text-sm text-gray-500">Bill Preview</p>
+              <p className="text-xs text-gray-400">{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            </div>
+
+            {selectedCustomer && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
+                <div>
+                  <p className="font-medium text-gray-900">{selectedCustomer.name}</p>
+                  <p className="text-xs text-gray-500">{selectedCustomer.mobile}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5 mb-4">
+              {billItems.filter((i) => i.description).map((item, idx) => (
+                <div key={idx} className="flex justify-between text-sm py-1 border-b border-gray-100">
+                  <span>{item.description} x{item.qty}</span>
+                  <span className="font-medium">₹{(item.qty * item.price).toFixed(0)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-gray-200 pt-2 space-y-1 text-sm">
+              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
+              {billDiscount > 0 && <div className="flex justify-between text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
+              {billTax > 0 && <div className="flex justify-between text-amber-600"><span>GST</span><span>+₹{billTax.toFixed(0)}</span></div>}
+              <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200"><span>Total</span><span>₹{totalAmount.toFixed(0)}</span></div>
+              {advancePaid > 0 && <div className="flex justify-between text-emerald-600"><span>Advance</span><span>₹{advancePaid.toFixed(0)}</span></div>}
+              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Balance</span><span>₹{pendingAmt.toFixed(0)}</span></div>}
+            </div>
+
+            {orderDeliveryDate && <p className="text-xs text-gray-400 text-center mt-4">Expected Delivery: {new Date(orderDeliveryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>}
+
+            <div className="flex justify-center mt-6">
+              <button onClick={() => setShowBillPreview(false)} className="btn-primary">Close Preview</button>
+            </div>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import { clearToken, get } from "../api";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, Eye, ClipboardList, BarChart3, Settings, LogOut,
-  Menu, X, ChevronRight, UserCircle, Search, Phone, User
+  Menu, X, ChevronRight, UserCircle, Search, Phone, User, Hand
 } from "lucide-react";
 
 const menuItems = [
@@ -13,6 +13,7 @@ const menuItems = [
   { path: "/visits", label: "Visits", icon: ClipboardList },
   { path: "/prescriptions", label: "Prescriptions", icon: Eye },
   { path: "/orders", label: "Orders", icon: ShoppingCart },
+  { path: "/pickup", label: "Pickup", icon: Hand },
   { path: "/bills", label: "Bills", icon: FileText },
   { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/inventory", label: "Inventory", icon: Package },

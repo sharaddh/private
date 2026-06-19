@@ -56,6 +56,41 @@ router.post("/", async (req, res) => {
   }
 });
 
+// GET /summary/:id — rich customer card data (placed before /:id to avoid route conflict)
+router.get("/summary/:id", async (req, res) => {
+  try {
+    const c = await Customer.findById(req.params.id);
+    if (!c) return res.status(404).json({ success: false, message: "Not found" });
+
+    const [visits, prescs, orders] = await Promise.all([
+      Visit.find({ customerId: c._id }).sort({ visitDate: -1 }).limit(5),
+      Prescription.find({ customerId: c._id }).sort({ createdAt: -1 }).limit(1),
+      Order.find({ customerId: c._id }).sort({ createdAt: -1 }).limit(3),
+    ]);
+
+    const lastVisit = visits.length > 0 ? visits[0] : null;
+    const lastPresc = prescs.length > 0 ? prescs[0] : null;
+    const lastOrder = orders.length > 0 ? orders[0] : null;
+    const labOrders = orders.filter((o) => o.status === "In Lab" || o.status === "Ordered");
+    const readyOrders = orders.filter((o) => o.status === "Ready");
+
+    res.json({
+      success: true,
+      data: {
+        customer: c,
+        lastVisit,
+        lastPrescription: lastPresc,
+        lastOrder,
+        recentOrders: orders,
+        labOrders: labOrders.length,
+        readyOrders: readyOrders.length,
+      },
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   const c = await Customer.findById(req.params.id);
   if (!c) return res.status(404).json({ success: false, message: "Not found" });
