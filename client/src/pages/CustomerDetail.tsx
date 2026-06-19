@@ -11,7 +11,7 @@ export default function CustomerDetail() {
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [tab, setTab] = useState<"overview" | "visits" | "prescriptions" | "bills" | "orders">("overview");
+  const [tab, setTab] = useState<"overview" | "visits" | "prescriptions" | "bills" | "orders" | "timeline">("overview");
 
   useEffect(() => {
     if (!id) return;
