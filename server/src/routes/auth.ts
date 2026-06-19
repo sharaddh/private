@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { User } from "../models/user";
 import { signAccess, signRefresh } from "../utils/jwt";
+import { JWT_SECRET } from "../config";
+import { authenticate, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -36,6 +39,26 @@ router.post("/login", async (req, res) => {
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }
+});
+
+router.post("/refresh", async (req, res) => {
+  try {
+    const { refresh } = req.body;
+    if (!refresh) return res.status(400).json({ success: false, message: "Refresh token required" });
+    const payload: any = jwt.verify(refresh, JWT_SECRET);
+    const user = await User.findById(payload.sub);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const access = signAccess({ sub: user._id, username: user.username });
+    res.json({ success: true, data: { access } });
+  } catch (err: any) {
+    res.status(401).json({ success: false, message: "Invalid refresh token" });
+  }
+});
+
+router.get("/me", authenticate, async (req: AuthRequest, res) => {
+  const user = await User.findById(req.user.sub).select("-passwordHash");
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  res.json({ success: true, data: { id: user._id, username: user.username, role: user.role } });
 });
 
 export default router;

@@ -12,8 +12,35 @@ function buildHeaders(isJson = true) {
   return headers;
 }
 
+async function tryRefresh(): Promise<boolean> {
+  const refresh = localStorage.getItem("refreshToken");
+  if (!refresh) return false;
+  try {
+    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    const data = await res.json();
+    if (data.success && data.data?.access) {
+      localStorage.setItem("accessToken", data.data.access);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 async function request(path: string, init: RequestInit = {}) {
-  const res = await fetch(`${API_URL}${path}`, init);
+  let res = await fetch(`${API_URL}${path}`, init);
+  if (res.status === 401) {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      const newHeaders = { ...init.headers as any, Authorization: `Bearer ${localStorage.getItem("accessToken")}` };
+      res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
+    }
+  }
   const text = await res.text();
   let payload: any = {};
 
@@ -73,8 +100,13 @@ export function setToken(token: string) {
   localStorage.setItem("accessToken", token);
 }
 
-export function clearToken() {
-  localStorage.removeItem("accessToken");
+export function setRefreshToken(token: string) {
+  localStorage.setItem("refreshToken", token);
 }
 
-export default { get, post, put, patch, del, setToken, clearToken };
+export function clearToken() {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+}
+
+export default { get, post, put, patch, del, setToken, setRefreshToken, clearToken };
