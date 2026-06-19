@@ -1,26 +1,28 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import { BarChart3, TrendingUp, DollarSign, Package, Truck, Users } from "lucide-react";
+import { Users, DollarSign, Clock, Package, TrendingUp, AlertTriangle } from "lucide-react";
 
 export default function Reports() {
-  const [revenue, setRevenue] = useState<any>(null);
-  const [monthly, setMonthly] = useState<any>(null);
-  const [invReport, setInvReport] = useState<any>(null);
-  const [delReport, setDelReport] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("revenue");
+  const [activeTab, setActiveTab] = useState("customers");
+  const [customerData, setCustomerData] = useState<any>(null);
+  const [salesData, setSalesData] = useState<any>(null);
+  const [pendingData, setPendingData] = useState<any[]>([]);
+  const [invData, setInvData] = useState<any>(null);
 
   useEffect(() => {
-    api.get("/api/reports/revenue").then((r) => { if (r.success) setRevenue(r.data); });
-    api.get("/api/reports/monthly").then((r) => { if (r.success) setMonthly(r.data); });
-    api.get("/api/reports/inventory").then((r) => { if (r.success) setInvReport(r.data); });
-    api.get("/api/reports/deliveries").then((r) => { if (r.success) setDelReport(r.data); });
+    api.get("/api/reports/revenue").then((r) => { if (r.success) setSalesData(r.data); });
+    api.get("/api/reports/inventory").then((r) => { if (r.success) setInvData(r.data); });
+    api.get("/api/customers").then((r) => { if (r.success) setCustomerData(r.data); });
+    api.get("/api/bills").then((r) => {
+      if (r.success) setPendingData((r.data || []).filter((b: any) => (b.pendingAmount || 0) > 0));
+    });
   }, []);
 
   const tabs = [
-    { key: "revenue", label: "Revenue", icon: DollarSign },
-    { key: "monthly", label: "Monthly", icon: TrendingUp },
+    { key: "customers", label: "Customers", icon: Users },
+    { key: "sales", label: "Sales", icon: DollarSign },
+    { key: "pending", label: "Pending", icon: Clock },
     { key: "inventory", label: "Inventory", icon: Package },
-    { key: "delivery", label: "Delivery", icon: Truck },
   ];
 
   return (
@@ -36,13 +38,10 @@ export default function Reports() {
             const Icon = t.icon;
             const isActive = activeTab === t.key;
             return (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
+              <button key={t.key} onClick={() => setActiveTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   isActive ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
-              >
+                }`}>
                 <Icon size={16} /> {t.label}
               </button>
             );
@@ -50,123 +49,221 @@ export default function Reports() {
         </div>
       </div>
 
-      {activeTab === "revenue" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Total Revenue</p>
-            <p className="text-3xl font-bold text-gray-900">₹{(revenue?.totalRevenue || 0).toLocaleString()}</p>
+      {activeTab === "customers" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-gray-900">{customerData?.length || 0}</p>
+              <p className="text-sm text-gray-500">Total Customers</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-emerald-600">
+                {customerData?.filter((c: any) => c.totalVisits === 1).length || 0}
+              </p>
+              <p className="text-sm text-gray-500">New Customers</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-indigo-600">
+                {customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0}
+              </p>
+              <p className="text-sm text-gray-500">Returning Customers</p>
+            </div>
           </div>
           <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Total Bills</p>
-            <p className="text-3xl font-bold text-gray-900">{revenue?.billCount || 0}</p>
-          </div>
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Total Collection</p>
-            <p className="text-3xl font-bold text-emerald-600">₹{(revenue?.totalCollection || 0).toLocaleString()}</p>
-          </div>
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Total Payments</p>
-            <p className="text-3xl font-bold text-gray-900">{revenue?.paymentCount || 0}</p>
+            <h3 className="section-title mb-4">All Customers</h3>
+            {(!customerData || customerData.length === 0) ? (
+              <p className="text-gray-400 text-sm text-center py-8">No customers yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Name</th>
+                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Mobile</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Visits</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Total Spent</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Pending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customerData?.map((c: any) => (
+                      <tr key={c._id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-2 px-3 font-medium">{c.name}</td>
+                        <td className="py-2 px-3 text-gray-500">{c.mobile || "—"}</td>
+                        <td className="py-2 px-3 text-right">{c.totalVisits || 0}</td>
+                        <td className="py-2 px-3 text-right text-emerald-600 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
+                        <td className="py-2 px-3 text-right">
+                          <span className={c.pendingAmount > 0 ? "text-amber-600 font-medium" : "text-gray-500"}>
+                            {(c.pendingAmount || 0) > 0 ? `₹${c.pendingAmount.toLocaleString()}` : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {activeTab === "monthly" && (
-        <div className="card">
-          <h3 className="section-title mb-4">Monthly Revenue & Collection</h3>
-          {monthly?.revenue?.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-8">No data yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-3 text-gray-500 font-medium">Month</th>
-                    <th className="text-right py-2 px-3 text-gray-500 font-medium">Revenue</th>
-                    <th className="text-right py-2 px-3 text-gray-500 font-medium">Bills</th>
-                    <th className="text-right py-2 px-3 text-gray-500 font-medium">Collection</th>
-                    <th className="text-right py-2 px-3 text-gray-500 font-medium">Payments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(monthly?.revenue || []).map((r: any) => {
-                    const col = (monthly?.collection || []).find((c: any) => c._id === r._id);
-                    return (
-                      <tr key={r._id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-2 px-3 font-medium">{r._id}</td>
-                        <td className="py-2 px-3 text-right">₹{r.total.toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right">{r.count}</td>
-                        <td className="py-2 px-3 text-right text-emerald-600">₹{(col?.total || 0).toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right">{col?.count || 0}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+      {activeTab === "sales" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-gray-900">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
+              <p className="text-sm text-gray-500">Total Revenue</p>
             </div>
-          )}
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-indigo-600">
+                ₹{(salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount) : 0).toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-500">Avg Order Value</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-emerald-600">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
+              <p className="text-sm text-gray-500">Total Collection</p>
+            </div>
+          </div>
+          <div className="card">
+            <h3 className="section-title mb-4">Sales Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-500">Total Bills</p>
+                <p className="text-xl font-bold text-gray-900">{salesData?.billCount || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Total Payments</p>
+                <p className="text-xl font-bold text-gray-900">{salesData?.paymentCount || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Avg Discount</p>
+                <p className="text-xl font-bold text-gray-900">
+                  ₹{(salesData?.billCount > 0 ? ((salesData.totalRevenue - salesData.totalCollection) / salesData.billCount) : 0).toFixed(0)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Collection Ratio</p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {salesData?.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(0)}%` : "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "pending" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-amber-600">{pendingData.length}</p>
+              <p className="text-sm text-gray-500">Pending Bills</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-red-600">
+                ₹{pendingData.reduce((s: number, b: any) => s + (b.pendingAmount || 0), 0).toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-500">Total Pending Amount</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-indigo-600">
+                {pendingData.filter((b: any) => {
+                  const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                  return days > 30;
+                }).length}
+              </p>
+              <p className="text-sm text-gray-500">Over 30 Days</p>
+            </div>
+          </div>
+          <div className="card">
+            <h3 className="section-title mb-4">Pending Payments</h3>
+            {pendingData.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">No pending payments.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Bill</th>
+                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Customer ID</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Total</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Pending</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Days</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingData.map((b: any) => {
+                      const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                      return (
+                        <tr key={b._id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-3 font-medium">{b.billNumber || "—"}</td>
+                          <td className="py-2 px-3 text-gray-500">{b.customerId || "—"}</td>
+                          <td className="py-2 px-3 text-right">₹{(b.totalAmount || 0).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-right text-amber-600 font-medium">₹{(b.pendingAmount || 0).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-right">
+                            <span className={days > 30 ? "text-red-600 font-medium" : "text-gray-500"}>
+                              {days}d
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {activeTab === "inventory" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card">
-            <h3 className="section-title mb-4">Low Stock Items</h3>
-            {invReport?.lowStock?.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">All items well stocked.</p>
-            ) : (
-              <div className="space-y-3">
-                {invReport?.lowStock?.map((item: any) => (
-                  <div key={item._id} className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{item.sku}</p>
-                      <p className="text-xs text-gray-500">{item.brand} {item.model}</p>
-                    </div>
-                    <span className="text-sm font-bold text-red-600">{item.quantity || 0} units</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-gray-900">{invData?.totalItems || 0}</p>
+              <p className="text-sm text-gray-500">Total Items</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-red-600">{invData?.lowStock?.length || 0}</p>
+              <p className="text-sm text-gray-500">Low Stock</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-indigo-600">{invData?.totalValue || 0}</p>
+              <p className="text-sm text-gray-500">Stock Value</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-emerald-600">{invData?.topSelling?.length || 0}</p>
+              <p className="text-sm text-gray-500">Top Items</p>
+            </div>
           </div>
-          <div className="card">
-            <h3 className="section-title mb-4">By Category</h3>
-            {invReport?.byCategory?.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No inventory data.</p>
-            ) : (
-              <div className="space-y-3">
-                {invReport?.byCategory?.map((cat: any) => (
-                  <div key={cat._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                    <p className="text-sm font-medium text-gray-900">{cat._id || "Uncategorized"}</p>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">{cat.totalQty || 0}</p>
-                      <p className="text-xs text-gray-400">{cat.count} items</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {activeTab === "delivery" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Pending</p>
-            <p className="text-3xl font-bold text-amber-600">{delReport?.pending || 0}</p>
-          </div>
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Ready</p>
-            <p className="text-3xl font-bold text-emerald-600">{delReport?.ready || 0}</p>
-          </div>
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Today's Deliveries</p>
-            <p className="text-3xl font-bold text-indigo-600">{delReport?.todayDelivery || 0}</p>
-          </div>
-          <div className="card">
-            <p className="text-sm text-gray-500 mb-1">Overdue</p>
-            <p className="text-3xl font-bold text-red-600">{delReport?.overdue || 0}</p>
-          </div>
+          {invData?.lowStock?.length > 0 && (
+            <div className="card border border-red-200">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle size={18} className="text-red-500" />
+                <h3 className="section-title text-red-700">Low Stock Alert</h3>
+              </div>
+              <div className="space-y-2">
+                {invData.lowStock.map((item: any) => (
+                  <div key={item._id} className="flex items-center justify-between p-3 rounded-xl bg-red-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
+                      <p className="text-xs text-gray-500">{item.category || "Frame"}</p>
+                    </div>
+                    <span className="text-sm font-bold text-red-600">{item.quantity || 0} left</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!invData?.lowStock || invData.lowStock.length === 0) && (
+            <div className="card">
+              <h3 className="section-title mb-4">All Stock</h3>
+              <p className="text-gray-400 text-sm text-center py-8">No inventory data available.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

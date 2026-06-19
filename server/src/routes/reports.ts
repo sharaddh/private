@@ -90,11 +90,17 @@ router.get("/customers", async (req, res) => {
 
 router.get("/inventory", async (req, res) => {
   try {
-    const lowStock = await Inventory.find({ quantity: { $lte: 5 } }).sort({ quantity: 1 });
-    const byCategory = await Inventory.aggregate([
-      { $group: { _id: "$category", count: { $sum: 1 }, totalQty: { $sum: "$quantity" } } },
+    const [allItems, lowStock, byCategory] = await Promise.all([
+      Inventory.find(),
+      Inventory.find({ quantity: { $lte: 5 } }).sort({ quantity: 1 }),
+      Inventory.aggregate([
+        { $group: { _id: "$category", count: { $sum: 1 }, totalQty: { $sum: "$quantity" } } },
+      ]),
     ]);
-    res.json({ success: true, data: { lowStock, byCategory } });
+    const totalItems = allItems.length;
+    const totalValue = allItems.reduce((s, i) => s + (i.sellingPrice || 0) * (i.quantity || 0), 0);
+    const topSelling = allItems.filter((i) => i.sellingPrice > 0).sort((a, b) => (b.sellingPrice || 0) - (a.sellingPrice || 0)).slice(0, 5);
+    res.json({ success: true, data: { totalItems, totalValue, lowStock, byCategory, topSelling } });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }
