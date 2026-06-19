@@ -18,6 +18,10 @@ interface CustomerData {
   city?: string;
   age?: number;
   gender?: string;
+  totalVisits?: number;
+  totalSpent?: number;
+  pendingAmount?: number;
+  lastVisit?: string;
 }
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
@@ -149,6 +153,43 @@ export default function Workspace() {
   const totalAmount = subtotal - billDiscount + billTax;
   const pendingAmount = totalAmount - advancePaid;
 
+  // Load previous data for returning customer
+  async function loadPreviousData(customerId: string) {
+    const [visitsRes, prescRes, ordersRes] = await Promise.all([
+      api.get(`/api/visits?customerId=${customerId}`),
+      api.get(`/api/prescriptions?customerId=${customerId}`),
+      api.get(`/api/orders?customerId=${customerId}`),
+    ]);
+
+    // Set last visit
+    if (visitsRes.success && visitsRes.data.length > 0) {
+      const lastVisit = visitsRes.data[0];
+      setVisitDoctor(lastVisit.doctorName || "");
+      setVisitRemarks(lastVisit.remarks || "");
+    }
+
+    // Auto-load previous prescription
+    if (prescRes.success && prescRes.data.length > 0) {
+      const prev = prescRes.data[0];
+      setPrescription({
+        rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
+        leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
+        pd: prev.pd || "",
+        notes: prev.notes || "",
+      });
+    }
+
+    // Auto-load previous frame/lens/coating
+    if (ordersRes.success && ordersRes.data.length > 0) {
+      const lastOrder = ordersRes.data[0];
+      setOrderFrame(lastOrder.frame || "");
+      setOrderLens(lastOrder.lens || "");
+      setOrderCoating(lastOrder.coating || "");
+      if (lastOrder.accessories) setOrderAccessories(lastOrder.accessories.join(", "));
+      setUseOrder(true);
+    }
+  }
+
   async function searchCustomer() {
     const num = phoneSearch.replace(/\D/g, "");
     if (num.length < 3) return;
@@ -157,16 +198,25 @@ export default function Workspace() {
     const res = await api.get(`/api/customers?phone=${encodeURIComponent(num)}`);
     if (res.success && res.data.length > 0) {
       const c = res.data[0];
-      setSearchResults([c]);
+      const fullRes = await api.get(`/api/customers/${c._id}`);
+      const full = fullRes.success ? fullRes.data : c;
+      const visitsRes = await api.get(`/api/visits?customerId=${c._id}`);
+      const lastVisit = visitsRes.success && visitsRes.data.length > 0
+        ? new Date(visitsRes.data[0].visitDate).toLocaleDateString()
+        : undefined;
+      setSearchResults([full]);
       setSelectedCustomer({
-        _id: c._id, name: c.name, mobile: c.mobile || "", email: c.email || "",
-        address: c.address || "", city: c.city || "", age: c.age, gender: c.gender,
+        _id: full._id, name: full.name, mobile: full.mobile || "", email: full.email || "",
+        address: full.address || "", city: full.city || "", age: full.age, gender: full.gender || "",
+        totalVisits: full.totalVisits, totalSpent: full.totalSpent, pendingAmount: full.pendingAmount,
+        lastVisit,
       });
       setCustomerForm({
-        name: c.name, mobile: c.mobile || "", email: c.email || "",
-        address: c.address || "", city: c.city || "", age: c.age, gender: c.gender || "",
+        name: full.name, mobile: full.mobile || "", email: full.email || "",
+        address: full.address || "", city: full.city || "", age: full.age, gender: full.gender || "",
       });
-      setDeliveryAddress(c.address || deliveryAddress);
+      setDeliveryAddress(full.address || deliveryAddress);
+      await loadPreviousData(full._id);
       setStep("examination");
     } else {
       setSearchResults([]);
@@ -179,6 +229,7 @@ export default function Workspace() {
     setSelectedCustomer({
       _id: c._id, name: c.name, mobile: c.mobile || "", email: c.email || "",
       address: c.address || "", city: c.city || "", age: c.age, gender: c.gender || "",
+      totalVisits: c.totalVisits, totalSpent: c.totalSpent, pendingAmount: c.pendingAmount,
     });
     setCustomerForm({
       name: c.name, mobile: c.mobile || "", email: c.email || "",
@@ -186,6 +237,7 @@ export default function Workspace() {
     });
     setDeliveryAddress(c.address || deliveryAddress);
     setIsNewCustomer(false);
+    loadPreviousData(c._id);
   }
 
   function handlePhoneKeyDown(e: React.KeyboardEvent) {
@@ -575,19 +627,43 @@ export default function Workspace() {
           </div>
 
           {selectedCustomer && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 font-bold text-lg">
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-5 mb-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 font-bold text-xl">
                     {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{selectedCustomer.name}</p>
+                    <p className="text-lg font-bold text-gray-900">{selectedCustomer.name}</p>
                     <p className="text-sm text-gray-500">{selectedCustomer.mobile}</p>
                     {selectedCustomer.email && <p className="text-xs text-gray-400">{selectedCustomer.email}</p>}
+                    {selectedCustomer._id && <p className="text-xs text-gray-400 mt-0.5">{selectedCustomer._id}</p>}
                   </div>
                 </div>
                 <span className="badge-green">Existing Customer</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold text-gray-900">{selectedCustomer.totalVisits ?? "—"}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Visits</p>
+                </div>
+                <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold text-amber-600">
+                    ₹{(selectedCustomer.pendingAmount ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Pending</p>
+                </div>
+                <div className="bg-white/70 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold text-indigo-600">
+                    ₹{(selectedCustomer.totalSpent ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">Total Spent</p>
+                </div>
+                {selectedCustomer.lastVisit && (
+                  <div className="bg-white/70 rounded-lg p-2.5 text-center col-span-3">
+                    <p className="text-xs text-gray-500">Last Visit: <span className="font-medium text-gray-700">{selectedCustomer.lastVisit}</span></p>
+                  </div>
+                )}
               </div>
             </div>
           )}

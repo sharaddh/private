@@ -34,7 +34,7 @@ router.get("/stats", async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [todaySales, todayCollection, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders] =
+    const [todaySales, todayCollection, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills] =
       await Promise.all([
         Bill.aggregate([
           { $match: { createdAt: { $gte: today, $lt: tomorrow } } },
@@ -62,6 +62,19 @@ router.get("/stats", async (req, res) => {
         ]),
         Customer.find().sort({ createdAt: -1 }).limit(5),
         Order.find().sort({ createdAt: -1 }).limit(5),
+        Delivery.find({
+          $or: [
+            { expectedDeliveryDate: { $gte: today, $lt: tomorrow } },
+            { status: { $in: ["Pending", "Ready"] } },
+          ],
+        })
+          .populate("customerId", "name mobile")
+          .sort({ expectedDeliveryDate: 1 })
+          .limit(10),
+        Bill.find({ pendingAmount: { $gt: 0 } })
+          .populate("customerId", "name mobile")
+          .sort({ pendingAmount: -1 })
+          .limit(5),
       ]);
 
     res.json({
@@ -76,6 +89,8 @@ router.get("/stats", async (req, res) => {
         pendingPayments: pendingPayments[0]?.total || 0,
         recentCustomers,
         recentOrders,
+        todayDeliveries,
+        pendingBills,
       },
     });
   } catch (err: any) {

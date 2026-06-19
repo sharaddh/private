@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearToken } from "../api";
+import { clearToken, get } from "../api";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, Eye, ClipboardList, BarChart3, Settings, LogOut,
-  Menu, X, ChevronRight, UserCircle
+  Menu, X, ChevronRight, UserCircle, Search, Phone, User
 } from "lucide-react";
 
 const menuItems = [
@@ -24,8 +24,43 @@ const menuItems = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchTimer = useRef<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleSearch(value: string) {
+    setSearchQuery(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (value.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
+    searchTimer.current = setTimeout(async () => {
+      const res = await get(`/api/customers?q=${encodeURIComponent(value)}`);
+      if (res.success) {
+        setSearchResults(res.data || []);
+        setSearchOpen(res.data.length > 0);
+      }
+    }, 300);
+  }
+
+  function goToCustomer(id: string) {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    navigate(`/customers/${id}`);
+  }
 
   const handleLogout = () => {
     clearToken();
@@ -127,10 +162,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <Menu size={20} />
             </button>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 hidden md:block">
               {menuItems.find((m) => m.path === location.pathname)?.label || "Dashboard"}
             </h2>
           </div>
+
+          <div ref={searchRef} className="relative flex-1 max-w-md mx-4">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, mobile, or customer ID..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            {searchOpen && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto z-50">
+                {searchResults.map((c: any) => (
+                  <button
+                    key={c._id}
+                    type="button"
+                    onClick={() => goToCustomer(c._id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 text-left border-b border-gray-100 last:border-0 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold text-xs flex-shrink-0">
+                      {c.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {c.mobile && <><Phone size={11} className="inline mr-0.5" />{c.mobile} • </>}
+                        {c.customerId}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs text-gray-400 flex-shrink-0">
+                      <p>{c.totalVisits || 0} visits</p>
+                      {c.pendingAmount > 0 && <p className="text-amber-600 font-medium">₹{c.pendingAmount}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <UserCircle size={18} className="text-gray-400" />

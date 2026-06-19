@@ -25,6 +25,8 @@ interface DashboardData {
   pendingPayments: number;
   recentCustomers: any[];
   recentOrders: any[];
+  todayDeliveries: any[];
+  pendingBills: any[];
 }
 
 export default function Dashboard() {
@@ -191,6 +193,85 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Today's Deliveries */}
+      {data.todayDeliveries && data.todayDeliveries.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Truck size={18} className="text-amber-500" />
+              <h3 className="section-title">Today's Deliveries</h3>
+            </div>
+            <button onClick={() => navigate("/delivery")} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </button>
+          </div>
+          <div className="space-y-3">
+            {data.todayDeliveries.map((d: any) => (
+              <div key={d._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-amber-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 font-semibold text-sm">
+                    {d.customerId?.name?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{d.customerId?.name || "—"}</p>
+                    <p className="text-xs text-gray-400">{d.customerId?.mobile || ""}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`badge ${
+                    d.status === "Delivered" ? "badge-green" :
+                    d.status === "Ready" ? "badge-blue" :
+                    d.status === "Cancelled" ? "badge-red" :
+                    "badge-yellow"
+                  }`}>{d.status}</span>
+                  {d.expectedDeliveryDate && (
+                    <span className="text-xs text-gray-400">
+                      {new Date(d.expectedDeliveryDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Bills */}
+      {data.pendingBills && data.pendingBills.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Clock size={18} className="text-amber-500" />
+              <h3 className="section-title">Pending Payments</h3>
+            </div>
+            <button onClick={() => navigate("/bills")} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </button>
+          </div>
+          <div className="space-y-3">
+            {data.pendingBills.map((b: any) => (
+              <div key={b._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold text-sm">
+                    {b.customerId?.name?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{b.customerId?.name || "—"}</p>
+                    <p className="text-xs text-gray-400">{b.billNumber}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-amber-600">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">
+                    {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

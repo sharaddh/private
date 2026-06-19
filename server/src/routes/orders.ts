@@ -19,7 +19,10 @@ const createSchema = z.object({
 });
 
 router.get("/", async (req, res) => {
-  const list = await Order.find().limit(100);
+  const { customerId } = req.query;
+  const filter: any = {};
+  if (customerId) filter.customerId = customerId;
+  const list = await Order.find(filter).sort({ createdAt: -1 }).limit(100);
   res.json({ success: true, data: list });
 });
 
