@@ -6,6 +6,10 @@ import bills from "./bills";
 import payments from "./payments";
 import delivery from "./delivery";
 import inventory from "./inventory";
+import visits from "./visits";
+import prescriptions from "./prescriptions";
+import dashboard from "./dashboard";
+import reports from "./reports";
 
 const router = Router();
 
@@ -16,5 +20,9 @@ router.use("/bills", bills);
 router.use("/payments", payments);
 router.use("/delivery", delivery);
 router.use("/inventory", inventory);
+router.use("/visits", visits);
+router.use("/prescriptions", prescriptions);
+router.use("/dashboard", dashboard);
+router.use("/reports", reports);
 
 export default router;

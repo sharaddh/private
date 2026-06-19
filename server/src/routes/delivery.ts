@@ -33,4 +33,24 @@ router.get("/:id", async (req, res) => {
   res.json({ success: true, data: d });
 });
 
+router.put("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const d = await Delivery.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    if (!d) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, data: d });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const d = await Delivery.findByIdAndDelete(req.params.id);
+    if (!d) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, message: "Deleted" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 export default router;

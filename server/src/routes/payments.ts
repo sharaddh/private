@@ -14,6 +14,26 @@ router.get("/", async (req, res) => {
   res.json({ success: true, data: list });
 });
 
+router.put("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const p = await Payment.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    if (!p) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, data: p });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/:id", authenticate, audit, async (req, res) => {
+  try {
+    const p = await Payment.findByIdAndDelete(req.params.id);
+    if (!p) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, message: "Deleted" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
