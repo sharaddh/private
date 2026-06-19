@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { Customer } from "../models/customer";
+import { Order } from "../models/order";
+import { Prescription } from "../models/prescription";
+import { Visit } from "../models/visit";
 import { z } from "zod";
 
 const router = Router();
@@ -31,8 +34,8 @@ router.get("/", async (req, res) => {
   const q = (req.query.q as string) || "";
   const phone = req.query.phone as string;
   if (phone) {
-    const customer = await Customer.findOne({ mobile: phone });
-    return res.json({ success: true, data: customer ? [customer] : [] });
+    const customers = await Customer.find({ mobile: phone });
+    return res.json({ success: true, data: customers || [] });
   }
   const customers = await Customer.find(
     q ? { $or: [{ name: new RegExp(q, "i") }, { mobile: new RegExp(q, "i") }, { customerId: new RegExp(q, "i") }] } : {}
