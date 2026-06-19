@@ -1,10 +1,23 @@
 import { Router } from "express";
 import { Order } from "../models/order";
+import { Bill } from "../models/bill";
+import { Delivery } from "../models/delivery";
+import { Payment } from "../models/payment";
+import { Customer } from "../models/customer";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
 
 const router = Router();
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  Draft: ["Ordered", "Cancelled"],
+  Ordered: ["In Lab", "Cancelled"],
+  "In Lab": ["Ready", "Cancelled"],
+  Ready: ["Delivered", "Cancelled"],
+  Delivered: [],
+  Cancelled: [],
+};
 
 const createSchema = z.object({
   customerId: z.string(),
@@ -18,12 +31,33 @@ const createSchema = z.object({
   status: z.string().optional()
 });
 
+const statusUpdateSchema = z.object({
+  status: z.string(),
+  collectPayment: z.number().optional(),
+  paymentMode: z.string().optional(),
+});
+
 router.get("/", async (req, res) => {
   const { customerId } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
-  const list = await Order.find(filter).sort({ createdAt: -1 }).limit(100);
-  res.json({ success: true, data: list });
+  const list = await Order.find(filter)
+    .populate("customerId", "name mobile")
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  // Attach pending bill amount per order
+  const enriched = await Promise.all(
+    list.map(async (o) => {
+      const custId = (o.customerId as any)?._id || o.customerId;
+      const bill = custId
+        ? await Bill.findOne({ customerId: custId }).sort({ createdAt: -1 }).select("pendingAmount totalAmount advancePaid billNumber")
+        : null;
+      return { ...o.toObject(), billInfo: bill || null };
+    })
+  );
+
+  res.json({ success: true, data: enriched });
 });
 
 router.post("/", authenticate, audit, async (req, res) => {
@@ -38,7 +72,7 @@ router.post("/", authenticate, audit, async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const o = await Order.findById(req.params.id);
+  const o = await Order.findById(req.params.id).populate("customerId", "name mobile");
   if (!o) return res.status(404).json({ success: false, message: "Not found" });
   res.json({ success: true, data: o });
 });
@@ -48,6 +82,77 @@ router.put("/:id", authenticate, audit, async (req, res) => {
     const o = await Order.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
     if (!o) return res.status(404).json({ success: false, message: "Not found" });
     res.json({ success: true, data: o });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// PATCH /:id/status — validated status transition with optional due collection
+router.patch("/:id/status", authenticate, async (req, res) => {
+  try {
+    const { status, collectPayment, paymentMode } = statusUpdateSchema.parse(req.body);
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    const allowed = VALID_TRANSITIONS[order.status] || [];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot transition from "${order.status}" to "${status}". Allowed: ${allowed.join(", ") || "none"}`,
+      });
+    }
+
+    order.status = status as any;
+    await order.save();
+
+    const result: any = { order };
+
+    // Auto-update delivery
+    const delivery = await Delivery.findOne({ orderId: order._id });
+    if (delivery) {
+      if (status === "Ready") {
+        delivery.status = "Ready";
+        await delivery.save();
+      } else if (status === "Delivered") {
+        delivery.status = "Delivered";
+        delivery.actualDeliveryDate = new Date();
+        await delivery.save();
+      } else if (status === "Cancelled") {
+        delivery.status = "Cancelled";
+        await delivery.save();
+      }
+      result.delivery = delivery;
+    }
+
+    // Handle due collection on delivery
+    if (status === "Delivered" && collectPayment && collectPayment > 0) {
+      const bill = await Bill.findOne({ customerId: order.customerId })
+        .sort({ createdAt: -1 });
+      if (bill && bill.pendingAmount > 0) {
+        const payment = new Payment({
+          customerId: order.customerId,
+          billId: bill._id,
+          amount: collectPayment,
+          paymentMode: paymentMode || "Cash",
+          paymentDate: new Date(),
+          notes: `Collected on delivery (order ${order._id})`,
+        });
+        await payment.save();
+        bill.advancePaid = (bill.advancePaid || 0) + collectPayment;
+        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
+        await bill.save();
+        result.payment = payment;
+        result.bill = bill;
+
+        const customer = await Customer.findById(order.customerId);
+        if (customer) {
+          customer.pendingAmount = Math.max(0, (customer.pendingAmount || 0) - collectPayment);
+          await customer.save();
+        }
+      }
+    }
+
+    res.json({ success: true, data: result });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }

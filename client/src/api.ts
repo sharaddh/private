@@ -61,6 +61,14 @@ export async function del(path: string) {
   });
 }
 
+export async function patch(path: string, body: any) {
+  return request(path, {
+    method: "PATCH",
+    headers: buildHeaders(true),
+    body: JSON.stringify(body),
+  });
+}
+
 export function setToken(token: string) {
   localStorage.setItem("accessToken", token);
 }
@@ -69,4 +77,4 @@ export function clearToken() {
   localStorage.removeItem("accessToken");
 }
 
-export default { get, post, put, del, setToken, clearToken };
+export default { get, post, put, patch, del, setToken, clearToken };
