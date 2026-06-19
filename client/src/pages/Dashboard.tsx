@@ -1,128 +1,194 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
+import StatCard from "../components/StatCard";
+import {
+  Users, ShoppingCart, FileText, CreditCard, Package, Truck,
+  ClipboardList, Eye, TrendingUp, DollarSign, Clock, AlertTriangle
+} from "lucide-react";
+
+interface DashboardData {
+  counts: {
+    customers: number;
+    orders: number;
+    bills: number;
+    payments: number;
+    inventory: number;
+    deliveries: number;
+    visits: number;
+  };
+  todaySales: number;
+  todayCollection: number;
+  readyDeliveries: number;
+  newCustomersToday: number;
+  lowStock: number;
+  pendingPayments: number;
+  recentCustomers: any[];
+  recentOrders: any[];
+}
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    customers: 0,
-    orders: 0,
-    bills: 0,
-    payments: 0,
-    inventory: 0,
-    deliveries: 0,
-  });
+  const [data, setData] = useState<DashboardData | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([
-      api.get("/api/customers"),
-      api.get("/api/orders"),
-      api.get("/api/bills"),
-      api.get("/api/payments"),
-      api.get("/api/inventory"),
-      api.get("/api/delivery"),
-    ]).then((results) => {
-      setStats({
-        customers: results[0].data?.length || 0,
-        orders: results[1].data?.length || 0,
-        bills: results[2].data?.length || 0,
-        payments: results[3].data?.length || 0,
-        inventory: results[4].data?.length || 0,
-        deliveries: results[5].data?.length || 0,
-      });
+    api.get("/api/dashboard/stats").then((res) => {
+      if (res.success) setData(res.data);
     });
   }, []);
 
-  const cards = [
-    { title: "Customers", count: stats.customers, icon: "👥", color: "blue" },
-    { title: "Orders", count: stats.orders, icon: "📦", color: "green" },
-    { title: "Bills", count: stats.bills, icon: "📄", color: "purple" },
-    { title: "Payments", count: stats.payments, icon: "💳", color: "yellow" },
-    { title: "Inventory", count: stats.inventory, icon: "📦", color: "red" },
-    { title: "Deliveries", count: stats.deliveries, icon: "🚚", color: "indigo" },
-  ];
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
-  const colorClasses = {
-    blue: "bg-blue-50 border-blue-200 text-blue-600",
-    green: "bg-green-50 border-green-200 text-green-600",
-    purple: "bg-purple-50 border-purple-200 text-purple-600",
-    yellow: "bg-yellow-50 border-yellow-200 text-yellow-600",
-    red: "bg-red-50 border-red-200 text-red-600",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-600",
-  };
+  const { counts } = data;
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold mb-2">Welcome to KMJ Optical ERP</h1>
-        <p className="text-blue-100">
-          Manage your optical business efficiently with our comprehensive ERP system
-        </p>
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white">
+        <h1 className="text-2xl font-bold mb-1">Good morning! 👋</h1>
+        <p className="text-indigo-100 text-sm">Here's what's happening at KMJ Optical today.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card) => (
-          <div
-            key={card.title}
-            className={`border-2 ${colorClasses[card.color as keyof typeof colorClasses]} p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-75">{card.title}</p>
-                <p className="text-3xl font-bold mt-2">{card.count}</p>
-              </div>
-              <div className="text-5xl">{card.icon}</div>
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          title="Today's Sales"
+          value={`₹${(data.todaySales || 0).toLocaleString()}`}
+          icon={<TrendingUp size={22} />}
+          color="indigo"
+        />
+        <StatCard
+          title="Today's Collection"
+          value={`₹${(data.todayCollection || 0).toLocaleString()}`}
+          icon={<DollarSign size={22} />}
+          color="emerald"
+        />
+        <StatCard
+          title="Pending Payments"
+          value={`₹${(data.pendingPayments || 0).toLocaleString()}`}
+          icon={<Clock size={22} />}
+          color="amber"
+        />
+        <StatCard
+          title="Low Stock Items"
+          value={data.lowStock || 0}
+          icon={<AlertTriangle size={22} />}
+          color="red"
+          onClick={() => navigate("/inventory")}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard
+          title="Customers"
+          value={counts.customers}
+          icon={<Users size={22} />}
+          color="blue"
+          subtitle={`+${data.newCustomersToday} today`}
+          onClick={() => navigate("/customers")}
+        />
+        <StatCard
+          title="Orders"
+          value={counts.orders}
+          icon={<ShoppingCart size={22} />}
+          color="purple"
+          onClick={() => navigate("/orders")}
+        />
+        <StatCard
+          title="Bills"
+          value={counts.bills}
+          icon={<FileText size={22} />}
+          color="cyan"
+          onClick={() => navigate("/bills")}
+        />
+        <StatCard
+          title="Payments"
+          value={counts.payments}
+          icon={<CreditCard size={22} />}
+          color="emerald"
+          onClick={() => navigate("/payments")}
+        />
+        <StatCard
+          title="Ready Deliveries"
+          value={data.readyDeliveries || 0}
+          icon={<Truck size={22} />}
+          color="amber"
+          onClick={() => navigate("/delivery")}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card">
+          <div className="card-header">
+            <h3 className="section-title">Recent Customers</h3>
+            <button onClick={() => navigate("/customers")} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </button>
           </div>
-        ))}
-      </div>
+          <div className="space-y-3">
+            {data.recentCustomers?.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No customers yet</p>
+            ) : (
+              data.recentCustomers?.map((c: any) => (
+                <div
+                  key={c._id}
+                  onClick={() => navigate(`/customers/${c._id}`)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                      {c.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                      <p className="text-xs text-gray-400">{c.mobile || "No phone"}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <a
-            href="/customers"
-            className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <p className="font-semibold text-blue-600">👥 Add Customer</p>
-            <p className="text-sm text-gray-600">Manage customer information</p>
-          </a>
-          <a
-            href="/orders"
-            className="p-4 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <p className="font-semibold text-green-600">📦 Create Order</p>
-            <p className="text-sm text-gray-600">Place a new order</p>
-          </a>
-          <a
-            href="/bills"
-            className="p-4 bg-purple-50 border-2 border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
-          >
-            <p className="font-semibold text-purple-600">📄 Generate Bill</p>
-            <p className="text-sm text-gray-600">Create billing invoice</p>
-          </a>
-          <a
-            href="/payments"
-            className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
-          >
-            <p className="font-semibold text-yellow-600">💳 Record Payment</p>
-            <p className="text-sm text-gray-600">Track payments</p>
-          </a>
-          <a
-            href="/inventory"
-            className="p-4 bg-red-50 border-2 border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-          >
-            <p className="font-semibold text-red-600">📦 Inventory</p>
-            <p className="text-sm text-gray-600">Manage stock</p>
-          </a>
-          <a
-            href="/delivery"
-            className="p-4 bg-indigo-50 border-2 border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-          >
-            <p className="font-semibold text-indigo-600">🚚 Deliveries</p>
-            <p className="text-sm text-gray-600">Track shipments</p>
-          </a>
+        <div className="card">
+          <div className="card-header">
+            <h3 className="section-title">Recent Orders</h3>
+            <button onClick={() => navigate("/orders")} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </button>
+          </div>
+          <div className="space-y-3">
+            {data.recentOrders?.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-4">No orders yet</p>
+            ) : (
+              data.recentOrders?.map((o: any) => (
+                <div
+                  key={o._id}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{o.frame || "No frame"} / {o.lens || "No lens"}</p>
+                    <p className="text-xs text-gray-400">Qty: {o.quantity || 1}</p>
+                  </div>
+                  <span className={`badge ${
+                    o.status === "Delivered" ? "badge-green" :
+                    o.status === "Cancelled" ? "badge-red" :
+                    o.status === "Ready" ? "badge-blue" :
+                    "badge-yellow"
+                  }`}>
+                    {o.status || "Draft"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
