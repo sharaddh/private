@@ -168,7 +168,7 @@ export default function Table({
                   onClick={() => setPage(pg)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium ${
                     pg === page
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-primary-600 text-white"
                       : "hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-600 dark:text-gray-400"
                   }`}
                 >

@@ -151,7 +151,7 @@ export default function Announcement() {
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               waStatus === "connected" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
-              waStatus === "qr" ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" :
+              waStatus === "qr" ? "bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400" :
               "bg-gray-50 dark:bg-dark-700 text-gray-400"
             }`}>
               <Smartphone size={20} />
@@ -175,7 +175,7 @@ export default function Announcement() {
 
         {waStatus === "qr" && waQr && (
           <div className="mt-4 flex flex-col items-center p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-            <QrCode size={24} className="text-indigo-600 dark:text-indigo-400 mb-2" />
+            <QrCode size={24} className="text-primary-600 dark:text-primary-400 mb-2" />
             <img src={waQr} alt="WhatsApp QR" className="w-48 h-48 rounded-lg" />
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Open WhatsApp → Settings → Linked Devices → Link a Device</p>
           </div>
@@ -185,7 +185,7 @@ export default function Announcement() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 card space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
               <MessageCircle size={20} />
             </div>
             <div>
@@ -269,14 +269,14 @@ export default function Announcement() {
               placeholder="Search by name, mobile, or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {filtered.length > 0 && (
             <button
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-2"
+              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2"
             >
               {selectAll ? <CheckSquare size={16} /> : <Square size={16} />}
               {selectAll ? "Deselect All" : "Select All"}
@@ -297,13 +297,13 @@ export default function Announcement() {
                   <div
                     key={c._id}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                      isSelected ? "bg-indigo-50 dark:bg-indigo-900/20" : "hover:bg-gray-50 dark:hover:bg-dark-700"
+                      isSelected ? "bg-primary-50 dark:bg-primary-900/20" : "hover:bg-gray-50 dark:hover:bg-dark-700"
                     }`}
                   >
-                    <button onClick={() => toggleSelect(c._id)} className="flex-shrink-0 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
-                      {isSelected ? <CheckSquare size={18} className="text-indigo-600 dark:text-indigo-400" /> : <Square size={18} />}
+                    <button onClick={() => toggleSelect(c._id)} className="flex-shrink-0 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+                      {isSelected ? <CheckSquare size={18} className="text-primary-600 dark:text-primary-400" /> : <Square size={18} />}
                     </button>
-                    <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex-shrink-0">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
                       {c.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
-import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
+import { Printer, MessageCircle, FileText as PdfIcon, FileText } from "lucide-react";
 import { downloadBillPdf } from "../utils/pdf";
 
 export default function Bills() {
@@ -10,13 +10,8 @@ export default function Bills() {
 
   useEffect(() => { fetchBills(); fetchSettings(); }, []);
 
-  function fetchBills() {
-    api.get("/api/bills").then((d) => { if (d.success) setList(d.data || []); });
-  }
-
-  function fetchSettings() {
-    api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
-  }
+  function fetchBills() { api.get("/api/bills").then((d) => { if (d.success) setList(d.data || []); }); }
+  function fetchSettings() { api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); }); }
 
   function resolveCustomer(bill: any) {
     if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId;
@@ -101,10 +96,10 @@ export default function Bills() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <div>
         <h1 className="page-title">Bills</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">View and manage invoices. Bills are created through customer visits and orders.</p>
+        <p className="page-subtitle">View and manage invoices created through visits and orders.</p>
       </div>
 
       <Table
@@ -117,17 +112,17 @@ export default function Bills() {
           { key: "subtotal", label: "Subtotal", render: (v) => `₹${(v || 0).toFixed(2)}` },
           { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{(v || 0).toFixed(2)}</span> },
           { key: "pendingAmount", label: "Pending", render: (v) => (
-            <span className={v > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-emerald-600 dark:text-emerald-400"}>{v > 0 ? `₹${v.toFixed(2)}` : "Paid"}</span>
+            <span className={v > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{v > 0 ? `₹${v.toFixed(2)}` : "Paid"}</span>
           )},
         ]}
         data={list}
         searchPlaceholder="Search bills..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400" title="Send WhatsApp">
+            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400" title="WhatsApp">
               <MessageCircle size={15} />
             </button>
-            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400" title="Download PDF">
+            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Download PDF">
               <PdfIcon size={15} />
             </button>
             <button onClick={() => handlePrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Print">

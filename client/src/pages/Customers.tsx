@@ -2,24 +2,13 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users } from "lucide-react";
 
 interface Customer {
-  _id: string;
-  customerId: string;
-  name: string;
-  email?: string;
-  mobile?: string;
-  alternateMobile?: string;
-  address?: string;
-  city?: string;
-  age?: number;
-  gender?: string;
-  tags?: string[];
-  totalVisits?: number;
-  totalSpent?: number;
-  pendingAmount?: number;
-  createdAt: string;
+  _id: string; customerId: string; name: string; email?: string;
+  mobile?: string; alternateMobile?: string; address?: string; city?: string;
+  age?: number; gender?: string; tags?: string[];
+  totalVisits?: number; totalSpent?: number; pendingAmount?: number; createdAt: string;
 }
 
 export default function Customers() {
@@ -28,193 +17,135 @@ export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [form, setForm] = useState({
-    name: "", email: "", mobile: "", alternateMobile: "", address: "",
-    city: "", age: "", gender: "", tags: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const fetchCustomers = useCallback(async () => {
     const res = await api.get("/api/customers");
-    if (res.success) {
-      setList(res.data || []);
-      setFilteredList(res.data || []);
-    }
+    if (res.success) { setList(res.data || []); setFilteredList(res.data || []); }
   }, []);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
   useEffect(() => {
     const q = searchQuery.trim();
-    if (!q) {
-      setFilteredList(list);
-      return;
-    }
+    if (!q) { setFilteredList(list); return; }
     const lower = q.toLowerCase();
-    setFilteredList(
-      list.filter((c) =>
-        c.name?.toLowerCase().includes(lower) ||
-        c.mobile?.includes(q) ||
-        c.customerId?.toLowerCase().includes(lower) ||
-        c.email?.toLowerCase().includes(lower)
-      )
-    );
+    setFilteredList(list.filter((c) =>
+      c.name?.toLowerCase().includes(lower) || c.mobile?.includes(q) ||
+      c.customerId?.toLowerCase().includes(lower) || c.email?.toLowerCase().includes(lower)
+    ));
   }, [searchQuery, list]);
 
   function openCreate() {
     setEditing(null);
     setForm({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
-    setShowForm(true);
-    setError("");
+    setShowForm(true); setError("");
   }
 
   function openEdit(c: Customer) {
     setEditing(c);
     setForm({
-      name: c.name || "",
-      email: c.email || "",
-      mobile: c.mobile || "",
-      alternateMobile: c.alternateMobile || "",
-      address: c.address || "",
-      city: c.city || "",
-      age: c.age?.toString() || "",
-      gender: c.gender || "",
+      name: c.name || "", email: c.email || "", mobile: c.mobile || "",
+      alternateMobile: c.alternateMobile || "", address: c.address || "",
+      city: c.city || "", age: c.age?.toString() || "", gender: c.gender || "",
       tags: c.tags?.join(", ") || "",
     });
-    setShowForm(true);
-    setError("");
+    setShowForm(true); setError("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    setIsLoading(true); setError("");
     try {
-      const payload = {
-        ...form,
-        age: form.age ? Number(form.age) : undefined,
-        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        email: form.email || undefined,
-        mobile: form.mobile || undefined,
-      };
-      const res = editing
-        ? await api.put(`/api/customers/${editing._id}`, payload)
-        : await api.post("/api/customers", payload);
-      if (res.success) {
-        await fetchCustomers();
-        setShowForm(false);
-        if (!editing && res.data?._id) {
-          navigate(`/customers/${res.data._id}`);
-        }
-      } else {
-        setError(res.message || "Operation failed");
-      }
-    } catch {
-      setError("An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+      const payload = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
+      const res = editing ? await api.put(`/api/customers/${editing._id}`, payload) : await api.post("/api/customers", payload);
+      if (res.success) { await fetchCustomers(); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
+      else setError(res.message || "Operation failed");
+    } catch { setError("An error occurred"); }
+    finally { setIsLoading(false); }
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this customer?")) return;
     const res = await api.del(`/api/customers/${id}`);
-    if (res.success) {
-      setList((prev) => prev.filter((c) => c._id !== id));
-    }
+    if (res.success) setList((prev) => prev.filter((c) => c._id !== id));
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-title">Customers</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Search, view, and manage customer profiles.</p>
+          <p className="page-subtitle">Search, view, and manage customer profiles.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <UserPlus size={18} />
-          <span className="hidden sm:inline">Add New Customer</span>
+          <span className="hidden sm:inline">Add Customer</span>
           <span className="sm:hidden">Add</span>
         </button>
       </div>
 
       <div className="relative">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search by name, mobile number, email, or customer ID..."
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input type="text" placeholder="Search by name, mobile, email, or ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="input-field pl-11 text-base"
+          className="input-field pl-11 text-base bg-white dark:bg-dark-800"
         />
       </div>
 
       {filteredList.length === 0 ? (
-        <div className="card text-center py-12">
-          <Phone size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <div className="card text-center py-16">
+          <div className="w-16 h-16 bg-gray-50 dark:bg-dark-750 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users size={32} className="text-gray-300 dark:text-gray-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">
             {searchQuery ? "No customers found" : "No customers yet"}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            {searchQuery
-              ? `No results matching "${searchQuery}". Add a new customer.`
-              : "Start by adding your first customer."}
+          <p className="text-sm text-gray-500 mb-5">
+            {searchQuery ? `No results matching "${searchQuery}"` : "Start by adding your first customer."}
           </p>
           <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
-            <UserPlus size={18} /> Add New Customer
+            <UserPlus size={18} /> Add Customer
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{filteredList.length} customer(s)</p>
+          <p className="text-sm text-gray-500">{filteredList.length} customer(s)</p>
           {filteredList.map((c) => (
-            <div
-              key={c._id}
-              onClick={() => navigate(`/customers/${c._id}`)}
-              className="card cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/30 transition-all"
+            <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
+              className="card cursor-pointer hover:bg-primary-50/30 dark:hover:bg-primary-900/10 hover:shadow-soft-lg transition-all"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg flex-shrink-0">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg flex-shrink-0">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 dark:text-white truncate">{c.name}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                      {c.mobile && (
-                        <span className="flex items-center gap-1">
-                          <Phone size={12} /> {c.mobile}
-                        </span>
-                      )}
-                      {c.email && <span>{c.email}</span>}
-                      {c.city && <span>{c.city}</span>}
-                      {c.customerId && <span className="text-xs text-gray-400 dark:text-gray-500">ID: {c.customerId}</span>}
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500">
+                      {c.mobile && <span className="flex items-center gap-1"><Phone size={12} /> {c.mobile}</span>}
+                      {c.email && <span className="truncate">{c.email}</span>}
+                      {c.customerId && <span className="text-xs text-gray-400">ID: {c.customerId}</span>}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{c.totalVisits || 0} visits</p>
-                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">₹{(c.totalSpent || 0).toLocaleString()}</p>
-                    {(c.pendingAmount || 0) > 0 && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">₹{c.pendingAmount} due</p>
-                    )}
+                    <p className="text-sm text-gray-500">{c.totalVisits || 0} visits</p>
+                    <p className="text-sm font-semibold text-emerald-600">₹{(c.totalSpent || 0).toLocaleString()}</p>
+                    {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-500 font-medium">₹{c.pendingAmount} due</p>}
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                      className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 transition-colors"
-                      title="Edit"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(c); }}
+                      className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400 transition-colors" title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors"
-                      title="Delete"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
+                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors" title="Delete">
                       <Trash2 size={16} />
                     </button>
                     <ArrowRight size={18} className="text-gray-300 dark:text-gray-600 ml-1" />
@@ -226,15 +157,8 @@ export default function Customers() {
         </div>
       )}
 
-      <Modal
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        title={editing ? "Edit Customer" : "Add New Customer"}
-        size="lg"
-      >
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
-        )}
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Customer" : "Add Customer"} size="lg">
+        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -250,7 +174,7 @@ export default function Customers() {
               <input className="input-field" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alternate Mobile</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alt Mobile</label>
               <input className="input-field" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
             </div>
             <div>
@@ -281,9 +205,7 @@ export default function Customers() {
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary">
-              {isLoading ? "Saving..." : editing ? "Update Customer" : "Add Customer"}
-            </button>
+            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Customer"}</button>
           </div>
         </form>
       </Modal>

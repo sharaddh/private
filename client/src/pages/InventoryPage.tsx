@@ -125,7 +125,7 @@ export default function InventoryPage() {
         searchPlaceholder="Search by SKU, brand, model..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400"><Edit2 size={15} /></button>
             <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}

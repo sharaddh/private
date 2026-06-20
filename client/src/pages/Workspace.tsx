@@ -532,7 +532,7 @@ export default function Workspace() {
           <div className="card">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Customer</h3>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{customer.name?.charAt(0) || "?"}</div>
+              <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">{customer.name?.charAt(0) || "?"}</div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">{customer.name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{customer.mobile}</p>
@@ -648,7 +648,7 @@ export default function Workspace() {
           return (
             <button key={s.key} onClick={() => { if (i < currentIdx) setStep(s.key); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
-                isActive ? "bg-indigo-600 text-white shadow-md" :
+                isActive ? "bg-primary-600 text-white shadow-md" :
                 isDone ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" :
                 "text-gray-400 dark:text-gray-500"
               }`}>
@@ -690,10 +690,10 @@ export default function Workspace() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{searchResults.length} customer(s) found</p>
                   {searchResults.map((c: any) => (
                     <div key={c._id}
-                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/30 transition-all cursor-pointer"
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/30 dark:hover:bg-primary-900/30 transition-all cursor-pointer"
                       onClick={() => selectCustomer(c)}>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
+                        <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">{c.mobile}</p>
@@ -703,13 +703,13 @@ export default function Workspace() {
                       <div className="text-right">
                         <p className="text-xs text-gray-500 dark:text-gray-400">{c.totalVisits || 0} visits</p>
                         {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">₹{c.pendingAmount} due</p>}
-                        <span className="text-indigo-600 dark:text-indigo-400 text-sm font-medium mt-1 inline-block">Select →</span>
+                        <span className="text-primary-600 dark:text-primary-400 text-sm font-medium mt-1 inline-block">Select →</span>
                       </div>
                     </div>
                   ))}
 
                   <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
-                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                    className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium text-sm w-full justify-center py-2 border border-dashed border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/20">
                     <UserPlus size={16} /> Add new customer with this number
                   </button>
                 </div>
@@ -773,7 +773,7 @@ export default function Workspace() {
               <div className="card">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
                       {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div>
@@ -784,7 +784,7 @@ export default function Workspace() {
                         <span>•</span>
                         <span><Phone size={12} className="inline" /> {selectedCustomer.mobile}</span>
                         <span>•</span>
-                        <span className="text-indigo-600 dark:text-indigo-400 font-medium">ID: {customerSummary.customer?.customerId || ""}</span>
+                        <span className="text-primary-600 dark:text-primary-400 font-medium">ID: {customerSummary.customer?.customerId || ""}</span>
                       </div>
                     </div>
                   </div>
@@ -799,7 +799,7 @@ export default function Workspace() {
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Visits</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                    <p className="text-lg font-bold text-primary-600 dark:text-primary-400">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Revenue</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
@@ -816,7 +816,7 @@ export default function Workspace() {
 
                 {/* Last Order Info */}
                 {customerSummary.lastOrder && (
-                  <div className="bg-gradient-to-r from-gray-50 dark:from-dark-700 to-indigo-50 dark:to-indigo-900/20 rounded-xl p-3 mb-4">
+                  <div className="bg-gradient-to-r from-gray-50 dark:from-dark-700 to-primary-50 dark:to-primary-900/20 rounded-xl p-3 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Last Purchase</p>
@@ -952,7 +952,7 @@ export default function Workspace() {
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
               <input type="checkbox" checked={!usePrescription} onChange={(e) => setUsePrescription(!e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-primary-600 dark:text-primary-400 focus:ring-primary-500" />
               Skip
             </label>
           </div>
@@ -1027,7 +1027,7 @@ export default function Workspace() {
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                   <input type="checkbox" checked={!useOrder} onChange={(e) => setUseOrder(!e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                    className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-primary-600 dark:text-primary-400 focus:ring-primary-500" />
                   No items
                 </label>
               </div>
@@ -1149,7 +1149,7 @@ export default function Workspace() {
                       </div>
                     ))}
                     <button onClick={() => setOrderAccessories([...orderAccessories, { name: "", price: 0 }])}
-                      className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                      className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                       <Plus size={14} /> Add Accessory
                     </button>
                   </div>
@@ -1224,12 +1224,12 @@ export default function Workspace() {
                     <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                       {suggestions.map((inv: any) => (
                         <button key={inv._id} type="button" onClick={() => applySuggestion(idx, inv)}
-                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left border-b border-gray-100 dark:border-dark-700 last:border-0">
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-primary-50 dark:hover:bg-primary-900/20 text-left border-b border-gray-100 dark:border-dark-700 last:border-0">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">{inv.brand && inv.model ? `${inv.brand} ${inv.model}` : inv.sku}</p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">{inv.category || ""}{inv.color ? ` | ${inv.color}` : ""}</p>
                           </div>
-                          <span className="font-semibold text-indigo-600 dark:text-indigo-400">₹{inv.sellingPrice || 0}</span>
+                          <span className="font-semibold text-primary-600 dark:text-primary-400">₹{inv.sellingPrice || 0}</span>
                         </button>
                       ))}
                     </div>
@@ -1247,7 +1247,7 @@ export default function Workspace() {
                 <button onClick={() => removeBillItem(idx)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 dark:text-red-300 mt-1"><X size={16} /></button>
               </div>
             ))}
-            <button onClick={addBillItem} className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+            <button onClick={addBillItem} className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
               <Plus size={16} /> Add Item
             </button>
           </div>
@@ -1307,7 +1307,7 @@ export default function Workspace() {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Collect payment and complete the transaction.</p>
 
-          <div className="bg-gradient-to-r from-indigo-50 dark:from-indigo-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6 mb-5">
+          <div className="bg-gradient-to-r from-primary-50 dark:from-primary-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6 mb-5">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
@@ -1358,7 +1358,7 @@ export default function Workspace() {
                           setPayments(updated);
                         }}
                           className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-all ${
-                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
+                            p.mode === mode ? "bg-primary-600 text-white border-primary-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
                           }`}>{mode}</button>
                       ))}
                     </div>
@@ -1376,7 +1376,7 @@ export default function Workspace() {
               </div>
             ))}
             <button onClick={() => setPayments([...payments, { amount: 0, mode: "Cash", notes: "" }])}
-              className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+              className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
               <Plus size={14} /> Add Another Payment
             </button>
           </div>
@@ -1396,7 +1396,7 @@ export default function Workspace() {
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-5">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={useDelivery} onChange={(e) => setUseDelivery(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-primary-600 dark:text-primary-400 focus:ring-primary-500" />
               <div>
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Schedule Delivery</p>
                 <p className="text-xs text-amber-600 dark:text-amber-400">Set delivery address and expected date</p>
@@ -1446,7 +1446,7 @@ export default function Workspace() {
 
             {selectedCustomer && (
               <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-dark-700 rounded-xl">
-                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
+                <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.name}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{selectedCustomer.mobile}</p>
@@ -1486,7 +1486,7 @@ export default function Workspace() {
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-dark-700 p-3 lg:pl-72 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+              <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                 {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
@@ -1498,7 +1498,7 @@ export default function Workspace() {
               {totalAmount > 0 && <span className="font-semibold text-gray-900 dark:text-white">₹{totalAmount.toFixed(0)}</span>}
               <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">Step {currentIdx + 1} of 5</span>
               <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden hidden sm:block">
-                <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / 5) * 100}%` }} />
+                <div className="h-full bg-primary-600 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / 5) * 100}%` }} />
               </div>
             </div>
           </div>

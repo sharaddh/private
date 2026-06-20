@@ -40,7 +40,7 @@ export default function Reports() {
             return (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  isActive ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  isActive ? "border-primary-600 text-primary-600 dark:text-primary-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}>
                 <Icon size={16} /> {t.label}
               </button>
@@ -63,7 +63,7 @@ export default function Reports() {
               <p className="text-sm text-gray-500 dark:text-gray-400">New Customers</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Returning Customers</p>
@@ -115,7 +115,7 @@ export default function Reports() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 ₹{(salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount) : 0).toLocaleString()}
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Avg Order Value</p>
@@ -167,7 +167,7 @@ export default function Reports() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Pending Amount</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {pendingData.filter((b: any) => {
                   const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                   return days > 30;
@@ -229,7 +229,7 @@ export default function Reports() {
               <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{invData?.totalValue || 0}</p>
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{invData?.totalValue || 0}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Stock Value</p>
             </div>
             <div className="card text-center">

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { Eye, ChevronRight, Clock, Package } from "lucide-react";
+import { Eye, ChevronRight, Clock, Package, Monitor } from "lucide-react";
 
 const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
 
-const STATUS_THEME: Record<string, { bar: string; dot: string; border: string; gradient: string; badge: string; glow: string }> = {
-  Draft:    { bar: "bg-gray-300 dark:bg-gray-600", dot: "bg-gray-400 dark:bg-gray-500", border: "border-l-gray-400 dark:border-l-gray-500", gradient: "from-gray-50 to-white dark:from-dark-800 dark:to-dark-850", badge: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300", glow: "shadow-gray-200/50 dark:shadow-gray-800/50" },
-  Ordered:  { bar: "bg-purple-500", dot: "bg-purple-500", border: "border-l-purple-500", gradient: "from-purple-50 to-white dark:from-purple-950/30 dark:to-dark-850", badge: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300", glow: "shadow-purple-200/50 dark:shadow-purple-800/30" },
-  "In Lab": { bar: "bg-amber-500", dot: "bg-amber-500", border: "border-l-amber-500", gradient: "from-amber-50 to-white dark:from-amber-950/30 dark:to-dark-850", badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300", glow: "shadow-amber-200/50 dark:shadow-amber-800/30" },
-  Ready:    { bar: "bg-blue-500", dot: "bg-blue-500", border: "border-l-blue-500", gradient: "from-blue-50 to-white dark:from-blue-950/30 dark:to-dark-850", badge: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300", glow: "shadow-blue-200/50 dark:shadow-blue-800/30" },
-  Delivered: { bar: "bg-emerald-500", dot: "bg-emerald-500", border: "border-l-emerald-500", gradient: "from-emerald-50 to-white dark:from-emerald-950/30 dark:to-dark-850", badge: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300", glow: "shadow-emerald-200/50 dark:shadow-emerald-800/30" },
+const STATUS_THEME: Record<string, { dot: string; badge: string }> = {
+  Draft:    { dot: "bg-gray-300 dark:bg-gray-600", badge: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" },
+  Ordered:  { dot: "bg-purple-500", badge: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" },
+  "In Lab": { dot: "bg-amber-500", badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" },
+  Ready:    { dot: "bg-blue-500", badge: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" },
+  Delivered: { dot: "bg-emerald-500", badge: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300" },
 };
 
 const VALID_NEXT: Record<string, string> = {
@@ -28,18 +28,18 @@ function DotProgress({ currentIdx }: { currentIdx: number }) {
         const active = currentIdx === i;
         return (
           <div key={l} className="flex items-center flex-1 last:flex-none">
-            <div className={`relative w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500 ${
-              active ? "bg-indigo-500 shadow-lg shadow-indigo-300/50 dark:shadow-indigo-700/50 scale-110" :
-              done ? "bg-emerald-400 shadow-sm" : "bg-gray-200 dark:bg-dark-700"
+            <div className={`relative w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold transition-all duration-500 ${
+              active ? "bg-primary-500 shadow-sm scale-110" :
+              done ? "bg-primary-400 shadow-sm" : "bg-gray-200 dark:bg-dark-700"
             }`}>
               {done ? (
-                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               ) : (
-                <span className={active ? "text-white" : "text-gray-400 dark:text-gray-600"}>{i + 1}</span>
+                <span className={active ? "text-white text-[7px]" : "text-gray-400 dark:text-gray-600 text-[7px]"}>{i + 1}</span>
               )}
             </div>
             {i < labels.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all duration-500 ${done || active ? "bg-indigo-400" : "bg-gray-200 dark:bg-dark-700"}`} />
+              <div className={`flex-1 h-[2px] mx-1 rounded-full transition-all duration-500 ${done || active ? "bg-primary-300" : "bg-gray-200 dark:bg-dark-700"}`} />
             )}
           </div>
         );
@@ -115,7 +115,7 @@ export default function Orders() {
         ].map((s) => (
           <button key={s.key} onClick={() => setFilter(s.key)}
             className={`relative card text-center py-4 px-3 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
-              filter === s.key ? "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-dark-850" : ""
+              filter === s.key ? "ring-2 ring-primary-500/40 ring-offset-2 dark:ring-offset-dark-850" : ""
             }`}>
             <p className={`text-3xl font-bold tracking-tight ${s.color}`}>{s.value}</p>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
@@ -134,10 +134,10 @@ export default function Orders() {
           { key: "Delivered", label: "Delivered" },
         ].map((f) => (
           <button key={f.key} onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200 ${
               filter === f.key
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200/50 dark:shadow-indigo-900/30"
-                : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700 hover:border-gray-300 dark:hover:border-dark-600"
+                ? "bg-primary-600 text-white shadow-sm"
+                : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700"
             }`}>
             {f.label}
           </button>
@@ -159,7 +159,7 @@ export default function Orders() {
             const pending = o.billInfo?.pendingAmount || 0;
             return (
               <div key={o._id}
-                className={`group relative bg-white dark:bg-dark-800 rounded-2xl border-l-[5px] ${theme.border} ${theme.glow} shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br ${theme.gradient} overflow-hidden`}>
+                className="group relative bg-white dark:bg-dark-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-gray-100 dark:border-dark-700 overflow-hidden">
                 {/* Top section */}
                 <div className="p-4 pb-2">
                   <div className="flex items-center justify-between mb-3">
@@ -178,9 +178,9 @@ export default function Orders() {
                   </div>
                   {/* Order items as pills */}
                   <div className="flex flex-wrap gap-1.5 mb-2.5">
-                    {o.frame && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">🖼 {o.frame}</span>}
-                    {o.lens && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">💎 {o.lens}</span>}
-                    {o.coating && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">✨ {o.coating}</span>}
+                    {o.frame && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Frm: {o.frame}</span>}
+                    {o.lens && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Lens: {o.lens}</span>}
+                    {o.coating && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Coat: {o.coating}</span>}
                   </div>
                   {/* Delivery + Amount */}
                   <div className="flex items-center justify-between text-[11px]">
@@ -204,16 +204,16 @@ export default function Orders() {
                   <DotProgress currentIdx={currentIdx} />
                 </div>
                 {/* Actions bar */}
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/80 dark:bg-dark-900/50 border-t border-gray-100 dark:border-dark-700">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/50 dark:bg-dark-900/30 border-t border-gray-100 dark:border-dark-700">
                   <button onClick={() => navigate(`/customers/${customerId(o)}?visitId=${o.visitId || ""}`)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-dark-700 transition-all duration-200">
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-all duration-200">
                     <Eye size={13} /> View
                   </button>
                   {nextStep && (
                     <button onClick={() => advanceStatus(o)} disabled={statusLoading === o._id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition-all duration-200">
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 disabled:opacity-50 transition-all duration-200">
                       {statusLoading === o._id
-                        ? <div className="animate-spin w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full" />
+                        ? <div className="animate-spin w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full" />
                         : <ChevronRight size={13} />}
                       {nextStep}
                     </button>

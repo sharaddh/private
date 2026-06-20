@@ -2,22 +2,18 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, CreditCard } from "lucide-react";
 
 export default function Payments() {
   const [list, setList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({
-    customerId: "", billId: "", amount: 0, paymentMode: "Cash", notes: "",
-  });
+  const [form, setForm] = useState({ customerId: "", billId: "", amount: 0, paymentMode: "Cash", notes: "" });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => { fetchPayments(); }, []);
 
-  function fetchPayments() {
-    api.get("/api/payments").then((d) => { if (d.success) setList(d.data || []); });
-  }
+  function fetchPayments() { api.get("/api/payments").then((d) => { if (d.success) setList(d.data || []); }); }
 
   function openCreate() {
     setEditing(null);
@@ -27,13 +23,7 @@ export default function Payments() {
 
   function openEdit(p: any) {
     setEditing(p);
-    setForm({
-      customerId: p.customerId || "",
-      billId: p.billId || "",
-      amount: p.amount || 0,
-      paymentMode: p.paymentMode || "Cash",
-      notes: p.notes || "",
-    });
+    setForm({ customerId: p.customerId || "", billId: p.billId || "", amount: p.amount || 0, paymentMode: p.paymentMode || "Cash", notes: p.notes || "" });
     setShowForm(true);
   }
 
@@ -41,9 +31,7 @@ export default function Payments() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = editing
-        ? await api.put(`/api/payments/${editing._id}`, form)
-        : await api.post("/api/payments", form);
+      const res = editing ? await api.put(`/api/payments/${editing._id}`, form) : await api.post("/api/payments", form);
       if (res.success) { fetchPayments(); setShowForm(false); }
     } finally { setIsLoading(false); }
   }
@@ -55,11 +43,11 @@ export default function Payments() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Payments</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Record and manage payments.</p>
+          <p className="page-subtitle">Record and manage payments.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">Record Payment</span>
@@ -75,19 +63,18 @@ export default function Payments() {
             <span className={`badge ${
               v === "Cash" ? "badge-green" :
               v === "UPI" ? "badge-blue" :
-              v === "Card" ? "badge-purple" :
-              "badge-yellow"
+              v === "Card" ? "badge-purple" : "badge-yellow"
             }`}>{v || "Cash"}</span>
           )},
-          { key: "paymentDate", label: "Date", render: (v) => v ? new Date(v).toLocaleDateString() : "—" },
+          { key: "paymentDate", label: "Date", render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
           { key: "notes", label: "Notes" },
         ]}
         data={list}
         searchPlaceholder="Search payments..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -108,7 +95,7 @@ export default function Payments() {
               <input type="number" step="0.01" className="input-field" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Payment Mode</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mode</label>
               <select className="input-field" value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}>
                 {["Cash", "UPI", "Card", "Bank Transfer"].map((m) => (
                   <option key={m} value={m}>{m}</option>

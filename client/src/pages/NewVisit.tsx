@@ -331,7 +331,7 @@ export default function NewVisit() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-primary-600 dark:border-primary-400 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -415,7 +415,7 @@ export default function NewVisit() {
           <ArrowLeft size={20} className="text-gray-500 dark:text-gray-400" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
             {customer.name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <div>
@@ -436,7 +436,7 @@ export default function NewVisit() {
           return (
             <button key={s.key} type="button" onClick={() => { if (i < currentStepIdx) setVisitStep(s.key as any); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
-                isActive ? "bg-indigo-600 text-white shadow-md" :
+                isActive ? "bg-primary-600 text-white shadow-md" :
                 isDone ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" :
                 "text-gray-400 dark:text-gray-500"
               }`}>
@@ -470,7 +470,7 @@ export default function NewVisit() {
                   <button key={vt.value} type="button" onClick={() => setVisitType(vt.value as any)}
                     className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 text-sm font-medium transition-all ${
                       isActive
-                        ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 shadow-sm"
+                        ? "border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm"
                         : "border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
                     }`}>
                     <Icon size={24} />
@@ -651,7 +651,7 @@ export default function NewVisit() {
                     </div>
                   ))}
                   <button onClick={addAccessory}
-                    className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                    className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                     <Plus size={14} /> Add Accessory
                   </button>
                 </div>
@@ -701,7 +701,7 @@ export default function NewVisit() {
                 </div>
               ))}
               <button onClick={addBillItem}
-                className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                 <Plus size={16} /> Add Item
               </button>
             </div>
@@ -742,7 +742,7 @@ export default function NewVisit() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Review and collect payment to complete the visit.</p>
             </div>
-            <div className="bg-gradient-to-r from-indigo-50 dark:from-indigo-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6">
+            <div className="bg-gradient-to-r from-primary-50 dark:from-primary-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
@@ -771,7 +771,7 @@ export default function NewVisit() {
                     <button key={mode} type="button" onClick={() => setPaymentMode(mode)}
                       className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
                         paymentMode === mode
-                          ? "bg-indigo-600 text-white border-indigo-600"
+                          ? "bg-primary-600 text-white border-primary-600"
                           : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
                       }`}>{mode}</button>
                   ))}
