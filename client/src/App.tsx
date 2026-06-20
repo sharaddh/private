@@ -1,11 +1,9 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
-import Visits from "./pages/Visits";
-import Prescriptions from "./pages/Prescriptions";
 import Orders from "./pages/Orders";
 import Bills from "./pages/Bills";
 import Payments from "./pages/Payments";
@@ -25,8 +23,8 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/customers/:id" element={<CustomerDetail />} />
-        <Route path="/visits" element={<Visits />} />
-        <Route path="/prescriptions" element={<Prescriptions />} />
+        <Route path="/visits" element={<Navigate to="/customers" replace />} />
+        <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/bills" element={<Bills />} />
         <Route path="/payments" element={<Payments />} />

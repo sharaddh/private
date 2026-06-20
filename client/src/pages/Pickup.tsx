@@ -6,6 +6,7 @@ import { Search, Phone, Check, DollarSign, ChevronRight, MessageCircle, X } from
 export default function Pickup() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
+  const [settings, setSettings] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -16,6 +17,10 @@ export default function Pickup() {
   const [collectMode, setCollectMode] = useState("Cash");
   const [delivering, setDelivering] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
+  }, []);
 
   async function searchCustomer() {
     const num = phone.replace(/\D/g, "");
@@ -103,8 +108,10 @@ export default function Pickup() {
   function sendPickupWhatsApp(phoneNum: string) {
     const num = phoneNum.replace(/\D/g, "");
     if (!num) return;
-    const msg = `*KMJ Optical* 🕶%0a%0aHi ${selectedCustomer?.name || ""},%0aYour order has been delivered! 🎉%0a%0aThank you for choosing KMJ Optical.%0aSee you again! 🙏`;
-    window.open(`https://wa.me/91${num}?text=${msg}`, "_blank");
+    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
+    const shop = settings?.shopName || "KMJ Optical";
+    const msg = `*${shop}* 🕶%0a%0aHi ${selectedCustomer?.name || ""},%0aYour order has been delivered! 🎉%0a%0aThank you for choosing ${shop}.%0aSee you again! 🙏`;
+    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
   }
 
   return (
