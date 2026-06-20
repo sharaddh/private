@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearToken, get } from "../api";
+import { clearToken, get, post } from "../api";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, LogOut,
   Menu, X, ChevronRight, Search, Phone, Hand, PlusCircle,
-  Sun, Moon, Megaphone, Bell, ChevronDown
+  Sun, Moon, Megaphone, Bell, ChevronDown, UserPlus
 } from "lucide-react";
 
 const menuItems = [
@@ -68,13 +68,49 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (value.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
     searchTimer.current = setTimeout(async () => {
       const res = await get(`/api/customers?q=${encodeURIComponent(value)}`);
-      if (res.success) { setSearchResults(res.data || []); setSearchOpen(res.data.length > 0); }
+      if (res.success) { setSearchResults(res.data || []); setSearchOpen(true); }
     }, 300);
   }
 
   function goToCustomer(id: string) {
     setSearchOpen(false); setSearchQuery(""); setSearchResults([]);
     navigate(`/customers/${id}`);
+  }
+
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
+  const [drawerForm, setDrawerForm] = useState({ name: "", mobile: "", email: "", age: "", gender: "", city: "", address: "" });
+  const [drawerSaving, setDrawerSaving] = useState(false);
+  const [drawerError, setDrawerError] = useState("");
+
+  function goAddCustomer() {
+    setSearchOpen(false);
+    setDrawerForm({ name: "", mobile: searchQuery.replace(/\D/g, ""), email: "", age: "", gender: "", city: "", address: "" });
+    setDrawerError("");
+    setShowAddDrawer(true);
+  }
+
+  async function handleCreateCustomer() {
+    if (!drawerForm.name.trim()) { setDrawerError("Name is required"); return; }
+    if (!drawerForm.mobile.trim()) { setDrawerError("Mobile is required"); return; }
+    setDrawerSaving(true); setDrawerError("");
+    try {
+      const res = await post("/api/customers", {
+        name: drawerForm.name.trim(), mobile: drawerForm.mobile.trim(),
+        email: drawerForm.email.trim() || undefined,
+        age: drawerForm.age ? Number(drawerForm.age) : undefined,
+        gender: drawerForm.gender || undefined,
+        city: drawerForm.city.trim() || undefined,
+        address: drawerForm.address.trim() || undefined,
+      });
+      if (res.success) {
+        setShowAddDrawer(false);
+        setSearchQuery(""); setSearchResults([]);
+        navigate(`/customers/${res.data._id}`);
+      } else {
+        setDrawerError(res.message || "Failed to create customer");
+      }
+    } catch { setDrawerError("An error occurred"); }
+    finally { setDrawerSaving(false); }
   }
 
   const handleLogout = () => {
@@ -195,27 +231,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
               className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-750 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
             />
-            {searchOpen && searchResults.length > 0 && (
+            {searchOpen && searchQuery.length >= 2 && (
               <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
-                {searchResults.map((c: any) => (
-                  <button key={c._id} type="button" onClick={() => goToCustomer(c._id)}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-gray-50 dark:border-dark-700 last:border-0 transition-colors">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
-                      {c.name?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {c.mobile && <><Phone size={10} className="inline mr-0.5" />{c.mobile} • </>}
-                        {c.customerId}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-gray-400 flex-shrink-0">
-                      <p>{c.totalVisits || 0} visits</p>
-                      {c.pendingAmount > 0 && <p className="text-amber-500 font-medium">₹{c.pendingAmount}</p>}
-                    </div>
+                {searchResults.length > 0 ? (
+                  searchResults.map((c: any) => (
+                    <button key={c._id} type="button" onClick={() => goToCustomer(c._id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-gray-50 dark:border-dark-700 last:border-0 transition-colors">
+                      <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
+                        {c.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {c.mobile && <><Phone size={10} className="inline mr-0.5" />{c.mobile} • </>}
+                          {c.customerId}
+                        </p>
+                      </div>
+                      <div className="text-right text-xs text-gray-400 flex-shrink-0">
+                        <p>{c.totalVisits || 0} visits</p>
+                        {c.pendingAmount > 0 && <p className="text-amber-500 font-medium">₹{c.pendingAmount}</p>}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 pt-3 pb-1 text-center">
+                    <p className="text-sm text-gray-400">No customer found</p>
+                  </div>
+                )}
+                <div className="px-4 pb-3 pt-2 border-t border-gray-50 dark:border-dark-700">
+                  <button onClick={goAddCustomer}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors">
+                    <UserPlus size={15} /> Add New Customer
                   </button>
-                ))}
+                </div>
               </div>
             )}
           </div>
@@ -227,6 +275,92 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
+
+      {/* Add Customer Drawer */}
+      {showAddDrawer && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowAddDrawer(false)}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-t-3xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-dark-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-dark-700">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+                  <UserPlus size={18} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">New Customer</h3>
+              </div>
+              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {drawerError && (
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{drawerError}</div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name *</label>
+                <input className="input-field" value={drawerForm.name}
+                  onChange={(e) => setDrawerForm({ ...drawerForm, name: e.target.value })}
+                  placeholder="Enter customer name" autoFocus />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile *</label>
+                <input className="input-field" value={drawerForm.mobile}
+                  onChange={(e) => setDrawerForm({ ...drawerForm, mobile: e.target.value.replace(/\D/g, "") })}
+                  placeholder="Phone number" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                  <input className="input-field" type="email" value={drawerForm.email}
+                    onChange={(e) => setDrawerForm({ ...drawerForm, email: e.target.value })}
+                    placeholder="Email" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Age</label>
+                  <input className="input-field" type="number" value={drawerForm.age}
+                    onChange={(e) => setDrawerForm({ ...drawerForm, age: e.target.value })}
+                    placeholder="Age" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
+                  <select className="input-field" value={drawerForm.gender}
+                    onChange={(e) => setDrawerForm({ ...drawerForm, gender: e.target.value })}>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
+                  <input className="input-field" value={drawerForm.city}
+                    onChange={(e) => setDrawerForm({ ...drawerForm, city: e.target.value })}
+                    placeholder="City" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
+                <textarea className="input-field" rows={2} value={drawerForm.address}
+                  onChange={(e) => setDrawerForm({ ...drawerForm, address: e.target.value })}
+                  placeholder="Address (optional)" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowAddDrawer(false)} className="btn-secondary flex-1">Cancel</button>
+                <button onClick={handleCreateCustomer} disabled={drawerSaving}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2">
+                  {drawerSaving ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <UserPlus size={16} />
+                  )}
+                  {drawerSaving ? "Creating..." : "Create Customer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import {
@@ -19,8 +19,11 @@ export default function NewVisit() {
   const [error, setError] = useState("");
 
   // Steps
-  const [visitStep, setVisitStep] = useState<"type" | "prescription" | "products" | "billing" | "payment" | "done">("type");
-  const [visitType, setVisitType] = useState<"new_specs" | "frame_change" | "new_lens" | "sunglasses" | "service" | "other">("new_specs");
+  const [visitStep, setVisitStep] = useState<"type" | "prescription" | "products" | "billing" | "summary" | "done">("type");
+  const [visitType, setVisitType] = useState<"new_specs" | "frame_change" | "new_lens" | "contact_lens" | "sunglasses" | "service" | "other">("new_specs");
+  const [otherSubType, setOtherSubType] = useState("");
+
+  const otherSubTypes = ["Fitted Near Specs", "Sunglasses", "Hearing Aid", "Cell Cleaning Spray/Kit", "Other Products"];
 
   // Visit details
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
@@ -69,6 +72,14 @@ export default function NewVisit() {
 
   // Success data
   const [successData, setSuccessData] = useState<any>(null);
+
+  // Auto WhatsApp
+  const [waCountdown, setWaCountdown] = useState(0);
+  const [waCancelled, setWaCancelled] = useState(false);
+  const [waSending, setWaSending] = useState(false);
+  const [waSent, setWaSent] = useState(false);
+  const [waFailed, setWaFailed] = useState(false);
+  const waTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const billTotal = billSubtotal - billDiscount + billTax;
@@ -124,6 +135,88 @@ export default function NewVisit() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  // Auto WhatsApp countdown
+  function startWaTimer() {
+    setWaCountdown(3);
+    setWaCancelled(false);
+    setWaSent(false);
+    setWaSending(false);
+    setWaFailed(false);
+    waTimerRef.current = setTimeout(() => doWaSend(), 3000);
+  }
+
+  function cancelWaSend() {
+    if (waTimerRef.current) clearTimeout(waTimerRef.current);
+    setWaCancelled(true);
+    setWaCountdown(0);
+  }
+
+  function doWaSend() {
+    setWaSending(true);
+    setWaCountdown(0);
+    const num = customer?.mobile?.replace(/\D/g, "");
+    const bill = successData?.bill;
+    if (!num || !customer) { setWaSending(false); return; }
+    const fullNum = num.length === 10 ? `91${num}` : num;
+    api.get("/api/settings").then(async (settingsRes) => {
+      const shop = settingsRes.success ? settingsRes.data?.shopName || "KMJ Optical" : "KMJ Optical";
+      if (bill) {
+        // Try sending PDF via server API
+        try {
+          const { generateBillPdf } = await import("../utils/pdf");
+          const doc = generateBillPdf(bill, customer, settingsRes.success ? settingsRes.data : {});
+          const base64 = doc.output("datauristring").split(",")[1];
+          const caption = `🕶 *${shop}*\n\nHi ${customer.name},\nThank you for your visit!\nPlease find your bill attached.\n\nThank you! 🙏`;
+          const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
+          if (mediaRes.success) {
+            setWaSent(true);
+            setWaSending(false);
+            return;
+          }
+        } catch {}
+        // Fallback: wa.me text + PDF tab
+        const items = (bill.items || []).map((i: any) =>
+          `• ${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
+        ).join("%0a");
+        const msg = `🕶 *${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit! 🎉%0a%0a*Bill:* ${bill.billNumber || ""}%0a*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}%0a%0a${items}%0a%0aThank you! 🙏`;
+        window.open(`https://wa.me/${fullNum}?text=${msg}`, "_blank");
+        try {
+          const { openBillPdf } = await import("../utils/pdf");
+          openBillPdf(bill, customer, settingsRes.success ? settingsRes.data : {});
+        } catch {}
+        setWaSent(true);
+      } else {
+        const msg = `🕶 *${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit! 🎉%0a%0aService completed successfully.%0a%0aThank you! 🙏`;
+        window.open(`https://wa.me/${fullNum}?text=${msg}`, "_blank");
+        setWaSent(true);
+      }
+      setWaSending(false);
+    }).catch(() => {
+      setWaFailed(true);
+      setWaSending(false);
+    });
+  }
+
+  // Show countdown ticking
+  useEffect(() => {
+    if (waCountdown <= 0 || waCancelled) return;
+    const t = setTimeout(() => setWaCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [waCountdown, waCancelled]);
+
+  // Sync bill items when entering billing step
+  useEffect(() => {
+    if (visitStep === "billing") syncBillFromOrder();
+  }, [visitStep]);
+
+  // Pre-fill payment amount with pending balance when entering billing step
+  useEffect(() => {
+    if (visitStep === "billing") {
+      const pending = Math.max(0, billTotal - advancePaid);
+      setPaymentAmount(pending > 0 ? pending : 0);
+    }
+  }, [visitStep]);
+
   function updateEye(side: "rightEye" | "leftEye", type: "dv" | "nv" | "pc", field: string, value: string) {
     setPrescription((prev) => {
       const eyeSet = { ...prev[side] };
@@ -173,15 +266,23 @@ export default function NewVisit() {
   function removeAccessory(idx: number) { setOrderAccessories((prev) => prev.filter((_, i) => i !== idx)); }
 
   function syncBillFromOrder() {
-    if (visitType === "service" || visitType === "other") return;
+    if (visitType === "service") return;
     const items: { description: string; qty: number; price: number }[] = [];
-    if (visitType !== "new_lens" && orderFrame) {
+    if (visitType === "other") {
+      if (orderFrame) items.push({ description: orderFrame, qty: orderQty, price: orderFramePrice });
+      orderAccessories.filter((a) => a.name).forEach((a) => items.push({ description: a.name, qty: 1, price: a.price }));
+      if (items.length > 0) setBillItems(items);
+      return;
+    }
+    const hasLens = orderLens || orderLensBrand || orderLensType || orderLensIndex;
+    if (visitType !== "new_lens" && visitType !== "contact_lens" && orderFrame) {
       items.push({ description: `Frame - ${orderFrame}`, qty: orderQty, price: orderFramePrice });
     }
-    if (visitType !== "frame_change" && visitType !== "sunglasses" && orderLens) {
-      items.push({ description: `Lens - ${orderLens}`, qty: 1, price: orderLensPrice });
+    if (visitType !== "frame_change" && visitType !== "sunglasses" && hasLens) {
+      const lensDesc = orderLens || `${orderLensBrand} ${orderLensType}`.trim() || "Lens";
+      items.push({ description: `Lens - ${lensDesc}`, qty: 1, price: orderLensPrice });
     }
-    if (visitType !== "frame_change" && visitType !== "sunglasses" && orderCoating) {
+    if (visitType !== "frame_change" && visitType !== "sunglasses" && visitType !== "contact_lens" && orderCoating) {
       items.push({ description: `Coating - ${orderCoating}`, qty: 1, price: orderCoatingPrice });
     }
     orderAccessories.filter((a) => a.name).forEach((a) => {
@@ -195,24 +296,30 @@ export default function NewVisit() {
       case "type": return !!visitType;
       case "prescription": return true;
       case "products": return true;
-      case "billing": return billItems.some((i) => i.description && i.price > 0);
-      case "payment": return true;
+      case "billing": return visitType === "service" ? true : billItems.some((i) => i.description && i.price > 0);
+      case "summary": return true;
       default: return true;
     }
   }
 
   function goNext() {
-    if (visitStep === "products") syncBillFromOrder();
-    const steps = ["type", "prescription", "products", "billing", "payment"];
+    if (visitType === "service") {
+      if (visitStep === "prescription") { setVisitStep("summary"); return; }
+      const steps = ["type", "prescription", "products", "billing", "summary"];
+      const idx = steps.indexOf(visitStep);
+      if (idx < steps.length - 1 && canProceed()) setVisitStep(steps[idx + 1] as any);
+      return;
+    }
+    const steps = ["type", "prescription", "products", "billing", "summary"];
     let idx = steps.indexOf(visitStep);
-    if (steps[idx] === "prescription" && (visitType === "service" || visitType === "other")) {
+    if (visitType === "other" && steps[idx] === "prescription") {
       idx++;
     }
     if (idx < steps.length - 1 && canProceed()) setVisitStep(steps[idx + 1] as any);
   }
 
   function goBack() {
-    const steps = ["type", "prescription", "products", "billing", "payment"];
+    const steps = ["type", "prescription", "products", "billing", "summary"];
     const idx = steps.indexOf(visitStep);
     if (idx > 0) setVisitStep(steps[idx - 1] as any);
   }
@@ -231,7 +338,7 @@ export default function NewVisit() {
         notes: prescription.notes || undefined,
       };
 
-      if (visitType !== "service" && visitType !== "other") {
+      if (visitType !== "service") {
         payload.order = {
           frame: orderFrame || undefined, frameBrand: orderFrameBrand || undefined,
           frameModel: orderFrameModel || undefined, frameColor: orderFrameColor || undefined,
@@ -246,11 +353,25 @@ export default function NewVisit() {
         if (visitType === "frame_change") {
           delete payload.order.lens; delete payload.order.lensBrand;
           delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
+          delete payload.order.coating; delete payload.order.coatingPrice;
         }
         if (visitType === "new_lens") {
           delete payload.order.frame; delete payload.order.frameBrand;
           delete payload.order.frameModel; delete payload.order.frameColor;
           delete payload.order.frameSize; delete payload.order.framePrice;
+        }
+        if (visitType === "contact_lens") {
+          delete payload.order.frame; delete payload.order.frameBrand;
+          delete payload.order.frameModel; delete payload.order.frameColor;
+          delete payload.order.frameSize; delete payload.order.framePrice;
+          delete payload.order.coating; delete payload.order.coatingPrice;
+        }
+        if (visitType === "other") {
+          delete payload.order.frameBrand; delete payload.order.frameModel;
+          delete payload.order.frameColor; delete payload.order.frameSize;
+          delete payload.order.lens; delete payload.order.lensBrand;
+          delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
+          delete payload.order.coating; delete payload.order.coatingPrice;
         }
       }
 
@@ -270,6 +391,9 @@ export default function NewVisit() {
       if (res.success) {
         setSuccessData(res.data);
         setVisitStep("done");
+        if (res.data.visit && customer?.mobile?.replace(/\D/g, "")) {
+          startWaTimer();
+        }
       } else {
         setError(res.message || "Failed to save");
       }
@@ -311,20 +435,20 @@ export default function NewVisit() {
   }
 
   const visitTypes = [
-    { value: "new_specs", label: "New Spectacles", icon: Eye, desc: "Frame + Lens + Coating" },
+    { value: "new_specs", label: "New Specs", icon: Eye, desc: "Frame + Lens + Coating" },
     { value: "frame_change", label: "Frame Change", icon: Tag, desc: "New frame only" },
     { value: "new_lens", label: "New Lens", icon: Sun, desc: "New lens in old frame" },
-    { value: "sunglasses", label: "Sunglasses", icon: Eye, desc: "Ready-made sunglasses" },
-    { value: "service", label: "Service/Repair", icon: Clock, desc: "No products" },
-    { value: "other", label: "Other", icon: Plus, desc: "General visit" },
+    { value: "contact_lens", label: "Contact Lens", icon: Eye, desc: "Contact lenses" },
+    { value: "service", label: "Service/Repair", icon: Clock, desc: "Free visit" },
+    { value: "other", label: "Other", icon: Plus, desc: "Select sub-type" },
   ];
 
   const visitSteps = [
     { key: "type", label: "Visit", icon: Plus },
     { key: "prescription", label: "Prescription", icon: Eye },
     { key: "products", label: "Products", icon: ShoppingCart },
-    { key: "billing", label: "Billing", icon: DollarSign },
-    { key: "payment", label: "Payment", icon: CreditCard },
+    { key: "billing", label: "Billing & Payment", icon: DollarSign },
+    { key: "summary", label: "Summary", icon: CreditCard },
   ];
   const currentStepIdx = visitSteps.findIndex((s) => s.key === visitStep);
 
@@ -361,6 +485,39 @@ export default function NewVisit() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bill: {bill?.billNumber || ""}</p>
         </div>
 
+        {/* Auto WhatsApp */}
+        {mobile && !waSent && waCountdown > 0 && (
+          <div className="card text-center py-5 space-y-3 border-primary-200 dark:border-primary-800 border-2">
+            <MessageCircle size={28} className="mx-auto text-primary-600 dark:text-primary-400" />
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">WhatsApp message will be sent automatically in <span className="text-lg font-bold text-primary-600 dark:text-primary-400">{waCountdown}</span> seconds...</p>
+            <button onClick={cancelWaSend} className="btn-secondary text-sm">Cancel</button>
+          </div>
+        )}
+        {mobile && waSending && (
+          <div className="card text-center py-5 space-y-3">
+            <div className="animate-spin w-8 h-8 border-4 border-primary-600 dark:border-primary-400 border-t-transparent rounded-full mx-auto" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Sending WhatsApp message...</p>
+          </div>
+        )}
+        {mobile && waSent && (
+          <div className="card text-center py-5 space-y-2 border-emerald-200 dark:border-emerald-800 border-2">
+            <Check size={24} className="mx-auto text-emerald-600 dark:text-emerald-400" />
+            <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">WhatsApp message sent! ✅</p>
+          </div>
+        )}
+        {mobile && waCancelled && !waSent && !waSending && !waFailed && (
+          <div className="card text-center py-5 space-y-2 border-gray-200 dark:border-dark-700 border-2">
+            <X size={24} className="mx-auto text-gray-400" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Auto-send cancelled</p>
+          </div>
+        )}
+        {mobile && waFailed && !waSent && !waSending && (
+          <div className="card text-center py-5 space-y-2 border-red-200 dark:border-red-800 border-2">
+            <AlertCircle size={24} className="mx-auto text-red-400" />
+            <p className="text-sm text-red-600 dark:text-red-400 font-medium">Failed to send. WhatsApp may not be connected.</p>
+          </div>
+        )}
+
         {/* Summary */}
         <div className="card space-y-3">
           <h3 className="font-semibold text-gray-900 dark:text-white">Summary</h3>
@@ -389,7 +546,7 @@ export default function NewVisit() {
           <button onClick={() => navigate(`/customers/${id}`)} className="btn-primary flex items-center gap-2">
             <ArrowLeft size={16} /> Back to Profile
           </button>
-          {mobile && bill && (
+          {mobile && bill && !waSent && (
             <button onClick={() => {
               const num = mobile.replace(/\D/g, "");
               if (!num) return;
@@ -538,13 +695,53 @@ export default function NewVisit() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Products</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Add frame, lens, coating, and accessories.</p>
             </div>
-            {visitType === "service" || visitType === "other" ? (
+            {visitType === "service" ? (
               <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                No products needed for this visit type.
+                Service/Repair visit — no products needed.
+              </div>
+            ) : visitType === "other" ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Type</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {otherSubTypes.map((st) => (
+                      <button key={st} type="button" onClick={() => setOtherSubType(st)}
+                        className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${
+                          otherSubType === st
+                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                            : "border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
+                        }`}>
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {otherSubType && (
+                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{otherSubType} Details</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2 md:col-span-1">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Product Name</label>
+                        <input className="input-field" placeholder="Name" value={orderFrame}
+                          onChange={(e) => setOrderFrame(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
+                        <input type="number" min="1" className="input-field" value={orderQty}
+                          onChange={(e) => setOrderQty(Number(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
+                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
+                          onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
-                {visitType !== "new_lens" && (
+                {visitType !== "new_lens" && visitType !== "contact_lens" && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                       <Tag size={14} /> {visitType === "sunglasses" ? "Sunglasses" : "Frame"}
@@ -620,7 +817,7 @@ export default function NewVisit() {
                   </div>
                 )}
 
-                {visitType !== "frame_change" && visitType !== "sunglasses" && (
+                {visitType !== "frame_change" && visitType !== "sunglasses" && visitType !== "contact_lens" && (
                   <div className="border-t border-gray-100 dark:border-dark-700 pt-5">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Coating</h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -673,12 +870,12 @@ export default function NewVisit() {
           </div>
         )}
 
-        {/* ===== STEP 4: BILLING ===== */}
+        {/* ===== STEP 4: BILLING (with Payment fields) ===== */}
         {visitStep === "billing" && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Billing</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Items auto-filled from products. Edit as needed.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Billing & Payment</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Items auto-filled from products. Set advance, discount, tax, and collect payment.</p>
             </div>
             <div className="space-y-2">
               {billItems.map((item, idx) => (
@@ -705,7 +902,7 @@ export default function NewVisit() {
                 <Plus size={16} /> Add Item
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Discount (₹)</label>
                 <input type="number" min="0" step="0.01" className="input-field" value={billDiscount}
@@ -721,51 +918,15 @@ export default function NewVisit() {
                 <input type="number" min="0" step="0.01" className="input-field" value={advancePaid}
                   onChange={(e) => setAdvancePaid(Number(e.target.value))} />
               </div>
-            </div>
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{billSubtotal.toFixed(0)}</span></div>
-              {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
-              {billTax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Tax</span><span>+₹{billTax.toFixed(0)}</span></div>}
-              <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-dark-700">
-                <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
-              </div>
-              {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>-₹{advancePaid.toFixed(0)}</span></div>}
-              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Pending</span><span>₹{pendingAmt.toFixed(0)}</span></div>}
-            </div>
-          </div>
-        )}
-
-        {/* ===== STEP 5: PAYMENT ===== */}
-        {visitStep === "payment" && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Review and collect payment to complete the visit.</p>
-            </div>
-            <div className="bg-gradient-to-r from-primary-50 dark:from-primary-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{billTotal.toFixed(0)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Advance</p>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">₹{advancePaid.toFixed(0)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Balance</p>
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">₹{Math.max(0, pendingAmt).toFixed(0)}</p>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Amount (₹)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Collect Amount (₹)</label>
                 <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={paymentAmount}
                   onChange={(e) => setPaymentAmount(Number(e.target.value))} />
               </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mode</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payment Mode</label>
                 <div className="flex gap-2">
                   {["Cash", "UPI", "Card"].map((mode) => (
                     <button key={mode} type="button" onClick={() => setPaymentMode(mode)}
@@ -778,16 +939,66 @@ export default function NewVisit() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payment Notes</label>
                 <input className="input-field" placeholder="Optional" value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)} />
               </div>
             </div>
+            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-1 text-sm">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{billSubtotal.toFixed(0)}</span></div>
+              {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
+              {billTax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Tax</span><span>+₹{billTax.toFixed(0)}</span></div>}
+              <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-dark-700">
+                <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
+              </div>
+              {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>-₹{advancePaid.toFixed(0)}</span></div>}
+              <div className="flex justify-between text-primary-600 dark:text-primary-400 font-medium"><span>Collecting</span><span>₹{paymentAmount.toFixed(0)}</span></div>
+              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Pending after payment</span><span>₹{Math.max(0, billTotal - advancePaid - paymentAmount).toFixed(0)}</span></div>}
+            </div>
+          </div>
+        )}
+
+        {/* ===== STEP 5: SUMMARY ===== */}
+        {visitStep === "summary" && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Final Summary</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Review all details before completing the visit.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><User size={14} /> Customer</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{customer.name} — {customer.mobile}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><Plus size={14} /> Visit</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{visitDate} {visitDoctor && `| Dr. ${visitDoctor}`}</p>
+              </div>
+            </div>
+            {billItems.some((i) => i.description) && (
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><DollarSign size={14} /> Bill</h3>
+                <div className="space-y-1">
+                  {billItems.filter((i) => i.description).map((i, idx) => (
+                    <div key={idx} className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                      <span>{i.description} x{i.qty}</span>
+                      <span>₹{(i.qty * i.price).toFixed(0)}</span>
+                    </div>
+                  ))}
+                  {(billDiscount > 0 || billTax > 0) && <hr className="border-gray-200 dark:border-dark-600" />}
+                  {billDiscount > 0 && <div className="flex justify-between text-sm text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
+                  {billTax > 0 && <div className="flex justify-between text-sm text-amber-600"><span>Tax</span><span>+₹{billTax.toFixed(0)}</span></div>}
+                  <hr className="border-gray-200 dark:border-dark-600" />
+                  <div className="flex justify-between font-bold text-gray-900 dark:text-white"><span>Total</span><span>₹{billTotal.toFixed(0)}</span></div>
+                  {advancePaid > 0 && <div className="flex justify-between text-sm text-emerald-600"><span>Advance Paid</span><span>₹{advancePaid.toFixed(0)}</span></div>}
+                  <div className="flex justify-between text-sm text-primary-600"><span>Collecting Now</span><span>₹{paymentAmount.toFixed(0)}</span></div>
+                </div>
+              </div>
+            )}
             {paymentAmount > 0 && (
-              <div className={`rounded-xl p-3 text-center text-sm font-medium ${
-                pendingAmt <= 0 ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"
-              }`}>
-                {pendingAmt <= 0 ? "✓ Full amount covered" : `Balance: ₹${pendingAmt.toFixed(0)}`}
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><CreditCard size={14} /> Payment</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Mode: {paymentMode} | Amount: ₹{paymentAmount.toFixed(0)}{paymentNotes ? ` | Notes: ${paymentNotes}` : ""}</p>
               </div>
             )}
           </div>

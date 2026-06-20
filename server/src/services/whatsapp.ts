@@ -1,4 +1,4 @@
-import { Client, LocalAuth } from "whatsapp-web.js";
+import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
 import * as QR from "qrcode";
 
 class WhatsAppService {
@@ -88,6 +88,25 @@ class WhatsAppService {
       return true;
     } catch (err) {
       console.error("WhatsApp send error:", err);
+      return false;
+    }
+  }
+
+  async sendMedia(phone: string, base64: string, filename: string, caption?: string): Promise<boolean> {
+    if (!this._ready || !this.client) {
+      console.error("WhatsApp sendMedia: client not ready");
+      return false;
+    }
+    try {
+      const formatted = phone.replace(/[^0-9]/g, "");
+      const chatId = `${formatted}@c.us`;
+      console.log(`WhatsApp sendMedia: sending to ${chatId}, filename: ${filename}, base64 length: ${base64.length}`);
+      const media = new MessageMedia("application/pdf", base64, filename);
+      await this.client.sendMessage(chatId, media, { caption: caption || "" });
+      console.log("WhatsApp sendMedia: sent successfully");
+      return true;
+    } catch (err) {
+      console.error("WhatsApp sendMedia error:", err);
       return false;
     }
   }

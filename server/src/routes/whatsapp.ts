@@ -32,6 +32,25 @@ router.post("/send", authenticate, async (req: Request, res: Response) => {
   }
 });
 
+router.post("/send-media", authenticate, async (req: Request, res: Response) => {
+  try {
+    const { phone, base64, filename, caption } = req.body;
+    if (!phone || !base64 || !filename) {
+      res.status(400).json({ success: false, message: "Phone, base64 and filename required" });
+      return;
+    }
+    const ok = await whatsapp.sendMedia(phone, base64, filename, caption);
+    if (!ok) {
+      const status = await whatsapp.getStatus();
+      res.json({ success: false, message: "Failed to send", status: status.status });
+      return;
+    }
+    res.json({ success: true, message: "Sent" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/broadcast", authenticate, async (req: Request, res: Response) => {
   try {
     const { numbers, message } = req.body;
