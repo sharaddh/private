@@ -12,6 +12,7 @@ import dashboard from "./dashboard";
 import reports from "./reports";
 import settings from "./settings";
 import workspace from "./workspace";
+import whatsapp from "./whatsapp";
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use("/dashboard", dashboard);
 router.use("/reports", reports);
 router.use("/settings", settings);
 router.use("/workspace", workspace);
+router.use("/whatsapp", whatsapp);
 
 export default router;

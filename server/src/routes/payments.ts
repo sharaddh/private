@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Payment } from "../models/payment";
 import { Bill } from "../models/bill";
+import { Customer } from "../models/customer";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
@@ -48,6 +49,12 @@ router.post("/", authenticate, audit, async (req, res) => {
         await bill.save();
       }
     }
+    const customer = await Customer.findById(p.customerId);
+    if (customer) {
+      customer.pendingAmount = Math.max(0, (customer.pendingAmount || 0) - p.amount);
+      await customer.save();
+    }
+
     res.json({ success: true, data: payment });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });

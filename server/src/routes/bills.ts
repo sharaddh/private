@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Bill } from "../models/bill";
+import { Customer } from "../models/customer";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
@@ -16,7 +17,13 @@ const createSchema = z.object({
 });
 
 router.get("/", authenticate, async (req, res) => {
-  const list = await Bill.find().limit(100);
+  const { customerId } = req.query;
+  const filter: any = {};
+  if (customerId) filter.customerId = customerId;
+  const list = await Bill.find(filter)
+    .populate("customerId", "name mobile customerId")
+    .sort({ createdAt: -1 })
+    .limit(100);
   res.json({ success: true, data: list });
 });
 
@@ -28,6 +35,14 @@ router.post("/", authenticate, audit, async (req, res) => {
     const total = subtotal - (p.discount || 0) + (p.tax || 0);
     const bill = new Bill({ billNumber, ...p, subtotal, totalAmount: total, pendingAmount: total - (p.advancePaid || 0) } as any);
     await bill.save();
+
+    const customer = await Customer.findById(p.customerId);
+    if (customer) {
+      customer.totalSpent = (customer.totalSpent || 0) + total;
+      customer.pendingAmount = (customer.pendingAmount || 0) + bill.pendingAmount;
+      await customer.save();
+    }
+
     res.json({ success: true, data: bill });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
