@@ -21,3 +21,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# WhatsApp auth
+.wwebjs_auth/
+.wwebjs_cache/
