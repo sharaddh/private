@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
-import Modal from "../components/Modal";
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList,
-  ShoppingCart, FileText, Clock, Edit3, Plus, Trash2, Save, X, MessageCircle,
-  ChevronRight, AlertCircle, Info
+  ShoppingCart, Edit3, Plus, Save, X, MessageCircle,
+  AlertCircle, Info
 } from "lucide-react";
-
-interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
-interface EyeSet { dv?: EyeData; nv?: EyeData; pc?: EyeData; }
 
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const visitRef = useRef<HTMLDivElement>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
@@ -25,49 +23,35 @@ export default function CustomerDetail() {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<any>(null);
 
-  // New Visit Modal
-  const [showVisitModal, setShowVisitModal] = useState(false);
-  const [visitDoctor, setVisitDoctor] = useState("");
-  const [visitRemarks, setVisitRemarks] = useState("");
-  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
-  const [prevPrescription, setPrevPrescription] = useState<any>(null);
-  const [prescription, setPrescription] = useState({
-    rightEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
-    leftEye: { dv: {} as EyeData, nv: {} as EyeData, pc: {} as EyeData },
-    pd: "", notes: "",
-  });
-  const [savingVisit, setSavingVisit] = useState(false);
-  const [visitError, setVisitError] = useState("");
-
   useEffect(() => {
     if (!id) return;
     Promise.all([
       api.get(`/api/customers/${id}`),
       api.get(`/api/visits?customerId=${id}`),
       api.get(`/api/prescriptions?customerId=${id}`),
-      api.get("/api/bills"),
-      api.get("/api/orders"),
+      api.get(`/api/bills?customerId=${id}`),
+      api.get(`/api/orders?customerId=${id}`),
       api.get("/api/settings"),
     ]).then(([c, v, p, b, o, s]) => {
       if (c.success) { setCustomer(c.data); setEditForm(c.data); }
       if (v.success) setVisits(v.data);
-      if (p.success) {
-        setPrescriptions(p.data);
-        if (p.data.length > 0) {
-          const prev = p.data[0];
-          setPrevPrescription(prev);
-          setPrescription({
-            rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
-            leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
-            pd: prev.pd || "", notes: prev.notes || "",
-          });
-        }
-      }
-      if (b.success) setBills(b.data.filter((bill: any) => bill.customerId === id));
-      if (o.success) setOrders(o.data.filter((ord: any) => ord.customerId === id));
+      if (p.success) setPrescriptions(p.data);
+      if (b.success) setBills(b.data || []);
+      if (o.success) setOrders(o.data || []);
       if (s.success) setSettings(s.data);
     });
   }, [id]);
+
+  useEffect(() => {
+    const visitId = searchParams.get("visitId");
+    if (visitId && visits.length > 0) {
+      setTab("visits");
+      setTimeout(() => {
+        const el = document.getElementById(`visit-${visitId}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [searchParams, visits]);
 
   if (!customer) {
     return (
@@ -99,106 +83,6 @@ export default function CustomerDetail() {
     } finally { setSaving(false); }
   }
 
-  function openVisitModal() {
-    setVisitDate(new Date().toISOString().split("T")[0]);
-    setVisitDoctor("");
-    setVisitRemarks("");
-    setVisitError("");
-    // Load latest prescription
-    if (prescriptions.length > 0) {
-      const prev = prescriptions[0];
-      setPrevPrescription(prev);
-      setPrescription({
-        rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
-        leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
-        pd: prev.pd || "", notes: prev.notes || "",
-      });
-    }
-    setShowVisitModal(true);
-  }
-
-  function updateEye(side: "rightEye" | "leftEye", type: "dv" | "nv" | "pc", field: string, value: string) {
-    setPrescription((prev) => {
-      const eyeSet = { ...prev[side] };
-      eyeSet[type] = { ...eyeSet[type], [field]: value === "" ? undefined : field === "va" ? value : Number(value) };
-      return { ...prev, [side]: eyeSet };
-    });
-  }
-
-  function getPrevValue(side: string, type: string, field: string): string {
-    if (!prevPrescription) return "";
-    const val = prevPrescription[side]?.[type]?.[field];
-    return val !== undefined && val !== 0 && val !== "" ? String(val) : "";
-  }
-
-  function isChanged(side: string, type: string, field: string): boolean {
-    if (!prevPrescription) return false;
-    const prev = prevPrescription[side]?.[type]?.[field];
-    const curr = prescription[side as "rightEye" | "leftEye"]?.[type as "dv" | "nv" | "pc"]?.[field as "sph" | "cyl" | "axis" | "va"];
-    if (field === "va") return prev !== curr && curr !== undefined && curr !== "";
-    return Number(prev) !== Number(curr) && curr !== undefined && curr !== "";
-  }
-
-  async function handleSaveVisit() {
-    setSavingVisit(true);
-    setVisitError("");
-    try {
-      const payload: any = { customer: { _id: id, name: customer.name, mobile: customer.mobile } };
-
-      payload.visit = { doctorName: visitDoctor || undefined, remarks: visitRemarks || undefined };
-      payload.prescription = {
-        rightEye: cleanEyeSet(prescription.rightEye),
-        leftEye: cleanEyeSet(prescription.leftEye),
-        pd: prescription.pd || undefined,
-        notes: prescription.notes || undefined,
-      };
-
-      const res = await api.post("/api/workspace/transaction", payload);
-      if (res.success) {
-        // Refresh data
-        const [v, p, c] = await Promise.all([
-          api.get(`/api/visits?customerId=${id}`),
-          api.get(`/api/prescriptions?customerId=${id}`),
-          api.get(`/api/customers/${id}`),
-        ]);
-        if (v.success) setVisits(v.data);
-        if (p.success) {
-          setPrescriptions(p.data);
-          if (p.data.length > 0) {
-            setPrevPrescription(p.data[0]);
-            setPrescription({
-              rightEye: p.data[0].rightEye || { dv: {}, nv: {}, pc: {} },
-              leftEye: p.data[0].leftEye || { dv: {}, nv: {}, pc: {} },
-              pd: p.data[0].pd || "", notes: p.data[0].notes || "",
-            });
-          }
-        }
-        if (c.success) { setCustomer(c.data); setEditForm(c.data); }
-        setShowVisitModal(false);
-      } else {
-        setVisitError(res.message || "Failed to save visit");
-      }
-    } catch (err: any) {
-      setVisitError(err.message || "An error occurred");
-    } finally { setSavingVisit(false); }
-  }
-
-  function cleanEyeSet(e: any): any {
-    return {
-      dv: cleanEye(e.dv), nv: cleanEye(e.nv), pc: cleanEye(e.pc),
-    };
-  }
-
-  function cleanEye(e?: EyeData): EyeData | undefined {
-    if (!e) return undefined;
-    const out: EyeData = {};
-    if (e.sph !== undefined && e.sph !== 0) out.sph = Number(e.sph);
-    if (e.cyl !== undefined && e.cyl !== 0) out.cyl = Number(e.cyl);
-    if (e.axis !== undefined && e.axis !== 0) out.axis = Number(e.axis);
-    if (e.va) out.va = e.va;
-    return Object.keys(out).length > 0 ? out : undefined;
-  }
-
   function sendWhatsApp(phone: string, bill: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
@@ -217,38 +101,6 @@ export default function CustomerDetail() {
     { key: "bills", label: `Bills (${bills.length})`, icon: DollarSign },
     { key: "orders", label: `Orders (${orders.length})`, icon: ShoppingCart },
   ] as const;
-
-  function renderEyeFields(side: "rightEye" | "leftEye", label: string) {
-    const data = prescription[side];
-    return (
-      <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4">
-        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{label}</h4>
-        {(["dv", "nv", "pc"] as const).map((type) => (
-          <div key={type} className="mb-3">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-              {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(["sph", "cyl", "axis", "va"] as const).map((field) => {
-                const changed = isChanged(side, type, field);
-                const prevVal = getPrevValue(side, type, field);
-                return (
-                  <div key={field}>
-                    <label className="text-[10px] text-gray-400 dark:text-gray-500 block">{field.toUpperCase()}</label>
-                    <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
-                      value={data[type]?.[field] ?? ""}
-                      onChange={(e) => updateEye(side, type, field, e.target.value)} />
-                    {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -362,7 +214,7 @@ export default function CustomerDetail() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Pending Amount</p>
         </div>
         <div className="card text-center flex flex-col items-center justify-center">
-          <button onClick={openVisitModal} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+          <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
             <Plus size={16} /> Add New Visit
           </button>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Pre-filled prescription</p>
@@ -460,7 +312,7 @@ export default function CustomerDetail() {
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">All Visits ({visits.length})</h3>
-              <button onClick={openVisitModal} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
+              <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
                 <Plus size={15} /> Add Visit
               </button>
             </div>
@@ -469,7 +321,7 @@ export default function CustomerDetail() {
             ) : (
               <div className="space-y-3">
                 {visits.map((v: any) => (
-                  <div key={v._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700">
+                  <div key={v._id} id={`visit-${v._id}`} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700">
                     <div>
                       <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
@@ -490,7 +342,7 @@ export default function CustomerDetail() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900 dark:text-white">Prescriptions ({prescriptions.length})</h3>
-              <button onClick={openVisitModal} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
+              <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
                 <Plus size={15} /> Add Prescription
               </button>
             </div>
@@ -583,62 +435,6 @@ export default function CustomerDetail() {
           </div>
         )}
       </div>
-
-      {/* New Visit Modal */}
-      <Modal open={showVisitModal} onClose={() => setShowVisitModal(false)} title="Add New Visit" size="xl">
-        {visitError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
-            <AlertCircle size={16} /> {visitError}
-          </div>
-        )}
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit Date</label>
-              <input type="date" className="input-field" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Doctor</label>
-              <input className="input-field" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Remarks</label>
-              <input className="input-field" placeholder="Any notes" value={visitRemarks} onChange={(e) => setVisitRemarks(e.target.value)} />
-            </div>
-          </div>
-
-          {prevPrescription && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
-              <Info size={14} /> Previous prescription pre-filled below. Changed fields highlighted in amber.
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {renderEyeFields("rightEye", "Right Eye")}
-            {renderEyeFields("leftEye", "Left Eye")}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">PD (Pupillary Distance)</label>
-              <input className="input-field" placeholder="e.g. 62mm" value={prescription.pd}
-                onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
-              <input className="input-field" placeholder="Additional notes" value={prescription.notes}
-                onChange={(e) => setPrescription({ ...prescription, notes: e.target.value })} />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
-            <button type="button" onClick={() => setShowVisitModal(false)} className="btn-secondary">Cancel</button>
-            <button onClick={handleSaveVisit} disabled={savingVisit} className="btn-primary">
-              {savingVisit ? "Saving..." : "Save Visit & Prescription"}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
