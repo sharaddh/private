@@ -168,7 +168,7 @@ export default function Orders() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Orders</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Track order status from lab processing to delivery.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track order status from lab processing to delivery.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">New Order</span>
@@ -176,10 +176,10 @@ export default function Orders() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card text-center"><p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Total</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">In Progress</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.ready}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Ready</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.delivered}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Delivered</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p><p className="text-sm text-gray-500 dark:text-gray-400">Total</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</p><p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.ready}</p><p className="text-sm text-gray-500 dark:text-gray-400">Ready</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.delivered}</p><p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p></div>
       </div>
 
       <Table

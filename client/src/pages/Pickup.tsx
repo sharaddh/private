@@ -184,7 +184,7 @@ export default function Pickup() {
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{orders.length} pending order(s)</p>
               {orders.map((o: any) => (
                 <div key={o._id} onClick={() => selectOrder(o)}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 cursor-pointer transition-all">
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 cursor-pointer transition-all">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {o.frame && `Frame: ${o.frame}`}{o.frame && o.lens ? " | " : ""}{o.lens && `Lens: ${o.lens}`}
@@ -225,18 +225,18 @@ export default function Pickup() {
 
               {bill && (
                 <>
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-gray-200 dark:border-dark-700 pt-4">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Bill Summary</h3>
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
+                    <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2 text-sm">
                       <div className="flex justify-between"><span>Bill #{bill.billNumber}</span></div>
                       <div className="flex justify-between"><span>Total</span><span className="font-bold">₹{bill.totalAmount?.toFixed(0) || "0"}</span></div>
                       <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance Paid</span><span className="font-medium">₹{bill.advancePaid?.toFixed(0) || "0"}</span></div>
-                      <div className="flex justify-between text-amber-600 font-medium border-t border-gray-200 pt-2"><span>Pending</span><span>₹{bill.pendingAmount?.toFixed(0) || "0"}</span></div>
+                      <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium border-t border-gray-200 dark:border-dark-700 pt-2"><span>Pending</span><span>₹{bill.pendingAmount?.toFixed(0) || "0"}</span></div>
                     </div>
                   </div>
 
                   {bill.pendingAmount > 0 && (
-                    <div className="border-t border-gray-200 pt-4">
+                    <div className="border-t border-gray-200 dark:border-dark-700 pt-4">
                       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Collect Payment</h3>
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
@@ -250,7 +250,7 @@ export default function Pickup() {
                             {["Cash", "UPI", "Card"].map((m) => (
                               <button key={m} onClick={() => setCollectMode(m)}
                                 className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 dark:text-gray-400 dark:text-gray-500 border-gray-200"
+                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 border-gray-200 dark:border-dark-700"
                                 }`}>{m}</button>
                             ))}
                           </div>
@@ -262,12 +262,12 @@ export default function Pickup() {
               )}
 
               {message && (
-                <div className={`rounded-xl p-3 text-sm ${message.includes("✓") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                <div className={`rounded-xl p-3 text-sm ${message.includes("✓") ? "bg-emerald-50 text-emerald-700 dark:text-emerald-400" : "bg-red-50 text-red-700 dark:text-red-400"}`}>
                   {message}
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-200">
+              <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-200 dark:border-dark-700">
                 <button onClick={handleDeliver} disabled={delivering}
                   className="btn-success flex items-center gap-2 px-6">
                   {delivering ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />

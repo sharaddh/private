@@ -235,16 +235,16 @@ export default function Prescriptions() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">PD (Pupillary Distance)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">PD (Pupillary Distance)</label>
               <input className="input-field" value={form.pd} onChange={(e) => setForm({ ...form, pd: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
               <input className="input-field" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Save Prescription"}</button>
           </div>
@@ -254,23 +254,23 @@ export default function Prescriptions() {
       <Modal open={!!selected} onClose={() => setSelected(null)} title="Prescription Details" size="lg">
         {selected && (
           <div className="space-y-4">
-            <p className="text-xs text-gray-400">Date: {new Date(selected.createdAt).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Date: {new Date(selected.createdAt).toLocaleDateString()}</p>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Right Eye</h4>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Right Eye</h4>
                 {renderEyeBlock("DV", selected.rightEye?.dv)}
                 {renderEyeBlock("NV", selected.rightEye?.nv)}
                 {renderEyeBlock("PC", selected.rightEye?.pc)}
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Left Eye</h4>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Left Eye</h4>
                 {renderEyeBlock("DV", selected.leftEye?.dv)}
                 {renderEyeBlock("NV", selected.leftEye?.nv)}
                 {renderEyeBlock("PC", selected.leftEye?.pc)}
               </div>
             </div>
-            {selected.pd && <p className="text-sm text-gray-600">PD: {selected.pd}</p>}
-            {selected.notes && <p className="text-sm text-gray-600">Notes: {selected.notes}</p>}
+            {selected.pd && <p className="text-sm text-gray-600 dark:text-gray-400">PD: {selected.pd}</p>}
+            {selected.notes && <p className="text-sm text-gray-600 dark:text-gray-400">Notes: {selected.notes}</p>}
           </div>
         )}
       </Modal>
