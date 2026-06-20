@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, LogOut,
   Menu, X, ChevronRight, Search, Phone, Hand, PlusCircle,
-  Sun, Moon
+  Sun, Moon, Megaphone
 } from "lucide-react";
 
 const menuItems = [
@@ -15,6 +15,7 @@ const menuItems = [
   { path: "/orders", label: "Orders", icon: ShoppingCart },
   { path: "/pickup", label: "Pickup", icon: Hand },
   { path: "/bills", label: "Bills", icon: FileText },
+  { path: "/announcements", label: "Announcements", icon: Megaphone },
   { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/inventory", label: "Inventory", icon: Package },
   { path: "/delivery", label: "Delivery", icon: Truck },

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import StatCard from "../components/StatCard";
 import {
-  Users, ShoppingCart, FileText, CreditCard, Package, Truck,
+  Users, ShoppingCart, FileText, Package, Truck,
   TrendingUp, DollarSign, Clock, AlertTriangle
 } from "lucide-react";
 
@@ -41,24 +42,24 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">{greeting}! 👋</h1>
+          <h1 className="page-title">{greeting}!</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">KMJ Optical dashboard overview.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Today Sales" value={`₹${(data.todaySales || 0).toLocaleString()}`} icon={<TrendingUp size={20} />} color="indigo" />
-        <MetricCard title="Collection" value={`₹${(data.todayCollection || 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="emerald" />
-        <MetricCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={20} />} color="amber" />
-        <MetricCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={20} />} color="red" onClick={() => navigate("/inventory")} />
+        <StatCard title="Today Sales" value={`₹${(data.todaySales || 0).toLocaleString()}`} icon={<TrendingUp size={20} />} color="indigo" />
+        <StatCard title="Collection" value={`₹${(data.todayCollection || 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="emerald" />
+        <StatCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={20} />} color="amber" />
+        <StatCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={20} />} color="red" onClick={() => navigate("/inventory")} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <CountCard title="Customers" value={data.counts.customers} subtitle={`+${data.newCustomersToday} today`} icon={<Users size={18} />} onClick={() => navigate("/customers")} />
-        <CountCard title="Orders" value={data.counts.orders} icon={<ShoppingCart size={18} />} onClick={() => navigate("/orders")} />
-        <CountCard title="Bills" value={data.counts.bills} icon={<FileText size={18} />} onClick={() => navigate("/bills")} />
-        <CountCard title="Deliveries" value={data.readyDeliveries || 0} subtitle="ready" icon={<Truck size={18} />} onClick={() => navigate("/delivery")} />
-        <CountCard title="Inventory" value={data.counts.inventory} icon={<Package size={18} />} onClick={() => navigate("/inventory")} />
+        <StatCard title="Customers" value={data.counts.customers} subtitle={`+${data.newCustomersToday} today`} icon={<Users size={18} />} color="indigo" onClick={() => navigate("/customers")} />
+        <StatCard title="Orders" value={data.counts.orders} icon={<ShoppingCart size={18} />} color="blue" onClick={() => navigate("/orders")} />
+        <StatCard title="Bills" value={data.counts.bills} icon={<FileText size={18} />} color="emerald" onClick={() => navigate("/bills")} />
+        <StatCard title="Deliveries" value={data.readyDeliveries || 0} subtitle="ready" icon={<Truck size={18} />} color="purple" onClick={() => navigate("/delivery")} />
+        <StatCard title="Inventory" value={data.counts.inventory} icon={<Package size={18} />} color="cyan" onClick={() => navigate("/inventory")} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -112,37 +113,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function MetricCard({ title, value, icon, color, onClick }: { title: string; value: string | number; icon: React.ReactNode; color: string; onClick?: () => void }) {
-  const colors: Record<string, string> = {
-    indigo: "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400",
-    emerald: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
-    amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-    red: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-  };
-  return (
-    <div onClick={onClick} className={`card ${onClick ? "cursor-pointer hover:shadow-md" : ""} transition-shadow`}>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${colors[color] || colors.indigo}`}>{icon}</div>
-      </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === "number" ? value.toLocaleString() : value}</p>
-    </div>
-  );
-}
-
-function CountCard({ title, value, subtitle, icon, onClick }: { title: string; value: number; subtitle?: string; icon: React.ReactNode; onClick?: () => void }) {
-  return (
-    <div onClick={onClick} className={`card text-center ${onClick ? "cursor-pointer hover:shadow-md" : ""} transition-shadow`}>
-      <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center mx-auto mb-2 text-indigo-600 dark:text-indigo-400">
-        {icon}
-      </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-      {subtitle && <p className="text-xs text-indigo-500 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
