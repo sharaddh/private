@@ -11,6 +11,7 @@ export default function Settings() {
   const [logo, setLogo] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,13 +45,18 @@ export default function Settings() {
     e.preventDefault();
     setLoading(true);
     try {
+      setError("");
       const res = await api.put("/api/settings", {
         shopName, shopAddress, shopPhone, shopEmail, adminWhatsApp, logo,
       });
       if (res.success) {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
+      } else {
+        setError(res.message || "Failed to save settings");
       }
+    } catch (e: any) {
+      setError(e?.message || "An error occurred");
     } finally { setLoading(false); }
   }
 
@@ -73,6 +79,9 @@ export default function Settings() {
             </div>
           </div>
           <form onSubmit={handleSave} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{error}</div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop Logo</label>
               <div

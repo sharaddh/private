@@ -37,8 +37,13 @@ async function request(path: string, init: RequestInit = {}) {
   if (res.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      const newHeaders = { ...init.headers as any, Authorization: `Bearer ${localStorage.getItem("accessToken")}` };
+      const newToken = localStorage.getItem("accessToken");
+      const newHeaders = { ...init.headers as any, Authorization: `Bearer ${newToken}` };
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
+    } else {
+      clearToken();
+      window.location.href = "/login";
+      return { success: false, message: "Session expired. Please login again." };
     }
   }
   const text = await res.text();
