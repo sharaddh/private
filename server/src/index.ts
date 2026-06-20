@@ -1,6 +1,7 @@
 import { connect } from "mongoose";
 import { PORT, MONGO_URI } from "./config";
 import app from "./app";
+import { whatsapp } from "./services/whatsapp";
 
 async function start() {
   if (!MONGO_URI) {
@@ -13,6 +14,10 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+  });
+
+  whatsapp.init().then(() => {
+    console.log("WhatsApp service initialized");
   });
 }
 
