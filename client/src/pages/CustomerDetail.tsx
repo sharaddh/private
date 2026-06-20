@@ -173,7 +173,7 @@ export default function CustomerDetail() {
             });
           }
         }
-        if (c.success) setCustomer(c.data);
+        if (c.success) { setCustomer(c.data); setEditForm(c.data); }
         setShowVisitModal(false);
       } else {
         setVisitError(res.message || "Failed to save visit");

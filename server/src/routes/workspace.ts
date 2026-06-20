@@ -7,6 +7,7 @@ import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
 import { z } from "zod";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
@@ -80,7 +81,7 @@ const transactionSchema = z.object({
   }).optional(),
 });
 
-router.post("/transaction", async (req, res) => {
+router.post("/transaction", authenticate, async (req, res) => {
   try {
     const body = transactionSchema.parse(req.body);
     const result: any = {};
