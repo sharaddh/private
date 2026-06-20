@@ -72,7 +72,7 @@ export default function CustomerDetail() {
   if (!customer) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -221,11 +221,11 @@ export default function CustomerDetail() {
   function renderEyeFields(side: "rightEye" | "leftEye", label: string) {
     const data = prescription[side];
     return (
-      <div className="border border-gray-200 rounded-xl p-4">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">{label}</h4>
+      <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4">
+        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{label}</h4>
         {(["dv", "nv", "pc"] as const).map((type) => (
           <div key={type} className="mb-3">
-            <p className="text-xs font-medium text-gray-400 mb-1">
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
               {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
             </p>
             <div className="grid grid-cols-4 gap-1.5">
@@ -234,9 +234,9 @@ export default function CustomerDetail() {
                 const prevVal = getPrevValue(side, type, field);
                 return (
                   <div key={field}>
-                    <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
+                    <label className="text-[10px] text-gray-400 dark:text-gray-500 block">{field.toUpperCase()}</label>
                     <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 bg-amber-50 ring-1 ring-amber-300" : ""}`}
+                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
                       value={data[type]?.[field] ?? ""}
                       onChange={(e) => updateEye(side, type, field, e.target.value)} />
                     {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
@@ -252,7 +252,7 @@ export default function CustomerDetail() {
 
   return (
     <div className="space-y-6">
-      <button onClick={() => navigate("/customers")} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
+      <button onClick={() => navigate("/customers")} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
         <ArrowLeft size={18} /> Back to Customers
       </button>
 
@@ -260,7 +260,7 @@ export default function CustomerDetail() {
       <div className="card">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 font-bold text-2xl">
+            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-2xl">
               {customer.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
             <div className="flex-1">
@@ -302,32 +302,32 @@ export default function CustomerDetail() {
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
-                  <p className="text-sm text-gray-500">{customer.customerId || "—"}</p>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{customer.name}</h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{customer.customerId || "—"}</p>
                   <div className="flex flex-wrap gap-4 mt-3">
                     {customer.mobile && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <Phone size={14} className="text-gray-400" /> {customer.mobile}
+                      <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        <Phone size={14} className="text-gray-400 dark:text-gray-500" /> {customer.mobile}
                       </span>
                     )}
                     {customer.email && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <Mail size={14} className="text-gray-400" /> {customer.email}
+                      <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        <Mail size={14} className="text-gray-400 dark:text-gray-500" /> {customer.email}
                       </span>
                     )}
                     {customer.city && (
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <MapPin size={14} className="text-gray-400" /> {customer.city}
+                      <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        <MapPin size={14} className="text-gray-400 dark:text-gray-500" /> {customer.city}
                       </span>
                     )}
-                    <span className="flex items-center gap-1.5 text-sm text-gray-600">
-                      <Calendar size={14} className="text-gray-400" /> Joined {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "—"}
+                    <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                      <Calendar size={14} className="text-gray-400 dark:text-gray-500" /> Joined {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "—"}
                     </span>
-                    {customer.age && <span className="text-sm text-gray-600">Age: {customer.age}</span>}
-                    {customer.gender && <span className="text-sm text-gray-600">Gender: {customer.gender}</span>}
+                    {customer.age && <span className="text-sm text-gray-600 dark:text-gray-400">Age: {customer.age}</span>}
+                    {customer.gender && <span className="text-sm text-gray-600 dark:text-gray-400">Gender: {customer.gender}</span>}
                   </div>
-                  {customer.address && <p className="text-sm text-gray-500 mt-2">{customer.address}</p>}
-                  {customer.alternateMobile && <p className="text-sm text-gray-500 mt-1">Alt: {customer.alternateMobile}</p>}
+                  {customer.address && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{customer.address}</p>}
+                  {customer.alternateMobile && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Alt: {customer.alternateMobile}</p>}
                   {customer.tags?.length > 0 && (
                     <div className="flex gap-2 mt-2">
                       {customer.tags.map((tag: string, i: number) => (
@@ -350,27 +350,27 @@ export default function CustomerDetail() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900">{customer.totalVisits || 0}</p>
-          <p className="text-sm text-gray-500">Total Visits</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{customer.totalVisits || 0}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Visits</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-emerald-600">₹{(customer.totalSpent || 0).toLocaleString()}</p>
-          <p className="text-sm text-gray-500">Total Spent</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">₹{(customer.totalSpent || 0).toLocaleString()}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Spent</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-amber-600">₹{(customer.pendingAmount || 0).toLocaleString()}</p>
-          <p className="text-sm text-gray-500">Pending Amount</p>
+          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">₹{(customer.pendingAmount || 0).toLocaleString()}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Pending Amount</p>
         </div>
         <div className="card text-center flex flex-col items-center justify-center">
           <button onClick={openVisitModal} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
             <Plus size={16} /> Add New Visit
           </button>
-          <p className="text-xs text-gray-400 mt-2">Pre-filled prescription</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Pre-filled prescription</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-dark-700">
         <div className="flex gap-1 overflow-x-auto">
           {tabs.map((t) => {
             const Icon = t.icon;
@@ -381,8 +381,8 @@ export default function CustomerDetail() {
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
-                    ? "border-indigo-600 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-dark-700"
                 }`}
               >
                 <Icon size={16} />
@@ -397,33 +397,33 @@ export default function CustomerDetail() {
       <div>
         {tab === "overview" && (
           <div className="card space-y-4">
-            <h3 className="font-semibold text-gray-900">Customer Summary</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Customer Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-medium text-gray-500">Last 5 Visits</p>
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Last 5 Visits</p>
                 {visits.slice(0, 5).length > 0 ? (
                   <div className="mt-2 space-y-2">
                     {visits.slice(0, 5).map((v: any) => (
                       <div key={v._id} className="text-sm">
                         <span className="font-medium">{new Date(v.visitDate).toLocaleDateString()}</span>
-                        {v.doctorName && <span className="text-gray-500"> — {v.doctorName}</span>}
+                        {v.doctorName && <span className="text-gray-500 dark:text-gray-400"> — {v.doctorName}</span>}
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-sm text-gray-400 mt-2">No visits</p>}
+                ) : <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">No visits</p>}
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-medium text-gray-500">Latest Prescription</p>
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Latest Prescription</p>
                 {prescriptions.length > 0 ? (
                   <div className="mt-2 text-sm">
                     <p>RE: SPH {prescriptions[0].rightEye?.dv?.sph ?? "—"} / CYL {prescriptions[0].rightEye?.dv?.cyl ?? "—"}</p>
                     <p>LE: SPH {prescriptions[0].leftEye?.dv?.sph ?? "—"} / CYL {prescriptions[0].leftEye?.dv?.cyl ?? "—"}</p>
                     {prescriptions[0].pd && <p>PD: {prescriptions[0].pd}</p>}
                   </div>
-                ) : <p className="text-sm text-gray-400 mt-2">No prescriptions</p>}
+                ) : <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">No prescriptions</p>}
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-medium text-gray-500">Recent Orders</p>
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Recent Orders</p>
                 {orders.slice(0, 5).length > 0 ? (
                   <div className="mt-2 space-y-2">
                     {orders.slice(0, 5).map((o: any) => (
@@ -437,10 +437,10 @@ export default function CustomerDetail() {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-sm text-gray-400 mt-2">No orders</p>}
+                ) : <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">No orders</p>}
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm font-medium text-gray-500">Recent Bills</p>
+              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Recent Bills</p>
                 {bills.slice(0, 5).length > 0 ? (
                   <div className="mt-2 space-y-2">
                     {bills.slice(0, 5).map((b: any) => (
@@ -450,7 +450,7 @@ export default function CustomerDetail() {
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-sm text-gray-400 mt-2">No bills</p>}
+                ) : <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">No bills</p>}
               </div>
             </div>
           </div>
@@ -459,26 +459,26 @@ export default function CustomerDetail() {
         {tab === "visits" && (
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">All Visits ({visits.length})</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">All Visits ({visits.length})</h3>
               <button onClick={openVisitModal} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
                 <Plus size={15} /> Add Visit
               </button>
             </div>
             {visits.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No visits recorded yet.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No visits recorded yet.</p>
             ) : (
               <div className="space-y-3">
                 {visits.map((v: any) => (
-                  <div key={v._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                  <div key={v._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-gray-400" />
-                        <p className="text-sm font-medium text-gray-900">{new Date(v.visitDate).toLocaleDateString()}</p>
+                        <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{new Date(v.visitDate).toLocaleDateString()}</p>
                       </div>
-                      {v.doctorName && <p className="text-xs text-gray-500 mt-0.5">Doctor: {v.doctorName}</p>}
-                      {v.remarks && <p className="text-xs text-gray-500">{v.remarks}</p>}
+                      {v.doctorName && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Doctor: {v.doctorName}</p>}
+                      {v.remarks && <p className="text-xs text-gray-500 dark:text-gray-400">{v.remarks}</p>}
                     </div>
-                    <span className="text-xs text-gray-400">{new Date(v.createdAt).toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(v.createdAt).toLocaleDateString()}</span>
                   </div>
                 ))}
               </div>
@@ -489,33 +489,33 @@ export default function CustomerDetail() {
         {tab === "prescriptions" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Prescriptions ({prescriptions.length})</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Prescriptions ({prescriptions.length})</h3>
               <button onClick={openVisitModal} className="btn-primary flex items-center gap-1.5 text-sm px-3 py-2">
                 <Plus size={15} /> Add Prescription
               </button>
             </div>
             {prescriptions.length === 0 ? (
-              <div className="card"><p className="text-gray-400 text-sm text-center py-8">No prescriptions yet.</p></div>
+              <div className="card"><p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No prescriptions yet.</p></div>
             ) : (
               prescriptions.map((p: any) => (
                 <div key={p._id} className="card">
-                  <p className="text-xs text-gray-400 mb-3">{new Date(p.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{new Date(p.createdAt).toLocaleDateString()}</p>
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Right Eye</p>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Right Eye</p>
                       {p.rightEye?.dv && <EyeRow label="DV" data={p.rightEye.dv} />}
                       {p.rightEye?.nv && <EyeRow label="NV" data={p.rightEye.nv} />}
                       {p.rightEye?.pc && <EyeRow label="PC" data={p.rightEye.pc} />}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Left Eye</p>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Left Eye</p>
                       {p.leftEye?.dv && <EyeRow label="DV" data={p.leftEye.dv} />}
                       {p.leftEye?.nv && <EyeRow label="NV" data={p.leftEye.nv} />}
                       {p.leftEye?.pc && <EyeRow label="PC" data={p.leftEye.pc} />}
                     </div>
                   </div>
-                  {p.pd && <p className="text-sm text-gray-500 mt-2">PD: {p.pd}</p>}
-                  {p.notes && <p className="text-sm text-gray-500 mt-1">Notes: {p.notes}</p>}
+                  {p.pd && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">PD: {p.pd}</p>}
+                  {p.notes && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Notes: {p.notes}</p>}
                 </div>
               ))
             )}
@@ -524,25 +524,25 @@ export default function CustomerDetail() {
 
         {tab === "bills" && (
           <div className="card">
-            <h3 className="font-semibold text-gray-900 mb-4">Bills ({bills.length})</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Bills ({bills.length})</h3>
             {bills.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No bills yet.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No bills yet.</p>
             ) : (
               <div className="space-y-3">
                 {bills.map((b: any) => (
-                  <div key={b._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                  <div key={b._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{b.billNumber || "—"}</p>
-                      <p className="text-xs text-gray-500">{new Date(b.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{b.billNumber || "—"}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(b.createdAt).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900">₹{(b.totalAmount || 0).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{(b.totalAmount || 0).toLocaleString()}</p>
                       <p className="text-xs" style={{color: (b.pendingAmount || 0) > 0 ? "#d97706" : "#059669"}}>
                         {(b.pendingAmount || 0) > 0 ? `Pending: ₹${b.pendingAmount}` : "Paid"}
                       </p>
                       <button
                         onClick={() => sendWhatsApp(customer.mobile, b)}
-                        className="text-xs text-green-600 hover:text-green-800 mt-1 flex items-center gap-1"
+                        className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 mt-1 flex items-center gap-1"
                       >
                         <MessageCircle size={12} /> Send Bill
                       </button>
@@ -556,19 +556,19 @@ export default function CustomerDetail() {
 
         {tab === "orders" && (
           <div className="card">
-            <h3 className="font-semibold text-gray-900 mb-4">Orders ({orders.length})</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Orders ({orders.length})</h3>
             {orders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No orders yet.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No orders yet.</p>
             ) : (
               <div className="space-y-3">
                 {orders.map((o: any) => (
-                  <div key={o._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                  <div key={o._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {[o.frameBrand, o.frame, o.lensBrand, o.lens].filter(Boolean).join(" / ") || "Order"}
                       </p>
-                      <p className="text-xs text-gray-500">Qty: {o.quantity || 1}</p>
-                      {o.deliveryDate && <p className="text-xs text-gray-400">Delivery: {new Date(o.deliveryDate).toLocaleDateString()}</p>}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Qty: {o.quantity || 1}</p>
+                      {o.deliveryDate && <p className="text-xs text-gray-400 dark:text-gray-500">Delivery: {new Date(o.deliveryDate).toLocaleDateString()}</p>}
                     </div>
                     <span className={`badge ${
                       o.status === "Delivered" ? "badge-green" :
@@ -587,28 +587,28 @@ export default function CustomerDetail() {
       {/* New Visit Modal */}
       <Modal open={showVisitModal} onClose={() => setShowVisitModal(false)} title="Add New Visit" size="xl">
         {visitError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
             <AlertCircle size={16} /> {visitError}
           </div>
         )}
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit Date</label>
               <input type="date" className="input-field" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Doctor</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Doctor</label>
               <input className="input-field" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Remarks</label>
               <input className="input-field" placeholder="Any notes" value={visitRemarks} onChange={(e) => setVisitRemarks(e.target.value)} />
             </div>
           </div>
 
           {prevPrescription && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 flex items-center gap-2 text-sm text-amber-700">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
               <Info size={14} /> Previous prescription pre-filled below. Changed fields highlighted in amber.
             </div>
           )}
@@ -620,18 +620,18 @@ export default function CustomerDetail() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">PD (Pupillary Distance)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">PD (Pupillary Distance)</label>
               <input className="input-field" placeholder="e.g. 62mm" value={prescription.pd}
                 onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
               <input className="input-field" placeholder="Additional notes" value={prescription.notes}
                 onChange={(e) => setPrescription({ ...prescription, notes: e.target.value })} />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowVisitModal(false)} className="btn-secondary">Cancel</button>
             <button onClick={handleSaveVisit} disabled={savingVisit} className="btn-primary">
               {savingVisit ? "Saving..." : "Save Visit & Prescription"}
@@ -645,8 +645,8 @@ export default function CustomerDetail() {
 
 function EyeRow({ label, data }: { label: string; data: any }) {
   return (
-    <div className="text-xs text-gray-600 mb-1">
-      <span className="font-medium text-gray-700">{label}: </span>
+    <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+      <span className="font-medium text-gray-700 dark:text-gray-300">{label}: </span>
       SPH: {data.sph ?? "—"} CYL: {data.cyl ?? "—"} AXIS: {data.axis ?? "—"} {data.va ? `VA: ${data.va}` : ""}
     </div>
   );

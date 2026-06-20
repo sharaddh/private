@@ -434,10 +434,10 @@ export default function Workspace() {
     const data = prescription[side];
     return (
       <div className="border border-gray-200 rounded-xl p-4">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">{label}</h4>
+        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{label}</h4>
         {(["dv", "nv", "pc"] as const).map((type) => (
           <div key={type} className="mb-3">
-            <p className="text-xs font-medium text-gray-400 mb-1">
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
               {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
             </p>
             <div className="grid grid-cols-4 gap-1.5">
@@ -446,12 +446,12 @@ export default function Workspace() {
                 const prevVal = getPrevValue(side, type, field);
                 return (
                   <div key={field}>
-                    <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
+                    <label className="text-[10px] text-gray-400 dark:text-gray-500 block">{field.toUpperCase()}</label>
                     <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 bg-amber-50 ring-1 ring-amber-300" : ""}`}
+                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300" : ""}`}
                       value={data[type]?.[field] ?? ""}
                       onChange={(e) => updateEye(side, type, field, e.target.value)} />
-                    {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
+                    {changed && prevVal && <span className="text-[9px] text-amber-500 dark:text-amber-400 block mt-0.5">was {prevVal}</span>}
                   </div>
                 );
               })}
@@ -520,22 +520,22 @@ export default function Workspace() {
     return (
       <div className="max-w-2xl mx-auto space-y-4 pt-4 pb-20">
         <div className="card text-center py-6">
-          <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Check size={28} className="text-emerald-600" />
+          <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Check size={28} className="text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Transaction Complete!</h2>
-          <p className="text-sm text-gray-500">Bill: {bill?.billNumber || ""}</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Transaction Complete!</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Bill: {bill?.billNumber || ""}</p>
         </div>
 
         {/* Customer Info */}
         {customer && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Customer</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Customer</h3>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">{customer.name?.charAt(0) || "?"}</div>
+              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{customer.name?.charAt(0) || "?"}</div>
               <div>
-                <p className="font-medium text-gray-900">{customer.name}</p>
-                <p className="text-sm text-gray-500">{customer.mobile}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{customer.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{customer.mobile}</p>
               </div>
             </div>
           </div>
@@ -544,14 +544,14 @@ export default function Workspace() {
         {/* Prescription Summary */}
         {success.prescription && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Prescription</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Prescription</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Right Eye</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Right Eye</p>
                 {success.prescription.rightEye?.dv?.sph != null && <p>DV: {success.prescription.rightEye.dv.sph} {success.prescription.rightEye.dv.cyl != null ? `/ ${success.prescription.rightEye.dv.cyl}` : ""}</p>}
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Left Eye</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Left Eye</p>
                 {success.prescription.leftEye?.dv?.sph != null && <p>DV: {success.prescription.leftEye.dv.sph} {success.prescription.leftEye.dv.cyl != null ? `/ ${success.prescription.leftEye.dv.cyl}` : ""}</p>}
               </div>
               {success.prescription.pd && <div className="col-span-2"><p>PD: {success.prescription.pd}</p></div>}
@@ -562,12 +562,12 @@ export default function Workspace() {
         {/* Order Summary */}
         {order && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Order</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Order</h3>
             <div className="space-y-1 text-sm">
-              {order.frame && <p><span className="text-gray-500">Frame:</span> {order.frame}</p>}
-              {order.lens && <p><span className="text-gray-500">Lens:</span> {order.lens}</p>}
-              {order.coating && <p><span className="text-gray-500">Coating:</span> {order.coating}</p>}
-              {order.accessories?.length > 0 && <p><span className="text-gray-500">Accessories:</span> {order.accessories.join(", ")}</p>}
+              {order.frame && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Frame:</span> {order.frame}</p>}
+              {order.lens && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Lens:</span> {order.lens}</p>}
+              {order.coating && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Coating:</span> {order.coating}</p>}
+              {order.accessories?.length > 0 && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Accessories:</span> {order.accessories.join(", ")}</p>}
               <span className={`mt-2 inline-block badge ${
                 order.status === "Delivered" ? "badge-green" :
                 order.status === "Ready" ? "badge-blue" : "badge-yellow"
@@ -579,7 +579,7 @@ export default function Workspace() {
         {/* Bill Summary */}
         {bill && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Bill</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bill</h3>
             <div className="space-y-1.5 text-sm">
               {(bill.items || []).map((it: any, i: number) => (
                 <div key={i} className="flex justify-between">
@@ -588,11 +588,11 @@ export default function Workspace() {
                 </div>
               ))}
               <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-0.5">
-                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>₹{(bill.subtotal || 0).toFixed(0)}</span></div>
-                {bill.discount > 0 && <div className="flex justify-between text-red-500"><span>Discount</span><span>-₹{bill.discount.toFixed(0)}</span></div>}
+                <div className="flex justify-between text-gray-500 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{(bill.subtotal || 0).toFixed(0)}</span></div>
+                {bill.discount > 0 && <div className="flex justify-between text-red-500 dark:text-red-400"><span>Discount</span><span>-₹{bill.discount.toFixed(0)}</span></div>}
                 {bill.tax > 0 && <div className="flex justify-between text-amber-600"><span>Tax</span><span>+₹{bill.tax.toFixed(0)}</span></div>}
-                <div className="flex justify-between font-bold text-gray-900 text-base pt-1"><span>Total</span><span>₹{(bill.totalAmount || 0).toFixed(0)}</span></div>
-                {bill.advancePaid > 0 && <div className="flex justify-between text-emerald-600"><span>Paid</span><span>₹{bill.advancePaid.toFixed(0)}</span></div>}
+                <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base pt-1"><span>Total</span><span>₹{(bill.totalAmount || 0).toFixed(0)}</span></div>
+                {bill.advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Paid</span><span>₹{bill.advancePaid.toFixed(0)}</span></div>}
                 {bill.pendingAmount > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Pending</span><span>₹{bill.pendingAmount.toFixed(0)}</span></div>}
               </div>
             </div>
@@ -602,8 +602,8 @@ export default function Workspace() {
         {/* Delivery */}
         {delivery && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Delivery</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Delivery</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
               Status: {delivery.status}
               {delivery.expectedDeliveryDate && ` | Expected: ${new Date(delivery.expectedDeliveryDate).toLocaleDateString()}`}
             </p>
@@ -640,7 +640,7 @@ export default function Workspace() {
   return (
     <div className="max-w-4xl mx-auto space-y-4 pb-20">
       {/* Step indicator */}
-      <div className="flex items-center gap-0 bg-white rounded-2xl p-1 border border-gray-200 shadow-sm">
+      <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 shadow-sm">
         {steps.map((s, i) => {
           const Icon = s.icon;
           const isActive = step === s.key;
@@ -649,8 +649,8 @@ export default function Workspace() {
             <button key={s.key} onClick={() => { if (i < currentIdx) setStep(s.key); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
                 isActive ? "bg-indigo-600 text-white shadow-md" :
-                isDone ? "text-emerald-600 hover:bg-emerald-50" :
-                "text-gray-400"
+                isDone ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" :
+                "text-gray-400 dark:text-gray-500"
               }`}>
               <Icon size={16} />
               <span className="hidden sm:inline">{s.label}</span>
@@ -661,7 +661,7 @@ export default function Workspace() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 dark:text-red-300 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -671,12 +671,12 @@ export default function Workspace() {
         <div className="flex gap-4">
           <div className="flex-1 space-y-4">
             <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Find Customer</h2>
-              <p className="text-sm text-gray-500 mb-5">Enter phone number to search existing customers or add new.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Find Customer</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Enter phone number to search existing customers or add new.</p>
 
               <div className="flex gap-3 mb-5">
                 <div className="relative flex-1">
-                  <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                   <input ref={phoneRef} type="tel" placeholder="Enter phone number..."
                     value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
                     onKeyDown={handlePhoneKeyDown} className="input-field pl-10 text-lg" />
@@ -687,29 +687,29 @@ export default function Workspace() {
               {/* Multi-customer search results */}
               {searched && !selectedCustomer && searchResults.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  <p className="text-sm font-medium text-gray-500">{searchResults.length} customer(s) found</p>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{searchResults.length} customer(s) found</p>
                   {searchResults.map((c: any) => (
                     <div key={c._id}
-                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer"
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20/30 transition-all cursor-pointer"
                       onClick={() => selectCustomer(c)}>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
+                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
                         <div>
-                          <p className="font-semibold text-gray-900">{c.name}</p>
-                          <p className="text-sm text-gray-500">{c.mobile}</p>
-                          {c.lastVisit && <p className="text-xs text-gray-400">Last visit: {c.lastVisit}</p>}
+                          <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{c.mobile}</p>
+                          {c.lastVisit && <p className="text-xs text-gray-400 dark:text-gray-500">Last visit: {c.lastVisit}</p>}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">{c.totalVisits || 0} visits</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{c.totalVisits || 0} visits</p>
                         {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 font-medium">₹{c.pendingAmount} due</p>}
-                        <span className="text-indigo-600 text-sm font-medium mt-1 inline-block">Select →</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 text-sm font-medium mt-1 inline-block">Select →</span>
                       </div>
                     </div>
                   ))}
 
                   <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 rounded-xl hover:bg-indigo-50">
+                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
                     <UserPlus size={16} /> Add new customer with this number
                   </button>
                 </div>
@@ -717,42 +717,42 @@ export default function Workspace() {
 
               {/* Add new customer form */}
               {searched && !selectedCustomer && searchResults.length === 0 && isNewCustomer && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl p-4 mb-4">
                   <p className="text-sm font-medium text-amber-800 mb-3">New customer — fill in the details</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Name *</label>
                       <input className="input-field" placeholder="Full name" value={customerForm.name}
                         onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Phone</label>
                       <input className="input-field" value={customerForm.mobile} disabled />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Email</label>
                       <input className="input-field" placeholder="email@example.com" value={customerForm.email || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Age</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Age</label>
                       <input type="number" className="input-field" placeholder="Age" value={customerForm.age ?? ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Gender</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Gender</label>
                       <select className="input-field" value={customerForm.gender || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
                         <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">City</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">City</label>
                       <input className="input-field" placeholder="City" value={customerForm.city || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Address</label>
                       <input className="input-field" placeholder="Address" value={customerForm.address || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
                     </div>
@@ -777,14 +777,14 @@ export default function Workspace() {
                       {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h3>
-                      <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCustomer.name}</h3>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">
                         <span>{selectedCustomer.gender || "—"}</span>
                         {selectedCustomer.age && <span>• {selectedCustomer.age} yrs</span>}
                         <span>•</span>
                         <span><Phone size={12} className="inline" /> {selectedCustomer.mobile}</span>
                         <span>•</span>
-                        <span className="text-indigo-600 font-medium">ID: {customerSummary.customer?.customerId || ""}</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-medium">ID: {customerSummary.customer?.customerId || ""}</span>
                       </div>
                     </div>
                   </div>
@@ -794,33 +794,33 @@ export default function Workspace() {
                 </div>
 
                 <div className="grid grid-cols-4 gap-3 mb-4">
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-gray-900">{selectedCustomer.totalVisits || 0}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Visits</p>
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedCustomer.totalVisits || 0}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Visits</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-indigo-600">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Revenue</p>
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Revenue</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
                     <p className="text-lg font-bold text-amber-600">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Pending</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Pending</p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-sm font-bold text-gray-700">
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
                       {selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                     </p>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Since</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Since</p>
                   </div>
                 </div>
 
                 {/* Last Order Info */}
                 {customerSummary.lastOrder && (
-                  <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl p-3 mb-4">
+                  <div className="bg-gradient-to-r from-gray-50 dark:from-dark-700 to-indigo-50 dark:to-indigo-900/20 rounded-xl p-3 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Last Purchase</p>
-                        <p className="font-medium text-gray-900">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Last Purchase</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
                           {customerSummary.lastOrder.frame && `Frame: ${customerSummary.lastOrder.frame}`}
                           {customerSummary.lastOrder.frame && customerSummary.lastOrder.lens && " | "}
                           {customerSummary.lastOrder.lens && `Lens: ${customerSummary.lastOrder.lens}`}
@@ -833,7 +833,7 @@ export default function Workspace() {
                       }`}>{customerSummary.lastOrder.status || "Draft"}</span>
                     </div>
                     {customerSummary.lastPrescription?.rightEye?.dv?.sph != null && (
-                      <p className="text-xs text-gray-400 mt-1">Last Rx: {customerSummary.lastPrescription.rightEye.dv.sph} / {customerSummary.lastPrescription.leftEye?.dv?.sph || ""}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Last Rx: {customerSummary.lastPrescription.rightEye.dv.sph} / {customerSummary.lastPrescription.leftEye?.dv?.sph || ""}</p>
                     )}
                   </div>
                 )}
@@ -864,7 +864,7 @@ export default function Workspace() {
             {/* Customer Timeline */}
             {customerSummary?.recentOrders && customerSummary.recentOrders.length > 0 && (
               <div className="card">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Clock size={14} /> Recent Activity</h3>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Clock size={14} /> Recent Activity</h3>
                 <div className="space-y-2">
                   {(customerSummary.recentOrders || []).slice(0, 5).map((o: any) => (
                     <div key={o._id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -872,7 +872,7 @@ export default function Workspace() {
                         <p className="text-sm text-gray-800">
                           {o.frame || ""}{o.frame && o.lens ? " + " : ""}{o.lens || ""}{o.coating ? " + " + o.coating : ""}
                         </p>
-                        <p className="text-xs text-gray-400">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}</p>
                       </div>
                       <span className={`badge ${
                         o.status === "Delivered" ? "badge-green" :
@@ -890,11 +890,11 @@ export default function Workspace() {
           {selectedCustomer && customerSummary && (
             <div className="w-72 hidden lg:block space-y-4">
               <div className="card">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Last Prescription</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Last Prescription</h3>
                 {customerSummary.lastPrescription ? (
                   <div className="space-y-2 text-sm">
                     <div>
-                      <p className="text-xs text-gray-400">Right Eye</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Right Eye</p>
                       <p className="font-medium">
                         {customerSummary.lastPrescription.rightEye?.dv?.sph != null
                           ? `SPH ${customerSummary.lastPrescription.rightEye.dv.sph}`
@@ -905,7 +905,7 @@ export default function Workspace() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Left Eye</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Left Eye</p>
                       <p className="font-medium">
                         {customerSummary.lastPrescription.leftEye?.dv?.sph != null
                           ? `SPH ${customerSummary.lastPrescription.leftEye.dv.sph}`
@@ -915,26 +915,26 @@ export default function Workspace() {
                           : ""}
                       </p>
                     </div>
-                    {customerSummary.lastPrescription.pd && <p className="text-xs text-gray-500">PD: {customerSummary.lastPrescription.pd}</p>}
+                    {customerSummary.lastPrescription.pd && <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">PD: {customerSummary.lastPrescription.pd}</p>}
                   </div>
-                ) : <p className="text-sm text-gray-400">No previous prescription</p>}
+                ) : <p className="text-sm text-gray-400 dark:text-gray-500">No previous prescription</p>}
               </div>
 
               {customerSummary.lastVisit && (
                 <div className="card">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Last Visit</h3>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Last Visit</h3>
                   <p className="text-sm">{customerSummary.lastVisit.doctorName ? `Dr. ${customerSummary.lastVisit.doctorName}` : "—"}</p>
-                  <p className="text-xs text-gray-400">{new Date(customerSummary.lastVisit.visitDate || customerSummary.lastVisit.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                  {customerSummary.lastVisit.remarks && <p className="text-xs text-gray-500 mt-1">{customerSummary.lastVisit.remarks}</p>}
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(customerSummary.lastVisit.visitDate || customerSummary.lastVisit.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                  {customerSummary.lastVisit.remarks && <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">{customerSummary.lastVisit.remarks}</p>}
                 </div>
               )}
 
               <div className="card">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quick Stats</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Quick Stats</h3>
                 <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">In Lab</span><span className="font-medium">{customerSummary.labOrders || 0}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Ready</span><span className="font-medium">{customerSummary.readyOrders || 0}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Total Spent</span><span className="font-medium">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">In Lab</span><span className="font-medium">{customerSummary.labOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Ready</span><span className="font-medium">{customerSummary.readyOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Total Spent</span><span className="font-medium">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</span></div>
                 </div>
               </div>
             </div>
@@ -947,12 +947,12 @@ export default function Workspace() {
         <div className="card">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Eye Examination</h2>
-              <p className="text-sm text-gray-500">Record today's prescription. Previous values are pre-filled.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Eye Examination</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Record today's prescription. Previous values are pre-filled.</p>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 cursor-pointer">
               <input type="checkbox" checked={!usePrescription} onChange={(e) => setUsePrescription(!e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
               Skip
             </label>
           </div>
@@ -961,27 +961,27 @@ export default function Workspace() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit Date</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit Date</label>
                   <input type="date" className="input-field" defaultValue={new Date().toISOString().split("T")[0]} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Doctor</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Doctor</label>
                   <input className="input-field" placeholder="Doctor's name" value={visitDoctor}
                     onChange={(e) => setVisitDoctor(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop</label>
                   <input className="input-field" placeholder="Shop/location" value={visitShop}
                     onChange={(e) => setVisitShop(e.target.value)} />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes / Remarks</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes / Remarks</label>
                   <input className="input-field" placeholder="Any remarks" value={visitRemarks}
                     onChange={(e) => setVisitRemarks(e.target.value)} />
                 </div>
               </div>
               {prevPrescription && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-4 flex items-center gap-2 text-sm text-amber-700">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl px-4 py-2 mb-4 flex items-center gap-2 text-sm text-amber-700">
                   <Info size={14} /> Previous values are pre-filled. Changed fields are highlighted in amber.
                 </div>
               )}
@@ -991,12 +991,12 @@ export default function Workspace() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">PD</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">PD</label>
                   <input className="input-field" placeholder="e.g. 62mm" value={prescription.pd}
                     onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
                   <input className="input-field" placeholder="Additional notes" value={prescription.notes}
                     onChange={(e) => setPrescription({ ...prescription, notes: e.target.value })} />
                 </div>
@@ -1022,12 +1022,12 @@ export default function Workspace() {
             <div className="card">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Products</h2>
-                  <p className="text-sm text-gray-500">Select frame, lens, coating, and accessories.</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Products</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Select frame, lens, coating, and accessories.</p>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 cursor-pointer">
                   <input type="checkbox" checked={!useOrder} onChange={(e) => setUseOrder(!e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
                   No items
                 </label>
               </div>
@@ -1036,35 +1036,35 @@ export default function Workspace() {
                 <div className="space-y-6">
                   {/* Frame Section */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Tag size={14} /> Frame</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Tag size={14} /> Frame</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Brand</label>
                         <input className="input-field" placeholder="e.g. RayBan" value={orderFrameBrand}
                           onChange={(e) => setOrderFrameBrand(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Model</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Model</label>
                         <input className="input-field" placeholder="e.g. RB2180" value={orderFrameModel}
                           onChange={(e) => setOrderFrameModel(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Color</label>
                         <input className="input-field" placeholder="e.g. Black" value={orderFrameColor}
                           onChange={(e) => setOrderFrameColor(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Size</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Size</label>
                         <input className="input-field" placeholder="e.g. 52-18" value={orderFrameSize}
                           onChange={(e) => setOrderFrameSize(e.target.value)} />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Frame (summary)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Frame (summary)</label>
                         <input className="input-field" placeholder="Frame description" value={orderFrame}
                           onChange={(e) => setOrderFrame(e.target.value)} />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Frame Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Frame Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
                           onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
                       </div>
@@ -1073,15 +1073,15 @@ export default function Workspace() {
 
                   {/* Lens Section */}
                   <div className="border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Eye size={14} /> Lens</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Eye size={14} /> Lens</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Brand</label>
                         <input className="input-field" placeholder="Lens brand" value={orderLensBrand}
                           onChange={(e) => setOrderLensBrand(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Type</label>
                         <select className="input-field" value={orderLensType}
                           onChange={(e) => setOrderLensType(e.target.value)}>
                           <option>Single Vision</option>
@@ -1093,17 +1093,17 @@ export default function Workspace() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Index</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Index</label>
                         <input className="input-field" placeholder="e.g. 1.56" value={orderLensIndex}
                           onChange={(e) => setOrderLensIndex(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Lens (summary)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Lens (summary)</label>
                         <input className="input-field" placeholder="e.g. Anti-glare" value={orderLens}
                           onChange={(e) => setOrderLens(e.target.value)} />
                       </div>
                       <div className="col-span-2 md:col-span-4">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Lens Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Lens Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderLensPrice}
                           onChange={(e) => setOrderLensPrice(Number(e.target.value))} />
                       </div>
@@ -1112,15 +1112,15 @@ export default function Workspace() {
 
                   {/* Coating Section */}
                   <div className="border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Coating</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Coating</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Type</label>
                         <input className="input-field" placeholder="e.g. Blue Cut AR" value={orderCoating}
                           onChange={(e) => setOrderCoating(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderCoatingPrice}
                           onChange={(e) => setOrderCoatingPrice(Number(e.target.value))} />
                       </div>
@@ -1129,7 +1129,7 @@ export default function Workspace() {
 
                   {/* Accessories Section */}
                   <div className="border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Accessories</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Accessories</h3>
                     {orderAccessories.map((acc, idx) => (
                       <div key={idx} className="flex gap-2 mb-2 items-center">
                         <input className="input-field flex-1" placeholder="Item name" value={acc.name}
@@ -1145,11 +1145,11 @@ export default function Workspace() {
                             setOrderAccessories(updated);
                           }} />
                         <button onClick={() => setOrderAccessories(orderAccessories.filter((_, i) => i !== idx))}
-                          className="p-2 hover:bg-red-50 rounded-lg text-red-400"><X size={15} /></button>
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 dark:text-red-300"><X size={15} /></button>
                       </div>
                     ))}
                     <button onClick={() => setOrderAccessories([...orderAccessories, { name: "", price: 0 }])}
-                      className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                      className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
                       <Plus size={14} /> Add Accessory
                     </button>
                   </div>
@@ -1157,12 +1157,12 @@ export default function Workspace() {
                   {/* Quantity & Delivery */}
                   <div className="border-t border-gray-100 pt-4 grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Quantity</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Quantity</label>
                       <input type="number" min="1" className="input-field" value={orderQty}
                         onChange={(e) => setOrderQty(Number(e.target.value))} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Expected Delivery</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Expected Delivery</label>
                       <input type="date" className="input-field" value={orderDeliveryDate}
                         onChange={(e) => setOrderDeliveryDate(e.target.value)} />
                     </div>
@@ -1184,23 +1184,23 @@ export default function Workspace() {
           {/* Live Order Summary sidebar */}
           <div className="w-72 hidden lg:block">
             <div className="card sticky top-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Summary</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 {useOrder && orderFrame && (
-                  <div className="flex justify-between"><span className="text-gray-600">Frame</span><span className="font-medium">₹{orderFramePrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Frame</span><span className="font-medium">₹{orderFramePrice.toFixed(0)}</span></div>
                 )}
                 {useOrder && orderLens && (
-                  <div className="flex justify-between"><span className="text-gray-600">Lens</span><span className="font-medium">₹{orderLensPrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Lens</span><span className="font-medium">₹{orderLensPrice.toFixed(0)}</span></div>
                 )}
                 {useOrder && orderCoating && (
-                  <div className="flex justify-between"><span className="text-gray-600">Coating</span><span className="font-medium">₹{orderCoatingPrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Coating</span><span className="font-medium">₹{orderCoatingPrice.toFixed(0)}</span></div>
                 )}
                 {orderAccessories.filter((a) => a.name).map((a, i) => (
-                  <div key={i} className="flex justify-between"><span className="text-gray-600">{a.name}</span><span className="font-medium">₹{a.price.toFixed(0)}</span></div>
+                  <div key={i} className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">{a.name}</span><span className="font-medium">₹{a.price.toFixed(0)}</span></div>
                 ))}
                 <div className="border-t border-gray-200 pt-2 mt-2">
-                  <div className="flex justify-between font-bold text-gray-900"><span>Subtotal</span><span>₹{(orderFramePrice + orderLensPrice + orderCoatingPrice + accessoriesTotal).toFixed(0)}</span></div>
-                  <div className="flex justify-between text-gray-500 text-xs mt-1"><span>Qty</span><span>{orderQty}</span></div>
+                  <div className="flex justify-between font-bold text-gray-900 dark:text-white"><span>Subtotal</span><span>₹{(orderFramePrice + orderLensPrice + orderCoatingPrice + accessoriesTotal).toFixed(0)}</span></div>
+                  <div className="flex justify-between text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs mt-1"><span>Qty</span><span>{orderQty}</span></div>
                 </div>
               </div>
             </div>
@@ -1211,25 +1211,25 @@ export default function Workspace() {
       {/* ===== STEP 4: BILLING ===== */}
       {step === "billing" && (
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Billing</h2>
-          <p className="text-sm text-gray-500 mb-5">Add items and set prices. Order items are pre-filled.</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Billing</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Add items and set prices. Order items are pre-filled.</p>
 
           <div className="space-y-3 mb-4">
             {billItems.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-start bg-gray-50 p-3 rounded-xl relative">
+              <div key={idx} className="flex gap-2 items-start bg-gray-50 dark:bg-dark-700 p-3 rounded-xl relative">
                 <div className="flex-1 relative">
                   <input className="input-field text-sm" placeholder="Item description (type for suggestions)" value={item.description}
                     onChange={(e) => { updateBillItem(idx, "description", e.target.value); searchInventory(e.target.value, idx); }} />
                   {suggestionsForIdx === idx && suggestions.length > 0 && (
-                    <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-dark-800 border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                       {suggestions.map((inv: any) => (
                         <button key={inv._id} type="button" onClick={() => applySuggestion(idx, inv)}
-                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 text-left border-b border-gray-100 last:border-0">
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left border-b border-gray-100 last:border-0">
                           <div>
-                            <p className="font-medium text-gray-900">{inv.brand && inv.model ? `${inv.brand} ${inv.model}` : inv.sku}</p>
-                            <p className="text-xs text-gray-400">{inv.category || ""}{inv.color ? ` | ${inv.color}` : ""}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{inv.brand && inv.model ? `${inv.brand} ${inv.model}` : inv.sku}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{inv.category || ""}{inv.color ? ` | ${inv.color}` : ""}</p>
                           </div>
-                          <span className="font-semibold text-indigo-600">₹{inv.sellingPrice || 0}</span>
+                          <span className="font-semibold text-indigo-600 dark:text-indigo-400">₹{inv.sellingPrice || 0}</span>
                         </button>
                       ))}
                     </div>
@@ -1243,46 +1243,46 @@ export default function Workspace() {
                   <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
                     onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
                 </div>
-                <div className="w-16 text-right pt-2.5 text-sm font-medium text-gray-700">₹{(item.qty * item.price).toFixed(0)}</div>
-                <button onClick={() => removeBillItem(idx)} className="p-2 hover:bg-red-50 rounded-lg text-red-400 mt-1"><X size={16} /></button>
+                <div className="w-16 text-right pt-2.5 text-sm font-medium text-gray-700 dark:text-gray-300">₹{(item.qty * item.price).toFixed(0)}</div>
+                <button onClick={() => removeBillItem(idx)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 dark:text-red-300 mt-1"><X size={16} /></button>
               </div>
             ))}
-            <button onClick={addBillItem} className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+            <button onClick={addBillItem} className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
               <Plus size={16} /> Add Item
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Discount (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Discount (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billDiscount}
                 onChange={(e) => setBillDiscount(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Tax / GST (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Tax / GST (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billTax}
                 onChange={(e) => setBillTax(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Advance Paid (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Advance Paid (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={advancePaid}
                 onChange={(e) => setAdvancePaid(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Expected Delivery</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Expected Delivery</label>
               <input type="date" className="input-field" value={orderDeliveryDate}
                 onChange={(e) => setOrderDeliveryDate(e.target.value)} />
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 space-y-1 text-sm">
-            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
-            {billDiscount > 0 && <div className="flex justify-between text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(2)}</span></div>}
+          <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-1 text-sm">
+            <div className="flex justify-between text-gray-600 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+            {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(2)}</span></div>}
             {billTax > 0 && <div className="flex justify-between text-amber-600"><span>Tax</span><span>+₹{billTax.toFixed(2)}</span></div>}
-            <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200">
               <span>Total</span><span>₹{totalAmount.toFixed(2)}</span>
             </div>
-            {advancePaid > 0 && <div className="flex justify-between text-emerald-600"><span>Advance</span><span>-₹{advancePaid.toFixed(2)}</span></div>}
+            {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>-₹{advancePaid.toFixed(2)}</span></div>}
             {pendingAmt > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Pending</span><span>₹{pendingAmt.toFixed(2)}</span></div>}
           </div>
 
@@ -1304,21 +1304,21 @@ export default function Workspace() {
       {/* ===== STEP 5: PAYMENT ===== */}
       {step === "payment" && (
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Payment</h2>
-          <p className="text-sm text-gray-500 mb-5">Collect payment and complete the transaction.</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Collect payment and complete the transaction.</p>
 
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-5">
+          <div className="bg-gradient-to-r from-indigo-50 dark:from-indigo-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6 mb-5">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
-                <p className="text-2xl font-bold text-gray-900">₹{totalAmount.toFixed(0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toFixed(0)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Advance</p>
-                <p className="text-2xl font-bold text-emerald-600">₹{advancePaid.toFixed(0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Advance</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">₹{advancePaid.toFixed(0)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Balance</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Balance</p>
                 <p className="text-2xl font-bold text-amber-600">₹{Math.max(0, pendingAmt).toFixed(0)}</p>
               </div>
             </div>
@@ -1327,20 +1327,20 @@ export default function Workspace() {
           {/* Multiple payments */}
           <div className="space-y-3 mb-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700">Payments ({payments.length})</h3>
-              <p className="text-sm font-medium text-emerald-600">Total: ₹{totalPaid.toFixed(0)}</p>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Payments ({payments.length})</h3>
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Total: ₹{totalPaid.toFixed(0)}</p>
             </div>
             {payments.map((p, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-xl p-3">
+              <div key={idx} className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-medium text-gray-500">#{idx + 1}</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">#{idx + 1}</span>
                   <div className="flex-1" />
                   <button onClick={() => { if (payments.length > 1) setPayments(payments.filter((_, i) => i !== idx)); }}
-                    className="p-1 hover:bg-red-50 rounded text-red-400"><X size={14} /></button>
+                    className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400 dark:text-red-300"><X size={14} /></button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Amount</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Amount</label>
                     <input type="number" step="0.01" className="input-field text-sm font-medium" value={p.amount}
                       onChange={(e) => {
                         const updated = [...payments];
@@ -1349,7 +1349,7 @@ export default function Workspace() {
                       }} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Mode</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Mode</label>
                     <div className="grid grid-cols-2 gap-1">
                       {["Cash", "UPI", "Card"].map((mode) => (
                         <button key={mode} onClick={() => {
@@ -1358,13 +1358,13 @@ export default function Workspace() {
                           setPayments(updated);
                         }}
                           className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-all ${
-                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200"
+                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 border-gray-200"
                           }`}>{mode}</button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-0.5">Notes</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Notes</label>
                     <input className="input-field text-xs" placeholder="Optional" value={p.notes}
                       onChange={(e) => {
                         const updated = [...payments];
@@ -1376,7 +1376,7 @@ export default function Workspace() {
               </div>
             ))}
             <button onClick={() => setPayments([...payments, { amount: 0, mode: "Cash", notes: "" }])}
-              className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
               <Plus size={14} /> Add Another Payment
             </button>
           </div>
@@ -1384,7 +1384,7 @@ export default function Workspace() {
           {/* Balance status */}
           {totalPaid > 0 && (
             <div className={`rounded-xl p-3 mb-5 text-center text-sm font-medium ${
-              totalPaid + advancePaid >= totalAmount ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+              totalPaid + advancePaid >= totalAmount ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"
             }`}>
               {totalPaid + advancePaid >= totalAmount
                 ? "✓ Full payment received"
@@ -1393,10 +1393,10 @@ export default function Workspace() {
           )}
 
           {/* Delivery section */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl p-4 mb-5">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={useDelivery} onChange={(e) => setUseDelivery(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
               <div>
                 <p className="text-sm font-medium text-amber-800">Schedule Delivery</p>
                 <p className="text-xs text-amber-600">Set delivery address and expected date</p>
@@ -1405,12 +1405,12 @@ export default function Workspace() {
             {useDelivery && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Address</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Address</label>
                   <textarea className="input-field" rows={2} value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Expected Delivery Date</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expected Delivery Date</label>
                   <input type="date" className="input-field" value={deliveryDate}
                     onChange={(e) => setDeliveryDate(e.target.value)} />
                 </div>
@@ -1432,24 +1432,24 @@ export default function Workspace() {
       {/* ===== DIGITAL BILL PREVIEW MODAL ===== */}
       {showBillPreview && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowBillPreview(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900">Digital Bill Preview</h2>
-              <button onClick={() => setShowBillPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Digital Bill Preview</h2>
+              <button onClick={() => setShowBillPreview(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg"><X size={18} /></button>
             </div>
 
             <div className="text-center mb-6">
               <h3 className="font-bold text-xl">KMJ Optical</h3>
-              <p className="text-sm text-gray-500">Bill Preview</p>
-              <p className="text-xs text-gray-400">{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Bill Preview</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
             </div>
 
             {selectedCustomer && (
-              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
-                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-dark-700 rounded-xl">
+                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
                 <div>
-                  <p className="font-medium text-gray-900">{selectedCustomer.name}</p>
-                  <p className="text-xs text-gray-500">{selectedCustomer.mobile}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{selectedCustomer.mobile}</p>
                 </div>
               </div>
             )}
@@ -1464,15 +1464,15 @@ export default function Workspace() {
             </div>
 
             <div className="border-t border-gray-200 pt-2 space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
-              {billDiscount > 0 && <div className="flex justify-between text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
+              <div className="flex justify-between text-gray-600 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
+              {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
               {billTax > 0 && <div className="flex justify-between text-amber-600"><span>GST</span><span>+₹{billTax.toFixed(0)}</span></div>}
               <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200"><span>Total</span><span>₹{totalAmount.toFixed(0)}</span></div>
-              {advancePaid > 0 && <div className="flex justify-between text-emerald-600"><span>Advance</span><span>₹{advancePaid.toFixed(0)}</span></div>}
+              {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>₹{advancePaid.toFixed(0)}</span></div>}
               {pendingAmt > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Balance</span><span>₹{pendingAmt.toFixed(0)}</span></div>}
             </div>
 
-            {orderDeliveryDate && <p className="text-xs text-gray-400 text-center mt-4">Expected Delivery: {new Date(orderDeliveryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>}
+            {orderDeliveryDate && <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">Expected Delivery: {new Date(orderDeliveryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>}
 
             <div className="flex justify-center mt-6">
               <button onClick={() => setShowBillPreview(false)} className="btn-primary">Close Preview</button>
@@ -1483,20 +1483,20 @@ export default function Workspace() {
 
       {/* Summary bar - always visible with current data */}
       {(step !== "customer" && step !== "done") && selectedCustomer && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 lg:pl-72 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-800 border-t border-gray-200 p-3 lg:pl-72 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
+              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
                 {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{selectedCustomer.name}</p>
-                <p className="text-xs text-gray-400">{selectedCustomer.mobile} {orderFrame && `• ${orderFrame}`}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedCustomer.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{selectedCustomer.mobile} {orderFrame && `• ${orderFrame}`}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              {totalAmount > 0 && <span className="font-semibold text-gray-900">₹{totalAmount.toFixed(0)}</span>}
-              <span className="text-gray-400 hidden sm:inline">Step {currentIdx + 1} of 5</span>
+              {totalAmount > 0 && <span className="font-semibold text-gray-900 dark:text-white">₹{totalAmount.toFixed(0)}</span>}
+              <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">Step {currentIdx + 1} of 5</span>
               <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden hidden sm:block">
                 <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / 5) * 100}%` }} />
               </div>

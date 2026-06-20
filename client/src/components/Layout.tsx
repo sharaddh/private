@@ -200,7 +200,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div ref={searchRef} className="relative flex-1 max-w-md mx-4">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search by name, mobile..."
@@ -230,7 +230,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="text-right text-xs text-gray-400 flex-shrink-0">
                       <p>{c.totalVisits || 0} visits</p>
-                      {c.pendingAmount > 0 && <p className="text-amber-600 font-medium">₹{c.pendingAmount}</p>}
+                      {c.pendingAmount > 0 && <p className="text-amber-600 dark:text-amber-400 font-medium">₹{c.pendingAmount}</p>}
                     </div>
                   </button>
                 ))}

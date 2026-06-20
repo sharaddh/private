@@ -23,7 +23,7 @@ export default function Form({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
         >
           {isLoading ? "Loading..." : submitLabel}
         </button>
@@ -42,7 +42,7 @@ export function FormGroup({ label, error, children }: FormGroupProps) {
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
         </label>
       )}
@@ -63,7 +63,7 @@ export function Input({ label, error, ...props }: InputProps) {
     <FormGroup label={label} error={error}>
       <input
         {...props}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-800 text-gray-900 dark:text-white"
       />
     </FormGroup>
   );
@@ -81,7 +81,7 @@ export function Select({ label, error, options, ...props }: SelectProps) {
     <FormGroup label={label} error={error}>
       <select
         {...props}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-800 text-gray-900 dark:text-white"
       >
         <option value="">Select an option</option>
         {options.map((opt) => (
