@@ -69,7 +69,7 @@ export default function Table({
     <div className="space-y-4">
       {searchable && (
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -80,16 +80,16 @@ export default function Table({
         </div>
       )}
 
-      <div className="overflow-x-auto bg-white rounded-2xl border border-gray-200">
+      <div className="overflow-x-auto bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/50">
+            <tr className="border-b border-gray-200 dark:border-dark-700 bg-gray-50/50 dark:bg-dark-800/50">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                   className={`px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${
-                    col.sortable !== false ? "cursor-pointer hover:text-gray-700 select-none" : ""
+                    col.sortable !== false ? "cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" : ""
                   }`}
                 >
                   <div className="flex items-center gap-1">
@@ -101,21 +101,21 @@ export default function Table({
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th                 className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-dark-700">
             {paged.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-4 py-12 text-center text-gray-400"
+                  className="px-4 py-12 text-center text-gray-400 dark:text-gray-500"
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <Search size={24} className="text-gray-300" />
+                    <Search size={24} className="text-gray-300 dark:text-gray-600" />
                     <span>No data available</span>
                   </div>
                 </td>
@@ -125,12 +125,12 @@ export default function Table({
                 <tr
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-gray-50 transition-colors ${
+                  className={`hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5 text-sm text-gray-700 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
                     </td>
                   ))}
@@ -148,14 +148,14 @@ export default function Table({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={18} />
             </button>
@@ -169,7 +169,7 @@ export default function Table({
                   className={`w-8 h-8 rounded-lg text-sm font-medium ${
                     pg === page
                       ? "bg-indigo-600 text-white"
-                      : "hover:bg-gray-100 text-gray-600"
+                      : "hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-600 dark:text-gray-400"
                   }`}
                 >
                   {pg + 1}
@@ -179,7 +179,7 @@ export default function Table({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronRight size={18} />
             </button>
