@@ -6,10 +6,11 @@ import { Payment } from "../models/payment";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/stats", async (req, res) => {
+router.get("/stats", authenticate, async (req, res) => {
   try {
     const [
       customers,

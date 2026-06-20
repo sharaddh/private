@@ -15,7 +15,7 @@ const createSchema = z.object({
   advancePaid: z.number().optional()
 });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const list = await Bill.find().limit(100);
   res.json({ success: true, data: list });
 });

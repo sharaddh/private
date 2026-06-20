@@ -9,7 +9,7 @@ const router = Router();
 
 const createSchema = z.object({ customerId: z.string(), billId: z.string().optional(), amount: z.number().min(0.01), paymentMode: z.string().optional(), paymentDate: z.string().optional() });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const list = await Payment.find().limit(200);
   res.json({ success: true, data: list });
 });

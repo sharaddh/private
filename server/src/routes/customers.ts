@@ -31,11 +31,11 @@ const createCustomerSchema = z.object({
   )
 });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const q = (req.query.q as string) || "";
   const phone = req.query.phone as string;
   if (phone) {
-    const customers = await Customer.find({ mobile: phone });
+    const customers = await Customer.find({ mobile: { $regex: phone, $options: "i" } });
     return res.json({ success: true, data: customers || [] });
   }
   const customers = await Customer.find(
@@ -58,7 +58,7 @@ router.post("/", authenticate, async (req, res) => {
 });
 
 // GET /summary/:id — rich customer card data (placed before /:id to avoid route conflict)
-router.get("/summary/:id", async (req, res) => {
+router.get("/summary/:id", authenticate, async (req, res) => {
   try {
     const c = await Customer.findById(req.params.id);
     if (!c) return res.status(404).json({ success: false, message: "Not found" });
@@ -92,7 +92,7 @@ router.get("/summary/:id", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   const c = await Customer.findById(req.params.id);
   if (!c) return res.status(404).json({ success: false, message: "Not found" });
   res.json({ success: true, data: c });

@@ -6,6 +6,7 @@ import { User } from "../models/user";
 import { signAccess, signRefresh } from "../utils/jwt";
 import { JWT_SECRET } from "../config";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { verifyToken } from "../utils/jwt";
 
 const router = Router();
 
@@ -14,6 +15,18 @@ const loginSchema = registerSchema;
 
 router.post("/register", async (req, res) => {
   try {
+    const userCount = await User.countDocuments();
+    if (userCount > 0) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ success: false, message: "Admin access required to create new users" });
+      }
+      try {
+        verifyToken(authHeader.split(" ")[1]);
+      } catch {
+        return res.status(401).json({ success: false, message: "Invalid admin token" });
+      }
+    }
     const p = registerSchema.parse(req.body);
     const exists = await User.findOne({ username: p.username });
     if (exists) return res.status(400).json({ success: false, message: "Username already exists" });

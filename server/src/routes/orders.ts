@@ -37,7 +37,7 @@ const statusUpdateSchema = z.object({
   paymentMode: z.string().optional(),
 });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const { customerId } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;

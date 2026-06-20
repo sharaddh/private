@@ -8,7 +8,7 @@ const router = Router();
 
 const createSchema = z.object({ customerId: z.string(), orderId: z.string().optional(), address: z.string().optional(), expectedDeliveryDate: z.string().optional(), status: z.string().optional() });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const list = await Delivery.find().limit(200);
   res.json({ success: true, data: list });
 });

@@ -8,7 +8,7 @@ const router = Router();
 
 const createSchema = z.object({ sku: z.string().min(1), category: z.string().optional(), brand: z.string().optional(), model: z.string().optional(), color: z.string().optional(), size: z.string().optional(), quantity: z.number().optional(), purchasePrice: z.number().optional(), sellingPrice: z.number().optional() });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const q = (req.query.q as string) || "";
   const filter = q
     ? {

@@ -10,6 +10,7 @@ import visits from "./visits";
 import prescriptions from "./prescriptions";
 import dashboard from "./dashboard";
 import reports from "./reports";
+import settings from "./settings";
 import workspace from "./workspace";
 
 const router = Router();
@@ -25,6 +26,7 @@ router.use("/visits", visits);
 router.use("/prescriptions", prescriptions);
 router.use("/dashboard", dashboard);
 router.use("/reports", reports);
+router.use("/settings", settings);
 router.use("/workspace", workspace);
 
 export default router;

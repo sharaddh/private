@@ -14,7 +14,7 @@ const createSchema = z.object({
   remarks: z.string().optional(),
 });
 
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const { customerId } = req.query;
     const filter: any = {};
@@ -44,7 +44,7 @@ router.post("/", authenticate, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     const v = await Visit.findById(req.params.id);
     if (!v) return res.status(404).json({ success: false, message: "Not found" });
