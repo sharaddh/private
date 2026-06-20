@@ -168,7 +168,7 @@ export default function Orders() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Orders</h1>
-          <p className="text-sm text-gray-500 mt-1">Track order status from lab processing to delivery.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Track order status from lab processing to delivery.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">New Order</span>
@@ -176,10 +176,10 @@ export default function Orders() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card text-center"><p className="text-2xl font-bold text-gray-900">{stats.total}</p><p className="text-sm text-gray-500">Total</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-amber-600">{stats.pending}</p><p className="text-sm text-gray-500">In Progress</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-blue-600">{stats.ready}</p><p className="text-sm text-gray-500">Ready</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-emerald-600">{stats.delivered}</p><p className="text-sm text-gray-500">Delivered</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Total</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">In Progress</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.ready}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Ready</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.delivered}</p><p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Delivered</p></div>
       </div>
 
       <Table
@@ -188,8 +188,8 @@ export default function Orders() {
             key: "customerId", label: "Customer",
             render: (v: any, row: any) => (
               <div>
-                <p className="font-medium text-gray-900">{customerName(row)}</p>
-                {customerMobile(row) && <p className="text-xs text-gray-400">{customerMobile(row)}</p>}
+                <p className="font-medium text-gray-900 dark:text-white">{customerName(row)}</p>
+                {customerMobile(row) && <p className="text-xs text-gray-400 dark:text-gray-500">{customerMobile(row)}</p>}
               </div>
             ),
           },
@@ -204,8 +204,8 @@ export default function Orders() {
           {
             key: "billInfo", label: "Pending",
             render: (v: any) => v?.pendingAmount > 0
-              ? <span className="text-amber-600 font-medium">₹{v.pendingAmount}</span>
-              : v?.totalAmount ? <span className="text-emerald-600 text-sm">Cleared</span> : "—",
+              ? <span className="text-amber-600 dark:text-amber-400 font-medium">₹{v.pendingAmount}</span>
+              : v?.totalAmount ? <span className="text-emerald-600 dark:text-emerald-400 text-sm">Cleared</span> : "—",
           },
           {
             key: "status", label: "Status",
@@ -218,7 +218,7 @@ export default function Orders() {
                     <button
                       onClick={() => advanceStatus(row)}
                       disabled={statusLoading === row._id}
-                      className="p-1 hover:bg-indigo-50 rounded text-indigo-500 disabled:opacity-30"
+                      className="p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded text-indigo-500 dark:text-indigo-400 disabled:opacity-30"
                       title={`Mark as ${next}`}
                     >
                       {statusLoading === row._id
@@ -227,7 +227,7 @@ export default function Orders() {
                     </button>
                   )}
                   {canCancel(v) && (
-                    <button onClick={() => cancelOrder(row)} className="p-1 hover:bg-red-50 rounded text-red-400" title="Cancel order">
+                    <button onClick={() => cancelOrder(row)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400" title="Cancel order">
                       <Trash2 size={13} />
                     </button>
                   )}
@@ -240,8 +240,8 @@ export default function Orders() {
         searchPlaceholder="Search orders..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -251,31 +251,31 @@ export default function Orders() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer ID *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer ID *</label>
                 <input className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Frame</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Frame</label>
                 <input className="input-field" placeholder="Frame model" value={form.frame} onChange={(e) => setForm({ ...form, frame: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Lens</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Lens</label>
                 <input className="input-field" placeholder="Lens type" value={form.lens} onChange={(e) => setForm({ ...form, lens: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Coating</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Coating</label>
                 <input className="input-field" placeholder="Coating type" value={form.coating} onChange={(e) => setForm({ ...form, coating: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
                 <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} min="1" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Date</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Date</label>
                 <input type="date" className="input-field" value={form.deliveryDate} onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
                 <select className="input-field" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                   {["Draft", "Ordered", "In Lab", "Ready", "Delivered", "Cancelled"].map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -283,11 +283,11 @@ export default function Orders() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Accessories</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Accessories</label>
                 <input className="input-field" placeholder="comma, separated" value={form.accessories} onChange={(e) => setForm({ ...form, accessories: e.target.value })} />
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
               <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Create Order"}</button>
             </div>
@@ -300,26 +300,26 @@ export default function Orders() {
         {collectModal && (
           <div className="space-y-5">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-              <p className="text-sm text-amber-700 mb-1">Pending Amount</p>
-              <p className="text-3xl font-bold text-amber-700">₹{collectModal.pendingAmount}</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mb-1">Pending Amount</p>
+              <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">₹{collectModal.pendingAmount}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Collect Amount</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Collect Amount</label>
               <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
                 onChange={(e) => setCollectAmount(Number(e.target.value))} max={collectModal.pendingAmount} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Payment Mode</label>
               <div className="grid grid-cols-2 gap-2">
                 {["Cash", "UPI", "Card", "Bank Transfer"].map((mode) => (
                   <button key={mode} onClick={() => setCollectMode(mode)}
                     className={`py-2.5 px-4 rounded-xl text-sm font-medium border transition-all ${
-                      collectMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                      collectMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700 hover:border-gray-300"
                     }`}>{mode}</button>
                 ))}
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
               <button onClick={() => setCollectModal(null)} className="btn-secondary">Skip</button>
               <button onClick={handleCollectAndDeliver} disabled={collectAmount <= 0}
                 className="btn-success flex items-center gap-2">

@@ -160,26 +160,26 @@ export default function Prescriptions() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {list.length === 0 ? (
           <div className="card col-span-full">
-            <p className="text-gray-400 text-sm text-center py-8">No prescriptions yet.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No prescriptions yet.</p>
           </div>
         ) : list.map((p: any) => (
           <div key={p._id} className="card cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelected(p)}>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString()}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(p.createdAt).toLocaleDateString()}</p>
               <div className="flex gap-1">
-                <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-1 hover:bg-indigo-50 rounded text-indigo-600"><Edit2 size={14} /></button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(p._id); }} className="p-1 hover:bg-red-50 rounded text-red-600"><Trash2 size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded text-indigo-600 dark:text-indigo-400"><Edit2 size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(p._id); }} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600 dark:text-red-400"><Trash2 size={14} /></button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1">Right Eye</p>
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Right Eye</p>
                 {renderEyeBlock("DV", p.rightEye?.dv)}
                 {renderEyeBlock("NV", p.rightEye?.nv)}
                 {renderEyeBlock("PC", p.rightEye?.pc)}
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1">Left Eye</p>
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Left Eye</p>
                 {renderEyeBlock("DV", p.leftEye?.dv)}
                 {renderEyeBlock("NV", p.leftEye?.nv)}
                 {renderEyeBlock("PC", p.leftEye?.pc)}
