@@ -5,6 +5,7 @@ import { Customer } from "../models/customer";
 import { Order } from "../models/order";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 

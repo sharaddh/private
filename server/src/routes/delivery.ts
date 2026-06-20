@@ -27,7 +27,7 @@ router.post("/", authenticate, audit, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   const d = await Delivery.findById(req.params.id);
   if (!d) return res.status(404).json({ success: false, message: "Not found" });
   res.json({ success: true, data: d });
