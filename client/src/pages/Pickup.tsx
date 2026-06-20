@@ -146,7 +146,7 @@ export default function Pickup() {
               className="card cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
+                  <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
@@ -166,7 +166,7 @@ export default function Pickup() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
+              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
                 {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
@@ -262,7 +262,7 @@ export default function Pickup() {
               )}
 
               {message && (
-                <div className={`rounded-xl p-3 text-sm ${message.includes("✓") ? "bg-emerald-50 text-emerald-700 dark:text-emerald-400" : "bg-red-50 text-red-700 dark:text-red-400"}`}>
+                <div className={`rounded-xl p-3 text-sm ${message.includes("✓") ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"}`}>
                   {message}
                 </div>
               )}

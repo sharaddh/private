@@ -70,7 +70,7 @@ export default function InventoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage frames, lenses, and accessories stock.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frames, lenses, and accessories stock.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowAdjust(true)} className="btn-secondary flex items-center gap-2">
@@ -84,12 +84,12 @@ export default function InventoryPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
-          <p className="text-sm text-gray-500">Frames</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Frames</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900">{list.filter((i) => i.category === "Lens").length}</p>
-          <p className="text-sm text-gray-500">Lenses</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Lens").length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Lenses</p>
         </div>
         <div className="card text-center">
           <p className="text-2xl font-bold text-gray-900">{list.filter((i) => i.category === "Accessories").length}</p>
