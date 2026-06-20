@@ -156,7 +156,7 @@ export default function Bills() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Bills</h1>
-          <p className="text-sm text-gray-500 mt-1">Create and manage billing invoices.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create and manage billing invoices.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">New Bill</span>
@@ -173,21 +173,21 @@ export default function Bills() {
           { key: "subtotal", label: "Subtotal", render: (v) => `₹${(v || 0).toFixed(2)}` },
           { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{(v || 0).toFixed(2)}</span> },
           { key: "pendingAmount", label: "Pending", render: (v) => (
-            <span className={v > 0 ? "text-amber-600 font-medium" : "text-emerald-600"}>{v > 0 ? `₹${v.toFixed(2)}` : "Paid"}</span>
+            <span className={v > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-emerald-600 dark:text-emerald-400"}>{v > 0 ? `₹${v.toFixed(2)}` : "Paid"}</span>
           )},
         ]}
         data={list}
         searchPlaceholder="Search bills..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-green-50 rounded-lg text-green-600" title="Send WhatsApp">
+            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400" title="Send WhatsApp">
               <MessageCircle size={15} />
             </button>
-            <button onClick={() => handlePrint(row)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600" title="Print">
+            <button onClick={() => handlePrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Print">
               <Printer size={15} />
             </button>
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -196,7 +196,7 @@ export default function Bills() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer *</label>
               <select className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required>
                 <option value="">Select customer</option>
                 {customers.map((c) => (
@@ -205,31 +205,31 @@ export default function Bills() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Item Description *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Item Description *</label>
               <input className="input-field" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
               <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} min="1" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Unit Price</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Price</label>
               <input type="number" step="0.01" className="input-field" value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Discount</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Discount</label>
               <input type="number" step="0.01" className="input-field" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tax</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tax</label>
               <input type="number" step="0.01" className="input-field" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Advance Paid</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Advance Paid</label>
               <input type="number" step="0.01" className="input-field" value={form.advancePaid} onChange={(e) => setForm({ ...form, advancePaid: Number(e.target.value) })} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update Bill" : "Create Bill"}</button>
           </div>

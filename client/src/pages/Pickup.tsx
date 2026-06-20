@@ -146,15 +146,15 @@ export default function Pickup() {
               className="card cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{c.name}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{c.mobile}</p>
                   </div>
                 </div>
-                <span className="text-indigo-600 text-sm font-medium">Select →</span>
+                <span className="text-indigo-600 dark:text-indigo-400 text-sm font-medium">Select →</span>
               </div>
             </div>
           ))}
@@ -166,11 +166,11 @@ export default function Pickup() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
                 {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{selectedCustomer.name}</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCustomer.mobile}</p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function Pickup() {
                 <div key={o._id} onClick={() => selectOrder(o)}
                   className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 cursor-pointer transition-all">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-white">
                       {o.frame && `Frame: ${o.frame}`}{o.frame && o.lens ? " | " : ""}{o.lens && `Lens: ${o.lens}`}
                     </p>
                     <p className="text-xs text-gray-400">
@@ -206,7 +206,7 @@ export default function Pickup() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-700">Order Details</h3>
                 <button onClick={() => { setSelectedOrder(null); setBill(null); }}
-                  className="text-sm text-indigo-600 hover:text-indigo-800">Change</button>
+                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">Change</button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -250,7 +250,7 @@ export default function Pickup() {
                             {["Cash", "UPI", "Card"].map((m) => (
                               <button key={m} onClick={() => setCollectMode(m)}
                                 className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200"
+                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 dark:text-gray-400 border-gray-200"
                                 }`}>{m}</button>
                             ))}
                           </div>

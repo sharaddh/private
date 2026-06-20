@@ -222,7 +222,7 @@ export default function Orders() {
                       title={`Mark as ${next}`}
                     >
                       {statusLoading === row._id
-                        ? <div className="animate-spin w-3.5 h-3.5 border-2 border-indigo-500 border-t-transparent rounded-full" />
+                        ? <div className="animate-spin w-3.5 h-3.5 border-2 border-indigo-500 dark:border-indigo-400 border-t-transparent rounded-full" />
                         : <ChevronRight size={14} />}
                     </button>
                   )}
@@ -241,7 +241,7 @@ export default function Orders() {
         actions={(row) => (
           <div className="flex items-center gap-1">
             <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -299,7 +299,7 @@ export default function Orders() {
       <Modal open={!!collectModal} onClose={() => setCollectModal(null)} title="Collect Due on Delivery" size="md">
         {collectModal && (
           <div className="space-y-5">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-center">
               <p className="text-sm text-amber-700 dark:text-amber-300 mb-1">Pending Amount</p>
               <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">₹{collectModal.pendingAmount}</p>
             </div>
@@ -314,7 +314,7 @@ export default function Orders() {
                 {["Cash", "UPI", "Card", "Bank Transfer"].map((mode) => (
                   <button key={mode} onClick={() => setCollectMode(mode)}
                     className={`py-2.5 px-4 rounded-xl text-sm font-medium border transition-all ${
-                      collectMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700 hover:border-gray-300"
+                      collectMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700 hover:border-gray-300"
                     }`}>{mode}</button>
                 ))}
               </div>

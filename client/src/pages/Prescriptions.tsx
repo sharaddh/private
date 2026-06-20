@@ -186,7 +186,7 @@ export default function Prescriptions() {
               </div>
             </div>
             {(p.pd || p.notes) && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 {p.pd && <span>PD: {p.pd} </span>}
                 {p.notes && <span>Notes: {p.notes}</span>}
               </div>
@@ -199,7 +199,7 @@ export default function Prescriptions() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer *</label>
               <select className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required>
                 <option value="">Select customer</option>
                 {customers.map((c) => (
