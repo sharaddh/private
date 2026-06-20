@@ -16,7 +16,7 @@ export default function Form({
   isLoading = false,
 }: FormProps) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div className="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-md mb-6">
       {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
       <form onSubmit={onSubmit} className="space-y-4">
         {children}
