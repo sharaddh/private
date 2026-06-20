@@ -156,7 +156,7 @@ export default function CustomerDetail() {
       const res = await api.post("/api/workspace/transaction", payload);
       if (res.success) {
         // Refresh data
-        const [v, p] = await Promise.all([
+        const [v, p, c] = await Promise.all([
           api.get(`/api/visits?customerId=${id}`),
           api.get(`/api/prescriptions?customerId=${id}`),
           api.get(`/api/customers/${id}`),

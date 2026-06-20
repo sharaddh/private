@@ -26,6 +26,7 @@ interface BillItem { description: string; qty: number; price: number; }
 export default function Workspace() {
   const navigate = useNavigate();
   const phoneRef = useRef<HTMLInputElement>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [step, setStep] = useState<Step>("customer");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -109,7 +110,10 @@ export default function Workspace() {
   const [labExpectedDate, setLabExpectedDate] = useState("");
   const [labRemarks, setLabRemarks] = useState("");
 
-  useEffect(() => { phoneRef.current?.focus(); }, []);
+  useEffect(() => {
+    phoneRef.current?.focus();
+    api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
+  }, []);
 
   // Auto-fill bill from order
   useEffect(() => {
@@ -461,18 +465,22 @@ export default function Workspace() {
   function sendWhatsApp(phone: string, bill: any, customer: any, payment: any, order: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
+    const shop = settings?.shopName || "KMJ Optical";
+    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
     const items = (bill?.items || []).map((i: any) =>
       `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
     ).join("%0a");
-    const msg = `*KMJ Optical* 🕶%0a%0a*Bill:* ${bill?.billNumber || ""}%0a*Date:* ${new Date().toLocaleDateString("en-IN")}%0a%0a*Customer:* ${customer?.name || ""}%0a*Mobile:* ${customer?.mobile || ""}%0a%0a*Items:*%0a${items}%0a%0a*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}%0a${bill?.discount ? `*Discount:* -₹${bill.discount.toFixed(0)}%0a` : ""}${bill?.tax ? `*Tax:* +₹${bill.tax.toFixed(0)}%0a` : ""}*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}%0a*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}%0a%0a*Payment:* ${payment?.paymentMode || "Cash"}%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a%0aThank you for your visit! 🙏`;
-    window.open(`https://wa.me/91${num}?text=${msg}`, "_blank");
+    const msg = `*${shop}* 🕶%0a%0a*Bill:* ${bill?.billNumber || ""}%0a*Date:* ${new Date().toLocaleDateString("en-IN")}%0a%0a*Customer:* ${customer?.name || ""}%0a*Mobile:* ${customer?.mobile || ""}%0a%0a*Items:*%0a${items}%0a%0a*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}%0a${bill?.discount ? `*Discount:* -₹${bill.discount.toFixed(0)}%0a` : ""}${bill?.tax ? `*Tax:* +₹${bill.tax.toFixed(0)}%0a` : ""}*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}%0a*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}%0a%0a*Payment:* ${payment?.paymentMode || "Cash"}%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a%0aThank you for your visit! 🙏`;
+    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
   }
 
   function sendPickupWhatsApp(phone: string, order: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
-    const msg = `*KMJ Optical* 🕶%0a%0aHi ${selectedCustomer?.name || ""},%0aYour order is ready for pickup! 🎉%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a*Due Amount:* ₹${(success?.bill?.pendingAmount || 0).toFixed(0)}%0a%0aPlease visit our store to collect.%0aThank you! 🙏`;
-    window.open(`https://wa.me/91${num}?text=${msg}`, "_blank");
+    const shop = settings?.shopName || "KMJ Optical";
+    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
+    const msg = `*${shop}* 🕶%0a%0aHi ${selectedCustomer?.name || ""},%0aYour order is ready for pickup! 🎉%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a*Due Amount:* ₹${(success?.bill?.pendingAmount || 0).toFixed(0)}%0a%0aPlease visit our store to collect.%0aThank you! 🙏`;
+    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
   }
 
   const steps = [
