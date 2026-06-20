@@ -4,6 +4,8 @@ import { Bill } from "../models/bill";
 import { Delivery } from "../models/delivery";
 import { Payment } from "../models/payment";
 import { Customer } from "../models/customer";
+import { Settings } from "../models/settings";
+import { whatsapp } from "../services/whatsapp";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
@@ -122,6 +124,23 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         await delivery.save();
       }
       result.delivery = delivery;
+    }
+
+    // Auto-send WhatsApp when Ready for pickup
+    if (status === "Ready") {
+      const customer = await Customer.findById(order.customerId).select("name mobile");
+      if (customer?.mobile) {
+        const settings = await Settings.findOne().sort({ createdAt: -1 });
+        const shop = settings?.shopName || "KMJ Optical";
+        const items = [order.frame, order.lens, order.coating].filter(Boolean).join(", ");
+        const deliveryDate = order.deliveryDate
+          ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
+          : "soon";
+        const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
+        try {
+          await whatsapp.sendMessage(customer.mobile, msg);
+        } catch { /* WhatsApp not connected, skip */ }
+      }
     }
 
     // Handle due collection on delivery
