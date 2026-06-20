@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import Table from "../components/Table";
 import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, UserPlus } from "lucide-react";
+import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight } from "lucide-react";
 
 interface Customer {
   _id: string;
@@ -25,6 +24,8 @@ interface Customer {
 
 export default function Customers() {
   const [list, setList] = useState<Customer[]>([]);
+  const [filteredList, setFilteredList] = useState<Customer[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState({
@@ -37,10 +38,30 @@ export default function Customers() {
 
   const fetchCustomers = useCallback(async () => {
     const res = await api.get("/api/customers");
-    if (res.success) setList(res.data || []);
+    if (res.success) {
+      setList(res.data || []);
+      setFilteredList(res.data || []);
+    }
   }, []);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setFilteredList(list);
+      return;
+    }
+    const lower = q.toLowerCase();
+    setFilteredList(
+      list.filter((c) =>
+        c.name?.toLowerCase().includes(lower) ||
+        c.mobile?.includes(q) ||
+        c.customerId?.toLowerCase().includes(lower) ||
+        c.email?.toLowerCase().includes(lower)
+      )
+    );
+  }, [searchQuery, list]);
 
   function openCreate() {
     setEditing(null);
@@ -84,6 +105,9 @@ export default function Customers() {
       if (res.success) {
         await fetchCustomers();
         setShowForm(false);
+        if (!editing && res.data?._id) {
+          navigate(`/customers/${res.data._id}`);
+        }
       } else {
         setError(res.message || "Operation failed");
       }
@@ -104,56 +128,103 @@ export default function Customers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-title">Customers</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage customer profiles and contact details.</p>
+          <p className="text-sm text-gray-500 mt-1">Search, view, and manage customer profiles.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <UserPlus size={18} />
-          <span className="hidden sm:inline">Add Customer</span>
+          <span className="hidden sm:inline">Add New Customer</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
 
-      <Table
-        columns={[
-          { key: "name", label: "Name", render: (v, row) => (
-            <span
-              onClick={() => navigate(`/customers/${row._id}`)}
-              className="text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+      <div className="relative">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search by name, mobile number, email, or customer ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input-field pl-11 text-base"
+        />
+      </div>
+
+      {filteredList.length === 0 ? (
+        <div className="card text-center py-12">
+          <Phone size={48} className="mx-auto text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            {searchQuery ? "No customers found" : "No customers yet"}
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            {searchQuery
+              ? `No results matching "${searchQuery}". Add a new customer.`
+              : "Start by adding your first customer."}
+          </p>
+          <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
+            <UserPlus size={18} /> Add New Customer
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">{filteredList.length} customer(s)</p>
+          {filteredList.map((c) => (
+            <div
+              key={c._id}
+              onClick={() => navigate(`/customers/${c._id}`)}
+              className="card cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all"
             >
-              {v || "—"}
-            </span>
-          )},
-          { key: "mobile", label: "Mobile" },
-          { key: "email", label: "Email" },
-          { key: "city", label: "City" },
-          { key: "gender", label: "Gender" },
-          { key: "totalVisits", label: "Visits" },
-          { key: "totalSpent", label: "Total Spent", render: (v) => v ? `₹${v.toLocaleString()}` : "—" },
-        ]}
-        data={list}
-        searchPlaceholder="Search by name, mobile, email..."
-        actions={(row: Customer) => (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); openEdit(row); }}
-              className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-colors"
-              title="Edit"
-            >
-              <Edit2 size={16} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleDelete(row._id); }}
-              className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-              title="Delete"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-        onRowClick={(row) => navigate(`/customers/${row._id}`)}
-      />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg flex-shrink-0">
+                    {c.name?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{c.name}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                      {c.mobile && (
+                        <span className="flex items-center gap-1">
+                          <Phone size={12} /> {c.mobile}
+                        </span>
+                      )}
+                      {c.email && <span>{c.email}</span>}
+                      {c.city && <span>{c.city}</span>}
+                      {c.customerId && <span className="text-xs text-gray-400">ID: {c.customerId}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm text-gray-500">{c.totalVisits || 0} visits</p>
+                    <p className="text-sm font-semibold text-emerald-600">₹{(c.totalSpent || 0).toLocaleString()}</p>
+                    {(c.pendingAmount || 0) > 0 && (
+                      <p className="text-xs text-amber-600 font-medium">₹{c.pendingAmount} due</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openEdit(c); }}
+                      className="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
+                      className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <ArrowRight size={18} className="text-gray-300 ml-1" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Modal
         open={showForm}
@@ -175,7 +246,7 @@ export default function Customers() {
               <input type="email" className="input-field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Mobile</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Mobile *</label>
               <input className="input-field" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
             </div>
             <div>

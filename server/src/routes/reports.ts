@@ -9,7 +9,7 @@ import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/revenue", async (req, res) => {
+router.get("/revenue", authenticate, async (req, res) => {
   try {
     const { start, end } = req.query;
     const filter: any = {};
@@ -40,7 +40,7 @@ router.get("/revenue", async (req, res) => {
   }
 });
 
-router.get("/monthly", async (req, res) => {
+router.get("/monthly", authenticate, async (req, res) => {
   try {
     const revenue = await Bill.aggregate([
       {
@@ -70,7 +70,7 @@ router.get("/monthly", async (req, res) => {
   }
 });
 
-router.get("/customers", async (req, res) => {
+router.get("/customers", authenticate, async (req, res) => {
   try {
     const topCustomers = await Customer.find().sort({ totalSpent: -1 }).limit(20);
     const newCustomers = await Customer.aggregate([
@@ -89,7 +89,7 @@ router.get("/customers", async (req, res) => {
   }
 });
 
-router.get("/inventory", async (req, res) => {
+router.get("/inventory", authenticate, async (req, res) => {
   try {
     const [allItems, lowStock, byCategory] = await Promise.all([
       Inventory.find(),
@@ -107,7 +107,7 @@ router.get("/inventory", async (req, res) => {
   }
 });
 
-router.get("/deliveries", async (req, res) => {
+router.get("/deliveries", authenticate, async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
