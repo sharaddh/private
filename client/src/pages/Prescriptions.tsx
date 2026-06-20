@@ -208,7 +208,7 @@ export default function Prescriptions() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Visit</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit</label>
               <select className="input-field" value={form.visitId} onChange={(e) => setForm({ ...form, visitId: e.target.value })}>
                 <option value="">Select visit (optional)</option>
                 {visits.map((v) => (
@@ -219,14 +219,14 @@ export default function Prescriptions() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border border-gray-200 rounded-xl p-4 space-y-4">
-              <h4 className="text-sm font-semibold text-gray-700">Right Eye</h4>
+            <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Right Eye</h4>
               <EyeInputGroup side="rightEye" type="dv" label="Distance Vision (DV)" />
               <EyeInputGroup side="rightEye" type="nv" label="Near Vision (NV)" />
               <EyeInputGroup side="rightEye" type="pc" label="Peripheral Curve (PC)" />
             </div>
-            <div className="border border-gray-200 rounded-xl p-4 space-y-4">
-              <h4 className="text-sm font-semibold text-gray-700">Left Eye</h4>
+            <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Left Eye</h4>
               <EyeInputGroup side="leftEye" type="dv" label="Distance Vision (DV)" />
               <EyeInputGroup side="leftEye" type="nv" label="Near Vision (NV)" />
               <EyeInputGroup side="leftEye" type="pc" label="Peripheral Curve (PC)" />
