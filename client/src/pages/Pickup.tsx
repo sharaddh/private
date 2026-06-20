@@ -143,7 +143,7 @@ export default function Pickup() {
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{customers.length} customer(s) found</p>
           {customers.map((c: any) => (
             <div key={c._id} onClick={() => selectCustomer(c)}
-              className="card cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
+              className="card cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
@@ -184,7 +184,7 @@ export default function Pickup() {
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{orders.length} pending order(s)</p>
               {orders.map((o: any) => (
                 <div key={o._id} onClick={() => selectOrder(o)}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 cursor-pointer transition-all">
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 dark:hover:border-indigo-700 cursor-pointer transition-all">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
                       {o.frame && `Frame: ${o.frame}`}{o.frame && o.lens ? " | " : ""}{o.lens && `Lens: ${o.lens}`}
@@ -206,7 +206,7 @@ export default function Pickup() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Order Details</h3>
                 <button onClick={() => { setSelectedOrder(null); setBill(null); }}
-                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">Change</button>
+                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">Change</button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">

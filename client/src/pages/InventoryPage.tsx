@@ -92,12 +92,12 @@ export default function InventoryPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Lenses</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900">{list.filter((i) => i.category === "Accessories").length}</p>
-          <p className="text-sm text-gray-500">Accessories</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Accessories").length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Accessories</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-red-600">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
-          <p className="text-sm text-gray-500">Low Stock</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function InventoryPage() {
           { key: "model", label: "Model" },
           { key: "color", label: "Color" },
           { key: "quantity", label: "Stock", render: (v) => (
-            <span className={`font-medium ${v > 10 ? "text-emerald-600" : v > 0 ? "text-amber-600" : "text-red-600"}`}>
+            <span className={`font-medium ${v > 10 ? "text-emerald-600 dark:text-emerald-400" : v > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
               {v || 0}
             </span>
           )},
