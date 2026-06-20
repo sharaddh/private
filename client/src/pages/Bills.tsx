@@ -1,82 +1,26 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
-import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, Printer, MessageCircle, FileDown } from "lucide-react";
+import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
+import { downloadBillPdf } from "../utils/pdf";
 
 export default function Bills() {
   const [list, setList] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({
-    customerId: "", description: "", quantity: 1, unitPrice: 0,
-    discount: 0, tax: 0, advancePaid: 0,
-  });
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => { fetchBills(); fetchCustomers(); fetchSettings(); }, []);
+  useEffect(() => { fetchBills(); fetchSettings(); }, []);
 
   function fetchBills() {
     api.get("/api/bills").then((d) => { if (d.success) setList(d.data || []); });
-  }
-
-  function fetchCustomers() {
-    api.get("/api/customers").then((d) => { if (d.success) setCustomers(d.data || []); });
   }
 
   function fetchSettings() {
     api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
   }
 
-  function getCustomerByMobileOrId(val: string) {
-    return customers.find((c) => c._id === val || c.mobile === val || c.customerId === val);
-  }
-
-  function openCreate() {
-    setEditing(null);
-    setForm({ customerId: "", description: "", quantity: 1, unitPrice: 0, discount: 0, tax: 0, advancePaid: 0 });
-    setShowForm(true);
-  }
-
-  function openEdit(b: any) {
-    setEditing(b);
-    const item = b.items?.[0] || {};
-    setForm({
-      customerId: b.customerId || "",
-      description: item.description || "",
-      quantity: item.quantity || 1,
-      unitPrice: item.unitPrice || 0,
-      discount: b.discount || 0,
-      tax: b.tax || 0,
-      advancePaid: b.advancePaid || 0,
-    });
-    setShowForm(true);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const body = {
-        customerId: form.customerId,
-        items: [{ description: form.description, quantity: form.quantity, unitPrice: form.unitPrice }],
-        discount: form.discount,
-        tax: form.tax,
-        advancePaid: form.advancePaid,
-      };
-      const res = editing
-        ? await api.put(`/api/bills/${editing._id}`, body)
-        : await api.post("/api/bills", body);
-      if (res.success) { fetchBills(); setShowForm(false); }
-    } finally { setIsLoading(false); }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this bill?")) return;
-    const res = await api.del(`/api/bills/${id}`);
-    if (res.success) setList((prev) => prev.filter((b) => b._id !== id));
+  function resolveCustomer(bill: any) {
+    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId;
+    return null;
   }
 
   function handlePrint(bill: any) {
@@ -86,7 +30,7 @@ export default function Bills() {
     const address = settings?.shopAddress || "";
     const phone = settings?.shopPhone || "";
     const logo = settings?.logo || "";
-    const customer = getCustomerByMobileOrId(bill.customerId);
+    const customer = resolveCustomer(bill);
     w.document.write(`
       <html><head><title>Bill ${bill.billNumber}</title>
       <style>
@@ -138,8 +82,13 @@ export default function Bills() {
     w.document.close();
   }
 
+  function handleDownloadPdf(bill: any) {
+    const customer = resolveCustomer(bill) || {};
+    downloadBillPdf(bill, customer, settings || {});
+  }
+
   function sendWhatsApp(bill: any) {
-    const customer = getCustomerByMobileOrId(bill.customerId);
+    const customer = resolveCustomer(bill);
     const num = customer?.mobile?.replace(/\D/g, "");
     if (!num) return;
     const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
@@ -153,22 +102,17 @@ export default function Bills() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Bills</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create and manage billing invoices.</p>
-        </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> <span className="hidden sm:inline">New Bill</span>
-        </button>
+      <div>
+        <h1 className="page-title">Bills</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">View and manage invoices. Bills are created through customer visits and orders.</p>
       </div>
 
       <Table
         columns={[
           { key: "billNumber", label: "Bill #" },
-          { key: "customerId", label: "Customer", render: (v) => {
-            const c = getCustomerByMobileOrId(v);
-            return c ? c.name : v;
+          { key: "customerId", label: "Customer", render: (v: any, row: any) => {
+            const c = resolveCustomer(row);
+            return c ? c.name : typeof v === "string" ? v.slice(-6) : "—";
           }},
           { key: "subtotal", label: "Subtotal", render: (v) => `₹${(v || 0).toFixed(2)}` },
           { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{(v || 0).toFixed(2)}</span> },
@@ -183,58 +127,15 @@ export default function Bills() {
             <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400" title="Send WhatsApp">
               <MessageCircle size={15} />
             </button>
+            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400" title="Download PDF">
+              <PdfIcon size={15} />
+            </button>
             <button onClick={() => handlePrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Print">
               <Printer size={15} />
             </button>
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
-
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Bill" : "Create New Bill"} size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer *</label>
-              <select className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required>
-                <option value="">Select customer</option>
-                {customers.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name} ({c.mobile || c.customerId})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Item Description *</label>
-              <input className="input-field" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
-              <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} min="1" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Unit Price</label>
-              <input type="number" step="0.01" className="input-field" value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Discount</label>
-              <input type="number" step="0.01" className="input-field" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tax</label>
-              <input type="number" step="0.01" className="input-field" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Advance Paid</label>
-              <input type="number" step="0.01" className="input-field" value={form.advancePaid} onChange={(e) => setForm({ ...form, advancePaid: Number(e.target.value) })} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update Bill" : "Create Bill"}</button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 }

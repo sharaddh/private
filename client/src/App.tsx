@@ -10,9 +10,11 @@ import Payments from "./pages/Payments";
 import InventoryPage from "./pages/InventoryPage";
 import Delivery from "./pages/Delivery";
 import Pickup from "./pages/Pickup";
+import Announcement from "./pages/Announcement";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Workspace from "./pages/Workspace";
+import NewVisit from "./pages/NewVisit";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -23,6 +25,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/customers/:id" element={<CustomerDetail />} />
+        <Route path="/customers/:id/new-visit" element={<NewVisit />} />
         <Route path="/visits" element={<Navigate to="/customers" replace />} />
         <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
         <Route path="/orders" element={<Orders />} />
@@ -31,6 +34,7 @@ export default function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/delivery" element={<Delivery />} />
         <Route path="/pickup" element={<Pickup />} />
+        <Route path="/announcements" element={<Announcement />} />
         <Route path="/workspace" element={<Workspace />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
