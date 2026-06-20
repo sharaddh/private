@@ -1,41 +1,58 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
-import Table from "../components/Table";
-import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, ChevronRight, DollarSign, Check } from "lucide-react";
+import { Eye, ChevronRight, Clock, Package } from "lucide-react";
 
-const STATUS_FLOW = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"] as const;
-const STATUS_NEXT: Record<string, string> = {
+const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
+
+const STATUS_THEME: Record<string, { bar: string; dot: string; border: string; gradient: string; badge: string; glow: string }> = {
+  Draft:    { bar: "bg-gray-300 dark:bg-gray-600", dot: "bg-gray-400 dark:bg-gray-500", border: "border-l-gray-400 dark:border-l-gray-500", gradient: "from-gray-50 to-white dark:from-dark-800 dark:to-dark-850", badge: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300", glow: "shadow-gray-200/50 dark:shadow-gray-800/50" },
+  Ordered:  { bar: "bg-purple-500", dot: "bg-purple-500", border: "border-l-purple-500", gradient: "from-purple-50 to-white dark:from-purple-950/30 dark:to-dark-850", badge: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300", glow: "shadow-purple-200/50 dark:shadow-purple-800/30" },
+  "In Lab": { bar: "bg-amber-500", dot: "bg-amber-500", border: "border-l-amber-500", gradient: "from-amber-50 to-white dark:from-amber-950/30 dark:to-dark-850", badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300", glow: "shadow-amber-200/50 dark:shadow-amber-800/30" },
+  Ready:    { bar: "bg-blue-500", dot: "bg-blue-500", border: "border-l-blue-500", gradient: "from-blue-50 to-white dark:from-blue-950/30 dark:to-dark-850", badge: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300", glow: "shadow-blue-200/50 dark:shadow-blue-800/30" },
+  Delivered: { bar: "bg-emerald-500", dot: "bg-emerald-500", border: "border-l-emerald-500", gradient: "from-emerald-50 to-white dark:from-emerald-950/30 dark:to-dark-850", badge: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300", glow: "shadow-emerald-200/50 dark:shadow-emerald-800/30" },
+};
+
+const VALID_NEXT: Record<string, string> = {
   Draft: "Ordered",
   Ordered: "In Lab",
   "In Lab": "Ready",
-  Ready: "Delivered",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  Draft: "badge-gray",
-  Ordered: "badge-purple",
-  "In Lab": "badge-yellow",
-  Ready: "badge-blue",
-  Delivered: "badge-green",
-  Cancelled: "badge-red",
-};
+function DotProgress({ currentIdx }: { currentIdx: number }) {
+  const labels = ["Draft", "Ordered", "In Lab", "Ready"];
+  return (
+    <div className="flex items-center w-full gap-0">
+      {labels.map((l, i) => {
+        const done = currentIdx > i;
+        const active = currentIdx === i;
+        return (
+          <div key={l} className="flex items-center flex-1 last:flex-none">
+            <div className={`relative w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500 ${
+              active ? "bg-indigo-500 shadow-lg shadow-indigo-300/50 dark:shadow-indigo-700/50 scale-110" :
+              done ? "bg-emerald-400 shadow-sm" : "bg-gray-200 dark:bg-dark-700"
+            }`}>
+              {done ? (
+                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <span className={active ? "text-white" : "text-gray-400 dark:text-gray-600"}>{i + 1}</span>
+              )}
+            </div>
+            {i < labels.length - 1 && (
+              <div className={`flex-1 h-0.5 mx-1 rounded-full transition-all duration-500 ${done || active ? "bg-indigo-400" : "bg-gray-200 dark:bg-dark-700"}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Orders() {
+  const navigate = useNavigate();
   const [list, setList] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({
-    customerId: "", frame: "", lens: "", coating: "", accessories: "",
-    quantity: 1, deliveryDate: "", status: "Draft",
-  });
-  const [isLoading, setIsLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
-
-  // Due collection modal
-  const [collectModal, setCollectModal] = useState<{ order: any; pendingAmount: number } | null>(null);
-  const [collectAmount, setCollectAmount] = useState(0);
-  const [collectMode, setCollectMode] = useState("Cash");
+  const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => { fetchOrders(); }, []);
 
@@ -43,106 +60,14 @@ export default function Orders() {
     api.get("/api/orders").then((d) => { if (d.success) setList(d.data || []); });
   }
 
-  function openCreate() {
-    setEditing(null);
-    setForm({ customerId: "", frame: "", lens: "", coating: "", accessories: "", quantity: 1, deliveryDate: "", status: "Draft" });
-    setShowForm(true);
-  }
-
-  function openEdit(o: any) {
-    setEditing(o);
-    setForm({
-      customerId: o.customerId?._id || o.customerId || "",
-      frame: o.frame || "",
-      lens: o.lens || "",
-      coating: o.coating || "",
-      accessories: o.accessories?.join(", ") || "",
-      quantity: o.quantity || 1,
-      deliveryDate: o.deliveryDate ? new Date(o.deliveryDate).toISOString().split("T")[0] : "",
-      status: o.status || "Draft",
-    });
-    setShowForm(true);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const payload = {
-        ...form,
-        accessories: form.accessories.split(",").map((s) => s.trim()).filter(Boolean),
-        deliveryDate: form.deliveryDate || undefined,
-      };
-      const res = editing
-        ? await api.put(`/api/orders/${editing._id}`, payload)
-        : await api.post("/api/orders", payload);
-      if (res.success) { fetchOrders(); setShowForm(false); }
-    } finally { setIsLoading(false); }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this order?")) return;
-    const res = await api.del(`/api/orders/${id}`);
-    if (res.success) setList((prev) => prev.filter((o) => o._id !== id));
-  }
-
-  function getNextStatus(current: string): string | null {
-    return STATUS_NEXT[current] || null;
-  }
-
-  function canCancel(status: string): boolean {
-    return !["Delivered", "Cancelled"].includes(status);
-  }
-
   async function advanceStatus(order: any) {
-    const next = getNextStatus(order.status);
+    const next = VALID_NEXT[order.status];
     if (!next) return;
-
-    const bill = order.billInfo;
-    const pending = bill?.pendingAmount || 0;
-
-    // If advancing to Delivered and there's pending amount, show collection modal
-    if (next === "Delivered" && pending > 0) {
-      setCollectModal({ order, pendingAmount: pending });
-      setCollectAmount(pending);
-      setCollectMode("Cash");
-      return;
-    }
-
-    // Confirm before advancing
-    if (!confirm(`Mark order as "${next}"?`)) return;
-    await doStatusUpdate(order._id, next);
-  }
-
-  async function cancelOrder(order: any) {
-    if (!confirm(`Cancel order for ${customerName(order)}?`)) return;
-    await doStatusUpdate(order._id, "Cancelled");
-  }
-
-  async function doStatusUpdate(id: string, status: string, payment?: { amount: number; mode: string }) {
-    setStatusLoading(id);
+    setStatusLoading(order._id);
     try {
-      const payload: any = { status };
-      if (payment) {
-        payload.collectPayment = payment.amount;
-        payload.paymentMode = payment.mode;
-      }
-      const res = await api.patch(`/api/orders/${id}/status`, payload);
-      if (res.success) {
-        fetchOrders();
-      } else {
-        alert(res.message || "Status update failed");
-      }
+      const res = await api.patch(`/api/orders/${order._id}/status`, { status: next });
+      if (res.success) fetchOrders();
     } finally { setStatusLoading(null); }
-  }
-
-  async function handleCollectAndDeliver() {
-    if (!collectModal || collectAmount <= 0) return;
-    await doStatusUpdate(collectModal.order._id, "Delivered", {
-      amount: collectAmount,
-      mode: collectMode,
-    });
-    setCollectModal(null);
   }
 
   function customerName(o: any): string {
@@ -156,179 +81,149 @@ export default function Orders() {
     return "";
   }
 
+  function customerId(o: any): string {
+    if (typeof o.customerId === "object" && o.customerId?._id) return o.customerId._id;
+    return o.customerId || "";
+  }
+
+  const filteredList = filter === "all" ? list : list.filter((o) => o.status === filter);
+
   const stats = {
     total: list.length,
-    pending: list.filter((o) => !["Delivered", "Cancelled"].includes(o.status)).length,
+    ordered: list.filter((o) => o.status === "Ordered" || o.status === "Draft").length,
+    inLab: list.filter((o) => o.status === "In Lab").length,
     ready: list.filter((o) => o.status === "Ready").length,
-    delivered: list.filter((o) => o.status === "Delivered").length,
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">Orders</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track order status from lab processing to delivery.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Orders</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Orders generated from visits — track from processing to delivery.</p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> <span className="hidden sm:inline">New Order</span>
-        </button>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card text-center"><p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p><p className="text-sm text-gray-500 dark:text-gray-400">Total</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</p><p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.ready}</p><p className="text-sm text-gray-500 dark:text-gray-400">Ready</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.delivered}</p><p className="text-sm text-gray-500 dark:text-gray-400">Delivered</p></div>
+        {[
+          { key: "all", label: "Total", value: stats.total, color: "text-gray-900 dark:text-white" },
+          { key: "Ordered", label: "Ordered", value: stats.ordered, color: "text-purple-600 dark:text-purple-400" },
+          { key: "In Lab", label: "In Lab", value: stats.inLab, color: "text-amber-600 dark:text-amber-400" },
+          { key: "Ready", label: "Ready", value: stats.ready, color: "text-blue-600 dark:text-blue-400" },
+        ].map((s) => (
+          <button key={s.key} onClick={() => setFilter(s.key)}
+            className={`relative card text-center py-4 px-3 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+              filter === s.key ? "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-dark-850" : ""
+            }`}>
+            <p className={`text-3xl font-bold tracking-tight ${s.color}`}>{s.value}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
+          </button>
+        ))}
       </div>
 
-      <Table
-        columns={[
-          {
-            key: "customerId", label: "Customer",
-            render: (v: any, row: any) => (
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{customerName(row)}</p>
-                {customerMobile(row) && <p className="text-xs text-gray-400 dark:text-gray-500">{customerMobile(row)}</p>}
-              </div>
-            ),
-          },
-          { key: "frame", label: "Frame" },
-          { key: "lens", label: "Lens" },
-          { key: "coating", label: "Coating" },
-          { key: "quantity", label: "Qty" },
-          {
-            key: "deliveryDate", label: "Delivery",
-            render: (v: string) => v ? new Date(v).toLocaleDateString() : "—",
-          },
-          {
-            key: "billInfo", label: "Pending",
-            render: (v: any) => v?.pendingAmount > 0
-              ? <span className="text-amber-600 dark:text-amber-400 font-medium">₹{v.pendingAmount}</span>
-              : v?.totalAmount ? <span className="text-emerald-600 dark:text-emerald-400 text-sm">Cleared</span> : "—",
-          },
-          {
-            key: "status", label: "Status",
-            render: (v: string, row: any) => {
-              const next = getNextStatus(v);
-              return (
-                <div className="flex items-center gap-2">
-                  <span className={`badge ${STATUS_COLORS[v] || "badge-gray"}`}>{v || "Draft"}</span>
-                  {next && (
-                    <button
-                      onClick={() => advanceStatus(row)}
-                      disabled={statusLoading === row._id}
-                      className="p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded text-indigo-500 dark:text-indigo-400 disabled:opacity-30"
-                      title={`Mark as ${next}`}
-                    >
-                      {statusLoading === row._id
-                        ? <div className="animate-spin w-3.5 h-3.5 border-2 border-indigo-500 dark:border-indigo-400 border-t-transparent rounded-full" />
-                        : <ChevronRight size={14} />}
-                    </button>
-                  )}
-                  {canCancel(v) && (
-                    <button onClick={() => cancelOrder(row)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400" title="Cancel order">
-                      <Trash2 size={13} />
+      {/* Filter pills */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { key: "all", label: "All Orders" },
+          { key: "Draft", label: "Draft" },
+          { key: "Ordered", label: "Ordered" },
+          { key: "In Lab", label: "In Lab" },
+          { key: "Ready", label: "Ready" },
+          { key: "Delivered", label: "Delivered" },
+        ].map((f) => (
+          <button key={f.key} onClick={() => setFilter(f.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+              filter === f.key
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-200/50 dark:shadow-indigo-900/30"
+                : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700 hover:border-gray-300 dark:hover:border-dark-600"
+            }`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Orders grid */}
+      {filteredList.length === 0 ? (
+        <div className="card text-center py-16">
+          <Package size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+          <p className="text-gray-400 dark:text-gray-500 text-sm">No orders found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {filteredList.map((o: any) => {
+            const currentIdx = STATUS_STEPS.indexOf(o.status);
+            const nextStep = VALID_NEXT[o.status];
+            const theme = STATUS_THEME[o.status] || STATUS_THEME.Draft;
+            const pending = o.billInfo?.pendingAmount || 0;
+            return (
+              <div key={o._id}
+                className={`group relative bg-white dark:bg-dark-800 rounded-2xl border-l-[5px] ${theme.border} ${theme.glow} shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br ${theme.gradient} overflow-hidden`}>
+                {/* Top section */}
+                <div className="p-4 pb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm ${theme.badge}`}>
+                        {customerName(o).charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{customerName(o)}</p>
+                        {customerMobile(o) && <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{customerMobile(o)}</p>}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${theme.badge} flex-shrink-0`}>
+                      {o.status}
+                    </span>
+                  </div>
+                  {/* Order items as pills */}
+                  <div className="flex flex-wrap gap-1.5 mb-2.5">
+                    {o.frame && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">🖼 {o.frame}</span>}
+                    {o.lens && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">💎 {o.lens}</span>}
+                    {o.coating && <span className="text-[11px] bg-white dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">✨ {o.coating}</span>}
+                  </div>
+                  {/* Delivery + Amount */}
+                  <div className="flex items-center justify-between text-[11px]">
+                    {o.deliveryDate ? (
+                      <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+                        <Clock size={11} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    {o.billInfo?.totalAmount > 0 && (
+                      <span className="font-bold text-gray-900 dark:text-white tracking-tight">
+                        ₹{o.billInfo.totalAmount.toLocaleString()}
+                        {pending > 0 && <span className="text-[10px] text-amber-500 font-medium ml-1">({pending})</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* Progress bar section */}
+                <div className="px-4 pb-3 pt-1">
+                  <DotProgress currentIdx={currentIdx} />
+                </div>
+                {/* Actions bar */}
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/80 dark:bg-dark-900/50 border-t border-gray-100 dark:border-dark-700">
+                  <button onClick={() => navigate(`/customers/${customerId(o)}?visitId=${o.visitId || ""}`)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-dark-700 transition-all duration-200">
+                    <Eye size={13} /> View
+                  </button>
+                  {nextStep && (
+                    <button onClick={() => advanceStatus(o)} disabled={statusLoading === o._id}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition-all duration-200">
+                      {statusLoading === o._id
+                        ? <div className="animate-spin w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full" />
+                        : <ChevronRight size={13} />}
+                      {nextStep}
                     </button>
                   )}
                 </div>
-              );
-            },
-          },
-        ]}
-        data={list}
-        searchPlaceholder="Search orders..."
-        actions={(row) => (
-          <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
-          </div>
-        )}
-      />
-
-      {showForm && (
-        <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Order" : "Create New Order"} size="lg">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer ID *</label>
-                <input className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Frame</label>
-                <input className="input-field" placeholder="Frame model" value={form.frame} onChange={(e) => setForm({ ...form, frame: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Lens</label>
-                <input className="input-field" placeholder="Lens type" value={form.lens} onChange={(e) => setForm({ ...form, lens: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Coating</label>
-                <input className="input-field" placeholder="Coating type" value={form.coating} onChange={(e) => setForm({ ...form, coating: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
-                <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} min="1" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Date</label>
-                <input type="date" className="input-field" value={form.deliveryDate} onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
-                <select className="input-field" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  {["Draft", "Ordered", "In Lab", "Ready", "Delivered", "Cancelled"].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Accessories</label>
-                <input className="input-field" placeholder="comma, separated" value={form.accessories} onChange={(e) => setForm({ ...form, accessories: e.target.value })} />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
-              <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-              <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Create Order"}</button>
-            </div>
-          </form>
-        </Modal>
+            );
+          })}
+        </div>
       )}
-
-      {/* Due collection modal on delivery */}
-      <Modal open={!!collectModal} onClose={() => setCollectModal(null)} title="Collect Due on Delivery" size="md">
-        {collectModal && (
-          <div className="space-y-5">
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-center">
-              <p className="text-sm text-amber-700 dark:text-amber-300 mb-1">Pending Amount</p>
-              <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">₹{collectModal.pendingAmount}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Collect Amount</label>
-              <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
-                onChange={(e) => setCollectAmount(Number(e.target.value))} max={collectModal.pendingAmount} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Payment Mode</label>
-              <div className="grid grid-cols-2 gap-2">
-                {["Cash", "UPI", "Card", "Bank Transfer"].map((mode) => (
-                  <button key={mode} onClick={() => setCollectMode(mode)}
-                    className={`py-2.5 px-4 rounded-xl text-sm font-medium border transition-all ${
-                      collectMode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700 hover:border-gray-300"
-                    }`}>{mode}</button>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
-              <button onClick={() => setCollectModal(null)} className="btn-secondary">Skip</button>
-              <button onClick={handleCollectAndDeliver} disabled={collectAmount <= 0}
-                className="btn-success flex items-center gap-2">
-                <DollarSign size={16} /> Collect ₹{collectAmount} & Deliver
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
