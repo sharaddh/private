@@ -112,8 +112,8 @@ export default function Prescriptions() {
   function renderEyeBlock(label: string, data: EyeData) {
     if (!data || (!data.sph && !data.cyl && !data.axis && !data.va)) return null;
     return (
-      <div className="text-xs text-gray-600 mb-1 p-1.5 bg-gray-50 rounded-lg">
-        <span className="font-semibold text-gray-700">{label}: </span>
+      <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 p-1.5 bg-gray-50 dark:bg-dark-700 rounded-lg">
+        <span className="font-semibold text-gray-700 dark:text-gray-300">{label}: </span>
         {data.sph !== undefined ? `SPH: ${data.sph}` : ""}
         {data.cyl !== undefined ? ` | CYL: ${data.cyl}` : ""}
         {data.axis !== undefined ? ` | AXIS: ${data.axis}` : ""}
@@ -126,11 +126,11 @@ export default function Prescriptions() {
     const data = form[side][type] || {};
     return (
       <div>
-        <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</p>
         <div className="grid grid-cols-4 gap-1.5">
           {(["sph", "cyl", "axis", "va"] as (keyof EyeData)[]).map((field) => (
             <div key={field}>
-              <label className="text-[10px] text-gray-400 block">{field.toUpperCase()}</label>
+              <label className="text-[10px] text-gray-400 dark:text-gray-500 block">{field.toUpperCase()}</label>
               <input
                 type={field === "va" ? "text" : "number"}
                 step={field === "va" ? undefined : "0.25"}
@@ -150,7 +150,7 @@ export default function Prescriptions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Prescriptions</h1>
-          <p className="text-sm text-gray-500 mt-1">Store and compare eye prescriptions.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Store and compare eye prescriptions.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">New Prescription</span>

@@ -433,7 +433,7 @@ export default function Workspace() {
   function renderEyeFields(side: "rightEye" | "leftEye", label: string) {
     const data = prescription[side];
     return (
-      <div className="border border-gray-200 rounded-xl p-4">
+      <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4">
         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{label}</h4>
         {(["dv", "nv", "pc"] as const).map((type) => (
           <div key={type} className="mb-3">
@@ -524,7 +524,7 @@ export default function Workspace() {
             <Check size={28} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Transaction Complete!</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Bill: {bill?.billNumber || ""}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Bill: {bill?.billNumber || ""}</p>
         </div>
 
         {/* Customer Info */}
@@ -535,7 +535,7 @@ export default function Workspace() {
               <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{customer.name?.charAt(0) || "?"}</div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">{customer.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{customer.mobile}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{customer.mobile}</p>
               </div>
             </div>
           </div>
@@ -547,11 +547,11 @@ export default function Workspace() {
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Prescription</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Right Eye</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Right Eye</p>
                 {success.prescription.rightEye?.dv?.sph != null && <p>DV: {success.prescription.rightEye.dv.sph} {success.prescription.rightEye.dv.cyl != null ? `/ ${success.prescription.rightEye.dv.cyl}` : ""}</p>}
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Left Eye</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Left Eye</p>
                 {success.prescription.leftEye?.dv?.sph != null && <p>DV: {success.prescription.leftEye.dv.sph} {success.prescription.leftEye.dv.cyl != null ? `/ ${success.prescription.leftEye.dv.cyl}` : ""}</p>}
               </div>
               {success.prescription.pd && <div className="col-span-2"><p>PD: {success.prescription.pd}</p></div>}
@@ -564,10 +564,10 @@ export default function Workspace() {
           <div className="card">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Order</h3>
             <div className="space-y-1 text-sm">
-              {order.frame && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Frame:</span> {order.frame}</p>}
-              {order.lens && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Lens:</span> {order.lens}</p>}
-              {order.coating && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Coating:</span> {order.coating}</p>}
-              {order.accessories?.length > 0 && <p><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Accessories:</span> {order.accessories.join(", ")}</p>}
+              {order.frame && <p><span className="text-gray-500 dark:text-gray-400">Frame:</span> {order.frame}</p>}
+              {order.lens && <p><span className="text-gray-500 dark:text-gray-400">Lens:</span> {order.lens}</p>}
+              {order.coating && <p><span className="text-gray-500 dark:text-gray-400">Coating:</span> {order.coating}</p>}
+              {order.accessories?.length > 0 && <p><span className="text-gray-500 dark:text-gray-400">Accessories:</span> {order.accessories.join(", ")}</p>}
               <span className={`mt-2 inline-block badge ${
                 order.status === "Delivered" ? "badge-green" :
                 order.status === "Ready" ? "badge-blue" : "badge-yellow"
@@ -587,13 +587,13 @@ export default function Workspace() {
                   <span className="font-medium">₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(0)}</span>
                 </div>
               ))}
-              <div className="border-t border-gray-200 pt-1.5 mt-1.5 space-y-0.5">
-                <div className="flex justify-between text-gray-500 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{(bill.subtotal || 0).toFixed(0)}</span></div>
+              <div className="border-t border-gray-200 dark:border-dark-700 pt-1.5 mt-1.5 space-y-0.5">
+                <div className="flex justify-between text-gray-500 dark:text-gray-400"><span>Subtotal</span><span>₹{(bill.subtotal || 0).toFixed(0)}</span></div>
                 {bill.discount > 0 && <div className="flex justify-between text-red-500 dark:text-red-400"><span>Discount</span><span>-₹{bill.discount.toFixed(0)}</span></div>}
-                {bill.tax > 0 && <div className="flex justify-between text-amber-600"><span>Tax</span><span>+₹{bill.tax.toFixed(0)}</span></div>}
+                {bill.tax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Tax</span><span>+₹{bill.tax.toFixed(0)}</span></div>}
                 <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base pt-1"><span>Total</span><span>₹{(bill.totalAmount || 0).toFixed(0)}</span></div>
                 {bill.advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Paid</span><span>₹{bill.advancePaid.toFixed(0)}</span></div>}
-                {bill.pendingAmount > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Pending</span><span>₹{bill.pendingAmount.toFixed(0)}</span></div>}
+                {bill.pendingAmount > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Pending</span><span>₹{bill.pendingAmount.toFixed(0)}</span></div>}
               </div>
             </div>
           </div>
@@ -603,7 +603,7 @@ export default function Workspace() {
         {delivery && (
           <div className="card">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Delivery</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Status: {delivery.status}
               {delivery.expectedDeliveryDate && ` | Expected: ${new Date(delivery.expectedDeliveryDate).toLocaleDateString()}`}
             </p>
@@ -640,7 +640,7 @@ export default function Workspace() {
   return (
     <div className="max-w-4xl mx-auto space-y-4 pb-20">
       {/* Step indicator */}
-      <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 shadow-sm">
+      <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 dark:border-dark-700 shadow-sm">
         {steps.map((s, i) => {
           const Icon = s.icon;
           const isActive = step === s.key;
@@ -661,7 +661,7 @@ export default function Workspace() {
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 dark:text-red-300 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -672,7 +672,7 @@ export default function Workspace() {
           <div className="flex-1 space-y-4">
             <div className="card">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Find Customer</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Enter phone number to search existing customers or add new.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Enter phone number to search existing customers or add new.</p>
 
               <div className="flex gap-3 mb-5">
                 <div className="relative flex-1">
@@ -687,29 +687,29 @@ export default function Workspace() {
               {/* Multi-customer search results */}
               {searched && !selectedCustomer && searchResults.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{searchResults.length} customer(s) found</p>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{searchResults.length} customer(s) found</p>
                   {searchResults.map((c: any) => (
                     <div key={c._id}
-                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20/30 transition-all cursor-pointer"
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/30 transition-all cursor-pointer"
                       onClick={() => selectCustomer(c)}>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">{c.name?.charAt(0)?.toUpperCase() || "?"}</div>
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{c.mobile}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{c.mobile}</p>
                           {c.lastVisit && <p className="text-xs text-gray-400 dark:text-gray-500">Last visit: {c.lastVisit}</p>}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{c.totalVisits || 0} visits</p>
-                        {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 font-medium">₹{c.pendingAmount} due</p>}
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{c.totalVisits || 0} visits</p>
+                        {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">₹{c.pendingAmount} due</p>}
                         <span className="text-indigo-600 dark:text-indigo-400 text-sm font-medium mt-1 inline-block">Select →</span>
                       </div>
                     </div>
                   ))}
 
                   <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
-                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm w-full justify-center py-2 border border-dashed border-indigo-200 dark:border-indigo-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
                     <UserPlus size={16} /> Add new customer with this number
                   </button>
                 </div>
@@ -717,42 +717,42 @@ export default function Workspace() {
 
               {/* Add new customer form */}
               {searched && !selectedCustomer && searchResults.length === 0 && isNewCustomer && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl p-4 mb-4">
-                  <p className="text-sm font-medium text-amber-800 mb-3">New customer — fill in the details</p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-3">New customer — fill in the details</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Name *</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name *</label>
                       <input className="input-field" placeholder="Full name" value={customerForm.name}
                         onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Phone</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
                       <input className="input-field" value={customerForm.mobile} disabled />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Email</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
                       <input className="input-field" placeholder="email@example.com" value={customerForm.email || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Age</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Age</label>
                       <input type="number" className="input-field" placeholder="Age" value={customerForm.age ?? ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Gender</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Gender</label>
                       <select className="input-field" value={customerForm.gender || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
                         <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">City</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">City</label>
                       <input className="input-field" placeholder="City" value={customerForm.city || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Address</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Address</label>
                       <input className="input-field" placeholder="Address" value={customerForm.address || ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
                     </div>
@@ -778,7 +778,7 @@ export default function Workspace() {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCustomer.name}</h3>
-                      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">
+                      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         <span>{selectedCustomer.gender || "—"}</span>
                         {selectedCustomer.age && <span>• {selectedCustomer.age} yrs</span>}
                         <span>•</span>
@@ -796,21 +796,21 @@ export default function Workspace() {
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
                     <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedCustomer.totalVisits || 0}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Visits</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Visits</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
                     <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Revenue</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Revenue</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-amber-600">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Pending</p>
+                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pending</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3 text-center">
                     <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
                       {selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                     </p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Since</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Since</p>
                   </div>
                 </div>
 
@@ -819,7 +819,7 @@ export default function Workspace() {
                   <div className="bg-gradient-to-r from-gray-50 dark:from-dark-700 to-indigo-50 dark:to-indigo-900/20 rounded-xl p-3 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Last Purchase</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Last Purchase</p>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {customerSummary.lastOrder.frame && `Frame: ${customerSummary.lastOrder.frame}`}
                           {customerSummary.lastOrder.frame && customerSummary.lastOrder.lens && " | "}
@@ -867,7 +867,7 @@ export default function Workspace() {
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Clock size={14} /> Recent Activity</h3>
                 <div className="space-y-2">
                   {(customerSummary.recentOrders || []).slice(0, 5).map((o: any) => (
-                    <div key={o._id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div key={o._id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-dark-700 last:border-0">
                       <div>
                         <p className="text-sm text-gray-800">
                           {o.frame || ""}{o.frame && o.lens ? " + " : ""}{o.lens || ""}{o.coating ? " + " + o.coating : ""}
@@ -890,7 +890,7 @@ export default function Workspace() {
           {selectedCustomer && customerSummary && (
             <div className="w-72 hidden lg:block space-y-4">
               <div className="card">
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Last Prescription</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Last Prescription</h3>
                 {customerSummary.lastPrescription ? (
                   <div className="space-y-2 text-sm">
                     <div>
@@ -915,26 +915,26 @@ export default function Workspace() {
                           : ""}
                       </p>
                     </div>
-                    {customerSummary.lastPrescription.pd && <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">PD: {customerSummary.lastPrescription.pd}</p>}
+                    {customerSummary.lastPrescription.pd && <p className="text-xs text-gray-500 dark:text-gray-400">PD: {customerSummary.lastPrescription.pd}</p>}
                   </div>
                 ) : <p className="text-sm text-gray-400 dark:text-gray-500">No previous prescription</p>}
               </div>
 
               {customerSummary.lastVisit && (
                 <div className="card">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Last Visit</h3>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Last Visit</h3>
                   <p className="text-sm">{customerSummary.lastVisit.doctorName ? `Dr. ${customerSummary.lastVisit.doctorName}` : "—"}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(customerSummary.lastVisit.visitDate || customerSummary.lastVisit.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                  {customerSummary.lastVisit.remarks && <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">{customerSummary.lastVisit.remarks}</p>}
+                  {customerSummary.lastVisit.remarks && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{customerSummary.lastVisit.remarks}</p>}
                 </div>
               )}
 
               <div className="card">
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Quick Stats</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Quick Stats</h3>
                 <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">In Lab</span><span className="font-medium">{customerSummary.labOrders || 0}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Ready</span><span className="font-medium">{customerSummary.readyOrders || 0}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Total Spent</span><span className="font-medium">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">In Lab</span><span className="font-medium">{customerSummary.labOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Ready</span><span className="font-medium">{customerSummary.readyOrders || 0}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Total Spent</span><span className="font-medium">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</span></div>
                 </div>
               </div>
             </div>
@@ -948,11 +948,11 @@ export default function Workspace() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Eye Examination</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Record today's prescription. Previous values are pre-filled.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Record today's prescription. Previous values are pre-filled.</p>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
               <input type="checkbox" checked={!usePrescription} onChange={(e) => setUsePrescription(!e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
               Skip
             </label>
           </div>
@@ -981,7 +981,7 @@ export default function Workspace() {
                 </div>
               </div>
               {prevPrescription && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl px-4 py-2 mb-4 flex items-center gap-2 text-sm text-amber-700">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2 mb-4 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
                   <Info size={14} /> Previous values are pre-filled. Changed fields are highlighted in amber.
                 </div>
               )}
@@ -1004,7 +1004,7 @@ export default function Workspace() {
             </>
           )}
 
-          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button onClick={() => setStep("customer")} className="btn-secondary flex items-center gap-2">
               <ChevronLeft size={16} /> Back
             </button>
@@ -1023,11 +1023,11 @@ export default function Workspace() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">Products</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Select frame, lens, coating, and accessories.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Select frame, lens, coating, and accessories.</p>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                   <input type="checkbox" checked={!useOrder} onChange={(e) => setUseOrder(!e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                    className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
                   No items
                 </label>
               </div>
@@ -1039,32 +1039,32 @@ export default function Workspace() {
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Tag size={14} /> Frame</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Brand</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
                         <input className="input-field" placeholder="e.g. RayBan" value={orderFrameBrand}
                           onChange={(e) => setOrderFrameBrand(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Model</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Model</label>
                         <input className="input-field" placeholder="e.g. RB2180" value={orderFrameModel}
                           onChange={(e) => setOrderFrameModel(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Color</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
                         <input className="input-field" placeholder="e.g. Black" value={orderFrameColor}
                           onChange={(e) => setOrderFrameColor(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Size</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Size</label>
                         <input className="input-field" placeholder="e.g. 52-18" value={orderFrameSize}
                           onChange={(e) => setOrderFrameSize(e.target.value)} />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Frame (summary)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Frame (summary)</label>
                         <input className="input-field" placeholder="Frame description" value={orderFrame}
                           onChange={(e) => setOrderFrame(e.target.value)} />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Frame Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Frame Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
                           onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
                       </div>
@@ -1072,16 +1072,16 @@ export default function Workspace() {
                   </div>
 
                   {/* Lens Section */}
-                  <div className="border-t border-gray-100 pt-4">
+                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Eye size={14} /> Lens</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Brand</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
                         <input className="input-field" placeholder="Lens brand" value={orderLensBrand}
                           onChange={(e) => setOrderLensBrand(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Type</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
                         <select className="input-field" value={orderLensType}
                           onChange={(e) => setOrderLensType(e.target.value)}>
                           <option>Single Vision</option>
@@ -1093,17 +1093,17 @@ export default function Workspace() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Index</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Index</label>
                         <input className="input-field" placeholder="e.g. 1.56" value={orderLensIndex}
                           onChange={(e) => setOrderLensIndex(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Lens (summary)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens (summary)</label>
                         <input className="input-field" placeholder="e.g. Anti-glare" value={orderLens}
                           onChange={(e) => setOrderLens(e.target.value)} />
                       </div>
                       <div className="col-span-2 md:col-span-4">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Lens Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderLensPrice}
                           onChange={(e) => setOrderLensPrice(Number(e.target.value))} />
                       </div>
@@ -1111,16 +1111,16 @@ export default function Workspace() {
                   </div>
 
                   {/* Coating Section */}
-                  <div className="border-t border-gray-100 pt-4">
+                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Coating</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Type</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
                         <input className="input-field" placeholder="e.g. Blue Cut AR" value={orderCoating}
                           onChange={(e) => setOrderCoating(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Price (₹)</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderCoatingPrice}
                           onChange={(e) => setOrderCoatingPrice(Number(e.target.value))} />
                       </div>
@@ -1128,7 +1128,7 @@ export default function Workspace() {
                   </div>
 
                   {/* Accessories Section */}
-                  <div className="border-t border-gray-100 pt-4">
+                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Accessories</h3>
                     {orderAccessories.map((acc, idx) => (
                       <div key={idx} className="flex gap-2 mb-2 items-center">
@@ -1155,14 +1155,14 @@ export default function Workspace() {
                   </div>
 
                   {/* Quantity & Delivery */}
-                  <div className="border-t border-gray-100 pt-4 grid grid-cols-2 gap-3">
+                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4 grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Quantity</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
                       <input type="number" min="1" className="input-field" value={orderQty}
                         onChange={(e) => setOrderQty(Number(e.target.value))} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Expected Delivery</label>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery</label>
                       <input type="date" className="input-field" value={orderDeliveryDate}
                         onChange={(e) => setOrderDeliveryDate(e.target.value)} />
                     </div>
@@ -1170,7 +1170,7 @@ export default function Workspace() {
                 </div>
               )}
 
-              <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+              <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-dark-700">
                 <button onClick={() => setStep("examination")} className="btn-secondary flex items-center gap-2">
                   <ChevronLeft size={16} /> Back
                 </button>
@@ -1187,20 +1187,20 @@ export default function Workspace() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 {useOrder && orderFrame && (
-                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Frame</span><span className="font-medium">₹{orderFramePrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Frame</span><span className="font-medium">₹{orderFramePrice.toFixed(0)}</span></div>
                 )}
                 {useOrder && orderLens && (
-                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Lens</span><span className="font-medium">₹{orderLensPrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Lens</span><span className="font-medium">₹{orderLensPrice.toFixed(0)}</span></div>
                 )}
                 {useOrder && orderCoating && (
-                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">Coating</span><span className="font-medium">₹{orderCoatingPrice.toFixed(0)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">Coating</span><span className="font-medium">₹{orderCoatingPrice.toFixed(0)}</span></div>
                 )}
                 {orderAccessories.filter((a) => a.name).map((a, i) => (
-                  <div key={i} className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 dark:text-gray-500">{a.name}</span><span className="font-medium">₹{a.price.toFixed(0)}</span></div>
+                  <div key={i} className="flex justify-between"><span className="text-gray-600 dark:text-gray-400">{a.name}</span><span className="font-medium">₹{a.price.toFixed(0)}</span></div>
                 ))}
-                <div className="border-t border-gray-200 pt-2 mt-2">
+                <div className="border-t border-gray-200 dark:border-dark-700 pt-2 mt-2">
                   <div className="flex justify-between font-bold text-gray-900 dark:text-white"><span>Subtotal</span><span>₹{(orderFramePrice + orderLensPrice + orderCoatingPrice + accessoriesTotal).toFixed(0)}</span></div>
-                  <div className="flex justify-between text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs mt-1"><span>Qty</span><span>{orderQty}</span></div>
+                  <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs mt-1"><span>Qty</span><span>{orderQty}</span></div>
                 </div>
               </div>
             </div>
@@ -1212,7 +1212,7 @@ export default function Workspace() {
       {step === "billing" && (
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Billing</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Add items and set prices. Order items are pre-filled.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Add items and set prices. Order items are pre-filled.</p>
 
           <div className="space-y-3 mb-4">
             {billItems.map((item, idx) => (
@@ -1221,10 +1221,10 @@ export default function Workspace() {
                   <input className="input-field text-sm" placeholder="Item description (type for suggestions)" value={item.description}
                     onChange={(e) => { updateBillItem(idx, "description", e.target.value); searchInventory(e.target.value, idx); }} />
                   {suggestionsForIdx === idx && suggestions.length > 0 && (
-                    <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-dark-800 border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    <div ref={suggestionRef} className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                       {suggestions.map((inv: any) => (
                         <button key={inv._id} type="button" onClick={() => applySuggestion(idx, inv)}
-                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left border-b border-gray-100 last:border-0">
+                          className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left border-b border-gray-100 dark:border-dark-700 last:border-0">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white">{inv.brand && inv.model ? `${inv.brand} ${inv.model}` : inv.sku}</p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">{inv.category || ""}{inv.color ? ` | ${inv.color}` : ""}</p>
@@ -1254,39 +1254,39 @@ export default function Workspace() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Discount (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Discount (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billDiscount}
                 onChange={(e) => setBillDiscount(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Tax / GST (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tax / GST (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={billTax}
                 onChange={(e) => setBillTax(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Advance Paid (₹)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Advance Paid (₹)</label>
               <input type="number" min="0" step="0.01" className="input-field" value={advancePaid}
                 onChange={(e) => setAdvancePaid(Number(e.target.value))} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 mb-1">Expected Delivery</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Expected Delivery</label>
               <input type="date" className="input-field" value={orderDeliveryDate}
                 onChange={(e) => setOrderDeliveryDate(e.target.value)} />
             </div>
           </div>
 
           <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-1 text-sm">
-            <div className="flex justify-between text-gray-600 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
             {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(2)}</span></div>}
-            {billTax > 0 && <div className="flex justify-between text-amber-600"><span>Tax</span><span>+₹{billTax.toFixed(2)}</span></div>}
-            <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200">
+            {billTax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Tax</span><span>+₹{billTax.toFixed(2)}</span></div>}
+            <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-dark-700">
               <span>Total</span><span>₹{totalAmount.toFixed(2)}</span>
             </div>
             {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>-₹{advancePaid.toFixed(2)}</span></div>}
-            {pendingAmt > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Pending</span><span>₹{pendingAmt.toFixed(2)}</span></div>}
+            {pendingAmt > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Pending</span><span>₹{pendingAmt.toFixed(2)}</span></div>}
           </div>
 
-          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button onClick={() => setStep("order")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
             <div className="flex gap-2">
               <button onClick={() => setShowBillPreview(true)} className="btn-secondary flex items-center gap-2">
@@ -1305,21 +1305,21 @@ export default function Workspace() {
       {step === "payment" && (
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-5">Collect payment and complete the transaction.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Collect payment and complete the transaction.</p>
 
           <div className="bg-gradient-to-r from-indigo-50 dark:from-indigo-900/30 to-purple-50 dark:to-purple-900/20 rounded-xl p-6 mb-5">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toFixed(0)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Advance</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Advance</p>
                 <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">₹{advancePaid.toFixed(0)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Balance</p>
-                <p className="text-2xl font-bold text-amber-600">₹{Math.max(0, pendingAmt).toFixed(0)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Balance</p>
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">₹{Math.max(0, pendingAmt).toFixed(0)}</p>
               </div>
             </div>
           </div>
@@ -1333,14 +1333,14 @@ export default function Workspace() {
             {payments.map((p, idx) => (
               <div key={idx} className="bg-gray-50 dark:bg-dark-700 rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">#{idx + 1}</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">#{idx + 1}</span>
                   <div className="flex-1" />
                   <button onClick={() => { if (payments.length > 1) setPayments(payments.filter((_, i) => i !== idx)); }}
                     className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400 dark:text-red-300"><X size={14} /></button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Amount</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Amount</label>
                     <input type="number" step="0.01" className="input-field text-sm font-medium" value={p.amount}
                       onChange={(e) => {
                         const updated = [...payments];
@@ -1349,7 +1349,7 @@ export default function Workspace() {
                       }} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Mode</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Mode</label>
                     <div className="grid grid-cols-2 gap-1">
                       {["Cash", "UPI", "Card"].map((mode) => (
                         <button key={mode} onClick={() => {
@@ -1358,13 +1358,13 @@ export default function Workspace() {
                           setPayments(updated);
                         }}
                           className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-all ${
-                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 border-gray-200"
+                            p.mode === mode ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
                           }`}>{mode}</button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-0.5">Notes</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Notes</label>
                     <input className="input-field text-xs" placeholder="Optional" value={p.notes}
                       onChange={(e) => {
                         const updated = [...payments];
@@ -1393,13 +1393,13 @@ export default function Workspace() {
           )}
 
           {/* Delivery section */}
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl p-4 mb-5">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-5">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={useDelivery} onChange={(e) => setUseDelivery(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 dark:border-dark-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500" />
               <div>
-                <p className="text-sm font-medium text-amber-800">Schedule Delivery</p>
-                <p className="text-xs text-amber-600">Set delivery address and expected date</p>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Schedule Delivery</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">Set delivery address and expected date</p>
               </div>
             </label>
             {useDelivery && (
@@ -1418,7 +1418,7 @@ export default function Workspace() {
             )}
           </div>
 
-          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button onClick={() => setStep("billing")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
             <button onClick={saveTransaction} disabled={saving || totalPaid <= 0}
               className="btn-success flex items-center gap-2 px-8 py-3 text-base">
@@ -1440,7 +1440,7 @@ export default function Workspace() {
 
             <div className="text-center mb-6">
               <h3 className="font-bold text-xl">KMJ Optical</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Bill Preview</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Bill Preview</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
             </div>
 
@@ -1449,27 +1449,27 @@ export default function Workspace() {
                 <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">{selectedCustomer.name?.charAt(0) || "?"}</div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{selectedCustomer.mobile}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{selectedCustomer.mobile}</p>
                 </div>
               </div>
             )}
 
             <div className="space-y-1.5 mb-4">
               {billItems.filter((i) => i.description).map((item, idx) => (
-                <div key={idx} className="flex justify-between text-sm py-1 border-b border-gray-100">
+                <div key={idx} className="flex justify-between text-sm py-1 border-b border-gray-100 dark:border-dark-700">
                   <span>{item.description} x{item.qty}</span>
                   <span className="font-medium">₹{(item.qty * item.price).toFixed(0)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-gray-200 pt-2 space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600 dark:text-gray-400 dark:text-gray-500"><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
+            <div className="border-t border-gray-200 dark:border-dark-700 pt-2 space-y-1 text-sm">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
               {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
-              {billTax > 0 && <div className="flex justify-between text-amber-600"><span>GST</span><span>+₹{billTax.toFixed(0)}</span></div>}
-              <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200"><span>Total</span><span>₹{totalAmount.toFixed(0)}</span></div>
+              {billTax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>GST</span><span>+₹{billTax.toFixed(0)}</span></div>}
+              <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 dark:border-dark-700"><span>Total</span><span>₹{totalAmount.toFixed(0)}</span></div>
               {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>₹{advancePaid.toFixed(0)}</span></div>}
-              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 font-medium"><span>Balance</span><span>₹{pendingAmt.toFixed(0)}</span></div>}
+              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Balance</span><span>₹{pendingAmt.toFixed(0)}</span></div>}
             </div>
 
             {orderDeliveryDate && <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">Expected Delivery: {new Date(orderDeliveryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>}
@@ -1483,7 +1483,7 @@ export default function Workspace() {
 
       {/* Summary bar - always visible with current data */}
       {(step !== "customer" && step !== "done") && selectedCustomer && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-800 border-t border-gray-200 p-3 lg:pl-72 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-dark-700 p-3 lg:pl-72 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">

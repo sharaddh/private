@@ -74,7 +74,7 @@ export default function Delivery() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="page-title">Delivery</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and track order deliveries.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and track order deliveries.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">New Delivery</span>
@@ -83,20 +83,20 @@ export default function Delivery() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter("all")}>
-          <p className="text-2xl font-bold text-gray-900">{list.length}</p>
-          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
         </div>
         <div className="card text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter("today")}>
-          <p className="text-2xl font-bold text-indigo-600">{todayDeliveries.length}</p>
-          <p className="text-sm text-gray-500">Today</p>
+          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{todayDeliveries.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Today</p>
         </div>
         <div className="card text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter("ready")}>
-          <p className="text-2xl font-bold text-emerald-600">{list.filter((d) => d.status === "Ready").length}</p>
-          <p className="text-sm text-gray-500">Ready</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{list.filter((d) => d.status === "Ready").length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Ready</p>
         </div>
         <div className="card text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter("overdue")}>
-          <p className="text-2xl font-bold text-red-600">{overdue.length}</p>
-          <p className="text-sm text-gray-500">Overdue</p>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdue.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Overdue</p>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export default function Delivery() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              filter === f.key ? "bg-indigo-600 text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+              filter === f.key ? "bg-indigo-600 text-white" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50"
             }`}
           >
             {f.label}
@@ -133,8 +133,8 @@ export default function Delivery() {
         searchPlaceholder="Search deliveries..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -143,23 +143,23 @@ export default function Delivery() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer ID *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer ID *</label>
               <input className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Order ID</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Order ID</label>
               <input className="input-field" value={form.orderId} onChange={(e) => setForm({ ...form, orderId: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Address</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Address</label>
               <textarea className="input-field" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Expected Delivery Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expected Delivery Date</label>
               <input type="date" className="input-field" value={form.expectedDeliveryDate} onChange={(e) => setForm({ ...form, expectedDeliveryDate: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
               <select className="input-field" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 {["Pending", "In Transit", "Ready", "Delivered", "Cancelled"].map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -167,7 +167,7 @@ export default function Delivery() {
               </select>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Create Delivery"}</button>
           </div>
