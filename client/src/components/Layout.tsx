@@ -11,8 +11,6 @@ const menuItems = [
   { path: "/workspace", label: "New Visit", icon: PlusCircle },
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/customers", label: "Customers", icon: Users },
-  { path: "/visits", label: "Visits", icon: ClipboardList },
-  { path: "/prescriptions", label: "Prescriptions", icon: Eye },
   { path: "/orders", label: "Orders", icon: ShoppingCart },
   { path: "/pickup", label: "Pickup", icon: Hand },
   { path: "/bills", label: "Bills", icon: FileText },

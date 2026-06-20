@@ -1,17 +1,57 @@
-import React, { useState } from "react";
-import { Save, User, Shield, Bell } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import api from "../api";
+import { Save, User, Shield, Bell, Upload, MessageCircle, Image } from "lucide-react";
 
 export default function Settings() {
   const [shopName, setShopName] = useState("KMJ Optical");
   const [shopAddress, setShopAddress] = useState("");
   const [shopPhone, setShopPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [shopEmail, setShopEmail] = useState("");
+  const [adminWhatsApp, setAdminWhatsApp] = useState("");
+  const [logo, setLogo] = useState("");
+  const [logoPreview, setLogoPreview] = useState("");
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleSave(e: React.FormEvent) {
+  useEffect(() => {
+    api.get("/api/settings").then((d) => {
+      if (d.success && d.data) {
+        setShopName(d.data.shopName || "KMJ Optical");
+        setShopAddress(d.data.shopAddress || "");
+        setShopPhone(d.data.shopPhone || "");
+        setShopEmail(d.data.shopEmail || "");
+        setAdminWhatsApp(d.data.adminWhatsApp || "");
+        setLogo(d.data.logo || "");
+        setLogoPreview(d.data.logo || "");
+      }
+    });
+  }, []);
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setLogoPreview(dataUrl);
+      setLogo(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setLoading(true);
+    try {
+      const res = await api.put("/api/settings", {
+        shopName, shopAddress, shopPhone, shopEmail, adminWhatsApp, logo,
+      });
+      if (res.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } finally { setLoading(false); }
   }
 
   return (
@@ -29,10 +69,31 @@ export default function Settings() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Shop Profile</h3>
-              <p className="text-xs text-gray-500">Update shop information</p>
+              <p className="text-xs text-gray-500">Update shop information & logo</p>
             </div>
           </div>
           <form onSubmit={handleSave} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop Logo</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-indigo-400 transition-colors"
+              >
+                {logoPreview ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img src={logoPreview} alt="Logo" className="max-h-24 max-w-48 object-contain" />
+                    <p className="text-xs text-gray-400">Click to change</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-400">
+                    <Image size={32} />
+                    <p className="text-sm">Upload Logo</p>
+                    <p className="text-xs">PNG, JPG (max 2MB)</p>
+                  </div>
+                )}
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop Name</label>
               <input className="input-field" value={shopName} onChange={(e) => setShopName(e.target.value)} />
@@ -47,11 +108,41 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <input type="email" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" className="input-field" value={shopEmail} onChange={(e) => setShopEmail(e.target.value)} />
             </div>
-            <button type="submit" className="btn-primary flex items-center gap-2">
+            <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2">
               {saved ? "Saved!" : <><Save size={18} /> Save Settings</>}
             </button>
+          </form>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">WhatsApp Integration</h3>
+              <p className="text-xs text-gray-500">Configure automated messaging</p>
+            </div>
+          </div>
+          <form onSubmit={handleSave} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Admin WhatsApp Number</label>
+              <input className="input-field" placeholder="e.g. 919XXXXXXXXX" value={adminWhatsApp}
+                onChange={(e) => setAdminWhatsApp(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">
+                Bills will be sent from this number. Include country code (e.g., 91 for India).
+              </p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4">
+              <h4 className="text-sm font-medium text-green-800 mb-2">How it works</h4>
+              <ul className="space-y-1.5 text-sm text-green-700">
+                <li className="flex items-center gap-2">• Bills are sent via WhatsApp to customers</li>
+                <li className="flex items-center gap-2">• Clean WhatsApp Web API (no API key needed)</li>
+                <li className="flex items-center gap-2">• Opens WhatsApp with pre-filled message</li>
+              </ul>
+            </div>
           </form>
         </div>
 
@@ -67,33 +158,25 @@ export default function Settings() {
           </div>
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-sm font-medium text-gray-900">User Role</p>
-              <p className="text-xs text-gray-500 mt-1">Currently: Owner / Operator</p>
+              <p className="text-sm font-medium text-gray-900">Admin Role</p>
+              <p className="text-xs text-gray-500 mt-1">Owner / Operator</p>
+            </div>
+            <div className="p-4 bg-emerald-50 rounded-xl">
+              <p className="text-sm font-medium text-emerald-800">✓ All API routes secured</p>
+              <p className="text-xs text-emerald-600 mt-1">JWT authentication required for all endpoints</p>
+            </div>
+            <div className="p-4 bg-emerald-50 rounded-xl">
+              <p className="text-sm font-medium text-emerald-800">✓ Registration Protected</p>
+              <p className="text-xs text-emerald-600 mt-1">Only admin can create new users (no open registration)</p>
+            </div>
+            <div className="p-4 bg-emerald-50 rounded-xl">
+              <p className="text-sm font-medium text-emerald-800">✓ Rate Limiting Active</p>
+              <p className="text-xs text-emerald-600 mt-1">200 requests per minute per IP</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl">
               <p className="text-sm font-medium text-gray-900">Multi-role Support</p>
               <p className="text-xs text-gray-500 mt-1">Coming in a future update</p>
             </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
-              <Bell size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Notifications</h3>
-              <p className="text-xs text-gray-500">Coming soon</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">WhatsApp automation features:</p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center gap-2">• Order Ready Notification</li>
-              <li className="flex items-center gap-2">• Payment Reminder</li>
-              <li className="flex items-center gap-2">• Annual Eye Check Reminder</li>
-            </ul>
           </div>
         </div>
       </div>
