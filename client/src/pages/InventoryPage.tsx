@@ -125,8 +125,8 @@ export default function InventoryPage() {
         searchPlaceholder="Search by SKU, brand, model..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -135,11 +135,11 @@ export default function InventoryPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">SKU *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">SKU *</label>
               <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
               <select className="input-field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 <option value="Frame">Frame</option>
                 <option value="Lens">Lens</option>
@@ -147,35 +147,35 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Brand</label>
               <input className="input-field" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Model</label>
               <input className="input-field" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Color</label>
               <input className="input-field" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Size</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Size</label>
               <input className="input-field" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
               <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Purchase Price</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Purchase Price</label>
               <input type="number" step="0.01" className="input-field" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Selling Price</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Selling Price</label>
               <input type="number" step="0.01" className="input-field" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: Number(e.target.value) })} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Item"}</button>
           </div>
@@ -185,7 +185,7 @@ export default function InventoryPage() {
       <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title="Adjust Stock">
         <form onSubmit={handleAdjustStock} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Item</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Select Item</label>
             <select className="input-field" value={adjust.id} onChange={(e) => setAdjust({ ...adjust, id: e.target.value })}>
               <option value="">Choose item</option>
               {list.map((it) => (
@@ -194,10 +194,10 @@ export default function InventoryPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity Change (+/-)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity Change (+/-)</label>
             <input type="number" className="input-field" value={adjust.qty} onChange={(e) => setAdjust({ ...adjust, qty: Number(e.target.value) })} placeholder="+5 or -3" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-success">{isLoading ? "Saving..." : "Apply Adjustment"}</button>
           </div>

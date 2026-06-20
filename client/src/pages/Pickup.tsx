@@ -118,7 +118,7 @@ export default function Pickup() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="page-title">Order Pickup</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Search customer, collect payment, and mark order as delivered.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Search customer, collect payment, and mark order as delivered.</p>
       </div>
 
       {/* Search */}
@@ -140,7 +140,7 @@ export default function Pickup() {
       {/* Customer results */}
       {customers.length > 0 && !selectedCustomer && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{customers.length} customer(s) found</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{customers.length} customer(s) found</p>
           {customers.map((c: any) => (
             <div key={c._id} onClick={() => selectCustomer(c)}
               className="card cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20 transition-all">
@@ -151,7 +151,7 @@ export default function Pickup() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{c.mobile}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{c.mobile}</p>
                   </div>
                 </div>
                 <span className="text-indigo-600 dark:text-indigo-400 text-sm font-medium">Select →</span>
@@ -171,7 +171,7 @@ export default function Pickup() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{selectedCustomer.mobile}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCustomer.mobile}</p>
               </div>
             </div>
             <button onClick={() => { setSelectedCustomer(null); setCustomers([]); setOrders([]); setSelectedOrder(null); setBill(null); }}
@@ -181,7 +181,7 @@ export default function Pickup() {
           {/* Pending Orders */}
           {orders.length > 0 && !selectedOrder && (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{orders.length} pending order(s)</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{orders.length} pending order(s)</p>
               {orders.map((o: any) => (
                 <div key={o._id} onClick={() => selectOrder(o)}
                   className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-indigo-300 dark:hover:border-indigo-700 cursor-pointer transition-all">
@@ -210,12 +210,12 @@ export default function Pickup() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
-                {selectedOrder.frame && <div><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Frame:</span> <span className="font-medium">{selectedOrder.frame}</span></div>}
-                {selectedOrder.lens && <div><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Lens:</span> <span className="font-medium">{selectedOrder.lens}</span></div>}
-                {selectedOrder.coating && <div><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Coating:</span> <span className="font-medium">{selectedOrder.coating}</span></div>}
-                {selectedOrder.quantity && <div><span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Qty:</span> <span className="font-medium">{selectedOrder.quantity}</span></div>}
+                {selectedOrder.frame && <div><span className="text-gray-500 dark:text-gray-400">Frame:</span> <span className="font-medium">{selectedOrder.frame}</span></div>}
+                {selectedOrder.lens && <div><span className="text-gray-500 dark:text-gray-400">Lens:</span> <span className="font-medium">{selectedOrder.lens}</span></div>}
+                {selectedOrder.coating && <div><span className="text-gray-500 dark:text-gray-400">Coating:</span> <span className="font-medium">{selectedOrder.coating}</span></div>}
+                {selectedOrder.quantity && <div><span className="text-gray-500 dark:text-gray-400">Qty:</span> <span className="font-medium">{selectedOrder.quantity}</span></div>}
                 <div className="col-span-2">
-                  <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Status:</span>{" "}
+                  <span className="text-gray-500 dark:text-gray-400">Status:</span>{" "}
                   <span className={`badge ${
                     selectedOrder.status === "Ready" ? "badge-blue" :
                     selectedOrder.status === "In Lab" ? "badge-yellow" : "badge-gray"
@@ -240,17 +240,17 @@ export default function Pickup() {
                       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Collect Payment</h3>
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Amount to Collect</label>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Amount to Collect</label>
                           <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
                             onChange={(e) => setCollectAmount(Number(e.target.value))} max={bill.pendingAmount} />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1">Mode</label>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mode</label>
                           <div className="grid grid-cols-2 gap-1">
                             {["Cash", "UPI", "Card"].map((m) => (
                               <button key={m} onClick={() => setCollectMode(m)}
                                 className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 border-gray-200 dark:border-dark-700"
+                                  collectMode === m ? "bg-indigo-600 text-white border-indigo-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
                                 }`}>{m}</button>
                             ))}
                           </div>

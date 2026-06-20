@@ -59,7 +59,7 @@ export default function Payments() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Payments</h1>
-          <p className="text-sm text-gray-500 mt-1">Record and manage payments.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Record and manage payments.</p>
         </div>
         <button onClick={openCreate} className="btn-primary flex items-center gap-2">
           <Plus size={18} /> <span className="hidden sm:inline">Record Payment</span>
@@ -86,8 +86,8 @@ export default function Payments() {
         searchPlaceholder="Search payments..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -96,19 +96,19 @@ export default function Payments() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer ID *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer ID *</label>
               <input className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Bill ID</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Bill ID</label>
               <input className="input-field" value={form.billId} onChange={(e) => setForm({ ...form, billId: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Amount *</label>
               <input type="number" step="0.01" className="input-field" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Payment Mode</label>
               <select className="input-field" value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}>
                 {["Cash", "UPI", "Card", "Bank Transfer"].map((m) => (
                   <option key={m} value={m}>{m}</option>
@@ -116,11 +116,11 @@ export default function Payments() {
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
               <textarea className="input-field" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Record Payment"}</button>
           </div>

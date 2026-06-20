@@ -29,10 +29,10 @@ export default function Reports() {
     <div className="space-y-6">
       <div>
         <h1 className="page-title">Reports</h1>
-        <p className="text-sm text-gray-500 mt-1">Business insights and analytics.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Business insights and analytics.</p>
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-dark-700">
         <div className="flex gap-1">
           {tabs.map((t) => {
             const Icon = t.icon;
@@ -40,7 +40,7 @@ export default function Reports() {
             return (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  isActive ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                  isActive ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}>
                 <Icon size={16} /> {t.label}
               </button>
@@ -53,47 +53,47 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900">{customerData?.length || 0}</p>
-              <p className="text-sm text-gray-500">Total Customers</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{customerData?.length || 0}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Customers</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-emerald-600">
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {customerData?.filter((c: any) => c.totalVisits === 1).length || 0}
               </p>
-              <p className="text-sm text-gray-500">New Customers</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">New Customers</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600">
+              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                 {customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0}
               </p>
-              <p className="text-sm text-gray-500">Returning Customers</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Returning Customers</p>
             </div>
           </div>
           <div className="card">
             <h3 className="section-title mb-4">All Customers</h3>
             {(!customerData || customerData.length === 0) ? (
-              <p className="text-gray-400 text-sm text-center py-8">No customers yet.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No customers yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Name</th>
-                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Mobile</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Visits</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Total Spent</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Pending</th>
+                    <tr className="border-b border-gray-200 dark:border-dark-700">
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Name</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Mobile</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Visits</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Total Spent</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Pending</th>
                     </tr>
                   </thead>
                   <tbody>
                     {customerData?.map((c: any) => (
-                      <tr key={c._id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={c._id} className="border-b border-gray-100 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700">
                         <td className="py-2 px-3 font-medium">{c.name}</td>
-                        <td className="py-2 px-3 text-gray-500">{c.mobile || "—"}</td>
+                        <td className="py-2 px-3 text-gray-500 dark:text-gray-400">{c.mobile || "—"}</td>
                         <td className="py-2 px-3 text-right">{c.totalVisits || 0}</td>
-                        <td className="py-2 px-3 text-right text-emerald-600 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
+                        <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right">
-                          <span className={c.pendingAmount > 0 ? "text-amber-600 font-medium" : "text-gray-500"}>
+                          <span className={c.pendingAmount > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-gray-500 dark:text-gray-400"}>
                             {(c.pendingAmount || 0) > 0 ? `₹${c.pendingAmount.toLocaleString()}` : "—"}
                           </span>
                         </td>
@@ -111,40 +111,40 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
-              <p className="text-sm text-gray-500">Total Revenue</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600">
+              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                 ₹{(salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount) : 0).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500">Avg Order Value</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Avg Order Value</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-emerald-600">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
-              <p className="text-sm text-gray-500">Total Collection</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Collection</p>
             </div>
           </div>
           <div className="card">
             <h3 className="section-title mb-4">Sales Summary</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-gray-500">Total Bills</p>
-                <p className="text-xl font-bold text-gray-900">{salesData?.billCount || 0}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Bills</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{salesData?.billCount || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Total Payments</p>
-                <p className="text-xl font-bold text-gray-900">{salesData?.paymentCount || 0}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Payments</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{salesData?.paymentCount || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Avg Discount</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Avg Discount</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
                   ₹{(salesData?.billCount > 0 ? ((salesData.totalRevenue - salesData.totalCollection) / salesData.billCount) : 0).toFixed(0)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Collection Ratio</p>
-                <p className="text-xl font-bold text-emerald-600">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Collection Ratio</p>
+                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                   {salesData?.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(0)}%` : "—"}
                 </p>
               </div>
@@ -157,52 +157,52 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-amber-600">{pendingData.length}</p>
-              <p className="text-sm text-gray-500">Pending Bills</p>
+              <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{pendingData.length}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pending Bills</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-red-600">
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">
                 ₹{pendingData.reduce((s: number, b: any) => s + (b.pendingAmount || 0), 0).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500">Total Pending Amount</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Pending Amount</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600">
+              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                 {pendingData.filter((b: any) => {
                   const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                   return days > 30;
                 }).length}
               </p>
-              <p className="text-sm text-gray-500">Over 30 Days</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Over 30 Days</p>
             </div>
           </div>
           <div className="card">
             <h3 className="section-title mb-4">Pending Payments</h3>
             {pendingData.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">No pending payments.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No pending payments.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Bill</th>
-                      <th className="text-left py-2 px-3 text-gray-500 font-medium">Customer ID</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Total</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Pending</th>
-                      <th className="text-right py-2 px-3 text-gray-500 font-medium">Days</th>
+                    <tr className="border-b border-gray-200 dark:border-dark-700">
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Bill</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Customer ID</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Total</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Pending</th>
+                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Days</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pendingData.map((b: any) => {
                       const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                       return (
-                        <tr key={b._id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <tr key={b._id} className="border-b border-gray-100 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700">
                           <td className="py-2 px-3 font-medium">{b.billNumber || "—"}</td>
-                          <td className="py-2 px-3 text-gray-500">{b.customerId || "—"}</td>
+                          <td className="py-2 px-3 text-gray-500 dark:text-gray-400">{b.customerId || "—"}</td>
                           <td className="py-2 px-3 text-right">₹{(b.totalAmount || 0).toLocaleString()}</td>
-                          <td className="py-2 px-3 text-right text-amber-600 font-medium">₹{(b.pendingAmount || 0).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-right text-amber-600 dark:text-amber-400 font-medium">₹{(b.pendingAmount || 0).toLocaleString()}</td>
                           <td className="py-2 px-3 text-right">
-                            <span className={days > 30 ? "text-red-600 font-medium" : "text-gray-500"}>
+                            <span className={days > 30 ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-500 dark:text-gray-400"}>
                               {days}d
                             </span>
                           </td>
@@ -221,37 +221,37 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900">{invData?.totalItems || 0}</p>
-              <p className="text-sm text-gray-500">Total Items</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{invData?.totalItems || 0}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-red-600">{invData?.lowStock?.length || 0}</p>
-              <p className="text-sm text-gray-500">Low Stock</p>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{invData?.lowStock?.length || 0}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-indigo-600">{invData?.totalValue || 0}</p>
-              <p className="text-sm text-gray-500">Stock Value</p>
+              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{invData?.totalValue || 0}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Stock Value</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-emerald-600">{invData?.topSelling?.length || 0}</p>
-              <p className="text-sm text-gray-500">Top Items</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{invData?.topSelling?.length || 0}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Top Items</p>
             </div>
           </div>
 
           {invData?.lowStock?.length > 0 && (
-            <div className="card border border-red-200">
+            <div className="card border border-red-200 dark:border-red-800">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle size={18} className="text-red-500" />
-                <h3 className="section-title text-red-700">Low Stock Alert</h3>
+                <h3 className="section-title text-red-700 dark:text-red-400">Low Stock Alert</h3>
               </div>
               <div className="space-y-2">
                 {invData.lowStock.map((item: any) => (
-                  <div key={item._id} className="flex items-center justify-between p-3 rounded-xl bg-red-50">
+                  <div key={item._id} className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/20">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
-                      <p className="text-xs text-gray-500">{item.category || "Frame"}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.category || "Frame"}</p>
                     </div>
-                    <span className="text-sm font-bold text-red-600">{item.quantity || 0} left</span>
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{item.quantity || 0} left</span>
                   </div>
                 ))}
               </div>
@@ -261,7 +261,7 @@ export default function Reports() {
           {(!invData?.lowStock || invData.lowStock.length === 0) && (
             <div className="card">
               <h3 className="section-title mb-4">All Stock</h3>
-              <p className="text-gray-400 text-sm text-center py-8">No inventory data available.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No inventory data available.</p>
             </div>
           )}
         </div>
