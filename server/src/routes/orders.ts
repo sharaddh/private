@@ -40,13 +40,26 @@ const statusUpdateSchema = z.object({
 });
 
 router.get("/", authenticate, async (req, res) => {
-  const { customerId } = req.query;
+  const { customerId, startDate, endDate } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) {
+      const s = new Date(startDate as string);
+      s.setHours(0, 0, 0, 0);
+      filter.createdAt.$gte = s;
+    }
+    if (endDate) {
+      const e = new Date(endDate as string);
+      e.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = e;
+    }
+  }
   const list = await Order.find(filter)
     .populate("customerId", "name mobile")
     .sort({ createdAt: -1 })
-    .limit(100);
+    .limit(500);
 
   // Attach pending bill amount per order
   const enriched = await Promise.all(
@@ -87,6 +100,17 @@ router.put("/:id", authenticate, audit, async (req, res) => {
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }
+});
+
+// PATCH /:id/review — toggle reviewed flag
+router.patch("/:id/review", authenticate, async (req, res) => {
+  const o = await Order.findByIdAndUpdate(
+    req.params.id,
+    { $set: { reviewed: req.body.reviewed } },
+    { new: true }
+  );
+  if (!o) return res.status(404).json({ success: false, message: "Not found" });
+  res.json({ success: true, data: o });
 });
 
 // PATCH /:id/status — validated status transition with optional due collection
