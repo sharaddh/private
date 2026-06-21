@@ -382,7 +382,8 @@ export default function NewVisit() {
       }
 
       if (paymentAmount > 0) {
-        payload.payment = { amount: paymentAmount, paymentMode, notes: paymentNotes || undefined };
+        const visitNote = `Payment from visit - ₹${paymentAmount}`;
+        payload.payment = { amount: paymentAmount, paymentMode, notes: paymentNotes ? `${paymentNotes} | ${visitNote}` : visitNote };
       }
 
       const res = await api.post("/api/workspace/transaction", payload);
@@ -926,6 +927,28 @@ export default function NewVisit() {
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery Date</label>
                     <input type="date" className="input-field text-base" value={orderDeliveryDate}
                       onChange={(e) => setOrderDeliveryDate(e.target.value)} />
+                    <div className="flex gap-1.5 mt-1.5">
+                      {[
+                        { label: "Today", days: 0 },
+                        { label: "Tomorrow", days: 1 },
+                        { label: "3 Days", days: 3 },
+                        { label: "5 Days", days: 5 },
+                        { label: "7 Days", days: 7 },
+                      ].map((s) => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + s.days);
+                        const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+                        const active = orderDeliveryDate === dateStr;
+                        return (
+                          <button key={s.label} type="button" onClick={() => setOrderDeliveryDate(dateStr)}
+                            className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${
+                              active ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 dark:bg-dark-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
+                            }`}>
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
