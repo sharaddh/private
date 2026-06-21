@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
-import { Eye, ChevronRight, Clock, Package, Monitor } from "lucide-react";
+import { Eye, ChevronRight, Clock, Package, Glasses, FlaskConical, Circle } from "lucide-react";
+import DateRangePicker from "../components/DateRangePicker";
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
 
@@ -55,11 +61,14 @@ export default function Orders() {
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [startDate, setStartDate] = useState(todayStr());
+  const [endDate, setEndDate] = useState(todayStr());
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => { fetchOrders(); }, [startDate, endDate]);
 
   function fetchOrders() {
-    api.get("/api/orders").then((d) => { if (d.success) setList(d.data || []); });
+    const params = new URLSearchParams({ startDate, endDate });
+    api.get("/api/orders?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
   }
 
   async function advanceStatus(order: any) {
@@ -155,6 +164,8 @@ export default function Orders() {
         ))}
       </div>
 
+      <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={filteredList.length} label="order" />
+
       {/* Orders grid */}
       {filteredList.length === 0 ? (
         <div className="card text-center py-16">
@@ -187,11 +198,34 @@ export default function Orders() {
                       {o.status}
                     </span>
                   </div>
-                  {/* Order items as pills */}
+                  {/* Order items with icons */}
                   <div className="flex flex-wrap gap-1.5 mb-2.5">
-                    {o.frame && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Frm: {o.frame}</span>}
-                    {o.lens && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Lens: {o.lens}</span>}
-                    {o.coating && <span className="text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">Coat: {o.coating}</span>}
+                    {o.frameBrand ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
+                      </span>
+                    ) : o.frame ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frame}
+                      </span>
+                    ) : null}
+                    {o.lensBrand && (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 px-2 py-0.5 rounded-md text-sky-700 dark:text-sky-300 font-medium truncate max-w-full">
+                        <Eye size={11} className="text-sky-500 dark:text-sky-400 flex-shrink-0" /> {o.lensBrand}{o.lens ? ` · ${o.lens}` : ""}
+                      </span>
+                    )}
+
+                    {(o.accessories || []).map((a: string, i: number) => {
+                      const lower = a.toLowerCase();
+                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={11} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
+                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                        : <Package size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />;
+                      return (
+                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">
+                          {accIcon} {a}
+                        </span>
+                      );
+                    })}
                   </div>
                   {/* Delivery + Amount */}
                   <div className="flex items-center justify-between text-[11px]">
