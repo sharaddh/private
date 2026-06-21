@@ -24,6 +24,7 @@ const OrderSchema = new Schema(
     labAssigned: { type: String },
     labExpectedDate: { type: Date },
     labRemarks: { type: String },
+  reviewed: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
