@@ -176,79 +176,67 @@ export default function Dashboard() {
                 const cMobile = typeof o.customerId === "object" ? o.customerId?.mobile : "";
                 const isExpanded = expandedOrders.has(o._id);
                 const rx = o.prescription;
-                const rightDV = rx?.rightEye?.dv;
-                const leftDV = rx?.leftEye?.dv;
+                const demand = rx ? buildDemand(rx, o) : null;
                 return (
-                  <div key={o._id} className={`rounded-lg border transition-all ${o.reviewed ? "border-emerald-200 dark:border-emerald-800/40 bg-emerald-50/30 dark:bg-emerald-900/10" : "border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600"}`}>
-                    {/* Header row */}
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      <button onClick={() => toggleReviewed(o)}
-                        className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-all ${
-                          o.reviewed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-400"
-                        }`}>
-                        {o.reviewed && <Check size={11} className="text-white" />}
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" :
-                            o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" :
-                            "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"
-                          }`}>{o.status}</span>
-                          {cName && <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{cName}</span>}
-                          {cMobile && <span className="text-xs text-gray-400 hidden sm:inline">{cMobile}</span>}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {o.frameBrand && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-300">
-                              <Glasses size={12} /> {o.frameBrand} {o.frameModel ? `(${o.frameModel})` : ""}
-                            </span>
-                          )}
-                          {o.lensBrand && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-sky-50 dark:bg-sky-900/20 px-2 py-0.5 rounded text-sky-600 dark:text-sky-300">
-                              <Eye size={12} /> {o.lensBrand}
-                            </span>
-                          )}
-                          {o.coating && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded text-amber-600 dark:text-amber-300">
-                              <FlaskConical size={12} /> {o.coating}
-                            </span>
-                          )}
-                        </div>
+                  <div key={o._id} className={`rounded-lg border transition-all ${o.reviewed ? "border-emerald-200 dark:border-emerald-800/40" : "border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600"}`}>
+                    {/* Status bar */}
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-50 dark:border-dark-700/50">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => toggleReviewed(o)}
+                          className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${
+                            o.reviewed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-400"
+                          }`}>
+                          {o.reviewed && <Check size={9} className="text-white" />}
+                        </button>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" :
+                          o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" :
+                          "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"
+                        }`}>{o.status}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-1">
                         <button onClick={() => navigate(`/inventory?q=${encodeURIComponent(o.lensBrand || o.lens || o.frame || "")}`)}
-                          className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-primary-600 transition-all"
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-primary-600 transition-all"
                           title="Check stock">
-                          <Search size={15} />
+                          <Search size={13} />
                         </button>
                         <button onClick={() => toggleExpand(o._id)}
-                          className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                       </div>
                     </div>
 
-                    {/* Prescription row — always visible */}
-                    {rx && (
-                      <div className="px-3 pb-2 pt-0">
-                        <div className="flex flex-wrap gap-3 text-xs bg-gray-50 dark:bg-dark-800/50 rounded px-3 py-1.5">
-                          <span className="text-gray-400 font-medium">Prescription:</span>
-                          {rightDV?.sph != null && (
-                            <span className="text-gray-600 dark:text-gray-300">
-                              R: {formatRx(rightDV.sph, rightDV.cyl, rightDV.axis)}
-                            </span>
-                          )}
-                          {leftDV?.sph != null && (
-                            <span className="text-gray-600 dark:text-gray-300">
-                              L: {formatRx(leftDV.sph, leftDV.cyl, leftDV.axis)}
-                            </span>
-                          )}
-                          {rx.pd && <span className="text-gray-400">PD: {rx.pd}</span>}
-                          {!rightDV?.sph && !leftDV?.sph && <span className="text-gray-400 italic">No Rx data</span>}
-                        </div>
+                    {/* Body: left = prescription, right = customer + frame */}
+                    <div className="flex flex-col sm:flex-row">
+                      {/* Left — Prescription */}
+                      <div className="flex-1 px-3 py-2">
+                        {demand ? (
+                          <div className="space-y-0.5">
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white">{demand.heading}</div>
+                            {demand.lines.map((line, i) => (
+                              <div key={i} className="text-xs font-mono text-gray-700 dark:text-gray-300">{line}</div>
+                            ))}
+                            {demand.footer && <div className="text-xs text-gray-400 pt-0.5">{demand.footer}</div>}
+                          </div>
+                        ) : (
+                          <div className="text-sm italic text-gray-400 py-1">No prescription</div>
+                        )}
                       </div>
-                    )}
+
+                      {/* Right — Customer + Frame */}
+                      <div className="sm:w-48 px-3 py-2 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">{cName || "—"}</div>
+                        {cMobile && <div className="text-xs text-gray-400">{cMobile}</div>}
+                        {o.frameBrand && (
+                          <div className="flex sm:justify-end items-center gap-1 mt-1.5 text-xs text-indigo-600 dark:text-indigo-400">
+                            <Glasses size={11} />
+                            {o.frameBrand}{o.frameModel ? ` (${o.frameModel})` : ""}
+                          </div>
+                        )}
+                        {o.frameColor && <div className="text-[10px] text-gray-400">{o.frameColor}{o.frameSize ? ` / ${o.frameSize}` : ""}</div>}
+                      </div>
+                    </div>
 
                     {/* Expanded details */}
                     {isExpanded && (
@@ -418,6 +406,67 @@ function formatRx(sph?: number, cyl?: number, axis?: number): string {
   const a = axis != null ? `×${axis}` : "";
   if (!s && !c) return "—";
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
+}
+
+function buildDemand(rx: any, order: any): { heading: string; lines: string[]; footer: string } | null {
+  const right = rx?.rightEye;
+  const left = rx?.leftEye;
+  const rDV = right?.dv;
+  const lDV = left?.dv;
+  const rNV = right?.nv;
+  const lNV = left?.nv;
+
+  const hasRx = rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null;
+  if (!hasRx) return null;
+
+  const lensLabel = [order.lensBrand, order.lensType, order.lensIndex].filter(Boolean).join(" ") || "";
+
+  function rxStr(e: any, dv: any, nv: any): string {
+    const parts: string[] = [];
+    if (dv?.sph != null) {
+      let s = formatRx(dv.sph, dv.cyl, dv.axis);
+      if (dv.va) s += ` VA:${dv.va}`;
+      parts.push(s);
+    }
+    if (nv?.sph != null) {
+      let s = formatRx(nv.sph, nv.cyl, nv.axis);
+      if (dv?.sph != null && nv.sph !== dv.sph) {
+        const add = (nv.sph - dv.sph).toFixed(2);
+        s += ` Add ${add}`;
+      }
+      if (nv.va) s += ` VA:${nv.va}`;
+      parts.push(s);
+    }
+    return parts.join(" | ");
+  }
+
+  function eyeMatch(a: any, b: any): boolean {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return a.sph === b.sph && a.cyl === b.cyl && a.axis === b.axis;
+  }
+
+  const sameRx = eyeMatch(rDV, lDV) && eyeMatch(rNV, lNV);
+  const heading = sameRx
+    ? `1p ${lensLabel}`.trim()
+    : `1/2p ${lensLabel}`.trim();
+
+  const lines: string[] = [];
+  if (sameRx) {
+    const rxLine = rxStr("R", rDV || lDV, rNV || lNV);
+    if (rxLine) lines.push(rxLine);
+  } else {
+    const rLine = rxStr("R", rDV, rNV);
+    const lLine = rxStr("L", lDV, lNV);
+    if (rLine) lines.push(`R: ${rLine}`);
+    if (lLine) lines.push(`L: ${lLine}`);
+  }
+
+  const coating = order.coating ? `Coating: ${order.coating}` : "";
+  const pd = rx.pd ? `PD ${rx.pd}` : "";
+  const footer = [coating, pd].filter(Boolean).join(" · ");
+
+  return { heading, lines, footer };
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
