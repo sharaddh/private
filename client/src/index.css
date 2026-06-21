@@ -99,11 +99,15 @@ body {
   }
 
   .badge-blue {
-    @apply badge bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300;
+    @apply badge bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300;
   }
 
   .badge-yellow {
-    @apply badge bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300;
+    @apply badge bg-accent-50 dark:bg-accent-900/30 text-accent-600 dark:text-accent-300;
+  }
+
+  .badge-accent {
+    @apply badge bg-accent-50 dark:bg-accent-900/30 text-accent-600 dark:text-accent-300;
   }
 
   .badge-red {
@@ -115,7 +119,7 @@ body {
   }
 
   .badge-purple {
-    @apply badge bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300;
+    @apply badge bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300;
   }
 
   .flex-center {
@@ -131,7 +135,7 @@ body {
   }
 
   .sidebar-item-active {
-    @apply sidebar-item bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300 font-semibold;
+    @apply sidebar-item bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300 font-semibold shadow-sm;
   }
 
   .sidebar-item-inactive {
