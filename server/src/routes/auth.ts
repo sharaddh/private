@@ -38,6 +38,27 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 });
+// router.post("/register", async (req, res) => {
+//   try {
+//     // 1. Removed the userCount check and admin token verification.
+//     // Now anyone can register regardless of how many users exist.
+
+//     const p = registerSchema.parse(req.body);
+    
+//     const exists = await User.findOne({ username: p.username });
+//     if (exists) {
+//       return res.status(400).json({ success: false, message: "Username already exists" });
+//     }
+
+//     const hash = await bcrypt.hash(p.password, 10);
+//     const user = new User({ username: p.username, passwordHash: hash });
+//     await user.save();
+
+//     res.json({ success: true, data: { id: user._id, username: user.username } });
+//   } catch (err: any) {
+//     res.status(400).json({ success: false, message: err.message });
+//   }
+// });   
 
 router.post("/login", async (req, res) => {
   try {
