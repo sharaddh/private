@@ -203,13 +203,17 @@ router.post("/transaction", authenticate, async (req, res) => {
 
     // 6. Create payment
     if (body.payment) {
+      const visitNote = `Payment from visit - ₹${body.payment.amount}`;
+      const notes = body.payment.notes
+        ? (body.payment.notes.includes("Payment from visit") ? body.payment.notes : `${body.payment.notes} | ${visitNote}`)
+        : visitNote;
       const payment = new Payment({
         customerId: customer._id,
         billId: result.bill?._id,
         amount: body.payment.amount,
         paymentMode: body.payment.paymentMode || "Cash",
         paymentDate: new Date(),
-        notes: body.payment.notes,
+        notes,
       });
       await payment.save();
       if (result.bill) {
