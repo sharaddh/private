@@ -95,7 +95,16 @@ export default function Dashboard() {
     const res = await api.post("/api/orders/demand-send", { type });
     setSendingDemand(null);
     if (res.success) {
-      setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list sent to your WhatsApp!`, type: "success" });
+      if (res.data?.sent) {
+        setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list sent to your WhatsApp!`, type: "success" });
+      } else if (res.data?.waConnected === false) {
+        setToast({ message: `WhatsApp not connected. Scan QR code on WhatsApp page to receive PDFs`, type: "error" });
+      } else if (res.data?.queued) {
+        setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list queued — WhatsApp will send when connected`, type: "info" });
+      } else {
+        const errMsg = res.data?.sendError ? `: ${res.data.sendError}` : "";
+        setToast({ message: `PDF generated (${res.data?.count || 0} items, ${res.data?.sizeKB || "?"}KB) but send failed${errMsg}`, type: "error" });
+      }
     } else {
       setToast({ message: res.message || "Failed to send", type: "error" });
     }

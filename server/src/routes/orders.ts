@@ -233,8 +233,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
 function formatDemandRx(sph?: number, cyl?: number, axis?: number): string {
   const s = sph != null ? (sph > 0 ? `+${sph}` : `${sph}`) : "";
   const c = cyl != null ? (cyl > 0 ? `+${cyl}` : `${cyl}`) : "";
-  const a = axis != null ? `×${axis}` : "";
-  if (!s && !c) return "—";
+  const a = axis != null ? `x${axis}` : "";
+  if (!s && !c) return "-";
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
 }
 
@@ -389,21 +389,25 @@ router.post("/demand-send", authenticate, async (req, res) => {
     }
 
     // Attach prescriptions
-    const visitIds = orders.map(o => (o.visitId as any)?._id || o.visitId).filter(Boolean);
+    const visitIds = orders.map(o => {
+      const vid = (o.visitId as any)?._id || o.visitId;
+      return vid ? vid.toString() : null;
+    }).filter(Boolean);
     const prescriptions = visitIds.length > 0
       ? await Prescription.find({ visitId: { $in: visitIds } }).lean()
       : [];
     const rxMap = new Map(prescriptions.map(p => [p.visitId!.toString(), p]));
-    const enriched = orders.map(o => ({
-      ...o,
-      prescription: o.visitId ? rxMap.get(o.visitId.toString()) || null : null,
-    }));
+    const enriched = orders.map(o => {
+      const vid = ((o.visitId as any)?._id || o.visitId)?.toString();
+      return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
+    });
 
     const pdfBuffer = generateDemandPdf(enriched, type);
+    const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
     const filename = type === "buy" ? "Purchase_List.pdf" : "Lab_Order_List.pdf";
     const caption = type === "buy"
-      ? "📋 *Purchase List* — Items to buy from supplier"
-      : "🔬 *Lab Order List* — Items to order from lab";
+      ? "Purchase List - Items to buy from supplier"
+      : "Lab Order List - Items to order from lab";
 
     // Send to shop owner
     const settings = await Settings.findOne().sort({ createdAt: -1 });
@@ -412,13 +416,58 @@ router.post("/demand-send", authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: "Shop phone not configured" });
     }
     const normalized = phone.length === 10 ? `91${phone}` : phone;
-    const sent = await whatsapp.sendMedia(normalized, pdfBuffer.toString("base64"), filename, caption);
+    const waStatus = await whatsapp.getStatus();
+
+    const sizeKB = (pdfBuffer.length / 1024).toFixed(1);
+    console.log(`Demand PDF: ${filename}, ${sizeKB}KB, sending to ${normalized}, WA status: ${waStatus.status}`);
+
+    const base64 = pdfBuffer.toString("base64");
+    let sent = false;
+    let sendError: string | null = null;
+
+    try {
+      sent = await whatsapp.sendMedia(normalized, base64, filename, caption);
+    } catch (e: any) {
+      sendError = e.message;
+      console.error(`Demand PDF sendMedia threw: ${e.message}`);
+    }
+
+    // Fallback: if media send failed but WA is connected, send as text
+    if (!sent && waStatus.status === "connected" && !sendError) {
+      console.log("Demand PDF sendMedia returned false, trying text fallback");
+      try {
+        const items = enriched.map((o: any) => {
+          const cName = o.customerId?.name || "—";
+          const rx = o.prescription;
+          const r = rx?.rightEye?.dv;
+          const l = rx?.leftEye?.dv;
+          const rxStr = r?.sph != null
+            ? `R: ${r.sph}/${r.cyl || 0}x${r.axis || 0}  L: ${l?.sph || 0}/${l?.cyl || 0}x${l?.axis || 0}`
+            : "No Rx";
+          return `${cName} - ${o.frameBrand || ""} ${o.lensBrand || ""} | ${rxStr}`;
+        }).join("\n");
+        const textMsg = `${title}\n\n${items}\n\nTotal: ${enriched.length} items`;
+        await whatsapp.sendMessage(normalized, textMsg);
+      } catch (e2: any) {
+        console.error(`Demand text fallback also failed: ${e2.message}`);
+      }
+    }
 
     res.json({
       success: true,
-      data: { sent, queued: !sent, phone: normalized, filename, count: enriched.length },
+      data: {
+        sent,
+        queued: !sent && waStatus.status !== "connected",
+        waConnected: waStatus.status === "connected",
+        phone: normalized,
+        filename,
+        count: enriched.length,
+        sizeKB: parseFloat(sizeKB),
+        sendError,
+      },
     });
   } catch (err: any) {
+    console.error("Demand send error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 });
