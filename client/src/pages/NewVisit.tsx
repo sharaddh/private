@@ -44,18 +44,18 @@ export default function NewVisit() {
   const [orderFrameBrand, setOrderFrameBrand] = useState("");
   const [orderFrameModel, setOrderFrameModel] = useState("");
   const [orderFrameColor, setOrderFrameColor] = useState("");
-  const [orderFrameSize, setOrderFrameSize] = useState("");
   const [orderFramePrice, setOrderFramePrice] = useState(0);
   const [orderLens, setOrderLens] = useState("");
   const [orderLensBrand, setOrderLensBrand] = useState("");
-  const [orderLensType, setOrderLensType] = useState("Single Vision");
+  const [lensFeatures, setLensFeatures] = useState<string[]>([]);
   const [orderLensIndex, setOrderLensIndex] = useState("");
   const [orderLensPrice, setOrderLensPrice] = useState(0);
   const [orderCoating, setOrderCoating] = useState("");
   const [orderCoatingPrice, setOrderCoatingPrice] = useState(0);
   const [orderAccessories, setOrderAccessories] = useState<{ name: string; price: number }[]>([]);
-  const [orderQty, setOrderQty] = useState(1);
   const [orderDeliveryDate, setOrderDeliveryDate] = useState("");
+
+  const lensFeatureOptions = ["Single Vision", "Bifocal", "Progressive", "Polycarbonate", "Blue Cut", "Photochromic", "Polarized", "High Index"];
 
   // Billing
   const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([
@@ -111,20 +111,18 @@ export default function NewVisit() {
         setOrderFrameBrand(last.frameBrand || "");
         setOrderFrameModel(last.frameModel || "");
         setOrderFrameColor(last.frameColor || "");
-        setOrderFrameSize(last.frameSize || "");
         setOrderFramePrice(last.framePrice || 0);
         setOrderLens(last.lens || "");
         setOrderLensBrand(last.lensBrand || "");
-        setOrderLensType(last.lensType || "Single Vision");
+        setLensFeatures((last.lensType || "").split(", ").filter(Boolean));
         setOrderLensIndex(last.lensIndex || "");
         setOrderLensPrice(last.lensPrice || 0);
         setOrderCoating(last.coating || "");
         setOrderCoatingPrice(last.coatingPrice || 0);
         if (last.accessories) setOrderAccessories(last.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
-        setOrderQty(last.quantity || 1);
 
         const items: { description: string; qty: number; price: number }[] = [];
-        if (last.frame) items.push({ description: `Frame - ${last.frame}`, qty: last.quantity || 1, price: last.framePrice || 0 });
+        if (last.frame) items.push({ description: `Frame - ${last.frame}`, qty: 1, price: last.framePrice || 0 });
         if (last.lens) items.push({ description: `Lens - ${last.lens}`, qty: 1, price: last.lensPrice || 0 });
         if (last.coating) items.push({ description: `Coating - ${last.coating}`, qty: 1, price: last.coatingPrice || 0 });
         const accs = (last.accessories || []).map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a);
@@ -180,8 +178,8 @@ export default function NewVisit() {
         // PDF send failed, don't auto-fallback to text
         setWaFailed(true);
       } else {
-        const msg = `*${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit!%0a%0aService completed successfully.%0a%0aThank you!`;
-        window.open(`https://wa.me/${fullNum}?text=${msg}`, "_blank");
+        const msg = `*${shop}*\n\nHi ${customer.name},\nThank you for your visit!\n\nService completed successfully.\n\nThank you!`;
+        try { await api.post("/api/whatsapp/send", { phone: fullNum, message: msg }); } catch {}
         setWaSent(true);
       }
       setWaSending(false);
@@ -396,38 +394,6 @@ export default function NewVisit() {
     } finally { setSaving(false); }
   }
 
-  function renderEyeFields(side: "rightEye" | "leftEye", label: string) {
-    const data = prescription[side];
-    return (
-      <div className="border border-gray-200 dark:border-dark-700 rounded-xl p-4">
-        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{label}</h4>
-        {(["dv", "nv", "pc"] as const).map((type) => (
-          <div key={type} className="mb-3">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-1">
-              {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(["sph", "cyl", "axis", "va"] as const).map((field) => {
-                const changed = isChanged(side, type, field);
-                const prevVal = getPrevValue(side, type, field);
-                return (
-                  <div key={field}>
-                    <label className="text-[10px] text-gray-400 dark:text-gray-500 block">{field.toUpperCase()}</label>
-                    <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                      className={`input-field py-1.5 text-xs ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
-                      value={data[type]?.[field] ?? ""}
-                      onChange={(e) => updateEye(side, type, field, e.target.value)} />
-                    {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   const visitTypes = [
     { value: "new_specs", label: "New Specs", icon: Eye, desc: "Frame + Lens + Coating" },
     { value: "frame_change", label: "Frame Change", icon: Tag, desc: "New frame only" },
@@ -541,13 +507,15 @@ export default function NewVisit() {
             <ArrowLeft size={16} /> Back to Profile
           </button>
           {mobile && bill && !waSent && (
-            <button onClick={() => {
+            <button onClick={async () => {
               const num = mobile.replace(/\D/g, "");
               if (!num) return;
               const items = (bill.items || []).map((i: any) =>
                 `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-              ).join("%0a");
-              window.open(`https://wa.me/91${num}?text=*Bill:* ${bill.billNumber || ""}%0a*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}%0a%0a${items}%0a%0aThank you!`, "_blank");
+              ).join("\n");
+              const msg = `*Bill:* ${bill.billNumber || ""}\n*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}\n\n${items}\n\nThank you!`;
+              await api.post("/api/whatsapp/send", { phone: `91${num}`, message: msg });
+              setWaSent(true);
             }} className="btn-success flex items-center gap-2">
               <MessageCircle size={16} /> Send WhatsApp
             </button>
@@ -559,44 +527,28 @@ export default function NewVisit() {
 
   // ===== MAIN FLOW =====
   return (
-    <div className="max-w-4xl mx-auto space-y-5 pb-20">
+    <div className="space-y-6 pb-20">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(`/customers/${id}`)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-xl transition-colors">
-          <ArrowLeft size={20} className="text-gray-500 dark:text-gray-400" />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+      <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-5">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(`/customers/${id}`)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-xl transition-colors">
+            <ArrowLeft size={20} className="text-gray-500 dark:text-gray-400" />
+          </button>
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
             {customer.name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">New Visit</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">New Visit</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-              <Phone size={12} /> {customer.name} — {customer.mobile}
+              <Phone size={13} /> {customer.name} — {customer.mobile}
             </p>
           </div>
+          <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
+            <span className="px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg font-medium">
+              Step {currentStepIdx + 1} of 5
+            </span>
+          </div>
         </div>
-      </div>
-
-      {/* Step Indicator */}
-      <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 dark:border-dark-700 shadow-sm">
-        {visitSteps.map((s, i) => {
-          const Icon = s.icon;
-          const isActive = visitStep === s.key;
-          const isDone = currentStepIdx > i;
-          return (
-            <button key={s.key} type="button" onClick={() => { if (i < currentStepIdx) setVisitStep(s.key as any); }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
-                isActive ? "bg-primary-600 text-white shadow-md" :
-                isDone ? "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30" :
-                "text-gray-400 dark:text-gray-500"
-              }`}>
-              <Icon size={16} />
-              <span className="hidden sm:inline">{s.label}</span>
-              {isDone && <Check size={14} />}
-            </button>
-          );
-        })}
       </div>
 
       {error && (
@@ -605,79 +557,115 @@ export default function NewVisit() {
         </div>
       )}
 
-      <div className="card">
-        {/* ===== STEP 1: VISIT TYPE ===== */}
-        {visitStep === "type" && (
-          <div className="space-y-6">
+      {/* ===== STEP 1: VISIT TYPE ===== */}
+      {visitStep === "type" && (
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
+            <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+              <Plus size={20} />
+            </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">What kind of visit?</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Select the type of service for {customer.name}.</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">What kind of visit?</h2>
+              <p className="text-sm text-gray-500">Select the type of service for {customer.name}.</p>
             </div>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {visitTypes.map((vt) => {
-                const Icon = vt.icon;
-                const isActive = visitType === vt.value;
-                return (
-                  <button key={vt.value} type="button" onClick={() => setVisitType(vt.value as any)}
-                    className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                      isActive
-                        ? "border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm"
-                        : "border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
-                    }`}>
-                    <Icon size={24} />
-                    <span className="leading-tight text-center font-semibold">{vt.label}</span>
-                    <span className="text-[10px] opacity-60">{vt.desc}</span>
-                  </button>
-                );
-              })}
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {visitTypes.map((vt) => {
+              const Icon = vt.icon;
+              const isActive = visitType === vt.value;
+              return (
+                <button key={vt.value} type="button" onClick={() => setVisitType(vt.value as any)}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    isActive
+                      ? "border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm"
+                      : "border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
+                  }`}>
+                  <Icon size={26} className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400"} />
+                  <span className="leading-tight text-center font-semibold">{vt.label}</span>
+                  <span className="text-[10px] opacity-60">{vt.desc}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar size={16} className="text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Visit Details</h3>
             </div>
-            <div className="border-t border-gray-200 dark:border-dark-700 pt-5">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Visit Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit Date</label>
-                  <input type="date" className="input-field" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Doctor</label>
-                  <input className="input-field" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Remarks</label>
-                  <input className="input-field" placeholder="Any notes" value={visitRemarks} onChange={(e) => setVisitRemarks(e.target.value)} />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  <Calendar size={14} className="inline mr-1.5 text-gray-400" />Visit Date
+                </label>
+                <input type="date" className="input-field text-base" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  <User size={14} className="inline mr-1.5 text-gray-400" />Doctor
+                </label>
+                <input className="input-field text-base" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* ===== STEP 2: PRESCRIPTION ===== */}
         {visitStep === "prescription" && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Prescription</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Previous values pre-filled. Changed fields are highlighted.</p>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <Eye size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prescription</h2>
+                <p className="text-sm text-gray-500">Previous values pre-filled. Changed fields highlighted.</p>
+              </div>
             </div>
             {prevPrescription && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
-                <Info size={14} /> Changed fields highlighted in amber.
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+                <Info size={15} /> Changed fields highlighted in amber.
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderEyeFields("rightEye", "Right Eye")}
-              {renderEyeFields("leftEye", "Left Eye")}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">PD (Pupillary Distance)</label>
-                <input className="input-field" placeholder="e.g. 62mm" value={prescription.pd}
-                  onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
-                <input className="input-field" placeholder="Additional notes" value={prescription.notes}
-                  onChange={(e) => setPrescription({ ...prescription, notes: e.target.value })} />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {(["rightEye", "leftEye"] as const).map((side) => {
+                const label = side === "rightEye" ? "Right Eye (OD)" : "Left Eye (OS)";
+                const data = prescription[side];
+                return (
+                  <div key={side} className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold ${side === "rightEye" ? "bg-blue-500" : "bg-emerald-500"}`}>
+                        {side === "rightEye" ? "R" : "L"}
+                      </div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{label}</h3>
+                    </div>
+                    {(["dv", "nv", "pc"] as const).map((type) => (
+                      <div key={type} className="mb-4 last:mb-0">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                          {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
+                        </p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {(["sph", "cyl", "axis", "va"] as const).map((field) => {
+                            const changed = isChanged(side, type, field);
+                            const prevVal = getPrevValue(side, type, field);
+                            const fieldLabels: Record<string, string> = { sph: "SPH", cyl: "CYL", axis: "AXIS", va: "VA" };
+                            return (
+                              <div key={field}>
+                                <label className="text-[10px] font-medium text-gray-400 dark:text-gray-500 block mb-0.5">{fieldLabels[field]}</label>
+                                <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
+                                  className={`input-field py-2 text-sm ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
+                                  value={data[type]?.[field] ?? ""}
+                                  onChange={(e) => updateEye(side, type, field, e.target.value)} />
+                                {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

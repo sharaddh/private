@@ -165,7 +165,9 @@ class WhatsAppService {
 
   async destroy() {
     if (this.client) {
-      await this.client.destroy();
+      try {
+        await this.client.destroy();
+      } catch {}
       this.client = null;
     }
     this._ready = false;
@@ -173,6 +175,18 @@ class WhatsAppService {
     this._qrBase64 = null;
     this._error = null;
     this.initializing = false;
+  }
+
+  async disconnect() {
+    await this.destroy();
+    this.cleanSession();
+    this.initializing = false;
+    this.initPromise = null;
+  }
+
+  async reconnect() {
+    await this.disconnect();
+    await this.init();
   }
 }
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import {
   Send, Search, MessageCircle, Users, CheckSquare, Square,
-  Smartphone, QrCode, RefreshCw, CheckCircle, XCircle, Loader2
+  Smartphone, RefreshCw, CheckCircle, XCircle, Loader2
 } from "lucide-react";
 
 export default function Announcement() {
@@ -14,9 +14,7 @@ export default function Announcement() {
   const [selectAll, setSelectAll] = useState(false);
   const [settings, setSettings] = useState<any>(null);
 
-  const [waStatus, setWaStatus] = useState<string>("checking");
-  const [waQr, setWaQr] = useState<string | null>(null);
-  const [waError, setWaError] = useState<string | null>(null);
+  const [waConnected, setWaConnected] = useState<boolean | null>(null);
 
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
@@ -27,27 +25,12 @@ export default function Announcement() {
     try {
       const res = await api.get("/api/whatsapp/status");
       if (res.success) {
-        const d = res.data;
-        if (d.status === "connected") {
-          setWaStatus("connected");
-          setWaQr(null);
-          setWaError(null);
-        } else if (d.status === "qr") {
-          setWaStatus("qr");
-          setWaQr(d.qr);
-          setWaError(null);
-        } else if (d.status === "error") {
-          setWaStatus("error");
-          setWaError(d.error);
-          setWaQr(null);
-        } else {
-          setWaStatus("initializing");
-          setWaQr(null);
-        }
+        setWaConnected(res.data?.status === "connected");
+      } else {
+        setWaConnected(false);
       }
     } catch {
-      setWaStatus("error");
-      setWaError("Could not connect to server");
+      setWaConnected(false);
     }
   }, []);
 
@@ -146,25 +129,24 @@ export default function Announcement() {
       </div>
 
       {/* WhatsApp Connection Status */}
-      <div className={`card ${waStatus === "connected" ? "border-emerald-200 dark:border-emerald-800" : ""}`}>
+      <div className={`card ${waConnected ? "border-emerald-200 dark:border-emerald-800" : ""}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              waStatus === "connected" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
-              waStatus === "qr" ? "bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400" :
+              waConnected ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
+              waConnected === false ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400" :
               "bg-gray-50 dark:bg-dark-700 text-gray-400"
             }`}>
               <Smartphone size={20} />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                WhatsApp {waStatus === "connected" ? "Connected" : waStatus === "qr" ? "Scan QR Code" : waStatus === "error" ? "Error" : "Initializing..."}
+                WhatsApp {waConnected ? "Connected" : waConnected === false ? "Not Connected" : "Checking..."}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {waStatus === "connected" ? "Ready to send messages" :
-                 waStatus === "qr" ? "Scan with your phone to connect" :
-                 waStatus === "error" ? waError || "Connection failed" :
-                 "Connecting to WhatsApp..."}
+                {waConnected ? "Ready to send messages" :
+                 waConnected === false ? "Connect WhatsApp in Settings to send messages" :
+                 "Checking connection..."}
               </p>
             </div>
           </div>
@@ -172,14 +154,6 @@ export default function Announcement() {
             <RefreshCw size={14} /> Refresh
           </button>
         </div>
-
-        {waStatus === "qr" && waQr && (
-          <div className="mt-4 flex flex-col items-center p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-            <QrCode size={24} className="text-primary-600 dark:text-primary-400 mb-2" />
-            <img src={waQr} alt="WhatsApp QR" className="w-48 h-48 rounded-lg" />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Open WhatsApp → Settings → Linked Devices → Link a Device</p>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -237,7 +211,7 @@ export default function Announcement() {
 
           <button
             onClick={() => setShowConfirm(true)}
-            disabled={selectedCount === 0 || !message.trim() || sending || waStatus !== "connected"}
+            disabled={selectedCount === 0 || !message.trim() || sending || !waConnected}
             className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {sending ? (
@@ -247,9 +221,9 @@ export default function Announcement() {
             )}
           </button>
 
-          {waStatus !== "connected" && selectedCount > 0 && (
+          {!waConnected && selectedCount > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-              Connect WhatsApp above to send messages
+              Connect WhatsApp in Settings to send messages
             </p>
           )}
         </div>

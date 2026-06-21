@@ -126,6 +126,11 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       result.delivery = delivery;
     }
 
+    function normalizePhone(phone: string): string {
+      const digits = phone.replace(/\D/g, "");
+      return digits.length === 10 ? `91${digits}` : digits;
+    }
+
     // Auto-send WhatsApp when Ready for pickup
     if (status === "Ready") {
       const customer = await Customer.findById(order.customerId).select("name mobile");
@@ -138,8 +143,21 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
         try {
-          await whatsapp.sendMessage(customer.mobile, msg);
+          await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
         } catch { /* WhatsApp not connected, skip */ }
+      }
+    }
+
+    // Auto-send WhatsApp when Delivered
+    if (status === "Delivered") {
+      const customer = await Customer.findById(order.customerId).select("name mobile");
+      if (customer?.mobile) {
+        const settings = await Settings.findOne().sort({ createdAt: -1 });
+        const shop = settings?.shopName || "KMJ Optical";
+        const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
+        try {
+          await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
+        } catch {}
       }
     }
 

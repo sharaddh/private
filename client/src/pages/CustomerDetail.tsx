@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList,
-  ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User
+  ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User,
+  ChevronRight, Clock, Activity, AlertCircle, CheckCircle
 } from "lucide-react";
 
 export default function CustomerDetail() {
@@ -20,6 +21,25 @@ export default function CustomerDetail() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [selectedVisit, setSelectedVisit] = useState<any>(null);
+  const [editingVisit, setEditingVisit] = useState(false);
+  const [editVisitForm, setEditVisitForm] = useState<any>({});
+  const [savingVisit, setSavingVisit] = useState(false);
+
+  const linkedPrescription = useMemo(() => {
+    if (!selectedVisit) return null;
+    return prescriptions.find((p: any) => p.visitId === selectedVisit._id) || null;
+  }, [selectedVisit, prescriptions]);
+
+  const linkedOrder = useMemo(() => {
+    if (!selectedVisit) return null;
+    return orders.find((o: any) => o.visitId === selectedVisit._id) || null;
+  }, [selectedVisit, orders]);
+
+  const linkedBill = useMemo(() => {
+    if (!selectedVisit) return null;
+    return bills.find((b: any) => b.visitId === selectedVisit._id) || null;
+  }, [selectedVisit, bills]);
 
   useEffect(() => {
     if (!id) return;
@@ -70,15 +90,50 @@ export default function CustomerDetail() {
     } finally { setSaving(false); }
   }
 
-  function sendWhatsApp(phone: string, bill: any) {
+  async function handleVisitSave() {
+    setSavingVisit(true);
+    try {
+      const res = await api.put(`/api/visits/${selectedVisit._id}`, editVisitForm);
+      if (res.success) {
+        setSelectedVisit(res.data);
+        setVisits((prev: any[]) => prev.map((v: any) => v._id === res.data._id ? res.data : v));
+        setEditingVisit(false);
+      }
+    } finally {
+      setSavingVisit(false);
+    }
+  }
+
+  function openVisitDetail(v: any) {
+    setSelectedVisit(v);
+    setEditVisitForm({ visitDate: v.visitDate?.split("T")[0] || "", doctorName: v.doctorName || "", remarks: v.remarks || "" });
+    setEditingVisit(false);
+  }
+
+  async function sendWhatsApp(phone: string, bill: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
-    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
+    const fullNum = num.length === 10 ? `91${num}` : num;
+    const shop = settings?.shopName || "KMJ Optical";
+    const custData = { name: customer?.name, mobile: customer?.mobile, address: customer?.address, customerId: customer?.customerId };
+    try {
+      if (bill) {
+        const { generateBillPdf } = await import("../utils/pdf");
+        const doc = generateBillPdf(bill, custData, settings || {});
+        const base64 = doc.output("datauristring").split(",")[1];
+        const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
+        const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
+        if (mediaRes.success) return;
+        console.warn("WhatsApp PDF send failed:", mediaRes?.message);
+      }
+    } catch (e) {
+      console.warn("WhatsApp PDF send error:", e);
+    }
     const items = (bill?.items || []).map((i: any) =>
       `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-    ).join("%0a");
-    const msg = `*${settings?.shopName || "KMJ Optical"}* 🕶%0a%0a*Bill:* ${bill?.billNumber || ""}%0a*Date:* ${new Date().toLocaleDateString("en-IN")}%0a%0a*Customer:* ${customer?.name || ""}%0a*Mobile:* ${customer?.mobile || ""}%0a%0a*Items:*%0a${items}%0a%0a*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}%0a${bill?.discount ? `*Discount:* -₹${bill.discount.toFixed(0)}%0a` : ""}${bill?.tax ? `*Tax:* +₹${bill.tax.toFixed(0)}%0a` : ""}*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}%0a*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}%0a%0aThank you! 🙏`;
-    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
+    ).join("\n");
+    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}${bill?.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill?.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
+    try { await api.post("/api/whatsapp/send", { phone: fullNum, message: msg }); } catch {};
   }
 
   const tabs = [
@@ -300,7 +355,8 @@ export default function CustomerDetail() {
               <div className="space-y-2">
                 {visits.map((v: any) => (
                   <div key={v._id} id={`visit-${v._id}`}
-                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-dark-750 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors">
+                    onClick={() => openVisitDetail(v)}
+                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-dark-750 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors cursor-pointer group">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 bg-white dark:bg-dark-700 rounded-full flex items-center justify-center text-gray-400">
                         <Calendar size={16} />
@@ -316,7 +372,10 @@ export default function CustomerDetail() {
                         {v.remarks && <p className="text-xs text-gray-500">{v.remarks}</p>}
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      <ChevronRight size={15} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -421,6 +480,277 @@ export default function CustomerDetail() {
           </div>
         )}
       </div>
+
+      {selectedVisit && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setSelectedVisit(null)} />
+          <div className="relative w-full max-w-2xl bg-white dark:bg-dark-800 shadow-2xl overflow-y-auto animate-slide-in-right">
+            <div className="sticky top-0 z-10 bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Calendar size={18} className="text-primary-500" />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Visit Details</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {!editingVisit && (
+                  <button onClick={() => { setEditingVisit(true); }} className="btn-ghost btn-sm flex items-center gap-1.5">
+                    <Edit3 size={14} /> Edit
+                  </button>
+                )}
+                <button onClick={() => setSelectedVisit(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-xl">
+                  <X size={18} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Visit Info */}
+              <div className="card p-4">
+                {editingVisit ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Visit Date</label>
+                      <input type="date" className="input-field" value={editVisitForm.visitDate || ""}
+                        onChange={(e) => setEditVisitForm({ ...editVisitForm, visitDate: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Doctor Name</label>
+                      <input className="input-field" placeholder="Doctor name" value={editVisitForm.doctorName || ""}
+                        onChange={(e) => setEditVisitForm({ ...editVisitForm, doctorName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Remarks</label>
+                      <textarea className="input-field" rows={2} placeholder="Remarks" value={editVisitForm.remarks || ""}
+                        onChange={(e) => setEditVisitForm({ ...editVisitForm, remarks: e.target.value })} />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={handleVisitSave} disabled={savingVisit} className="btn-primary btn-sm flex items-center gap-1.5">
+                        <Save size={14} /> {savingVisit ? "Saving..." : "Save"}
+                      </button>
+                      <button onClick={() => setEditingVisit(false)} className="btn-secondary btn-sm flex items-center gap-1.5">
+                        <X size={14} /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 flex-shrink-0">
+                      <Calendar size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {new Date(selectedVisit.visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">
+                        {selectedVisit.doctorName && (
+                          <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <User size={12} className="text-gray-400" /> Dr. {selectedVisit.doctorName}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Clock size={12} className="text-gray-400" /> Created {new Date(selectedVisit.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                      {selectedVisit.remarks && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 bg-gray-50 dark:bg-dark-750 rounded-lg p-2.5">{selectedVisit.remarks}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Linked Prescription */}
+              {linkedPrescription && (
+                <div className="card p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Eye size={16} className="text-primary-500" />
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Prescription</h3>
+                    <span className="text-[10px] text-gray-400 ml-auto">
+                      {new Date(linkedPrescription.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Right Eye</p>
+                      {linkedPrescription.rightEye?.dv && <EyeRow label="DV" data={linkedPrescription.rightEye.dv} />}
+                      {linkedPrescription.rightEye?.nv && <EyeRow label="NV" data={linkedPrescription.rightEye.nv} />}
+                      {linkedPrescription.rightEye?.pc && <EyeRow label="PC" data={linkedPrescription.rightEye.pc} />}
+                      {!linkedPrescription.rightEye?.dv && !linkedPrescription.rightEye?.nv && !linkedPrescription.rightEye?.pc && (
+                        <p className="text-xs text-gray-400">No data</p>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Left Eye</p>
+                      {linkedPrescription.leftEye?.dv && <EyeRow label="DV" data={linkedPrescription.leftEye.dv} />}
+                      {linkedPrescription.leftEye?.nv && <EyeRow label="NV" data={linkedPrescription.leftEye.nv} />}
+                      {linkedPrescription.leftEye?.pc && <EyeRow label="PC" data={linkedPrescription.leftEye.pc} />}
+                      {!linkedPrescription.leftEye?.dv && !linkedPrescription.leftEye?.nv && !linkedPrescription.leftEye?.pc && (
+                        <p className="text-xs text-gray-400">No data</p>
+                      )}
+                    </div>
+                  </div>
+                  {linkedPrescription.pd && (
+                    <p className="text-xs text-gray-500 mt-2">PD: {linkedPrescription.pd}</p>
+                  )}
+                  {linkedPrescription.notes && (
+                    <p className="text-xs text-gray-500 mt-1">Notes: {linkedPrescription.notes}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Linked Order */}
+              {linkedOrder && (
+                <div className="card p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShoppingCart size={16} className="text-amber-500" />
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Order</h3>
+                    <span className={`badge ml-auto text-[10px] ${
+                      linkedOrder.status === "Delivered" ? "badge-green" :
+                      linkedOrder.status === "Ready" ? "badge-blue" :
+                      linkedOrder.status === "Cancelled" ? "badge-red" : "badge-yellow"
+                    }`}>{linkedOrder.status || "Draft"}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    {linkedOrder.frame && (
+                      <>
+                        <p className="text-xs text-gray-500">Frame</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">
+                          {[linkedOrder.frameBrand, linkedOrder.frameModel, linkedOrder.frameColor, linkedOrder.frameSize].filter(Boolean).join(" / ") || linkedOrder.frame}
+                          {linkedOrder.framePrice ? ` (₹${linkedOrder.framePrice})` : ""}
+                        </p>
+                      </>
+                    )}
+                    {linkedOrder.lens && (
+                      <>
+                        <p className="text-xs text-gray-500">Lens</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">
+                          {[linkedOrder.lensBrand, linkedOrder.lensType, linkedOrder.lensIndex].filter(Boolean).join(" / ") || linkedOrder.lens}
+                          {linkedOrder.lensPrice ? ` (₹${linkedOrder.lensPrice})` : ""}
+                        </p>
+                      </>
+                    )}
+                    {linkedOrder.coating && (
+                      <>
+                        <p className="text-xs text-gray-500">Coating</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">
+                          {linkedOrder.coating}{linkedOrder.coatingPrice ? ` (₹${linkedOrder.coatingPrice})` : ""}
+                        </p>
+                      </>
+                    )}
+                    {linkedOrder.accessories?.length > 0 && (
+                      <>
+                        <p className="text-xs text-gray-500">Accessories</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">{linkedOrder.accessories.join(", ")}</p>
+                      </>
+                    )}
+                    <p className="text-xs text-gray-500">Quantity</p>
+                    <p className="text-xs font-medium text-gray-900 dark:text-white text-right">{linkedOrder.quantity || 1}</p>
+                    {linkedOrder.deliveryDate && (
+                      <>
+                        <p className="text-xs text-gray-500">Delivery Date</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">
+                          {new Date(linkedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      </>
+                    )}
+                    {linkedOrder.labAssigned && (
+                      <>
+                        <p className="text-xs text-gray-500">Lab</p>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-right">{linkedOrder.labAssigned}{linkedOrder.labExpectedDate ? ` (by ${new Date(linkedOrder.labExpectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})` : ""}</p>
+                      </>
+                    )}
+                  </div>
+                  {linkedOrder.labRemarks && (
+                    <p className="text-xs text-gray-500 mt-2">Lab Remarks: {linkedOrder.labRemarks}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Linked Bill */}
+              {linkedBill && (
+                <div className="card p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign size={16} className="text-emerald-500" />
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Bill</h3>
+                    <span className="text-[10px] text-gray-400 ml-auto">{linkedBill.billNumber}</span>
+                  </div>
+                  {linkedBill.items?.length > 0 && (
+                    <div className="overflow-x-auto mb-3">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-dark-700">
+                            <th className="text-left py-2 font-medium text-gray-500">Description</th>
+                            <th className="text-center py-2 font-medium text-gray-500">Qty</th>
+                            <th className="text-right py-2 font-medium text-gray-500">Price</th>
+                            <th className="text-right py-2 font-medium text-gray-500">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-dark-700">
+                          {linkedBill.items.map((it: any, i: number) => (
+                            <tr key={i}>
+                              <td className="py-2 pr-2 text-gray-800 dark:text-gray-200">{it.description || "Item"}</td>
+                              <td className="py-2 text-center text-gray-600 dark:text-gray-400">{it.quantity || 1}</td>
+                              <td className="py-2 text-right text-gray-600 dark:text-gray-400">₹{(it.unitPrice || 0).toFixed(2)}</td>
+                              <td className="py-2 text-right font-medium text-gray-900 dark:text-white">₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-200 dark:border-dark-700 pt-2 space-y-1 text-xs">
+                    <div className="flex justify-between text-gray-500">
+                      <span>Subtotal</span>
+                      <span>₹{(linkedBill.subtotal || 0).toFixed(2)}</span>
+                    </div>
+                    {linkedBill.discount ? (
+                      <div className="flex justify-between text-red-500">
+                        <span>Discount</span>
+                        <span>-₹{linkedBill.discount.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                    {linkedBill.tax ? (
+                      <div className="flex justify-between text-emerald-600">
+                        <span>GST</span>
+                        <span>+₹{linkedBill.tax.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between font-bold text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-dark-700">
+                      <span>Total</span>
+                      <span>₹{(linkedBill.totalAmount || 0).toFixed(2)}</span>
+                    </div>
+                    {linkedBill.advancePaid ? (
+                      <div className="flex justify-between text-emerald-600">
+                        <span>Paid</span>
+                        <span>₹{linkedBill.advancePaid.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                    {(linkedBill.pendingAmount || 0) > 0 ? (
+                      <div className="flex justify-between text-amber-600 font-semibold">
+                        <span>Balance Due</span>
+                        <span>₹{linkedBill.pendingAmount.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => sendWhatsApp(customer?.mobile, linkedBill)}
+                      className="btn-ghost btn-sm text-xs flex items-center gap-1.5">
+                      <MessageCircle size={13} /> Send Bill
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No linked data */}
+              {!linkedPrescription && !linkedOrder && !linkedBill && (
+                <div className="card p-6 text-center">
+                  <Activity size={24} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-400">No linked prescription, order, or bill for this visit.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

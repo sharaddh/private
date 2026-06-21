@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import Toast from "../components/Toast";
 import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X } from "lucide-react";
 
 export default function Pickup() {
@@ -20,6 +21,7 @@ export default function Pickup() {
   const [delivering, setDelivering] = useState(false);
   const [waStatus, setWaStatus] = useState<string>("checking");
   const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [showCreateBill, setShowCreateBill] = useState(false);
   const [billForm, setBillForm] = useState({ description: "", quantity: 1, unitPrice: 0, discount: 0, tax: 0 });
 
@@ -133,17 +135,9 @@ export default function Pickup() {
     const res = await api.patch(`/api/orders/${selectedOrder._id}/status`, payload);
     if (res.success) {
       setMessage("✓ Order delivered successfully!");
-      if (selectedCustomer?.mobile && waStatus === "connected") {
-        const shop = settings?.shopName || "KMJ Optical";
-        const msg = `*${shop}* 🕶\n\nHi ${selectedCustomer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
-        const num = selectedCustomer.mobile.replace(/\D/g, "");
-        const waRes = await api.post("/api/whatsapp/send", { phone: num, message: msg });
-        if (!waRes.success) setMessage("✓ Delivered but WhatsApp notification failed");
-      } else if (selectedCustomer?.mobile && waStatus !== "connected") {
-        setMessage("✓ Delivered (WhatsApp not connected)");
-      }
+      setToast({ message: "Order delivered — notification sent", type: "success" });
       selectCustomer(selectedCustomer); setSelectedOrder(null); setBill(null);
-    } else { setMessage(res.message || "Failed to deliver order"); }
+    } else { setMessage(res.message || "Failed to deliver order"); setToast({ message: res.message || "Failed to deliver", type: "error" }); }
     setDelivering(false); setShowConfirmDeliver(false);
   }
 
@@ -431,6 +425,9 @@ export default function Pickup() {
         <div className="flex justify-center py-8">
           <div className="animate-spin w-8 h-8 border-[3px] border-primary-500 border-t-transparent rounded-full" />
         </div>
+      )}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </div>
   );

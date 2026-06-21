@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import Toast from "../components/Toast";
 import {
   Search, UserPlus, Phone, User, Eye, ShoppingCart,
   CreditCard, Truck, Check, ChevronRight, ChevronLeft, Save,
@@ -100,6 +101,9 @@ export default function Workspace() {
   ]);
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
 
+  const [waSending, setWaSending] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
   // Step 6: Delivery
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -114,6 +118,43 @@ export default function Workspace() {
     phoneRef.current?.focus();
     api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
   }, []);
+
+  // Auto-send WhatsApp when visit is completed
+  const [autoSent, setAutoSent] = useState(false);
+  useEffect(() => {
+    if (step !== "done" || !success || autoSent) return;
+    setAutoSent(true);
+    const doAutoSend = async () => {
+      const bill = success.bill;
+      const customer = success.customer;
+      const payment = success.payment;
+      const order = success.order;
+      const mobile = customer?.mobile || selectedCustomer?.mobile || "";
+      let sentBill = false;
+      let sentPickup = false;
+      if (mobile && bill) {
+        try {
+          await sendWhatsApp(mobile, bill, customer, payment, order);
+          sentBill = true;
+        } catch {}
+      }
+      if (mobile && order) {
+        try {
+          await sendPickupWhatsApp(mobile, order);
+          sentPickup = true;
+        } catch {}
+      }
+      const msgs: string[] = [];
+      if (sentBill) msgs.push("Bill sent");
+      if (sentPickup) msgs.push("Pickup notified");
+      if (msgs.length > 0) {
+        setToast({ message: msgs.join(" + "), type: "success" });
+      } else if (mobile) {
+        setToast({ message: "WhatsApp not connected", type: "info" });
+      }
+    };
+    doAutoSend();
+  }, [step, success, autoSent]);
 
   // Auto-fill bill from order
   useEffect(() => {
@@ -462,25 +503,37 @@ export default function Workspace() {
     );
   }
 
-  function sendWhatsApp(phone: string, bill: any, customer: any, payment: any, order: any) {
+  async function sendWhatsApp(phone: string, bill: any, customer: any, payment: any, order: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
+    const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = settings?.shopName || "KMJ Optical";
-    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
+    setWaSending(true);
+    try {
+      const { generateBillPdf } = await import("../utils/pdf");
+      const doc = generateBillPdf(bill, customer, settings || {});
+      const base64 = doc.output("datauristring").split(",")[1];
+      const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
+      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
+      if (mediaRes.success) { setWaSending(false); return; }
+    } catch {}
     const items = (bill?.items || []).map((i: any) =>
       `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-    ).join("%0a");
-    const msg = `*${shop}* 🕶%0a%0a*Bill:* ${bill?.billNumber || ""}%0a*Date:* ${new Date().toLocaleDateString("en-IN")}%0a%0a*Customer:* ${customer?.name || ""}%0a*Mobile:* ${customer?.mobile || ""}%0a%0a*Items:*%0a${items}%0a%0a*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}%0a${bill?.discount ? `*Discount:* -₹${bill.discount.toFixed(0)}%0a` : ""}${bill?.tax ? `*Tax:* +₹${bill.tax.toFixed(0)}%0a` : ""}*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}%0a*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}%0a%0a*Payment:* ${payment?.paymentMode || "Cash"}%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a%0aThank you for your visit! 🙏`;
-    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
+    ).join("\n");
+    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}${bill?.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill?.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\n*Payment:* ${payment?.paymentMode || "Cash"}\n\n*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}\n\nThank you for your visit! 🙏`;
+    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    setWaSending(false);
   }
 
-  function sendPickupWhatsApp(phone: string, order: any) {
+  async function sendPickupWhatsApp(phone: string, order: any) {
     const num = phone.replace(/\D/g, "");
     if (!num) return;
+    const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = settings?.shopName || "KMJ Optical";
-    const adminNum = settings?.adminWhatsApp?.replace(/\D/g, "") || "91";
-    const msg = `*${shop}* 🕶%0a%0aHi ${selectedCustomer?.name || ""},%0aYour order is ready for pickup! 🎉%0a%0a*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}%0a*Due Amount:* ₹${(success?.bill?.pendingAmount || 0).toFixed(0)}%0a%0aPlease visit our store to collect.%0aThank you! 🙏`;
-    window.open(`https://wa.me/${adminNum}?text=${msg}`, "_blank");
+    setWaSending(true);
+    const msg = `*${shop}* 🕶\n\nHi ${selectedCustomer?.name || ""},\nYour order is ready for pickup! 🎉\n\n*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}\n*Due Amount:* ₹${(success?.bill?.pendingAmount || 0).toFixed(0)}\n\nPlease visit our store to collect.\nThank you! 🙏`;
+    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    setWaSending(false);
   }
 
   const steps = [
@@ -614,14 +667,18 @@ export default function Workspace() {
         <div className="flex flex-wrap gap-3 justify-center">
           {mobile && bill && (
             <button onClick={() => sendWhatsApp(mobile, bill, customer, payment, order)}
-              className="btn-success flex items-center gap-2">
-              <MessageCircle size={18} /> Send WhatsApp Bill
+              disabled={waSending}
+              className="btn-success flex items-center gap-2 disabled:opacity-50">
+              {waSending ? <RefreshCw size={18} className="animate-spin" /> : <MessageCircle size={18} />}
+              {waSending ? "Sending..." : "Send WhatsApp Bill"}
             </button>
           )}
           {mobile && order && (
             <button onClick={() => sendPickupWhatsApp(mobile, order)}
-              className="btn-secondary flex items-center gap-2">
-              <RefreshCw size={18} /> Notify for Pickup
+              disabled={waSending}
+              className="btn-secondary flex items-center gap-2 disabled:opacity-50">
+              {waSending ? <RefreshCw size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+              {waSending ? "Sending..." : "Notify for Pickup"}
             </button>
           )}
           <button onClick={() => { if (bill) window.open(`/bills`, "_blank"); }}
@@ -638,10 +695,11 @@ export default function Workspace() {
 
   // ----- MAIN FLOW -----
   return (
-    <div className="max-w-4xl mx-auto space-y-4 pb-20">
-      {/* Step indicator */}
-      <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 dark:border-dark-700 shadow-sm">
-        {steps.map((s, i) => {
+    <>
+      <div className="max-w-4xl mx-auto space-y-4 pb-20">
+        {/* Step indicator */}
+        <div className="flex items-center gap-0 bg-white dark:bg-dark-800 rounded-2xl p-1 border border-gray-200 dark:border-dark-700 shadow-sm">
+          {steps.map((s, i) => {
           const Icon = s.icon;
           const isActive = step === s.key;
           const isDone = currentIdx > i;
@@ -852,7 +910,11 @@ export default function Workspace() {
                     </button>
                   )}
                   {selectedCustomer.mobile && (
-                    <button onClick={() => window.open(`https://wa.me/91${selectedCustomer.mobile.replace(/\D/g, "")}?text=Hi ${selectedCustomer.name}, this is KMJ Optical.`, "_blank")}
+                    <button onClick={async () => {
+                      const num = selectedCustomer.mobile.replace(/\D/g, "");
+                      const msg = `Hi ${selectedCustomer.name}, this is KMJ Optical.`;
+                      await api.post("/api/whatsapp/send", { phone: `91${num}`, message: msg });
+                    }}
                       className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
                       <MessageCircle size={15} /> WhatsApp
                     </button>
@@ -1505,5 +1567,9 @@ export default function Workspace() {
         </div>
       )}
     </div>
+    {toast && (
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+    )}
+  </>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import Toast from "../components/Toast";
 import { Eye, ChevronRight, Clock, Package, Monitor } from "lucide-react";
 
 const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
@@ -53,6 +54,7 @@ export default function Orders() {
   const [list, setList] = useState<any[]>([]);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   useEffect(() => { fetchOrders(); }, []);
 
@@ -66,7 +68,16 @@ export default function Orders() {
     setStatusLoading(order._id);
     try {
       const res = await api.patch(`/api/orders/${order._id}/status`, { status: next });
-      if (res.success) fetchOrders();
+      if (res.success) {
+        fetchOrders();
+        if (next === "Ready") {
+          setToast({ message: "Order ready — pickup notification sent", type: "success" });
+        } else {
+          setToast({ message: `Order moved to "${next}"`, type: "success" });
+        }
+      } else {
+        setToast({ message: res.message || "Failed to update status", type: "error" });
+      }
     } finally { setStatusLoading(null); }
   }
 
@@ -223,6 +234,9 @@ export default function Orders() {
             );
           })}
         </div>
+      )}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </div>
   );

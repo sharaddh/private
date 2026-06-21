@@ -12,13 +12,12 @@ async function start() {
   await connect(MONGO_URI);
   console.log("Connected to MongoDB");
 
-  try {
-    await whatsapp.init();
+  whatsapp.init().then(() => {
     console.log("WhatsApp service initialized");
-  } catch (err) {
+  }).catch((err) => {
     console.error("WhatsApp initialization failed:", (err as Error)?.message);
     console.log("Server will continue without WhatsApp");
-  }
+  });
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

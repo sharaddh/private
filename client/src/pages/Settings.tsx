@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
-import { Save, User, Shield, Bell, Upload, MessageCircle, Image } from "lucide-react";
+import { Save, User, Shield, Bell, Upload, MessageCircle, Image, RefreshCw, LogOut } from "lucide-react";
 
 export default function Settings() {
   const [shopName, setShopName] = useState("KMJ Optical");
@@ -14,6 +14,9 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [waStatus, setWaStatus] = useState<string>("checking");
+  const [waQr, setWaQr] = useState<string | null>(null);
+  const [waDisconnecting, setWaDisconnecting] = useState(false);
 
   useEffect(() => {
     api.get("/api/settings").then((d) => {
@@ -27,6 +30,36 @@ export default function Settings() {
         setLogoPreview(d.data.logo || "");
       }
     });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function poll() {
+      while (!cancelled) {
+        try {
+          const res = await api.get("/api/whatsapp/qr");
+          if (cancelled) return;
+          if (res.success) {
+            if (res.data?.qr) {
+              setWaQr(res.data.qr);
+              setWaStatus("qr");
+            } else if (res.data?.status === "connected") {
+              setWaQr(null);
+              setWaStatus("connected");
+            } else if (res.data?.status === "error") {
+              setWaQr(null);
+              setWaStatus("error");
+            } else {
+              setWaQr(null);
+              setWaStatus("initializing");
+            }
+          }
+        } catch {}
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+    poll();
+    return () => { cancelled = true; };
   }, []);
 
   function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -144,13 +177,68 @@ export default function Settings() {
                 Bills will be sent from this number. Include country code (e.g., 91 for India).
               </p>
             </div>
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
-              <h4 className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">How it works</h4>
-              <ul className="space-y-1.5 text-sm text-green-700 dark:text-green-400">
-                <li className="flex items-center gap-2">• Bills are sent via WhatsApp to customers</li>
-                <li className="flex items-center gap-2">• Clean WhatsApp Web API (no API key needed)</li>
-                <li className="flex items-center gap-2">• Opens WhatsApp with pre-filled message</li>
-              </ul>
+            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">WhatsApp Connection</h4>
+              {waStatus === "connected" && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                    <div className="w-3 h-3 bg-emerald-500 rounded-full" />
+                    <span className="text-sm font-medium">Connected</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setWaDisconnecting(true);
+                      await api.post("/api/whatsapp/disconnect", {});
+                      setWaDisconnecting(false);
+                      setWaStatus("disconnected");
+                    }}
+                    disabled={waDisconnecting}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    <LogOut size={16} />
+                    {waDisconnecting ? "Disconnecting..." : "Logout & Reset WhatsApp"}
+                  </button>
+                </div>
+              )}
+              {waStatus === "qr" && waQr && (
+                <div className="text-center space-y-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Scan this QR code with WhatsApp to connect</p>
+                  <img src={waQr} alt="WhatsApp QR" className="mx-auto w-48 h-48" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Open WhatsApp → Menu → Linked Devices → Link a Device
+                  </p>
+                  <button
+                    onClick={async () => {
+                      setWaDisconnecting(true);
+                      await api.post("/api/whatsapp/disconnect", {});
+                      setWaDisconnecting(false);
+                      setWaStatus("disconnected");
+                    }}
+                    disabled={waDisconnecting}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    <LogOut size={16} />
+                    {waDisconnecting ? "Disconnecting..." : "Cancel & Reset"}
+                  </button>
+                </div>
+              )}
+              {waStatus === "disconnected" && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">WhatsApp session cleared. A new QR code will appear shortly for re-linking.</p>
+                </div>
+              )}
+              {waStatus === "initializing" && (
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span className="text-sm">Connecting...</span>
+                </div>
+              )}
+              {waStatus === "error" && (
+                <p className="text-sm text-red-500">Connection error. Restart the server.</p>
+              )}
+              {waStatus === "checking" && (
+                <p className="text-sm text-gray-400">Checking status...</p>
+              )}
             </div>
           </form>
         </div>
