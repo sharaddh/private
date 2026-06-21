@@ -7,7 +7,7 @@ import {
   Users, ShoppingCart, FileText, Package, Truck,
   TrendingUp, DollarSign, Clock, AlertTriangle, ArrowRight,
   Glasses, Eye, Plus, Check, Trash2, Circle, FlaskConical,
-  Search, ChevronDown, ChevronUp
+  Search, ChevronDown, ChevronUp, Send, ShoppingBag, Factory
 } from "lucide-react";
 
 interface DashboardData {
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [todos, setTodos] = useState<any[]>([]);
   const [newTask, setNewTask] = useState("");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [sendingDemand, setSendingDemand] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const navigate = useNavigate();
 
@@ -71,6 +72,32 @@ export default function Dashboard() {
           ),
         };
       });
+    }
+  }
+
+  async function classifyOrder(id: string, classification: string) {
+    const res = await api.patch(`/api/orders/${id}/classify`, { classification });
+    if (res.success) {
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          incompleteOrders: prev.incompleteOrders.map((x: any) =>
+            x._id === id ? { ...x, classification } : x
+          ),
+        };
+      });
+    }
+  }
+
+  async function sendDemand(type: "buy" | "order") {
+    setSendingDemand(type);
+    const res = await api.post("/api/orders/demand-send", { type });
+    setSendingDemand(null);
+    if (res.success) {
+      setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list sent to your WhatsApp!`, type: "success" });
+    } else {
+      setToast({ message: res.message || "Failed to send", type: "error" });
     }
   }
 
@@ -167,7 +194,45 @@ export default function Dashboard() {
               View all <ArrowRight size={14} />
             </button>
           </div>
-          <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-thin pr-1">
+          {/* Demand action bar */}
+          {data.incompleteOrders.length > 0 && (
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              {(["pending", "stock", "buy", "order"] as const).map(c => {
+                const count = data.incompleteOrders.filter((o: any) => (o.classification || "pending") === c).length;
+                const colors: Record<string, string> = {
+                  pending: "bg-gray-100 dark:bg-dark-700 text-gray-500",
+                  stock: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300",
+                  buy: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300",
+                  order: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300",
+                };
+                const labels: Record<string, string> = {
+                  pending: "Pending",
+                  stock: "In Stock",
+                  buy: "To Buy",
+                  order: "To Order",
+                };
+                return (
+                  <span key={c} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colors[c]}`}>
+                    {labels[c]}: {count}
+                  </span>
+                );
+              })}
+              <div className="flex-1" />
+              {(["buy", "order"] as const).map(type => {
+                const hasItems = data.incompleteOrders.some((o: any) => (o.classification || "pending") === type);
+                return hasItems ? (
+                  <button key={type} onClick={() => sendDemand(type)}
+                    disabled={sendingDemand === type}
+                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 transition-all disabled:opacity-40"
+                    style={{ background: type === "buy" ? "#fef3c7" : "#dbeafe", color: type === "buy" ? "#d97706" : "#2563eb" }}>
+                    <Send size={11} />
+                    {sendingDemand === type ? "Sending..." : `Send ${type === "buy" ? "Purchase" : "Lab Order"}`}
+                  </button>
+                ) : null;
+              })}
+            </div>
+          )}
+          <div className="space-y-2 max-h-[460px] overflow-y-auto scrollbar-thin pr-1">
             {(data.incompleteOrders || []).length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-6">All orders complete</p>
             ) : (
@@ -177,6 +242,7 @@ export default function Dashboard() {
                 const isExpanded = expandedOrders.has(o._id);
                 const rx = o.prescription;
                 const demand = rx ? buildDemand(rx, o) : null;
+                const cls = o.classification || "pending";
                 return (
                   <div key={o._id} className={`rounded-lg border transition-all ${o.reviewed ? "border-emerald-200 dark:border-emerald-800/40" : "border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600"}`}>
                     {/* Status bar */}
@@ -193,6 +259,16 @@ export default function Dashboard() {
                           o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" :
                           "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"
                         }`}>{o.status}</span>
+                        {/* Classification badges */}
+                        {cls !== "pending" && (
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                            cls === "stock" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300" :
+                            cls === "buy" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300" :
+                            "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"
+                          }`}>
+                            {cls === "stock" ? "Stock" : cls === "buy" ? "Buy" : "Order"}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <button onClick={() => navigate(`/inventory?q=${encodeURIComponent(o.lensBrand || o.lens || o.frame || "")}`)}
@@ -235,6 +311,21 @@ export default function Dashboard() {
                           </div>
                         )}
                         {o.frameColor && <div className="text-[10px] text-gray-400">{o.frameColor}{o.frameSize ? ` / ${o.frameSize}` : ""}</div>}
+                        {/* Classification buttons */}
+                        <div className="flex sm:justify-end gap-1 mt-2">
+                          {(["stock", "buy", "order"] as const).map(c => (
+                            <button key={c} onClick={() => classifyOrder(o._id, cls === c ? "pending" : c)}
+                              className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border transition-all ${
+                                cls === c
+                                  ? c === "stock" ? "bg-emerald-500 border-emerald-500 text-white"
+                                    : c === "buy" ? "bg-amber-500 border-amber-500 text-white"
+                                    : "bg-blue-500 border-blue-500 text-white"
+                                  : "border-gray-200 dark:border-dark-600 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              }`}>
+                              {c === "stock" ? "Stock" : c === "buy" ? "Buy" : "Order"}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
