@@ -21,13 +21,26 @@ const createSchema = z.object({
 });
 
 router.get("/", authenticate, async (req, res) => {
-  const { customerId } = req.query;
+  const { customerId, startDate, endDate } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) {
+      const s = new Date(startDate as string);
+      s.setHours(0, 0, 0, 0);
+      filter.createdAt.$gte = s;
+    }
+    if (endDate) {
+      const e = new Date(endDate as string);
+      e.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = e;
+    }
+  }
   const list = await Bill.find(filter)
     .populate("customerId", "name mobile customerId")
     .sort({ createdAt: -1 })
-    .limit(100);
+    .limit(500);
   res.json({ success: true, data: list });
 });
 

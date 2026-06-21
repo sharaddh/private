@@ -4,15 +4,26 @@ import Table from "../components/Table";
 import Toast from "../components/Toast";
 import { Printer, MessageCircle, FileText as PdfIcon, FileText } from "lucide-react";
 import { downloadBillPdf } from "../utils/pdf";
+import DateRangePicker from "../components/DateRangePicker";
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 export default function Bills() {
   const [list, setList] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [startDate, setStartDate] = useState(todayStr());
+  const [endDate, setEndDate] = useState(todayStr());
 
-  useEffect(() => { fetchBills(); fetchSettings(); }, []);
+  useEffect(() => { fetchBills(); fetchSettings(); }, [startDate, endDate]);
 
-  function fetchBills() { api.get("/api/bills").then((d) => { if (d.success) setList(d.data || []); }); }
+  function fetchBills() {
+    const params = new URLSearchParams({ startDate, endDate });
+    api.get("/api/bills?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
+  }
   function fetchSettings() { api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); }); }
 
   function resolveCustomer(bill: any) {
@@ -194,6 +205,8 @@ export default function Bills() {
         <h1 className="page-title">Bills</h1>
         <p className="page-subtitle">View and manage invoices created through visits and orders.</p>
       </div>
+
+      <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="bill" />
 
       <Table
         columns={[
