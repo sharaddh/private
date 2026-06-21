@@ -84,67 +84,106 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   const margin = 15;
   const contentW = pageW - margin * 2;
   let y = 0;
+// --- Configuration ---
+const logoSize = 50; 
+const headerHeight = 50; 
+const cursorY = 7; // Start below top bar
 
-  doc.setFillColor(primary[0], primary[1], primary[2]);
-  doc.rect(0, 0, pageW, 7, "F");
+// --- Background ---
+doc.setFillColor(primary[0], primary[1], primary[2]);
+doc.rect(0, 0, pageW, 7, "F");
 
-  y = 7;
+doc.setFillColor(247, 248, 252);
+doc.rect(0, 7, pageW, headerHeight, "F");
 
-  doc.setFillColor(247, 248, 252);
-  doc.rect(0, y, pageW, 36, "F");
+// --- 1. Draw Logo (Left) ---
+const logoX = margin;
+const logoY = cursorY + 2; // Fixed top padding for logo
 
-  y += 6;
+if (settings.logo) {
+  let format = "JPEG";
+  if (settings.logo.startsWith("data:image/png")) format = "PNG";
+  else if (settings.logo.startsWith("data:image/gif")) format = "GIF";
+  else if (settings.logo.startsWith("data:image/webp")) format = "WEBP";
 
-  if (settings.logo) {
-    let format = "JPEG";
-    const logo = settings.logo;
-    if (logo.startsWith("data:image/png")) format = "PNG";
-    else if (logo.startsWith("data:image/gif")) format = "GIF";
-    else if (logo.startsWith("data:image/webp")) format = "WEBP";
-    try {
-      doc.addImage(logo, format, margin, y + 1, 32, 32);
-    } catch {
-      try { doc.addImage(logo, "PNG", margin, y + 1, 32, 32); } catch {
-        try { doc.addImage(logo, "JPEG", margin, y + 1, 32, 32); } catch {}
-      }
-    }
+  try {
+    doc.addImage(settings.logo, format, logoX, logoY, logoSize, logoSize);
+  } catch (e) {
+    try { doc.addImage(settings.logo, "PNG", logoX, logoY, logoSize, logoSize); } 
+    catch { try { doc.addImage(settings.logo, "JPEG", logoX, logoY, logoSize, logoSize); } catch {} }
   }
+}
 
-  const rightInfoX = pageW - margin;
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  let riY = y + 4;
+// --- 2. Calculate Text Vertical Center (Right) ---
+const rightMargin = 15; 
+const rightX = pageW - rightMargin;
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text(settings.shopName || "Optical Shop", rightInfoX, riY, { align: "right" });
-  riY += 6;
+// Get font heights to measure accurately
+doc.setFont("helvetica", "bold");
+doc.setFontSize(12);
+const titleHeight = doc.getLineHeight();
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  if (settings.shopAddress) {
-    doc.text(settings.shopAddress, rightInfoX, riY, { align: "right" });
-    riY += 4.5;
+doc.setFont("helvetica", "normal");
+doc.setFontSize(9);
+const infoHeight = doc.getLineHeight();
+
+// Gather active info lines 
+const infoLines = [];
+if (settings.shopAddress) infoLines.push(settings.shopAddress);
+if (settings.shopPhone) infoLines.push(`Phone: ${settings.shopPhone}`);
+if (settings.shopEmail) infoLines.push(`Email: ${settings.shopEmail}`);
+
+// --- ZERO VERTICAL GAP SETTINGS ---
+const titleGap = -6; // Tiny spacing below the shop name for readability
+const lineGap = -6;  // Zero spacing between the contact lines
+
+// Calculate the EXACT total height of the text block dynamically
+let textBlockHeight = titleHeight;
+if (infoLines.length > 0) {
+  textBlockHeight += titleGap;
+  textBlockHeight += (infoLines.length * infoHeight);
+  textBlockHeight += ((infoLines.length - 1) * lineGap);
+}
+
+// Find the vertical center of the logo
+const logoCenterY = logoY + (logoSize / 2);
+
+// Calculate the starting Y position for the Title
+let currentTextY = logoCenterY - (textBlockHeight / 2) + (titleHeight * 0.8);
+
+// --- 3. Draw Text (Right Aligned on Same Axis) ---
+
+// Draw the Shop Name (Title)
+doc.setFont("helvetica", "bold");
+doc.setFontSize(12);
+doc.setTextColor(dark[0], dark[1], dark[2]);
+doc.text(settings.shopName || "Optical Shop", rightX, currentTextY, { align: "right" });
+
+// Draw the Info Lines
+doc.setFont("helvetica", "normal");
+doc.setFontSize(9);
+doc.setTextColor(gray[0], gray[1], gray[2]);
+
+if (infoLines.length > 0) {
+  // Move down to the first info line
+  currentTextY += titleGap + infoHeight; 
+  doc.text(infoLines[0], rightX, currentTextY, { align: "right" });
+
+  // Move down for any remaining lines (Since lineGap is 0, this is tightly stacked)
+  for (let i = 1; i < infoLines.length; i++) {
+    currentTextY += lineGap + infoHeight;
+    doc.text(infoLines[i], rightX, currentTextY, { align: "right" });
   }
-  if (settings.shopPhone) {
-    doc.text(`Phone: ${settings.shopPhone}`, rightInfoX, riY, { align: "right" });
-    riY += 4.5;
-  }
-  if (settings.shopEmail) {
-    doc.text(`Email: ${settings.shopEmail}`, rightInfoX, riY, { align: "right" });
-    riY += 4.5;
-  }
+}
 
-  y += 34;
+// --- Divider Line ---
+const lineY = cursorY + headerHeight; 
+doc.setDrawColor(border[0], border[1], border[2]);
+doc.setLineWidth(0.5);
+doc.line(margin, lineY, pageW - margin, lineY);
+doc.setLineWidth(0.1);
 
-  doc.setDrawColor(border[0], border[1], border[2]);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
-  doc.setLineWidth(0.1);
-  y += 6;
-
+y = lineY + 6;
   const leftColX = margin;
   const rightColX = pageW / 2 + 5;
 
