@@ -18,6 +18,10 @@ router.get("/qr", authenticate, async (_req, res: Response) => {
   }
 });
 
+router.get("/queue", authenticate, async (_req, res: Response) => {
+  res.json({ success: true, data: { queueLength: whatsapp.queueLength } });
+});
+
 router.post("/send", authenticate, async (req: Request, res: Response) => {
   try {
     const { phone, message } = req.body;
@@ -26,7 +30,13 @@ router.post("/send", authenticate, async (req: Request, res: Response) => {
       return;
     }
     const ok = await whatsapp.sendMessage(phone, message);
-    res.json({ success: ok, message: ok ? "Sent" : "Failed to send" });
+    const status = await whatsapp.getStatus();
+    res.json({
+      success: true,
+      sent: ok,
+      queued: !ok && status.status !== "connected",
+      message: ok ? "Sent" : status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects",
+    });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }
@@ -40,12 +50,13 @@ router.post("/send-media", authenticate, async (req: Request, res: Response) => 
       return;
     }
     const ok = await whatsapp.sendMedia(phone, base64, filename, caption);
-    if (!ok) {
-      const status = await whatsapp.getStatus();
-      res.json({ success: false, message: "Failed to send", status: status.status });
-      return;
-    }
-    res.json({ success: true, message: "Sent" });
+    const status = await whatsapp.getStatus();
+    res.json({
+      success: true,
+      sent: ok,
+      queued: !ok && status.status !== "connected",
+      message: ok ? "Sent" : status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects",
+    });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
   }

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import {
   ArrowLeft, Eye, ShoppingCart, DollarSign, CreditCard, Plus, Save, X, MessageCircle,
-  AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock
+  AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText
 } from "lucide-react";
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
@@ -51,7 +51,6 @@ export default function NewVisit() {
   const [orderLensIndex, setOrderLensIndex] = useState("");
   const [orderLensPrice, setOrderLensPrice] = useState(0);
   const [orderCoating, setOrderCoating] = useState("");
-  const [orderCoatingPrice, setOrderCoatingPrice] = useState(0);
   const [orderAccessories, setOrderAccessories] = useState<{ name: string; price: number }[]>([]);
   const [orderDeliveryDate, setOrderDeliveryDate] = useState("");
 
@@ -79,11 +78,11 @@ export default function NewVisit() {
   const [waSending, setWaSending] = useState(false);
   const [waSent, setWaSent] = useState(false);
   const [waFailed, setWaFailed] = useState(false);
+  const [waQueued, setWaQueued] = useState(false);
   const waTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
-  const billTotal = billSubtotal - billDiscount + billTax;
-  const pendingAmt = billTotal - advancePaid - paymentAmount;
+  const billTotal = billSubtotal - billDiscount;
 
   useEffect(() => {
     if (!id) return;
@@ -118,13 +117,11 @@ export default function NewVisit() {
         setOrderLensIndex(last.lensIndex || "");
         setOrderLensPrice(last.lensPrice || 0);
         setOrderCoating(last.coating || "");
-        setOrderCoatingPrice(last.coatingPrice || 0);
         if (last.accessories) setOrderAccessories(last.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
 
         const items: { description: string; qty: number; price: number }[] = [];
         if (last.frame) items.push({ description: `Frame - ${last.frame}`, qty: 1, price: last.framePrice || 0 });
         if (last.lens) items.push({ description: `Lens - ${last.lens}`, qty: 1, price: last.lensPrice || 0 });
-        if (last.coating) items.push({ description: `Coating - ${last.coating}`, qty: 1, price: last.coatingPrice || 0 });
         const accs = (last.accessories || []).map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a);
         accs.forEach((a: any) => items.push({ description: a.name, qty: 1, price: a.price || 0 }));
         if (items.length > 0) setBillItems(items);
@@ -140,6 +137,7 @@ export default function NewVisit() {
     setWaSent(false);
     setWaSending(false);
     setWaFailed(false);
+    setWaQueued(false);
     waTimerRef.current = setTimeout(() => doWaSend(), 3000);
   }
 
@@ -166,8 +164,13 @@ export default function NewVisit() {
           const base64 = doc.output("datauristring").split(",")[1];
           const caption = `*${shop}*\n\nHi ${customer.name},\nThank you for your visit!\nPlease find your bill attached.\n\nThank you!`;
           const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
-          if (mediaRes.success) {
+          if (mediaRes.sent) {
             setWaSent(true);
+            setWaSending(false);
+            return;
+          }
+          if (mediaRes.queued) {
+            setWaQueued(true);
             setWaSending(false);
             return;
           }
@@ -179,8 +182,10 @@ export default function NewVisit() {
         setWaFailed(true);
       } else {
         const msg = `*${shop}*\n\nHi ${customer.name},\nThank you for your visit!\n\nService completed successfully.\n\nThank you!`;
-        try { await api.post("/api/whatsapp/send", { phone: fullNum, message: msg }); } catch {}
-        setWaSent(true);
+        try {
+          const res = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+          if (res.queued) { setWaQueued(true); } else { setWaSent(true); }
+        } catch { setWaSent(true); }
       }
       setWaSending(false);
     }).catch(() => {
@@ -201,13 +206,10 @@ export default function NewVisit() {
     if (visitStep === "billing") syncBillFromOrder();
   }, [visitStep]);
 
-  // Pre-fill payment amount with pending balance when entering billing step
+  // Sync payment amount with advance paid
   useEffect(() => {
-    if (visitStep === "billing") {
-      const pending = Math.max(0, billTotal - advancePaid);
-      setPaymentAmount(pending > 0 ? pending : 0);
-    }
-  }, [visitStep]);
+    setPaymentAmount(advancePaid);
+  }, [advancePaid]);
 
   function updateEye(side: "rightEye" | "leftEye", type: "dv" | "nv" | "pc", field: string, value: string) {
     setPrescription((prev) => {
@@ -261,21 +263,18 @@ export default function NewVisit() {
     if (visitType === "service") return;
     const items: { description: string; qty: number; price: number }[] = [];
     if (visitType === "other") {
-      if (orderFrame) items.push({ description: orderFrame, qty: orderQty, price: orderFramePrice });
+      if (orderFrame) items.push({ description: orderFrame, qty: 1, price: orderFramePrice });
       orderAccessories.filter((a) => a.name).forEach((a) => items.push({ description: a.name, qty: 1, price: a.price }));
       if (items.length > 0) setBillItems(items);
       return;
     }
-    const hasLens = orderLens || orderLensBrand || orderLensType || orderLensIndex;
+    const hasLens = orderLens || orderLensBrand || lensFeatures.length > 0 || orderLensIndex;
     if (visitType !== "new_lens" && visitType !== "contact_lens" && orderFrame) {
-      items.push({ description: `Frame - ${orderFrame}`, qty: orderQty, price: orderFramePrice });
+      items.push({ description: `Frame - ${orderFrame}`, qty: 1, price: orderFramePrice });
     }
     if (visitType !== "frame_change" && visitType !== "sunglasses" && hasLens) {
-      const lensDesc = orderLens || `${orderLensBrand} ${orderLensType}`.trim() || "Lens";
+      const lensDesc = orderLens || `${orderLensBrand || ""} ${lensFeatures.join(", ") || ""}`.trim() || "Lens";
       items.push({ description: `Lens - ${lensDesc}`, qty: 1, price: orderLensPrice });
-    }
-    if (visitType !== "frame_change" && visitType !== "sunglasses" && visitType !== "contact_lens" && orderCoating) {
-      items.push({ description: `Coating - ${orderCoating}`, qty: 1, price: orderCoatingPrice });
     }
     orderAccessories.filter((a) => a.name).forEach((a) => {
       if (!items.some((i) => i.description === a.name)) items.push({ description: a.name, qty: 1, price: a.price });
@@ -284,33 +283,37 @@ export default function NewVisit() {
   }
 
   function canProceed(): boolean {
-    switch (visitStep) {
-      case "type": return !!visitType;
-      case "prescription": return true;
-      case "products": return true;
-      case "billing": return visitType === "service" ? true : billItems.some((i) => i.description && i.price > 0);
-      case "summary": return true;
-      default: return true;
-    }
+    if (visitStep === "type") return !!visitType;
+    if (visitStep === "billing" && visitType !== "service") return billItems.some((i) => i.description && i.price > 0);
+    return true;
   }
 
   function goNext() {
     if (visitType === "service") {
-      if (visitStep === "prescription") { setVisitStep("summary"); return; }
-      const steps = ["type", "prescription", "products", "billing", "summary"];
+      const steps = ["type", "products", "billing", "summary"];
       const idx = steps.indexOf(visitStep);
       if (idx < steps.length - 1 && canProceed()) setVisitStep(steps[idx + 1] as any);
       return;
     }
     const steps = ["type", "prescription", "products", "billing", "summary"];
-    let idx = steps.indexOf(visitStep);
-    if (visitType === "other" && steps[idx] === "prescription") {
-      idx++;
+    if (visitType === "other") {
+      if (visitStep === "type") { setVisitStep("products"); return; }
+      const idx = steps.indexOf(visitStep);
+      if (idx < steps.length - 1 && canProceed()) setVisitStep(steps[idx + 1] as any);
+      return;
     }
+    const idx = steps.indexOf(visitStep);
     if (idx < steps.length - 1 && canProceed()) setVisitStep(steps[idx + 1] as any);
   }
 
   function goBack() {
+    if (visitType === "other" && visitStep === "products") { setVisitStep("type"); return; }
+    if (visitType === "service") {
+      const steps = ["type", "products", "billing", "summary"];
+      const idx = steps.indexOf(visitStep);
+      if (idx > 0) setVisitStep(steps[idx - 1] as any);
+      return;
+    }
     const steps = ["type", "prescription", "products", "billing", "summary"];
     const idx = steps.indexOf(visitStep);
     if (idx > 0) setVisitStep(steps[idx - 1] as any);
@@ -334,36 +337,36 @@ export default function NewVisit() {
         payload.order = {
           frame: orderFrame || undefined, frameBrand: orderFrameBrand || undefined,
           frameModel: orderFrameModel || undefined, frameColor: orderFrameColor || undefined,
-          frameSize: orderFrameSize || undefined, framePrice: orderFramePrice || 0,
+          framePrice: orderFramePrice || 0,
           lens: orderLens || undefined, lensBrand: orderLensBrand || undefined,
-          lensType: orderLensType || undefined, lensIndex: orderLensIndex || undefined,
+          lensType: lensFeatures.join(", ") || undefined, lensIndex: orderLensIndex || undefined,
           lensPrice: orderLensPrice || 0,
-          coating: orderCoating || undefined, coatingPrice: orderCoatingPrice || 0,
+          coating: orderCoating || undefined,
           accessories: orderAccessories.map((a) => a.name),
-          quantity: orderQty, deliveryDate: orderDeliveryDate || undefined,
+          deliveryDate: orderDeliveryDate || undefined,
         };
         if (visitType === "frame_change") {
           delete payload.order.lens; delete payload.order.lensBrand;
           delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
-          delete payload.order.coating; delete payload.order.coatingPrice;
+          delete payload.order.coating;
         }
         if (visitType === "new_lens") {
           delete payload.order.frame; delete payload.order.frameBrand;
           delete payload.order.frameModel; delete payload.order.frameColor;
-          delete payload.order.frameSize; delete payload.order.framePrice;
+          delete payload.order.framePrice;
         }
         if (visitType === "contact_lens") {
           delete payload.order.frame; delete payload.order.frameBrand;
           delete payload.order.frameModel; delete payload.order.frameColor;
-          delete payload.order.frameSize; delete payload.order.framePrice;
-          delete payload.order.coating; delete payload.order.coatingPrice;
+          delete payload.order.framePrice;
+          delete payload.order.coating;
         }
         if (visitType === "other") {
           delete payload.order.frameBrand; delete payload.order.frameModel;
-          delete payload.order.frameColor; delete payload.order.frameSize;
+          delete payload.order.frameColor;
           delete payload.order.lens; delete payload.order.lensBrand;
           delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
-          delete payload.order.coating; delete payload.order.coatingPrice;
+          delete payload.order.coating;
         }
       }
 
@@ -371,7 +374,7 @@ export default function NewVisit() {
       if (validItems.length > 0) {
         payload.bill = {
           items: validItems.map((i) => ({ description: i.description, quantity: i.qty, unitPrice: i.price })),
-          discount: billDiscount || 0, tax: billTax || 0, advancePaid: advancePaid || 0,
+          discount: billDiscount || 0, advancePaid: advancePaid || 0,
         };
       }
 
@@ -403,13 +406,16 @@ export default function NewVisit() {
     { value: "other", label: "Other", icon: Plus, desc: "Select sub-type" },
   ];
 
-  const visitSteps = [
+  const allSteps = [
     { key: "type", label: "Visit", icon: Plus },
     { key: "prescription", label: "Prescription", icon: Eye },
     { key: "products", label: "Products", icon: ShoppingCart },
     { key: "billing", label: "Billing & Payment", icon: DollarSign },
     { key: "summary", label: "Summary", icon: CreditCard },
   ];
+  const visitSteps = (visitType === "service" || visitType === "other")
+    ? allSteps.filter(s => s.key !== "prescription")
+    : allSteps;
   const currentStepIdx = visitSteps.findIndex((s) => s.key === visitStep);
 
   if (loading) {
@@ -469,6 +475,12 @@ export default function NewVisit() {
           <div className="card text-center py-5 space-y-2 border-gray-200 dark:border-dark-700 border-2">
             <X size={24} className="mx-auto text-gray-400" />
             <p className="text-sm text-gray-500 dark:text-gray-400">Auto-send cancelled</p>
+          </div>
+        )}
+        {mobile && waQueued && !waSent && !waSending && !waFailed && (
+          <div className="card text-center py-5 space-y-2 border-amber-200 dark:border-amber-800 border-2">
+            <Clock size={24} className="mx-auto text-amber-400" />
+            <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">WhatsApp not connected — message queued. Will send automatically when connected.</p>
           </div>
         )}
         {mobile && waFailed && !waSent && !waSending && (
@@ -543,11 +555,27 @@ export default function NewVisit() {
               <Phone size={13} /> {customer.name} — {customer.mobile}
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
-            <span className="px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg font-medium">
-              Step {currentStepIdx + 1} of 5
-            </span>
-          </div>
+        </div>
+        {/* Step pills */}
+        <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-gray-100 dark:border-dark-700 overflow-x-auto">
+          {visitSteps.map((s, i) => {
+            const Icon = s.icon;
+            const isActive = visitStep === s.key;
+            const isPast = currentStepIdx > i;
+            return (
+              <div key={s.key}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                  isActive
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : isPast
+                    ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                    : "bg-gray-100 dark:bg-dark-700 text-gray-400 dark:text-gray-500"
+                }`}>
+                {isPast ? <Check size={11} /> : <Icon size={11} />}
+                <span>{s.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -672,19 +700,64 @@ export default function NewVisit() {
 
         {/* ===== STEP 3: PRODUCTS ===== */}
         {visitStep === "products" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Products</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Add frame, lens, coating, and accessories.</p>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/40 rounded-xl flex items-center justify-center text-violet-600 dark:text-violet-400">
+                <ShoppingCart size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Products</h2>
+                <p className="text-sm text-gray-500">Add frame, lens, coating, and accessories.</p>
+              </div>
             </div>
             {visitType === "service" ? (
-              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                Service/Repair visit — no products needed.
+              <div className="space-y-5">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-5 py-3 flex items-start gap-3 text-sm text-amber-700 dark:text-amber-300">
+                  <Clock size={18} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Service / Repair</p>
+                    <p className="text-xs mt-0.5 opacity-80">Free service — add chargeable items below if applicable, or leave empty for a free visit.</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Tag size={15} className="text-gray-400" />
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Service Items</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {billItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-start bg-white dark:bg-dark-800 p-3 rounded-xl border border-gray-200 dark:border-dark-700">
+                        <div className="flex-1">
+                          <input className="input-field text-sm" placeholder="Service description (e.g. Frame adjustment)" value={item.description}
+                            onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
+                        </div>
+                        <div className="w-16">
+                          <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
+                            onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
+                        </div>
+                        <div className="w-24">
+                          <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
+                            onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
+                        </div>
+                        <div className="w-16 text-right pt-2.5 text-sm font-medium">₹{(item.qty * item.price).toFixed(0)}</div>
+                        <button onClick={() => removeBillItem(idx)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+                      </div>
+                    ))}
+                    <button onClick={addBillItem}
+                      className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                      <Plus size={16} /> Add Service Item
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : visitType === "other" ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Type</label>
+              <div className="space-y-5">
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Tag size={15} className="text-gray-400" />
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Product Type</h3>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {otherSubTypes.map((st) => (
                       <button key={st} type="button" onClick={() => setOtherSubType(st)}
@@ -699,22 +772,17 @@ export default function NewVisit() {
                   </div>
                 </div>
                 {otherSubType && (
-                  <div className="border-t border-gray-100 dark:border-dark-700 pt-4">
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{otherSubType} Details</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="col-span-2 md:col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Product Name</label>
-                        <input className="input-field" placeholder="Name" value={orderFrame}
+                        <input className="input-field text-base" placeholder="Name" value={orderFrame}
                           onChange={(e) => setOrderFrame(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
-                        <input type="number" min="1" className="input-field" value={orderQty}
-                          onChange={(e) => setOrderQty(Number(e.target.value))} />
-                      </div>
-                      <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
+                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderFramePrice}
                           onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
                       </div>
                     </div>
@@ -722,41 +790,39 @@ export default function NewVisit() {
                 )}
               </div>
             ) : (
-              <>
+              <div className="space-y-6">
                 {visitType !== "new_lens" && visitType !== "contact_lens" && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <Tag size={14} /> {visitType === "sunglasses" ? "Sunglasses" : "Frame"}
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
+                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <Tag size={20} />
+                      </div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{visitType === "sunglasses" ? "Sunglasses" : "Frame"}</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
-                        <input className="input-field" placeholder="Brand" value={orderFrameBrand}
+                        <input className="input-field text-base" placeholder="Brand" value={orderFrameBrand}
                           onChange={(e) => setOrderFrameBrand(e.target.value)} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Model</label>
-                        <input className="input-field" placeholder="Model" value={orderFrameModel}
+                        <input className="input-field text-base" placeholder="Model" value={orderFrameModel}
                           onChange={(e) => setOrderFrameModel(e.target.value)} />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
-                        <input className="input-field" placeholder="Color" value={orderFrameColor}
+                        <input className="input-field text-base" placeholder="Color" value={orderFrameColor}
                           onChange={(e) => setOrderFrameColor(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Size</label>
-                        <input className="input-field" placeholder="52-18" value={orderFrameSize}
-                          onChange={(e) => setOrderFrameSize(e.target.value)} />
-                      </div>
-                      <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                        <input className="input-field" placeholder="Frame name" value={orderFrame}
+                        <input className="input-field text-base" placeholder="Frame name" value={orderFrame}
                           onChange={(e) => setOrderFrame(e.target.value)} />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderFramePrice}
+                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderFramePrice}
                           onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
                       </div>
                     </div>
@@ -764,66 +830,79 @@ export default function NewVisit() {
                 )}
 
                 {visitType !== "frame_change" && visitType !== "sunglasses" && (
-                  <div className="border-t border-gray-100 dark:border-dark-700 pt-5">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><Eye size={14} /> Lens</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
+                      <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center text-sky-600 dark:text-sky-400">
+                        <Eye size={20} />
+                      </div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Lens</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
-                        <input className="input-field" placeholder="Brand" value={orderLensBrand}
+                        <input className="input-field text-base" placeholder="Brand" value={orderLensBrand}
                           onChange={(e) => setOrderLensBrand(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
-                        <select className="input-field" value={orderLensType}
-                          onChange={(e) => setOrderLensType(e.target.value)}>
-                          <option>Single Vision</option><option>Bifocal</option><option>Progressive</option>
-                          <option>Blue Cut</option><option>Photochromic</option><option>Polarized</option>
-                        </select>
-                      </div>
-                      <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Index</label>
-                        <input className="input-field" placeholder="1.56" value={orderLensIndex}
+                        <input className="input-field text-base" placeholder="1.56" value={orderLensIndex}
                           onChange={(e) => setOrderLensIndex(e.target.value)} />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                        <input className="input-field" placeholder="Lens type" value={orderLens}
+                        <input className="input-field text-base" placeholder="Lens description" value={orderLens}
                           onChange={(e) => setOrderLens(e.target.value)} />
                       </div>
-                      <div className="col-span-2 md:col-span-4">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderLensPrice}
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Features</label>
+                      <div className="flex flex-wrap gap-2">
+                        {lensFeatureOptions.map((feat) => {
+                          const selected = lensFeatures.includes(feat);
+                          return (
+                            <button key={feat} type="button" onClick={() => {
+                              setLensFeatures((prev) =>
+                                selected ? prev.filter((f) => f !== feat) : [...prev, feat]
+                              );
+                            }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                selected
+                                  ? "bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-700 dark:text-sky-300"
+                                  : "bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
+                              }`}>
+                              {feat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          <span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5" />Coating / Add-on
+                        </label>
+                        <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={orderCoating}
+                          onChange={(e) => setOrderCoating(e.target.value)} />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
+                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderLensPrice}
                           onChange={(e) => setOrderLensPrice(Number(e.target.value))} />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {visitType !== "frame_change" && visitType !== "sunglasses" && visitType !== "contact_lens" && (
-                  <div className="border-t border-gray-100 dark:border-dark-700 pt-5">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Coating</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
-                        <input className="input-field" placeholder="e.g. Blue Cut AR" value={orderCoating}
-                          onChange={(e) => setOrderCoating(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={orderCoatingPrice}
-                          onChange={(e) => setOrderCoatingPrice(Number(e.target.value))} />
-                      </div>
-                    </div>
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Plus size={15} className="text-gray-400" />
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Accessories</h3>
                   </div>
-                )}
-
-                <div className="border-t border-gray-100 dark:border-dark-700 pt-5">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Accessories</h3>
                   {orderAccessories.map((acc, idx) => (
                     <div key={idx} className="flex gap-2 mb-2 items-center">
-                      <input className="input-field flex-1" placeholder="Item name" value={acc.name}
+                      <input className="input-field flex-1 text-base" placeholder="Item name" value={acc.name}
                         onChange={(e) => updateAccessory(idx, "name", e.target.value)} />
-                      <input type="number" min="0" className="input-field w-24" placeholder="Price" value={acc.price}
+                      <input type="number" min="0" className="input-field w-28 text-base" placeholder="Price" value={acc.price}
                         onChange={(e) => updateAccessory(idx, "price", Number(e.target.value))} />
                       <button onClick={() => removeAccessory(idx)}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 dark:text-red-300"><X size={15} /></button>
@@ -835,81 +914,85 @@ export default function NewVisit() {
                   </button>
                 </div>
 
-                <div className="border-t border-gray-100 dark:border-dark-700 pt-5 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
-                    <input type="number" min="1" className="input-field" value={orderQty}
-                      onChange={(e) => setOrderQty(Number(e.target.value))} />
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar size={15} className="text-gray-400" />
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Delivery</h3>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery</label>
-                    <input type="date" className="input-field" value={orderDeliveryDate}
+                  <div className="max-w-xs">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery Date</label>
+                    <input type="date" className="input-field text-base" value={orderDeliveryDate}
                       onChange={(e) => setOrderDeliveryDate(e.target.value)} />
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
 
         {/* ===== STEP 4: BILLING (with Payment fields) ===== */}
         {visitStep === "billing" && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Billing & Payment</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Items auto-filled from products. Set advance, discount, tax, and collect payment.</p>
-            </div>
-            <div className="space-y-2">
-              {billItems.map((item, idx) => (
-                <div key={idx} className="flex gap-2 items-start bg-gray-50 dark:bg-dark-700 p-3 rounded-xl">
-                  <div className="flex-1">
-                    <input className="input-field text-sm" placeholder="Item description" value={item.description}
-                      onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
-                  </div>
-                  <div className="w-16">
-                    <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
-                      onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
-                  </div>
-                  <div className="w-24">
-                    <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
-                      onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
-                  </div>
-                  <div className="w-16 text-right pt-2.5 text-sm font-medium">₹{(item.qty * item.price).toFixed(0)}</div>
-                  <button onClick={() => removeBillItem(idx)}
-                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
-                </div>
-              ))}
-              <button onClick={addBillItem}
-                className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-                <Plus size={16} /> Add Item
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <DollarSign size={20} />
+              </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Discount (₹)</label>
-                <input type="number" min="0" step="0.01" className="input-field" value={billDiscount}
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Billing & Payment</h2>
+                <p className="text-sm text-gray-500">Items auto-filled from products. Set discount, advance, and collect payment.</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+              <div className="flex items-center gap-2 mb-3">
+                <ShoppingCart size={15} className="text-gray-400" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Bill Items</h3>
+              </div>
+              <div className="space-y-2">
+                {billItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 items-start bg-white dark:bg-dark-800 p-3 rounded-xl border border-gray-200 dark:border-dark-700">
+                    <div className="flex-1">
+                      <input className="input-field text-sm" placeholder="Item description" value={item.description}
+                        onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
+                    </div>
+                    <div className="w-16">
+                      <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
+                        onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
+                    </div>
+                    <div className="w-24">
+                      <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
+                        onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
+                    </div>
+                    <div className="w-16 text-right pt-2.5 text-sm font-medium">₹{(item.qty * item.price).toFixed(0)}</div>
+                    <button onClick={() => removeBillItem(idx)}
+                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+                  </div>
+                ))}
+                <button onClick={addBillItem}
+                  className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                  <Plus size={16} /> Add Item
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-400" /> Discount (₹)
+                </label>
+                <input type="number" min="0" step="0.01" className="input-field text-base" value={billDiscount}
                   onChange={(e) => setBillDiscount(Number(e.target.value))} />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tax / GST (₹)</label>
-                <input type="number" min="0" step="0.01" className="input-field" value={billTax}
-                  onChange={(e) => setBillTax(Number(e.target.value))} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Advance Paid (₹)</label>
-                <input type="number" min="0" step="0.01" className="input-field" value={advancePaid}
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" /> Advance Paid (₹)
+                </label>
+                <input type="number" min="0" step="0.01" className="input-field text-base" value={advancePaid}
                   onChange={(e) => setAdvancePaid(Number(e.target.value))} />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Collect Amount (₹)</label>
-                <input type="number" min="0" step="0.01" className="input-field" placeholder="0" value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(Number(e.target.value))} />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payment Mode</label>
-                <div className="flex gap-2">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" /> Payment Mode
+                </label>
+                <div className="flex gap-1.5">
                   {["Cash", "UPI", "Card"].map((mode) => (
                     <button key={mode} type="button" onClick={() => setPaymentMode(mode)}
                       className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
@@ -920,66 +1003,82 @@ export default function NewVisit() {
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payment Notes</label>
-                <input className="input-field" placeholder="Optional" value={paymentNotes}
-                  onChange={(e) => setPaymentNotes(e.target.value)} />
+            </div>
+            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-dark-750 dark:to-dark-800 rounded-xl p-5 border border-gray-200 dark:border-dark-700">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Payment Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Subtotal</span><span className="font-medium">₹{billSubtotal.toFixed(0)}</span>
+                </div>
+                {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400">
+                  <span>Discount</span><span className="font-medium">-₹{billDiscount.toFixed(0)}</span>
+                </div>}
+                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-300 dark:border-dark-600">
+                  <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
+                </div>
+                {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                  <span>Advance Paid</span><span className="font-medium">-₹{advancePaid.toFixed(0)}</span>
+                </div>}
+                <div className="flex justify-between text-amber-600 dark:text-amber-400 font-semibold pt-1 border-t border-dashed border-gray-200 dark:border-dark-700">
+                  <span>Remaining Balance</span>
+                  <span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span>
+                </div>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal</span><span>₹{billSubtotal.toFixed(0)}</span></div>
-              {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
-              {billTax > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Tax</span><span>+₹{billTax.toFixed(0)}</span></div>}
-              <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-dark-700">
-                <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
-              </div>
-              {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>Advance</span><span>-₹{advancePaid.toFixed(0)}</span></div>}
-              <div className="flex justify-between text-primary-600 dark:text-primary-400 font-medium"><span>Collecting</span><span>₹{paymentAmount.toFixed(0)}</span></div>
-              {pendingAmt > 0 && <div className="flex justify-between text-amber-600 dark:text-amber-400 font-medium"><span>Pending after payment</span><span>₹{Math.max(0, billTotal - advancePaid - paymentAmount).toFixed(0)}</span></div>}
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
+                <FileText size={13} className="text-gray-400" /> Payment Notes (optional)
+              </label>
+              <input className="input-field text-base" placeholder="Any notes about this payment" value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)} />
             </div>
           </div>
         )}
 
         {/* ===== STEP 5: SUMMARY ===== */}
         {visitStep === "summary" && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Final Summary</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Review all details before completing the visit.</p>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <Check size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Final Summary</h2>
+                <p className="text-sm text-gray-500">Review all details before completing the visit.</p>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><User size={14} /> Customer</h3>
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><User size={14} className="text-gray-400" /> Customer</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{customer.name} — {customer.mobile}</p>
               </div>
-              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><Plus size={14} /> Visit</h3>
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><Calendar size={14} className="text-gray-400" /> Visit</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{visitDate} {visitDoctor && `| Dr. ${visitDoctor}`}</p>
               </div>
             </div>
             {billItems.some((i) => i.description) && (
-              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><DollarSign size={14} /> Bill</h3>
-                <div className="space-y-1">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-3"><DollarSign size={14} className="text-gray-400" /> Bill</h3>
+                <div className="space-y-1.5">
                   {billItems.filter((i) => i.description).map((i, idx) => (
                     <div key={idx} className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                       <span>{i.description} x{i.qty}</span>
                       <span>₹{(i.qty * i.price).toFixed(0)}</span>
                     </div>
                   ))}
-                  {(billDiscount > 0 || billTax > 0) && <hr className="border-gray-200 dark:border-dark-600" />}
+                  {billDiscount > 0 && <hr className="border-gray-200 dark:border-dark-600" />}
                   {billDiscount > 0 && <div className="flex justify-between text-sm text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
-                  {billTax > 0 && <div className="flex justify-between text-sm text-amber-600"><span>Tax</span><span>+₹{billTax.toFixed(0)}</span></div>}
-                  <hr className="border-gray-200 dark:border-dark-600" />
-                  <div className="flex justify-between font-bold text-gray-900 dark:text-white"><span>Total</span><span>₹{billTotal.toFixed(0)}</span></div>
-                  {advancePaid > 0 && <div className="flex justify-between text-sm text-emerald-600"><span>Advance Paid</span><span>₹{advancePaid.toFixed(0)}</span></div>}
-                  <div className="flex justify-between text-sm text-primary-600"><span>Collecting Now</span><span>₹{paymentAmount.toFixed(0)}</span></div>
+                  <hr className="border-gray-300 dark:border-dark-600" />
+                  <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base"><span>Total</span><span>₹{billTotal.toFixed(0)}</span></div>
+                  {advancePaid > 0 && <div className="flex justify-between text-sm text-emerald-600 font-medium"><span>Advance Paid</span><span>₹{advancePaid.toFixed(0)}</span></div>}
+                  <div className="flex justify-between text-sm text-amber-600 font-medium"><span>Remaining Balance</span><span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span></div>
                 </div>
               </div>
             )}
             {paymentAmount > 0 && (
-              <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><CreditCard size={14} /> Payment</h3>
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><CreditCard size={14} className="text-gray-400" /> Payment</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Mode: {paymentMode} | Amount: ₹{paymentAmount.toFixed(0)}{paymentNotes ? ` | Notes: ${paymentNotes}` : ""}</p>
               </div>
             )}
@@ -1016,7 +1115,6 @@ export default function NewVisit() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

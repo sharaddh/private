@@ -169,7 +169,8 @@ export default function Bills() {
       const base64 = doc.output("datauristring").split(",")[1];
       const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
       const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
-      if (mediaRes.success) { setToast({ message: "Bill sent on WhatsApp", type: "success" }); return; }
+      if (mediaRes.success && mediaRes.sent) { setToast({ message: "Bill sent on WhatsApp", type: "success" }); return; }
+      if (mediaRes.queued) { setToast({ message: "WhatsApp not ready — will send when connected", type: "info" }); return; }
     } catch (e) {
       console.warn("WhatsApp PDF send error:", e);
     }
@@ -178,7 +179,9 @@ export default function Bills() {
     ).join("\n");
     const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
     const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
-    if (textRes.success) {
+    if (textRes.queued) {
+      setToast({ message: "WhatsApp not ready — will send when connected", type: "info" });
+    } else if (textRes.success && textRes.sent) {
       setToast({ message: "Bill sent on WhatsApp", type: "success" });
     } else {
       setToast({ message: "WhatsApp send failed — connect in Settings", type: "error" });

@@ -142,9 +142,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
-        try {
-          await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
-        } catch { /* WhatsApp not connected, skip */ }
+        const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
+        if (!sent) console.log(`WhatsApp: order ready message queued for ${customer.mobile}`);
       }
     }
 
@@ -155,9 +154,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         const settings = await Settings.findOne().sort({ createdAt: -1 });
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
-        try {
-          await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
-        } catch {}
+        const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
+        if (!sent) console.log(`WhatsApp: order delivered message queued for ${customer.mobile}`);
       }
     }
 

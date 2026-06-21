@@ -130,25 +130,25 @@ export default function Workspace() {
       const payment = success.payment;
       const order = success.order;
       const mobile = customer?.mobile || selectedCustomer?.mobile || "";
-      let sentBill = false;
-      let sentPickup = false;
+      let billResult = { sent: false, queued: false };
+      let pickupResult = { sent: false, queued: false };
       if (mobile && bill) {
         try {
-          await sendWhatsApp(mobile, bill, customer, payment, order);
-          sentBill = true;
+          billResult = await sendWhatsApp(mobile, bill, customer, payment, order);
         } catch {}
       }
       if (mobile && order) {
         try {
-          await sendPickupWhatsApp(mobile, order);
-          sentPickup = true;
+          pickupResult = await sendPickupWhatsApp(mobile, order);
         } catch {}
       }
       const msgs: string[] = [];
-      if (sentBill) msgs.push("Bill sent");
-      if (sentPickup) msgs.push("Pickup notified");
+      if (billResult.sent) msgs.push("Bill sent");
+      else if (billResult.queued) msgs.push("Bill queued");
+      if (pickupResult.sent) msgs.push("Pickup notified");
+      else if (pickupResult.queued) msgs.push("Pickup queued");
       if (msgs.length > 0) {
-        setToast({ message: msgs.join(" + "), type: "success" });
+        setToast({ message: msgs.join(" + "), type: msgs.some(m => m.includes("queued")) ? "info" : "success" });
       } else if (mobile) {
         setToast({ message: "WhatsApp not connected", type: "info" });
       }
@@ -503,9 +503,9 @@ export default function Workspace() {
     );
   }
 
-  async function sendWhatsApp(phone: string, bill: any, customer: any, payment: any, order: any) {
+  async function sendWhatsApp(phone: string, bill: any, customer: any, payment: any, order: any): Promise<{sent: boolean, queued: boolean}> {
     const num = phone.replace(/\D/g, "");
-    if (!num) return;
+    if (!num) return { sent: false, queued: false };
     const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = settings?.shopName || "KMJ Optical";
     setWaSending(true);
@@ -515,25 +515,32 @@ export default function Workspace() {
       const base64 = doc.output("datauristring").split(",")[1];
       const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
       const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
-      if (mediaRes.success) { setWaSending(false); return; }
+      if (mediaRes.sent) { setWaSending(false); return { sent: true, queued: false }; }
+      if (mediaRes.queued) { setWaSending(false); return { sent: false, queued: true }; }
     } catch {}
     const items = (bill?.items || []).map((i: any) =>
       `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
     ).join("\n");
     const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}${bill?.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill?.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\n*Payment:* ${payment?.paymentMode || "Cash"}\n\n*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}\n\nThank you for your visit! 🙏`;
-    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     setWaSending(false);
+    if (textRes.queued) return { sent: false, queued: true };
+    if (textRes.sent) return { sent: true, queued: false };
+    return { sent: false, queued: false };
   }
 
-  async function sendPickupWhatsApp(phone: string, order: any) {
+  async function sendPickupWhatsApp(phone: string, order: any): Promise<{sent: boolean, queued: boolean}> {
     const num = phone.replace(/\D/g, "");
-    if (!num) return;
+    if (!num) return { sent: false, queued: false };
     const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = settings?.shopName || "KMJ Optical";
     setWaSending(true);
     const msg = `*${shop}* 🕶\n\nHi ${selectedCustomer?.name || ""},\nYour order is ready for pickup! 🎉\n\n*Order:* ${order?.frame || ""} ${order?.lens || ""}${order?.coating ? ` + ${order.coating}` : ""}\n*Due Amount:* ₹${(success?.bill?.pendingAmount || 0).toFixed(0)}\n\nPlease visit our store to collect.\nThank you! 🙏`;
-    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    const res = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     setWaSending(false);
+    if (res.queued) return { sent: false, queued: true };
+    if (res.sent) return { sent: true, queued: false };
+    return { sent: false, queued: false };
   }
 
   const steps = [

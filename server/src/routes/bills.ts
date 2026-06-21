@@ -47,8 +47,8 @@ router.post("/", authenticate, audit, async (req, res) => {
       await customer.save();
     }
 
-    // Send WhatsApp message with bill PDF
-    if (customer?.mobile && whatsapp.ready) {
+    // Send WhatsApp message with bill PDF — queue if not ready
+    if (customer?.mobile) {
       try {
         const settings = await Settings.findOne();
         const visit = p.visitId ? await Visit.findById(p.visitId) : null;
@@ -85,19 +85,18 @@ router.post("/", authenticate, audit, async (req, res) => {
         console.log(`PDF generated successfully for bill ${bill.billNumber}, buffer length: ${pdfBuffer.length}`);
 
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${total.toFixed(2)}. Please find the PDF attached.`;
-        console.log(`Attempting to send WhatsApp message to ${customer.mobile} with message: ${message}`);
         const sent = await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, message);
         
         if (sent) {
           console.log(`Bill PDF sent successfully to ${customer.mobile} for bill ${bill.billNumber}`);
-        } else {
+        } else if (whatsapp.ready) {
           console.error(`Failed to send bill PDF to ${customer.mobile} for bill ${bill.billNumber}`);
+        } else {
+          console.log(`Bill PDF queued for ${customer.mobile} — WhatsApp not ready`);
         }
       } catch (err: any) {
         console.error(`Error sending WhatsApp message for bill ${bill.billNumber}:`, err);
       }
-    } else if (customer?.mobile) {
-      console.log(`WhatsApp not ready, skipping bill PDF notification for ${customer.mobile}`);
     } else {
       console.log(`No mobile number for customer ${customer?.name}, skipping bill PDF notification`);
     }

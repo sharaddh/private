@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
-import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X } from "lucide-react";
+import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();
@@ -23,7 +23,12 @@ export default function Pickup() {
   const [message, setMessage] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [showCreateBill, setShowCreateBill] = useState(false);
-  const [billForm, setBillForm] = useState({ description: "", quantity: 1, unitPrice: 0, discount: 0, tax: 0 });
+  const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([{ description: "", qty: 1, price: 0 }]);
+  const [billDiscount, setBillDiscount] = useState(0);
+  const [showConfirmDeliver, setShowConfirmDeliver] = useState(false);
+
+  const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
+  const billTotal = Math.max(0, billSubtotal - billDiscount);
 
   useEffect(() => {
     api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); });
@@ -64,13 +69,36 @@ export default function Pickup() {
           api.get(`/api/orders?customerId=${c._id}`), api.get("/api/bills"),
         ]);
         if (ordersRes.success) setOrders((ordersRes.data || []).filter((o2: any) => o2.status === "Ready"));
-        if (billsRes.success) setBills((billsRes.data || []).filter((b: any) => b.customerId === c._id));
+        let custBills: any[] = [];
+        if (billsRes.success) {
+          custBills = (billsRes.data || []).filter((b: any) => b.customerId === c._id);
+          setBills(custBills);
+        }
         setSelectedOrder(o);
-        const b = (billsRes.data || []).find((b: any) => b.customerId === c._id) || null;
-        setBill(b);
-        if (b) setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+        syncBillForOrder(o, custBills);
       }
     } finally { setIsLoading(false); }
+  }
+
+  function syncBillForOrder(o: any, custBills?: any[]) {
+    const targetId = o.visitId || o._id;
+    const allBills = custBills || bills;
+    const b = allBills.find((b: any) => b.visitId === targetId) || null;
+    setBill(b);
+    if (!b) {
+      const items: { description: string; qty: number; price: number }[] = [];
+      if (o.frame) items.push({ description: o.frameBrand ? `${o.frame} (${o.frameBrand})` : o.frame, qty: 1, price: o.framePrice || 0 });
+      if (o.lens) items.push({ description: o.lensBrand ? `${o.lens} (${o.lensBrand})` : o.lens, qty: 1, price: o.lensPrice || 0 });
+      if (o.coating) items.push({ description: o.coating, qty: 1, price: o.coatingPrice || 0 });
+      if (o.accessories?.length) {
+        o.accessories.forEach((a: string) => items.push({ description: a, qty: 1, price: 0 }));
+      }
+      if (items.length === 0) items.push({ description: "", qty: 1, price: 0 });
+      setBillItems(items);
+      setBillDiscount(0);
+    } else {
+      setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+    }
   }
 
   async function selectCustomer(c: any) {
@@ -85,47 +113,65 @@ export default function Pickup() {
         if (pending.length === 0) setMessage("No orders ready for pickup");
       }
       if (billsRes.success) {
-        setBills((billsRes.data || []).filter((b: any) => b.customerId === c._id)
-          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        const custBills = (billsRes.data || []).filter((b: any) => b.customerId === c._id)
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setBills(custBills);
       }
     } finally { setIsLoading(false); }
   }
 
   function findBillForOrder(o: any): any {
-    const custId = o.customerId?._id || o.customerId;
-    return bills.find((b: any) => b.customerId === custId) || null;
+    const targetId = o.visitId || o._id;
+    return bills.find((b: any) => b.visitId === targetId) || null;
   }
 
   async function selectOrder(o: any) {
     setSelectedOrder(o); setMessage(""); setShowCreateBill(false);
     const b = findBillForOrder(o);
     setBill(b);
-    if (b) { setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0); }
-    else {
-      const itemTotal = (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
-      setBillForm({
-        description: `Frame: ${o.frame || ""}, Lens: ${o.lens || ""}${o.coating ? `, Coating: ${o.coating}` : ""}`,
-        quantity: o.quantity || 1, unitPrice: itemTotal > 0 ? itemTotal / (o.quantity || 1) : 0, discount: 0, tax: 0,
-      });
+    if (b) {
+      setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+    } else {
+      const items: { description: string; qty: number; price: number }[] = [];
+      if (o.frame) items.push({ description: o.frameBrand ? `${o.frame} (${o.frameBrand})` : o.frame, qty: 1, price: o.framePrice || 0 });
+      if (o.lens) items.push({ description: o.lensBrand ? `${o.lens} (${o.lensBrand})` : o.lens, qty: 1, price: o.lensPrice || 0 });
+      if (o.coating) items.push({ description: o.coating, qty: 1, price: o.coatingPrice || 0 });
+      if (o.accessories?.length) {
+        o.accessories.forEach((a: string) => items.push({ description: a, qty: 1, price: 0 }));
+      }
+      if (items.length === 0) items.push({ description: "", qty: 1, price: 0 });
+      setBillItems(items);
+      setBillDiscount(0);
     }
+  }
+
+  function addBillItem() { setBillItems([...billItems, { description: "", qty: 1, price: 0 }]); }
+  function updateBillItem(idx: number, field: string, value: any) {
+    const updated = billItems.map((item, i) => i === idx ? { ...item, [field]: value } : item);
+    setBillItems(updated);
+  }
+  function removeBillItem(idx: number) {
+    if (billItems.length <= 1) return;
+    setBillItems(billItems.filter((_, i) => i !== idx));
   }
 
   async function handleCreateBill() {
     if (!selectedCustomer || !selectedOrder) return;
-    const items = [{ description: billForm.description || "Optical items", quantity: billForm.quantity, unitPrice: billForm.unitPrice }];
+    const items = billItems.filter((i) => i.description && i.price > 0);
+    if (items.length === 0) { setMessage("Add at least one item with description and price"); return; }
     const res = await api.post("/api/bills", {
-      customerId: selectedCustomer._id, visitId: selectedOrder.visitId, items,
-      discount: billForm.discount, tax: billForm.tax, advancePaid: 0,
+      customerId: selectedCustomer._id, visitId: selectedOrder.visitId,
+      items: items.map((i) => ({ description: i.description, quantity: i.qty, unitPrice: i.price })),
+      discount: billDiscount, tax: 0, advancePaid: 0,
     });
     if (res.success) {
       setBill(res.data); setCollectAmount(res.data.pendingAmount || 0); setShowCreateBill(false);
-      setMessage("✓ Bill created");
+      setMessage("✓ Bill created successfully");
       const billsRes = await api.get("/api/bills");
       if (billsRes.success) setBills((billsRes.data || []).filter((b: any) => b.customerId === selectedCustomer._id));
+      setToast({ message: "Bill created", type: "success" });
     } else { setMessage(res.message || "Failed to create bill"); }
   }
-
-  const [showConfirmDeliver, setShowConfirmDeliver] = useState(false);
 
   async function handleDeliver() {
     if (!selectedOrder) return;
@@ -136,63 +182,82 @@ export default function Pickup() {
     if (res.success) {
       setMessage("✓ Order delivered successfully!");
       setToast({ message: "Order delivered — notification sent", type: "success" });
+      fetchReadyOrders();
       selectCustomer(selectedCustomer); setSelectedOrder(null); setBill(null);
     } else { setMessage(res.message || "Failed to deliver order"); setToast({ message: res.message || "Failed to deliver", type: "error" }); }
     setDelivering(false); setShowConfirmDeliver(false);
   }
 
   return (
-    <div className="max-w-3xl mx-auto page-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Pickup</h1>
-          <p className="page-subtitle">Collect ready orders, finalize billing, and mark as delivered.</p>
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      {/* Header */}
+      <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white shadow-sm">
+              <Package size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Pickup</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Collect ready orders and manage deliveries.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {waStatus === "connected" ? (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                WhatsApp Connected
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-dark-700 text-gray-500 rounded-full text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                WhatsApp {waStatus === "checking" ? "..." : "Disconnected"}
+              </span>
+            )}
+          </div>
         </div>
-        {waStatus === "connected" && (
-          <span className="badge-green flex items-center gap-1.5 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            WhatsApp Connected
-          </span>
-        )}
       </div>
 
-      {/* Ready orders cards */}
+      {/* Ready orders grid */}
       {readyOrders.length > 0 && !selectedCustomer && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={16} className="text-emerald-500" />
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               {readyOrders.length} order(s) ready for pickup
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {readyOrders.map((o: any) => {
               const cName = typeof o.customerId === "object" ? o.customerId?.name : "";
               const cMobile = typeof o.customerId === "object" ? o.customerId?.mobile : "";
+              const totalPrice = (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
               return (
                 <div key={o._id} onClick={() => pickReadyOrder(o)}
-                  className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-dark-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-4">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-9 h-9 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
+                  className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</p>
-                      {cMobile && <p className="text-[11px] text-gray-400 truncate">{cMobile}</p>}
+                      {cMobile && <p className="text-xs text-gray-400">{cMobile}</p>}
                     </div>
-                    <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Ready</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Ready</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {o.frame && <span className="text-[10px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">Frm: {o.frame}</span>}
-                    {o.lens && <span className="text-[10px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">Lens: {o.lens}</span>}
-                    {o.coating && <span className="text-[10px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">Coat: {o.coating}</span>}
+                  <div className="space-y-1.5">
+                    {o.frame && <p className="text-xs text-gray-500"><span className="text-gray-400">Frame:</span> {o.frame}</p>}
+                    {o.lens && <p className="text-xs text-gray-500"><span className="text-gray-400">Lens:</span> {o.lens}</p>}
+                    {o.coating && <p className="text-xs text-gray-500"><span className="text-gray-400">Coating:</span> {o.coating}</p>}
                   </div>
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-dark-700">
                     {o.deliveryDate ? (
-                      <span className="flex items-center gap-1 text-gray-400"><Clock size={10} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      <span className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                     ) : <span />}
-                    {o.billInfo?.totalAmount > 0 && (
-                      <span className="font-semibold text-gray-900 dark:text-white">₹{o.billInfo.totalAmount.toLocaleString()}</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {o.billInfo?.totalAmount > 0 && <span className="text-sm font-bold text-gray-900 dark:text-white">₹{o.billInfo.totalAmount.toLocaleString()}</span>}
+                      <ChevronRight size={16} className="text-gray-300" />
+                    </div>
                   </div>
                 </div>
               );
@@ -201,8 +266,8 @@ export default function Pickup() {
         </div>
       )}
 
-      {/* Search by phone */}
-      <div className="card">
+      {/* Search bar */}
+      <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-5">
         <div className="flex gap-3">
           <div className="relative flex-1">
             <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -212,17 +277,18 @@ export default function Pickup() {
               className="input-field pl-10 text-base" />
           </div>
           <button onClick={searchCustomer} disabled={isLoading} className="btn-primary px-6">
-            <Search size={18} />
+            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
           </button>
         </div>
       </div>
 
+      {/* Customer list */}
       {customers.length > 0 && !selectedCustomer && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-500">{customers.length} customer(s) found</p>
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{customers.length} customer(s) found</p>
           {customers.map((c: any) => (
             <div key={c._id} onClick={() => selectCustomer(c)}
-              className="card cursor-pointer hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-all p-5">
+              className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all duration-200 cursor-pointer p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
@@ -233,153 +299,230 @@ export default function Pickup() {
                     <p className="text-sm text-gray-500">{c.mobile}</p>
                   </div>
                 </div>
-                <span className="text-primary-600 dark:text-primary-400 text-sm font-medium">Select →</span>
+                <ChevronRight size={18} className="text-gray-300" />
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Selected customer flow */}
       {selectedCustomer && (
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
-                {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm">
+          {/* Customer header */}
+          <div className="p-5 border-b border-gray-100 dark:border-dark-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
+                  {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.name}</p>
+                  <p className="text-sm text-gray-500">{selectedCustomer.mobile}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.name}</p>
-                <p className="text-sm text-gray-500">{selectedCustomer.mobile}</p>
-              </div>
+              <button onClick={() => { setSelectedCustomer(null); setCustomers([]); setOrders([]); setSelectedOrder(null); setBill(null); }}
+                className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">Change</button>
             </div>
-            <button onClick={() => { setSelectedCustomer(null); setCustomers([]); setOrders([]); setSelectedOrder(null); setBill(null); }}
-              className="btn-ghost btn-sm">Change</button>
           </div>
 
+          {/* Order list */}
           {orders.length > 0 && !selectedOrder && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500 mb-3">{orders.length} order(s) ready for pickup</p>
+            <div className="p-5 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Package size={14} /> Orders Ready ({orders.length})
+              </p>
               {orders.map((o: any) => (
                 <div key={o._id} onClick={() => selectOrder(o)}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-primary-300 dark:hover:border-primary-700 cursor-pointer transition-all">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {o.frame && `Frame: ${o.frame}`}{o.frame && o.lens ? " | " : ""}{o.lens && `Lens: ${o.lens}`}
-                      {o.framePrice || o.lensPrice ? ` (₹${(o.framePrice||0)+(o.lensPrice||0)+(o.coatingPrice||0)})` : ""}
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-dark-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/30 dark:hover:bg-primary-900/10 cursor-pointer transition-all">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {[o.frame, o.lens, o.coating].filter(Boolean).join(" + ") || "Order items"}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Status: <span className="font-medium text-blue-500">{o.status}</span>
-                      {o.deliveryDate && ` | Expected: ${new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
+                      {o.deliveryDate && `Expected: ${new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {findBillForOrder(o) ? <span className="badge-green text-xs">Has Bill</span> : <span className="badge-yellow text-xs">No Bill</span>}
-                    <ChevronRight size={18} className="text-gray-400" />
+                  <div className="flex items-center gap-3 ml-3">
+                    {findBillForOrder(o) ? (
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full">
+                        <Check size={10} /> Billed
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">
+                        No Bill
+                      </span>
+                    )}
+                    <ChevronRight size={16} className="text-gray-300" />
                   </div>
                 </div>
               ))}
             </div>
           )}
 
+          {/* Selected order detail */}
           {selectedOrder && (
-            <div className="space-y-4">
+            <div className="p-5 space-y-5">
+              {/* Order header */}
               <div className="flex items-center justify-between">
-                <h3 className="section-title">Order Details</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <Package size={15} className="text-primary-500" /> Order Details
+                </h3>
                 <button onClick={() => { setSelectedOrder(null); setBill(null); }}
-                  className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700">Change</button>
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700">Change</button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-sm bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                {selectedOrder.frame && <div><span className="text-gray-500">Frame:</span> <span className="font-medium">{selectedOrder.frame}</span></div>}
-                {selectedOrder.lens && <div><span className="text-gray-500">Lens:</span> <span className="font-medium">{selectedOrder.lens}</span></div>}
-                {selectedOrder.coating && <div><span className="text-gray-500">Coating:</span> <span className="font-medium">{selectedOrder.coating}</span></div>}
-                {selectedOrder.quantity && <div><span className="text-gray-500">Qty:</span> <span className="font-medium">{selectedOrder.quantity}</span></div>}
+              {/* Order items */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {selectedOrder.frame && (
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Frame</p>
+                    <p className="text-sm font-medium">{selectedOrder.frameBrand ? `${selectedOrder.frame} (${selectedOrder.frameBrand})` : selectedOrder.frame}</p>
+                    {selectedOrder.framePrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.framePrice}</p>}
+                  </div>
+                )}
+                {selectedOrder.lens && (
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Lens</p>
+                    <p className="text-sm font-medium">{selectedOrder.lensBrand ? `${selectedOrder.lens} (${selectedOrder.lensBrand})` : selectedOrder.lens}</p>
+                    {selectedOrder.lensPrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.lensPrice}</p>}
+                  </div>
+                )}
+                {selectedOrder.coating && (
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Coating</p>
+                    <p className="text-sm font-medium">{selectedOrder.coating}</p>
+                    {selectedOrder.coatingPrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.coatingPrice}</p>}
+                  </div>
+                )}
+                {selectedOrder.deliveryDate && (
+                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Delivery Date</p>
+                    <p className="text-sm font-medium">{new Date(selectedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                  </div>
+                )}
               </div>
 
+              {/* Bill section */}
               {bill ? (
-                <div className="border-t border-gray-200 dark:border-dark-700 pt-4">
-                  <h3 className="section-title mb-3">Bill Summary</h3>
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-gray-500">Bill #</span><span className="font-medium">{bill.billNumber}</span></div>
+                <div className="bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/20 dark:to-dark-800 rounded-xl border border-emerald-200 dark:border-emerald-800 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                      <Receipt size={15} className="text-emerald-500" /> Bill Summary
+                    </h3>
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 rounded-full">{bill.billNumber}</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
                     {(bill.items || []).map((it: any, i: number) => (
-                      <div key={i} className="flex justify-between text-gray-500 text-xs">
-                        <span>{it.description}</span><span>₹{(it.quantity||1)*(it.unitPrice||0)}</span>
+                      <div key={i} className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span className="text-xs">{it.description} ×{it.quantity || 1}</span>
+                        <span>₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(0)}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-dark-700"><span>Total</span><span className="font-bold">₹{bill.totalAmount?.toFixed(0) || "0"}</span></div>
-                    <div className="flex justify-between text-emerald-600"><span>Advance Paid</span><span className="font-medium">₹{bill.advancePaid?.toFixed(0) || "0"}</span></div>
-                    <div className="flex justify-between text-amber-500 font-medium pt-2 border-t border-gray-200 dark:border-dark-700"><span>Pending</span><span>₹{bill.pendingAmount?.toFixed(0) || "0"}</span></div>
+                  </div>
+                  <hr className="border-emerald-200 dark:border-emerald-800" />
+                  <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
+                    <span>Total</span><span>₹{bill.totalAmount?.toFixed(0) || "0"}</span>
+                  </div>
+                  {bill.advancePaid > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                      <span>Advance Paid</span><span>₹{bill.advancePaid?.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold text-amber-600">
+                    <span>Pending</span><span>₹{bill.pendingAmount?.toFixed(0) || "0"}</span>
                   </div>
 
                   {bill.pendingAmount > 0 && (
-                    <div className="border-t border-gray-200 dark:border-dark-700 pt-4 mt-4">
-                      <h3 className="section-title mb-3">Collect Payment</h3>
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Amount</label>
-                          <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
-                            onChange={(e) => setCollectAmount(Number(e.target.value))} max={bill.pendingAmount} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Mode</label>
-                          <div className="grid grid-cols-3 gap-1">
-                            {["Cash", "UPI", "Card"].map((m) => (
-                              <button key={m} onClick={() => setCollectMode(m)}
-                                className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                                  collectMode === m ? "bg-primary-600 text-white border-primary-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
-                                }`}>{m}</button>
-                            ))}
+                    <>
+                      <hr className="border-emerald-200 dark:border-emerald-800" />
+                      <div className="pt-1">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Collect Payment</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Amount</label>
+                            <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
+                              onChange={(e) => setCollectAmount(Number(e.target.value))} max={bill.pendingAmount} />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Mode</label>
+                            <div className="grid grid-cols-3 gap-1">
+                              {["Cash", "UPI", "Card"].map((m) => (
+                                <button key={m} onClick={() => setCollectMode(m)}
+                                  className={`py-2 rounded-lg text-xs font-medium border transition-all ${
+                                    collectMode === m ? "bg-primary-600 text-white border-primary-600" : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
+                                  }`}>{m}</button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
+              ) : showCreateBill ? (
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 p-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <FileText size={15} className="text-amber-500" /> Create Bill
+                  </h3>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Items auto-filled from order. Adjust as needed.</p>
+                  <div className="space-y-2">
+                    {billItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-start bg-white dark:bg-dark-800 p-3 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                        <div className="flex-1">
+                          <input className="input-field text-sm" placeholder="Item description" value={item.description}
+                            onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
+                        </div>
+                        <div className="w-16">
+                          <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
+                            onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
+                        </div>
+                        <div className="w-24">
+                          <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
+                            onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
+                        </div>
+                        <div className="w-16 text-right pt-2.5 text-sm font-medium text-gray-700 dark:text-gray-300">₹{(item.qty * item.price).toFixed(0)}</div>
+                        <button onClick={() => removeBillItem(idx)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+                      </div>
+                    ))}
+                    <button onClick={addBillItem}
+                      className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
+                      <Plus size={14} /> Add Item
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32">
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Discount (₹)</label>
+                      <input type="number" min="0" className="input-field text-sm" value={billDiscount}
+                        onChange={(e) => setBillDiscount(Number(e.target.value))} />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <p className="text-xs text-gray-500">Subtotal: <span className="font-medium text-gray-700 dark:text-gray-300">₹{billSubtotal.toFixed(0)}</span></p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">Total: ₹{billTotal.toFixed(0)}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={handleCreateBill} className="btn-primary btn-sm flex items-center gap-1">
+                      <Plus size={14} /> Create Bill — ₹{billTotal.toFixed(0)}
+                    </button>
+                    <button onClick={() => setShowCreateBill(false)} className="btn-ghost btn-sm">Cancel</button>
+                  </div>
+                </div>
               ) : (
-                <div className="border-t border-gray-200 dark:border-dark-700 pt-4">
-                  {showCreateBill ? (
-                    <div className="space-y-3">
-                      <h3 className="section-title">Create Bill</h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-                          <input className="input-field" value={billForm.description} onChange={(e) => setBillForm({...billForm, description: e.target.value})} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Qty</label>
-                          <input type="number" className="input-field" value={billForm.quantity} onChange={(e) => setBillForm({...billForm, quantity: Number(e.target.value)})} min="1" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Unit Price</label>
-                          <input type="number" className="input-field" value={billForm.unitPrice} onChange={(e) => setBillForm({...billForm, unitPrice: Number(e.target.value)})} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Discount</label>
-                          <input type="number" className="input-field" value={billForm.discount} onChange={(e) => setBillForm({...billForm, discount: Number(e.target.value)})} />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Tax</label>
-                          <input type="number" className="input-field" value={billForm.tax} onChange={(e) => setBillForm({...billForm, tax: Number(e.target.value)})} />
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={handleCreateBill} className="btn-primary btn-sm flex items-center gap-1">
-                          <Plus size={14} /> Create Bill
-                        </button>
-                        <button onClick={() => setShowCreateBill(false)} className="btn-ghost btn-sm">Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-amber-500 mb-2">No bill found for this order</p>
-                      <button onClick={() => setShowCreateBill(true)} className="btn-primary btn-sm flex items-center gap-1 mx-auto">
-                        <Plus size={14} /> Create Bill
-                      </button>
-                    </div>
-                  )}
+                <div className="text-center py-6 space-y-3 bg-gray-50 dark:bg-dark-750 rounded-xl border border-dashed border-gray-200 dark:border-dark-700">
+                  <FileText size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">No bill found for this order</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Create a bill from the order items to proceed.</p>
+                  </div>
+                  <button onClick={() => setShowCreateBill(true)} className="btn-primary btn-sm flex items-center gap-1 mx-auto">
+                    <Plus size={14} /> Create Bill
+                  </button>
                 </div>
               )}
 
+              {/* Messages */}
               {message && (
                 <div className={`rounded-xl p-3 text-sm ${
                   message.includes("✓") ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
@@ -389,29 +532,41 @@ export default function Pickup() {
                 </div>
               )}
 
+              {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200 dark:border-dark-700">
                 <button onClick={() => setShowConfirmDeliver(true)} disabled={delivering || !bill}
-                  className="btn-success flex items-center gap-2 px-6">
+                  className="btn-success flex items-center gap-2 px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
                   {delivering ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                  Mark Delivered{collectAmount > 0 ? ` & Collect ₹${collectAmount}` : ""}
+                  {bill?.pendingAmount > 0 ? `Deliver & Collect ₹${collectAmount}` : "Mark Delivered"}
                 </button>
                 <button onClick={() => navigate(`/customers/${selectedCustomer._id}`)}
-                  className="btn-secondary flex items-center gap-2">View Profile</button>
+                  className="btn-secondary flex items-center gap-2 py-2.5">
+                  <User size={16} /> View Profile
+                </button>
               </div>
               {!bill && <p className="text-xs text-amber-500 text-center">Create a bill first to mark as delivered</p>}
 
+              {/* Confirm Delivery modal */}
               {showConfirmDeliver && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowConfirmDeliver(false)}>
                   <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Confirm Delivery</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      {collectAmount > 0 ? `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?` : "Mark this order as Delivered?"}
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Package size={24} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-2">Confirm Delivery</h3>
+                    <p className="text-sm text-gray-500 text-center mb-5">
+                      {collectAmount > 0
+                        ? `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?`
+                        : "Mark this order as Delivered?"}
                     </p>
-                    <div className="flex gap-3 justify-end">
-                      <button onClick={() => setShowConfirmDeliver(false)} className="btn-secondary">Cancel</button>
-                      <button onClick={handleDeliver} className="btn-success flex items-center gap-1.5">
-                        <Check size={16} /> Confirm
+                    <div className="space-y-2">
+                      <button onClick={handleDeliver} disabled={delivering}
+                        className="w-full btn-success flex items-center justify-center gap-2 py-2.5 disabled:opacity-50">
+                        {delivering ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                        {delivering ? "Delivering..." : "Confirm Delivery"}
                       </button>
+                      <button onClick={() => setShowConfirmDeliver(false)} disabled={delivering}
+                        className="w-full btn-secondary py-2.5">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -421,11 +576,14 @@ export default function Pickup() {
         </div>
       )}
 
+      {/* Loading spinner */}
       {isLoading && (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-12">
           <div className="animate-spin w-8 h-8 border-[3px] border-primary-500 border-t-transparent rounded-full" />
         </div>
       )}
+
+      {/* Toast */}
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
