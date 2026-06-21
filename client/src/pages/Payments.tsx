@@ -1,118 +1,114 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
-import Modal from "../components/Modal";
-import { Plus, Edit2, Trash2, CreditCard } from "lucide-react";
+import DateRangePicker from "../components/DateRangePicker";
+import { IndianRupee, Receipt, TrendingUp } from "lucide-react";
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 export default function Payments() {
   const [list, setList] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ customerId: "", billId: "", amount: 0, paymentMode: "Cash", notes: "" });
-  const [isLoading, setIsLoading] = useState(false);
+  const [startDate, setStartDate] = useState(todayStr());
+  const [endDate, setEndDate] = useState(todayStr());
 
-  useEffect(() => { fetchPayments(); }, []);
+  useEffect(() => { fetchPayments(); }, [startDate, endDate]);
 
-  function fetchPayments() { api.get("/api/payments").then((d) => { if (d.success) setList(d.data || []); }); }
-
-  function openCreate() {
-    setEditing(null);
-    setForm({ customerId: "", billId: "", amount: 0, paymentMode: "Cash", notes: "" });
-    setShowForm(true);
+  function fetchPayments() {
+    const params = new URLSearchParams({ startDate, endDate });
+    api.get("/api/payments?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
   }
 
-  function openEdit(p: any) {
-    setEditing(p);
-    setForm({ customerId: p.customerId || "", billId: p.billId || "", amount: p.amount || 0, paymentMode: p.paymentMode || "Cash", notes: p.notes || "" });
-    setShowForm(true);
+  function customerName(p: any): string {
+    if (typeof p.customerId === "object" && p.customerId?.name) return p.customerId.name;
+    return p.customerId?.slice?.(-6) || "—";
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const res = editing ? await api.put(`/api/payments/${editing._id}`, form) : await api.post("/api/payments", form);
-      if (res.success) { fetchPayments(); setShowForm(false); }
-    } finally { setIsLoading(false); }
+  function customerMobile(p: any): string {
+    if (typeof p.customerId === "object" && p.customerId?.mobile) return p.customerId.mobile;
+    return "";
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this payment?")) return;
-    const res = await api.del(`/api/payments/${id}`);
-    if (res.success) setList((prev) => prev.filter((p) => p._id !== id));
-  }
+  const totalAmount = list.reduce((s, p) => s + (p.amount || 0), 0);
+  const modeBreakdown = list.reduce<Record<string, number>>((acc, p) => {
+    const mode = p.paymentMode || "Cash";
+    acc[mode] = (acc[mode] || 0) + (p.amount || 0);
+    return acc;
+  }, {});
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between">
+    <div className="page-container max-w-full overflow-hidden">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
         <div>
           <h1 className="page-title">Payments</h1>
-          <p className="page-subtitle">Record and manage payments.</p>
+          <p className="page-subtitle">View all payments recorded from visits, orders, and deliveries.</p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> <span className="hidden sm:inline">Record Payment</span>
-        </button>
       </div>
 
-      <Table
-        columns={[
-          { key: "customerId", label: "Customer ID" },
-          { key: "billId", label: "Bill ID" },
-          { key: "amount", label: "Amount", render: (v) => <span className="font-semibold">₹{(v || 0).toFixed(2)}</span> },
-          { key: "paymentMode", label: "Mode", render: (v) => (
-            <span className={`badge ${
-              v === "Cash" ? "badge-green" :
-              v === "UPI" ? "badge-blue" :
-              v === "Card" ? "badge-purple" : "badge-yellow"
-            }`}>{v || "Cash"}</span>
-          )},
-          { key: "paymentDate", label: "Date", render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
-          { key: "notes", label: "Notes" },
-        ]}
-        data={list}
-        searchPlaceholder="Search payments..."
-        actions={(row) => (
-          <div className="flex items-center gap-1">
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500"><Trash2 size={15} /></button>
-          </div>
-        )}
-      />
+      <div className="mb-4">
+        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="payment" />
+      </div>
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Payment" : "Record Payment"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Customer ID *</label>
-              <input className="input-field" value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Bill ID</label>
-              <input className="input-field" value={form.billId} onChange={(e) => setForm({ ...form, billId: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Amount *</label>
-              <input type="number" step="0.01" className="input-field" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mode</label>
-              <select className="input-field" value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}>
-                {["Cash", "UPI", "Card", "Bank Transfer"].map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Notes</label>
-              <textarea className="input-field" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="card p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+            <IndianRupee size={20} className="text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Record Payment"}</button>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total Collected</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString("en-IN")}</p>
           </div>
-        </form>
-      </Modal>
+        </div>
+        <div className="card p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+            <Receipt size={20} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Transactions</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{list.length}</p>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={20} className="text-purple-600 dark:text-purple-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Mode Breakdown</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {Object.entries(modeBreakdown).map(([mode, amt]) => (
+                <span key={mode} className="mr-3">{mode}: ₹{amt.toLocaleString("en-IN")}</span>
+              ))}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table
+          columns={[
+            { key: "customerId", label: "Customer", render: (v: any, row: any) => (
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 dark:text-white truncate">{customerName(row)}</p>
+                {customerMobile(row) && <p className="text-[11px] text-gray-400 truncate">{customerMobile(row)}</p>}
+              </div>
+            )},
+            { key: "amount", label: "Amount", render: (v) => <span className="font-semibold text-emerald-600">₹{(v || 0).toLocaleString("en-IN")}</span> },
+            { key: "paymentMode", label: "Mode", render: (v) => (
+              <span className={`badge ${
+                v === "Cash" ? "badge-green" :
+                v === "UPI" ? "badge-blue" :
+                v === "Card" ? "badge-purple" : "badge-yellow"
+              }`}>{v || "Cash"}</span>
+            )},
+            { key: "paymentDate", label: "Date", render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
+            { key: "notes", label: "Notes", render: (v) => <span className="text-gray-500">{v || "—"}</span> },
+          ]}
+          data={list}
+          searchPlaceholder="Search payments..."
+        />
+      </div>
     </div>
   );
 }
