@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: kmj-erp
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_VERSION
+        value: 20.18.0
