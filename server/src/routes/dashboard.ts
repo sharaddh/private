@@ -6,6 +6,7 @@ import { Payment } from "../models/payment";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
+import { Prescription } from "../models/prescription";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
@@ -35,7 +36,7 @@ router.get("/stats", authenticate, async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [todaySales, todayCollection, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills] =
+    const [todaySales, todayCollection, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders] =
       await Promise.all([
         Bill.aggregate([
           { $match: { createdAt: { $gte: today, $lt: tomorrow } } },
@@ -76,6 +77,19 @@ router.get("/stats", authenticate, async (req, res) => {
           .populate("customerId", "name mobile")
           .sort({ pendingAmount: -1 })
           .limit(5),
+        (async () => {
+          const orders = await Order.find({ status: { $in: ["Draft", "Ordered", "In Lab"] } })
+            .populate("customerId", "name mobile")
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .lean();
+          const visitIds = orders.map(o => o.visitId).filter(Boolean);
+          const prescriptions = visitIds.length > 0
+            ? await Prescription.find({ visitId: { $in: visitIds } }).lean()
+            : [];
+          const rxMap = new Map(prescriptions.map(p => [p.visitId!.toString(), p]));
+          return orders.map(o => ({ ...o, prescription: o.visitId ? rxMap.get(o.visitId.toString()) || null : null }));
+        })(),
       ]);
 
     res.json({
@@ -92,6 +106,7 @@ router.get("/stats", authenticate, async (req, res) => {
         recentOrders,
         todayDeliveries,
         pendingBills,
+        incompleteOrders,
       },
     });
   } catch (err: any) {
