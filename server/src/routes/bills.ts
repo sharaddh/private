@@ -1,9 +1,13 @@
 import { Router } from "express";
 import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
+import { Settings } from "../models/settings";
+import { Visit } from "../models/visit";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
+import { whatsapp } from "../services/whatsapp";
+import { generateBillPdf } from "../utils/pdf";
 
 const router = Router();
 
@@ -41,6 +45,61 @@ router.post("/", authenticate, audit, async (req, res) => {
       customer.totalSpent = (customer.totalSpent || 0) + total;
       customer.pendingAmount = (customer.pendingAmount || 0) + bill.pendingAmount;
       await customer.save();
+    }
+
+    // Send WhatsApp message with bill PDF
+    if (customer?.mobile && whatsapp.ready) {
+      try {
+        const settings = await Settings.findOne();
+        const visit = p.visitId ? await Visit.findById(p.visitId) : null;
+
+        console.log(`Generating PDF for bill ${bill.billNumber} for customer ${customer.name}`);
+        const pdfBuffer = generateBillPdf(
+          {
+            billNumber: bill.billNumber,
+            createdAt: bill.createdAt,
+            items: bill.items,
+            subtotal: bill.subtotal,
+            discount: bill.discount,
+            tax: bill.tax,
+            advancePaid: bill.advancePaid,
+            pendingAmount: bill.pendingAmount,
+            totalAmount: bill.totalAmount,
+            status: bill.status,
+          },
+          {
+            name: customer.name,
+            mobile: customer.mobile,
+            address: customer.address,
+            customerId: customer.customerId,
+          },
+          {
+            shopName: settings?.shopName || "KMJ Optical",
+            shopAddress: settings?.shopAddress || "",
+            shopPhone: settings?.shopPhone || "",
+            shopEmail: settings?.shopEmail || "",
+            logo: settings?.logo || "",
+          }
+        );
+
+        console.log(`PDF generated successfully for bill ${bill.billNumber}, buffer length: ${pdfBuffer.length}`);
+
+        const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${total.toFixed(2)}. Please find the PDF attached.`;
+        console.log(`Attempting to send WhatsApp message to ${customer.mobile} with message: ${message}`);
+        const sent = await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, message);
+        
+        if (sent) {
+          console.log(`Bill PDF sent successfully to ${customer.mobile} for bill ${bill.billNumber}`);
+        } else {
+          console.error(`Failed to send bill PDF to ${customer.mobile} for bill ${bill.billNumber}`);
+        }
+      } catch (err: any) {
+        console.error(`Error sending WhatsApp message for bill ${bill.billNumber}:`, err);
+      }
+    } else if (customer?.mobile) {
+      console.log(`WhatsApp not ready, skipping bill PDF notification for ${customer.mobile}`);
+    } else {
+      console.log(`No mobile number for customer ${customer?.name}, skipping bill PDF notification`);
     }
 
     res.json({ success: true, data: bill });

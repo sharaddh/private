@@ -166,27 +166,21 @@ export default function NewVisit() {
           const { generateBillPdf } = await import("../utils/pdf");
           const doc = generateBillPdf(bill, customer, settingsRes.success ? settingsRes.data : {});
           const base64 = doc.output("datauristring").split(",")[1];
-          const caption = `🕶 *${shop}*\n\nHi ${customer.name},\nThank you for your visit!\nPlease find your bill attached.\n\nThank you! 🙏`;
+          const caption = `*${shop}*\n\nHi ${customer.name},\nThank you for your visit!\nPlease find your bill attached.\n\nThank you!`;
           const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
           if (mediaRes.success) {
             setWaSent(true);
             setWaSending(false);
             return;
           }
-        } catch {}
-        // Fallback: wa.me text + PDF tab
-        const items = (bill.items || []).map((i: any) =>
-          `• ${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-        ).join("%0a");
-        const msg = `🕶 *${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit! 🎉%0a%0a*Bill:* ${bill.billNumber || ""}%0a*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}%0a*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}%0a%0a${items}%0a%0aThank you! 🙏`;
-        window.open(`https://wa.me/${fullNum}?text=${msg}`, "_blank");
-        try {
-          const { openBillPdf } = await import("../utils/pdf");
-          openBillPdf(bill, customer, settingsRes.success ? settingsRes.data : {});
-        } catch {}
-        setWaSent(true);
+          console.warn("WhatsApp PDF send failed:", mediaRes?.message || mediaRes?.status || "Unknown error");
+        } catch (e) {
+          console.warn("WhatsApp PDF send error:", e);
+        }
+        // PDF send failed, don't auto-fallback to text
+        setWaFailed(true);
       } else {
-        const msg = `🕶 *${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit! 🎉%0a%0aService completed successfully.%0a%0aThank you! 🙏`;
+        const msg = `*${shop}*%0a%0aHi ${customer.name},%0aThank you for your visit!%0a%0aService completed successfully.%0a%0aThank you!`;
         window.open(`https://wa.me/${fullNum}?text=${msg}`, "_blank");
         setWaSent(true);
       }

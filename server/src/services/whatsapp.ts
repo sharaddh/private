@@ -1,5 +1,7 @@
 import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
 import * as QR from "qrcode";
+import * as fs from "fs";
+import * as path from "path";
 
 class WhatsAppService {
   private client: Client | null = null;
@@ -15,20 +17,57 @@ class WhatsAppService {
   get qrBase64() { return this._qrBase64; }
   get error() { return this._error; }
 
+  private cleanSession() {
+    const sessionDir = path.resolve(".wwebjs_auth");
+    if (fs.existsSync(sessionDir)) {
+      try {
+        fs.rmSync(sessionDir, { recursive: true, force: true });
+        console.log("Cleaned WhatsApp session directory");
+      } catch (e) {
+        console.error("Failed to clean session directory:", e);
+      }
+    }
+  }
+
+  private createClient() {
+    return new Client({
+      authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
+      puppeteer: {
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+      },
+      webVersion: "2.2412.54",
+      webVersionCache: {
+        type: "remote",
+        remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-js/master/src/api/js/waVersion.js",
+      },
+    });
+  }
+
   async init() {
     if (this.client) return;
     if (this.initializing) return this.initPromise;
     this.initializing = true;
 
-    this.initPromise = new Promise<void>((resolve) => {
+    this.initPromise = this.doInit();
+
+    return this.initPromise;
+  }
+
+  private async doInit(): Promise<void> {
+    await this.tryInit().catch(async (err) => {
+      console.error("WhatsApp first init attempt failed:", err?.message);
+      await this.destroy();
+      this.cleanSession();
+      console.log("Retrying WhatsApp initialization with clean session...");
+      await this.tryInit();
+    });
+  }
+
+  private async tryInit(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
       try {
-        this.client = new Client({
-          authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
-          puppeteer: {
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-          },
-        });
+        this.client = this.createClient();
 
         this.client.on("qr", async (qr) => {
           this._qr = qr;
@@ -59,24 +98,17 @@ class WhatsAppService {
         this.client.on("auth_failure", (msg: string) => {
           this._error = msg || "Auth failure";
           console.error("WhatsApp auth failure:", this._error);
+          this._ready = false;
           resolve();
         });
 
         this.client.initialize().catch((err) => {
-          this._error = err?.message || "Failed to initialize";
-          console.error("WhatsApp init error:", this._error);
-          this.initializing = false;
-          resolve();
+          reject(err);
         });
       } catch (err: any) {
-        this._error = err?.message || "Failed to create client";
-        console.error("WhatsApp create error:", this._error);
-        this.initializing = false;
-        resolve();
+        reject(err);
       }
     });
-
-    return this.initPromise;
   }
 
   async sendMessage(phone: string, message: string): Promise<boolean> {
@@ -101,7 +133,9 @@ class WhatsAppService {
       const formatted = phone.replace(/[^0-9]/g, "");
       const chatId = `${formatted}@c.us`;
       console.log(`WhatsApp sendMedia: sending to ${chatId}, filename: ${filename}, base64 length: ${base64.length}`);
+      console.log("WhatsApp sendMedia: creating MessageMedia object");
       const media = new MessageMedia("application/pdf", base64, filename);
+      console.log("WhatsApp sendMedia: MessageMedia created, sending message");
       await this.client.sendMessage(chatId, media, { caption: caption || "" });
       console.log("WhatsApp sendMedia: sent successfully");
       return true;
