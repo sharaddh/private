@@ -105,7 +105,7 @@ export default function Dashboard() {
         setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list queued — WhatsApp will send when connected`, type: "info" });
       } else {
         const errMsg = d.sendError ? `: ${d.sendError}` : "";
-        setToast({ message: `PDF generated (${d.count || 0} items, ${d.sizeKB || "?"}KB) but send failed${errMsg}`, type: "error" });
+        setToast({ message: `PDF generated (${d.count || 0} items, ${d.sizeKB != null ? d.sizeKB + "KB" : "?"}) but send failed${errMsg}`, type: "error" });
       }
     } else {
       setToast({ message: res.message || "Failed to send", type: "error" });

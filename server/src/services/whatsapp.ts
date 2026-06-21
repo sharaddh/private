@@ -52,25 +52,20 @@ class WhatsAppService {
   private createClient() {
     return new Client({
       authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
-      puppeteer: {
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-          "--disable-background-timer-throttling",
-          "--disable-backgrounding-occluded-windows",
-          "--disable-renderer-backgrounding",
-          "--single-process",
-          "--no-zygote",
-        ],
-      },
-      webVersion: "2.2412.54",
-      webVersionCache: {
-        type: "remote",
-        remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-js/master/src/api/js/waVersion.js",
-      },
+            puppeteer: {
+                headless: true,
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--disable-background-timer-throttling",
+                    "--disable-backgrounding-occluded-windows",
+                    "--disable-renderer-backgrounding",
+                    "--single-process",
+                    "--no-zygote",
+                ],
+            },
     });
   }
 
@@ -125,13 +120,23 @@ class WhatsAppService {
         this.client.on("disconnected", (reason) => {
           this._ready = false;
           this.stopHeartbeat();
+          this.client = null;
+          this.initializing = false;
+          this.initPromise = null;
           console.log("WhatsApp client disconnected:", reason);
+          if (reason !== "LOGOUT") {
+            console.log("Auto-reconnecting WhatsApp...");
+            this.init().catch(() => {});
+          }
         });
 
         this.client.on("auth_failure", (msg: string) => {
           this._error = msg || "Auth failure";
           console.error("WhatsApp auth failure:", this._error);
           this._ready = false;
+          this.client = null;
+          this.initializing = false;
+          this.initPromise = null;
           resolve();
         });
 
@@ -205,9 +210,9 @@ class WhatsAppService {
   private async sendMessageNow(phone: string, message: string): Promise<boolean> {
     if (!this.client) return false;
     try {
-      const formatted = phone.replace(/[^0-9]/g, "");
-      const chatId = `${formatted}@c.us`;
-      await this.client.sendMessage(chatId, message);
+            const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
+            const chatId = `${formatted}@c.us`;
+            await this.client.sendMessage(chatId, message);
       return true;
     } catch (err) {
       console.error("WhatsApp send error:", err);
@@ -218,7 +223,7 @@ class WhatsAppService {
   private async sendMediaNow(phone: string, base64: string, filename: string, caption?: string): Promise<boolean> {
     if (!this.client) return false;
     try {
-      const formatted = phone.replace(/[^0-9]/g, "");
+      const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
       const chatId = `${formatted}@c.us`;
       console.log(`sendMediaNow: sending to ${chatId}, filename: ${filename}, base64 length: ${base64.length}, client ready: ${this._ready}`);
       const media = new MessageMedia("application/pdf", base64, filename);
@@ -248,7 +253,7 @@ class WhatsAppService {
       return false;
     }
     if (throwOnError) {
-      const formatted = phone.replace(/[^0-9]/g, "");
+      const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
       const chatId = `${formatted}@c.us`;
       const media = new MessageMedia("application/pdf", base64, filename);
       await this.client.sendMessage(chatId, media, { caption: caption || "" });

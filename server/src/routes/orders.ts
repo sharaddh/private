@@ -238,126 +238,120 @@ function formatDemandRx(sph?: number, cyl?: number, axis?: number): string {
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
 }
 
-function generateDemandPdf(orders: any[], type: "buy" | "order"): Buffer {
-  const doc = new PDFKit({ size: "A4", margin: 20 });
-  const buffers: Buffer[] = [];
-  doc.on("data", (chunk) => buffers.push(chunk));
+function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFKit({ size: "A4", margin: 20 });
+    const buffers: Buffer[] = [];
+    doc.on("data", (chunk) => buffers.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", reject);
 
-  const pw = doc.page.width;
-  const m = 20;
-  let y = m;
+    const pw = doc.page.width;
+    const m = 20;
+    let y = m;
 
-  const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
-  const label = type === "buy" ? "Items to Purchase" : "Items to Order from Lab";
+    const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
+    const label = type === "buy" ? "Items to Purchase" : "Items to Order from Lab";
 
-  // Header
-  doc.rect(0, 0, pw, 22).fillColor("#4f46e5").fill();
-  doc.fontSize(16).font("Helvetica-Bold").fillColor("white");
-  doc.text(title, pw / 2, 14, { align: "center" });
+    doc.rect(0, 0, pw, 22).fillColor("#4f46e5").fill();
+    doc.fontSize(16).font("Helvetica-Bold").fillColor("white");
+    doc.text(title, pw / 2, 14, { align: "center" });
 
-  y = 36;
+    y = 36;
 
-  doc.fontSize(10).font("Helvetica").fillColor("#6b7280");
-  doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, m, y);
-  doc.text(`Total Items: ${orders.length}`, m + 200, y);
-  y += 18;
+    doc.fontSize(10).font("Helvetica").fillColor("#6b7280");
+    doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, m, y);
+    doc.text(`Total Items: ${orders.length}`, m + 200, y);
+    y += 18;
 
-  orders.forEach((o, idx) => {
-    const cName = o.customerId?.name || "—";
-    const cMobile = o.customerId?.mobile || "";
-    const rx = o.prescription;
-    const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ") || "";
-    const coating = o.coating || "";
+    orders.forEach((o, idx) => {
+      const cName = o.customerId?.name || "—";
+      const cMobile = o.customerId?.mobile || "";
+      const rx = o.prescription;
+      const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ") || "";
+      const coating = o.coating || "";
 
-    // Card header
-    const cardTop = y;
-    doc.rect(m, y, pw - 2 * m, 14).fillColor("#f1f5f9").fill();
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b");
-    doc.text(`#${idx + 1}  ${cName}  ${cMobile}`, m + 6, y + 4);
-    y += 14;
+      const cardTop = y;
+      doc.rect(m, y, pw - 2 * m, 14).fillColor("#f1f5f9").fill();
+      doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b");
+      doc.text(`#${idx + 1}  ${cName}  ${cMobile}`, m + 6, y + 4);
+      y += 14;
 
-    // Frame info
-    if (o.frameBrand) {
-      doc.fontSize(8).font("Helvetica").fillColor("#4f46e5");
-      doc.text(`Frame: ${o.frameBrand}${o.frameModel ? ` (${o.frameModel})` : ""}${o.frameColor ? ` - ${o.frameColor}` : ""}`, m + 10, y + 2);
-      y += 10;
-    }
-
-    // Lens info
-    if (lensLabel || coating) {
-      doc.fontSize(8).font("Helvetica-Bold").fillColor("#0891b2");
-      doc.text(`Lens: ${lensLabel}${coating ? ` | Coating: ${coating}` : ""}`, m + 10, y + 2);
-      y += 10;
-    }
-
-    // Prescription
-    const rDV = rx?.rightEye?.dv;
-    const lDV = rx?.leftEye?.dv;
-    const rNV = rx?.rightEye?.nv;
-    const lNV = rx?.leftEye?.nv;
-
-    if (rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null) {
-      doc.fontSize(8).font("Courier").fillColor("#374151");
-
-      const sameRx =
-        (rDV?.sph === lDV?.sph && rDV?.cyl === lDV?.cyl && rDV?.axis === lDV?.axis) &&
-        (rNV?.sph === lNV?.sph && rNV?.cyl === lNV?.cyl && rNV?.axis === lNV?.axis);
-
-      if (sameRx) {
-        const dv = formatDemandRx(rDV?.sph || lDV?.sph, rDV?.cyl || lDV?.cyl, rDV?.axis || lDV?.axis);
-        const add = (rDV?.sph != null && rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-        doc.text(`Rx: ${dv}${add ? `  Add ${add}` : ""}  PD: ${rx?.pd || "—"}`, m + 14, y + 2);
+      if (o.frameBrand) {
+        doc.fontSize(8).font("Helvetica").fillColor("#4f46e5");
+        doc.text(`Frame: ${o.frameBrand}${o.frameModel ? ` (${o.frameModel})` : ""}${o.frameColor ? ` - ${o.frameColor}` : ""}`, m + 10, y + 2);
         y += 10;
-      } else {
-        if (rDV?.sph != null) {
-          const rDv = formatDemandRx(rDV.sph, rDV.cyl, rDV.axis);
-          const addR = (rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-          doc.text(`R: ${rDv}${addR ? `  Add ${addR}` : ""}`, m + 14, y + 2);
-          y += 9;
-        }
-        if (lDV?.sph != null) {
-          const lDv = formatDemandRx(lDV.sph, lDV.cyl, lDV.axis);
-          const addL = (lNV?.sph != null) ? (lNV.sph - lDV.sph).toFixed(2) : null;
-          doc.text(`L: ${lDv}${addL ? `  Add ${addL}` : ""}`, m + 14, y + 2);
-          y += 9;
-        }
-        if (rx?.pd) {
-          doc.text(`PD: ${rx.pd}`, m + 14, y + 2);
-          y += 9;
-        }
       }
 
-      // NV line if different from DV
-      if (rNV?.sph != null || lNV?.sph != null) {
-        const showNv = sameRx
-          ? `NV: ${formatDemandRx(rNV?.sph || lNV?.sph, rNV?.cyl || lNV?.cyl, rNV?.axis || lNV?.axis)}`
-          : `R NV: ${rNV?.sph != null ? formatDemandRx(rNV.sph, rNV.cyl, rNV.axis) : "—"}  |  L NV: ${lNV?.sph != null ? formatDemandRx(lNV.sph, lNV.cyl, lNV.axis) : "—"}`;
-        doc.text(showNv, m + 14, y + 2);
-        y += 9;
+      if (lensLabel || coating) {
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#0891b2");
+        doc.text(`Lens: ${lensLabel}${coating ? ` | Coating: ${coating}` : ""}`, m + 10, y + 2);
+        y += 10;
       }
 
-      y += 2;
+      const rDV = rx?.rightEye?.dv;
+      const lDV = rx?.leftEye?.dv;
+      const rNV = rx?.rightEye?.nv;
+      const lNV = rx?.leftEye?.nv;
+
+      if (rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null) {
+        doc.fontSize(8).font("Courier").fillColor("#374151");
+
+        const sameRx =
+          (rDV?.sph === lDV?.sph && rDV?.cyl === lDV?.cyl && rDV?.axis === lDV?.axis) &&
+          (rNV?.sph === lNV?.sph && rNV?.cyl === lNV?.cyl && rNV?.axis === lNV?.axis);
+
+        if (sameRx) {
+          const dv = formatDemandRx(rDV?.sph || lDV?.sph, rDV?.cyl || lDV?.cyl, rDV?.axis || lDV?.axis);
+          const add = (rDV?.sph != null && rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
+          doc.text(`Rx: ${dv}${add ? `  Add ${add}` : ""}  PD: ${rx?.pd || "—"}`, m + 14, y + 2);
+          y += 10;
+        } else {
+          if (rDV?.sph != null) {
+            const rDv = formatDemandRx(rDV.sph, rDV.cyl, rDV.axis);
+            const addR = (rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
+            doc.text(`R: ${rDv}${addR ? `  Add ${addR}` : ""}`, m + 14, y + 2);
+            y += 9;
+          }
+          if (lDV?.sph != null) {
+            const lDv = formatDemandRx(lDV.sph, lDV.cyl, lDV.axis);
+            const addL = (lNV?.sph != null) ? (lNV.sph - lDV.sph).toFixed(2) : null;
+            doc.text(`L: ${lDv}${addL ? `  Add ${addL}` : ""}`, m + 14, y + 2);
+            y += 9;
+          }
+          if (rx?.pd) {
+            doc.text(`PD: ${rx.pd}`, m + 14, y + 2);
+            y += 9;
+          }
+        }
+
+        if (rNV?.sph != null || lNV?.sph != null) {
+          const showNv = sameRx
+            ? `NV: ${formatDemandRx(rNV?.sph || lNV?.sph, rNV?.cyl || lNV?.cyl, rNV?.axis || lNV?.axis)}`
+            : `R NV: ${rNV?.sph != null ? formatDemandRx(rNV.sph, rNV.cyl, rNV.axis) : "—"}  |  L NV: ${lNV?.sph != null ? formatDemandRx(lNV.sph, lNV.cyl, lNV.axis) : "—"}`;
+          doc.text(showNv, m + 14, y + 2);
+          y += 9;
+        }
+
+        y += 2;
+      }
+
+      y += 4;
+
+      if (y > 260) {
+        doc.addPage();
+        y = m;
+      }
+    });
+
+    if (y < 260) {
+      doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(m, 270).lineTo(pw - m, 270).stroke();
+      doc.fontSize(8).font("Helvetica").fillColor("#9ca3af");
+      doc.text(`Generated by KMJ Optical ERP  |  ${title}`, pw / 2, 278, { align: "center" });
     }
 
-    // Spacer
-    y += 4;
-
-    // Page break check
-    if (y > 260) {
-      doc.addPage();
-      y = m;
-    }
+    doc.end();
   });
-
-  // Footer
-  if (y < 260) {
-    doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(m, 270).lineTo(pw - m, 270).stroke();
-    doc.fontSize(8).font("Helvetica").fillColor("#9ca3af");
-    doc.text(`Generated by KMJ Optical ERP  |  ${title}`, pw / 2, 278, { align: "center" });
-  }
-
-  doc.end();
-  return Buffer.concat(buffers);
 }
 
 router.delete("/:id", authenticate, audit, async (req, res) => {
@@ -402,7 +396,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
       return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
     });
 
-    const pdfBuffer = generateDemandPdf(enriched, type);
+    const pdfBuffer = await generateDemandPdf(enriched, type);
     const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
     const filename = type === "buy" ? "Purchase_List.pdf" : "Lab_Order_List.pdf";
     const caption = type === "buy"
@@ -411,10 +405,11 @@ router.post("/demand-send", authenticate, async (req, res) => {
 
     // Send to shop owner
     const settings = await Settings.findOne().sort({ createdAt: -1 });
-    const phone = settings?.shopPhone?.replace(/\D/g, "");
+    let phone = settings?.shopPhone?.replace(/\D/g, "");
     if (!phone) {
       return res.status(400).json({ success: false, message: "Shop phone not configured" });
     }
+    phone = phone.replace(/^0+/, "");
     const normalized = phone.length === 10 ? `91${phone}` : phone;
     const waStatus = await whatsapp.getStatus();
 

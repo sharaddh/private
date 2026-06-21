@@ -169,7 +169,7 @@ export default function Bills() {
 
   async function sendWhatsApp(bill: any) {
     const customer = resolveCustomer(bill);
-    const num = customer?.mobile?.replace(/\D/g, "");
+    const num = customer?.mobile?.replace(/\D/g, "").replace(/^0+/, "");
     if (!num) { setToast({ message: "Customer has no mobile number", type: "error" }); return; }
     setToast({ message: "Sending WhatsApp...", type: "info" });
     const fullNum = num.length === 10 ? `91${num}` : num;
