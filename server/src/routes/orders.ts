@@ -426,7 +426,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
     let sendError: string | null = null;
 
     try {
-      sent = await whatsapp.sendMedia(normalized, base64, filename, caption);
+      sent = await whatsapp.sendMedia(normalized, base64, filename, caption, true);
     } catch (e: any) {
       sendError = e.message;
       console.error(`Demand PDF sendMedia threw: ${e.message}`);
@@ -453,19 +453,18 @@ router.post("/demand-send", authenticate, async (req, res) => {
       }
     }
 
-    res.json({
-      success: true,
-      data: {
-        sent,
-        queued: !sent && waStatus.status !== "connected",
-        waConnected: waStatus.status === "connected",
-        phone: normalized,
-        filename,
-        count: enriched.length,
-        sizeKB: parseFloat(sizeKB),
-        sendError,
-      },
-    });
+    const responseData = {
+      sent,
+      queued: !sent && waStatus.status !== "connected",
+      waConnected: waStatus.status === "connected",
+      phone: normalized,
+      filename,
+      count: enriched.length,
+      sizeKB: parseFloat(sizeKB),
+      sendError,
+    };
+    console.log("Demand PDF response:", JSON.stringify(responseData));
+    res.json({ success: true, data: responseData });
   } catch (err: any) {
     console.error("Demand send error:", err);
     res.status(400).json({ success: false, message: err.message });

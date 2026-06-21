@@ -94,16 +94,18 @@ export default function Dashboard() {
     setSendingDemand(type);
     const res = await api.post("/api/orders/demand-send", { type });
     setSendingDemand(null);
+    console.log("Demand send response:", JSON.stringify(res));
     if (res.success) {
-      if (res.data?.sent) {
+      const d = res.data || res;
+      if (d.sent) {
         setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list sent to your WhatsApp!`, type: "success" });
-      } else if (res.data?.waConnected === false) {
+      } else if (d.waConnected === false) {
         setToast({ message: `WhatsApp not connected. Scan QR code on WhatsApp page to receive PDFs`, type: "error" });
-      } else if (res.data?.queued) {
+      } else if (d.queued) {
         setToast({ message: `${type === "buy" ? "Purchase" : "Lab Order"} list queued — WhatsApp will send when connected`, type: "info" });
       } else {
-        const errMsg = res.data?.sendError ? `: ${res.data.sendError}` : "";
-        setToast({ message: `PDF generated (${res.data?.count || 0} items, ${res.data?.sizeKB || "?"}KB) but send failed${errMsg}`, type: "error" });
+        const errMsg = d.sendError ? `: ${d.sendError}` : "";
+        setToast({ message: `PDF generated (${d.count || 0} items, ${d.sizeKB || "?"}KB) but send failed${errMsg}`, type: "error" });
       }
     } else {
       setToast({ message: res.message || "Failed to send", type: "error" });

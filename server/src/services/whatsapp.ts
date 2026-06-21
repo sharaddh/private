@@ -220,11 +220,14 @@ class WhatsAppService {
     try {
       const formatted = phone.replace(/[^0-9]/g, "");
       const chatId = `${formatted}@c.us`;
+      console.log(`sendMediaNow: sending to ${chatId}, filename: ${filename}, base64 length: ${base64.length}, client ready: ${this._ready}`);
       const media = new MessageMedia("application/pdf", base64, filename);
       await this.client.sendMessage(chatId, media, { caption: caption || "" });
+      console.log("sendMediaNow: sent successfully");
       return true;
-    } catch (err) {
-      console.error("WhatsApp sendMedia error:", err);
+    } catch (err: any) {
+      console.error("WhatsApp sendMedia error:", err?.message || err);
+      if (err?.stack) console.error("Stack:", err.stack);
       return false;
     }
   }
@@ -238,11 +241,18 @@ class WhatsAppService {
     return this.sendMessageNow(phone, message);
   }
 
-  async sendMedia(phone: string, base64: string, filename: string, caption?: string): Promise<boolean> {
+  async sendMedia(phone: string, base64: string, filename: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
     if (!this._ready || !this.client) {
       this.messageQueue.push({ type: "media", phone, base64, filename, caption });
       console.log(`WhatsApp: queued media message to ${phone} (queue: ${this.messageQueue.length})`);
       return false;
+    }
+    if (throwOnError) {
+      const formatted = phone.replace(/[^0-9]/g, "");
+      const chatId = `${formatted}@c.us`;
+      const media = new MessageMedia("application/pdf", base64, filename);
+      await this.client.sendMessage(chatId, media, { caption: caption || "" });
+      return true;
     }
     return this.sendMediaNow(phone, base64, filename, caption);
   }
