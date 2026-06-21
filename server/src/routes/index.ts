@@ -13,12 +13,14 @@ import reports from "./reports";
 import settings from "./settings";
 import workspace from "./workspace";
 import whatsapp from "./whatsapp";
+import todos from "./todos";
 
 const router = Router();
 
 router.use("/customers", customers);
 router.use("/auth", auth);
 router.use("/orders", orders);
+router.use("/todos", todos);
 router.use("/bills", bills);
 router.use("/payments", payments);
 router.use("/delivery", delivery);
