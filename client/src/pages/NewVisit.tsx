@@ -120,7 +120,8 @@ export default function NewVisit() {
         if (last.accessories) setOrderAccessories(last.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
 
         const items: { description: string; qty: number; price: number }[] = [];
-        if (last.frame) items.push({ description: `Frame - ${last.frame}`, qty: 1, price: last.framePrice || 0 });
+        const lastFrameDesc = last.frame || `${last.frameBrand || ""} ${last.frameModel || ""}`.trim();
+        if (lastFrameDesc) items.push({ description: `Frame - ${lastFrameDesc}`, qty: 1, price: last.framePrice || 0 });
         if (last.lens) items.push({ description: `Lens - ${last.lens}`, qty: 1, price: last.lensPrice || 0 });
         const accs = (last.accessories || []).map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a);
         accs.forEach((a: any) => items.push({ description: a.name, qty: 1, price: a.price || 0 }));
@@ -268,11 +269,13 @@ export default function NewVisit() {
       if (items.length > 0) setBillItems(items);
       return;
     }
-    const hasLens = orderLens || orderLensBrand || lensFeatures.length > 0 || orderLensIndex;
-    if (visitType !== "new_lens" && visitType !== "contact_lens" && orderFrame) {
-      items.push({ description: `Frame - ${orderFrame}`, qty: 1, price: orderFramePrice });
+    const hasFrame = orderFrame || orderFrameBrand || orderFrameModel;
+    if (visitType !== "new_lens" && visitType !== "contact_lens" && hasFrame) {
+      const frameDesc = orderFrame || `${orderFrameBrand} ${orderFrameModel}`.trim();
+      items.push({ description: `Frame - ${frameDesc}`, qty: 1, price: orderFramePrice });
     }
-    if (visitType !== "frame_change" && visitType !== "sunglasses" && hasLens) {
+    const hasLens = orderLens || orderLensBrand || lensFeatures.length > 0 || orderLensIndex;
+    if (visitType !== "frame_change" && hasLens) {
       const lensDesc = orderLens || `${orderLensBrand || ""} ${lensFeatures.join(", ") || ""}`.trim() || "Lens";
       items.push({ description: `Lens - ${lensDesc}`, qty: 1, price: orderLensPrice });
     }
@@ -374,7 +377,7 @@ export default function NewVisit() {
       if (validItems.length > 0) {
         payload.bill = {
           items: validItems.map((i) => ({ description: i.description, quantity: i.qty, unitPrice: i.price })),
-          discount: billDiscount || 0, advancePaid: advancePaid || 0,
+          discount: billDiscount || 0, advancePaid: paymentAmount > 0 ? 0 : advancePaid || 0,
         };
       }
 
@@ -797,9 +800,9 @@ export default function NewVisit() {
                       <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                         <Tag size={20} />
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{visitType === "sunglasses" ? "Sunglasses" : "Frame"}</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Frame</h3>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
                         <input className="input-field text-base" placeholder="Brand" value={orderFrameBrand}
@@ -816,20 +819,20 @@ export default function NewVisit() {
                           onChange={(e) => setOrderFrameColor(e.target.value)} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                        <input className="input-field text-base" placeholder="Frame name" value={orderFrame}
-                          onChange={(e) => setOrderFrame(e.target.value)} />
-                      </div>
-                      <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderFramePrice}
                           onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name / Description</label>
+                        <input className="input-field text-base" placeholder="Frame name" value={orderFrame}
+                          onChange={(e) => setOrderFrame(e.target.value)} />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {visitType !== "frame_change" && visitType !== "sunglasses" && (
+                {visitType !== "frame_change" && (
                   <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
                     <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
                       <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center text-sky-600 dark:text-sky-400">
@@ -837,7 +840,7 @@ export default function NewVisit() {
                       </div>
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">Lens</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
                         <input className="input-field text-base" placeholder="Brand" value={orderLensBrand}
@@ -848,7 +851,7 @@ export default function NewVisit() {
                         <input className="input-field text-base" placeholder="1.56" value={orderLensIndex}
                           onChange={(e) => setOrderLensIndex(e.target.value)} />
                       </div>
-                      <div className="md:col-span-2">
+                      <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
                         <input className="input-field text-base" placeholder="Lens description" value={orderLens}
                           onChange={(e) => setOrderLens(e.target.value)} />
@@ -876,15 +879,15 @@ export default function NewVisit() {
                         })}
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
-                      <div className="md:col-span-2">
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
+                      <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                           <span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5" />Coating / Add-on
                         </label>
                         <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={orderCoating}
                           onChange={(e) => setOrderCoating(e.target.value)} />
                       </div>
-                      <div className="md:col-span-2">
+                      <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
                         <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderLensPrice}
                           onChange={(e) => setOrderLensPrice(Number(e.target.value))} />

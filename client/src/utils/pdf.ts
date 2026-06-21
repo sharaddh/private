@@ -38,11 +38,20 @@ interface PdfSettings {
   logo?: string;
 }
 
-const primary = [30, 64, 175] as const;
-const primaryLight = [239, 242, 255] as const;
-const gray = [107, 114, 128] as const;
-const dark = [17, 24, 39] as const;
-const border = [229, 231, 235] as const;
+const primary: [number, number, number] = [30, 64, 175];
+const primaryLight: [number, number, number] = [239, 242, 255];
+const gray: [number, number, number] = [107, 114, 128];
+const dark: [number, number, number] = [17, 24, 39];
+const border: [number, number, number] = [229, 231, 235];
+const success: [number, number, number] = [5, 150, 105];
+const danger: [number, number, number] = [220, 38, 38];
+const warning: [number, number, number] = [217, 119, 6];
+
+const C = "Rs.";
+
+function fmt(n: number): string {
+  return `${C} ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function numberToWords(n: number): string {
   if (n === 0) return "Zero";
@@ -76,14 +85,16 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   const contentW = pageW - margin * 2;
   let y = 0;
 
-  // ---- Top header bar ----
   doc.setFillColor(primary[0], primary[1], primary[2]);
-  doc.rect(0, 0, pageW, 6, "F");
+  doc.rect(0, 0, pageW, 7, "F");
 
-  y += 10;
+  y = 7;
 
-  // ---- Logo + Shop info row ----
-  let logoX = margin;
+  doc.setFillColor(247, 248, 252);
+  doc.rect(0, y, pageW, 36, "F");
+
+  y += 6;
+
   if (settings.logo) {
     let format = "JPEG";
     const logo = settings.logo;
@@ -91,93 +102,77 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
     else if (logo.startsWith("data:image/gif")) format = "GIF";
     else if (logo.startsWith("data:image/webp")) format = "WEBP";
     try {
-      doc.addImage(logo, format, margin, y, 24, 24);
+      doc.addImage(logo, format, margin, y + 1, 32, 32);
     } catch {
-      try { doc.addImage(logo, "PNG", margin, y, 24, 24); } catch {
-        try { doc.addImage(logo, "JPEG", margin, y, 24, 24); } catch {}
+      try { doc.addImage(logo, "PNG", margin, y + 1, 32, 32); } catch {
+        try { doc.addImage(logo, "JPEG", margin, y + 1, 32, 32); } catch {}
       }
     }
-    logoX = margin + 30;
   }
 
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text(settings.shopName || "KMJ Optical", logoX, y + 9);
-
-  doc.setFontSize(8);
+  const rightInfoX = pageW - margin;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(gray[0], gray[1], gray[2]);
-  const shopInfo: string[] = [];
-  if (settings.shopAddress) shopInfo.push(settings.shopAddress);
-  if (settings.shopPhone) shopInfo.push(`Ph: ${settings.shopPhone}`);
-  if (settings.shopEmail) shopInfo.push(settings.shopEmail);
-  shopInfo.forEach((line, i) => {
-    doc.text(line, logoX, y + 17 + i * 4);
-  });
-
-  // ---- TAX INVOICE badge ----
-  const badgeX = pageW - margin - 58;
-  doc.setFillColor(primary[0], primary[1], primary[2]);
-  doc.roundedRect(badgeX, y, 58, 16, 3, 3, "F");
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("TAX INVOICE", badgeX + 29, y + 11, { align: "center" });
-
-  y += 32;
-
-  // ---- Separator line ----
-  doc.setDrawColor(border[0], border[1], border[2]);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
-  // ---- Invoice meta + Customer ----
-  const leftColX = margin;
-  const rightColX = pageW / 2 + 5;
-
-  // Left: Bill info
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("INVOICE NO.", leftColX, y);
+  let riY = y + 4;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text(bill.billNumber || "—", leftColX, y + 4);
+  doc.text(settings.shopName || "Optical Shop", rightInfoX, riY, { align: "right" });
+  riY += 6;
 
-  const yAfterBillNo = y + 9;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(gray[0], gray[1], gray[2]);
+  if (settings.shopAddress) {
+    doc.text(settings.shopAddress, rightInfoX, riY, { align: "right" });
+    riY += 4.5;
+  }
+  if (settings.shopPhone) {
+    doc.text(`Phone: ${settings.shopPhone}`, rightInfoX, riY, { align: "right" });
+    riY += 4.5;
+  }
+  if (settings.shopEmail) {
+    doc.text(`Email: ${settings.shopEmail}`, rightInfoX, riY, { align: "right" });
+    riY += 4.5;
+  }
 
-  doc.setFontSize(7);
+  y += 34;
+
+  doc.setDrawColor(border[0], border[1], border[2]);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageW - margin, y);
+  doc.setLineWidth(0.1);
+  y += 6;
+
+  const leftColX = margin;
+  const rightColX = pageW / 2 + 5;
+
+  doc.setFontSize(6.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("DATE", leftColX, yAfterBillNo);
+  doc.text("INVOICE NO.", leftColX, y);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(dark[0], dark[1], dark[2]);
+  doc.text(bill.billNumber || "—", leftColX, y + 4);
+  const yAfterBillNo = y + 9;
 
+  doc.setFontSize(6.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(gray[0], gray[1], gray[2]);
+  doc.text("INVOICE DATE", leftColX, yAfterBillNo);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(dark[0], dark[1], dark[2]);
   const billDate = bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
   doc.text(billDate, leftColX, yAfterBillNo + 4);
-
   const yAfterDate = yAfterBillNo + 9;
 
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("STATUS", leftColX, yAfterDate);
-
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(bill.status === "Cancelled" ? 220 : dark[0], bill.status === "Cancelled" ? 38 : dark[1], bill.status === "Cancelled" ? 38 : dark[2]);
-  doc.text(bill.status || "Active", leftColX, yAfterDate + 4);
-
-  // Right: Customer info
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(gray[0], gray[1], gray[2]);
   doc.text("BILL TO", rightColX, y);
-
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(dark[0], dark[1], dark[2]);
@@ -187,35 +182,36 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(gray[0], gray[1], gray[2]);
-  if (customer.mobile) {
-    doc.text(`Mobile: ${customer.mobile}`, rightColX, custLineY);
-    custLineY += 4.5;
-  }
-  if (customer.customerId) {
-    doc.text(`Customer ID: ${customer.customerId}`, rightColX, custLineY);
-    custLineY += 4.5;
-  }
-  if (customer.address) {
-    doc.text(customer.address, rightColX, custLineY);
-    custLineY += 4.5;
-  }
+
+  const custDetails: { label: string; value?: string }[] = [];
+  if (customer.mobile) custDetails.push({ label: "Mobile", value: customer.mobile });
+  if (customer.customerId) custDetails.push({ label: "Customer ID", value: customer.customerId });
+  if (customer.address) custDetails.push({ label: "Address", value: customer.address });
+  custDetails.forEach((d, i) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(`${d.label}: `, rightColX, custLineY + i * 4.5);
+    const labelW = doc.getTextWidth(`${d.label}: `);
+    doc.setFont("helvetica", "normal");
+    doc.text(d.value || "", rightColX + labelW, custLineY + i * 4.5);
+  });
+  custLineY += custDetails.length * 4.5;
 
   y = Math.max(yAfterDate + 9, custLineY + 2);
 
-  // ---- Items table ----
   const tableBody = (bill.items || []).map((it) => [
     it.description || "Item",
     String(it.quantity || 1),
-    `₹${(it.unitPrice || 0).toFixed(2)}`,
-    `₹${((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}`,
+    fmt(it.unitPrice || 0),
+    fmt((it.quantity || 1) * (it.unitPrice || 0)),
   ]);
 
   if (tableBody.length === 0) {
     tableBody.push(["No items", "—", "—", "—"]);
   }
 
+  const tableStartY = y + 2;
   (doc as any).autoTable({
-    startY: y,
+    startY: tableStartY,
     head: [["#", "Description", "Qty", "Unit Price", "Total"]],
     body: tableBody.map((row, i) => [`${i + 1}`, ...row]),
     theme: "grid",
@@ -225,49 +221,52 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
       fontStyle: "bold",
       fontSize: 9,
       halign: "center",
+      cellPadding: 3,
     },
     bodyStyles: {
       fontSize: 9,
       textColor: dark as any,
+      cellPadding: 3,
     },
     columnStyles: {
-      0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: contentW * 0.42 },
-      2: { cellWidth: contentW * 0.12, halign: "center" },
-      3: { cellWidth: contentW * 0.18, halign: "right" },
-      4: { cellWidth: contentW * 0.18, halign: "right" },
+      0: { cellWidth: 9, halign: "center" },
+      1: { cellWidth: contentW * 0.38 },
+      2: { cellWidth: contentW * 0.11, halign: "center" },
+      3: { cellWidth: contentW * 0.21, halign: "right" },
+      4: { cellWidth: contentW * 0.21, halign: "right" },
     },
     alternateRowStyles: {
       fillColor: [249, 250, 251] as any,
     },
     margin: { left: margin, right: margin },
     tableWidth: contentW,
+    tableLineColor: border as any,
+    tableLineWidth: 0.2,
   });
 
   y = (doc as any).lastAutoTable.finalY + 6;
 
-  // ---- Totals section (right-aligned box) ----
-  const totalX = contentW * 0.48 + margin;
-  const totalW = contentW * 0.52;
+  const totalX = contentW * 0.45 + margin;
+  const totalW = contentW * 0.55;
 
   const totalItems: { label: string; value: string; bold?: boolean; color?: [number, number, number] }[] = [
-    { label: "Subtotal", value: `₹${(bill.subtotal || 0).toFixed(2)}` },
+    { label: "Subtotal", value: fmt(bill.subtotal || 0) },
   ];
   if (bill.discount) {
-    totalItems.push({ label: "Discount", value: `-₹${bill.discount.toFixed(2)}`, color: [220, 38, 38] });
+    totalItems.push({ label: "Discount", value: `- ${fmt(bill.discount)}`, color: danger });
   }
   if (bill.tax) {
-    totalItems.push({ label: "GST", value: `+₹${bill.tax.toFixed(2)}`, color: [5, 150, 105] });
+    totalItems.push({ label: "GST", value: `+ ${fmt(bill.tax)}`, color: success });
   }
-  totalItems.push({ label: "Total Amount", value: `₹${(bill.totalAmount || 0).toFixed(2)}`, bold: true });
+  totalItems.push({ label: "Total Amount", value: fmt(bill.totalAmount || 0), bold: true });
   if (bill.advancePaid) {
-    totalItems.push({ label: "Paid", value: `₹${bill.advancePaid.toFixed(2)}`, color: [5, 150, 105] });
+    totalItems.push({ label: "Paid", value: fmt(bill.advancePaid), color: success });
   }
   if (bill.pendingAmount && bill.pendingAmount > 0) {
-    totalItems.push({ label: "Balance Due", value: `₹${bill.pendingAmount.toFixed(2)}`, color: [217, 119, 6], bold: true });
+    totalItems.push({ label: "Balance Due", value: fmt(bill.pendingAmount), color: warning, bold: true });
   }
 
-  const totalRowH = 7;
+  const totalRowH = 7.5;
   const totalPad = 3;
   const boxH = totalItems.length * (totalRowH + totalPad) + totalPad + 2;
 
@@ -278,7 +277,7 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
 
   let ty = y + totalPad + totalRowH / 2 + 2;
   totalItems.forEach((item, i) => {
-    doc.setFont(item.bold ? "helvetica" : "helvetica", item.bold ? "bold" : "normal");
+    doc.setFont("helvetica", item.bold ? "bold" : "normal");
     doc.setFontSize(item.bold ? 10 : 9);
     const c = item.color || dark;
     doc.setTextColor(c[0], c[1], c[2]);
@@ -287,8 +286,8 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
     const lastHighlightIdx = bill.pendingAmount && bill.pendingAmount > 0 ? totalItems.length - 1 : totalItems.length - 2;
     if (i === lastHighlightIdx) {
       doc.setDrawColor(primary[0], primary[1], primary[2]);
-      doc.setLineWidth(0.5);
-      doc.line(totalX + 8, ty + 2, totalX + totalW - 8, ty + 2);
+      doc.setLineWidth(0.6);
+      doc.line(totalX + 8, ty + 3, totalX + totalW - 8, ty + 3);
       doc.setLineWidth(0.1);
     }
     ty += totalRowH + totalPad;
@@ -296,61 +295,63 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
 
   y += boxH + 8;
 
-  // ---- Amount in words ----
-  if (bill.totalAmount) {
-    doc.setFontSize(8);
+  if (bill.totalAmount && bill.totalAmount > 0) {
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
     doc.setTextColor(gray[0], gray[1], gray[2]);
-    doc.text("Amount in Words:", margin, y);
+    doc.text("AMOUNT IN WORDS", margin, y);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(dark[0], dark[1], dark[2]);
     doc.setFontSize(9);
     const amountWords = numberToWords(Math.round(bill.totalAmount));
     doc.text(amountWords, margin, y + 5);
-    y += 12;
+    y += 14;
   }
 
-  // ---- Divider ----
   doc.setDrawColor(border[0], border[1], border[2]);
+  doc.setLineWidth(0.5);
   doc.line(margin, y, pageW - margin, y);
-  y += 6;
+  doc.setLineWidth(0.1);
+  y += 5;
 
-  // ---- Terms & Conditions + Signature ----
-  doc.setFontSize(8);
+  const termsY = y;
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
   doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text("Terms & Conditions:", margin, y);
+  doc.text("Terms & Conditions", margin, termsY);
+
   doc.setFont("helvetica", "normal");
   doc.setTextColor(gray[0], gray[1], gray[2]);
   doc.setFontSize(7);
   const terms = [
-    "1. All items are subject to a 7-day inspection period.",
-    "2. Prescription accuracy should be verified within 3 days of delivery.",
-    "3. Warranty covers manufacturing defects only.",
-    "4. This is a computer-generated invoice.",
+    "1. Goods once sold will not be taken back or exchanged.",
+    "2. Prescription accuracy must be verified within 3 days of delivery.",
+    "3. Warranty covers manufacturing defects only; does not cover scratches or breakage.",
+    "4. This is a computer-generated invoice and does not require a physical signature.",
   ];
   terms.forEach((t, i) => {
-    doc.text(t, margin, y + 5 + i * 4);
+    doc.text(t, margin, termsY + 5 + i * 4);
   });
 
-  // Signature
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  const signY = y + 5 + terms.length * 4;
-  doc.text("Authorised Signatory", pageW - margin - 50, signY);
-  doc.line(pageW - margin - 50, signY + 1, pageW - margin, signY + 1);
+  y = termsY + 5 + terms.length * 4 + 8;
 
-  // ---- Footer ----
-  const footerY = 278;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10);
+  doc.setTextColor(primary[0], primary[1], primary[2]);
+  doc.text(`Thank you for choosing ${settings.shopName || "us"}!`, pageW / 2, y, { align: "center" });
+
+  const footerY = 280;
   doc.setDrawColor(border[0], border[1], border[2]);
+  doc.setLineWidth(0.3);
   doc.line(margin, footerY, pageW - margin, footerY);
+  doc.setLineWidth(0.1);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text(`Thank you for choosing ${settings.shopName || "KMJ Optical"}! 🙏`, pageW / 2, footerY + 7, { align: "center" });
+  const footerParts = [settings.shopAddress, settings.shopPhone, settings.shopEmail].filter(Boolean);
+  doc.text(footerParts.join("  |  "), pageW / 2, footerY + 6, { align: "center" });
   doc.setFontSize(6);
-  doc.text(`Generated on ${new Date().toLocaleString("en-IN")}  |  ${settings.shopName || "KMJ Optical"} ERP`, pageW / 2, footerY + 12, { align: "center" });
+  doc.text(`Invoice generated on ${new Date().toLocaleString("en-IN")}`, pageW / 2, footerY + 11, { align: "center" });
 
   return doc;
 }

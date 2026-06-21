@@ -75,15 +75,26 @@ export default function Pickup() {
           setBills(custBills);
         }
         setSelectedOrder(o);
-        syncBillForOrder(o, custBills);
+        await syncBillForOrder(o, custBills);
       }
     } finally { setIsLoading(false); }
   }
 
-  function syncBillForOrder(o: any, custBills?: any[]) {
+  async function syncBillForOrder(o: any, custBills?: any[]): Promise<any> {
     const targetId = o.visitId || o._id;
-    const allBills = custBills || bills;
-    const b = allBills.find((b: any) => b.visitId === targetId) || null;
+    let b = (custBills || bills).find((b: any) => b.visitId === targetId) || null;
+    if (!b && o.billInfo?._id) {
+      try {
+        const res = await api.get(`/api/bills/${o.billInfo._id}`);
+        if (res.success) {
+          b = res.data;
+          setBills((prev) => {
+            const exists = prev.some((x) => x._id === b._id);
+            return exists ? prev : [...prev, b];
+          });
+        }
+      } catch {}
+    }
     setBill(b);
     if (!b) {
       const items: { description: string; qty: number; price: number }[] = [];
@@ -99,6 +110,7 @@ export default function Pickup() {
     } else {
       setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
     }
+    return b;
   }
 
   async function selectCustomer(c: any) {
@@ -120,18 +132,14 @@ export default function Pickup() {
     } finally { setIsLoading(false); }
   }
 
-  function findBillForOrder(o: any): any {
-    const targetId = o.visitId || o._id;
-    return bills.find((b: any) => b.visitId === targetId) || null;
-  }
-
   async function selectOrder(o: any) {
     setSelectedOrder(o); setMessage(""); setShowCreateBill(false);
-    const b = findBillForOrder(o);
-    setBill(b);
+    const b = await syncBillForOrder(o);
     if (b) {
       setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+      setBill(b);
     } else {
+      setBill(null);
       const items: { description: string; qty: number; price: number }[] = [];
       if (o.frame) items.push({ description: o.frameBrand ? `${o.frame} (${o.frameBrand})` : o.frame, qty: 1, price: o.framePrice || 0 });
       if (o.lens) items.push({ description: o.lensBrand ? `${o.lens} (${o.lensBrand})` : o.lens, qty: 1, price: o.lensPrice || 0 });
@@ -140,8 +148,7 @@ export default function Pickup() {
         o.accessories.forEach((a: string) => items.push({ description: a, qty: 1, price: 0 }));
       }
       if (items.length === 0) items.push({ description: "", qty: 1, price: 0 });
-      setBillItems(items);
-      setBillDiscount(0);
+      setBillItems(items); setBillDiscount(0);
     }
   }
 
@@ -344,7 +351,7 @@ export default function Pickup() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3 ml-3">
-                    {findBillForOrder(o) ? (
+                    {bills.some((b) => b.visitId === (o.visitId || o._id)) ? (
                       <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full">
                         <Check size={10} /> Billed
                       </span>
@@ -421,6 +428,16 @@ export default function Pickup() {
                     ))}
                   </div>
                   <hr className="border-emerald-200 dark:border-emerald-800" />
+                  {bill.subtotal > 0 && (
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Subtotal</span><span>₹{bill.subtotal?.toFixed(0)}</span>
+                    </div>
+                  )}
+                  {bill.discount > 0 && (
+                    <div className="flex justify-between text-sm text-red-500">
+                      <span>Discount</span><span>-₹{bill.discount?.toFixed(0)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
                     <span>Total</span><span>₹{bill.totalAmount?.toFixed(0) || "0"}</span>
                   </div>
