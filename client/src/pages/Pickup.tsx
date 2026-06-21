@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
-import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt } from "lucide-react";
+import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();
@@ -252,10 +252,32 @@ export default function Pickup() {
                     </div>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Ready</span>
                   </div>
-                  <div className="space-y-1.5">
-                    {o.frame && <p className="text-xs text-gray-500"><span className="text-gray-400">Frame:</span> {o.frame}</p>}
-                    {o.lens && <p className="text-xs text-gray-500"><span className="text-gray-400">Lens:</span> {o.lens}</p>}
-                    {o.coating && <p className="text-xs text-gray-500"><span className="text-gray-400">Coating:</span> {o.coating}</p>}
+                  <div className="flex flex-wrap gap-1.5">
+                    {o.frameBrand ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
+                      </span>
+                    ) : o.frame ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frame}
+                      </span>
+                    ) : null}
+                    {o.lensBrand && (
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 px-2 py-0.5 rounded-md text-sky-700 dark:text-sky-300 font-medium truncate max-w-full">
+                        <Eye size={11} className="text-sky-500 dark:text-sky-400 flex-shrink-0" /> {o.lensBrand}{o.lens ? ` · ${o.lens}` : ""}
+                      </span>
+                    )}
+                    {(o.accessories || []).map((a: string, i: number) => {
+                      const lower = a.toLowerCase();
+                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={11} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
+                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                        : <Package size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />;
+                      return (
+                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">
+                          {accIcon} {a}
+                        </span>
+                      );
+                    })}
                   </div>
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-dark-700">
                     {o.deliveryDate ? (
@@ -382,24 +404,17 @@ export default function Pickup() {
               {/* Order items */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {selectedOrder.frame && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Frame</p>
-                    <p className="text-sm font-medium">{selectedOrder.frameBrand ? `${selectedOrder.frame} (${selectedOrder.frameBrand})` : selectedOrder.frame}</p>
-                    {selectedOrder.framePrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.framePrice}</p>}
+                  <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl px-4 py-3 border border-indigo-100 dark:border-indigo-800/20">
+                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-0.5 flex items-center gap-1"><Glasses size={11} /> Frame</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedOrder.frameBrand ? `${selectedOrder.frameBrand} ${selectedOrder.frameModel || ""}`.trim() : selectedOrder.frame}</p>
+                    {selectedOrder.framePrice > 0 && <p className="text-xs text-gray-500 mt-0.5">₹{selectedOrder.framePrice}</p>}
                   </div>
                 )}
-                {selectedOrder.lens && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Lens</p>
-                    <p className="text-sm font-medium">{selectedOrder.lensBrand ? `${selectedOrder.lens} (${selectedOrder.lensBrand})` : selectedOrder.lens}</p>
-                    {selectedOrder.lensPrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.lensPrice}</p>}
-                  </div>
-                )}
-                {selectedOrder.coating && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl px-4 py-3 border border-gray-100 dark:border-dark-700">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Coating</p>
-                    <p className="text-sm font-medium">{selectedOrder.coating}</p>
-                    {selectedOrder.coatingPrice > 0 && <p className="text-xs text-gray-500">₹{selectedOrder.coatingPrice}</p>}
+                {selectedOrder.lensBrand && (
+                  <div className="bg-sky-50/50 dark:bg-sky-900/10 rounded-xl px-4 py-3 border border-sky-100 dark:border-sky-800/20">
+                    <p className="text-[10px] text-sky-500 dark:text-sky-400 uppercase tracking-wider mb-0.5 flex items-center gap-1"><Eye size={11} /> Lens</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedOrder.lensBrand}{selectedOrder.lens ? ` · ${selectedOrder.lens}` : ""}</p>
+                    {selectedOrder.lensPrice > 0 && <p className="text-xs text-gray-500 mt-0.5">₹{selectedOrder.lensPrice}</p>}
                   </div>
                 )}
                 {selectedOrder.deliveryDate && (
