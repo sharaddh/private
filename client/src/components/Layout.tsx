@@ -224,7 +224,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-16 bg-white/70 dark:bg-muted-900/70 backdrop-blur-xl border-b border-surface-200/60 dark:border-muted-800/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
+        <header className="h-16 bg-white/70 dark:bg-dark-850/80 backdrop-blur-xl border-b border-surface-200/60 dark:border-dark-600/30 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="btn-ghost p-2 lg:hidden">
               <Menu size={20} />
@@ -244,9 +244,9 @@ export default function Layout({ children }: { children: ReactNode }) {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-8 pr-3 py-2 bg-surface-100 dark:bg-muted-800 border border-surface-200 dark:border-muted-700 rounded-xl text-sm text-muted-900 dark:text-white placeholder-muted-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all" />
+              className="w-full pl-8 pr-3 py-2 bg-surface-100 dark:bg-dark-800 border border-surface-200 dark:border-dark-600 rounded-xl text-sm text-muted-900 dark:text-white placeholder-muted-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all" />
             {searchOpen && searchQuery.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-muted-800 border border-surface-100 dark:border-muted-700 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-dark-800 border border-surface-100 dark:border-dark-600 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
                 {searchResults.length > 0 ? (
                   searchResults.map((c) => (
                     <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
