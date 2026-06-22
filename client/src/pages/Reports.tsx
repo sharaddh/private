@@ -1,21 +1,28 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
+import PageSkeleton from "../components/PageSkeleton";
 import { Users, DollarSign, Clock, Package, TrendingUp, AlertTriangle } from "lucide-react";
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("customers");
+  const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any>(null);
   const [salesData, setSalesData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any[]>([]);
   const [invData, setInvData] = useState<any>(null);
 
   useEffect(() => {
-    api.get("/api/reports/revenue").then((r) => { if (r.success) setSalesData(r.data); });
-    api.get("/api/reports/inventory").then((r) => { if (r.success) setInvData(r.data); });
-    api.get("/api/customers").then((r) => { if (r.success) setCustomerData(r.data); });
-    api.get("/api/bills").then((r) => {
-      if (r.success) setPendingData((r.data || []).filter((b: any) => (b.pendingAmount || 0) > 0));
-    });
+    Promise.all([
+      api.get("/api/reports/revenue"),
+      api.get("/api/reports/inventory"),
+      api.get("/api/customers"),
+      api.get("/api/bills"),
+    ]).then(([rev, inv, cust, bills]) => {
+      if (rev.success) setSalesData(rev.data);
+      if (inv.success) setInvData(inv.data);
+      if (cust.success) setCustomerData(cust.data);
+      if (bills.success) setPendingData((bills.data || []).filter((b: any) => (b.pendingAmount || 0) > 0));
+    }).finally(() => setLoading(false));
   }, []);
 
   const tabs = [
@@ -24,6 +31,8 @@ export default function Reports() {
     { key: "pending", label: "Pending", icon: Clock },
     { key: "inventory", label: "Inventory", icon: Package },
   ];
+
+  if (loading) return <PageSkeleton page="reports" />;
 
   return (
     <div className="space-y-6">

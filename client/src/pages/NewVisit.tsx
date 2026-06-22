@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
+import PageSkeleton from "../components/PageSkeleton";
 import {
   ArrowLeft, Eye, ShoppingCart, DollarSign, CreditCard, Plus, Save, X, MessageCircle,
   AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText
@@ -422,13 +423,7 @@ export default function NewVisit() {
     : allSteps;
   const currentStepIdx = visitSteps.findIndex((s) => s.key === visitStep);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-primary-600 dark:border-primary-400 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton page="newvisit" />;
 
   if (!customer) {
     return (
