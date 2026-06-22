@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       colors: {
         surface: {
-          50: '#fafaf9',
+           50: '#f3f4f6',
           100: '#f5f5f4',
           200: '#e7e5e4',
           300: '#d6d3d1',
