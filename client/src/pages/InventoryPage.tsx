@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
+import PageSkeleton from "../components/PageSkeleton";
 import { Plus, Edit2, Trash2, Package } from "lucide-react";
 
 export default function InventoryPage() {
@@ -14,12 +15,14 @@ export default function InventoryPage() {
     quantity: 0, purchasePrice: 0, sellingPrice: 0,
   });
   const [adjust, setAdjust] = useState({ id: "", qty: 0, note: "" });
+  const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => { fetchInventory(); }, []);
 
   function fetchInventory() {
-    api.get("/api/inventory").then((d) => { if (d.success) setList(d.data || []); });
+    setLoading(true);
+    api.get("/api/inventory").then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
   }
 
   function openCreate() {
@@ -64,6 +67,8 @@ export default function InventoryPage() {
       if (res.success) { fetchInventory(); setShowAdjust(false); setAdjust({ id: "", qty: 0, note: "" }); }
     } finally { setIsLoading(false); }
   }
+
+  if (loading) return <PageSkeleton page="inventory" />;
 
   return (
     <div className="space-y-6">
