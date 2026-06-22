@@ -2,6 +2,7 @@ import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
 import * as QR from "qrcode";
 import * as fs from "fs";
 import * as path from "path";
+import puppeteer from "puppeteer";
 
 interface QueuedMessage {
   type: "text";
@@ -50,22 +51,30 @@ class WhatsAppService {
   }
 
   private createClient() {
+    let executablePath: string | undefined;
+    try {
+      const browserPath = puppeteer.executablePath();
+      if (fs.existsSync(browserPath)) executablePath = browserPath;
+    } catch {}
+    const opts: Record<string, any> = {
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--single-process",
+        "--no-zygote",
+      ],
+    };
+    if (executablePath) opts.executablePath = executablePath;
+    console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: opts.args.length }));
     return new Client({
       authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
-            puppeteer: {
-                headless: true,
-                args: [
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--disable-background-timer-throttling",
-                    "--disable-backgrounding-occluded-windows",
-                    "--disable-renderer-backgrounding",
-                    "--single-process",
-                    "--no-zygote",
-                ],
-            },
+      puppeteer: opts,
     });
   }
 
@@ -81,7 +90,8 @@ class WhatsAppService {
 
   private async doInit(): Promise<void> {
     await this.tryInit().catch(async (err) => {
-      console.error("WhatsApp first init attempt failed:", err?.message);
+      console.error("WhatsApp first init attempt failed:", err?.message || err);
+      if (err?.stack) console.error("Stack:", err.stack.split("\n").slice(0, 4).join("\n"));
       await this.destroy();
       this.cleanSession();
       console.log("Retrying WhatsApp initialization with clean session...");
