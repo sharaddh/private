@@ -2,6 +2,7 @@ import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
 import * as QR from "qrcode";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 import puppeteer from "puppeteer";
 
 interface QueuedMessage {
@@ -51,10 +52,50 @@ class WhatsAppService {
   }
 
   private async resolveExecutablePath(): Promise<string | undefined> {
+    const candidates: string[] = [];
+
     try {
       const browserPath = await puppeteer.executablePath();
-      if (fs.existsSync(browserPath)) return browserPath;
+      if (browserPath) candidates.push(browserPath);
+    } catch (e: any) {
+      console.log("puppeteer.executablePath() threw:", e?.message || e);
+    }
+
+    const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (envPath) candidates.push(envPath);
+
+    const cacheDir = process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), ".cache", "puppeteer");
+    try {
+      const chromeDir = path.join(cacheDir, "chrome");
+      if (fs.existsSync(chromeDir)) {
+        const entries = fs.readdirSync(chromeDir);
+        for (const entry of entries) {
+          const platformDir = path.join(chromeDir, entry);
+          if (fs.statSync(platformDir).isDirectory()) {
+            const files = fs.readdirSync(platformDir);
+            for (const file of files) {
+              candidates.push(path.join(platformDir, file, process.platform === "win32" ? "chrome.exe" : "chrome"));
+            }
+          }
+        }
+      }
     } catch {}
+
+    const linuxPaths = [
+      "/usr/bin/chromium-browser", "/usr/bin/chromium",
+      "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable",
+      "/snap/bin/chromium",
+    ];
+    candidates.push(...linuxPaths);
+
+    for (const p of candidates) {
+      if (p && fs.existsSync(p)) {
+        console.log("WhatsApp: using Chromium at", p);
+        return p;
+      }
+    }
+
+    console.log("WhatsApp: no Chromium found in any candidate path");
     return undefined;
   }
 
