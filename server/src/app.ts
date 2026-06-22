@@ -34,21 +34,23 @@ for (const p of possiblePaths) {
 }
 
 if (distPath) {
+  console.log("Serving client from:", distPath);
   app.use(express.static(distPath));
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) {
       res.status(404).json({ success: false, message: "API route not found" });
       return;
     }
-    const indexPath = path.join(distPath, "index.html");
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(200).send("<!DOCTYPE html><html><head><title>KMJ Optical</title></head><body><div id='root'></div><script>window.location.href='/index.html'</script></body></html>");
-    }
+    res.sendFile(path.join(distPath, "index.html"));
   });
 } else {
-  app.get("/", (req, res) => res.json({ success: true, message: "KMJ ERP API" }));
+  console.log("Client dist not found, checked:", possiblePaths.join(", "));
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) return res.status(404).json({ success: false, message: "API route not found" });
+    res.status(200).sendFile(path.join(__dirname, "../../client/dist/index.html"), (err) => {
+      if (err) res.json({ success: true, message: "KMJ ERP API" });
+    });
+  });
 }
 
 app.use(errorHandler);
