@@ -290,6 +290,52 @@ export default function Settings() {
             </div>
           </div>
         </div>
+
+        <div className="card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-600 dark:text-violet-400">
+              <User size={20} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Account</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Profile, theme & session</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {(user?.username as string) || "User"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">
+                {(user?.role as string) || "—"}
+              </p>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+              <div className="flex items-center gap-3">
+                {dark ? <Moon size={18} className="text-gray-600 dark:text-gray-300" /> : <Sun size={18} className="text-gray-600 dark:text-gray-300" />}
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Theme</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{dark ? "Dark" : "Light"}</p>
+                </div>
+              </div>
+              <button onClick={toggleTheme}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${dark ? "bg-primary-600" : "bg-gray-300"}`}>
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${dark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+            <button onClick={handleLogout}
+              className="flex items-center justify-between w-full p-4 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group">
+              <div className="flex items-center gap-3">
+                <LogOut size={18} className="text-red-500" />
+                <div className="text-left">
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Logout</p>
+                  <p className="text-xs text-red-500/70 dark:text-red-400/70">End current session</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
