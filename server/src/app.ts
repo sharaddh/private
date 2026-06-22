@@ -28,7 +28,10 @@ app.use("/api", routes);
 
 const clientDist = path.resolve(__dirname, "../../client/dist");
 const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), path.resolve(process.cwd(), "client/dist")];
-const distPath: string | null = possiblePaths.find((p) => fs.existsSync(p)) || null;
+let distPath = "";
+for (const p of possiblePaths) {
+  if (fs.existsSync(p)) { distPath = p; break; }
+}
 
 if (distPath) {
   app.use(express.static(distPath));
