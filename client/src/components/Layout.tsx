@@ -250,7 +250,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 {searchResults.length > 0 ? (
                   searchResults.map((c) => (
                     <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-surface-50 dark:border-muted-700 last:border-0 transition-colors">
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-surface-50 dark:border-dark-600/50 last:border-0 transition-colors">
                       <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
                         {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
@@ -266,7 +266,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 ) : (
                   <div className="px-4 py-6 text-center text-sm text-muted-400">No customer found</div>
                 )}
-                <div className="px-4 pb-3 pt-2 border-t border-surface-50 dark:border-muted-700">
+                <div className="px-4 pb-3 pt-2 border-t border-surface-50 dark:border-dark-600/50">
                   <button onClick={goAddCustomer}
                     className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors">
                     <UserPlus size={15} /> Add New Customer
@@ -288,7 +288,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {/* Mobile Bottom Navbar */}
       <nav className={`fixed bottom-0 left-0 right-0 z-40 lg:hidden transition-transform duration-300 ease-out ${navVisible ? "translate-y-0" : "translate-y-full"}`}>
-        <div className="bg-white/80 dark:bg-muted-900/80 backdrop-blur-2xl border-t border-surface-200/60 dark:border-muted-800/50 shadow-nav dark:shadow-nav-dark">
+        <div className="bg-white/80 dark:bg-dark-850/90 backdrop-blur-2xl border-t border-surface-200/60 dark:border-dark-600/40 shadow-nav dark:shadow-nav-dark">
           <div className="flex items-center justify-around h-[64px] px-2 pb-1">
             {mobileNav.map((item) => {
               const Icon = item.icon;
@@ -322,8 +322,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowAddDrawer(false)}>
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto bg-white dark:bg-muted-800 rounded-t-3xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-muted-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-surface-100 dark:border-muted-700">
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-t-3xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-dark-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-surface-100 dark:border-dark-600/50">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
                   <UserPlus size={18} />
