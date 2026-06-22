@@ -46,7 +46,7 @@ function clearTokens(): void {
 
 async function request<T = unknown>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
   let res = await fetch(`${API_URL}${path}`, init);
-  if (res.status === 401) {
+  if (res.status === 401 && !path.includes("/auth/login") && !path.includes("/auth/register")) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       const newToken = localStorage.getItem("accessToken");

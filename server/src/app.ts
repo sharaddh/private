@@ -27,11 +27,22 @@ app.use(
 app.use("/api", routes);
 
 const clientDist = path.resolve(__dirname, "../../client/dist");
-if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), path.resolve(process.cwd(), "client/dist")];
+const distPath: string | null = possiblePaths.find((p) => fs.existsSync(p)) || null;
+
+if (distPath) {
+  app.use(express.static(distPath));
   app.get("*", (req, res) => {
-    if (req.path.startsWith("/api")) return;
-    res.sendFile(path.join(clientDist, "index.html"));
+    if (req.path.startsWith("/api")) {
+      res.status(404).json({ success: false, message: "API route not found" });
+      return;
+    }
+    const indexPath = path.join(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(200).send("<!DOCTYPE html><html><head><title>KMJ Optical</title></head><body><div id='root'></div><script>window.location.href='/index.html'</script></body></html>");
+    }
   });
 } else {
   app.get("/", (req, res) => res.json({ success: true, message: "KMJ ERP API" }));

@@ -33,11 +33,11 @@ export async function login(req: Request, res: Response) {
     }
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
     const access = signAccess({ sub: user._id, username: user.username });
     const refresh = signRefresh({ sub: user._id });
