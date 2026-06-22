@@ -27,7 +27,8 @@ async function start() {
   whatsapp.init().then(() => {
     console.log("WhatsApp service initialized");
   }).catch((err) => {
-    console.error("WhatsApp initialization failed:", (err as Error)?.message);
+    console.error("WhatsApp initialization failed:", (err as Error)?.message || err);
+    if ((err as Error)?.stack) console.error("Stack:", (err as Error).stack!.split("\n").slice(0, 3).join("\n"));
     console.log("Server will continue without WhatsApp");
   });
 

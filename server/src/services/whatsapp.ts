@@ -50,12 +50,16 @@ class WhatsAppService {
     }
   }
 
-  private createClient() {
-    let executablePath: string | undefined;
+  private async resolveExecutablePath(): Promise<string | undefined> {
     try {
-      const browserPath = puppeteer.executablePath();
-      if (fs.existsSync(browserPath)) executablePath = browserPath;
+      const browserPath = await puppeteer.executablePath();
+      if (fs.existsSync(browserPath)) return browserPath;
     } catch {}
+    return undefined;
+  }
+
+  private async createClient() {
+    const executablePath = await this.resolveExecutablePath();
     const opts: Record<string, any> = {
       headless: true,
       args: [
@@ -100,11 +104,12 @@ class WhatsAppService {
   }
 
   private async tryInit(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) => {
       try {
-        this.client = this.createClient();
+        const client = await this.createClient();
+        this.client = client;
 
-        this.client.on("qr", async (qr) => {
+        client.on("qr", async (qr) => {
           this._qr = qr;
           this._ready = false;
           this._error = null;
@@ -116,7 +121,7 @@ class WhatsAppService {
           console.log("WhatsApp QR code generated");
         });
 
-        this.client.on("ready", () => {
+        client.on("ready", () => {
           this._ready = true;
           this._qr = null;
           this._qrBase64 = null;
@@ -127,7 +132,7 @@ class WhatsAppService {
           resolve();
         });
 
-        this.client.on("disconnected", (reason) => {
+        client.on("disconnected", (reason) => {
           this._ready = false;
           this.stopHeartbeat();
           this.client = null;
@@ -140,7 +145,7 @@ class WhatsAppService {
           }
         });
 
-        this.client.on("auth_failure", (msg: string) => {
+        client.on("auth_failure", (msg: string) => {
           this._error = msg || "Auth failure";
           console.error("WhatsApp auth failure:", this._error);
           this._ready = false;
@@ -150,7 +155,7 @@ class WhatsAppService {
           resolve();
         });
 
-        this.client.initialize().catch((err) => {
+        client.initialize().catch((err) => {
           reject(err);
         });
       } catch (err: any) {
