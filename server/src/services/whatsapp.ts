@@ -115,7 +115,7 @@ class WhatsAppService {
       "--no-zygote",
     ];
     const opts: Record<string, any> = {
-      headless: true,
+      headless: "shell",
       args,
       defaultViewport: { width: 1280, height: 720 },
     };
