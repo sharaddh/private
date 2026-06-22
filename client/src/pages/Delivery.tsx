@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from "../api";
+import { useCachedData } from "../hooks/useCachedData";
 import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Truck, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -12,23 +13,15 @@ function todayStr() {
 
 export default function Delivery() {
   const navigate = useNavigate();
-  const [list, setList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
-
-  useEffect(() => { fetchDelivered(); }, [startDate, endDate]);
-
-  function fetchDelivered() {
-    setLoading(true);
-    const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/orders?" + params.toString()).then((d) => {
-      if (d.success) {
-        const delivered = (d.data || []).filter((o: any) => o.status === "Delivered");
-        setList(delivered);
-      }
-    }).finally(() => setLoading(false));
-  }
+  const params = new URLSearchParams({ startDate, endDate });
+  const cacheKey = `/api/orders?${params.toString()}`;
+  const { data: orders, loading } = useCachedData<any[]>(cacheKey,
+    () => api.get("/api/orders?" + params.toString()),
+    [startDate, endDate]
+  );
+  const list = (orders || []).filter((o: any) => o.status === "Delivered");
 
   function customerName(o: any): string {
     if (typeof o.customerId === "object" && o.customerId?.name) return o.customerId.name;

@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
-import { useCache } from "./useCache";
+import { useCache, getCacheSnapshot } from "./useCache";
 
 interface UseApiOptions {
   cacheKey?: string;
-  cacheTtl?: number;
   enabled?: boolean;
 }
 
@@ -26,10 +25,11 @@ export function useApi<T = unknown>(
   const [error, setError] = useState<string | null>(null);
   const cache = useCache<T>(cacheKey ?? null);
   const mountedRef = useRef(true);
+  const initialLoadDone = useRef(false);
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (isBackground = false) => {
     if (!enabled) return;
-    setLoading(true);
+    if (!isBackground) setLoading(true);
     setError(null);
     try {
       const res = await fetcher();
@@ -43,23 +43,37 @@ export function useApi<T = unknown>(
     } catch (err) {
       if (mountedRef.current) setError((err as Error).message || "Network error");
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        initialLoadDone.current = true;
+      }
     }
   }, deps);
 
   useEffect(() => {
     mountedRef.current = true;
-    const cached = cacheKey ? cache.get() : null;
-    if (cached !== null) {
-      setData(cached);
+    const snapshot = cacheKey ? getCacheSnapshot<T>(cacheKey) : null;
+    if (snapshot?.exists && !snapshot.expired) {
+      setData(snapshot.data);
       setLoading(false);
+      initialLoadDone.current = true;
+      fetch(true);
+    } else if (snapshot?.exists && snapshot.expired) {
+      setData(snapshot.data);
+      setLoading(true);
+      fetch();
     } else {
       fetch();
     }
     return () => { mountedRef.current = false; };
   }, [fetch]);
 
-  return { data, loading, error, refetch: fetch };
+  const refetch = useCallback(() => {
+    if (cacheKey) cache.invalidate();
+    fetch();
+  }, [fetch, cacheKey, cache]);
+
+  return { data, loading, error, refetch };
 }
 
 export function useApiGet<T = unknown>(

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from "../api";
+import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import DateRangePicker from "../components/DateRangePicker";
@@ -11,18 +12,15 @@ function todayStr() {
 }
 
 export default function Payments() {
-  const [list, setList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
-
-  useEffect(() => { fetchPayments(); }, [startDate, endDate]);
-
-  function fetchPayments() {
-    setLoading(true);
-    const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/payments?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
-  }
+  const params = new URLSearchParams({ startDate, endDate });
+  const cacheKey = `/api/payments?${params.toString()}`;
+  const { data: rawList, loading } = useCachedData<any[]>(cacheKey,
+    () => api.get("/api/payments?" + params.toString()),
+    [startDate, endDate]
+  );
+  const list = rawList || [];
 
   function customerName(p: any): string {
     if (typeof p.customerId === "object" && p.customerId?.name) return p.customerId.name;

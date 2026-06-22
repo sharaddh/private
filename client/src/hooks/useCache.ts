@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 interface CacheEntry<T> {
   data: T;
@@ -11,6 +11,20 @@ const store = new Map<string, CacheEntry<unknown>>();
 
 function isExpired(entry: CacheEntry<unknown>): boolean {
   return Date.now() - entry.timestamp > ttl;
+}
+
+export function getCacheSnapshot<T>(key: string): { data: T | null; exists: boolean; expired: boolean } {
+  const entry = store.get(key) as CacheEntry<T> | undefined;
+  if (!entry) return { data: null, exists: false, expired: false };
+  return { data: entry.data, exists: true, expired: isExpired(entry) };
+}
+
+export function setCache<T>(key: string, data: T): void {
+  store.set(key, { data, timestamp: Date.now(), promise: null });
+}
+
+export function invalidateCache(key: string): void {
+  store.delete(key);
 }
 
 export function useCache<T>(key: string | null): {
@@ -33,7 +47,7 @@ export function useCache<T>(key: string | null): {
   const set = useCallback(
     (data: T) => {
       if (!key) return;
-      store.set(key, { data, timestamp: Date.now(), promise: null });
+      setCache(key, data);
       forceRender((n) => n + 1);
     },
     [key]
@@ -41,14 +55,8 @@ export function useCache<T>(key: string | null): {
 
   const invalidate = useCallback(() => {
     if (!key) return;
-    store.delete(key);
+    invalidateCache(key);
     forceRender((n) => n + 1);
-  }, [key]);
-
-  useEffect(() => {
-    return () => {
-      if (key) store.delete(key);
-    };
   }, [key]);
 
   return { get, set, invalidate };
