@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
+import PageSkeleton from "../components/PageSkeleton";
 import {
   Send, Search, MessageCircle, Users, CheckSquare, Square,
   Smartphone, RefreshCw, CheckCircle, XCircle, Loader2
@@ -13,6 +14,7 @@ export default function Announcement() {
   const [search, setSearch] = useState("");
   const [selectAll, setSelectAll] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
 
@@ -35,15 +37,13 @@ export default function Announcement() {
   }, []);
 
   useEffect(() => {
-    api.get("/api/customers").then((d) => {
-      if (d.success) {
-        setCustomers(d.data || []);
-        setFiltered(d.data || []);
-      }
-    });
-    api.get("/api/settings").then((d) => {
-      if (d.success) setSettings(d.data);
-    });
+    Promise.all([
+      api.get("/api/customers"),
+      api.get("/api/settings"),
+    ]).then(([c, s]) => {
+      if (c.success) { setCustomers(c.data || []); setFiltered(c.data || []); }
+      if (s.success) setSettings(s.data);
+    }).finally(() => setLoading(false));
     checkStatus();
     const interval = setInterval(checkStatus, 5000);
     return () => clearInterval(interval);
@@ -116,6 +116,8 @@ export default function Announcement() {
 
   const selectedCount = selectAll ? filtered.length : selected.size;
   const selectedPhones = getSelectedPhones();
+
+  if (loading) return <PageSkeleton page="announcement" />;
 
   return (
     <div className="space-y-6">
