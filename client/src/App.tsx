@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
-import PageLoader from "./components/errors/PageLoader";
 import ErrorBoundary from "./components/errors/ErrorBoundary";
+import PageSkeleton from "./components/PageSkeleton";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
@@ -16,13 +16,14 @@ const Pickup = lazy(() => import("./pages/Pickup"));
 const Announcement = lazy(() => import("./pages/Announcement"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
+const WhatsAppPage = lazy(() => import("./pages/WhatsApp"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const NewVisit = lazy(() => import("./pages/NewVisit"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 
-function SuspendedPage({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
+  return <Suspense fallback={<PageSkeleton page={page} />}>{children}</Suspense>;
 }
 
 export default function App() {
@@ -30,24 +31,25 @@ export default function App() {
     <Layout>
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<SuspendedPage><Dashboard /></SuspendedPage>} />
-          <Route path="/customers" element={<SuspendedPage><Customers /></SuspendedPage>} />
-          <Route path="/customers/:id" element={<SuspendedPage><CustomerDetail /></SuspendedPage>} />
-          <Route path="/customers/:id/new-visit" element={<SuspendedPage><NewVisit /></SuspendedPage>} />
+          <Route path="/" element={<SuspendedPage page="dashboard"><Dashboard /></SuspendedPage>} />
+          <Route path="/customers" element={<SuspendedPage page="customers"><Customers /></SuspendedPage>} />
+          <Route path="/customers/:id" element={<SuspendedPage page="customerdetail"><CustomerDetail /></SuspendedPage>} />
+          <Route path="/customers/:id/new-visit" element={<SuspendedPage page="newvisit"><NewVisit /></SuspendedPage>} />
           <Route path="/visits" element={<Navigate to="/customers" replace />} />
           <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
-          <Route path="/orders" element={<SuspendedPage><Orders /></SuspendedPage>} />
-          <Route path="/bills" element={<SuspendedPage><Bills /></SuspendedPage>} />
-          <Route path="/payments" element={<SuspendedPage><Payments /></SuspendedPage>} />
-          <Route path="/inventory" element={<SuspendedPage><InventoryPage /></SuspendedPage>} />
-          <Route path="/delivery" element={<SuspendedPage><Delivery /></SuspendedPage>} />
-          <Route path="/pickup" element={<SuspendedPage><Pickup /></SuspendedPage>} />
-          <Route path="/announcements" element={<SuspendedPage><Announcement /></SuspendedPage>} />
-          <Route path="/workspace" element={<SuspendedPage><Workspace /></SuspendedPage>} />
-          <Route path="/reports" element={<SuspendedPage><Reports /></SuspendedPage>} />
-          <Route path="/settings" element={<SuspendedPage><Settings /></SuspendedPage>} />
-          <Route path="/login" element={<SuspendedPage><Login /></SuspendedPage>} />
-          <Route path="/register" element={<SuspendedPage><Register /></SuspendedPage>} />
+          <Route path="/orders" element={<SuspendedPage page="orders"><Orders /></SuspendedPage>} />
+          <Route path="/bills" element={<SuspendedPage page="bills"><Bills /></SuspendedPage>} />
+          <Route path="/payments" element={<SuspendedPage page="payments"><Payments /></SuspendedPage>} />
+          <Route path="/inventory" element={<SuspendedPage page="inventory"><InventoryPage /></SuspendedPage>} />
+          <Route path="/delivery" element={<SuspendedPage page="delivery"><Delivery /></SuspendedPage>} />
+          <Route path="/pickup" element={<SuspendedPage page="pickup"><Pickup /></SuspendedPage>} />
+          <Route path="/announcements" element={<SuspendedPage page="announcement"><Announcement /></SuspendedPage>} />
+          <Route path="/workspace" element={<SuspendedPage page="workspace"><Workspace /></SuspendedPage>} />
+          <Route path="/reports" element={<SuspendedPage page="reports"><Reports /></SuspendedPage>} />
+          <Route path="/settings" element={<SuspendedPage page="settings"><Settings /></SuspendedPage>} />
+          <Route path="/whatsapp" element={<SuspendedPage page="settings"><WhatsAppPage /></SuspendedPage>} />
+          <Route path="/login" element={<SuspendedPage page="login"><Login /></SuspendedPage>} />
+          <Route path="/register" element={<SuspendedPage page="register"><Register /></SuspendedPage>} />
         </Routes>
       </ErrorBoundary>
     </Layout>
