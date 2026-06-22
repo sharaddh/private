@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
+import PageSkeleton from "../components/PageSkeleton";
+import { Skeleton, SkeletonStats, SkeletonCard } from "../components/Skeleton";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
 
@@ -21,14 +23,16 @@ export default function Orders() {
   const toast = useToast();
   const [list, setList] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
 
   useEffect(() => { fetchOrders(); }, [startDate, endDate]);
 
   function fetchOrders() {
+    setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/orders?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
+    api.get("/api/orders?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
   }
 
   function customerName(o: any): string {
@@ -41,6 +45,8 @@ export default function Orders() {
     if (typeof o.customerId === "object" && o.customerId?.mobile) return o.customerId.mobile;
     return "";
   }
+
+  if (loading) return <PageSkeleton page="orders" />;
 
   const filteredList = filter === "all" ? list : list.filter((o) => o.status === filter);
 
