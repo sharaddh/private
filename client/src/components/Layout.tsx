@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { get, post, clearToken } from "../api";
-import { useTheme } from "../context/ThemeContext";
+import { get, post } from "../api";
 import { useToast } from "../context/ToastContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
-  Package, Truck, BarChart3, Settings, LogOut,
+  Package, Truck, BarChart3, Settings,
   Menu, X, Search, Phone, PlusCircle,
-  Sun, Moon, Megaphone, UserPlus, Hand, ChevronLeft,
+  Megaphone, UserPlus, Hand, ChevronLeft,
 } from "lucide-react";
 
 interface DrawerForm {
