@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
+import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Truck, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DateRangePicker from "../components/DateRangePicker";
@@ -12,19 +13,21 @@ function todayStr() {
 export default function Delivery() {
   const navigate = useNavigate();
   const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
 
   useEffect(() => { fetchDelivered(); }, [startDate, endDate]);
 
   function fetchDelivered() {
+    setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
     api.get("/api/orders?" + params.toString()).then((d) => {
       if (d.success) {
         const delivered = (d.data || []).filter((o: any) => o.status === "Delivered");
         setList(delivered);
       }
-    });
+    }).finally(() => setLoading(false));
   }
 
   function customerName(o: any): string {
@@ -43,6 +46,8 @@ export default function Delivery() {
   }
 
   const totalRevenue = list.reduce((s, o) => s + (o.billInfo?.totalAmount || 0), 0);
+
+  if (loading) return <PageSkeleton page="delivery" />;
 
   return (
     <div className="page-container">
