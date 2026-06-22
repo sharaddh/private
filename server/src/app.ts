@@ -33,30 +33,55 @@ app.use(
 
 app.use("/api", routes);
 
-const clientDist = path.resolve(__dirname, "../../client/dist");
-const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), path.resolve(process.cwd(), "client/dist")];
-let distPath = "";
-for (const p of possiblePaths) {
-  if (fs.existsSync(p)) { distPath = p; break; }
+// Resolve client dist directory with case-insensitive fallback
+function findDistPath(candidates: string[]): string {
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+    // Try case-insensitive match on Windows
+    if (process.platform === "win32") {
+      const dir = path.dirname(p);
+      const base = path.basename(p);
+      if (fs.existsSync(dir)) {
+        const entries = fs.readdirSync(dir);
+        const match = entries.find((e) => e.toLowerCase() === base.toLowerCase());
+        if (match) return path.join(dir, match);
+      }
+    }
+  }
+  return "";
 }
 
-if (distPath) {
+const clientDist = path.resolve(__dirname, "../../client/dist");
+const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), path.resolve(process.cwd(), "client/dist")];
+const distPath = findDistPath(possiblePaths);
+
+if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
   console.log("Serving client from:", distPath);
   app.use(express.static(distPath));
+
+  // SPA catch-all: only serve index.html for non-file, non-API requests
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) {
       res.status(404).json({ success: false, message: "API route not found" });
       return;
     }
-    res.sendFile(path.join(distPath, "index.html"));
+    const filePath = path.join(distPath, "index.html");
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(200).json({ success: true, message: "KMJ ERP API" });
+    }
   });
 } else {
   console.log("Client dist not found, checked:", possiblePaths.join(", "));
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) return res.status(404).json({ success: false, message: "API route not found" });
-    res.status(200).sendFile(path.join(__dirname, "../../client/dist/index.html"), (err) => {
-      if (err) res.json({ success: true, message: "KMJ ERP API" });
-    });
+    const fallbackPath = path.resolve(process.cwd(), "client/dist/index.html");
+    if (fs.existsSync(fallbackPath)) {
+      res.sendFile(fallbackPath);
+    } else {
+      res.status(200).json({ success: true, message: "KMJ ERP API" });
+    }
   });
 }
 
