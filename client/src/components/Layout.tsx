@@ -153,16 +153,16 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="flex h-screen bg-surface-50 dark:bg-muted-950 overflow-hidden">
+    <div className="flex h-screen bg-surface-50 dark:bg-dark-850 overflow-hidden">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Desktop Sidebar */}
-      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-muted-900 border-r border-surface-200 dark:border-muted-800 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-dark-850 border-r border-surface-200 dark:border-dark-600/50 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-surface-100 dark:border-muted-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-surface-100 dark:border-dark-600/30">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">K</span>
@@ -196,7 +196,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${active
                   ? "bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium"
-                  : "text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-muted-800"
+                  : "text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-dark-700"
                 }`}>
                 <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-muted-400 group-hover:text-muted-600 dark:text-muted-500 dark:group-hover:text-muted-300"} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
