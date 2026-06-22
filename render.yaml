@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: npm install && npm run build
+    buildCommand: PUPPETEER_SKIP_DOWNLOAD=false npm install && npm run build
     startCommand: npm start
     envVars:
       - key: MONGO_URI
@@ -11,3 +11,7 @@ services:
         sync: false
       - key: NODE_VERSION
         value: 20.18.0
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/.cache/puppeteer
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "false"
