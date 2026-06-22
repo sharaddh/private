@@ -80,7 +80,7 @@ export default function WhatsApp() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">WhatsWeb Connection</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">WhatsApp Web Connection</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Link your WhatsApp account to send automated messages
             </p>
@@ -173,15 +173,16 @@ export default function WhatsApp() {
                 <span className="text-sm font-medium">Connection Error</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Failed to connect. Try resetting the session or restarting the server.
+                WhatsApp failed to start. The server will auto-retry up to 3 times.
+                If the issue persists, Chromium may not be installed on the server.
               </p>
               <button
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
+                onClick={handleReinit}
+                disabled={reinitializing}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
               >
-                <RefreshCw size={16} />
-                {disconnecting ? "Resetting..." : "Reset & Retry"}
+                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
+                {reinitializing ? "Restarting..." : "Retry Connection"}
               </button>
             </div>
           )}
