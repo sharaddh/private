@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import { useCachedData } from "../hooks/useCachedData";
+import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users } from "lucide-react";
@@ -15,7 +17,6 @@ interface Customer {
 export default function Customers() {
   const [list, setList] = useState<Customer[]>([]);
   const [filteredList, setFilteredList] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -23,15 +24,14 @@ export default function Customers() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { data: rawList, loading } = useCachedData<Customer[]>("/api/customers", () => api.get("/api/customers"));
 
-  const fetchCustomers = useCallback(async () => {
-    setLoading(true);
-    const res = await api.get("/api/customers");
-    if (res.success) { setList(res.data || []); setFilteredList(res.data || []); }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+  useEffect(() => {
+    if (rawList) {
+      setList(rawList);
+      setFilteredList(rawList);
+    }
+  }, [rawList]);
 
   useEffect(() => {
     const q = searchQuery.trim();
@@ -66,7 +66,7 @@ export default function Customers() {
     try {
       const payload = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
       const res = editing ? await api.put(`/api/customers/${editing._id}`, payload) : await api.post("/api/customers", payload);
-      if (res.success) { await fetchCustomers(); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
+      if (res.success) { invalidateCache("/api/customers"); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
       else setError(res.message || "Operation failed");
     } catch { setError("An error occurred"); }
     finally { setIsLoading(false); }

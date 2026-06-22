@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../api";
-import { useCachedData, invalidateCache } from "../hooks/useCache";
+import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { Plus, Edit2, Trash2, Package } from "lucide-react";
 
 export default function InventoryPage() {
-  const [list, setList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -18,11 +17,14 @@ export default function InventoryPage() {
   const [adjust, setAdjust] = useState({ id: "", qty: 0, note: "" });
   const [isLoading, setIsLoading] = useState(false);
   const { data: rawList, loading, refetch } = useCachedData<any[]>("/api/inventory", () => api.get("/api/inventory"));
+  const [list, setList] = useState<any[]>(() => rawList || []);
 
-  if (rawList && list !== rawList) setList(rawList);
+  useEffect(() => {
+    if (rawList) setList(rawList);
+  }, [rawList]);
 
   function fetchInventory() {
-    refetch();
+    refetch(true);
   }
 
   function openCreate() {

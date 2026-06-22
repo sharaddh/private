@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
+import { useCachedData } from "../hooks/useCachedData";
 import PageSkeleton from "../components/PageSkeleton";
 import { Skeleton, SkeletonStats, SkeletonCard } from "../components/Skeleton";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2 } from "lucide-react";
@@ -55,34 +56,41 @@ const STATUS_THEME: Record<string, { dot: string; badge: string }> = {
 
 export default function Orders() {
   const toast = useToast();
-  const [list, setList] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
-  const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
+  const params = new URLSearchParams({ startDate, endDate });
+  const cacheKey = `/api/orders?${params.toString()}`;
+  const { data: rawList, loading, refetch } = useCachedData<any[]>(cacheKey,
+    () => api.get("/api/orders?" + params.toString()),
+    [startDate, endDate]
+  );
+  const [list, setList] = useState<any[]>(() => rawList || []);
 
-  useEffect(() => { fetchOrders(); }, [startDate, endDate]);
-
-  function fetchOrders() {
-    setLoading(true);
-    const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/orders?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
-  }
+  useEffect(() => {
+    if (rawList) setList(rawList);
+  }, [rawList]);
 
   async function advanceStatus(order: any) {
     const next = VALID_NEXT[order.status];
     if (!next) return;
+    const prevStatus = order.status;
     setStatusLoading(order._id);
+    setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: next } : o));
+    toast.success(next === "Ready" ? "Order moved to Ready" : `Order moved to "${next}"`);
     try {
       const res = await api.patch(`/api/orders/${order._id}/status`, { status: next });
-      if (res.success) {
-        fetchOrders();
-        toast.success(next === "Ready" ? "Order ready — pickup notification sent" : `Order moved to "${next}"`);
-      } else {
+      if (!res.success) {
+        setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus } : o));
         toast.error(res.message || "Failed to update status");
+      } else if (next === "Ready") {
+        toast.success("Order ready — pickup notification sent");
       }
-    } catch { toast.error("Failed to update status"); }
+    } catch {
+      setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus } : o));
+      toast.error("Failed to update status");
+    }
     finally { setStatusLoading(null); }
   }
 
