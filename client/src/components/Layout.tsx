@@ -281,7 +281,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto pb-20 lg:pb-6 scrollbar-thin">
+        <main className="flex-1 overflow-auto pb-[72px] lg:pb-6 scrollbar-thin">
           <div className="max-w-7xl mx-auto p-4 lg:p-6">{children}</div>
         </main>
       </div>
@@ -305,10 +305,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                       className={`transition-all duration-200 ${active ? "scale-110" : ""}`}
                       style={active ? { animation: "icon-bounce 0.35s ease-out" } : undefined}
                     />
-                    {active && (
-                      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-5 h-[3px] bg-primary-500 dark:bg-primary-400 rounded-full"
-                        style={{ animation: "nav-indicator 0.25s ease-out" }} />
-                    )}
+
                   </div>
                   <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-muted-400 dark:text-muted-500"}`}>
                     {item.label}

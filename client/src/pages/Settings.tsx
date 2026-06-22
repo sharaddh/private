@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import api from "../api";
-import { Save, User, Shield, Bell, Upload, MessageCircle, Image, RefreshCw, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import api, { clearToken } from "../api";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
+import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight } from "lucide-react";
 
 export default function Settings() {
+  const { user } = useAuth();
+  const { dark, toggle: toggleTheme } = useTheme();
+  const toast = useToast();
+  const navigate = useNavigate();
   const [shopName, setShopName] = useState("KMJ Optical");
   const [shopAddress, setShopAddress] = useState("");
   const [shopPhone, setShopPhone] = useState("");
@@ -93,6 +101,12 @@ export default function Settings() {
     } finally { setLoading(false); }
   }
 
+  function handleLogout() {
+    clearToken();
+    toast.success("Logged out successfully");
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,7 +114,7 @@ export default function Settings() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your ERP system preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
