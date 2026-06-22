@@ -10,7 +10,6 @@ async function seedAdmin() {
   if (count === 0) {
     const passwordHash = await bcrypt.hash("admin123", 10);
     await User.create({ username: "admin", passwordHash, role: "owner" });
-    console.log("Default admin created: admin / admin123");
   }
 }
 
