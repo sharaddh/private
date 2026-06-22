@@ -1,46 +1,55 @@
-import React from "react";
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import Orders from "./pages/Orders";
-import Bills from "./pages/Bills";
-import Payments from "./pages/Payments";
-import InventoryPage from "./pages/InventoryPage";
-import Delivery from "./pages/Delivery";
-import Pickup from "./pages/Pickup";
-import Announcement from "./pages/Announcement";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import Workspace from "./pages/Workspace";
-import NewVisit from "./pages/NewVisit";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import PageLoader from "./components/errors/PageLoader";
+import ErrorBoundary from "./components/errors/ErrorBoundary";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Bills = lazy(() => import("./pages/Bills"));
+const Payments = lazy(() => import("./pages/Payments"));
+const InventoryPage = lazy(() => import("./pages/InventoryPage"));
+const Delivery = lazy(() => import("./pages/Delivery"));
+const Pickup = lazy(() => import("./pages/Pickup"));
+const Announcement = lazy(() => import("./pages/Announcement"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Workspace = lazy(() => import("./pages/Workspace"));
+const NewVisit = lazy(() => import("./pages/NewVisit"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+
+function SuspendedPage({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
 
 export default function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/:id" element={<CustomerDetail />} />
-        <Route path="/customers/:id/new-visit" element={<NewVisit />} />
-        <Route path="/visits" element={<Navigate to="/customers" replace />} />
-        <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/bills" element={<Bills />} />
-        <Route path="/payments" element={<Payments />} />
-        <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/delivery" element={<Delivery />} />
-        <Route path="/pickup" element={<Pickup />} />
-        <Route path="/announcements" element={<Announcement />} />
-        <Route path="/workspace" element={<Workspace />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<SuspendedPage><Dashboard /></SuspendedPage>} />
+          <Route path="/customers" element={<SuspendedPage><Customers /></SuspendedPage>} />
+          <Route path="/customers/:id" element={<SuspendedPage><CustomerDetail /></SuspendedPage>} />
+          <Route path="/customers/:id/new-visit" element={<SuspendedPage><NewVisit /></SuspendedPage>} />
+          <Route path="/visits" element={<Navigate to="/customers" replace />} />
+          <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
+          <Route path="/orders" element={<SuspendedPage><Orders /></SuspendedPage>} />
+          <Route path="/bills" element={<SuspendedPage><Bills /></SuspendedPage>} />
+          <Route path="/payments" element={<SuspendedPage><Payments /></SuspendedPage>} />
+          <Route path="/inventory" element={<SuspendedPage><InventoryPage /></SuspendedPage>} />
+          <Route path="/delivery" element={<SuspendedPage><Delivery /></SuspendedPage>} />
+          <Route path="/pickup" element={<SuspendedPage><Pickup /></SuspendedPage>} />
+          <Route path="/announcements" element={<SuspendedPage><Announcement /></SuspendedPage>} />
+          <Route path="/workspace" element={<SuspendedPage><Workspace /></SuspendedPage>} />
+          <Route path="/reports" element={<SuspendedPage><Reports /></SuspendedPage>} />
+          <Route path="/settings" element={<SuspendedPage><Settings /></SuspendedPage>} />
+          <Route path="/login" element={<SuspendedPage><Login /></SuspendedPage>} />
+          <Route path="/register" element={<SuspendedPage><Register /></SuspendedPage>} />
+        </Routes>
+      </ErrorBoundary>
     </Layout>
   );
 }

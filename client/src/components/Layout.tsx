@@ -1,12 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef, useCallback, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearToken, get, post } from "../api";
+import { get, post, clearToken } from "../api";
+import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, LogOut,
-  Menu, X, ChevronRight, Search, Phone, Hand, PlusCircle,
-  Sun, Moon, Megaphone, Bell, ChevronDown, UserPlus
+  Menu, X, Search, Phone, PlusCircle,
+  Sun, Moon, Megaphone, UserPlus, Hand,
 } from "lucide-react";
+
+interface DrawerForm {
+  name: string;
+  mobile: string;
+  email: string;
+  age: string;
+  gender: string;
+  city: string;
+  address: string;
+}
+
+const initialDrawer: DrawerForm = { name: "", mobile: "", email: "", age: "", gender: "", city: "", address: "" };
 
 const menuItems = [
   { path: "/workspace", label: "New Visit", icon: PlusCircle },
@@ -23,100 +37,88 @@ const menuItems = [
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
-function getToken() {
+function getToken(): string | null {
   return localStorage.getItem("accessToken");
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<Record<string, unknown>>>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
+  const [drawerForm, setDrawerForm] = useState<DrawerForm>(initialDrawer);
+  const [drawerSaving, setDrawerSaving] = useState(false);
+  const [drawerError, setDrawerError] = useState("");
+
   const searchRef = useRef<HTMLDivElement>(null);
-  const searchTimer = useRef<any>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { dark, toggle: toggleDark } = useTheme();
+  const toast = useToast();
 
   const isAuthPage = ["/login", "/register"].includes(location.pathname);
 
-  useEffect(() => {
+  useState(() => {
     if (!isAuthPage && !getToken()) navigate("/login", { replace: true });
-  }, [isAuthPage, navigate]);
+  });
 
-  useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  }, [dark]);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  function handleSearch(value: string) {
+  const handleSearch = useCallback((value: string) => {
     setSearchQuery(value);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (value.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
     searchTimer.current = setTimeout(async () => {
-      const res = await get(`/api/customers?q=${encodeURIComponent(value)}`);
+      const res = await get<Array<Record<string, unknown>>>("/api/customers?q=" + encodeURIComponent(value));
       if (res.success) { setSearchResults(res.data || []); setSearchOpen(true); }
     }, 300);
-  }
+  }, []);
 
-  function goToCustomer(id: string) {
+  const goToCustomer = useCallback((id: string) => {
     setSearchOpen(false); setSearchQuery(""); setSearchResults([]);
     navigate(`/customers/${id}`);
-  }
+  }, [navigate]);
 
-  const [showAddDrawer, setShowAddDrawer] = useState(false);
-  const [drawerForm, setDrawerForm] = useState({ name: "", mobile: "", email: "", age: "", gender: "", city: "", address: "" });
-  const [drawerSaving, setDrawerSaving] = useState(false);
-  const [drawerError, setDrawerError] = useState("");
-
-  function goAddCustomer() {
+  const goAddCustomer = useCallback(() => {
     setSearchOpen(false);
-    setDrawerForm({ name: "", mobile: searchQuery.replace(/\D/g, ""), email: "", age: "", gender: "", city: "", address: "" });
+    setDrawerForm({ ...initialDrawer, mobile: searchQuery.replace(/\D/g, "") });
     setDrawerError("");
     setShowAddDrawer(true);
-  }
+  }, [searchQuery]);
 
-  async function handleCreateCustomer() {
+  const handleCreateCustomer = useCallback(async () => {
     if (!drawerForm.name.trim()) { setDrawerError("Name is required"); return; }
     if (!drawerForm.mobile.trim()) { setDrawerError("Mobile is required"); return; }
     setDrawerSaving(true); setDrawerError("");
     try {
       const res = await post("/api/customers", {
-        name: drawerForm.name.trim(), mobile: drawerForm.mobile.trim(),
-        email: drawerForm.email.trim() || undefined,
-        age: drawerForm.age ? Number(drawerForm.age) : undefined,
-        gender: drawerForm.gender || undefined,
-        city: drawerForm.city.trim() || undefined,
-        address: drawerForm.address.trim() || undefined,
+        name: drawerForm.name.trim(),
+        mobile: drawerForm.mobile.trim(),
+        ...(drawerForm.email.trim() && { email: drawerForm.email.trim() }),
+        ...(drawerForm.age && { age: Number(drawerForm.age) }),
+        ...(drawerForm.gender && { gender: drawerForm.gender }),
+        ...(drawerForm.city.trim() && { city: drawerForm.city.trim() }),
+        ...(drawerForm.address.trim() && { address: drawerForm.address.trim() }),
       });
       if (res.success) {
         setShowAddDrawer(false);
-        setSearchQuery(""); setSearchResults([]);
-        navigate(`/customers/${res.data._id}`);
+        toast.success("Customer created successfully");
+        navigate(`/customers/${res.data?._id}`);
       } else {
         setDrawerError(res.message || "Failed to create customer");
       }
-    } catch { setDrawerError("An error occurred"); }
-    finally { setDrawerSaving(false); }
-  }
+    } catch {
+      setDrawerError("An error occurred");
+    } finally {
+      setDrawerSaving(false);
+    }
+  }, [drawerForm, navigate, toast]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     clearToken();
     navigate("/login", { replace: true });
-  };
+  }, [navigate]);
 
   if (isAuthPage) return <>{children}</>;
 
@@ -128,13 +130,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-white dark:bg-dark-900 lg:dark:bg-dark-950 border-r border-gray-200 dark:border-dark-800 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
+      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white dark:bg-dark-900 lg:dark:bg-dark-950 border-r border-gray-200 dark:border-dark-800 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-800/50">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-accent-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/20">
@@ -162,44 +158,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             const isActive = location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? "bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
-              >
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive ? "bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
                 <Icon size={19} className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300"} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                {isActive && sidebarOpen && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500 dark:bg-primary-400 shadow-sm" />
-                )}
+                {isActive && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500 dark:bg-primary-400 shadow-sm" />}
               </Link>
             );
           })}
         </nav>
 
         <div className="p-3 border-t border-gray-200 dark:border-dark-800/50 space-y-1">
-          <button onClick={() => setDark(!dark)}
-            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200 w-full ${
-              !sidebarOpen && "justify-center"
-            }`}
-          >
-            <div className={`relative w-10 h-5 rounded-full transition-all duration-300 ${
-              dark ? "bg-primary-500/30" : "bg-gray-300"
-            }`}>
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 flex items-center justify-center ${
-                dark ? "left-[22px]" : "left-0.5"
-              }`}>
+          <button onClick={toggleDark}
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
+            <div className={`relative w-10 h-5 rounded-full transition-all duration-300 ${dark ? "bg-primary-500/30" : "bg-gray-300"}`}>
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 flex items-center justify-center ${dark ? "left-[22px]" : "left-0.5"}`}>
                 {dark ? <Moon size={8} className="text-primary-600" /> : <Sun size={8} className="text-amber-500" />}
               </div>
             </div>
             {sidebarOpen && <span className="text-sm">{dark ? "Light" : "Dark"}</span>}
           </button>
           <button onClick={handleLogout}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400/80 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 w-full ${
-              !sidebarOpen && "justify-center"
-            }`}
-          >
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400/80 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
             <LogOut size={18} />
             {sidebarOpen && <span className="text-sm">Logout</span>}
           </button>
@@ -209,14 +188,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-dark-900">
         <header className="h-16 bg-white/70 dark:bg-dark-800/70 backdrop-blur-xl border-b border-gray-200/60 dark:border-dark-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)}
-              className="btn-ghost lg:hidden p-2">
+            <button onClick={() => setMobileOpen(true)} className="btn-ghost lg:hidden p-2">
               <Menu size={20} />
             </button>
             <div className="hidden md:block">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                {currentPage?.label || "Dashboard"}
-              </h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">{currentPage?.label || "Dashboard"}</h2>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 {currentPage?.label === "Dashboard" ? "Overview of your business" : `Manage ${currentPage?.label?.toLowerCase() || ""}`}
               </p>
@@ -229,27 +205,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-750 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-            />
+              className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-750 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all" />
             {searchOpen && searchQuery.length >= 2 && (
               <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
                 {searchResults.length > 0 ? (
-                  searchResults.map((c: any) => (
-                    <button key={c._id} type="button" onClick={() => goToCustomer(c._id)}
+                  searchResults.map((c) => (
+                    <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-gray-50 dark:border-dark-700 last:border-0 transition-colors">
                       <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
-                        {c.name?.charAt(0)?.toUpperCase() || "?"}
+                        {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{String(c.name ?? "")}</p>
                         <p className="text-xs text-gray-400 truncate">
-                          {c.mobile && <><Phone size={10} className="inline mr-0.5" />{c.mobile} • </>}
-                          {c.customerId}
+                          {c.mobile && <><Phone size={10} className="inline mr-0.5" />{String(c.mobile)} • </>}
+                          {String(c.customerId ?? "")}
                         </p>
                       </div>
                       <div className="text-right text-xs text-gray-400 flex-shrink-0">
-                        <p>{c.totalVisits || 0} visits</p>
-                        {c.pendingAmount > 0 && <p className="text-amber-500 font-medium">₹{c.pendingAmount}</p>}
+                        <p>{(c.totalVisits ?? 0) as number} visits</p>
+                        {(c.pendingAmount as number) > 0 && <p className="text-amber-500 font-medium">₹{c.pendingAmount as number}</p>}
                       </div>
                     </button>
                   ))
@@ -268,7 +243,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div /> {/* spacer */}
+          <div />
         </header>
 
         <main className="flex-1 overflow-auto p-4 lg:p-6 scrollbar-thin">
@@ -276,7 +251,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Add Customer Drawer */}
       {showAddDrawer && (
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowAddDrawer(false)}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
@@ -300,32 +274,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name *</label>
                 <input className="input-field" value={drawerForm.name}
-                  onChange={(e) => setDrawerForm({ ...drawerForm, name: e.target.value })}
+                  onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Enter customer name" autoFocus />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile *</label>
                 <input className="input-field" value={drawerForm.mobile}
-                  onChange={(e) => setDrawerForm({ ...drawerForm, mobile: e.target.value.replace(/\D/g, "") })}
+                  onChange={(e) => setDrawerForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, "") }))}
                   placeholder="Phone number" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
                   <input className="input-field" type="email" value={drawerForm.email}
-                    onChange={(e) => setDrawerForm({ ...drawerForm, email: e.target.value })}
+                    onChange={(e) => setDrawerForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="Email" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Age</label>
                   <input className="input-field" type="number" value={drawerForm.age}
-                    onChange={(e) => setDrawerForm({ ...drawerForm, age: e.target.value })}
+                    onChange={(e) => setDrawerForm((f) => ({ ...f, age: e.target.value }))}
                     placeholder="Age" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
                   <select className="input-field" value={drawerForm.gender}
-                    onChange={(e) => setDrawerForm({ ...drawerForm, gender: e.target.value })}>
+                    onChange={(e) => setDrawerForm((f) => ({ ...f, gender: e.target.value }))}>
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -335,14 +309,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
                   <input className="input-field" value={drawerForm.city}
-                    onChange={(e) => setDrawerForm({ ...drawerForm, city: e.target.value })}
+                    onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
                     placeholder="City" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
                 <textarea className="input-field" rows={2} value={drawerForm.address}
-                  onChange={(e) => setDrawerForm({ ...drawerForm, address: e.target.value })}
+                  onChange={(e) => setDrawerForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Address (optional)" />
               </div>
               <div className="flex gap-3 pt-2">

@@ -1,60 +1,63 @@
-import React, { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import api from "../api";
+import { useApiGet } from "../hooks/useApi";
 import Table from "../components/Table";
-import Toast from "../components/Toast";
-import { Printer, MessageCircle, FileText as PdfIcon, FileText } from "lucide-react";
-import { downloadBillPdf } from "../utils/pdf";
+import { useToast } from "../context/ToastContext";
+import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
+import { downloadBillPdf, generateBillPdf } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
 
-function todayStr() {
+function todayStr(): string {
   const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default function Bills() {
-  const [list, setList] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
-  const [startDate, setStartDate] = useState(todayStr());
-  const [endDate, setEndDate] = useState(todayStr());
+  const [list, setList] = useState<Record<string, unknown>[]>([]);
+  const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
+  const toast = useToast();
 
-  useEffect(() => { fetchBills(); fetchSettings(); }, [startDate, endDate]);
-
-  function fetchBills() {
+  const fetchBills = useCallback(() => {
     const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/bills?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
-  }
-  function fetchSettings() { api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); }); }
+    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`).then((d) => { if (d.success) setList(d.data || []); });
+  }, [startDate, endDate]);
 
-  function resolveCustomer(bill: any) {
-    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId;
+  const fetchSettings = useCallback(() => {
+    api.get<Record<string, unknown>>("/api/settings").then((d) => { if (d.success) setSettings(d.data || null); });
+  }, []);
+
+  useState(() => { fetchBills(); fetchSettings(); });
+
+  function resolveCustomer(bill: Record<string, unknown>): Record<string, unknown> | null {
+    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId as Record<string, unknown>;
     return null;
   }
 
-  function handlePrint(bill: any) {
+  function handlePrint(bill: Record<string, unknown>) {
     const w = window.open("", "_blank");
     if (!w) return;
-    const shop = settings?.shopName || "KMJ Optical";
-    const address = settings?.shopAddress || "";
-    const phone = settings?.shopPhone || "";
-    const email = settings?.shopEmail || "";
-    const logo = settings?.logo || "";
+    const shop = (settings?.shopName as string) || "KMJ Optical";
+    const address = (settings?.shopAddress as string) || "";
+    const phone = (settings?.shopPhone as string) || "";
+    const email = (settings?.shopEmail as string) || "";
+    const logo = (settings?.logo as string) || "";
     const customer = resolveCustomer(bill);
-    const items = (bill.items || []).map((it: any) => `
+    const items = ((bill.items as Record<string, unknown>[]) || []).map((it) => `
       <tr>
         <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;color:#374151">${it.description || ""}</td>
         <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:center;color:#374151">${it.quantity || 1}</td>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151">₹${(it.unitPrice || 0).toFixed(2)}</td>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151;font-weight:500">₹${((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td>
-      </tr>
-    `).join("");
+        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151">₹${((it.unitPrice as number) || 0).toFixed(2)}</td>
+        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151;font-weight:500">₹${(((it.quantity as number) || 1) * ((it.unitPrice as number) || 0)).toFixed(2)}</td>
+      </tr>`).join("");
     w.document.write(`<!DOCTYPE html>
 <html><head><title>Invoice ${bill.billNumber}</title>
 <style>
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   body{font-family:system-ui,sans-serif;margin:0;padding:0;color:#111827;background:#fff}
   .page{max-width:800px;margin:auto;padding:30px}
-  .top-bar{background:#1e40af;height:6px;margin:-30px -30px 0;border-radius:0}
+  .top-bar{background:#1e40af;height:6px;margin:-30px -30px 0}
   .header-row{display:flex;align-items:center;gap:16px;margin:28px 0 20px}
   .header-row img{width:60px;height:60px;object-fit:contain}
   .shop-details h1{margin:0;font-size:24px;color:#111827}
@@ -101,9 +104,9 @@ export default function Bills() {
       <div class="label">Invoice No.</div>
       <div class="value" style="font-weight:600">${bill.billNumber || "—"}</div>
       <div class="sub-label">Date</div>
-      <div class="value">${new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+      <div class="value">${new Date(bill.createdAt as string).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
       <div class="sub-label">Status</div>
-      <div class="value" style="color:${bill.status === "Cancelled" ? "#dc2626" : "#111827"}">${bill.status || "Active"}</div>
+      <div class="value" style="color:${bill.status === "Cancelled" ? "#dc2626" : "#111827"}">${String(bill.status || "Active")}</div>
     </div>
     <div class="info-col">
       <div class="label">Bill To</div>
@@ -117,14 +120,14 @@ export default function Bills() {
     ${items || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af">No items</td></tr>'}
   </table>
   <div class="totals-box">
-    <div class="row"><span>Subtotal</span><span>₹${(bill.subtotal || 0).toFixed(2)}</span></div>
-    ${bill.discount ? `<div class="row red"><span>Discount</span><span>-₹${bill.discount.toFixed(2)}</span></div>` : ""}
-    ${bill.tax ? `<div class="row green"><span>GST</span><span>+₹${bill.tax.toFixed(2)}</span></div>` : ""}
-    <div class="row bold divider"><span>Total Amount</span><span>₹${(bill.totalAmount || 0).toFixed(2)}</span></div>
-    ${bill.advancePaid ? `<div class="row green"><span>Paid</span><span>₹${bill.advancePaid.toFixed(2)}</span></div>` : ""}
-    ${bill.pendingAmount && bill.pendingAmount > 0 ? `<div class="row bold orange divider"><span>Balance Due</span><span>₹${bill.pendingAmount.toFixed(2)}</span></div>` : ""}
+    <div class="row"><span>Subtotal</span><span>₹${((bill.subtotal as number) || 0).toFixed(2)}</span></div>
+    ${bill.discount ? `<div class="row red"><span>Discount</span><span>-₹${(bill.discount as number).toFixed(2)}</span></div>` : ""}
+    ${bill.tax ? `<div class="row green"><span>GST</span><span>+₹${(bill.tax as number).toFixed(2)}</span></div>` : ""}
+    <div class="row bold divider"><span>Total Amount</span><span>₹${((bill.totalAmount as number) || 0).toFixed(2)}</span></div>
+    ${bill.advancePaid ? `<div class="row green"><span>Paid</span><span>₹${(bill.advancePaid as number).toFixed(2)}</span></div>` : ""}
+    ${bill.pendingAmount && (bill.pendingAmount as number) > 0 ? `<div class="row bold orange divider"><span>Balance Due</span><span>₹${(bill.pendingAmount as number).toFixed(2)}</span></div>` : ""}
   </div>
-  ${bill.totalAmount ? `<div class="words">Amount in Words: ${numberToWords(Math.round(bill.totalAmount))}</div>` : ""}
+  ${bill.totalAmount ? `<div class="words">Amount in Words: ${numberToWords(Math.round(bill.totalAmount as number))}</div>` : ""}
   <div class="terms">
     <strong>Terms &amp; Conditions:</strong>
     <p>1. All items are subject to a 7-day inspection period.</p>
@@ -162,41 +165,36 @@ export default function Bills() {
     return r.trim() + " Rupees Only";
   }
 
-  function handleDownloadPdf(bill: any) {
+  function handleDownloadPdf(bill: Record<string, unknown>) {
     const customer = resolveCustomer(bill) || {};
     downloadBillPdf(bill, customer, settings || {});
   }
 
-  async function sendWhatsApp(bill: any) {
+  async function sendWhatsApp(bill: Record<string, unknown>) {
     const customer = resolveCustomer(bill);
-    const num = customer?.mobile?.replace(/\D/g, "").replace(/^0+/, "");
-    if (!num) { setToast({ message: "Customer has no mobile number", type: "error" }); return; }
-    setToast({ message: "Sending WhatsApp...", type: "info" });
+    const num = customer?.mobile?.toString().replace(/\D/g, "").replace(/^0+/, "");
+    if (!num) { toast.error("Customer has no mobile number"); return; }
+    toast.info("Sending WhatsApp...");
     const fullNum = num.length === 10 ? `91${num}` : num;
-    const shop = settings?.shopName || "KMJ Optical";
+    const shop = (settings?.shopName as string) || "KMJ Optical";
     try {
-      const { generateBillPdf } = await import("../utils/pdf");
       const doc = generateBillPdf(bill, customer || {}, settings || {});
       const base64 = doc.output("datauristring").split(",")[1];
       const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
       const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
-      if (mediaRes.success && mediaRes.sent) { setToast({ message: "Bill sent on WhatsApp", type: "success" }); return; }
-      if (mediaRes.queued) { setToast({ message: "WhatsApp not ready — will send when connected", type: "info" }); return; }
-    } catch (e) {
-      console.warn("WhatsApp PDF send error:", e);
+      if (mediaRes.success && mediaRes.sent) { toast.success("Bill sent on WhatsApp"); return; }
+      if (mediaRes.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
+    } catch {
+      // fallback to text
     }
-    const items = (bill.items || []).map((i: any) =>
-      `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
+    const items = ((bill.items as Record<string, unknown>[]) || []).map((i) =>
+      `${i.description} x${i.quantity || 1} = ₹${(((i.quantity as number) || 1) * ((i.unitPrice as number) || 0)).toFixed(0)}`
     ).join("\n");
-    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
+    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹${(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹${(bill.tax as number).toFixed(0)}` : ""}\n*Total:* ₹${((bill.totalAmount as number) || 0).toFixed(0)}\n*Paid:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*Pending:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\nThank you! 🙏`;
     const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
-    if (textRes.queued) {
-      setToast({ message: "WhatsApp not ready — will send when connected", type: "info" });
-    } else if (textRes.success && textRes.sent) {
-      setToast({ message: "Bill sent on WhatsApp", type: "success" });
-    } else {
-      setToast({ message: "WhatsApp send failed — connect in Settings", type: "error" });
-    }
+    if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
+    else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
+    else toast.error("WhatsApp send failed — connect in Settings");
   }
 
   return (
@@ -211,14 +209,14 @@ export default function Bills() {
       <Table
         columns={[
           { key: "billNumber", label: "Bill #" },
-          { key: "customerId", label: "Customer", render: (v: any, row: any) => {
+          { key: "customerId", label: "Customer", render: (v: unknown, row: Record<string, unknown>) => {
             const c = resolveCustomer(row);
-            return c ? c.name : typeof v === "string" ? v.slice(-6) : "—";
+            return c ? c.name : typeof v === "string" ? (v as string).slice(-6) : "—";
           }},
-          { key: "subtotal", label: "Subtotal", render: (v) => `₹${(v || 0).toFixed(2)}` },
-          { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{(v || 0).toFixed(2)}</span> },
+          { key: "subtotal", label: "Subtotal", render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
+          { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹${((v as number) || 0).toFixed(2)}</span> },
           { key: "pendingAmount", label: "Pending", render: (v) => (
-            <span className={v > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{v > 0 ? `₹${v.toFixed(2)}` : "Paid"}</span>
+            <span className={(v as number) > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : "Paid"}</span>
           )},
         ]}
         data={list}
@@ -237,7 +235,6 @@ export default function Bills() {
           </div>
         )}
       />
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

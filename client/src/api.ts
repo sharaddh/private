@@ -1,10 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-function getToken() {
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  [key: string]: unknown;
+}
+
+function getToken(): string | null {
   return localStorage.getItem("accessToken");
 }
 
-function buildHeaders(isJson = true) {
+function buildHeaders(isJson = true): Record<string, string> {
   const headers: Record<string, string> = {};
   if (isJson) headers["Content-Type"] = "application/json";
   const token = getToken();
@@ -32,86 +39,84 @@ async function tryRefresh(): Promise<boolean> {
   }
 }
 
-async function request(path: string, init: RequestInit = {}) {
+function clearTokens(): void {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+}
+
+async function request<T = unknown>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
   let res = await fetch(`${API_URL}${path}`, init);
   if (res.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       const newToken = localStorage.getItem("accessToken");
-      const newHeaders = { ...init.headers as any, Authorization: `Bearer ${newToken}` };
+      const newHeaders = { ...init.headers as Record<string, string>, Authorization: `Bearer ${newToken}` };
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
     } else {
-      clearToken();
+      clearTokens();
       window.location.href = "/login";
       return { success: false, message: "Session expired. Please login again." };
     }
   }
   const text = await res.text();
-  let payload: any = {};
-
+  let payload: ApiResponse<T>;
   try {
     payload = text ? JSON.parse(text) : {};
   } catch {
     payload = { success: false, message: text || res.statusText };
   }
-
   if (!res.ok) {
-    return {
-      success: false,
-      message: payload?.message || res.statusText,
-      ...payload,
-    };
+    return { success: false, message: payload?.message || res.statusText, ...payload };
   }
-
   return payload;
 }
 
-export async function get(path: string) {
-  return request(path, { headers: buildHeaders(false) });
+export async function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
+  return request<T>(path, { headers: buildHeaders(false) });
 }
 
-export async function post(path: string, body: any) {
-  return request(path, {
+export async function post<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+  return request<T>(path, {
     method: "POST",
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });
 }
 
-export async function put(path: string, body: any) {
-  return request(path, {
+export async function put<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+  return request<T>(path, {
     method: "PUT",
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });
 }
 
-export async function del(path: string) {
-  return request(path, {
+export async function del<T = unknown>(path: string): Promise<ApiResponse<T>> {
+  return request<T>(path, {
     method: "DELETE",
     headers: buildHeaders(false),
   });
 }
 
-export async function patch(path: string, body: any) {
-  return request(path, {
+export async function patch<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+  return request<T>(path, {
     method: "PATCH",
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });
 }
 
-export function setToken(token: string) {
+export function setToken(token: string): void {
   localStorage.setItem("accessToken", token);
 }
 
-export function setRefreshToken(token: string) {
+export function setRefreshToken(token: string): void {
   localStorage.setItem("refreshToken", token);
 }
 
-export function clearToken() {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+export function clearToken(): void {
+  clearTokens();
 }
 
+export type { ApiResponse };
 export default { get, post, put, patch, del, setToken, setRefreshToken, clearToken };

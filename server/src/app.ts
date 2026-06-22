@@ -7,6 +7,7 @@ import fs from "fs";
 import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import { audit } from "./middleware/audit";
+import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
@@ -36,9 +37,6 @@ if (fs.existsSync(clientDist)) {
   app.get("/", (req, res) => res.json({ success: true, message: "KMJ ERP API" }));
 }
 
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err);
-  res.status(500).json({ success: false, message: "Internal Server Error" });
-});
+app.use(errorHandler);
 
 export default app;
