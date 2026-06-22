@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApiGet } from "../hooks/useApi";
 import StatCard from "../components/StatCard";
+import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
 import {
   Users, ShoppingCart, FileText, Package, Truck,
@@ -90,13 +91,7 @@ export default function Dashboard() {
     } else toast.error(res.message || "Failed to send");
   }, [toast]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-[3px] border-primary-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton page="dashboard" />;
 
   if (!data) return null;
 
