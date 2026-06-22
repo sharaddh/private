@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import Table from "../components/Table";
+import PageSkeleton from "../components/PageSkeleton";
 import DateRangePicker from "../components/DateRangePicker";
 import { IndianRupee, Receipt, TrendingUp } from "lucide-react";
 
@@ -11,14 +12,16 @@ function todayStr() {
 
 export default function Payments() {
   const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
 
   useEffect(() => { fetchPayments(); }, [startDate, endDate]);
 
   function fetchPayments() {
+    setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
-    api.get("/api/payments?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); });
+    api.get("/api/payments?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
   }
 
   function customerName(p: any): string {
@@ -37,6 +40,8 @@ export default function Payments() {
     acc[mode] = (acc[mode] || 0) + (p.amount || 0);
     return acc;
   }, {});
+
+  if (loading) return <PageSkeleton page="payments" />;
 
   return (
     <div className="page-container max-w-full overflow-hidden">
