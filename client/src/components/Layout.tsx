@@ -4,7 +4,7 @@ import { get, post } from "../api";
 import { useToast } from "../context/ToastContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
-  Package, Truck, BarChart3, Settings,
+  Package, Truck, BarChart3, Settings, MessageCircle,
   Menu, X, Search, Phone, PlusCircle,
   Megaphone, UserPlus, Hand, ChevronLeft,
 } from "lucide-react";
@@ -33,6 +33,7 @@ const desktopMenu = [
   { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/announcements", label: "Announcements", icon: Megaphone },
   { path: "/reports", label: "Reports", icon: BarChart3 },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
