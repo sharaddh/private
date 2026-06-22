@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Modal from "../components/Modal";
+import PageSkeleton from "../components/PageSkeleton";
 import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users } from "lucide-react";
 
 interface Customer {
@@ -14,6 +15,7 @@ interface Customer {
 export default function Customers() {
   const [list, setList] = useState<Customer[]>([]);
   const [filteredList, setFilteredList] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -23,8 +25,10 @@ export default function Customers() {
   const navigate = useNavigate();
 
   const fetchCustomers = useCallback(async () => {
+    setLoading(true);
     const res = await api.get("/api/customers");
     if (res.success) { setList(res.data || []); setFilteredList(res.data || []); }
+    setLoading(false);
   }, []);
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
@@ -73,6 +77,8 @@ export default function Customers() {
     const res = await api.del(`/api/customers/${id}`);
     if (res.success) setList((prev) => prev.filter((c) => c._id !== id));
   }
+
+  if (loading) return <PageSkeleton page="customers" />;
 
   return (
     <div className="page-container">

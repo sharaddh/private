@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
+import PageSkeleton from "../components/PageSkeleton";
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList,
   ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User,
@@ -68,13 +69,7 @@ export default function CustomerDetail() {
     }
   }, [searchParams, visits]);
 
-  if (!customer) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-[3px] border-primary-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  if (!customer) return <PageSkeleton page="customerdetail" />;
 
   async function handleEditSave() {
     setSaving(true);

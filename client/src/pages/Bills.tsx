@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import api from "../api";
 import { useApiGet } from "../hooks/useApi";
 import Table from "../components/Table";
+import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
 import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
 import { downloadBillPdf, generateBillPdf } from "../utils/pdf";
@@ -15,13 +16,15 @@ function todayStr(): string {
 export default function Bills() {
   const [list, setList] = useState<Record<string, unknown>[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
   const toast = useToast();
 
   const fetchBills = useCallback(() => {
+    setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
-    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`).then((d) => { if (d.success) setList(d.data || []); });
+    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
   }, [startDate, endDate]);
 
   const fetchSettings = useCallback(() => {
@@ -196,6 +199,8 @@ export default function Bills() {
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
     else toast.error("WhatsApp send failed — connect in Settings");
   }
+
+  if (loading) return <PageSkeleton page="bills" />;
 
   return (
     <div className="page-container">
