@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from "../api";
+import { useCachedData, invalidateCache } from "../hooks/useCache";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
@@ -15,14 +16,13 @@ export default function InventoryPage() {
     quantity: 0, purchasePrice: 0, sellingPrice: 0,
   });
   const [adjust, setAdjust] = useState({ id: "", qty: 0, note: "" });
-  const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const { data: rawList, loading, refetch } = useCachedData<any[]>("/api/inventory", () => api.get("/api/inventory"));
 
-  useEffect(() => { fetchInventory(); }, []);
+  if (rawList && list !== rawList) setList(rawList);
 
   function fetchInventory() {
-    setLoading(true);
-    api.get("/api/inventory").then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
+    refetch();
   }
 
   function openCreate() {
