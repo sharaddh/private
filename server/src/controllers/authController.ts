@@ -1,65 +1,78 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user";
-import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
+import { signAccess, signRefresh } from "../utils/jwt";
 import { JWT_SECRET } from "../config";
-import { success, created } from "../utils/response";
-import { AppError } from "../middleware/errorHandler";
 
-export async function register(req: Request, res: Response, next: NextFunction) {
+export async function register(req: Request, res: Response) {
   try {
     const { username, password } = req.body;
-    if (!username?.trim()) throw new AppError(400, "Username is required");
-    if (!password?.trim()) throw new AppError(400, "Password is required");
+    if (!username?.trim() || !password?.trim()) {
+      return res.status(400).json({ success: false, message: "Username and password required" });
+    }
     const existing = await User.findOne({ username });
-    if (existing) throw new AppError(409, "Username already exists");
+    if (existing) {
+      return res.status(409).json({ success: false, message: "Username already exists" });
+    }
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, passwordHash, role: "admin" });
-    const token = signAccess({ sub: user._id, username: user.username });
+    const user = await User.create({ username, passwordHash, role: "owner" });
+    const access = signAccess({ sub: user._id, username: user.username });
     const refresh = signRefresh({ sub: user._id });
-    return success(res, { user: { id: user._id, username: user.username, role: user.role }, access: token, refresh });
-  } catch (err) {
-    next(err);
+    return res.json({ success: true, data: { user: { id: user._id, username: user.username, role: user.role }, access, refresh } });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
   }
 }
 
-export async function login(req: Request, res: Response, next: NextFunction) {
+export async function login(req: Request, res: Response) {
   try {
     const { username, password } = req.body;
-    if (!username?.trim() || !password?.trim()) throw new AppError(400, "Username and password required");
+    if (!username?.trim() || !password?.trim()) {
+      return res.status(400).json({ success: false, message: "Username and password required" });
+    }
     const user = await User.findOne({ username });
-    if (!user) throw new AppError(401, "Invalid credentials");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
     const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) throw new AppError(401, "Invalid credentials");
-    const token = signAccess({ sub: user._id, username: user.username });
+    if (!match) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+    const access = signAccess({ sub: user._id, username: user.username });
     const refresh = signRefresh({ sub: user._id });
-    return success(res, { user: { id: user._id, username: user.username, role: user.role }, access: token, refresh });
-  } catch (err) {
-    next(err);
+    return res.json({ success: true, data: { user: { id: user._id, username: user.username, role: user.role }, access, refresh } });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
   }
 }
 
-export async function refresh(req: Request, res: Response, next: NextFunction) {
+export async function refresh(req: Request, res: Response) {
   try {
     const { refresh: refreshToken } = req.body;
-    if (!refreshToken) throw new AppError(400, "Refresh token required");
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, message: "Refresh token required" });
+    }
     const payload: any = jwt.verify(refreshToken, JWT_SECRET);
     const user = await User.findById(payload.sub);
-    if (!user) throw new AppError(401, "User not found");
-    const token = signAccess({ sub: user._id, username: user.username });
-    return success(res, { access: token });
-  } catch (err) {
-    next(err);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    const access = signAccess({ sub: user._id, username: user.username });
+    return res.json({ success: true, data: { access } });
+  } catch (err: any) {
+    return res.status(401).json({ success: false, message: "Invalid refresh token" });
   }
 }
 
-export async function me(req: Request, res: Response, next: NextFunction) {
+export async function me(req: Request, res: Response) {
   try {
     const user = await User.findById((req as any).user?.sub).select("-passwordHash");
-    if (!user) throw new AppError(404, "User not found");
-    return success(res, { id: user._id, username: user.username, role: user.role });
-  } catch (err) {
-    next(err);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    return res.json({ success: true, data: { id: user._id, username: user.username, role: user.role } });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
   }
 }

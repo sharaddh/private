@@ -1,7 +1,18 @@
 import { connect } from "mongoose";
+import bcrypt from "bcrypt";
 import { PORT, MONGO_URI } from "./config";
 import app from "./app";
 import { whatsapp } from "./services/whatsapp";
+import { User } from "./models/user";
+
+async function seedAdmin() {
+  const count = await User.countDocuments();
+  if (count === 0) {
+    const passwordHash = await bcrypt.hash("admin123", 10);
+    await User.create({ username: "admin", passwordHash, role: "owner" });
+    console.log("Default admin created: admin / admin123");
+  }
+}
 
 async function start() {
   if (!MONGO_URI) {
@@ -11,6 +22,8 @@ async function start() {
 
   await connect(MONGO_URI);
   console.log("Connected to MongoDB");
+
+  await seedAdmin();
 
   whatsapp.init().then(() => {
     console.log("WhatsApp service initialized");
