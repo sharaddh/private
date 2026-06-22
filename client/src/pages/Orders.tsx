@@ -3,8 +3,42 @@ import api from "../api";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
 import { Skeleton, SkeletonStats, SkeletonCard } from "../components/Skeleton";
-import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight } from "lucide-react";
+import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2 } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
+
+const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
+
+const VALID_NEXT: Record<string, string> = {
+  Draft: "Ordered",
+  Ordered: "In Lab",
+  "In Lab": "Ready",
+};
+
+function DotProgress({ status }: { status: string }) {
+  const currentIdx = STATUS_STEPS.indexOf(status);
+  return (
+    <div className="flex items-center gap-1 px-1">
+      {STATUS_STEPS.slice(0, 4).map((step, i) => (
+        <div key={step} className="flex items-center flex-1 last:flex-none">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${
+            i < currentIdx
+              ? "bg-primary-500 text-white"
+              : i === currentIdx
+              ? "ring-2 ring-primary-500/50 bg-primary-500 text-white"
+              : "bg-gray-200 dark:bg-dark-600 text-gray-400 dark:text-gray-500"
+          }`}>
+            {i < currentIdx ? "✓" : i + 1}
+          </div>
+          {i < 3 && (
+            <div className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 ${
+              i < currentIdx ? "bg-primary-500" : "bg-gray-200 dark:bg-dark-600"
+            }`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function todayStr() {
   const d = new Date();
@@ -24,6 +58,7 @@ export default function Orders() {
   const [list, setList] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
 
@@ -33,6 +68,22 @@ export default function Orders() {
     setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
     api.get("/api/orders?" + params.toString()).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
+  }
+
+  async function advanceStatus(order: any) {
+    const next = VALID_NEXT[order.status];
+    if (!next) return;
+    setStatusLoading(order._id);
+    try {
+      const res = await api.patch(`/api/orders/${order._id}/status`, { status: next });
+      if (res.success) {
+        fetchOrders();
+        toast.success(next === "Ready" ? "Order ready — pickup notification sent" : `Order moved to "${next}"`);
+      } else {
+        toast.error(res.message || "Failed to update status");
+      }
+    } catch { toast.error("Failed to update status"); }
+    finally { setStatusLoading(null); }
   }
 
   function customerName(o: any): string {
@@ -183,6 +234,12 @@ export default function Orders() {
                     )}
                   </div>
                 </div>
+                {/* Progress bar */}
+                {VALID_NEXT[o.status] && (
+                  <div className="px-5 pb-2">
+                    <DotProgress status={o.status} />
+                  </div>
+                )}
                 {/* Actions */}
                 <div className="px-5 pb-5 pt-0">
                   <div className="flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-dark-700">
@@ -193,13 +250,21 @@ export default function Orders() {
                       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 active:scale-[0.98] transition-all duration-200 shadow-sm">
                       <Eye size={16} /> View Details
                     </button>
-                    <button type="button" onClick={() => {
-                      const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
-                      window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
-                    }}
-                      className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 active:scale-[0.98] transition-all duration-200">
-                      <ArrowUpRight size={16} />
-                    </button>
+                    {VALID_NEXT[o.status] ? (
+                      <button type="button" disabled={statusLoading === o._id} onClick={() => advanceStatus(o)}
+                        className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {statusLoading === o._id ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+                        Mark as {VALID_NEXT[o.status]}
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => {
+                        const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
+                        window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
+                      }}
+                        className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 active:scale-[0.98] transition-all duration-200">
+                        <ArrowUpRight size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
