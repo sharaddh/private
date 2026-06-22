@@ -72,6 +72,16 @@ router.post("/disconnect", authenticate, async (req: Request, res: Response) => 
   }
 });
 
+router.post("/init", authenticate, async (req: Request, res: Response) => {
+  try {
+    await whatsapp.disconnect();
+    whatsapp.init().catch(() => {});
+    res.json({ success: true, message: "WhatsApp re-initialization triggered" });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/broadcast", authenticate, async (req: Request, res: Response) => {
   try {
     const { numbers, message } = req.body;
