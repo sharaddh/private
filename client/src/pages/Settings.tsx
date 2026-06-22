@@ -4,6 +4,7 @@ import api, { clearToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
+import PageSkeleton from "../components/PageSkeleton";
 import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight } from "lucide-react";
 
 export default function Settings() {
@@ -20,7 +21,8 @@ export default function Settings() {
   const [logoPreview, setLogoPreview] = useState("");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [waStatus, setWaStatus] = useState<string>("checking");
   const [waQr, setWaQr] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export default function Settings() {
         setLogo(d.data.logo || "");
         setLogoPreview(d.data.logo || "");
       }
-    });
+    }).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function Settings() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     try {
       setError("");
       const res = await api.put("/api/settings", {
@@ -98,7 +100,7 @@ export default function Settings() {
       }
     } catch (e: any) {
       setError(e?.message || "An error occurred");
-    } finally { setLoading(false); }
+    } finally { setSaving(false); }
   }
 
   function handleLogout() {
@@ -106,6 +108,8 @@ export default function Settings() {
     toast.success("Logged out successfully");
     navigate("/login", { replace: true });
   }
+
+  if (loading) return <PageSkeleton page="settings" />;
 
   return (
     <div className="space-y-6">
@@ -166,7 +170,7 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
               <input type="email" className="input-field" value={shopEmail} onChange={(e) => setShopEmail(e.target.value)} />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2">
+            <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
               {saved ? "Saved!" : <><Save size={18} /> Save Settings</>}
             </button>
           </form>
