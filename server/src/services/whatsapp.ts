@@ -101,22 +101,26 @@ class WhatsAppService {
 
   private async createClient() {
     const executablePath = await this.resolveExecutablePath();
+    const args = [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-web-security",
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--single-process",
+      "--no-zygote",
+    ];
     const opts: Record<string, any> = {
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-background-timer-throttling",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-renderer-backgrounding",
-        "--single-process",
-        "--no-zygote",
-      ],
+      headless: "shell",
+      args,
+      defaultViewport: { width: 1280, height: 720 },
     };
     if (executablePath) opts.executablePath = executablePath;
-    console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: opts.args.length }));
+    console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: args.length, headless: opts.headless }));
     return new Client({
       authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
       puppeteer: opts,
@@ -134,23 +138,39 @@ class WhatsAppService {
   }
 
   private async doInit(): Promise<void> {
-    await this.tryInit().catch(async (err) => {
-      console.error("WhatsApp first init attempt failed:", err?.message || err);
-      if (err?.stack) console.error("Stack:", err.stack.split("\n").slice(0, 4).join("\n"));
-      await this.destroy();
-      this.cleanSession();
-      console.log("Retrying WhatsApp initialization with clean session...");
-      await this.tryInit();
-    });
+    let lastError: any;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.tryInit();
+        return;
+      } catch (err: any) {
+        lastError = err;
+        console.error(`WhatsApp init attempt ${attempt}/3 failed:`, err?.message || err);
+        if (err?.stack) console.error("Stack:", err.stack.split("\n").slice(0, 4).join("\n"));
+        await this.destroy();
+        this.cleanSession();
+        if (attempt < 3) {
+          const delay = attempt * 5000;
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    }
+    console.error("WhatsApp: all 3 init attempts failed — service unavailable");
+    this._error = lastError?.message || "Init failed after 3 attempts";
+    this.initializing = false;
+    this.initPromise = null;
   }
 
   private async tryInit(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
+      let qrTimer: ReturnType<typeof setTimeout> | null = null;
+
       try {
         const client = await this.createClient();
         this.client = client;
 
-        client.on("qr", async (qr) => {
+        const onQr = async (qr: string) => {
           this._qr = qr;
           this._ready = false;
           this._error = null;
@@ -160,46 +180,67 @@ class WhatsAppService {
             this._qrBase64 = null;
           }
           console.log("WhatsApp QR code generated");
-        });
+        };
 
-        client.on("ready", () => {
+        const onReady = () => {
           this._ready = true;
           this._qr = null;
           this._qrBase64 = null;
           this._error = null;
+          if (qrTimer) clearTimeout(qrTimer);
           console.log("WhatsApp client is ready!");
           this.startHeartbeat();
           this.drainQueue();
           resolve();
-        });
+        };
 
-        client.on("disconnected", (reason) => {
+        const onDisconnected = (reason: string) => {
           this._ready = false;
           this.stopHeartbeat();
           this.client = null;
           this.initializing = false;
           this.initPromise = null;
+          if (qrTimer) clearTimeout(qrTimer);
           console.log("WhatsApp client disconnected:", reason);
           if (reason !== "LOGOUT") {
             console.log("Auto-reconnecting WhatsApp...");
             this.init().catch(() => {});
           }
-        });
+        };
 
-        client.on("auth_failure", (msg: string) => {
+        const onAuthFailure = (msg: string) => {
           this._error = msg || "Auth failure";
           console.error("WhatsApp auth failure:", this._error);
           this._ready = false;
           this.client = null;
           this.initializing = false;
           this.initPromise = null;
+          if (qrTimer) clearTimeout(qrTimer);
           resolve();
-        });
+        };
+
+        client.on("qr", onQr);
+        client.on("ready", onReady);
+        client.on("disconnected", onDisconnected);
+        client.on("auth_failure", onAuthFailure);
+
+        // Timeout: if no QR or ready within 60s, restart
+        qrTimer = setTimeout(() => {
+          console.log("WhatsApp: QR timeout — no QR received within 60s, destroying client");
+          client.removeListener("qr", onQr);
+          client.removeListener("ready", onReady);
+          client.removeListener("disconnected", onDisconnected);
+          client.removeListener("auth_failure", onAuthFailure);
+          client.destroy().catch(() => {});
+          reject(new Error("QR timeout after 60s"));
+        }, 60000);
 
         client.initialize().catch((err) => {
+          if (qrTimer) clearTimeout(qrTimer);
           reject(err);
         });
       } catch (err: any) {
+        if (qrTimer) clearTimeout(qrTimer);
         reject(err);
       }
     });
