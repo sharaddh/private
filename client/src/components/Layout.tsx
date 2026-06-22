@@ -207,9 +207,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-2.5 border-t border-surface-100 dark:border-muted-800 space-y-0.5">
+        <div className="p-2.5 border-t border-surface-100 dark:border-dark-600/30 space-y-0.5">
           <button onClick={toggleDark}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-muted-800 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-dark-700 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
             {dark ? <Sun size={17} /> : <Moon size={17} />}
             {sidebarOpen && <span className="text-sm">{dark ? "Light" : "Dark"}</span>}
           </button>
