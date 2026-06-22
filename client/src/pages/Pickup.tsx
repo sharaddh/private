@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
-import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
+import PageSkeleton from "../components/PageSkeleton";
+import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();
@@ -608,12 +609,7 @@ export default function Pickup() {
         </div>
       )}
 
-      {/* Loading spinner */}
-      {isLoading && (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-[3px] border-primary-500 border-t-transparent rounded-full" />
-        </div>
-      )}
+      {isLoading && <PageSkeleton page="pickup" />}
 
       {/* Toast */}
       {toast && (
