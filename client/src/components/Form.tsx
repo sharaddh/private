@@ -1,8 +1,8 @@
-import React from "react";
+import type { ReactNode, InputHTMLAttributes, SelectHTMLAttributes, FormEvent } from "react";
 
 interface FormProps {
-  onSubmit: (e: React.FormEvent) => void;
-  children: React.ReactNode;
+  onSubmit: (e: FormEvent) => void;
+  children: ReactNode;
   title?: string;
   submitLabel?: string;
   isLoading?: boolean;
@@ -16,14 +16,14 @@ export default function Form({
   isLoading = false,
 }: FormProps) {
   return (
-    <div className="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-md mb-6">
-      {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
+    <div className="bg-white dark:bg-dark-800 p-6 rounded-xl border border-surface-100 dark:border-dark-700 shadow-soft mb-6">
+      {title && <h3 className="text-lg font-semibold text-muted-900 dark:text-white mb-4">{title}</h3>}
       <form onSubmit={onSubmit} className="space-y-4">
         {children}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-muted-400 dark:disabled:bg-muted-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.98]"
         >
           {isLoading ? "Loading..." : submitLabel}
         </button>
@@ -35,14 +35,14 @@ export default function Form({
 interface FormGroupProps {
   label?: string;
   error?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function FormGroup({ label, error, children }: FormGroupProps) {
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1">
           {label}
         </label>
       )}
@@ -52,8 +52,7 @@ export function FormGroup({ label, error, children }: FormGroupProps) {
   );
 }
 
-interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
@@ -63,14 +62,13 @@ export function Input({ label, error, ...props }: InputProps) {
     <FormGroup label={label} error={error}>
       <input
         {...props}
-        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-800 text-gray-900 dark:text-white"
+        className="w-full px-4 py-2.5 border border-surface-200 dark:border-dark-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all duration-200 bg-white dark:bg-dark-800 text-muted-900 dark:text-white placeholder-muted-400"
       />
     </FormGroup>
   );
 }
 
-interface SelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   options: { value: string; label: string }[];
@@ -81,7 +79,7 @@ export function Select({ label, error, options, ...props }: SelectProps) {
     <FormGroup label={label} error={error}>
       <select
         {...props}
-        className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-800 text-gray-900 dark:text-white"
+        className="w-full px-4 py-2.5 border border-surface-200 dark:border-dark-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all duration-200 bg-white dark:bg-dark-800 text-muted-900 dark:text-white"
       >
         <option value="">Select an option</option>
         {options.map((opt) => (

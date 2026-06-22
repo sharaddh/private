@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, type ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { get, post, clearToken } from "../api";
 import { useTheme } from "../context/ThemeContext";
@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, LogOut,
   Menu, X, Search, Phone, PlusCircle,
-  Sun, Moon, Megaphone, UserPlus, Hand,
+  Sun, Moon, Megaphone, UserPlus, Hand, ChevronLeft,
 } from "lucide-react";
 
 interface DrawerForm {
@@ -22,19 +22,27 @@ interface DrawerForm {
 
 const initialDrawer: DrawerForm = { name: "", mobile: "", email: "", age: "", gender: "", city: "", address: "" };
 
-const menuItems = [
+const desktopMenu = [
   { path: "/workspace", label: "New Visit", icon: PlusCircle },
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/customers", label: "Customers", icon: Users },
   { path: "/orders", label: "Orders", icon: ShoppingCart },
-  { path: "/pickup", label: "Pickup", icon: Hand },
   { path: "/bills", label: "Bills", icon: FileText },
-  { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/inventory", label: "Inventory", icon: Package },
   { path: "/delivery", label: "Delivery", icon: Truck },
+  { path: "/pickup", label: "Pickup", icon: Hand },
+  { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/announcements", label: "Announcements", icon: Megaphone },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/settings", label: "Settings", icon: Settings },
+];
+
+const mobileNav = [
+  { path: "/", label: "Home", icon: LayoutDashboard },
+  { path: "/customers", label: "Customers", icon: Users },
+  { path: "/workspace", label: "New Visit", icon: PlusCircle },
+  { path: "/orders", label: "Orders", icon: ShoppingCart },
+  { path: "/bills", label: "Bills", icon: FileText },
 ];
 
 function getToken(): string | null {
@@ -51,6 +59,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [drawerForm, setDrawerForm] = useState<DrawerForm>(initialDrawer);
   const [drawerSaving, setDrawerSaving] = useState(false);
   const [drawerError, setDrawerError] = useState("");
+  const [prevScroll, setPrevScroll] = useState(0);
+  const [navVisible, setNavVisible] = useState(true);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -61,9 +71,27 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const isAuthPage = ["/login", "/register"].includes(location.pathname);
 
-  useState(() => {
+  useEffect(() => {
     if (!isAuthPage && !getToken()) navigate("/login", { replace: true });
-  });
+  }, [isAuthPage, navigate]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const current = window.scrollY;
+      setNavVisible(prevScroll > current || current < 20);
+      setPrevScroll(current);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [prevScroll]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchQuery(value);
@@ -122,118 +150,123 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   if (isAuthPage) return <>{children}</>;
 
-  const currentPage = menuItems.find((m) => m.path === location.pathname);
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-dark-900 overflow-hidden">
+    <div className="flex h-screen bg-surface-50 dark:bg-muted-950 overflow-hidden">
+      {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white dark:bg-dark-900 lg:dark:bg-dark-950 border-r border-gray-200 dark:border-dark-800 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-800/50">
+      {/* Desktop Sidebar */}
+      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-muted-900 border-r border-surface-200 dark:border-muted-800 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+        {/* Sidebar Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-surface-100 dark:border-muted-800">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-accent-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-500/20">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">K</span>
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="text-base font-bold text-gray-900 dark:text-white leading-tight truncate">KMJ Optical</h1>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">ERP System</p>
+                <h1 className="text-sm font-bold text-muted-900 dark:text-white leading-tight truncate">KMJ Optical</h1>
+                <p className="text-[9px] text-muted-400 font-medium">ERP System</p>
               </div>
             )}
           </div>
-          <button onClick={() => { setSidebarOpen(!sidebarOpen); setMobileOpen(false); }}
-            className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors hidden lg:block">
-            {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+          <button onClick={() => setSidebarOpen(false)}
+            className={`p-1.5 hover:bg-surface-100 dark:hover:bg-muted-800 rounded-lg text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 transition-colors ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
+            <ChevronLeft size={16} />
           </button>
-          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg text-gray-500 lg:hidden">
+          <button onClick={() => setSidebarOpen(true)}
+            className={`p-1.5 hover:bg-surface-100 dark:hover:bg-muted-800 rounded-lg text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 transition-colors ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
+            <Menu size={16} />
+          </button>
+          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-surface-100 dark:hover:bg-muted-800 rounded-lg text-muted-400 lg:hidden">
             <X size={16} />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 scrollbar-thin">
-          {menuItems.map((item) => {
+        {/* Sidebar Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5 scrollbar-thin">
+          {desktopMenu.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const active = isActive(item.path);
             return (
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive ? "bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
-                <Icon size={19} className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300"} />
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${active
+                  ? "bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium"
+                  : "text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-muted-800"
+                }`}>
+                <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-muted-400 group-hover:text-muted-600 dark:text-muted-500 dark:group-hover:text-muted-300"} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                {isActive && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500 dark:bg-primary-400 shadow-sm" />}
+                {active && sidebarOpen && <span className="ml-auto w-1 h-1 rounded-full bg-primary-500 dark:bg-primary-400" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-3 border-t border-gray-200 dark:border-dark-800/50 space-y-1">
+        {/* Sidebar Footer */}
+        <div className="p-2.5 border-t border-surface-100 dark:border-muted-800 space-y-0.5">
           <button onClick={toggleDark}
-            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
-            <div className={`relative w-10 h-5 rounded-full transition-all duration-300 ${dark ? "bg-primary-500/30" : "bg-gray-300"}`}>
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 flex items-center justify-center ${dark ? "left-[22px]" : "left-0.5"}`}>
-                {dark ? <Moon size={8} className="text-primary-600" /> : <Sun size={8} className="text-amber-500" />}
-              </div>
-            </div>
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-500 hover:text-muted-700 dark:text-muted-400 dark:hover:text-muted-200 hover:bg-surface-100 dark:hover:bg-muted-800 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
+            {dark ? <Sun size={17} /> : <Moon size={17} />}
             {sidebarOpen && <span className="text-sm">{dark ? "Light" : "Dark"}</span>}
           </button>
           <button onClick={handleLogout}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400/80 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-all duration-200 w-full ${!sidebarOpen && "justify-center"}`}>
-            <LogOut size={18} />
+            <LogOut size={17} />
             {sidebarOpen && <span className="text-sm">Logout</span>}
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-dark-900">
-        <header className="h-16 bg-white/70 dark:bg-dark-800/70 backdrop-blur-xl border-b border-gray-200/60 dark:border-dark-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header */}
+        <header className="h-16 bg-white/70 dark:bg-muted-900/70 backdrop-blur-xl border-b border-surface-200/60 dark:border-muted-800/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="btn-ghost lg:hidden p-2">
+            <button onClick={() => setMobileOpen(true)} className="btn-ghost p-2 lg:hidden">
               <Menu size={20} />
             </button>
-            <div className="hidden md:block">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">{currentPage?.label || "Dashboard"}</h2>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                {currentPage?.label === "Dashboard" ? "Overview of your business" : `Manage ${currentPage?.label?.toLowerCase() || ""}`}
-              </p>
-            </div>
+            <button onClick={() => setSidebarOpen(true)} className="btn-ghost p-2 hidden lg:flex">
+              <Menu size={18} />
+            </button>
+            <h2 className="text-base font-semibold text-muted-900 dark:text-white hidden sm:block">
+              {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
+            </h2>
           </div>
 
-          <div ref={searchRef} className="relative flex-1 max-w-md mx-2 lg:mx-6">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          {/* Search */}
+          <div ref={searchRef} className="relative flex-1 max-w-xs lg:max-w-sm mx-2 lg:mx-4">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-400" />
             <input type="text" placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-750 border border-gray-200 dark:border-dark-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all" />
+              className="w-full pl-8 pr-3 py-2 bg-surface-100 dark:bg-muted-800 border border-surface-200 dark:border-muted-700 rounded-xl text-sm text-muted-900 dark:text-white placeholder-muted-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all" />
             {searchOpen && searchQuery.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-muted-800 border border-surface-100 dark:border-muted-700 rounded-xl shadow-soft-lg max-h-80 overflow-y-auto z-50">
                 {searchResults.length > 0 ? (
                   searchResults.map((c) => (
                     <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-gray-50 dark:border-dark-700 last:border-0 transition-colors">
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary-50 dark:hover:bg-primary-900/10 text-left border-b border-surface-50 dark:border-muted-700 last:border-0 transition-colors">
                       <div className="w-8 h-8 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
                         {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{String(c.name ?? "")}</p>
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-sm font-medium text-muted-900 dark:text-white truncate">{String(c.name ?? "")}</p>
+                        <p className="text-xs text-muted-400 truncate">
                           {c.mobile && <><Phone size={10} className="inline mr-0.5" />{String(c.mobile)} • </>}
                           {String(c.customerId ?? "")}
                         </p>
                       </div>
-                      <div className="text-right text-xs text-gray-400 flex-shrink-0">
-                        <p>{(c.totalVisits ?? 0) as number} visits</p>
-                        {(c.pendingAmount as number) > 0 && <p className="text-amber-500 font-medium">₹{c.pendingAmount as number}</p>}
-                      </div>
                     </button>
                   ))
                 ) : (
-                  <div className="px-4 pt-3 pb-1 text-center">
-                    <p className="text-sm text-gray-400">No customer found</p>
-                  </div>
+                  <div className="px-4 py-6 text-center text-sm text-muted-400">No customer found</div>
                 )}
-                <div className="px-4 pb-3 pt-2 border-t border-gray-50 dark:border-dark-700">
+                <div className="px-4 pb-3 pt-2 border-t border-surface-50 dark:border-muted-700">
                   <button onClick={goAddCustomer}
                     className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors">
                     <UserPlus size={15} /> Add New Customer
@@ -243,27 +276,64 @@ export default function Layout({ children }: { children: ReactNode }) {
             )}
           </div>
 
-          <div />
+          {/* Spacer for mobile nav */}
+          <div className="lg:hidden w-8" />
         </header>
 
-        <main className="flex-1 overflow-auto p-4 lg:p-6 scrollbar-thin">
-          <div className="max-w-7xl mx-auto">{children}</div>
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto pb-20 lg:pb-6 scrollbar-thin">
+          <div className="max-w-7xl mx-auto p-4 lg:p-6">{children}</div>
         </main>
       </div>
 
+      {/* Mobile Bottom Navbar */}
+      <nav className={`fixed bottom-0 left-0 right-0 z-40 lg:hidden transition-transform duration-300 ease-out ${navVisible ? "translate-y-0" : "translate-y-full"}`}>
+        <div className="bg-white/80 dark:bg-muted-900/80 backdrop-blur-2xl border-t border-surface-200/60 dark:border-muted-800/50 shadow-nav dark:shadow-nav-dark">
+          <div className="flex items-center justify-around h-[64px] px-2 pb-1">
+            {mobileNav.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="nav-link relative flex-1 max-w-[72px]"
+                >
+                  <div className={`nav-link-icon relative ${active ? "text-primary-600 dark:text-primary-400" : "text-muted-400 dark:text-muted-500"}`}>
+                    <Icon
+                      size={active ? 22 : 20}
+                      className={`transition-all duration-200 ${active ? "scale-110" : ""}`}
+                      style={active ? { animation: "icon-bounce 0.35s ease-out" } : undefined}
+                    />
+                    {active && (
+                      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-5 h-[3px] bg-primary-500 dark:bg-primary-400 rounded-full"
+                        style={{ animation: "nav-indicator 0.25s ease-out" }} />
+                    )}
+                  </div>
+                  <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-muted-400 dark:text-muted-500"}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+
+      {/* Add Customer Drawer */}
       {showAddDrawer && (
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowAddDrawer(false)}>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-t-3xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-dark-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-dark-700">
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-muted-800 rounded-t-3xl shadow-xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-muted-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-surface-100 dark:border-muted-700">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
                   <UserPlus size={18} />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">New Customer</h3>
+                <h3 className="text-lg font-bold text-muted-900 dark:text-white">New Customer</h3>
               </div>
-              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-surface-100 dark:hover:bg-muted-700 rounded-lg text-muted-400">
                 <X size={18} />
               </button>
             </div>
@@ -272,32 +342,32 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{drawerError}</div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name *</label>
+                <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Full Name *</label>
                 <input className="input-field" value={drawerForm.name}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Enter customer name" autoFocus />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile *</label>
+                <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Mobile *</label>
                 <input className="input-field" value={drawerForm.mobile}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, "") }))}
                   placeholder="Phone number" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Email</label>
                   <input className="input-field" type="email" value={drawerForm.email}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="Email" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Age</label>
+                  <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Age</label>
                   <input className="input-field" type="number" value={drawerForm.age}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, age: e.target.value }))}
                     placeholder="Age" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
+                  <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Gender</label>
                   <select className="input-field" value={drawerForm.gender}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, gender: e.target.value }))}>
                     <option value="">Select</option>
@@ -307,14 +377,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
+                  <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">City</label>
                   <input className="input-field" value={drawerForm.city}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
                     placeholder="City" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
+                <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Address</label>
                 <textarea className="input-field" rows={2} value={drawerForm.address}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Address (optional)" />
