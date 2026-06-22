@@ -33,6 +33,9 @@ app.use(
 
 app.use("/api", routes);
 
+// Handle favicon to prevent 404
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+
 // Resolve client dist directory with case-insensitive fallback
 function findDistPath(candidates: string[]): string {
   for (const p of candidates) {
