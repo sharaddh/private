@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: mkdir -p /opt/render/.cache/puppeteer && PUPPETEER_SKIP_DOWNLOAD=false PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer npm install && npm run build
+    buildCommand: apt-get update && apt-get install -y chromium-browser && npm install && npm run build
     startCommand: npm start
     envVars:
       - key: MONGO_URI
@@ -11,7 +11,7 @@ services:
         sync: false
       - key: NODE_VERSION
         value: 20.18.0
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
       - key: PUPPETEER_SKIP_DOWNLOAD
-        value: "false"
+        value: "true"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium-browser
