@@ -52,21 +52,29 @@ class WhatsAppService {
   }
 
   private async resolveExecutablePath(): Promise<string | undefined> {
+    console.log("=== WhatsApp resolveExecutablePath START ===");
+    console.log("process.env.PUPPETEER_EXECUTABLE_PATH =", process.env.PUPPETEER_EXECUTABLE_PATH);
+    console.log("process.env.PUPPETEER_CACHE_DIR =", process.env.PUPPETEER_CACHE_DIR);
+    console.log("process.env.PUPPETEER_SKIP_DOWNLOAD =", process.env.PUPPETEER_SKIP_DOWNLOAD);
+    
     const candidates: string[] = [];
 
     try {
       const browserPath = await puppeteer.executablePath();
+      console.log("puppeteer.executablePath() =", browserPath);
       if (browserPath) candidates.push(browserPath);
     } catch (e: any) {
       console.log("puppeteer.executablePath() threw:", e?.message || e);
     }
 
     const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    console.log("WhatsApp: PUPPETEER_EXECUTABLE_PATH =", envPath);
-    if (envPath) candidates.push(envPath);
+    if (envPath) {
+      console.log("Adding env path:", envPath);
+      candidates.push(envPath);
+    }
 
     const cacheDir = process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), ".cache", "puppeteer");
-    console.log("WhatsApp: PUPPETEER_CACHE_DIR =", cacheDir);
+    console.log("Cache dir:", cacheDir);
     const browserDirs = ["chrome", "chrome-headless-shell"];
     for (const dirName of browserDirs) {
       try {
@@ -93,17 +101,17 @@ class WhatsAppService {
     ];
     candidates.push(...linuxPaths);
 
-    console.log("WhatsApp: checking candidates:", candidates);
+    console.log("All candidates:", candidates);
     for (const p of candidates) {
       const exists = p && fs.existsSync(p);
-      console.log("WhatsApp: candidate", p, "exists:", exists);
+      console.log("Candidate:", p, "exists:", exists);
       if (exists) {
-        console.log("WhatsApp: using Chromium at", p);
+        console.log("=== USING:", p, "===");
         return p;
       }
     }
 
-    console.log("WhatsApp: no Chromium found in any candidate path");
+    console.log("=== NO CHROMIUM FOUND ===");
     return undefined;
   }
 
