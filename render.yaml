@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: mkdir -p /opt/render/.cache/puppeteer && PUPPETEER_SKIP_DOWNLOAD=false PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer npm install && npm run build
+    buildCommand: mkdir -p /opt/render/.cache/puppeteer && PUPPETEER_SKIP_DOWNLOAD=false PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer npm install && npx puppeteer browsers install chrome-headless-shell && npm run build
     startCommand: npm start
     envVars:
       - key: MONGO_URI

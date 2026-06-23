@@ -65,21 +65,24 @@ class WhatsAppService {
     if (envPath) candidates.push(envPath);
 
     const cacheDir = process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), ".cache", "puppeteer");
-    try {
-      const chromeDir = path.join(cacheDir, "chrome");
-      if (fs.existsSync(chromeDir)) {
-        const entries = fs.readdirSync(chromeDir);
-        for (const entry of entries) {
-          const platformDir = path.join(chromeDir, entry);
-          if (fs.statSync(platformDir).isDirectory()) {
-            const files = fs.readdirSync(platformDir);
-            for (const file of files) {
-              candidates.push(path.join(platformDir, file, process.platform === "win32" ? "chrome.exe" : "chrome"));
+    const browserDirs = ["chrome", "chrome-headless-shell"];
+    for (const dirName of browserDirs) {
+      try {
+        const browserDir = path.join(cacheDir, dirName);
+        if (fs.existsSync(browserDir)) {
+          const entries = fs.readdirSync(browserDir);
+          for (const entry of entries) {
+            const platformDir = path.join(browserDir, entry);
+            if (fs.statSync(platformDir).isDirectory()) {
+              const files = fs.readdirSync(platformDir);
+              for (const file of files) {
+                candidates.push(path.join(platformDir, file, process.platform === "win32" ? `${dirName}.exe` : dirName));
+              }
             }
           }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
     const linuxPaths = [
       "/usr/bin/chromium-browser", "/usr/bin/chromium",
