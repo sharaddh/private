@@ -62,9 +62,11 @@ class WhatsAppService {
     }
 
     const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    console.log("WhatsApp: PUPPETEER_EXECUTABLE_PATH =", envPath);
     if (envPath) candidates.push(envPath);
 
     const cacheDir = process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), ".cache", "puppeteer");
+    console.log("WhatsApp: PUPPETEER_CACHE_DIR =", cacheDir);
     const browserDirs = ["chrome", "chrome-headless-shell"];
     for (const dirName of browserDirs) {
       try {
@@ -91,8 +93,11 @@ class WhatsAppService {
     ];
     candidates.push(...linuxPaths);
 
+    console.log("WhatsApp: checking candidates:", candidates);
     for (const p of candidates) {
-      if (p && fs.existsSync(p)) {
+      const exists = p && fs.existsSync(p);
+      console.log("WhatsApp: candidate", p, "exists:", exists);
+      if (exists) {
         console.log("WhatsApp: using Chromium at", p);
         return p;
       }
