@@ -251,7 +251,7 @@ export default function Bills() {
             <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Download PDF">
               <PdfIcon size={15} />
             </button>
-            <button onClick={() => handlePrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Print">
+            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Thermal Receipt (80mm)">
               <Printer size={15} />
             </button>
           </div>
