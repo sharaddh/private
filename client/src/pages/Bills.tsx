@@ -147,6 +147,23 @@ export default function Bills() {
     w.document.close();
   }
 
+  function handleThermalPrint(bill: Record<string, unknown>) {
+    const customer = resolveCustomer(bill) || {};
+    const receipt = generateThermalReceipt(bill, customer, settings || {});
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(`<!DOCTYPE html>
+<html><head><title>Thermal Receipt - ${bill.billNumber}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.3;
+         margin: 0; padding: 4mm; width: 72mm; color: #000; background: #fff;
+         white-space: pre-wrap; }
+  @media print { body { margin: 0; padding: 2mm; } }
+</style></head><body>${receipt.replace(/\n/g, "<br>")}</body></html>`);
+    w.document.close();
+  }
+
   function numberToWords(n: number): string {
     if (n === 0) return "Zero";
     const ones = ["", "One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
