@@ -5,7 +5,7 @@ import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
 import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
-import { downloadBillPdf, generateBillPdf } from "../utils/pdf";
+import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
 
 function todayStr(): string {
