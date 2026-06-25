@@ -61,6 +61,24 @@ router.get("/qr/:code", authenticate, async (req, res) => {
   }
 });
 
+router.get("/:id/qr-image", authenticate, async (req, res) => {
+  try {
+    const item = await Inventory.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "Not found" });
+    const qrData = item.sku || "";
+    const qrBuffer = await QRCode.toBuffer(qrData, {
+      type: "png",
+      width: 400,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
+    res.set("Content-Type", "image/png");
+    res.send(qrBuffer);
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
