@@ -23,6 +23,7 @@ export default function InventoryPage() {
   const [scanInput, setScanInput] = useState("");
   const [scannedItem, setScannedItem] = useState<any>(null);
   const [scanError, setScanError] = useState("");
+  const [scanLoading, setScanLoading] = useState(false);
 
   useEffect(() => {
     if (rawList) setList(rawList);
@@ -117,11 +118,18 @@ export default function InventoryPage() {
     if (!scanInput.trim()) return;
     setScanError("");
     setScannedItem(null);
-    const res = await api.get(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
-    if (res.success) {
-      setScannedItem(res.data);
-    } else {
-      setScanError(res.message || "Item not found");
+    setScanLoading(true);
+    try {
+      const res = await api.get(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
+      if (res.success) {
+        setScannedItem(res.data);
+      } else {
+        setScanError(res.message || "Item not found");
+      }
+    } catch {
+      setScanError("Network error. Please try again.");
+    } finally {
+      setScanLoading(false);
     }
   }
 
@@ -135,7 +143,7 @@ export default function InventoryPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frames, lenses, and accessories stock.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => { setScanModal(true); setScanInput(""); setScannedItem(null); setScanError(""); }} className="btn-secondary flex items-center gap-2">
+          <button onClick={() => { setScanModal(true); setScanInput(""); setScannedItem(null); setScanError(""); setScanLoading(false); }} className="btn-secondary flex items-center gap-2">
             <QrCode size={18} /> Scan QR
           </button>
           <button onClick={() => setShowAdjust(true)} className="btn-secondary flex items-center gap-2">
@@ -298,8 +306,8 @@ export default function InventoryPage() {
           <div className="flex gap-2">
             <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
               onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanLookup(); }} autoFocus />
-            <button onClick={handleScanLookup} className="btn-primary flex items-center gap-1.5">
-              <Search size={16} /> Search
+            <button onClick={handleScanLookup} disabled={scanLoading} className="btn-primary flex items-center gap-1.5">
+              {scanLoading ? <span className="animate-spin">⟳</span> : <Search size={16} />} Search
             </button>
           </div>
           {scanError && <p className="text-sm text-red-500">{scanError}</p>}
