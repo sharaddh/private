@@ -186,9 +186,12 @@ export default function InventoryPage() {
       }
 
       const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
+      const filteredCount = filteredList.length;
+      const totalCount = list.length;
       const categories = ["All", "Frame", "Lens", "Accessories"];
 
-      <div className="flex gap-1.5 mb-3 flex-wrap">
+      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+        <span className="text-xs text-gray-400 mr-2">{filteredCount} of {totalCount}</span>
         {categories.map((c) => (
           <button key={c} onClick={() => setCategoryFilter(c)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
