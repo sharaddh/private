@@ -412,3 +412,67 @@ function padCenter(str: string, width: number): string {
   const left = Math.floor((width - str.length) / 2);
   return " ".repeat(left) + str;
 }
+
+export function generateThermalReceipt(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings): string {
+  const L = "----------------------------------------";
+  const shopName = settings.shopName || "OPTICAL SHOP";
+  const address = settings.shopAddress || "";
+  const phone = settings.shopPhone || "";
+  const email = settings.shopEmail || "";
+  const billDate = bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+  const lines: string[] = [];
+
+  lines.push("");
+  lines.push(padCenter(shopName, 40));
+  if (address) lines.push(padCenter(address, 40));
+  if (phone) lines.push(padCenter(`Ph: ${phone}`, 40));
+  if (email) lines.push(padCenter(email, 40));
+  lines.push(L);
+  lines.push(`  Bill #: ${bill.billNumber || "—"}`);
+  lines.push(`  Date:   ${billDate}`);
+  lines.push(`  Customer: ${customer.name || "—"}`);
+  if (customer.mobile) lines.push(`  Mobile:   ${customer.mobile}`);
+  if (customer.address) lines.push(`  Address:  ${customer.address}`);
+  lines.push(L);
+  lines.push("  Items");
+  lines.push(L);
+
+  const items = bill.items || [];
+  if (items.length === 0) {
+    lines.push("  No items");
+  } else {
+    items.forEach((it, i) => {
+      const desc = it.description || "Item";
+      const qty = it.quantity || 1;
+      const price = it.unitPrice || 0;
+      const total = (it.quantity || 1) * (it.unitPrice || 0);
+      lines.push(`  ${i + 1}. ${desc}`);
+      lines.push(`     Qty: ${qty}  x  ₹${price.toFixed(2)}  =  ₹${total.toFixed(2)}`);
+    });
+  }
+
+  lines.push(L);
+  lines.push(`  Subtotal:${" ".repeat(20)}₹${(bill.subtotal || 0).toFixed(2)}`);
+  if (bill.discount) {
+    lines.push(`  Discount:${" ".repeat(21)}-₹${bill.discount.toFixed(2)}`);
+  }
+  if (bill.tax) {
+    lines.push(`  GST:${" ".repeat(26)}+₹${bill.tax.toFixed(2)}`);
+  }
+  lines.push(`  TOTAL AMOUNT:${" ".repeat(16)}₹${(bill.totalAmount || 0).toFixed(2)}`);
+  if (bill.advancePaid) {
+    lines.push(`  Paid:${" ".repeat(25)}₹${bill.advancePaid.toFixed(2)}`);
+  }
+  if (bill.pendingAmount && bill.pendingAmount > 0) {
+    lines.push(`  Balance Due:${" ".repeat(17)}₹${bill.pendingAmount.toFixed(2)}`);
+  }
+
+  lines.push(L);
+  lines.push(padCenter("Thank you for choosing us!", 40));
+  lines.push("");
+  lines.push(padCenter(`Generated on ${new Date().toLocaleString("en-IN")}`, 40));
+  lines.push("");
+
+  return lines.join("\n");
+}
