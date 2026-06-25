@@ -42,6 +42,7 @@ export default function App() {
           <Route path="/bills" element={<SuspendedPage page="bills"><Bills /></SuspendedPage>} />
           <Route path="/payments" element={<SuspendedPage page="payments"><Payments /></SuspendedPage>} />
           <Route path="/inventory" element={<SuspendedPage page="inventory"><InventoryPage /></SuspendedPage>} />
+          <Route path="/inventory/scan/:code" element={<SuspendedPage page="inventory"><ItemScan /></SuspendedPage>} />
           <Route path="/delivery" element={<SuspendedPage page="delivery"><Delivery /></SuspendedPage>} />
           <Route path="/pickup" element={<SuspendedPage page="pickup"><Pickup /></SuspendedPage>} />
           <Route path="/announcements" element={<SuspendedPage page="announcement"><Announcement /></SuspendedPage>} />
