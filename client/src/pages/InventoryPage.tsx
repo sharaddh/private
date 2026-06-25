@@ -348,9 +348,14 @@ export default function InventoryPage() {
             <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold text-gray-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
-                <button onClick={() => handlePrintLabel(scannedItem)} className="btn-ghost btn-sm flex items-center gap-1">
-                  <Printer size={14} /> Print
-                </button>
+                <div className="flex gap-1">
+                  <button onClick={() => window.open(`/inventory/scan/${scannedItem.sku}`, "_blank")} className="btn-ghost btn-sm flex items-center gap-1 text-primary-600">
+                    <Search size={14} /> View
+                  </button>
+                  <button onClick={() => handlePrintLabel(scannedItem)} className="btn-ghost btn-sm flex items-center gap-1">
+                    <Printer size={14} /> Print
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-500">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
