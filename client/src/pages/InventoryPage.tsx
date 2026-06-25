@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
