@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
+import Modal from "../components/Modal";
 import {
   ArrowLeft, Eye, ShoppingCart, DollarSign, CreditCard, Plus, Save, X, MessageCircle,
-  AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText
+  AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText,
+  QrCode, Search
 } from "lucide-react";
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
@@ -56,6 +58,10 @@ export default function NewVisit() {
   const [orderDeliveryDate, setOrderDeliveryDate] = useState("");
 
   const lensFeatureOptions = ["Single Vision", "Bifocal", "Progressive", "Polycarbonate", "Blue Cut", "Photochromic", "Polarized", "High Index"];
+
+  // Scan Frame
+  const [scanModal, setScanModal] = useState(false);
+  const [scanInput, setScanInput] = useState("");
 
   // Billing
   const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([
@@ -260,6 +266,21 @@ export default function NewVisit() {
     setOrderAccessories((prev) => prev.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
   }
   function removeAccessory(idx: number) { setOrderAccessories((prev) => prev.filter((_, i) => i !== idx)); }
+
+  async function handleScanFrame() {
+    if (!scanInput.trim()) return;
+    const res = await api.get<any>(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
+    if (res.success && res.data) {
+      const item = res.data;
+      setOrderFrame(item.sku || "");
+      setOrderFrameBrand(item.brand || "");
+      setOrderFrameModel(item.model || "");
+      setOrderFrameColor(item.color || "");
+      setOrderFramePrice(item.sellingPrice || item.purchasePrice || 0);
+      setScanModal(false);
+      setScanInput("");
+    }
+  }
 
   function syncBillFromOrder() {
     if (visitType === "service") return;
@@ -797,6 +818,10 @@ export default function NewVisit() {
                         <Tag size={20} />
                       </div>
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">Frame</h3>
+                      <button type="button" onClick={() => { setScanModal(true); setScanInput(""); }}
+                        className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+                        <QrCode size={14} /> Scan Frame
+                      </button>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -950,6 +975,20 @@ export default function NewVisit() {
             )}
           </div>
         )}
+
+        {/* Scan Frame Modal */}
+        <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Scan QR code on the frame label or enter SKU manually.</p>
+            <div className="flex gap-2">
+              <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
+                onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanFrame(); }} autoFocus />
+              <button onClick={handleScanFrame} className="btn-primary flex items-center gap-1.5">
+                <Search size={16} /> Lookup
+              </button>
+            </div>
+          </div>
+        </Modal>
 
         {/* ===== STEP 4: BILLING (with Payment fields) ===== */}
         {visitStep === "billing" && (
