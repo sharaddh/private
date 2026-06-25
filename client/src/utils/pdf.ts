@@ -424,6 +424,8 @@ export function generateThermalReceipt(bill: PdfBill, customer: PdfCustomer, set
   const lines: string[] = [];
 
   lines.push("");
+  lines.push(padCenter("TAX INVOICE", 40));
+  lines.push(padCenter("─".repeat(40), 40));
   lines.push(padCenter(shopName, 40));
   if (address) lines.push(padCenter(address, 40));
   if (phone) lines.push(padCenter(`Ph: ${phone}`, 40));
