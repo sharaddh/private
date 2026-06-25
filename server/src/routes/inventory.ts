@@ -3,7 +3,8 @@ import { Inventory } from "../models/inventory";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
-
+import QRCode from "qrcode";
+ 
 const router = Router();
 
 const createSchema = z.object({ sku: z.string().min(1), category: z.string().optional(), brand: z.string().optional(), model: z.string().optional(), color: z.string().optional(), size: z.string().optional(), quantity: z.number().optional(), purchasePrice: z.number().optional(), sellingPrice: z.number().optional() });
