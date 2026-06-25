@@ -135,6 +135,9 @@ export default function InventoryPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frames, lenses, and accessories stock.</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => { setScanModal(true); setScanInput(""); setScannedItem(null); setScanError(""); }} className="btn-secondary flex items-center gap-2">
+            <QrCode size={18} /> Scan QR
+          </button>
           <button onClick={() => setShowAdjust(true)} className="btn-secondary flex items-center gap-2">
             <Package size={18} /> Adjust Stock
           </button>
@@ -163,19 +166,25 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      function categoryLabel(cat: string) {
+        if (cat === "Lens") return "badge-blue";
+        if (cat === "Accessories") return "badge-purple";
+        return "badge-gray";
+      }
+
       <Table
         columns={[
           { key: "sku", label: "SKU" },
-          { key: "category", label: "Category", render: (v) => (
-            <span className={`badge ${
-              v === "Lens" ? "badge-blue" :
-              v === "Accessories" ? "badge-purple" :
-              "badge-gray"
-            }`}>{v || "Frame"}</span>
+          { key: "category", label: "Category", render: (v, row: any) => (
+            <span className="flex flex-col gap-0.5">
+              <span className={`badge ${categoryLabel(v)}`}>{v || "Frame"}</span>
+              {row.inventoryType && <span className="text-[10px] text-gray-400 capitalize">{row.inventoryType}</span>}
+            </span>
           )},
           { key: "brand", label: "Brand" },
           { key: "model", label: "Model" },
           { key: "color", label: "Color" },
+          { key: "gender", label: "Gender", render: (v) => v ? <span className="text-xs">{v}</span> : null },
           { key: "quantity", label: "Stock", render: (v) => (
             <span className={`font-medium ${v > 10 ? "text-emerald-600 dark:text-emerald-400" : v > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
               {v || 0}
@@ -184,9 +193,12 @@ export default function InventoryPage() {
           { key: "sellingPrice", label: "Price", render: (v) => `₹${(v || 0).toFixed(2)}` },
         ]}
         data={list}
-        searchPlaceholder="Search by SKU, brand, model..."
+        searchPlaceholder="Search by SKU, brand, model, supplier..."
         actions={(row) => (
           <div className="flex items-center gap-1">
+            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-500 dark:text-gray-400" title="Print Label">
+              <Printer size={15} />
+            </button>
             <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400"><Edit2 size={15} /></button>
             <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
           </div>
