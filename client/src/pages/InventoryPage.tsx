@@ -331,7 +331,7 @@ export default function InventoryPage() {
               {scanLoading ? <span className="animate-spin">⟳</span> : <Search size={16} />} Search
             </button>
           </div>
-          {scanError && <p className="text-sm text-red-500">{scanError}</p>}
+          {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
             <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
