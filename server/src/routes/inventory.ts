@@ -50,6 +50,17 @@ router.get("/:id", authenticate, async (req, res) => {
   }
 });
 
+router.get("/qr/:code", authenticate, async (req, res) => {
+  try {
+    const code = req.params.code;
+    const item = await Inventory.findOne({ sku: code });
+    if (!item) return res.status(404).json({ success: false, message: "Item not found" });
+    res.json({ success: true, data: item });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/", authenticate, audit, async (req, res) => {
   try {
     const p = createSchema.parse(req.body);
