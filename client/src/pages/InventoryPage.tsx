@@ -19,6 +19,7 @@ export default function InventoryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { data: rawList, loading, refetch } = useCachedData<any[]>("/api/inventory", () => api.get("/api/inventory"));
   const [list, setList] = useState<any[]>(() => rawList || []);
+  const [categoryFilter, setCategoryFilter] = useState("All");
   const [scanModal, setScanModal] = useState(false);
   const [scanInput, setScanInput] = useState("");
   const [scannedItem, setScannedItem] = useState<any>(null);
@@ -155,7 +156,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="card text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Frames</p>
@@ -172,6 +173,10 @@ export default function InventoryPage() {
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
         </div>
+        <div className="card text-center">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
+        </div>
       </div>
 
       function categoryLabel(cat: string) {
@@ -179,6 +184,22 @@ export default function InventoryPage() {
         if (cat === "Accessories") return "badge-purple";
         return "badge-gray";
       }
+
+      const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
+      const categories = ["All", "Frame", "Lens", "Accessories"];
+
+      <div className="flex gap-1.5 mb-3 flex-wrap">
+        {categories.map((c) => (
+          <button key={c} onClick={() => setCategoryFilter(c)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              categoryFilter === c
+                ? "bg-primary-600 text-white shadow-sm"
+                : "bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
+            }`}>
+            {c}
+          </button>
+        ))}
+      </div>
 
       <Table
         columns={[
@@ -200,7 +221,7 @@ export default function InventoryPage() {
           )},
           { key: "sellingPrice", label: "Price", render: (v) => `₹${(v || 0).toFixed(2)}` },
         ]}
-        data={list}
+        data={filteredList}
         searchPlaceholder="Search by SKU, brand, model, supplier..."
         actions={(row) => (
           <div className="flex items-center gap-1">
