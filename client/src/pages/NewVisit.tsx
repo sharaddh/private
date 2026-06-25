@@ -980,6 +980,7 @@ export default function NewVisit() {
         <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
           <div className="space-y-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">Scan QR code on the frame label or enter SKU manually.</p>
+            <p className="text-xs text-gray-400">Type the SKU and press Enter or click Lookup.</p>
             <div className="flex gap-2">
               <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanFrame(); }} autoFocus />
