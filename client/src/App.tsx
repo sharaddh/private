@@ -19,6 +19,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const WhatsAppPage = lazy(() => import("./pages/WhatsApp"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const NewVisit = lazy(() => import("./pages/NewVisit"));
+const ItemScan = lazy(() => import("./pages/ItemScan"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 
