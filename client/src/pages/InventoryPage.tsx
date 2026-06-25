@@ -1,23 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
-import { Plus, Edit2, Trash2, Package } from "lucide-react";
+import QRCode from "qrcode";
+import { Plus, Edit2, Trash2, Package, Printer, QrCode, Search } from "lucide-react";
 
 export default function InventoryPage() {
   const [showForm, setShowForm] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
-    sku: "", category: "Frame", brand: "", model: "", color: "", size: "",
-    quantity: 0, purchasePrice: 0, sellingPrice: 0,
+    sku: "", category: "Frame", inventoryType: "spectacles", brand: "", model: "", color: "", size: "",
+    gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "",
   });
   const [adjust, setAdjust] = useState({ id: "", qty: 0, note: "" });
   const [isLoading, setIsLoading] = useState(false);
   const { data: rawList, loading, refetch } = useCachedData<any[]>("/api/inventory", () => api.get("/api/inventory"));
   const [list, setList] = useState<any[]>(() => rawList || []);
+  const [scanModal, setScanModal] = useState(false);
+  const [scanInput, setScanInput] = useState("");
+  const [scannedItem, setScannedItem] = useState<any>(null);
+  const [scanError, setScanError] = useState("");
 
   useEffect(() => {
     if (rawList) setList(rawList);
@@ -29,16 +34,18 @@ export default function InventoryPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ sku: "", category: "Frame", brand: "", model: "", color: "", size: "", quantity: 0, purchasePrice: 0, sellingPrice: 0 });
+    setForm({ sku: "", category: "Frame", inventoryType: "spectacles", brand: "", model: "", color: "", size: "", gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "" });
     setShowForm(true);
   }
 
   function openEdit(item: any) {
     setEditing(item);
     setForm({
-      sku: item.sku || "", category: item.category || "Frame", brand: item.brand || "",
-      model: item.model || "", color: item.color || "", size: item.size || "",
+      sku: item.sku || "", category: item.category || "Frame", inventoryType: item.inventoryType || "spectacles",
+      brand: item.brand || "", model: item.model || "", color: item.color || "", size: item.size || "",
+      gender: item.gender || "", supplier: item.supplier || "",
       quantity: item.quantity || 0, purchasePrice: item.purchasePrice || 0, sellingPrice: item.sellingPrice || 0,
+      description: item.description || "",
     });
     setShowForm(true);
   }
@@ -68,6 +75,54 @@ export default function InventoryPage() {
       const res = await api.put(`/api/inventory/${adjust.id}/stock`, { quantity: adjust.qty });
       if (res.success) { fetchInventory(); setShowAdjust(false); setAdjust({ id: "", qty: 0, note: "" }); }
     } finally { setIsLoading(false); }
+  }
+
+  async function handlePrintLabel(item: any) {
+    const qrUrl = await QRCode.toDataURL(item.sku, { width: 300, margin: 1 });
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const category = item.category || "Frame";
+    const gender = item.gender ? ` / ${item.gender}` : "";
+    const type = item.inventoryType ? `${item.inventoryType}${gender}` : category;
+    printWindow.document.write(`
+      <html><head><title>Print Label - ${item.sku}</title>
+      <style>
+        @page { size: 100mm 50mm; margin: 0; }
+        body { margin: 0; padding: 4mm; width: 100mm; height: 50mm; box-sizing: border-box;
+               font-family: Arial, sans-serif; display: flex; align-items: center; }
+        .label { display: flex; align-items: center; gap: 4mm; width: 100%; }
+        .qr img { width: 40mm; height: 40mm; }
+        .info { flex: 1; font-size: 8pt; line-height: 1.3; }
+        .info .sku { font-size: 10pt; font-weight: bold; }
+        .info .brand { font-size: 9pt; }
+        .info .detail { color: #555; }
+      </style></head><body>
+      <div class="label">
+        <div class="qr"><img src="${qrUrl}" /></div>
+        <div class="info">
+          <div class="sku">${item.sku}</div>
+          <div class="brand">${item.brand || ""} ${item.model || ""}</div>
+          <div class="detail">${type}${item.color ? " / " + item.color : ""}</div>
+          <div class="detail">${item.supplier ? item.supplier : ""} ${item.purchasePrice ? "₹" + item.purchasePrice : ""}</div>
+          <div class="detail">₹${item.sellingPrice || 0}</div>
+        </div>
+      </div>
+      <script>window.print(); window.close();</script>
+      </body></html>
+    `);
+    printWindow.document.close();
+  }
+
+  async function handleScanLookup() {
+    if (!scanInput.trim()) return;
+    setScanError("");
+    setScannedItem(null);
+    const res = await api.get(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
+    if (res.success) {
+      setScannedItem(res.data);
+    } else {
+      setScanError(res.message || "Item not found");
+    }
   }
 
   if (loading) return <PageSkeleton page="inventory" />;
