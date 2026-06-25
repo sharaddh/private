@@ -32,6 +32,7 @@ router.get("/", authenticate, async (req, res) => {
           { brand: { $regex: q, $options: "i" } },
           { model: { $regex: q, $options: "i" } },
           { category: { $regex: q, $options: "i" } },
+          { supplier: { $regex: q, $options: "i" } },
         ],
       }
     : {};
