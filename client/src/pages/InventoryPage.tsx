@@ -215,9 +215,28 @@ export default function InventoryPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
               <select className="input-field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                <option value="Frame">Frame</option>
+                <option value="Frame">Frame / Spectacles / Sunglasses</option>
                 <option value="Lens">Lens</option>
                 <option value="Accessories">Accessories</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type</label>
+              <select className="input-field" value={form.inventoryType} onChange={(e) => setForm({ ...form, inventoryType: e.target.value })}>
+                {(form.category === "Frame" ? [
+                  { value: "spectacles", label: "Spectacles" },
+                  { value: "sunglasses", label: "Sunglasses" },
+                ] : form.category === "Lens" ? [
+                  { value: "lens", label: "Lens" },
+                ] : [
+                  { value: "accessory", label: "Accessory" },
+                  { value: "hearing-aid", label: "Hearing Aid" },
+                  { value: "cleaner", label: "Cleaner / Spray" },
+                  { value: "case", label: "Case" },
+                  { value: "other", label: "Other" },
+                ]).map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
               </select>
             </div>
             <div>
