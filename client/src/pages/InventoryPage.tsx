@@ -292,6 +292,40 @@ export default function InventoryPage() {
         </form>
       </Modal>
 
+      <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan QR Code" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Enter or scan the QR code (SKU) to look up an item.</p>
+          <div className="flex gap-2">
+            <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
+              onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanLookup(); }} autoFocus />
+            <button onClick={handleScanLookup} className="btn-primary flex items-center gap-1.5">
+              <Search size={16} /> Search
+            </button>
+          </div>
+          {scanError && <p className="text-sm text-red-500">{scanError}</p>}
+          {scannedItem && (
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
+                <button onClick={() => handlePrintLabel(scannedItem)} className="btn-ghost btn-sm flex items-center gap-1">
+                  <Printer size={14} /> Print
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-gray-500">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
+                <span className="text-gray-500">Category:</span><span className="capitalize">{scannedItem.category}</span>
+                {scannedItem.inventoryType && <><span className="text-gray-500">Type:</span><span className="capitalize">{scannedItem.inventoryType}</span></>}
+                {scannedItem.color && <><span className="text-gray-500">Color:</span><span>{scannedItem.color}</span></>}
+                {scannedItem.gender && <><span className="text-gray-500">Gender:</span><span>{scannedItem.gender}</span></>}
+                {scannedItem.supplier && <><span className="text-gray-500">Supplier:</span><span>{scannedItem.supplier}</span></>}
+                <span className="text-gray-500">Stock:</span><span className="font-medium">{scannedItem.quantity || 0}</span>
+                <span className="text-gray-500">Price:</span><span className="font-medium">₹{scannedItem.sellingPrice || 0}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
       <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title="Adjust Stock">
         <form onSubmit={handleAdjustStock} className="space-y-4">
           <div>
