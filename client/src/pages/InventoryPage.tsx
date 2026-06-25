@@ -107,6 +107,7 @@ export default function InventoryPage() {
           <div class="detail">${type}${item.color ? " / " + item.color : ""}</div>
           <div class="detail">${item.supplier ? item.supplier : ""} ${item.purchasePrice ? "₹" + item.purchasePrice : ""}</div>
           <div class="detail">₹${item.sellingPrice || 0}</div>
+          <div class="detail" style="font-size:6pt;color:#999">${new Date().toLocaleDateString("en-IN")}</div>
         </div>
       </div>
       <script>window.print(); window.close();</script>
