@@ -324,12 +324,14 @@ export default function InventoryPage() {
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan QR Code" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">Enter or scan the QR code (SKU) to look up an item.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Type the SKU and press Enter or click Search.</p>
           <div className="flex gap-2">
             <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
               onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanLookup(); }} autoFocus />
             <button onClick={handleScanLookup} disabled={scanLoading} className="btn-primary flex items-center gap-1.5">
               {scanLoading ? <span className="animate-spin">⟳</span> : <Search size={16} />} Search
             </button>
+            {scannedItem && <button onClick={() => { setScanInput(""); setScannedItem(null); setScanError(""); }} className="btn-secondary flex items-center gap-1">Clear</button>}
           </div>
           {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
