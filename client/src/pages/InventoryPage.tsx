@@ -201,6 +201,13 @@ export default function InventoryPage() {
         ))}
       </div>
 
+      {filteredList.length === 0 && (
+        <div className="text-center py-10 text-gray-400 dark:text-gray-500">
+          <Package size={40} className="mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No items found in this category.</p>
+        </div>
+      )}
+
       <Table
         columns={[
           { key: "sku", label: "SKU" },
