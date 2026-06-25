@@ -406,3 +406,9 @@ export function openBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfS
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");
 }
+
+function padCenter(str: string, width: number): string {
+  if (str.length >= width) return str;
+  const left = Math.floor((width - str.length) / 2);
+  return " ".repeat(left) + str;
+}
