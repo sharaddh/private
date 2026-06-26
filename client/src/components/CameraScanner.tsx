@@ -13,6 +13,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   const [useCamera, setUseCamera] = useState(true);
   const [starting, setStarting] = useState(true);
   const [scanTimer, setScanTimer] = useState(0);
+  const [scanSuccess, setScanSuccess] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -24,6 +25,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     if (!useCamera) return;
     mountedRef.current = true;
     scannedRef.current = false;
+    setScanSuccess(false);
     setScanTimer(0);
 
     const timer = setInterval(() => {
@@ -135,6 +137,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
     if (code && mountedRef.current) {
       scannedRef.current = true;
+      setScanSuccess(true);
       stopStream(streamRef.current);
       try { navigator.vibrate?.(200); } catch {}
       setTimeout(() => onScan(code.data), 300);
@@ -180,6 +183,11 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-3/4 aspect-square border-2 border-white/50 rounded-xl animate-pulse shadow-[0_0_30px_rgba(255,255,255,0.15)]" />
             </div>
+            {scanSuccess && (
+              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                <div className="text-white text-lg font-bold">✓ QR Detected!</div>
+              </div>
+            )}
             {starting && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90">
                 <div className="text-center text-white/60 space-y-3">
