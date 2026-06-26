@@ -226,7 +226,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             <div className="flex gap-2">
               <input
                 className="input-field flex-1 text-lg tracking-wider font-mono"
-                placeholder="Scan or type SKU..."
+                placeholder="Type or scan SKU..."
                 value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleManualSubmit(); }}
