@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
+import CameraScanner from "../components/CameraScanner";
 import {
   ArrowLeft, Eye, ShoppingCart, DollarSign, CreditCard, Plus, Save, X, MessageCircle,
   AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText,
-  QrCode, Search
+  QrCode, Search, Camera
 } from "lucide-react";
 
 interface EyeData { sph?: number; cyl?: number; axis?: number; va?: string; }
@@ -62,6 +63,7 @@ export default function NewVisit() {
   // Scan Frame
   const [scanModal, setScanModal] = useState(false);
   const [scanInput, setScanInput] = useState("");
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   // Billing
   const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([
@@ -267,9 +269,10 @@ export default function NewVisit() {
   }
   function removeAccessory(idx: number) { setOrderAccessories((prev) => prev.filter((_, i) => i !== idx)); }
 
-  async function handleScanFrame() {
-    if (!scanInput.trim()) return;
-    const res = await api.get<any>(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
+  async function handleScanFrame(code?: string) {
+    const sku = (code || scanInput).trim();
+    if (!sku) return;
+    const res = await api.get<any>(`/api/inventory/qr/${encodeURIComponent(sku)}`);
     if (res.success && res.data) {
       const item = res.data;
       setOrderFrame(item.sku || "");
@@ -820,7 +823,11 @@ export default function NewVisit() {
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">Frame</h3>
                       <button type="button" onClick={() => { setScanModal(true); setScanInput(""); }}
                         className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                        <QrCode size={14} /> Scan Frame
+                        <QrCode size={14} /> Scan
+                      </button>
+                      <button type="button" onClick={() => setShowCameraScanner(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors">
+                        <Camera size={14} /> Camera
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -979,17 +986,32 @@ export default function NewVisit() {
         {/* Scan Frame Modal */}
         <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
           <div className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Scan QR code on the frame label or enter SKU manually.</p>
-            <p className="text-xs text-gray-400">Type the SKU and press Enter or click Lookup.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Point your scanner at the QR code or type the SKU below.</p>
             <div className="flex gap-2">
-              <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
-                onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanFrame(); }} autoFocus />
-              <button onClick={handleScanFrame} className="btn-primary flex items-center gap-1.5">
-                <Search size={16} /> Lookup
+              <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder="Scan or type SKU..." value={scanInput}
+                onChange={(e) => setScanInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScanFrame(); } }}
+                autoFocus />
+              <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title="Use camera">
+                <Camera size={16} />
+              </button>
+              <button onClick={() => handleScanFrame()} className="btn-primary flex items-center gap-1.5 px-4">
+                <Search size={16} /> Find
               </button>
             </div>
+            <p className="text-xs text-gray-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
           </div>
         </Modal>
+
+        {showCameraScanner && (
+          <CameraScanner
+            onScan={(code) => {
+              setShowCameraScanner(false);
+              handleScanFrame(code);
+            }}
+            onClose={() => setShowCameraScanner(false)}
+          />
+        )}
 
         {/* ===== STEP 4: BILLING (with Payment fields) ===== */}
         {visitStep === "billing" && (

@@ -1,15 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApiGet } from "../hooks/useApi";
 import StatCard from "../components/StatCard";
 import PageSkeleton from "../components/PageSkeleton";
+import CameraScanner from "../components/CameraScanner";
 import { useToast } from "../context/ToastContext";
 import {
   Users, ShoppingCart, FileText, Package, Truck,
   TrendingUp, DollarSign, Clock, AlertTriangle, ArrowRight,
   Glasses, Eye, Plus, Check, Trash2,
-  Search, ChevronDown, ChevronUp, Send, FlaskConical,
+  Search, ChevronDown, ChevronUp, Send, FlaskConical, QrCode,
 } from "lucide-react";
 
 interface DashboardData {
@@ -25,12 +26,13 @@ export default function Dashboard() {
   const [newTask, setNewTask] = useState("");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [sendingDemand, setSendingDemand] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
-  useState(() => {
+  useEffect(() => {
     api.get<Record<string, unknown>[]>("/api/todos").then((d) => { if (d.success) setTodos(d.data || []); });
-  });
+  }, []);
 
   const fetchTodos = useCallback(() => {
     api.get<Record<string, unknown>[]>("/api/todos").then((d) => { if (d.success) setTodos(d.data || []); });
@@ -112,6 +114,9 @@ export default function Dashboard() {
           <h1 className="page-title">{greeting}!</h1>
           <p className="page-subtitle">Here's what's happening at your shop today.</p>
         </div>
+        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2">
+          <QrCode size={18} /> Scan
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -411,6 +416,15 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      {showScanner && (
+        <CameraScanner
+          onScan={(code) => {
+            setShowScanner(false);
+            navigate(`/inventory/scan/${encodeURIComponent(code)}`);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 }
