@@ -14,6 +14,7 @@ import settings from "./settings";
 import workspace from "./workspace";
 import whatsapp from "./whatsapp";
 import todos from "./todos";
+import cacheAdmin from "./cache-admin";
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use("/reports", reports);
 router.use("/settings", settings);
 router.use("/workspace", workspace);
 router.use("/whatsapp", whatsapp);
+router.use("/cache", cacheAdmin);
 
 export default router;
