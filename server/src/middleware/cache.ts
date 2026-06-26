@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { cacheGet, cacheSet, cacheDel } from "../services/cache";
+import { CACHE_PREFIX, cacheGet, cacheSet, cacheDel } from "../services/cache";
 
 export function cacheRoute(ttlSeconds = 60) {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET") return next();
 
-    const key = `route:${req.originalUrl}`;
+    const key = `${CACHE_PREFIX}${req.originalUrl}`;
     const cached = await cacheGet<{ body: unknown; status: number }>(key);
     if (cached) {
       return res.status(cached.status).json(cached.body);
@@ -24,5 +24,5 @@ export function cacheRoute(ttlSeconds = 60) {
 }
 
 export async function invalidateCache(pattern: string): Promise<void> {
-  await cacheDel(`route:${pattern}*`);
+  await cacheDel(`${pattern}*`);
 }
