@@ -129,13 +129,15 @@ class WhatsAppService {
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
-      "--single-process",
+      "--use-gl=swiftshader",
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
       "--no-zygote",
       "--no-first-run",
       "--no-default-browser-check",
+      "--disable-features=TranslateUI,ChromeWhatsNewUI,ChromeInProductHelp,StorageBuckets",
+      "--disk-cache-size=10485760",
     ];
     const opts: Record<string, any> = {
       headless: true,
