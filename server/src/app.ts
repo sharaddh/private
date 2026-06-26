@@ -87,6 +87,15 @@ if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
     }
   });
 }
+// This runs internally inside your server every 5 minutes (300,000 ms)
+setInterval(() => {
+  console.log("Running auto-task inside server...");
+  try {
+    // Put your automated logic here (e.g., db cleanup, data sync)
+  } catch (error) {
+    console.error("Error running auto-task:", error);
+  }
+}, 5 * 60 * 1000);
 
 app.use(errorHandler);
 
