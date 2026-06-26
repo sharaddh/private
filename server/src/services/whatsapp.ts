@@ -56,66 +56,37 @@ class WhatsAppService {
   }
 
   private async resolveExecutablePath(): Promise<string | undefined> {
-    console.log("=== WhatsApp resolveExecutablePath START ===");
-    console.log("process.env.PUPPETEER_EXECUTABLE_PATH =", process.env.PUPPETEER_EXECUTABLE_PATH);
-    console.log("process.env.PUPPETEER_CACHE_DIR =", process.env.PUPPETEER_CACHE_DIR);
-    console.log("process.env.PUPPETEER_SKIP_DOWNLOAD =", process.env.PUPPETEER_SKIP_DOWNLOAD);
-    
-    const candidates: string[] = [];
-
-    try {
-      const browserPath = await puppeteer.executablePath();
-      console.log("puppeteer.executablePath() =", browserPath);
-      if (browserPath) candidates.push(browserPath);
-    } catch (e: any) {
-      console.log("puppeteer.executablePath() threw:", e?.message || e);
-    }
-
     const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    if (envPath) {
-      console.log("Adding env path:", envPath);
-      candidates.push(envPath);
+    if (envPath && fs.existsSync(envPath)) {
+      console.log("WhatsApp: using PUPPETEER_EXECUTABLE_PATH =", envPath);
+      return envPath;
     }
 
-    const cacheDir = process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), ".cache", "puppeteer");
-    console.log("Cache dir:", cacheDir);
-    const browserDirs = ["chrome", "chrome-headless-shell"];
-    for (const dirName of browserDirs) {
-      try {
-        const browserDir = path.join(cacheDir, dirName);
-        if (fs.existsSync(browserDir)) {
-          const entries = fs.readdirSync(browserDir);
-          for (const entry of entries) {
-            const platformDir = path.join(browserDir, entry);
-            if (fs.statSync(platformDir).isDirectory()) {
-              const files = fs.readdirSync(platformDir);
-              for (const file of files) {
-                candidates.push(path.join(platformDir, file, process.platform === "win32" ? `${dirName}.exe` : dirName));
-              }
-            }
-          }
-        }
-      } catch {}
-    }
-
-    const linuxPaths = [
-      "/usr/bin/chromium-browser", "/usr/bin/chromium",
-      "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable",
+    const systemPaths = [
+      "/usr/bin/chromium-browser",
+      "/usr/bin/chromium",
+      "/usr/bin/google-chrome",
+      "/usr/bin/google-chrome-stable",
       "/snap/bin/chromium",
     ];
-    candidates.push(...linuxPaths);
-
-    console.log("All candidates:", candidates);
-    for (const p of candidates) {
-      const exists = p && fs.existsSync(p);
-      console.log("Candidate:", p, "exists:", exists);
-      if (exists) {
-        console.log("=== USING:", p, "===");
+    for (const p of systemPaths) {
+      if (fs.existsSync(p)) {
+        console.log("WhatsApp: found system Chrome at", p);
         return p;
       }
     }
 
-    console.log("=== NO CHROMIUM FOUND ===");
+    try {
+      const browserPath = await puppeteer.executablePath();
+      if (browserPath && fs.existsSync(browserPath)) {
+        console.log("WhatsApp: using puppeteer.executablePath =", browserPath);
+        return browserPath;
+      }
+    } catch (e: any) {
+      console.log("WhatsApp: puppeteer.executablePath() threw:", e?.message);
+    }
+
+    console.log("WhatsApp: no Chrome binary found");
     return undefined;
   }
 
@@ -134,7 +105,7 @@ class WhatsAppService {
       "--no-zygote",
     ];
     const opts: Record<string, any> = {
-      headless: "shell",
+      headless: true,
       args,
       defaultViewport: { width: 1280, height: 720 },
     };
