@@ -95,8 +95,15 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     streamRef.current = null;
   }
 
+  let frameSkip = 0;
+
   function scanFrame() {
     if (!mountedRef.current || scannedRef.current) return;
+    frameSkip = (frameSkip + 1) % 3;
+    if (frameSkip !== 0) {
+      animRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
