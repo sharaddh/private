@@ -4,8 +4,9 @@ import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
+import CameraScanner from "../components/CameraScanner";
 import QRCode from "qrcode";
-import { Plus, Edit2, Trash2, Package, Printer, QrCode, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, Package, Printer, QrCode, Search, Camera } from "lucide-react";
 
 export default function InventoryPage() {
   const [showForm, setShowForm] = useState(false);
@@ -25,6 +26,7 @@ export default function InventoryPage() {
   const [scannedItem, setScannedItem] = useState<any>(null);
   const [scanError, setScanError] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   useEffect(() => {
     if (rawList) setList(rawList);
@@ -116,13 +118,14 @@ export default function InventoryPage() {
     printWindow.document.close();
   }
 
-  async function handleScanLookup() {
-    if (!scanInput.trim()) return;
+  async function handleScanLookup(code?: string) {
+    const sku = (code || scanInput).trim();
+    if (!sku) return;
     setScanError("");
     setScannedItem(null);
     setScanLoading(true);
     try {
-      const res = await api.get(`/api/inventory/qr/${encodeURIComponent(scanInput.trim())}`);
+      const res = await api.get(`/api/inventory/qr/${encodeURIComponent(sku)}`);
       if (res.success) {
         setScannedItem(res.data);
       } else {
@@ -149,14 +152,25 @@ export default function InventoryPage() {
 
   if (loading) return <PageSkeleton page="inventory" />;
 
+  const categoryLabel = (cat: string) => {
+    if (cat === "Lens") return "badge-blue";
+    if (cat === "Accessories") return "badge-purple";
+    return "badge-gray";
+  };
+
+  const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
+  const filteredCount = filteredList.length;
+  const totalCount = list.length;
+  const categories = ["All", "Frame", "Lens", "Accessories"];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="page-title">Inventory</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frames, lenses, and accessories stock.</p>
+          <p className="text-sm text-muted-500 mt-1">Manage frames, lenses, and accessories stock.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => { setScanModal(true); setScanInput(""); setScannedItem(null); setScanError(""); setScanLoading(false); }} className="btn-secondary flex items-center gap-2">
             <QrCode size={18} /> Scan QR
           </button>
@@ -171,35 +185,35 @@ export default function InventoryPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Frames</p>
+          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
+          <p className="text-sm text-muted-500">Frames</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Lens").length}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Lenses</p>
+          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Lens").length}</p>
+          <p className="text-sm text-muted-500">Lenses</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.filter((i) => i.category === "Accessories").length}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Accessories</p>
+          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Accessories").length}</p>
+          <p className="text-sm text-muted-500">Accessories</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
+          <p className="text-2xl font-bold text-red-600">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
+          <p className="text-sm text-muted-500">Low Stock</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{list.length}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
+          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.length}</p>
+          <p className="text-sm text-muted-500">Total Items</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-        <span className="text-xs text-gray-400 mr-2">{filteredCount} of {totalCount}</span>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-400">{filteredCount} of {totalCount}</span>
         {categories.map((c) => (
           <button key={c} onClick={() => setCategoryFilter(c)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               categoryFilter === c
-                ? "bg-primary-600 text-white shadow-sm"
-                : "bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
+                ? "bg-primary-600 text-white shadow-soft"
+                : "bg-white/50 dark:bg-dark-700/50 backdrop-blur-sm text-muted-600 dark:text-muted-400 hover:bg-white/80 dark:hover:bg-dark-600/80 border border-surface-200/40 dark:border-dark-600/30"
             }`}>
             {c}
           </button>
@@ -207,8 +221,8 @@ export default function InventoryPage() {
       </div>
 
       {filteredList.length === 0 && (
-        <div className="text-center py-10 text-gray-400 dark:text-gray-500">
-          <Package size={40} className="mx-auto mb-2 opacity-40" />
+        <div className="flex flex-col items-center justify-center py-16 text-muted-400">
+          <Package size={48} className="mb-3 opacity-30" />
           <p className="text-sm">No items found in this category.</p>
         </div>
       )}
@@ -219,7 +233,7 @@ export default function InventoryPage() {
           { key: "category", label: "Category", render: (v, row: any) => (
             <span className="flex flex-col gap-0.5">
               <span className={`badge ${categoryLabel(v)}`}>{v || "Frame"}</span>
-              {row.inventoryType && <span className="text-[10px] text-gray-400 capitalize">{row.inventoryType}</span>}
+              {row.inventoryType && <span className="text-[10px] text-muted-400 capitalize">{row.inventoryType}</span>}
             </span>
           )},
           { key: "brand", label: "Brand" },
@@ -237,24 +251,24 @@ export default function InventoryPage() {
         searchPlaceholder="Search by SKU, brand, model, supplier..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-500 dark:text-gray-400" title="Print Label">
+            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 rounded-lg text-muted-400" title="Print Label">
               <Printer size={15} />
             </button>
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50/60 dark:hover:bg-primary-900/20 rounded-lg text-primary-600"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50/60 dark:hover:bg-red-900/20 rounded-lg text-red-600"><Trash2 size={15} /></button>
           </div>
         )}
       />
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Item" : "Add Inventory Item"} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">SKU *</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">SKU *</label>
               <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })} required placeholder="e.g. FRM-001" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Category</label>
               <select className="input-field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 <option value="Frame">Frame / Spectacles / Sunglasses</option>
                 <option value="Lens">Lens</option>
@@ -262,7 +276,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Type</label>
               <select className="input-field" value={form.inventoryType} onChange={(e) => setForm({ ...form, inventoryType: e.target.value })}>
                 {(form.category === "Frame" ? [
                   { value: "spectacles", label: "Spectacles" },
@@ -281,23 +295,23 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Brand</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Brand</label>
               <input className="input-field" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Model</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Model</label>
               <input className="input-field" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Color</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Color</label>
               <input className="input-field" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Size</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Size</label>
               <input className="input-field" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Gender</label>
               <select className="input-field" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
                 <option value="">All / Unisex</option>
                 <option value="Male">Male</option>
@@ -306,27 +320,27 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Supplier (Purchased From)</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Supplier</label>
               <input className="input-field" value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="Supplier name" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Quantity</label>
               <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Purchase Price (₹)</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Purchase Price (₹)</label>
               <input type="number" step="0.01" className="input-field" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Selling Price (₹)</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Selling Price (₹)</label>
               <input type="number" step="0.01" className="input-field" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: Number(e.target.value) })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Description</label>
               <textarea className="input-field" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional notes..." />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-dark-600/30">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Item"}</button>
           </div>
@@ -335,21 +349,25 @@ export default function InventoryPage() {
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan QR Code" size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Enter or scan the QR code (SKU) to look up an item.</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">Type the SKU and press Enter or click Search.</p>
+          <p className="text-sm text-muted-500">Point your scanner at the QR code or type the SKU below.</p>
           <div className="flex gap-2">
-            <input className="input-field flex-1" placeholder="Scan or enter SKU..." value={scanInput}
-              onChange={(e) => setScanInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleScanLookup(); }} autoFocus />
-            <button onClick={handleScanLookup} disabled={scanLoading} className="btn-primary flex items-center gap-1.5">
-              {scanLoading ? <span className="animate-spin">⟳</span> : <Search size={16} />} Search
+            <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder="Scan or type SKU..." value={scanInput}
+              onChange={(e) => setScanInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScanLookup(); } }} autoFocus />
+            <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title="Use camera">
+              <Camera size={16} />
+            </button>
+            <button onClick={() => handleScanLookup()} disabled={scanLoading} className="btn-primary flex items-center gap-1.5 px-4">
+              {scanLoading ? <span className="animate-spin">⟳</span> : <Search size={16} />} Find
             </button>
             {scannedItem && <button onClick={() => { setScanInput(""); setScannedItem(null); setScanError(""); }} className="btn-secondary flex items-center gap-1">Clear</button>}
           </div>
+          <p className="text-xs text-muted-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
           {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
-            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2">
+            <div className="bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm rounded-xl p-4 space-y-2 border border-surface-200/40 dark:border-dark-600/30">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-gray-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
+                <h4 className="font-semibold text-muted-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
                 <div className="flex gap-1">
                   <button onClick={() => window.open(`/inventory/scan/${scannedItem.sku}`, "_blank")} className="btn-ghost btn-sm flex items-center gap-1 text-primary-600">
                     <Search size={14} /> View
@@ -359,15 +377,15 @@ export default function InventoryPage() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-gray-500">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
-                <span className="text-gray-500">Category:</span><span className="capitalize">{scannedItem.category}</span>
-                {scannedItem.inventoryType && <><span className="text-gray-500">Type:</span><span className="capitalize">{scannedItem.inventoryType}</span></>}
-                {scannedItem.color && <><span className="text-gray-500">Color:</span><span>{scannedItem.color}</span></>}
-                {scannedItem.gender && <><span className="text-gray-500">Gender:</span><span>{scannedItem.gender}</span></>}
-                {scannedItem.supplier && <><span className="text-gray-500">Supplier:</span><span>{scannedItem.supplier}</span></>}
-                <span className="text-gray-500">Stock:</span><span className="font-medium">{scannedItem.quantity || 0}</span>
-                <span className="text-gray-500">Price:</span><span className="font-medium">₹{scannedItem.sellingPrice || 0}</span>
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+                <span className="text-muted-500">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
+                <span className="text-muted-500">Category:</span><span className="capitalize">{scannedItem.category}</span>
+                {scannedItem.inventoryType && <><span className="text-muted-500">Type:</span><span className="capitalize">{scannedItem.inventoryType}</span></>}
+                {scannedItem.color && <><span className="text-muted-500">Color:</span><span>{scannedItem.color}</span></>}
+                {scannedItem.gender && <><span className="text-muted-500">Gender:</span><span>{scannedItem.gender}</span></>}
+                {scannedItem.supplier && <><span className="text-muted-500">Supplier:</span><span>{scannedItem.supplier}</span></>}
+                <span className="text-muted-500">Stock:</span><span className="font-medium">{scannedItem.quantity || 0}</span>
+                <span className="text-muted-500">Price:</span><span className="font-medium">₹{scannedItem.sellingPrice || 0}</span>
               </div>
             </div>
           )}
@@ -377,7 +395,7 @@ export default function InventoryPage() {
       <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title="Adjust Stock">
         <form onSubmit={handleAdjustStock} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Select Item</label>
+            <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Select Item</label>
             <select className="input-field" value={adjust.id} onChange={(e) => setAdjust({ ...adjust, id: e.target.value })}>
               <option value="">Choose item</option>
               {list.map((it) => (
@@ -386,15 +404,26 @@ export default function InventoryPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Quantity Change (+/-)</label>
+            <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Quantity Change (+/-)</label>
             <input type="number" className="input-field" value={adjust.qty} onChange={(e) => setAdjust({ ...adjust, qty: Number(e.target.value) })} placeholder="+5 or -3" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-dark-600/30">
             <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-success">{isLoading ? "Saving..." : "Apply Adjustment"}</button>
           </div>
         </form>
       </Modal>
+
+      {showCameraScanner && (
+        <CameraScanner
+          onScan={(code) => {
+            setShowCameraScanner(false);
+            setScanInput(code);
+            handleScanLookup(code);
+          }}
+          onClose={() => setShowCameraScanner(false)}
+        />
+      )}
     </div>
   );
 }
