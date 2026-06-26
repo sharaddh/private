@@ -30,6 +30,7 @@ class WhatsAppService {
   private _qr: string | null = null;
   private _qrBase64: string | null = null;
   private _error: string | null = null;
+  private _pairingCode: string | null = null;
   private initializing = false;
   private initPromise: Promise<void> | null = null;
   private messageQueue: QueueItem[] = [];
@@ -40,6 +41,7 @@ class WhatsAppService {
   get qr() { return this._qr; }
   get qrBase64() { return this._qrBase64; }
   get error() { return this._error; }
+  get pairingCode() { return this._pairingCode; }
   get queueLength() { return this.messageQueue.length; }
 
   private get sessionPath() {
@@ -127,11 +129,10 @@ class WhatsAppService {
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
-      "--use-gl=swiftshader",
+      "--single-process",
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
-      "--disable-features=IsolateOrigins,site-per-process",
       "--no-zygote",
       "--no-first-run",
       "--no-default-browser-check",
@@ -139,7 +140,7 @@ class WhatsAppService {
     const opts: Record<string, any> = {
       headless: true,
       args,
-      defaultViewport: { width: 1280, height: 720 },
+      defaultViewport: { width: 800, height: 600 },
     };
     if (executablePath) opts.executablePath = executablePath;
     console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: args.length, headless: opts.headless }));
@@ -173,7 +174,7 @@ class WhatsAppService {
         await this.destroy();
         this.cleanSession();
         if (attempt < 3) {
-          const delay = attempt * 5000;
+          const delay = attempt * 10000;
           console.log(`Retrying in ${delay}ms...`);
           await new Promise((r) => setTimeout(r, delay));
         }
@@ -282,18 +283,18 @@ class WhatsAppService {
           }
         }, 25000);
 
-        // Timeout: if no QR or ready within 60s, restart
+        // Timeout: if no QR or ready within 120s, restart (Render 512MB is slow)
         qrTimer = setTimeout(() => {
           if (diagTimer) clearTimeout(diagTimer);
           clearInterval(pollPage);
-          console.log("WhatsApp: QR timeout — no QR received within 60s, destroying client");
+          console.log("WhatsApp: QR timeout — no QR received within 120s, destroying client");
           client.removeListener("qr", onQr);
           client.removeListener("ready", onReady);
           client.removeListener("disconnected", onDisconnected);
           client.removeListener("auth_failure", onAuthFailure);
           client.destroy().catch(() => {});
-          reject(new Error("QR timeout after 60s"));
-        }, 60000);
+          reject(new Error("QR timeout after 120s"));
+        }, 120000);
 
         client.initialize().catch((err) => {
           if (qrTimer) clearTimeout(qrTimer);
@@ -458,9 +459,22 @@ class WhatsAppService {
     return { sent, failed };
   }
 
+  async requestPairingCode(phoneNumber: string): Promise<string> {
+    if (!this.client) throw new Error("WhatsApp not initialized");
+    this._pairingCode = null;
+    const code = await this.client.requestPairingCode(phoneNumber);
+    this._pairingCode = code;
+    this._qr = null;
+    this._qrBase64 = null;
+    this._error = null;
+    console.log("WhatsApp: pairing code generated:", code);
+    return code;
+  }
+
   async getStatus() {
     if (this._error) return { status: "error", error: this._error };
     if (this._ready) return { status: "connected", queueLength: this.messageQueue.length };
+    if (this._pairingCode) return { status: "pairing", pairingCode: this._pairingCode };
     if (this._qr) return { status: "qr", qr: this._qrBase64, queueLength: this.messageQueue.length };
     return { status: "initializing", queueLength: this.messageQueue.length };
   }
@@ -476,6 +490,7 @@ class WhatsAppService {
     this._ready = false;
     this._qr = null;
     this._qrBase64 = null;
+    this._pairingCode = null;
     this._error = null;
     this.initializing = false;
   }

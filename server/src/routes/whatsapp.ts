@@ -72,6 +72,20 @@ router.post("/disconnect", authenticate, async (req: Request, res: Response) => 
   }
 });
 
+router.post("/pair", authenticate, async (req: Request, res: Response) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      res.status(400).json({ success: false, message: "Phone number required" });
+      return;
+    }
+    const code = await whatsapp.requestPairingCode(phone);
+    res.json({ success: true, data: { pairingCode: code } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/init", authenticate, async (req: Request, res: Response) => {
   try {
     await whatsapp.disconnect();
