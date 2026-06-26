@@ -8,6 +8,7 @@ import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { invalidateCache } from "../middleware/cache";
 
 const router = Router();
 
@@ -241,6 +242,10 @@ router.post("/transaction", authenticate, async (req, res) => {
       result.delivery = delivery;
     }
 
+    invalidateCache("/api/dashboard");
+    invalidateCache("/api/customers");
+    invalidateCache("/api/orders");
+    invalidateCache("/api/bills");
     res.json({ success: true, data: result });
   } catch (err: any) {
     console.error("Transaction error:", err);
