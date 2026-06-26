@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import jsQR from "jsqr";
-import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle } from "lucide-react";
+import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle, Clock } from "lucide-react";
 
 interface CameraScannerProps {
   onScan: (code: string) => void;
@@ -12,6 +12,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   const [scanInput, setScanInput] = useState("");
   const [useCamera, setUseCamera] = useState(true);
   const [starting, setStarting] = useState(true);
+  const [scanTimer, setScanTimer] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -23,6 +24,12 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     if (!useCamera) return;
     mountedRef.current = true;
     scannedRef.current = false;
+    setScanTimer(0);
+
+    const timer = setInterval(() => {
+      if (!mountedRef.current) return;
+      setScanTimer((t) => t + 1);
+    }, 1000);
 
     let retryCount = 0;
 
@@ -83,6 +90,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
     return () => {
       mountedRef.current = false;
+      clearInterval(timer);
       cancelAnimationFrame(animRef.current);
       stopStream(streamRef.current);
     };
@@ -211,10 +219,13 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         )}
 
         {useCamera && !starting && (
-          <div className="flex items-center justify-center gap-2 px-5 py-3 text-xs text-gray-400 border-t border-gray-100 dark:border-dark-700">
-            <CameraOff size={13} />
-            Press Esc or click outside to cancel
-          </div>
+          <>
+            <div className="flex items-center justify-center gap-2 px-5 py-3 text-xs text-gray-400 border-t border-gray-100 dark:border-dark-700">
+              <CameraOff size={13} />
+              {scanTimer > 8 && <span className="text-amber-500 font-medium">Still scanning... try bringing the QR closer.</span>}
+              {scanTimer <= 8 && <span>Press Esc or click outside to cancel</span>}
+            </div>
+          </>
         )}
       </div>
     </div>
