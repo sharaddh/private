@@ -201,7 +201,10 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             </div>
             {scanSuccess && (
               <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
-                <div className="text-white text-lg font-bold">✓ QR Detected!</div>
+                <div className="text-center">
+                  <div className="text-white text-lg font-bold">✓ Scanned!</div>
+                  <div className="text-white/70 text-xs mt-1">Redirecting...</div>
+                </div>
               </div>
             )}
             {starting && (
