@@ -3,6 +3,7 @@ import * as QR from "qrcode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { execSync } from "child_process";
 import puppeteer from "puppeteer";
 
 interface QueuedMessage {
@@ -84,6 +85,18 @@ class WhatsAppService {
       }
     } catch (e: any) {
       console.log("WhatsApp: puppeteer.executablePath() threw:", e?.message);
+    }
+
+    console.log("WhatsApp: Chrome not found — attempting auto-install...");
+    try {
+      execSync("npx puppeteer browsers install chrome", { stdio: "pipe", timeout: 120000 });
+      const installed = await puppeteer.executablePath();
+      if (installed && fs.existsSync(installed)) {
+        console.log("WhatsApp: auto-installed Chrome at", installed);
+        return installed;
+      }
+    } catch (installErr: any) {
+      console.warn("WhatsApp: auto-install failed:", installErr?.message);
     }
 
     console.log("WhatsApp: no Chrome binary found");
