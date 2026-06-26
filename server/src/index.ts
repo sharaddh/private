@@ -1,7 +1,8 @@
 import { connect } from "mongoose";
 import bcrypt from "bcrypt";
-import { PORT, MONGO_URI } from "./config";
+import { PORT, MONGO_URI, REDIS_URL } from "./config";
 import app from "./app";
+import { initCache } from "./services/cache";
 import { whatsapp } from "./services/whatsapp";
 import { User } from "./models/user";
 
@@ -21,6 +22,18 @@ async function start() {
 
   await connect(MONGO_URI);
   console.log("Connected to MongoDB");
+
+  if (REDIS_URL) {
+    try {
+      const redis = initCache(REDIS_URL);
+      await redis.connect();
+      console.log("Connected to Redis");
+    } catch (err) {
+      console.warn("Redis connection failed — server will continue without cache");
+    }
+  } else {
+    console.log("REDIS_URL not set — running without cache");
+  }
 
   await seedAdmin();
 
