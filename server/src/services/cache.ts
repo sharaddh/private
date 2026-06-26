@@ -17,7 +17,7 @@ export function initCache(redisUrl: string): Redis {
   });
 
   client.on("connect", () => { connected = true; console.log("Redis connected"); });
-  client.on("ready", () => { console.log("Redis ready"); });
+  client.on("ready", () => { console.log("Redis ready for cache operations"); });
   client.on("close", () => { connected = false; console.warn("Redis connection closed"); });
   client.on("reconnecting", () => { console.log("Redis reconnecting..."); });
   client.on("error", (err) => {
