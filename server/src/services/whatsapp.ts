@@ -39,8 +39,12 @@ class WhatsAppService {
   get error() { return this._error; }
   get queueLength() { return this.messageQueue.length; }
 
+  private get sessionPath() {
+    return path.resolve(process.cwd(), ".wwebjs_auth");
+  }
+
   private cleanSession() {
-    const sessionDir = path.resolve(".wwebjs_auth");
+    const sessionDir = this.sessionPath;
     if (fs.existsSync(sessionDir)) {
       try {
         fs.rmSync(sessionDir, { recursive: true, force: true });
@@ -127,18 +131,17 @@ class WhatsAppService {
       "--disable-renderer-backgrounding",
       "--disable-web-security",
       "--disable-features=IsolateOrigins,site-per-process",
-      "--single-process",
       "--no-zygote",
     ];
     const opts: Record<string, any> = {
-      headless: true,
+      headless: "shell",
       args,
       defaultViewport: { width: 1280, height: 720 },
     };
     if (executablePath) opts.executablePath = executablePath;
     console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: args.length, headless: opts.headless }));
     return new Client({
-      authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
+      authStrategy: new LocalAuth({ dataPath: this.sessionPath }),
       puppeteer: opts,
     });
   }
