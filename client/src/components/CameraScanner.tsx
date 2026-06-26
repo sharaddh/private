@@ -121,7 +121,8 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     if (code && mountedRef.current) {
       scannedRef.current = true;
       stopStream(streamRef.current);
-      onScan(code.data);
+      try { navigator.vibrate?.(200); } catch {}
+      setTimeout(() => onScan(code.data), 300);
       return;
     }
 
