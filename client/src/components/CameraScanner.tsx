@@ -170,7 +170,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3/4 aspect-square border-2 border-white/50 rounded-xl" />
+              <div className="w-3/4 aspect-square border-2 border-white/50 rounded-xl animate-pulse shadow-[0_0_30px_rgba(255,255,255,0.15)]" />
             </div>
             {starting && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90">
