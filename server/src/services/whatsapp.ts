@@ -5,6 +5,8 @@ import * as path from "path";
 import * as os from "os";
 import { execSync } from "child_process";
 import puppeteer from "puppeteer";
+import puppeteerExtra from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 interface QueuedMessage {
   type: "text";
@@ -56,6 +58,21 @@ class WhatsAppService {
     }
   }
 
+  private stealthPatched = false;
+
+  private patchPuppeteer() {
+    if (this.stealthPatched) return;
+    puppeteerExtra.use(StealthPlugin());
+    const Module = require("module");
+    const orig = Module.prototype.require;
+    Module.prototype.require = function (id: string) {
+      if (id === "puppeteer") return puppeteerExtra;
+      return orig.apply(this, arguments);
+    };
+    this.stealthPatched = true;
+    console.log("WhatsApp: puppeteer-extra stealth patched");
+  }
+
   private async resolveExecutablePath(): Promise<string | undefined> {
     const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
     if (envPath && fs.existsSync(envPath)) {
@@ -104,18 +121,20 @@ class WhatsAppService {
   }
 
   private async createClient() {
+    this.patchPuppeteer();
     const executablePath = await this.resolveExecutablePath();
     const args = [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
-      "--disable-gpu",
+      "--use-gl=swiftshader",
       "--disable-background-timer-throttling",
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding",
-      "--disable-web-security",
       "--disable-features=IsolateOrigins,site-per-process",
       "--no-zygote",
+      "--no-first-run",
+      "--no-default-browser-check",
     ];
     const opts: Record<string, any> = {
       headless: true,
@@ -127,6 +146,7 @@ class WhatsAppService {
     return new Client({
       authStrategy: new LocalAuth({ dataPath: this.sessionPath }),
       puppeteer: opts,
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
     });
   }
 
