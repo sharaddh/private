@@ -7,6 +7,21 @@ interface CameraScannerProps {
   onClose: () => void;
 }
 
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 1200;
+    gain.gain.value = 0.15;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.stop(ctx.currentTime + 0.15);
+  } catch {}
+}
+
 export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   const [error, setError] = useState("");
   const [scanInput, setScanInput] = useState("");
@@ -139,6 +154,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
       scannedRef.current = true;
       setScanSuccess(true);
       stopStream(streamRef.current);
+      playBeep();
       try { navigator.vibrate?.(200); } catch {}
       setTimeout(() => onScan(code.data), 300);
       return;
