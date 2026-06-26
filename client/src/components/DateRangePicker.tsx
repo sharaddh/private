@@ -57,26 +57,26 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
       <div className="flex items-center gap-1 flex-wrap">
         {presets.map((p) => (
           <button key={p.label} onClick={() => applyPreset(p)}
-            className="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all duration-200 text-muted-500 dark:text-muted-400 bg-surface-100 dark:bg-muted-800 border border-surface-200 dark:border-muted-700 hover:bg-surface-200 dark:hover:bg-muted-700 hover:text-muted-700 dark:hover:text-muted-300">
+            className="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all duration-200 text-muted-500 dark:text-muted-400 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm border border-surface-200/50 dark:border-dark-600/30 hover:bg-white/80 dark:hover:bg-dark-700/80 hover:text-muted-700 dark:hover:text-muted-300">
             {p.label}
           </button>
         ))}
       </div>
       <div className="flex items-center gap-1">
-        <button onClick={() => shift(-1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100 dark:hover:bg-muted-800 transition-all">
+        <button onClick={() => shift(-1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 transition-all">
           <ChevronLeft size={14} />
         </button>
         <input type="date" value={startDate} onChange={(e) => onChange(e.target.value, endDate)}
-          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200 dark:border-muted-700 bg-surface-50 dark:bg-muted-800/50 text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all w-28 hover:border-surface-300 dark:hover:border-muted-600 cursor-pointer" />
+          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200/50 dark:border-dark-600/30 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-28 hover:border-surface-300 dark:hover:border-dark-500 cursor-pointer" />
         <span className="text-xs text-muted-400">—</span>
         <input type="date" value={endDate} onChange={(e) => onChange(startDate, e.target.value)}
-          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200 dark:border-muted-700 bg-surface-50 dark:bg-muted-800/50 text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all w-28 hover:border-surface-300 dark:hover:border-muted-600 cursor-pointer" />
-        <button onClick={() => shift(1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100 dark:hover:bg-muted-800 transition-all">
+          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200/50 dark:border-dark-600/30 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-28 hover:border-surface-300 dark:hover:border-dark-500 cursor-pointer" />
+        <button onClick={() => shift(1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 transition-all">
           <ChevronRight size={14} />
         </button>
       </div>
       {count !== undefined && (
-        <span className="text-xs font-medium text-muted-400 dark:text-muted-500 ml-auto px-3 py-1.5 bg-surface-50 dark:bg-muted-800/50 rounded-lg border border-surface-100 dark:border-muted-700">
+        <span className="text-xs font-medium text-muted-400 dark:text-muted-500 ml-auto px-3 py-1.5 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm rounded-lg border border-surface-200/50 dark:border-dark-600/30">
           {count} {label}{count !== 1 ? "s" : ""}
         </span>
       )}
