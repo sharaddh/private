@@ -235,12 +235,14 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 onChange={(e) => setScanInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleManualSubmit(); }}
                 autoFocus
+                spellCheck={false}
+                autoComplete="off"
               />
-              <button onClick={handleManualSubmit} className="btn-primary flex items-center gap-1.5 px-4">
+              <button type="button" onClick={handleManualSubmit} className="btn-primary flex items-center gap-1.5 px-4">
                 <Search size={16} /> Lookup
               </button>
             </div>
-            <button onClick={retryCamera} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline">
               <RefreshCw size={14} /> Try camera again
             </button>
           </div>
