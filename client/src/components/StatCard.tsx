@@ -24,7 +24,7 @@ export default function StatCard({ title, value, icon, color = "primary", subtit
 
   return (
     <div onClick={onClick}
-      className={`card p-4 transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-soft-lg" : ""}`}
+      className={`card p-4 transition-all duration-300 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-glass-lg" : ""}`}
     >
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 ${cc.bg} rounded-xl flex items-center justify-center ${cc.icon} ring-1 ${cc.ring} flex-shrink-0`}>
