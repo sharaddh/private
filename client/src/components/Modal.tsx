@@ -38,12 +38,12 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div ref={ref} className={`bg-white dark:bg-dark-800 rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col animate-slide-up`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
-            <X size={20} />
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div ref={ref} className={`bg-white/80 dark:bg-dark-800/80 backdrop-blur-2xl rounded-2xl shadow-glass-lg w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col animate-slide-up`}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200/50 dark:border-dark-600/30">
+          <h3 className="text-lg font-semibold text-muted-900 dark:text-white">{title}</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 rounded-lg text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 transition-colors">
+            <X size={18} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">{children}</div>
