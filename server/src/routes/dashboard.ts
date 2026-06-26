@@ -9,10 +9,11 @@ import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
 import { authenticate } from "../middleware/auth";
+import { cacheRoute } from "../middleware/cache";
 
 const router = Router();
 
-router.get("/stats", authenticate, async (req, res) => {
+router.get("/stats", authenticate, cacheRoute(30), async (req, res) => {
   try {
     const [
       customers,
