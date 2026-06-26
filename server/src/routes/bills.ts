@@ -6,6 +6,7 @@ import { Visit } from "../models/visit";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
+import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { whatsapp } from "../services/whatsapp";
 import { generateBillPdf } from "../utils/pdf";
 
@@ -20,7 +21,7 @@ const createSchema = z.object({
   advancePaid: z.number().optional()
 });
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/", authenticate, cacheRoute(30), async (req, res) => {
   const { customerId, startDate, endDate } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
@@ -114,6 +115,8 @@ router.post("/", authenticate, audit, async (req, res) => {
       console.log(`No mobile number for customer ${customer?.name}, skipping bill PDF notification`);
     }
 
+    invalidateCache("/api/bills");
+    invalidateCache("/api/dashboard");
     res.json({ success: true, data: bill });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -138,6 +141,8 @@ router.put("/:id", authenticate, audit, async (req, res) => {
     }
     Object.assign(bill, p);
     await bill.save();
+    invalidateCache("/api/bills");
+    invalidateCache("/api/dashboard");
     res.json({ success: true, data: bill });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -148,6 +153,8 @@ router.delete("/:id", authenticate, audit, async (req, res) => {
   try {
     const b = await Bill.findByIdAndDelete(req.params.id);
     if (!b) return res.status(404).json({ success: false, message: "Not found" });
+    invalidateCache("/api/bills");
+    invalidateCache("/api/dashboard");
     res.json({ success: true, message: "Deleted" });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
