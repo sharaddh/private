@@ -135,6 +135,18 @@ export default function InventoryPage() {
     }
   }
 
+  // --- Helper & Filter Logic moved safely above JSX return ---
+  function categoryLabel(cat: string) {
+    if (cat === "Lens") return "badge-blue";
+    if (cat === "Accessories") return "badge-purple";
+    return "badge-gray";
+  }
+
+  const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
+  const filteredCount = filteredList.length;
+  const totalCount = list.length;
+  const categories = ["All", "Frame", "Lens", "Accessories"];
+
   if (loading) return <PageSkeleton page="inventory" />;
 
   return (
@@ -179,17 +191,6 @@ export default function InventoryPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
         </div>
       </div>
-
-      function categoryLabel(cat: string) {
-        if (cat === "Lens") return "badge-blue";
-        if (cat === "Accessories") return "badge-purple";
-        return "badge-gray";
-      }
-
-      const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
-      const filteredCount = filteredList.length;
-      const totalCount = list.length;
-      const categories = ["All", "Frame", "Lens", "Accessories"];
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         <span className="text-xs text-gray-400 mr-2">{filteredCount} of {totalCount}</span>
