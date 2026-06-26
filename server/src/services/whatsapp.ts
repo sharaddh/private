@@ -188,10 +188,16 @@ class WhatsAppService {
   private async tryInit(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
+      let diagTimer: ReturnType<typeof setTimeout> | null = null;
 
       try {
         const client = await this.createClient();
         this.client = client;
+
+        client.on("loading_screen", (percent: any, message) => {
+          const p = Number(percent);
+          if (p && p % 25 === 0) console.log(`WhatsApp loading: ${p}% ${message || ""}`);
+        });
 
         const onQr = async (qr: string) => {
           this._qr = qr;
@@ -247,8 +253,39 @@ class WhatsAppService {
         client.on("disconnected", onDisconnected);
         client.on("auth_failure", onAuthFailure);
 
+        // Diagnostic: capture screenshot + console errors at 25s to debug QR timeout
+        diagTimer = setTimeout(async () => {
+          try {
+            const page = (client as any).pupPage;
+            if (!page) { console.log("WhatsApp diag: no pupPage yet"); return; }
+            const url = page.url();
+            const title = await page.title().catch(() => "?");
+            console.log("WhatsApp diag: URL =", url, "title =", title);
+            const pageErrors = await page.evaluate(() => {
+              const logs = (window as any).__wwjErrors || [];
+              const errors = (window as any).__wwjPageErrors || [];
+              return { logs: logs.slice(-10), errors: errors.slice(-5) };
+            }).catch(() => ({}));
+            if (pageErrors.logs?.length || pageErrors.errors?.length) {
+              console.log("WhatsApp diag: console errors:", JSON.stringify(pageErrors));
+            }
+            const screenshot = await page.screenshot({ type: "png", encoding: "base64" }).catch(() => null);
+            if (screenshot) {
+              console.log("WhatsApp diag: screenshot captured (base64 length:", screenshot.length, ")");
+              // Write screenshot to disk for debugging
+              const screenshotPath = path.join(process.cwd(), ".whatsapp-diag.png");
+              fs.writeFileSync(screenshotPath, screenshot, "base64");
+              console.log("WhatsApp diag: screenshot saved to", screenshotPath);
+            }
+          } catch (e: any) {
+            console.log("WhatsApp diag error:", e?.message);
+          }
+        }, 25000);
+
         // Timeout: if no QR or ready within 60s, restart
         qrTimer = setTimeout(() => {
+          if (diagTimer) clearTimeout(diagTimer);
+          clearInterval(pollPage);
           console.log("WhatsApp: QR timeout — no QR received within 60s, destroying client");
           client.removeListener("qr", onQr);
           client.removeListener("ready", onReady);
@@ -260,8 +297,36 @@ class WhatsAppService {
 
         client.initialize().catch((err) => {
           if (qrTimer) clearTimeout(qrTimer);
+          if (diagTimer) clearTimeout(diagTimer);
           reject(err);
         });
+
+        // Capture page console errors as soon as page becomes available
+        const pollPage = setInterval(() => {
+          const page = (client as any).pupPage;
+          if (!page) return;
+          clearInterval(pollPage);
+          page.on("console", (msg: any) => {
+            if (msg.type() === "error") console.log("WhatsApp page error:", msg.text());
+          });
+          page.on("pageerror", (err: any) => {
+            console.log("WhatsApp page crash:", err?.message || err);
+          });
+          // Inject error capture into page context
+          page.evaluate(() => {
+            (window as any).__wwjErrors = [];
+            (window as any).__wwjPageErrors = [];
+            const orig = console.error;
+            console.error = (...args: any[]) => {
+              (window as any).__wwjErrors.push(args.map(String).join(" "));
+              orig.apply(console, args);
+            };
+            window.addEventListener("error", (e: any) => {
+              (window as any).__wwjPageErrors.push(e.message || String(e));
+            });
+          }).catch(() => {});
+          console.log("WhatsApp: page error listeners attached");
+        }, 200);
       } catch (err: any) {
         if (qrTimer) clearTimeout(qrTimer);
         reject(err);
