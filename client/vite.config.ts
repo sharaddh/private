@@ -24,7 +24,6 @@ export default defineConfig({
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-ui": ["lucide-react"],
           "vendor-pdf": ["jspdf", "jspdf-autotable"],
-          "vendor-utils": ["zod"],
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",

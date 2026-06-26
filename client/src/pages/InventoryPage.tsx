@@ -138,18 +138,6 @@ export default function InventoryPage() {
     }
   }
 
-  // --- Helper & Filter Logic moved safely above JSX return ---
-  function categoryLabel(cat: string) {
-    if (cat === "Lens") return "badge-blue";
-    if (cat === "Accessories") return "badge-purple";
-    return "badge-gray";
-  }
-
-  const filteredList = categoryFilter === "All" ? list : list.filter((i) => (i.category || "Frame") === categoryFilter);
-  const filteredCount = filteredList.length;
-  const totalCount = list.length;
-  const categories = ["All", "Frame", "Lens", "Accessories"];
-
   if (loading) return <PageSkeleton page="inventory" />;
 
   const categoryLabel = (cat: string) => {
