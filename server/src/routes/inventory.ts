@@ -3,6 +3,7 @@ import { Inventory } from "../models/inventory";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
+import { cacheRoute, invalidateCache } from "../middleware/cache";
 import QRCode from "qrcode";
  
 const router = Router();
@@ -23,7 +24,7 @@ const createSchema = z.object({
   description: z.string().optional(),
 });
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/", authenticate, cacheRoute(60), async (req, res) => {
   const q = (req.query.q as string) || "";
   const filter = q
     ? {
@@ -84,6 +85,7 @@ router.post("/", authenticate, audit, async (req, res) => {
     const p = createSchema.parse(req.body);
     const item = new Inventory(p as any);
     await item.save();
+    invalidateCache("/api/inventory");
     res.json({ success: true, data: item });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -97,6 +99,7 @@ router.put("/:id/stock", authenticate, audit, async (req, res) => {
     if (!it) return res.status(404).json({ success: false, message: "Not found" });
     it.quantity = (it.quantity || 0) + qty;
     await it.save();
+    invalidateCache("/api/inventory");
     res.json({ success: true, data: it });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -107,6 +110,7 @@ router.put("/:id", authenticate, audit, async (req, res) => {
   try {
     const it = await Inventory.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
     if (!it) return res.status(404).json({ success: false, message: "Not found" });
+    invalidateCache("/api/inventory");
     res.json({ success: true, data: it });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -117,6 +121,7 @@ router.delete("/:id", authenticate, audit, async (req, res) => {
   try {
     const it = await Inventory.findByIdAndDelete(req.params.id);
     if (!it) return res.status(404).json({ success: false, message: "Not found" });
+    invalidateCache("/api/inventory");
     res.json({ success: true, message: "Deleted" });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
