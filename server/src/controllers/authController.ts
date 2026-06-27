@@ -4,75 +4,100 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user";
 import { signAccess, signRefresh } from "../utils/jwt";
 import { JWT_SECRET } from "../config";
+import { AppError } from "../middleware/errorHandler";
+import { AuthRequest } from "../middleware/auth";
 
 export async function register(req: Request, res: Response) {
-  try {
-    const { username, password } = req.body;
-    if (!username?.trim() || !password?.trim()) {
-      return res.status(400).json({ success: false, message: "Username and password required" });
-    }
-    const existing = await User.findOne({ username });
-    if (existing) {
-      return res.status(409).json({ success: false, message: "Username already exists" });
-    }
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, passwordHash, role: "owner" });
-    const access = signAccess({ sub: user._id, username: user.username });
-    const refresh = signRefresh({ sub: user._id });
-    return res.json({ success: true, data: { user: { id: user._id, username: user.username, role: user.role }, access, refresh } });
-  } catch (err: any) {
-    return res.status(400).json({ success: false, message: err.message });
+  const authReq = req as AuthRequest;
+  if (!authReq.user || authReq.user.role !== "owner") {
+    throw new AppError(403, "Only admin can create new users");
   }
+  const { username, password, name, mobile, role } = req.body;
+  if (!username?.trim() || !password?.trim()) {
+    throw new AppError(400, "Username and password required");
+  }
+  const existing = await User.findOne({ username }).lean();
+  if (existing) {
+    throw new AppError(409, "Username already exists");
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await User.create({ username, passwordHash, name: name || "", mobile: mobile || "", role: role === "staff" ? "staff" : "owner" });
+  return res.json({ success: true, data: { id: user._id, username: user.username, name: user.name, mobile: user.mobile, role: user.role } });
 }
 
 export async function login(req: Request, res: Response) {
-  try {
-    const { username, password } = req.body;
-    if (!username?.trim() || !password?.trim()) {
-      return res.status(400).json({ success: false, message: "Username and password required" });
-    }
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ success: false, message: "Invalid credentials" });
-    }
-    const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) {
-      return res.status(400).json({ success: false, message: "Invalid credentials" });
-    }
-    const access = signAccess({ sub: user._id, username: user.username });
-    const refresh = signRefresh({ sub: user._id });
-    return res.json({ success: true, data: { user: { id: user._id, username: user.username, role: user.role }, access, refresh } });
-  } catch (err: any) {
-    return res.status(400).json({ success: false, message: err.message });
+  const { username, password } = req.body;
+  if (!username?.trim() || !password?.trim()) {
+    throw new AppError(400, "Username and password required");
   }
+  const user = await User.findOne({ username }).lean();
+  if (!user) {
+    throw new AppError(400, "Invalid credentials");
+  }
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) {
+    throw new AppError(400, "Invalid credentials");
+  }
+  const access = signAccess({ sub: user._id, username: user.username, role: user.role });
+  const refresh = signRefresh({ sub: user._id });
+  return res.json({ success: true, data: { user: { id: user._id, username: user.username, name: user.name, mobile: user.mobile, role: user.role }, access, refresh } });
 }
 
 export async function refresh(req: Request, res: Response) {
-  try {
-    const { refresh: refreshToken } = req.body;
-    if (!refreshToken) {
-      return res.status(400).json({ success: false, message: "Refresh token required" });
-    }
-    const payload: any = jwt.verify(refreshToken, JWT_SECRET);
-    const user = await User.findById(payload.sub);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-    const access = signAccess({ sub: user._id, username: user.username });
-    return res.json({ success: true, data: { access } });
-  } catch (err: any) {
-    return res.status(401).json({ success: false, message: "Invalid refresh token" });
+  const { refresh: refreshToken } = req.body;
+  if (!refreshToken) {
+    throw new AppError(400, "Refresh token required");
   }
+  const payload = jwt.verify(refreshToken, JWT_SECRET) as { sub: string };
+  const user = await User.findById(payload.sub).lean();
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+  const access = signAccess({ sub: user._id, username: user.username, role: user.role });
+  return res.json({ success: true, data: { access } });
 }
 
 export async function me(req: Request, res: Response) {
-  try {
-    const user = await User.findById((req as any).user?.sub).select("-passwordHash");
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-    return res.json({ success: true, data: { id: user._id, username: user.username, role: user.role } });
-  } catch (err: any) {
-    return res.status(400).json({ success: false, message: err.message });
+  const authReq = req as AuthRequest;
+  const user = await User.findById(authReq.user?.sub).select("-passwordHash").lean();
+  if (!user) {
+    throw new AppError(404, "User not found");
   }
+  return res.json({ success: true, data: { id: user._id, username: user.username, name: user.name, mobile: user.mobile, role: user.role } });
+}
+
+export async function updateMe(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const { name, mobile, password } = req.body;
+  const update: Record<string, unknown> = {};
+  if (name !== undefined) update.name = name;
+  if (mobile !== undefined) update.mobile = mobile;
+  if (password?.trim()) {
+    update.passwordHash = await bcrypt.hash(password, 10);
+  }
+  const user = await User.findByIdAndUpdate(authReq.user?.sub, { $set: update }, { new: true }).select("-passwordHash").lean();
+  if (!user) throw new AppError(404, "User not found");
+  return res.json({ success: true, data: { id: user._id, username: user.username, name: user.name, mobile: user.mobile, role: user.role } });
+}
+
+export async function listUsers(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  if (!authReq.user || authReq.user.role !== "owner") {
+    throw new AppError(403, "Only admin can list users");
+  }
+  const users = await User.find().select("-passwordHash").sort({ createdAt: -1 }).lean();
+  return res.json({ success: true, data: users.map(u => ({ id: u._id, username: u.username, name: u.name, mobile: u.mobile, role: u.role })) });
+}
+
+export async function deleteUser(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  if (!authReq.user || authReq.user.role !== "owner") {
+    throw new AppError(403, "Only admin can delete users");
+  }
+  const target = await User.findById(req.params.id).lean();
+  if (!target) throw new AppError(404, "User not found");
+  if (target.role === "owner") throw new AppError(400, "Cannot delete admin account");
+  if (target._id.toString() === authReq.user.sub) throw new AppError(400, "Cannot delete yourself");
+  await User.findByIdAndDelete(req.params.id);
+  return res.json({ success: true, message: "User deleted" });
 }
