@@ -5,10 +5,10 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
-import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight } from "lucide-react";
+import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight, Plus, Trash2, X } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, isStaff, setUser } = useAuth();
   const { dark, toggle: toggleTheme } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
@@ -27,6 +27,29 @@ export default function Settings() {
   const [waStatus, setWaStatus] = useState<string>("checking");
   const [waQr, setWaQr] = useState<string | null>(null);
   const [waDisconnecting, setWaDisconnecting] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
+  const [staffSaving, setStaffSaving] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(false);
+  const [editName, setEditName] = useState((user?.name as string) || "");
+  const [editMobile, setEditMobile] = useState((user?.mobile as string) || "");
+  const [editPassword, setEditPassword] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [saveProfileMsg, setSaveProfileMsg] = useState("");
+
+  useEffect(() => {
+    if (user?.role !== "staff") {
+      api.get("/api/auth/users").then((d) => { if (d.success) setUsers(d.data || []); });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      if (!editName) setEditName((user.name as string) || (user.username as string) || "");
+      if (!editMobile) setEditMobile((user.mobile as string) || "");
+    }
+  }, [user]);
 
   useEffect(() => {
     api.get("/api/settings").then((d) => {
@@ -103,10 +126,63 @@ export default function Settings() {
     } finally { setSaving(false); }
   }
 
+  function handleEditAccount() {
+    setEditName((user?.name as string) || (user?.username as string) || "");
+    setEditMobile((user?.mobile as string) || "");
+    setEditPassword("");
+    setSaveProfileMsg("");
+    setEditingAccount(true);
+  }
+
+  async function handleSaveProfile() {
+    setSavingProfile(true);
+    setSaveProfileMsg("");
+    const res = await api.put("/api/auth/me", { name: editName, mobile: editMobile, password: editPassword });
+    setSavingProfile(false);
+    if (res.success) {
+      setEditingAccount(false);
+      setSaveProfileMsg("Profile updated");
+      if (res.data) setUser(res.data);
+    } else {
+      setSaveProfileMsg("Error: " + (res.message || "Failed to update"));
+    }
+  }
+
   function handleLogout() {
     clearToken();
     toast.success("Logged out successfully");
     navigate("/login", { replace: true });
+  }
+
+  async function handleAddStaff(e: React.FormEvent) {
+    e.preventDefault();
+    if (!staffForm.username.trim() || !staffForm.password.trim()) {
+      toast.error("Username and password required");
+      return;
+    }
+    setStaffSaving(true);
+    const res = await api.post("/api/auth/register", { ...staffForm, role: "staff" });
+    setStaffSaving(false);
+    if (res.success) {
+      toast.success("Staff account created");
+      setShowAddStaff(false);
+      setStaffForm({ username: "", password: "", name: "", mobile: "" });
+      const list = await api.get("/api/auth/users");
+      if (list.success) setUsers(list.data || []);
+    } else {
+      toast.error(res.message || "Failed to create staff");
+    }
+  }
+
+  async function handleDeleteUser(id: string) {
+    if (!confirm("Delete this user?")) return;
+    const res = await api.del(`/api/auth/users/${id}`);
+    if (res.success) {
+      toast.success("User deleted");
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } else {
+      toast.error(res.message || "Failed to delete user");
+    }
   }
 
   if (loading) return <PageSkeleton page="settings" />;
@@ -119,6 +195,7 @@ export default function Settings() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {!isStaff && (
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
@@ -175,7 +252,9 @@ export default function Settings() {
             </button>
           </form>
         </div>
+        )}
 
+        {!isStaff && (
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400">
@@ -260,7 +339,9 @@ export default function Settings() {
             </div>
           </form>
         </div>
+        )}
 
+        {!isStaff && (
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -288,12 +369,36 @@ export default function Settings() {
               <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✓ Rate Limiting Active</p>
               <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">200 requests per minute per IP</p>
             </div>
-            <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Multi-role Support</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Coming in a future update</p>
-            </div>
+            {user?.role !== "staff" && (
+              <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Staff Accounts</p>
+                  <button onClick={() => setShowAddStaff(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-colors">
+                    <Plus size={14} /> Add Staff
+                  </button>
+                </div>
+                {users.length === 0 ? (
+                  <p className="text-xs text-gray-400">No staff accounts yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {users.filter((u) => u.role === "staff").map((u) => (
+                      <div key={u.id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name || u.username}</p>
+                          <p className="text-xs text-gray-400">@{u.username}{u.mobile ? ` · ${u.mobile}` : ""}</p>
+                        </div>
+                        <button onClick={() => handleDeleteUser(u.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
+        )}
 
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
@@ -307,12 +412,37 @@ export default function Settings() {
           </div>
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {(user?.username as string) || "User"}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">
-                {(user?.role as string) || "—"}
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Profile</p>
+                <button onClick={() => editingAccount ? setEditingAccount(false) : handleEditAccount()} className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700">
+                  {editingAccount ? "Cancel" : "Edit"}
+                </button>
+              </div>
+              {editingAccount ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                    <input className="input-field text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Your name" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Mobile</label>
+                    <input className="input-field text-sm" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="Phone number" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">New Password (leave blank to keep)</label>
+                    <input type="password" className="input-field text-sm" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="••••••••" />
+                  </div>
+                  <button onClick={handleSaveProfile} disabled={savingProfile}
+                    className="btn-primary text-sm px-4 py-2">{savingProfile ? "Saving..." : "Save"}</button>
+                  {saveProfileMsg && <p className={`text-xs ${saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600"}`}>{saveProfileMsg}</p>}
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{(user?.name as string) || (user?.username as string) || "User"}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">@{user?.username as string}{user?.mobile ? ` · ${user?.mobile as string}` : ""}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 capitalize">{(user?.role as string) || "—"}</p>
+                </>
+              )}
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
               <div className="flex items-center gap-3">
@@ -341,6 +471,42 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {showAddStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowAddStaff(false)}>
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md mx-4 bg-white dark:bg-dark-800 rounded-2xl shadow-xl border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add Staff Account</h3>
+              <button onClick={() => setShowAddStaff(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleAddStaff} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name</label>
+                <input className="input-field" value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} placeholder="Staff name" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username *</label>
+                <input className="input-field" value={staffForm.username} onChange={(e) => setStaffForm({ ...staffForm, username: e.target.value })} placeholder="Login username" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password *</label>
+                <input type="password" className="input-field" value={staffForm.password} onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })} placeholder="Password" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile</label>
+                <input className="input-field" value={staffForm.mobile} onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })} placeholder="Phone number" />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-600">
+                <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={staffSaving} className="btn-primary">{staffSaving ? "Creating..." : "Create Staff"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
