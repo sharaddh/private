@@ -24,4 +24,8 @@ const BillSchema = new Schema(
   { timestamps: true }
 );
 
+BillSchema.index({ customerId: 1, createdAt: -1 });
+BillSchema.index({ pendingAmount: 1 });
+BillSchema.index({ createdAt: -1 });
+
 export const Bill = model("Bill", BillSchema);

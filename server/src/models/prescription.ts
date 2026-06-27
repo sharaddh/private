@@ -19,4 +19,7 @@ const PrescriptionSchema = new Schema(
   { timestamps: true }
 );
 
+PrescriptionSchema.index({ customerId: 1, createdAt: -1 });
+PrescriptionSchema.index({ visitId: 1 });
+
 export const Prescription = model("Prescription", PrescriptionSchema);

@@ -18,4 +18,7 @@ const CustomerSchema = new Schema(
   { timestamps: true }
 );
 
+CustomerSchema.index({ totalSpent: -1 });
+CustomerSchema.index({ createdAt: -1 });
+
 export const Customer = model("Customer", CustomerSchema);

@@ -12,4 +12,8 @@ const PaymentSchema = new Schema(
   { timestamps: true }
 );
 
+PaymentSchema.index({ customerId: 1, paymentDate: -1 });
+PaymentSchema.index({ paymentDate: -1 });
+PaymentSchema.index({ billId: 1 });
+
 export const Payment = model("Payment", PaymentSchema);

@@ -12,4 +12,7 @@ const DeliverySchema = new Schema(
   { timestamps: true }
 );
 
+DeliverySchema.index({ status: 1, expectedDeliveryDate: 1 });
+DeliverySchema.index({ orderId: 1 });
+
 export const Delivery = model("Delivery", DeliverySchema);

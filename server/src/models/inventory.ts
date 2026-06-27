@@ -12,6 +12,7 @@ const InventorySchema = new Schema(
     gender: { type: String, enum: ["Male", "Female", "Unisex", ""], default: "" },
     supplier: { type: String },
     quantity: { type: Number, default: 0 },
+    location: { type: String, enum: ["shop", "warehouse"], default: "shop" },
     purchasePrice: { type: Number, default: 0 },
     sellingPrice: { type: Number, default: 0 },
     description: { type: String }

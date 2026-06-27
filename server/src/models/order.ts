@@ -18,9 +18,10 @@ const OrderSchema = new Schema(
     coating: { type: String },
     coatingPrice: { type: Number, default: 0 },
     accessories: { type: [String], default: [] },
-    quantity: { type: Number, default: 1 },
-    deliveryDate: { type: Date },
-    status: { type: String, enum: ["Draft","Ordered","In Lab","Ready","Delivered","Cancelled"], default: "Draft" },
+  quantity: { type: Number, default: 1 },
+  forwardedCount: { type: Number, default: 0 },
+  deliveryDate: { type: Date },
+  status: { type: String, enum: ["Draft","Ordered","In Lab","Ready","Delivered","Cancelled"], default: "Draft" },
     labAssigned: { type: String },
     labExpectedDate: { type: Date },
     labRemarks: { type: String },
@@ -29,5 +30,10 @@ const OrderSchema = new Schema(
   },
   { timestamps: true }
 );
+
+OrderSchema.index({ customerId: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1 });
+OrderSchema.index({ classification: 1, createdAt: -1 });
+OrderSchema.index({ createdAt: -1 });
 
 export const Order = model("Order", OrderSchema);
