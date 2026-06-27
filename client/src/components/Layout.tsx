@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, type ReactNode } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { get, post } from "../api";
 import { useToast } from "../context/ToastContext";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
@@ -21,28 +22,28 @@ interface DrawerForm {
 
 const initialDrawer: DrawerForm = { name: "", mobile: "", email: "", age: "", gender: "", city: "", address: "" };
 
-const desktopMenu = [
-  { path: "/workspace", label: "New Visit", icon: PlusCircle },
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/customers", label: "Customers", icon: Users },
-  { path: "/orders", label: "Orders", icon: ShoppingCart },
-  { path: "/bills", label: "Bills", icon: FileText },
-  { path: "/inventory", label: "Inventory", icon: Package },
-  { path: "/delivery", label: "Delivery", icon: Truck },
-  { path: "/pickup", label: "Pickup", icon: Hand },
-  { path: "/payments", label: "Payments", icon: CreditCard },
-  { path: "/announcements", label: "Announcements", icon: Megaphone },
-  { path: "/reports", label: "Reports", icon: BarChart3 },
-  { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { path: "/settings", label: "Settings", icon: Settings },
+const allDesktopMenu = [
+  { path: "/workspace", label: "New Visit", icon: PlusCircle, staff: true },
+  { path: "/", label: "Dashboard", icon: LayoutDashboard, staff: true },
+  { path: "/customers", label: "Customers", icon: Users, staff: true },
+  { path: "/orders", label: "Orders", icon: ShoppingCart, staff: true },
+  { path: "/bills", label: "Bills", icon: FileText, staff: true },
+  { path: "/inventory", label: "Inventory", icon: Package, staff: false },
+  { path: "/delivery", label: "Delivery", icon: Truck, staff: false },
+  { path: "/pickup", label: "Pickup", icon: Hand, staff: true },
+  { path: "/payments", label: "Payments", icon: CreditCard, staff: false },
+  { path: "/announcements", label: "Announcements", icon: Megaphone, staff: false },
+  { path: "/reports", label: "Reports", icon: BarChart3, staff: false },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle, staff: true },
+  { path: "/settings", label: "Settings", icon: Settings, staff: true },
 ];
 
-const mobileNav = [
-  { path: "/", label: "Home", icon: LayoutDashboard },
-  { path: "/customers", label: "Customers", icon: Users },
-  { path: "/workspace", label: "New Visit", icon: PlusCircle },
-  { path: "/orders", label: "Orders", icon: ShoppingCart },
-  { path: "/bills", label: "Bills", icon: FileText },
+const allMobileNav = [
+  { path: "/", label: "Home", icon: LayoutDashboard, staff: true },
+  { path: "/customers", label: "Customers", icon: Users, staff: true },
+  { path: "/workspace", label: "New Visit", icon: PlusCircle, staff: true },
+  { path: "/orders", label: "Orders", icon: ShoppingCart, staff: true },
+  { path: "/bills", label: "Bills", icon: FileText, staff: true },
 ];
 
 function getToken(): string | null {
@@ -50,6 +51,7 @@ function getToken(): string | null {
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
+  const { isStaff } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,6 +147,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   if (isAuthPage) return <>{children}</>;
 
   const isActive = (path: string) => location.pathname === path;
+  const desktopMenu = allDesktopMenu.filter(m => !isStaff || m.staff);
+  const mobileNav = allMobileNav.filter(m => !isStaff || m.staff);
 
   return (
     <div className="flex h-screen bg-surface-50 dark:bg-dark-850 overflow-hidden">
