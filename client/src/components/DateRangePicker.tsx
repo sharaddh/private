@@ -57,26 +57,26 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
       <div className="flex items-center gap-1 flex-wrap">
         {presets.map((p) => (
           <button key={p.label} onClick={() => applyPreset(p)}
-            className="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all duration-200 text-muted-500 dark:text-muted-400 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm border border-surface-200/50 dark:border-dark-600/30 hover:bg-white/80 dark:hover:bg-dark-700/80 hover:text-muted-700 dark:hover:text-muted-300">
+            className="text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 dark:text-gray-400 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700 hover:text-gray-800 dark:hover:text-gray-200 shadow-sm">
             {p.label}
           </button>
         ))}
       </div>
       <div className="flex items-center gap-1">
-        <button onClick={() => shift(-1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 transition-all">
-          <ChevronLeft size={14} />
+        <button onClick={() => shift(-1)} className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 transition-all bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700">
+          <ChevronLeft size={15} />
         </button>
         <input type="date" value={startDate} onChange={(e) => onChange(e.target.value, endDate)}
-          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200/50 dark:border-dark-600/30 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-28 hover:border-surface-300 dark:hover:border-dark-500 cursor-pointer" />
-        <span className="text-xs text-muted-400">—</span>
+          className="text-xs font-medium py-2 pl-2.5 pr-1.5 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-32 hover:border-gray-300 dark:hover:border-dark-500 cursor-pointer shadow-sm" />
+        <span className="text-xs font-medium text-gray-400">—</span>
         <input type="date" value={endDate} onChange={(e) => onChange(startDate, e.target.value)}
-          className="text-xs py-1.5 pl-2 pr-1 rounded-lg border border-surface-200/50 dark:border-dark-600/30 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm text-muted-800 dark:text-muted-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-28 hover:border-surface-300 dark:hover:border-dark-500 cursor-pointer" />
-        <button onClick={() => shift(1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-400 hover:text-muted-600 dark:hover:text-muted-300 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 transition-all">
-          <ChevronRight size={14} />
+          className="text-xs font-medium py-2 pl-2.5 pr-1.5 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/60 transition-all w-32 hover:border-gray-300 dark:hover:border-dark-500 cursor-pointer shadow-sm" />
+        <button onClick={() => shift(1)} className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 transition-all bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700">
+          <ChevronRight size={15} />
         </button>
       </div>
       {count !== undefined && (
-        <span className="text-xs font-medium text-muted-400 dark:text-muted-500 ml-auto px-3 py-1.5 bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm rounded-lg border border-surface-200/50 dark:border-dark-600/30">
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-auto px-4 py-2 bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 shadow-sm">
           {count} {label}{count !== 1 ? "s" : ""}
         </span>
       )}
