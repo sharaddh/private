@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
+import compression from "compression";
 import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
@@ -20,14 +21,17 @@ app.use(cors({
   ],
   credentials: true,
 }));
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "10mb" }));
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 app.use(audit);
 
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
     max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
   })
 );
 
@@ -40,7 +44,6 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 function findDistPath(candidates: string[]): string {
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
-    // Try case-insensitive match on Windows
     if (process.platform === "win32") {
       const dir = path.dirname(p);
       const base = path.basename(p);
@@ -59,10 +62,16 @@ const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), pa
 const distPath = findDistPath(possiblePaths);
 
 if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
-  console.log("Serving client from:", distPath);
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+    },
+  }));
 
-  // SPA catch-all: only serve index.html for non-file, non-API requests
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) {
       res.status(404).json({ success: false, message: "API route not found" });
@@ -70,32 +79,24 @@ if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
     }
     const filePath = path.join(distPath, "index.html");
     if (fs.existsSync(filePath)) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.sendFile(filePath);
     } else {
       res.status(200).json({ success: true, message: "KMJ ERP API" });
     }
   });
 } else {
-  console.log("Client dist not found, checked:", possiblePaths.join(", "));
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) return res.status(404).json({ success: false, message: "API route not found" });
     const fallbackPath = path.resolve(process.cwd(), "client/dist/index.html");
     if (fs.existsSync(fallbackPath)) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.sendFile(fallbackPath);
     } else {
       res.status(200).json({ success: true, message: "KMJ ERP API" });
     }
   });
 }
-// This runs internally inside your server every 5 minutes (300,000 ms)
-setInterval(() => {
-  console.log("Running auto-task inside server...");
-  try {
-    // Put your automated logic here (e.g., db cleanup, data sync)
-  } catch (error) {
-    console.error("Error running auto-task:", error);
-  }
-}, 5 * 60 * 1000);
 
 app.use(errorHandler);
 
