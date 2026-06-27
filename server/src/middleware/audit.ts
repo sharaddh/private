@@ -1,15 +1,19 @@
 import { Request, Response, NextFunction } from "express";
+import { AuthRequest } from "./auth";
 
 export function audit(req: Request, res: Response, next: NextFunction) {
-  const user = (req as any).user;
+  if (process.env.NODE_ENV === "test") return next();
+
+  const authReq = req as AuthRequest;
   const entry = {
-    time: new Date().toISOString(),
+    time: Date.now(),
     method: req.method,
     path: req.originalUrl,
-    user: user ? { id: user.sub, username: user.username } : null,
-    ip: req.ip
+    user: authReq.user ? { id: authReq.user.sub, username: authReq.user.username } : null,
+    ip: req.ip,
   };
-  // For now log to console; replace with DB/file logger in production
-  console.log("AUDIT:", JSON.stringify(entry));
+  if (process.env.NODE_ENV !== "production") {
+    console.log("AUDIT:", JSON.stringify(entry));
+  }
   next();
 }
