@@ -88,7 +88,7 @@ export function useApiGet<T = unknown>(
   );
 }
 
-export function useApiPost<T = unknown, B = unknown>(): {
+export function useApiPost<T = any, B = any>(): {
   execute: (path: string, body: B) => Promise<{ success: boolean; data?: T; message?: string }>;
   loading: boolean;
   error: string | null;
@@ -100,7 +100,7 @@ export function useApiPost<T = unknown, B = unknown>(): {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post(path, body);
+      const res = await api.post<T>(path, body);
       if (!res.success) setError(res.message || "Request failed");
       return res;
     } catch (err) {

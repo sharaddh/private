@@ -1,63 +1,98 @@
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-interface ApiResponse<T = unknown> {
+const TOKEN_KEYS = {
+  ACCESS: "accessToken",
+  REFRESH: "refreshToken",
+} as const;
+
+interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   message?: string;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
+interface RequestOptions extends RequestInit {
+  signal?: AbortSignal;
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+
 function getToken(): string | null {
-  return localStorage.getItem("accessToken");
+  try {
+    return localStorage.getItem(TOKEN_KEYS.ACCESS);
+  } catch {
+    return null;
+  }
 }
 
 function buildHeaders(isJson = true): Record<string, string> {
   const headers: Record<string, string> = {};
   if (isJson) headers["Content-Type"] = "application/json";
+  headers["Accept"] = "application/json";
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 }
 
 async function tryRefresh(): Promise<boolean> {
-  const refresh = localStorage.getItem("refreshToken");
+  const refresh = (() => { try { return localStorage.getItem(TOKEN_KEYS.REFRESH); } catch { return null; } })();
   if (!refresh) return false;
-  try {
-    const res = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh }),
-    });
-    const data = await res.json();
-    if (data.success && data.data?.access) {
-      localStorage.setItem("accessToken", data.data.access);
-      return true;
+
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.access) {
+        try { localStorage.setItem(TOKEN_KEYS.ACCESS, data.data.access); } catch {}
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
     }
-    return false;
-  } catch {
-    return false;
-  }
+  })();
+
+  return refreshPromise;
 }
 
 function clearTokens(): void {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  try {
+    localStorage.removeItem(TOKEN_KEYS.ACCESS);
+    localStorage.removeItem(TOKEN_KEYS.REFRESH);
+  } catch {}
 }
 
-async function request<T = unknown>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
+async function request<T = unknown>(path: string, init: RequestOptions = {}): Promise<ApiResponse<T>> {
+  const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register");
+
   let res = await fetch(`${API_URL}${path}`, init);
-  if (res.status === 401 && !path.includes("/auth/login") && !path.includes("/auth/register")) {
+
+  if (res.status === 401 && !isLoginPath) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      const newToken = localStorage.getItem("accessToken");
-      const newHeaders = { ...init.headers as Record<string, string>, Authorization: `Bearer ${newToken}` };
+      const newToken = getToken();
+      const newHeaders: Record<string, string> = {
+        ...(init.headers as Record<string, string> || {}),
+        Authorization: `Bearer ${newToken}`,
+      };
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
     } else {
       clearTokens();
-      window.location.href = "/login";
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${returnUrl}`;
       return { success: false, message: "Session expired. Please login again." };
     }
   }
+
   const text = await res.text();
   let payload: ApiResponse<T>;
   try {
@@ -65,10 +100,20 @@ async function request<T = unknown>(path: string, init: RequestInit = {}): Promi
   } catch {
     payload = { success: false, message: text || res.statusText };
   }
+
   if (!res.ok) {
-    return { success: false, message: payload?.message || res.statusText, ...payload };
+    return { success: false, message: payload.message || res.statusText, data: payload.data };
   }
   return payload;
+}
+
+export function createCancelableGet<T = any>(path: string): { promise: Promise<ApiResponse<T>>; abort: () => void } {
+  const controller = new AbortController();
+  const promise = request<T>(path, {
+    headers: buildHeaders(false),
+    signal: controller.signal,
+  });
+  return { promise, abort: () => controller.abort() };
 }
 
 export async function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
@@ -107,11 +152,11 @@ export async function patch<T = unknown>(path: string, body: unknown): Promise<A
 }
 
 export function setToken(token: string): void {
-  localStorage.setItem("accessToken", token);
+  try { localStorage.setItem(TOKEN_KEYS.ACCESS, token); } catch {}
 }
 
 export function setRefreshToken(token: string): void {
-  localStorage.setItem("refreshToken", token);
+  try { localStorage.setItem(TOKEN_KEYS.REFRESH, token); } catch {}
 }
 
 export function clearToken(): void {
