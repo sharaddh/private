@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
-import { whatsapp } from "./services/whatsapp";
 import { User } from "./models/user";
 
 let server: ReturnType<typeof app.listen> | null = null;
@@ -48,9 +47,12 @@ async function start() {
 
   await seedAdmin();
 
-  whatsapp.init().catch(() => {
-    // WhatsApp is optional
-  });
+  // Lazy-init WhatsApp: import and init in background after server starts
+  setTimeout(() => {
+    import("./services/whatsapp").then(({ whatsapp }) => {
+      whatsapp.init().catch(() => {});
+    });
+  }, 1000);
 
   server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} [${NODE_ENV}]`);

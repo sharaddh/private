@@ -1,12 +1,15 @@
-import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
+import makeWASocket, {
+  DisconnectReason,
+  AuthenticationState,
+  AuthenticationCreds,
+  SignalKeyStore,
+  initAuthCreds,
+  BufferJSON,
+  Browsers,
+} from "@whiskeysockets/baileys";
 import * as QR from "qrcode";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
-import { execSync } from "child_process";
-import puppeteer from "puppeteer";
-import puppeteerExtra from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { Buffer } from "buffer";
+import mongoose from "mongoose";
 
 interface QueuedMessage {
   type: "text";
@@ -24,8 +27,78 @@ interface QueuedMedia {
 
 type QueueItem = QueuedMessage | QueuedMedia;
 
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return "91" + digits;
+  if (digits.length === 11 && digits.startsWith("0")) return "91" + digits.slice(1);
+  if (digits.length === 12 && digits.startsWith("91")) return digits;
+  return digits;
+}
+
+function toJID(phone: string): string {
+  return normalizePhone(phone) + "@s.whatsapp.net";
+}
+
+async function useMongoDBAuthState(): Promise<{
+  state: AuthenticationState;
+  saveCreds: () => Promise<void>;
+}> {
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("MongoDB not connected");
+  const collection = db.collection("baileys_auth");
+
+  const saved = await collection.findOne({ _id: "auth_state" as any });
+  let creds: AuthenticationCreds;
+  let keysData: Record<string, Record<string, any>> = {};
+
+  if (saved) {
+    const raw = saved as any;
+    creds = JSON.parse(JSON.stringify(raw.creds), BufferJSON.reviver);
+    keysData = JSON.parse(JSON.stringify(raw.keys || {}), BufferJSON.reviver);
+  } else {
+    creds = initAuthCreds();
+  }
+
+  const keys: SignalKeyStore = {
+    get: async (type, ids) => {
+      const typeData = keysData[type] || {};
+      const result: Record<string, any> = {};
+      for (const id of ids) result[id] = typeData[id];
+      return result;
+    },
+    set: async (data) => {
+      for (const [type, entries] of Object.entries(data)) {
+        if (!keysData[type]) keysData[type] = {};
+        for (const [id, value] of Object.entries(entries as Record<string, any>)) {
+          keysData[type][id] = value;
+        }
+      }
+    },
+  };
+
+  const saveCreds = async () => {
+    try {
+      await collection.updateOne(
+        { _id: "auth_state" as any },
+        {
+          $set: {
+            creds: JSON.parse(JSON.stringify(creds, BufferJSON.replacer)),
+            keys: JSON.parse(JSON.stringify(keysData, BufferJSON.replacer)),
+            updatedAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+    } catch (e) {
+      console.error("WhatsApp: failed to save auth state to MongoDB:", e);
+    }
+  };
+
+  return { state: { creds, keys }, saveCreds };
+}
+
 class WhatsAppService {
-  private client: Client | null = null;
+  private sock: ReturnType<typeof makeWASocket> | null = null;
   private _ready = false;
   private _qr: string | null = null;
   private _qrBase64: string | null = null;
@@ -35,8 +108,8 @@ class WhatsAppService {
   private initPromise: Promise<void> | null = null;
   private initGen = 0;
   private messageQueue: QueueItem[] = [];
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private drainInProgress = false;
+  private saveCredsFn: (() => Promise<void>) | null = null;
 
   get ready() { return this._ready; }
   get qr() { return this._qr; }
@@ -45,114 +118,8 @@ class WhatsAppService {
   get pairingCode() { return this._pairingCode; }
   get queueLength() { return this.messageQueue.length; }
 
-  private get sessionPath() {
-    return path.resolve(process.cwd(), ".wwebjs_auth");
-  }
-
-  private cleanSession() {
-    const sessionDir = this.sessionPath;
-    if (fs.existsSync(sessionDir)) {
-      try {
-        fs.rmSync(sessionDir, { recursive: true, force: true });
-        console.log("Cleaned WhatsApp session directory");
-      } catch (e) {
-        console.error("Failed to clean session directory:", e);
-      }
-    }
-  }
-
-  private stealthPatched = false;
-
-  private async resolveExecutablePath(): Promise<string | undefined> {
-    const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    if (envPath && fs.existsSync(envPath)) {
-      console.log("WhatsApp: using PUPPETEER_EXECUTABLE_PATH =", envPath);
-      return envPath;
-    }
-
-    const systemPaths = [
-      "/usr/bin/chromium-browser",
-      "/usr/bin/chromium",
-      "/usr/bin/google-chrome",
-      "/usr/bin/google-chrome-stable",
-      "/snap/bin/chromium",
-    ];
-    for (const p of systemPaths) {
-      if (fs.existsSync(p)) {
-        console.log("WhatsApp: found system Chrome at", p);
-        return p;
-      }
-    }
-
-    try {
-      const browserPath = await puppeteer.executablePath();
-      if (browserPath && fs.existsSync(browserPath)) {
-        console.log("WhatsApp: using puppeteer.executablePath =", browserPath);
-        return browserPath;
-      }
-    } catch (e: any) {
-      console.log("WhatsApp: puppeteer.executablePath() threw:", e?.message);
-    }
-
-    console.log("WhatsApp: Chrome not found — attempting auto-install...");
-    try {
-      execSync("npx puppeteer browsers install chrome", { stdio: "pipe", timeout: 120000 });
-      const installed = await puppeteer.executablePath();
-      if (installed && fs.existsSync(installed)) {
-        console.log("WhatsApp: auto-installed Chrome at", installed);
-        return installed;
-      }
-    } catch (installErr: any) {
-      console.warn("WhatsApp: auto-install failed:", installErr?.message);
-    }
-
-    console.log("WhatsApp: no Chrome binary found");
-    return undefined;
-  }
-
-  private async createClient() {
-    // Inject puppeteer-extra with stealth BEFORE Client constructor runs
-    // (whatsapp-web.js loads puppeteer at module load time, too late for require hook)
-    if (!this.stealthPatched) {
-      puppeteerExtra.use(StealthPlugin());
-      try {
-        (Client as any).puppeteer = puppeteerExtra;
-      } catch {}
-      this.stealthPatched = true;
-      console.log("WhatsApp: injected puppeteer-extra stealth via Client.puppeteer");
-    }
-
-    const executablePath = await this.resolveExecutablePath();
-    const args = [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--use-gl=swiftshader",
-      "--disable-background-timer-throttling",
-      "--disable-backgrounding-occluded-windows",
-      "--disable-renderer-backgrounding",
-      "--no-zygote",
-      "--no-first-run",
-      "--no-default-browser-check",
-      "--disable-features=TranslateUI,ChromeWhatsNewUI,ChromeInProductHelp,StorageBuckets",
-      "--disk-cache-size=10485760",
-    ];
-    const opts: Record<string, any> = {
-      headless: true,
-      args,
-      defaultViewport: { width: 800, height: 600 },
-    };
-    if (executablePath) opts.executablePath = executablePath;
-    console.log("WhatsApp puppeteer config:", JSON.stringify({ executablePath, argsCount: args.length, headless: opts.headless }));
-    return new Client({
-      authStrategy: new LocalAuth({ dataPath: this.sessionPath }),
-      puppeteer: opts,
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
-    });
-  }
-
   async init() {
-    if (this.client) return;
+    if (this.sock) return;
     if (this.initializing) return this.initPromise;
     this.initializing = true;
     const gen = ++this.initGen;
@@ -172,14 +139,12 @@ class WhatsAppService {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         await this.tryInit();
+        console.log("WhatsApp: connected successfully");
         return;
       } catch (err: any) {
         lastError = err;
         console.error(`WhatsApp init attempt ${attempt}/3 failed:`, err?.message || err);
-        if (err?.stack) console.error("Stack:", err.stack.split("\n").slice(0, 4).join("\n"));
         await this.destroy();
-        this._error = null;
-        this.cleanSession();
         if (attempt < 3) {
           const delay = attempt * 10000;
           console.log(`Retrying in ${delay}ms...`);
@@ -187,193 +152,114 @@ class WhatsAppService {
         }
       }
     }
-    console.error("WhatsApp: all 3 init attempts failed — service unavailable");
+    console.error("WhatsApp: all 3 init attempts failed");
     this._error = lastError?.message || "Init failed after 3 attempts";
     this.initializing = false;
     this.initPromise = null;
   }
 
   private async tryInit(): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
+    const { state, saveCreds } = await useMongoDBAuthState();
+    this.saveCredsFn = saveCreds;
+
+    return new Promise<void>((resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
-      let diagTimer: ReturnType<typeof setTimeout> | null = null;
+      let resolved = false;
 
-      try {
-        const client = await this.createClient();
-        this.client = client;
+      const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        browser: Browsers.windows("Chrome"),
+        syncFullHistory: false,
+        markOnlineOnConnect: false,
+        emitOwnEvents: false,
+        generateHighQualityLinkPreview: false,
+        transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
+      });
 
-        client.on("loading_screen", (percent: any, message) => {
-          const p = Number(percent);
-          if (p && p % 25 === 0) console.log(`WhatsApp loading: ${p}% ${message || ""}`);
-        });
+      this.sock = sock;
 
-        const onQr = async (qr: string) => {
+      const onConnectionUpdate = async (update: any) => {
+        const { connection, lastDisconnect, qr, isNewLogin } = update;
+
+        if (qr && !resolved) {
           this._qr = qr;
           this._ready = false;
           this._error = null;
+          this._pairingCode = null;
           try {
             this._qrBase64 = await QR.toDataURL(qr);
           } catch {
             this._qrBase64 = null;
           }
-          console.log("WhatsApp QR code generated");
-        };
+          console.log("WhatsApp: QR code generated");
+        }
 
-        const onReady = () => {
+        if (isNewLogin) {
+          if (this.saveCredsFn) await this.saveCredsFn();
+        }
+
+        if (connection === "open") {
           this._ready = true;
           this._qr = null;
           this._qrBase64 = null;
           this._error = null;
+          this._pairingCode = null;
           if (qrTimer) clearTimeout(qrTimer);
-          console.log("WhatsApp client is ready!");
-          this.startHeartbeat();
-          this.drainQueue();
-          resolve();
-        };
+          if (!resolved) {
+            resolved = true;
+            console.log("WhatsApp: connected!");
+            this.drainQueue();
+            resolve();
+          }
+        }
 
-        const onDisconnected = (reason: string) => {
+        if (connection === "close") {
           const wasReady = this._ready;
           this._ready = false;
-          this.stopHeartbeat();
-          this.client = null;
+          this.sock = null;
+
+          const statusCode = lastDisconnect?.error?.output?.statusCode;
+          const reason = statusCode !== undefined ? (DisconnectReason as any)[statusCode] || "Unknown" : "Unknown";
+
+          if (statusCode === DisconnectReason.loggedOut) {
+            console.log("WhatsApp: logged out, clearing session");
+            if (this.saveCredsFn) {
+              try {
+                const db = mongoose.connection.db;
+                if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+              } catch {}
+            }
+          }
+
           if (qrTimer) clearTimeout(qrTimer);
-          console.log("WhatsApp client disconnected:", reason);
-          this.initGen++;
-          this.initializing = false;
-          this.initPromise = null;
-          if (reason !== "LOGOUT" && wasReady) {
-            console.log("Auto-reconnecting WhatsApp in 3s...");
+
+          if (resolved && wasReady && statusCode !== DisconnectReason.loggedOut) {
+            console.log(`WhatsApp: disconnected (${reason}), reconnecting in 3s...`);
             setTimeout(() => { this.init().catch(() => {}); }, 3000);
+          } else if (!resolved) {
+            resolved = true;
+            reject(new Error(`Connection closed: ${reason}`));
           }
-        };
+        }
+      };
 
-        const onAuthFailure = (msg: string) => {
-          this._error = msg || "Auth failure";
-          console.error("WhatsApp auth failure:", this._error);
-          this._ready = false;
-          this.client = null;
-          this.initializing = false;
-          this.initPromise = null;
-          if (qrTimer) clearTimeout(qrTimer);
-          client.removeListener("qr", onQr);
-          client.removeListener("ready", onReady);
-          client.removeListener("disconnected", onDisconnected);
-          client.removeListener("auth_failure", onAuthFailure);
-          client.destroy().catch(() => {});
-          reject(new Error("Auth failure: " + (msg || "unknown")));
-        };
+      sock.ev.on("connection.update", onConnectionUpdate);
 
-        client.on("qr", onQr);
-        client.on("ready", onReady);
-        client.on("disconnected", onDisconnected);
-        client.on("auth_failure", onAuthFailure);
+      sock.ev.on("creds.update", async () => {
+        if (this.saveCredsFn) await this.saveCredsFn();
+      });
 
-        // Diagnostic: capture screenshot + console errors at 25s to debug QR timeout
-        diagTimer = setTimeout(async () => {
-          try {
-            const page = (client as any).pupPage;
-            if (!page) { console.log("WhatsApp diag: no pupPage yet"); return; }
-            const url = page.url();
-            const title = await page.title().catch(() => "?");
-            console.log("WhatsApp diag: URL =", url, "title =", title);
-            const pageErrors = await page.evaluate(() => {
-              const logs = (window as any).__wwjErrors || [];
-              const errors = (window as any).__wwjPageErrors || [];
-              return { logs: logs.slice(-10), errors: errors.slice(-5) };
-            }).catch(() => ({}));
-            if (pageErrors.logs?.length || pageErrors.errors?.length) {
-              console.log("WhatsApp diag: console errors:", JSON.stringify(pageErrors));
-            }
-            const screenshot = await page.screenshot({ type: "png", encoding: "base64" }).catch(() => null);
-            if (screenshot) {
-              console.log("WhatsApp diag: screenshot captured (base64 length:", screenshot.length, ")");
-              // Write screenshot to disk for debugging
-              const screenshotPath = path.join(process.cwd(), ".whatsapp-diag.png");
-              fs.writeFileSync(screenshotPath, screenshot, "base64");
-              console.log("WhatsApp diag: screenshot saved to", screenshotPath);
-            }
-          } catch (e: any) {
-            console.log("WhatsApp diag error:", e?.message);
-          }
-        }, 25000);
-
-        // Timeout: if no QR or ready within 120s, restart (Render 512MB is slow)
-        qrTimer = setTimeout(() => {
-          if (diagTimer) clearTimeout(diagTimer);
-          clearInterval(pollPage);
-          console.log("WhatsApp: QR timeout — no QR received within 120s, destroying client");
-          client.removeListener("qr", onQr);
-          client.removeListener("ready", onReady);
-          client.removeListener("disconnected", onDisconnected);
-          client.removeListener("auth_failure", onAuthFailure);
-          client.destroy().catch(() => {});
-          reject(new Error("QR timeout after 120s"));
-        }, 120000);
-
-        client.initialize().catch((err) => {
-          if (qrTimer) clearTimeout(qrTimer);
-          if (diagTimer) clearTimeout(diagTimer);
-          reject(err);
-        });
-
-        // Capture page console errors as soon as page becomes available
-        const pollPage = setInterval(() => {
-          const page = (client as any).pupPage;
-          if (!page) return;
-          clearInterval(pollPage);
-          page.on("console", (msg: any) => {
-            if (msg.type() === "error") console.log("WhatsApp page error:", msg.text());
-          });
-          page.on("pageerror", (err: any) => {
-            console.log("WhatsApp page crash:", err?.message || err);
-          });
-          // Inject error capture into page context
-          page.evaluate(() => {
-            (window as any).__wwjErrors = [];
-            (window as any).__wwjPageErrors = [];
-            const orig = console.error;
-            console.error = (...args: any[]) => {
-              (window as any).__wwjErrors.push(args.map(String).join(" "));
-              orig.apply(console, args);
-            };
-            window.addEventListener("error", (e: any) => {
-              (window as any).__wwjPageErrors.push(e.message || String(e));
-            });
-          }).catch(() => {});
-          console.log("WhatsApp: page error listeners attached");
-        }, 200);
-      } catch (err: any) {
-        if (qrTimer) clearTimeout(qrTimer);
-        reject(err);
-      }
+      qrTimer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.log("WhatsApp: QR timeout — no connection within 60s");
+          sock.ev.removeAllListeners("connection.update");
+          sock.end(new Error("QR timeout"));
+          reject(new Error("QR timeout after 60s"));
+        }
+      }, 60000);
     });
-  }
-
-  private startHeartbeat() {
-    this.stopHeartbeat();
-    this.heartbeatTimer = setInterval(async () => {
-      if (!this.client) return;
-      try {
-        const state = await this.client.getState();
-        if (state === "CONNECTED") return;
-        console.log("WhatsApp heartbeat: state is", state, "— triggering reconnect");
-      } catch (err) {
-        console.log("WhatsApp heartbeat: getState() threw — triggering reconnect:", err);
-      }
-      this._ready = false;
-      this.stopHeartbeat();
-      this.client = null;
-      this.initializing = false;
-      this.initPromise = null;
-      this.init().catch(() => {});
-    }, 5 * 60 * 1000);
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
   }
 
   private async drainQueue() {
@@ -393,7 +279,6 @@ class WhatsAppService {
 
     for (const item of items) {
       if (!this._ready) {
-        console.log("WhatsApp became not-ready during queue drain, re-queuing remaining");
         this.messageQueue.unshift(...items.slice(items.indexOf(item)));
         break;
       }
@@ -413,11 +298,10 @@ class WhatsAppService {
   }
 
   private async sendMessageNow(phone: string, message: string): Promise<boolean> {
-    if (!this.client) return false;
+    if (!this.sock) return false;
     try {
-            const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
-            const chatId = `${formatted}@c.us`;
-            await this.client.sendMessage(chatId, message);
+      const jid = toJID(phone);
+      await this.sock.sendMessage(jid, { text: message });
       return true;
     } catch (err) {
       console.error("WhatsApp send error:", err);
@@ -426,24 +310,25 @@ class WhatsAppService {
   }
 
   private async sendMediaNow(phone: string, base64: string, filename: string, caption?: string): Promise<boolean> {
-    if (!this.client) return false;
+    if (!this.sock) return false;
     try {
-      const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
-      const chatId = `${formatted}@c.us`;
-      console.log(`sendMediaNow: sending to ${chatId}, filename: ${filename}, base64 length: ${base64.length}, client ready: ${this._ready}`);
-      const media = new MessageMedia("application/pdf", base64, filename);
-      await this.client.sendMessage(chatId, media, { caption: caption || "" });
-      console.log("sendMediaNow: sent successfully");
+      const jid = toJID(phone);
+      const buffer = Buffer.from(base64, "base64");
+      await this.sock.sendMessage(jid, {
+        document: buffer,
+        fileName: filename,
+        mimetype: "application/pdf",
+        caption: caption || "",
+      });
       return true;
     } catch (err: any) {
       console.error("WhatsApp sendMedia error:", err?.message || err);
-      if (err?.stack) console.error("Stack:", err.stack);
       return false;
     }
   }
 
   async sendMessage(phone: string, message: string): Promise<boolean> {
-    if (!this._ready || !this.client) {
+    if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
       console.log(`WhatsApp: queued text message to ${phone} (queue: ${this.messageQueue.length})`);
       return false;
@@ -452,16 +337,20 @@ class WhatsAppService {
   }
 
   async sendMedia(phone: string, base64: string, filename: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
-    if (!this._ready || !this.client) {
+    if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, caption });
       console.log(`WhatsApp: queued media message to ${phone} (queue: ${this.messageQueue.length})`);
       return false;
     }
     if (throwOnError) {
-      const formatted = phone.replace(/[^0-9]/g, "").replace(/^0+/, "");
-      const chatId = `${formatted}@c.us`;
-      const media = new MessageMedia("application/pdf", base64, filename);
-      await this.client.sendMessage(chatId, media, { caption: caption || "" });
+      const jid = toJID(phone);
+      const buffer = Buffer.from(base64, "base64");
+      await this.sock.sendMessage(jid, {
+        document: buffer,
+        fileName: filename,
+        mimetype: "application/pdf",
+        caption: caption || "",
+      });
       return true;
     }
     return this.sendMediaNow(phone, base64, filename, caption);
@@ -479,9 +368,9 @@ class WhatsAppService {
   }
 
   async requestPairingCode(phoneNumber: string): Promise<string> {
-    if (!this.client) throw new Error("WhatsApp not initialized");
+    if (!this.sock) throw new Error("WhatsApp not initialized");
     this._pairingCode = null;
-    const code = await this.client.requestPairingCode(phoneNumber);
+    const code = await this.sock.requestPairingCode(normalizePhone(phoneNumber));
     this._pairingCode = code;
     this._qr = null;
     this._qrBase64 = null;
@@ -499,12 +388,13 @@ class WhatsAppService {
   }
 
   async destroy() {
-    this.stopHeartbeat();
-    if (this.client) {
+    if (this.sock) {
       try {
-        await this.client.destroy();
+        this.sock.ev.removeAllListeners("connection.update");
+        this.sock.ev.removeAllListeners("creds.update");
+        this.sock.end(new Error("Service destroy"));
       } catch {}
-      this.client = null;
+      this.sock = null;
     }
     this._ready = false;
     this._qr = null;
@@ -512,11 +402,15 @@ class WhatsAppService {
     this._pairingCode = null;
     this._error = null;
     this.initializing = false;
+    this.saveCredsFn = null;
   }
 
   async disconnect() {
+    try {
+      const db = mongoose.connection.db;
+      if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+    } catch {}
     await this.destroy();
-    this.cleanSession();
     this.initializing = false;
     this.initPromise = null;
   }
