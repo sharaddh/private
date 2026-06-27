@@ -40,6 +40,7 @@ const statusUpdateSchema = z.object({
   status: z.string(),
   collectPayment: z.number().optional(),
   paymentMode: z.string().optional(),
+  advanceQuantity: z.number().optional(),
 });
 
 router.get("/", authenticate, cacheRoute(30), async (req, res) => {
@@ -135,10 +136,10 @@ router.patch("/:id/review", authenticate, async (req, res) => {
   res.json({ success: true, data: o });
 });
 
-// PATCH /:id/status — validated status transition with optional due collection
+// PATCH /:id/status — validated status transition with partial advancement support
 router.patch("/:id/status", authenticate, async (req, res) => {
   try {
-    const { status, collectPayment, paymentMode } = statusUpdateSchema.parse(req.body);
+    const { status, collectPayment, paymentMode, advanceQuantity } = statusUpdateSchema.parse(req.body);
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
@@ -150,14 +151,24 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       });
     }
 
-    order.status = status as any;
+    const qty = order.quantity || 1;
+    const advQty = advanceQuantity ?? qty;
+    const currentForwarded = order.forwardedCount || 0;
+    const newForwarded = currentForwarded + advQty;
+
+    if (newForwarded >= qty) {
+      order.status = status as any;
+      order.forwardedCount = 0;
+    } else {
+      order.forwardedCount = newForwarded;
+    }
     await order.save();
 
-    const result: any = { order };
+    const result: any = { order, partial: newForwarded < qty, forwardedCount: newForwarded < qty ? newForwarded : 0 };
 
-    // Auto-update delivery
+    // Auto-update delivery (only on full transition)
     const delivery = await Delivery.findOne({ orderId: order._id });
-    if (delivery) {
+    if (delivery && newForwarded >= qty) {
       if (status === "Ready") {
         delivery.status = "Ready";
         await delivery.save();
@@ -177,8 +188,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       return digits.length === 10 ? `91${digits}` : digits;
     }
 
-    // Auto-send WhatsApp when Ready for pickup
-    if (status === "Ready") {
+    // Auto-send WhatsApp when Ready for pickup (full transition only)
+    if (status === "Ready" && newForwarded >= qty) {
       const customer = await Customer.findById(order.customerId).select("name mobile");
       if (customer?.mobile) {
         const settings = await Settings.findOne().sort({ createdAt: -1 });
@@ -193,8 +204,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       }
     }
 
-    // Auto-send WhatsApp when Delivered
-    if (status === "Delivered") {
+    // Auto-send WhatsApp when Delivered (full transition only)
+    if (status === "Delivered" && newForwarded >= qty) {
       const customer = await Customer.findById(order.customerId).select("name mobile");
       if (customer?.mobile) {
         const settings = await Settings.findOne().sort({ createdAt: -1 });
@@ -205,8 +216,8 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       }
     }
 
-    // Handle due collection on delivery
-    if (status === "Delivered" && collectPayment && collectPayment > 0) {
+    // Handle due collection on delivery (full transition only)
+    if (status === "Delivered" && newForwarded >= qty && collectPayment && collectPayment > 0) {
       const bill = await Bill.findOne({ customerId: order.customerId })
         .sort({ createdAt: -1 });
       if (bill && bill.pendingAmount > 0) {
@@ -257,6 +268,7 @@ function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer
 
     const pw = doc.page.width;
     const m = 20;
+    const cw = pw - 2 * m;
     let y = m;
 
     const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
@@ -268,10 +280,10 @@ function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer
 
     y = 36;
 
-    doc.fontSize(10).font("Helvetica").fillColor("#6b7280");
+    doc.fontSize(9).font("Helvetica").fillColor("#6b7280");
     doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, m, y);
     doc.text(`Total Items: ${orders.length}`, m + 200, y);
-    y += 18;
+    y += 16;
 
     orders.forEach((o, idx) => {
       const cName = o.customerId?.name || "—";
@@ -279,32 +291,56 @@ function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer
       const rx = o.prescription;
       const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ") || "";
       const coating = o.coating || "";
+      const qty = o.quantity || 1;
 
-      const cardTop = y;
-      doc.rect(m, y, pw - 2 * m, 14).fillColor("#f1f5f9").fill();
+      // Card header
+      doc.rect(m, y, cw, 16).fillColor("#f1f5f9").fill();
       doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b");
       doc.text(`#${idx + 1}  ${cName}  ${cMobile}`, m + 6, y + 4);
-      y += 14;
+      doc.fontSize(8).font("Helvetica").fillColor("#6b7280");
+      doc.text(`Qty: ${qty}`, m + cw - 40, y + 4);
+      y += 16;
+
+      // Items in two columns
+      const leftX = m + 6;
+      const rightX = m + cw / 2 + 6;
+      let col = leftX;
+      let itemY = y;
 
       if (o.frameBrand) {
-        doc.fontSize(8).font("Helvetica").fillColor("#4f46e5");
-        doc.text(`Frame: ${o.frameBrand}${o.frameModel ? ` (${o.frameModel})` : ""}${o.frameColor ? ` - ${o.frameColor}` : ""}`, m + 10, y + 2);
-        y += 10;
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#4f46e5");
+        doc.text("Frame:", col, itemY);
+        doc.font("Helvetica").fillColor("#374151");
+        doc.text(`${o.frameBrand}${o.frameModel ? ` (${o.frameModel})` : ""}${o.frameColor ? ` - ${o.frameColor}` : ""}`, col + 38, itemY);
+        itemY += 10;
       }
 
       if (lensLabel || coating) {
         doc.fontSize(8).font("Helvetica-Bold").fillColor("#0891b2");
-        doc.text(`Lens: ${lensLabel}${coating ? ` | Coating: ${coating}` : ""}`, m + 10, y + 2);
-        y += 10;
+        doc.text("Lens:", col, itemY);
+        doc.font("Helvetica").fillColor("#374151");
+        doc.text(`${lensLabel}${coating ? ` | Coating: ${coating}` : ""}`, col + 30, itemY);
+        itemY += 10;
       }
 
+      if (o.accessories?.length) {
+        doc.fontSize(7).font("Helvetica").fillColor("#6b7280");
+        doc.text(`Acc: ${o.accessories.join(", ")}`, col, itemY);
+        itemY += 9;
+      }
+
+      // Prescription on right column
       const rDV = rx?.rightEye?.dv;
       const lDV = rx?.leftEye?.dv;
       const rNV = rx?.rightEye?.nv;
       const lNV = rx?.leftEye?.nv;
 
       if (rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null) {
-        doc.fontSize(8).font("Courier").fillColor("#374151");
+        let rxY = y;
+        doc.fontSize(7).font("Courier-Bold").fillColor("#374151");
+        doc.text("RX", rightX, rxY);
+        rxY += 9;
+        doc.font("Courier").fillColor("#374151");
 
         const sameRx =
           (rDV?.sph === lDV?.sph && rDV?.cyl === lDV?.cyl && rDV?.axis === lDV?.axis) &&
@@ -313,50 +349,52 @@ function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer
         if (sameRx) {
           const dv = formatDemandRx(rDV?.sph || lDV?.sph, rDV?.cyl || lDV?.cyl, rDV?.axis || lDV?.axis);
           const add = (rDV?.sph != null && rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-          doc.text(`Rx: ${dv}${add ? `  Add ${add}` : ""}  PD: ${rx?.pd || "—"}`, m + 14, y + 2);
-          y += 10;
+          doc.text(`${dv}${add ? `  ADD ${add}` : ""}  PD: ${rx?.pd || "—"}`, rightX, rxY);
+          rxY += 9;
         } else {
           if (rDV?.sph != null) {
             const rDv = formatDemandRx(rDV.sph, rDV.cyl, rDV.axis);
             const addR = (rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-            doc.text(`R: ${rDv}${addR ? `  Add ${addR}` : ""}`, m + 14, y + 2);
-            y += 9;
+            doc.text(`R: ${rDv}${addR ? `  ADD ${addR}` : ""}`, rightX, rxY);
+            rxY += 9;
           }
           if (lDV?.sph != null) {
             const lDv = formatDemandRx(lDV.sph, lDV.cyl, lDV.axis);
             const addL = (lNV?.sph != null) ? (lNV.sph - lDV.sph).toFixed(2) : null;
-            doc.text(`L: ${lDv}${addL ? `  Add ${addL}` : ""}`, m + 14, y + 2);
-            y += 9;
+            doc.text(`L: ${lDv}${addL ? `  ADD ${addL}` : ""}`, rightX, rxY);
+            rxY += 9;
           }
           if (rx?.pd) {
-            doc.text(`PD: ${rx.pd}`, m + 14, y + 2);
-            y += 9;
+            doc.text(`PD: ${rx.pd}`, rightX, rxY);
+            rxY += 9;
           }
         }
 
         if (rNV?.sph != null || lNV?.sph != null) {
-          const showNv = sameRx
-            ? `NV: ${formatDemandRx(rNV?.sph || lNV?.sph, rNV?.cyl || lNV?.cyl, rNV?.axis || lNV?.axis)}`
-            : `R NV: ${rNV?.sph != null ? formatDemandRx(rNV.sph, rNV.cyl, rNV.axis) : "—"}  |  L NV: ${lNV?.sph != null ? formatDemandRx(lNV.sph, lNV.cyl, lNV.axis) : "—"}`;
-          doc.text(showNv, m + 14, y + 2);
-          y += 9;
+          if (sameRx) {
+            doc.text(`NV: ${formatDemandRx(rNV?.sph || lNV?.sph, rNV?.cyl || lNV?.cyl, rNV?.axis || lNV?.axis)}`, rightX, rxY);
+          } else {
+            doc.text(`R NV: ${rNV?.sph != null ? formatDemandRx(rNV.sph, rNV.cyl, rNV.axis) : "—"}  L NV: ${lNV?.sph != null ? formatDemandRx(lNV.sph, lNV.cyl, lNV.axis) : "—"}`, rightX, rxY);
+          }
+          rxY += 9;
         }
 
-        y += 2;
+        itemY = Math.max(itemY, rxY);
       }
 
-      y += 4;
+      y = Math.max(itemY, y + 30) + 6;
 
-      if (y > 260) {
+      if (y > 270) {
         doc.addPage();
         y = m;
       }
     });
 
-    if (y < 260) {
-      doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(m, 270).lineTo(pw - m, 270).stroke();
+    // Footer
+    if (y < 270) {
+      doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(m, 275).lineTo(pw - m, 275).stroke();
       doc.fontSize(8).font("Helvetica").fillColor("#9ca3af");
-      doc.text(`Generated by KMJ Optical ERP  |  ${title}`, pw / 2, 278, { align: "center" });
+      doc.text(`Generated by KMJ Optical ERP  |  ${title}`, pw / 2, 283, { align: "center" });
     }
 
     doc.end();

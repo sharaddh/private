@@ -4,105 +4,104 @@ import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { asyncHandler } from "../middleware/asyncHandler";
 import { audit } from "../middleware/audit";
+import { cacheRoute, invalidateCache } from "../middleware/cache";
+import { AppError } from "../middleware/errorHandler";
 
 const router = Router();
 
 const createSchema = z.object({ customerId: z.string(), billId: z.string().optional(), amount: z.number().min(0.01), paymentMode: z.string().optional(), paymentDate: z.string().optional(), notes: z.string().optional() });
 
-router.get("/", authenticate, async (req, res) => {
+router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
   const { startDate, endDate } = req.query;
-  const filter: any = {};
+  const filter: Record<string, unknown> = {};
   if (startDate || endDate) {
     filter.paymentDate = {};
     if (startDate) {
       const s = new Date(startDate as string);
       s.setHours(0, 0, 0, 0);
-      filter.paymentDate.$gte = s;
+      (filter.paymentDate as Record<string, unknown>).$gte = s;
     }
     if (endDate) {
       const e = new Date(endDate as string);
       e.setHours(23, 59, 59, 999);
-      filter.paymentDate.$lte = e;
+      (filter.paymentDate as Record<string, unknown>).$lte = e;
     }
   }
-  const list = await Payment.find(filter).populate("customerId", "name mobile customerId").sort({ paymentDate: -1 }).limit(500);
+  const list = await Payment.find(filter)
+    .populate("customerId", "name mobile customerId")
+    .sort({ paymentDate: -1 })
+    .limit(500)
+    .lean();
   res.json({ success: true, data: list });
-});
+}));
 
-router.put("/:id", authenticate, audit, async (req, res) => {
-  try {
-    const oldPayment = await Payment.findById(req.params.id);
-    if (!oldPayment) return res.status(404).json({ success: false, message: "Not found" });
-
-    const oldAmount = oldPayment.amount;
-    const newAmount = req.body.amount ?? oldAmount;
-    const diff = newAmount - oldAmount;
-
-    const updateData: any = { ...req.body };
-    if (Math.abs(diff) > 0.01) {
-      const changeNote = `Amount changed from ₹${oldAmount.toFixed(0)} to ₹${newAmount.toFixed(0)}`;
-      const existingNotes = updateData.notes || oldPayment.notes || "";
-      updateData.notes = existingNotes ? `${existingNotes} | ${changeNote}` : changeNote;
+router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
+  const p = createSchema.parse(req.body);
+  const payment = await Payment.create({
+    ...p,
+    paymentDate: p.paymentDate ? new Date(p.paymentDate) : undefined,
+  });
+  if (p.billId) {
+    const bill = await Bill.findByIdAndUpdate(p.billId, {
+      $inc: { advancePaid: p.amount },
+    }, { new: true });
+    if (bill) {
+      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - (bill.advancePaid || 0));
+      await bill.save();
     }
-
-    Object.assign(oldPayment, updateData);
-    await oldPayment.save();
-
-    if (oldPayment.billId && Math.abs(diff) > 0.01) {
-      const bill = await Bill.findById(oldPayment.billId);
-      if (bill) {
-        bill.advancePaid = Math.max(0, (bill.advancePaid || 0) + diff);
-        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-        await bill.save();
-      }
-      const customer = await Customer.findById(oldPayment.customerId);
-      if (customer) {
-        customer.pendingAmount = Math.max(0, (customer.pendingAmount || 0) - diff);
-        await customer.save();
-      }
-    }
-
-    res.json({ success: true, data: oldPayment });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
   }
-});
+  await Customer.findByIdAndUpdate(p.customerId, {
+    $inc: { pendingAmount: -p.amount },
+  });
+  await Promise.all([
+    invalidateCache("/api/payments"),
+    invalidateCache("/api/bills"),
+    invalidateCache("/api/dashboard"),
+  ]);
+  res.json({ success: true, data: payment });
+}));
 
-router.delete("/:id", authenticate, audit, async (req, res) => {
-  try {
-    const p = await Payment.findByIdAndDelete(req.params.id);
-    if (!p) return res.status(404).json({ success: false, message: "Not found" });
-    res.json({ success: true, message: "Deleted" });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
+router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
+  const oldPayment = await Payment.findById(req.params.id);
+  if (!oldPayment) throw new AppError(404, "Not found");
+
+  const oldAmount = oldPayment.amount;
+  const newAmount = req.body.amount ?? oldAmount;
+  const diff = newAmount - oldAmount;
+
+  const updateData = { ...req.body };
+  if (Math.abs(diff) > 0.01) {
+    const changeNote = `Amount changed from ₹${oldAmount.toFixed(0)} to ₹${newAmount.toFixed(0)}`;
+    const existingNotes = updateData.notes || oldPayment.notes || "";
+    updateData.notes = existingNotes ? `${existingNotes} | ${changeNote}` : changeNote;
   }
-});
 
-router.post("/", authenticate, audit, async (req, res) => {
-  try {
-    const p = createSchema.parse(req.body);
-    const payment = new Payment({ ...p, paymentDate: p.paymentDate ? new Date(p.paymentDate) : undefined } as any);
-    await payment.save();
-    // update bill pending amount
-    if (p.billId) {
-      const bill = await Bill.findById(p.billId);
-      if (bill) {
-        bill.advancePaid = (bill.advancePaid || 0) + p.amount;
-        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-        await bill.save();
-      }
-    }
-    const customer = await Customer.findById(p.customerId);
-    if (customer) {
-      customer.pendingAmount = Math.max(0, (customer.pendingAmount || 0) - p.amount);
-      await customer.save();
-    }
+  Object.assign(oldPayment, updateData);
+  await oldPayment.save();
 
-    res.json({ success: true, data: payment });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
+  if (oldPayment.billId && Math.abs(diff) > 0.01) {
+    const bill = await Bill.findById(oldPayment.billId);
+    if (bill) {
+      bill.advancePaid = Math.max(0, (bill.advancePaid || 0) + diff);
+      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
+      await bill.save();
+    }
+    await Customer.findByIdAndUpdate(oldPayment.customerId, {
+      $inc: { pendingAmount: -diff },
+    });
   }
-});
+
+  await invalidateCache("/api/payments");
+  res.json({ success: true, data: oldPayment });
+}));
+
+router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
+  const p = await Payment.findByIdAndDelete(req.params.id).lean();
+  if (!p) throw new AppError(404, "Not found");
+  await invalidateCache("/api/payments");
+  res.json({ success: true, message: "Deleted" });
+}));
 
 export default router;
