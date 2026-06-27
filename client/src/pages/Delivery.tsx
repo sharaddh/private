@@ -51,27 +51,27 @@ export default function Delivery() {
 
       <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="delivery" />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="card text-center py-5">
-          <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Package size={20} className="text-emerald-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card text-center py-6">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <Package size={24} className="text-emerald-500" />
           </div>
-          <p className="stat-value text-emerald-600">{list.length}</p>
-          <p className="text-sm text-gray-500">Total Delivered</p>
+          <p className="text-3xl font-bold text-emerald-600">{list.length}</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">Total Delivered</p>
         </div>
-        <div className="card text-center py-5">
-          <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <DollarSign size={20} className="text-blue-500" />
+        <div className="card text-center py-6">
+          <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <DollarSign size={24} className="text-blue-500" />
           </div>
-          <p className="stat-value text-primary-600">₹{totalRevenue.toLocaleString()}</p>
-          <p className="text-sm text-gray-500">Total Revenue</p>
+          <p className="text-3xl font-bold text-primary-600">₹{totalRevenue.toLocaleString()}</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">Total Revenue</p>
         </div>
-        <div className="card text-center py-5">
-          <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Truck size={20} className="text-amber-500" />
+        <div className="card text-center py-6">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <Truck size={24} className="text-amber-500" />
           </div>
-          <p className="stat-value text-gray-900 dark:text-white">{list.reduce((s, o) => s + (o.billInfo?.pendingAmount > 0 ? 1 : 0), 0)}</p>
-          <p className="text-sm text-gray-500">Pending Payments</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{list.reduce((s, o) => s + (o.billInfo?.pendingAmount > 0 ? 1 : 0), 0)}</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">Pending Payments</p>
         </div>
       </div>
 
@@ -123,8 +123,8 @@ export default function Delivery() {
                   </div>
                 </div>
                 <button onClick={() => navigate(`/customers/${customerId(o)}?visitId=${o.visitId || ""}`)}
-                  className="btn-ghost btn-sm gap-1 flex-shrink-0">
-                  <Eye size={14} /> View
+                  className="btn-primary gap-2 px-5 py-2.5 flex-shrink-0 text-sm">
+                  <Eye size={16} /> View
                 </button>
               </div>
             </div>

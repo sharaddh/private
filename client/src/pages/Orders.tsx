@@ -3,8 +3,7 @@ import api from "../api";
 import { useToast } from "../context/ToastContext";
 import { useCachedData } from "../hooks/useCachedData";
 import PageSkeleton from "../components/PageSkeleton";
-import { Skeleton, SkeletonStats, SkeletonCard } from "../components/Skeleton";
-import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2 } from "lucide-react";
+import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
 
 const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
@@ -15,8 +14,11 @@ const VALID_NEXT: Record<string, string> = {
   "In Lab": "Ready",
 };
 
-function DotProgress({ status }: { status: string }) {
+function DotProgress({ status, forwardedCount, quantity }: { status: string; forwardedCount?: number; quantity?: number }) {
   const currentIdx = STATUS_STEPS.indexOf(status);
+  const qty = quantity || 1;
+  const fwd = forwardedCount || 0;
+  const pct = fwd > 0 && fwd < qty ? fwd / qty : 0;
   return (
     <div className="flex items-center gap-1 px-1">
       {STATUS_STEPS.slice(0, 4).map((step, i) => (
@@ -31,9 +33,13 @@ function DotProgress({ status }: { status: string }) {
             {i < currentIdx ? "✓" : i + 1}
           </div>
           {i < 3 && (
-            <div className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 ${
+            <div className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 relative overflow-hidden ${
               i < currentIdx ? "bg-primary-500" : "bg-gray-200 dark:bg-dark-600"
-            }`} />
+            }`}>
+              {i === currentIdx && pct > 0 && (
+                <div className="absolute inset-0 bg-primary-400 transition-all duration-500" style={{ width: `${pct * 100}%` }} />
+              )}
+            </div>
           )}
         </div>
       ))}
@@ -58,6 +64,8 @@ export default function Orders() {
   const toast = useToast();
   const [filter, setFilter] = useState<string>("all");
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [advanceModal, setAdvanceModal] = useState<{ order: any; nextStatus: string } | null>(null);
+  const [advanceQty, setAdvanceQty] = useState(1);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
   const params = new URLSearchParams({ startDate, endDate });
@@ -72,23 +80,44 @@ export default function Orders() {
     if (rawList) setList(rawList);
   }, [rawList]);
 
-  async function advanceStatus(order: any) {
+  function openAdvanceModal(order: any) {
     const next = VALID_NEXT[order.status];
     if (!next) return;
+    const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
+    setAdvanceQty(remaining);
+    setAdvanceModal({ order, nextStatus: next });
+  }
+
+  async function confirmAdvance() {
+    if (!advanceModal) return;
+    const { order, nextStatus } = advanceModal;
     const prevStatus = order.status;
+    const qty = order.quantity || 1;
+    const remaining = qty - (order.forwardedCount || 0);
+    const advQty = Math.min(advanceQty, remaining);
+    if (advQty <= 0) { setAdvanceModal(null); return; }
+    const isPartial = advQty < remaining;
     setStatusLoading(order._id);
-    setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: next } : o));
-    toast.success(next === "Ready" ? "Order moved to Ready" : `Order moved to "${next}"`);
+    setAdvanceModal(null);
+    setList((prev) => prev.map((o) => o._id === order._id ? {
+      ...o,
+      forwardedCount: isPartial ? (o.forwardedCount || 0) + advQty : 0,
+      status: isPartial ? o.status : nextStatus,
+    } : o));
     try {
-      const res = await api.patch(`/api/orders/${order._id}/status`, { status: next });
+      const res = await api.patch(`/api/orders/${order._id}/status`, { status: nextStatus, advanceQuantity: advQty });
       if (!res.success) {
-        setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus } : o));
+        setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus, forwardedCount: order.forwardedCount || 0 } : o));
         toast.error(res.message || "Failed to update status");
-      } else if (next === "Ready") {
+      } else if (res.data?.partial) {
+        toast.success(`${advQty} of ${qty} pair(s) moved to "${nextStatus}"`);
+      } else if (nextStatus === "Ready") {
         toast.success("Order ready — pickup notification sent");
+      } else {
+        toast.success(`Order moved to "${nextStatus}"`);
       }
     } catch {
-      setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus } : o));
+      setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus, forwardedCount: order.forwardedCount || 0 } : o));
       toast.error("Failed to update status");
     }
     finally { setStatusLoading(null); }
@@ -135,11 +164,11 @@ export default function Orders() {
           { key: "Ready", label: "Ready", value: stats.ready, color: "text-blue-600 dark:text-blue-400" },
         ].map((s) => (
           <button key={s.key} type="button" onClick={() => setFilter(s.key)}
-            className={`relative card text-center py-5 px-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+            className={`relative card text-center py-6 px-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
               filter === s.key ? "ring-2 ring-primary-500/40 ring-offset-2 dark:ring-offset-dark-850" : ""
             }`}>
-            <p className={`text-3xl font-bold tracking-tight ${s.color}`}>{s.value}</p>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
+            <p className={`text-4xl font-bold tracking-tight ${s.color}`}>{s.value}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">{s.label}</p>
           </button>
         ))}
       </div>
@@ -155,7 +184,7 @@ export default function Orders() {
           { key: "Delivered", label: "Delivered" },
         ].map((f) => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
               filter === f.key
                 ? "bg-primary-600 text-white shadow-sm"
                 : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700"
@@ -245,7 +274,15 @@ export default function Orders() {
                 {/* Progress bar */}
                 {VALID_NEXT[o.status] && (
                   <div className="px-5 pb-2">
-                    <DotProgress status={o.status} />
+                    <DotProgress status={o.status} forwardedCount={o.forwardedCount} quantity={o.quantity} />
+                  </div>
+                )}
+                {/* Partial progress indicator */}
+                {(o.forwardedCount || 0) > 0 && (o.forwardedCount || 0) < (o.quantity || 1) && (
+                  <div className="px-5 pb-2">
+                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">
+                      {o.forwardedCount} of {o.quantity} pair(s) advanced to {VALID_NEXT[o.status] || "next"}
+                    </span>
                   </div>
                 )}
                 {/* Actions */}
@@ -255,13 +292,13 @@ export default function Orders() {
                       const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
                       window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
                     }}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 active:scale-[0.98] transition-all duration-200 shadow-sm">
-                      <Eye size={16} /> View Details
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 active:scale-[0.98] transition-all duration-200 shadow-sm">
+                      <Eye size={18} /> View Details
                     </button>
                     {VALID_NEXT[o.status] ? (
-                      <button type="button" disabled={statusLoading === o._id} onClick={() => advanceStatus(o)}
-                        className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {statusLoading === o._id ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+                      <button type="button" disabled={statusLoading === o._id} onClick={() => openAdvanceModal(o)}
+                        className="flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl text-sm font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {statusLoading === o._id ? <Loader2 size={18} className="animate-spin" /> : <ArrowUpRight size={18} />}
                         Mark as {VALID_NEXT[o.status]}
                       </button>
                     ) : (
@@ -269,8 +306,8 @@ export default function Orders() {
                         const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
                         window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
                       }}
-                        className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 active:scale-[0.98] transition-all duration-200">
-                        <ArrowUpRight size={16} />
+                        className="flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 active:scale-[0.98] transition-all duration-200">
+                        <ArrowUpRight size={18} />
                       </button>
                     )}
                   </div>
@@ -278,6 +315,52 @@ export default function Orders() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Advance quantity modal */}
+      {advanceModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setAdvanceModal(null)}>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ArrowUpRight size={24} className="text-primary-600 dark:text-primary-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-2">Mark as "{advanceModal.nextStatus}"</h3>
+            <p className="text-sm text-gray-500 text-center mb-5">
+              {advanceModal.order.quantity > 1
+                ? `How many of ${advanceModal.order.quantity} pair(s) to advance?`
+                : `Advance this order to "${advanceModal.nextStatus}"?`}
+            </p>
+            {advanceModal.order.quantity > 1 && (
+              <div className="flex items-center justify-center gap-4 mb-5">
+                <button onClick={() => setAdvanceQty(Math.max(1, advanceQty - 1))}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors">
+                  <Minus size={18} className="text-gray-600 dark:text-gray-400" />
+                </button>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white w-12 text-center">{advanceQty}</span>
+                <button onClick={() => setAdvanceQty(Math.min((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0), advanceQty + 1))}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors">
+                  <Plus size={18} className="text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+            )}
+            {(advanceModal.order.forwardedCount || 0) > 0 && (
+              <p className="text-xs text-amber-500 text-center mb-3">
+                {advanceModal.order.forwardedCount} of {advanceModal.order.quantity} already advanced. Remaining: {(advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0)}
+              </p>
+            )}
+            <div className="space-y-2">
+              <button onClick={confirmAdvance} disabled={statusLoading === advanceModal.order._id}
+                className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-base font-semibold disabled:opacity-50">
+                {statusLoading === advanceModal.order._id ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                {advanceQty < ((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0))
+                  ? `Advance ${advanceQty} of ${advanceModal.order.quantity} pair(s)`
+                  : `Mark All as ${advanceModal.nextStatus}`}
+              </button>
+              <button onClick={() => setAdvanceModal(null)} disabled={statusLoading === advanceModal.order._id}
+                className="w-full btn-secondary py-3.5">Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

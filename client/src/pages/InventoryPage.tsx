@@ -14,7 +14,7 @@ export default function InventoryPage() {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
     sku: "", category: "Frame", inventoryType: "spectacles", brand: "", model: "", color: "", size: "",
-    gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "",
+    gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "", location: "shop",
   });
   const [adjust, setAdjust] = useState({ id: "", qty: 0, note: "" });
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function InventoryPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ sku: "", category: "Frame", inventoryType: "spectacles", brand: "", model: "", color: "", size: "", gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "" });
+    setForm({ sku: "", category: "Frame", inventoryType: "spectacles", brand: "", model: "", color: "", size: "", gender: "", supplier: "", quantity: 0, purchasePrice: 0, sellingPrice: 0, description: "", location: "shop" });
     setShowForm(true);
   }
 
@@ -49,7 +49,7 @@ export default function InventoryPage() {
       brand: item.brand || "", model: item.model || "", color: item.color || "", size: item.size || "",
       gender: item.gender || "", supplier: item.supplier || "",
       quantity: item.quantity || 0, purchasePrice: item.purchasePrice || 0, sellingPrice: item.sellingPrice || 0,
-      description: item.description || "",
+      description: item.description || "", location: item.location || "shop",
     });
     setShowForm(true);
   }
@@ -228,6 +228,11 @@ export default function InventoryPage() {
           { key: "model", label: "Model" },
           { key: "color", label: "Color" },
           { key: "gender", label: "Gender", render: (v) => v ? <span className="text-xs">{v}</span> : null },
+          { key: "location", label: "Location", render: (v) => (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v === "warehouse" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"}`}>
+              {v === "warehouse" ? "Warehouse" : "Shop"}
+            </span>
+          )},
           { key: "quantity", label: "Stock", render: (v) => (
             <span className={`font-medium ${v > 10 ? "text-emerald-600 dark:text-emerald-400" : v > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
               {v || 0}
@@ -310,6 +315,13 @@ export default function InventoryPage() {
             <div>
               <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Supplier</label>
               <input className="input-field" value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="Supplier name" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Location</label>
+              <select className="input-field" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value as "shop" | "warehouse" })}>
+                <option value="shop">Shop</option>
+                <option value="warehouse">Warehouse</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Quantity</label>

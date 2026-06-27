@@ -306,8 +306,8 @@ export default function Pickup() {
               onKeyDown={(e) => { if (e.key === "Enter") searchCustomer(); }}
               className="input-field pl-10 text-base" />
           </div>
-          <button onClick={searchCustomer} disabled={isLoading} className="btn-primary px-6">
-            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+          <button onClick={searchCustomer} disabled={isLoading} className="btn-primary px-8 py-3">
+            {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
           </button>
         </div>
       </div>
@@ -536,10 +536,10 @@ export default function Pickup() {
                     </div>
                   </div>
                   <div className="flex gap-2 pt-1">
-                    <button onClick={handleCreateBill} className="btn-primary btn-sm flex items-center gap-1">
-                      <Plus size={14} /> Create Bill — ₹{billTotal.toFixed(0)}
+                    <button onClick={handleCreateBill} className="btn-primary flex items-center gap-2 px-6 py-3">
+                      <Plus size={18} /> Create Bill — ₹{billTotal.toFixed(0)}
                     </button>
-                    <button onClick={() => setShowCreateBill(false)} className="btn-ghost btn-sm">Cancel</button>
+                    <button onClick={() => setShowCreateBill(false)} className="btn-secondary px-6 py-3">Cancel</button>
                   </div>
                 </div>
               ) : (
@@ -568,13 +568,13 @@ export default function Pickup() {
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200 dark:border-dark-700">
                 <button onClick={() => setShowConfirmDeliver(true)} disabled={delivering || !bill}
-                  className="btn-success flex items-center gap-2 px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {delivering ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  className="btn-success flex items-center gap-2 px-8 py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed">
+                  {delivering ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                   {bill?.pendingAmount > 0 ? `Deliver & Collect ₹${collectAmount}` : "Mark Delivered"}
                 </button>
                 <button onClick={() => navigate(`/customers/${selectedCustomer._id}`)}
-                  className="btn-secondary flex items-center gap-2 py-2.5">
-                  <User size={16} /> View Profile
+                  className="btn-secondary flex items-center gap-2 px-6 py-3.5 text-base">
+                  <User size={20} /> View Profile
                 </button>
               </div>
               {!bill && <p className="text-xs text-amber-500 text-center">Create a bill first to mark as delivered</p>}
@@ -594,12 +594,12 @@ export default function Pickup() {
                     </p>
                     <div className="space-y-2">
                       <button onClick={handleDeliver} disabled={delivering}
-                        className="w-full btn-success flex items-center justify-center gap-2 py-2.5 disabled:opacity-50">
-                        {delivering ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                        className="w-full btn-success flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-50">
+                        {delivering ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                         {delivering ? "Delivering..." : "Confirm Delivery"}
                       </button>
                       <button onClick={() => setShowConfirmDeliver(false)} disabled={delivering}
-                        className="w-full btn-secondary py-2.5">Cancel</button>
+                        className="w-full btn-secondary py-3.5 text-base">Cancel</button>
                     </div>
                   </div>
                 </div>
