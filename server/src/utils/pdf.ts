@@ -56,21 +56,10 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
 
   // Logo + Shop info
   if (settings.logo) {
-    const logoData = settings.logo;
-    let format = "JPEG";
-    if (logoData.startsWith("data:image/png")) format = "PNG";
-    else if (logoData.startsWith("data:image/gif")) format = "GIF";
-    else if (logoData.startsWith("data:image/webp")) format = "WEBP";
     try {
-      doc.image(logoData, margin, y, { width: 28, height: 28 });
+      doc.image(settings.logo, margin, y, { width: 28, height: 28 });
     } catch {
-      try {
-        doc.image(logoData, margin, y, { width: 28, height: 28 });
-      } catch {
-        try {
-          doc.image(logoData, margin, y, { width: 28, height: 28 });
-        } catch {}
-      }
+      // Logo is optional, skip silently
     }
   }
 
