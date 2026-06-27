@@ -2,9 +2,11 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApiGet } from "../hooks/useApi";
+import { useAuth } from "../context/AuthContext";
 import StatCard from "../components/StatCard";
 import PageSkeleton from "../components/PageSkeleton";
 import CameraScanner from "../components/CameraScanner";
+import { SalesTrendChart, PaymentModeChart, OrderStatusChart } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import {
   Users, ShoppingCart, FileText, Package, Truck,
@@ -15,9 +17,15 @@ import {
 
 interface DashboardData {
   counts: { customers: number; orders: number; bills: number; payments: number; inventory: number; deliveries: number; visits: number; };
-  todaySales: number; todayCollection: number; readyDeliveries: number; newCustomersToday: number;
+  todaySales: number; todayCollection: number; weekSales: number; monthSales: number;
+  readyDeliveries: number; newCustomersToday: number;
   lowStock: number; pendingPayments: number; recentCustomers: Record<string, unknown>[]; recentOrders: Record<string, unknown>[]; todayDeliveries: Record<string, unknown>[]; pendingBills: Record<string, unknown>[];
-  incompleteOrders: Record<string, unknown>[];
+  incompleteOrders: (Record<string, unknown> & { stockStatus?: { lensBrand?: { shop: number; warehouse: number } | null; frameBrand?: { shop: number; warehouse: number } | null } | null })[];
+  todayOrders: number; weekOrders: number; monthOrders: number;
+  todayBills: number; weekBills: number; monthBills: number;
+  dailySales: { date: string; total: number }[];
+  paymentModeSplit: { mode: string; total: number; count: number }[];
+  orderStatusCounts: { status: string; count: number }[];
 }
 
 export default function Dashboard() {
@@ -27,8 +35,12 @@ export default function Dashboard() {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [sendingDemand, setSendingDemand] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
+  const [hasDataOnce, setHasDataOnce] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
+  const { isStaff } = useAuth();
+  useEffect(() => { if (data) setHasDataOnce(true); }, [data]);
 
   useEffect(() => {
     api.get<Record<string, unknown>[]>("/api/todos").then((d) => { if (d.success) setTodos(d.data || []); });
@@ -62,19 +74,6 @@ export default function Dashboard() {
     });
   }, []);
 
-  const toggleReviewed = useCallback(async (o: Record<string, unknown>) => {
-    const newVal = !o.reviewed;
-    const res = await api.patch(`/api/orders/${o._id}/review`, { reviewed: newVal });
-    if (res.success) {
-      if (data) {
-        data.incompleteOrders = data.incompleteOrders.map((x) =>
-          x._id === o._id ? { ...x, reviewed: newVal } : x
-        );
-      }
-      refetch();
-    }
-  }, [data, refetch]);
-
   const classifyOrder = useCallback(async (id: string, classification: string) => {
     const res = await api.patch(`/api/orders/${id}/classify`, { classification });
     if (res.success) refetch();
@@ -93,8 +92,7 @@ export default function Dashboard() {
     } else toast.error(res.message || "Failed to send");
   }, [toast]);
 
-  if (loading) return <PageSkeleton page="dashboard" />;
-
+  if (loading && !hasDataOnce) return <PageSkeleton page="dashboard" />;
   if (!data) return null;
 
   const greeting = (() => {
@@ -104,6 +102,13 @@ export default function Dashboard() {
     return "Good evening";
   })();
 
+  const salesValue = period === "today" ? data.todaySales : period === "week" ? data.weekSales : data.monthSales;
+  const collectionValue = period === "today" ? data.todayCollection : 0;
+  const ordersValue = period === "today" ? data.todayOrders : period === "week" ? data.weekOrders : data.monthOrders;
+  const billsValue = period === "today" ? data.todayBills : period === "week" ? data.weekBills : data.monthBills;
+
+  const periodLabel = period === "today" ? "Today" : period === "week" ? "This Week" : "This Month";
+
   const activeTodos = todos.filter((t) => !t.done);
   const doneTodos = todos.filter((t) => t.done);
 
@@ -112,50 +117,123 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">{greeting}!</h1>
-          <p className="page-subtitle">Here's what's happening at your shop today.</p>
+          <p className="page-subtitle">Here's what's happening at your shop.</p>
         </div>
-        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2">
-          <QrCode size={18} /> Scan
+        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2.5 px-5 py-2.5 text-sm font-semibold rounded-xl">
+          <QrCode size={20} /> Scan Barcode
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Today's Sales" value={`₹${(data.todaySales || 0).toLocaleString()}`} icon={<TrendingUp size={20} />} color="primary" />
-        <StatCard title="Collection" value={`₹${(data.todayCollection || 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="emerald" />
-        <StatCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={20} />} color="amber" />
-        <StatCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={20} />} color="red" onClick={() => navigate("/inventory")} />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard title="Customers" value={data.counts.customers} subtitle={`+${data.newCustomersToday || 0} today`} icon={<Users size={18} />} color="primary" onClick={() => navigate("/customers")} />
-        <StatCard title="Orders" value={data.counts.orders} icon={<ShoppingCart size={18} />} color="blue" onClick={() => navigate("/orders")} />
-        <StatCard title="Bills" value={data.counts.bills} icon={<FileText size={18} />} color="emerald" onClick={() => navigate("/bills")} />
-        <StatCard title="Ready" value={data.readyDeliveries || 0} subtitle="for pickup" icon={<Truck size={18} />} color="purple" onClick={() => navigate("/pickup")} />
-        <StatCard title="Inventory" value={data.counts.inventory} subtitle={`${data.lowStock} low`} icon={<Package size={18} />} color="cyan" onClick={() => navigate("/inventory")} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="card p-4 lg:col-span-1">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">To-Do</h3>
-            <span className="text-xs text-gray-400">{activeTodos.length} pending</span>
+      {!isStaff && (
+        <>
+          {/* Time period selector */}
+          <div className="flex items-center gap-2">
+            {(["today", "week", "month"] as const).map((p) => (
+              <button key={p} onClick={() => setPeriod(p)}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                  period === p
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700"
+                }`}>
+                {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-2 mb-3">
+
+          {/* Main stat cards — key metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard title={`${periodLabel} Sales`} value={`₹${(salesValue || 0).toLocaleString()}`} icon={<TrendingUp size={22} />} color="primary" />
+            <StatCard title={`Collection`} value={`₹${(collectionValue || 0).toLocaleString()}`} icon={<DollarSign size={22} />} color="emerald" />
+            <StatCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={22} />} color="amber" />
+            <StatCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={22} />} color="red" onClick={() => navigate("/inventory")} />
+          </div>
+
+          {/* Navigation stat cards — larger, clickable */}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            <button onClick={() => navigate("/customers")}
+              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
+              <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+                <Users size={22} className="text-primary-600 dark:text-primary-400" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.customers}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Customers</p>
+              {data.newCustomersToday > 0 && <p className="text-[11px] text-primary-500 font-semibold mt-0.5">+{data.newCustomersToday} today</p>}
+            </button>
+            <button onClick={() => navigate("/orders")}
+              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+                <ShoppingCart size={22} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.orders}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Orders</p>
+              <p className="text-[11px] text-blue-500 font-semibold mt-0.5">+{ordersValue} {periodLabel.toLowerCase()}</p>
+            </button>
+            <button onClick={() => navigate("/bills")}
+              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
+              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+                <FileText size={22} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.bills}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Bills</p>
+              {data.todaySales > 0 && <p className="text-[11px] text-emerald-500 font-semibold mt-0.5">₹{(data.todaySales / (data.todayBills || 1)).toFixed(0)} avg</p>}
+            </button>
+            <button onClick={() => navigate("/pickup")}
+              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
+              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+                <Truck size={22} className="text-purple-600 dark:text-purple-400" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.readyDeliveries || 0}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Ready</p>
+              <p className="text-[11px] text-purple-500 font-semibold mt-0.5">for pickup</p>
+            </button>
+            <button onClick={() => navigate("/inventory")}
+              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
+              <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
+                <Package size={22} className="text-cyan-600 dark:text-cyan-400" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.inventory}</p>
+              <p className="text-sm font-medium text-gray-500 mt-1">Inventory</p>
+              <p className="text-[11px] text-red-500 font-semibold mt-0.5">{data.lowStock} low stock</p>
+            </button>
+          </div>
+
+          {/* Charts section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <SalesTrendChart data={data.dailySales} />
+            </div>
+            <div className="space-y-6">
+              <PaymentModeChart data={data.paymentModeSplit} />
+              <OrderStatusChart data={data.orderStatusCounts} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Two-column layout: To-Do + Incomplete Orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* To-Do widget */}
+        <div className="card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">To-Do</h3>
+            <span className="text-xs font-semibold text-gray-400 bg-gray-100 dark:bg-dark-700 px-2 py-0.5 rounded-full">{activeTodos.length} pending</span>
+          </div>
+          <div className="flex items-center gap-2 mb-4">
             <input type="text" placeholder="Add a task..." value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTodo()}
-              className="flex-1 text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-850 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
+              className="flex-1 text-sm px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-850 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
             <button onClick={addTodo} disabled={!newTask.trim()}
-              className="p-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-lg text-white transition-all">
-              <Plus size={16} />
+              className="p-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-xl text-white transition-all">
+              <Plus size={18} />
             </button>
           </div>
-          <div className="space-y-1 max-h-[280px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-1 max-h-[320px] overflow-y-auto scrollbar-thin pr-1">
             {todos.length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-6">No tasks yet</p>
             ) : (
               [...activeTodos, ...doneTodos].map((t) => (
-                <div key={t._id as string} className={`flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 group transition-all ${t.done ? "opacity-50" : ""}`}>
+                <div key={t._id as string} className={`flex items-center gap-2.5 py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 group transition-all ${t.done ? "opacity-50" : ""}`}>
                   <button onClick={() => toggleTodo(t._id as string, t.done as boolean)}
                     className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-400"}`}>
                     {t.done && <Check size={11} className="text-white" />}
@@ -164,8 +242,8 @@ export default function Dashboard() {
                     {t.task as string}
                   </span>
                   <button onClick={() => deleteTodo(t._id as string)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
-                    <Trash2 size={13} />
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
+                    <Trash2 size={14} />
                   </button>
                 </div>
               ))
@@ -173,15 +251,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-4 lg:col-span-3">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Incomplete Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
+        {/* Incomplete Orders */}
+        <div className="card p-5 lg:col-span-3">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Incomplete Orders</h3>
+            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+              View all <ArrowRight size={15} />
             </button>
           </div>
           {data.incompleteOrders.length > 0 && (
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               {(["pending", "stock", "buy", "order"] as const).map((c) => {
                 const count = data.incompleteOrders.filter((o) => (o.classification || "pending") === c).length;
                 const colors: Record<string, string> = {
@@ -191,7 +270,7 @@ export default function Dashboard() {
                   order: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300",
                 };
                 return (
-                  <span key={c} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colors[c]}`}>
+                  <span key={c} className={`text-[11px] font-bold px-3 py-1 rounded-full ${colors[c]}`}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}: {count}
                   </span>
                 );
@@ -201,18 +280,17 @@ export default function Dashboard() {
                 const hasItems = data.incompleteOrders.some((o) => (o.classification || "pending") === type);
                 return hasItems ? (
                   <button key={type} onClick={() => sendDemand(type)} disabled={sendingDemand === type}
-                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 transition-all disabled:opacity-40"
-                    style={{ background: type === "buy" ? "#fef3c7" : "#dbeafe", color: type === "buy" ? "#d97706" : "#2563eb" }}>
-                    <Send size={11} />
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 shadow-md hover:shadow-lg active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
+                    <Send size={16} />
                     {sendingDemand === type ? "Sending..." : `Send ${type === "buy" ? "Purchase" : "Lab Order"}`}
                   </button>
                 ) : null;
               })}
             </div>
           )}
-          <div className="space-y-2 max-h-[460px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin pr-1">
             {data.incompleteOrders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">All orders complete</p>
+              <p className="text-gray-400 text-sm text-center py-8">All orders complete</p>
             ) : (
               data.incompleteOrders.map((o) => {
                 const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
@@ -221,70 +299,103 @@ export default function Dashboard() {
                 const demand = o.prescription ? buildDemand(o.prescription, o) : null;
                 const cls = (o.classification as string) || "pending";
                 return (
-                  <div key={o._id as string} className={`rounded-lg border transition-all ${o.reviewed ? "border-emerald-200 dark:border-emerald-800/40" : "border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600"}`}>
-                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-50 dark:border-dark-700/50">
+                  <div key={o._id as string} className={`rounded-xl border transition-all border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600`}>
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 dark:border-dark-700/50">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => toggleReviewed(o)}
-                          className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${o.reviewed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-400"}`}>
-                          {o.reviewed && <Check size={9} className="text-white" />}
-                        </button>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{o.status as string}</span>
-                        {cls !== "pending" && (
-                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${cls === "stock" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300" : cls === "buy" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"}`}>
-                            {cls === "stock" ? "Stock" : cls === "buy" ? "Buy" : "Order"}
-                          </span>
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{o.status as string}</span>
+                        {!demand && (
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-dark-700 text-gray-500">Plain</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => navigate(`/inventory?q=${encodeURIComponent((o.lensBrand || o.lens || o.frame) as string)}`)}
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-primary-600 transition-all" title="Check stock">
-                          <Search size={13} />
-                        </button>
+                      <div className="flex items-center gap-1.5">
+                        {(["stock", "order", "buy"] as const).map((c) => (
+                          <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+                              cls === c
+                                ? c === "stock" ? "bg-emerald-500 text-white shadow-sm"
+                                  : c === "order" ? "bg-blue-500 text-white shadow-sm"
+                                  : "bg-amber-500 text-white shadow-sm"
+                                : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700 hover:text-gray-700 dark:hover:text-gray-300"
+                            }`}>
+                            {c === "stock" ? "Stock" : c === "order" ? "Order" : "Purchase"}
+                          </button>
+                        ))}
                         <button onClick={() => toggleExpand(o._id as string)}
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
-                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
+                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>
                       </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row">
-                      <div className="flex-1 px-3 py-2">
+                      <div className="flex-1 px-4 py-2.5">
                         {demand ? (
                           <div className="space-y-0.5">
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white">{demand.heading}</div>
+                            <div className="text-sm font-bold text-gray-900 dark:text-white">{demand.heading}</div>
                             {demand.lines.map((line, i) => (
                               <div key={i} className="text-xs font-mono text-gray-700 dark:text-gray-300">{line}</div>
                             ))}
                             {demand.footer && <div className="text-xs text-gray-400 pt-0.5">{demand.footer}</div>}
                           </div>
                         ) : (
-                          <div className="text-sm italic text-gray-400 py-1">No prescription</div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-1">
+                            <span className="font-semibold text-gray-900 dark:text-white">{o.lensBrand || o.lens || "Lens"}</span>
+                            <span className="text-xs">·</span>
+                            <span>Plain (no power)</span>
+                          </div>
                         )}
                       </div>
 
-                      <div className="sm:w-48 px-3 py-2 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">{cName || "—"}</div>
+                      <div className="sm:w-48 px-4 py-2.5 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
+                        <div className="text-sm font-bold text-gray-900 dark:text-white">{cName || "—"}</div>
                         {cMobile && <div className="text-xs text-gray-400">{cMobile}</div>}
                         {o.frameBrand && (
-                          <div className="flex sm:justify-end items-center gap-1 mt-1.5 text-xs text-indigo-600 dark:text-indigo-400">
-                            <Glasses size={11} /> {o.frameBrand as string}{o.frameModel ? ` (${o.frameModel as string})` : ""}
-                          </div>
+                          <button onClick={() => navigate(`/inventory?q=${encodeURIComponent(o.frameBrand as string)}`)}
+                            className="flex sm:justify-end items-center gap-1 mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-all w-full sm:text-right">
+                            <Glasses size={12} /> {o.frameBrand as string}{o.frameModel ? ` (${o.frameModel as string})` : ""}
+                          </button>
                         )}
                         {o.frameColor && <div className="text-[10px] text-gray-400">{o.frameColor as string}{o.frameSize ? ` / ${o.frameSize as string}` : ""}</div>}
-                        <div className="flex sm:justify-end gap-1 mt-2">
-                          {(["stock", "buy", "order"] as const).map((c) => (
-                            <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
-                              className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border transition-all ${cls === c ? c === "stock" ? "bg-emerald-500 border-emerald-500 text-white" : c === "buy" ? "bg-amber-500 border-amber-500 text-white" : "bg-blue-500 border-blue-500 text-white" : "border-gray-200 dark:border-dark-600 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}>
-                              {c === "stock" ? "Stock" : c === "buy" ? "Buy" : "Order"}
-                            </button>
-                          ))}
-                        </div>
+                        {(o.stockStatus?.frameBrand || o.stockStatus?.lensBrand) && (
+                          <div className="flex sm:justify-end gap-1.5 mt-2 flex-wrap">
+                            {(() => {
+                              const fs = o.stockStatus?.frameBrand;
+                              if (fs) {
+                                const total = fs.shop + fs.warehouse;
+                                if (total > 0) return (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
+                                    Frame: {fs.shop} shop / {fs.warehouse} warehouse
+                                  </span>
+                                );
+                                if (o.frameBrand) return (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">Frame: out of stock</span>
+                                );
+                              }
+                              return null;
+                            })()}
+                            {(() => {
+                              const ls = o.stockStatus?.lensBrand;
+                              if (ls) {
+                                const total = ls.shop + ls.warehouse;
+                                if (total > 0) return (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
+                                    Lens: {ls.shop} shop / {ls.warehouse} warehouse
+                                  </span>
+                                );
+                                if (o.lensBrand) return (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">Lens: out of stock</span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="px-3 pb-2.5 pt-0 border-t border-gray-100 dark:border-dark-700 mx-3">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs pt-2">
+                      <div className="px-4 pb-3 pt-0 border-t border-gray-100 dark:border-dark-700 mx-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs pt-3">
                           {o.frame && <Detail label="Frame" value={o.frame as string} />}
                           {o.frameBrand && <Detail label="Frame Brand" value={o.frameBrand as string} />}
                           {o.frameModel && <Detail label="Frame Model" value={o.frameModel as string} />}
@@ -314,11 +425,14 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {!isStaff && (
+        <>
+      {/* Bottom row: Recent Customers, Recent Orders, Pending Bills */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Customers</h3>
-            <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-medium">View all</button>
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Customers</h3>
+            <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">View all</button>
           </div>
           <div className="space-y-1">
             {data.recentCustomers.length === 0 ? (
@@ -326,17 +440,17 @@ export default function Dashboard() {
             ) : (
               data.recentCustomers.slice(0, 5).map((c) => (
                 <div key={c._id as string} onClick={() => navigate(`/customers/${c._id as string}`)}
-                  className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
+                  className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
                       {String(c.name ?? "?").charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name as string}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{c.name as string}</p>
                       <p className="text-xs text-gray-400 truncate">{String(c.mobile ?? "—")}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">
+                  <span className="text-xs font-medium text-gray-400 flex-shrink-0">
                     {c.createdAt ? new Date(c.createdAt as string).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
                   </span>
                 </div>
@@ -345,11 +459,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Orders</h3>
+            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
+              View all <ArrowRight size={15} />
             </button>
           </div>
           <div className="space-y-1">
@@ -359,19 +473,19 @@ export default function Dashboard() {
               data.recentOrders.slice(0, 6).map((o) => {
                 const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
                 return (
-                  <div key={o._id as string} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
+                  <div key={o._id as string} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-semibold flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">
                         {(cName?.charAt(0) || "?").toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{cName || "—"}</span>
-                          <span className={`badge text-[10px] px-1.5 py-0 ${o.status === "Delivered" ? "badge-green" : o.status === "Cancelled" ? "badge-red" : o.status === "Ready" ? "badge-blue" : o.status === "In Lab" ? "badge-yellow" : "badge-gray"}`}>{String(o.status || "Draft")}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</span>
+                          <span className={`badge text-[10px] px-2 py-0.5 font-semibold ${o.status === "Delivered" ? "badge-green" : o.status === "Cancelled" ? "badge-red" : o.status === "Ready" ? "badge-blue" : o.status === "In Lab" ? "badge-yellow" : "badge-gray"}`}>{String(o.status || "Draft")}</span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5 mt-0.5">
-                          {o.frameBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Glasses size={10} /> {o.frameBrand as string}</span>}
-                          {o.lensBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1 ml-2"><Eye size={10} /> {o.lensBrand as string}</span>}
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {o.frameBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Glasses size={11} /> {o.frameBrand as string}</span>}
+                          {o.lensBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Eye size={11} /> {o.lensBrand as string}</span>}
                         </div>
                       </div>
                     </div>
@@ -382,11 +496,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Pending Bills</h3>
-            <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Pending Bills</h3>
+            <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
+              View all <ArrowRight size={15} />
             </button>
           </div>
           <div className="space-y-1">
@@ -398,17 +512,17 @@ export default function Dashboard() {
                 const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
                 return (
                   <div key={b._id as string} onClick={() => navigate("/bills")}
-                    className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all group">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-semibold text-xs flex-shrink-0">
+                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all group">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-sm flex-shrink-0">
                         {(cName?.charAt(0) || "?").toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{cName || "—"}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</p>
                         {cMobile && <p className="text-xs text-gray-400 truncate">{cMobile}</p>}
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">₹{((b.pendingAmount as number) || 0).toLocaleString()}</span>
+                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">₹{((b.pendingAmount as number) || 0).toLocaleString()}</span>
                   </div>
                 );
               })
@@ -416,6 +530,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </>)}
       {showScanner && (
         <CameraScanner
           onScan={(code) => {
