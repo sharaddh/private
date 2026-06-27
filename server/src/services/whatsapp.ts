@@ -97,6 +97,10 @@ async function useMongoDBAuthState(): Promise<{
   return { state: { creds, keys }, saveCreds };
 }
 
+const MAX_RETRIES = 5;
+const QR_TIMEOUT_MS = 120000;
+const RETRY_BASE_DELAY = 5000;
+
 class WhatsAppService {
   private sock: ReturnType<typeof makeWASocket> | null = null;
   private _ready = false;
@@ -107,6 +111,7 @@ class WhatsAppService {
   private initializing = false;
   private initPromise: Promise<void> | null = null;
   private initGen = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private messageQueue: QueueItem[] = [];
   private drainInProgress = false;
   private saveCredsFn: (() => Promise<void>) | null = null;
@@ -136,24 +141,24 @@ class WhatsAppService {
 
   private async doInit(): Promise<void> {
     let lastError: any;
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         await this.tryInit();
         console.log("WhatsApp: connected successfully");
         return;
       } catch (err: any) {
         lastError = err;
-        console.error(`WhatsApp init attempt ${attempt}/3 failed:`, err?.message || err);
+        console.error(`WhatsApp init attempt ${attempt}/${MAX_RETRIES} failed:`, err?.message || err);
         await this.destroy();
-        if (attempt < 3) {
-          const delay = attempt * 10000;
-          console.log(`Retrying in ${delay}ms...`);
+        if (attempt < MAX_RETRIES) {
+          const delay = RETRY_BASE_DELAY * attempt;
+          console.log(`WhatsApp: retrying in ${delay}ms...`);
           await new Promise((r) => setTimeout(r, delay));
         }
       }
     }
-    console.error("WhatsApp: all 3 init attempts failed");
-    this._error = lastError?.message || "Init failed after 3 attempts";
+    console.error("WhatsApp: all init attempts failed");
+    this._error = lastError?.message || "Init failed after " + MAX_RETRIES + " attempts";
     this.initializing = false;
     this.initPromise = null;
   }
@@ -162,18 +167,27 @@ class WhatsAppService {
     const { state, saveCreds } = await useMongoDBAuthState();
     this.saveCredsFn = saveCreds;
 
+    const isLoggedIn = !!state.creds.me?.id;
+
     return new Promise<void>((resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
       let resolved = false;
 
+      if (isLoggedIn) {
+        console.log("WhatsApp: found existing session for", state.creds.me?.id);
+      }
+
       const sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
-        browser: Browsers.windows("Chrome"),
+        browser: Browsers.macOS("Chrome"),
         syncFullHistory: false,
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
         emitOwnEvents: false,
         generateHighQualityLinkPreview: false,
+        keepAliveIntervalMs: 30000,
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 60000,
         transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
       });
 
@@ -182,7 +196,7 @@ class WhatsAppService {
       const onConnectionUpdate = async (update: any) => {
         const { connection, lastDisconnect, qr, isNewLogin } = update;
 
-        if (qr && !resolved) {
+        if (qr && !resolved && !isLoggedIn) {
           this._qr = qr;
           this._ready = false;
           this._error = null;
@@ -196,6 +210,7 @@ class WhatsAppService {
         }
 
         if (isNewLogin) {
+          console.log("WhatsApp: new login detected, saving creds");
           if (this.saveCredsFn) await this.saveCredsFn();
         }
 
@@ -234,12 +249,9 @@ class WhatsAppService {
 
           if (qrTimer) clearTimeout(qrTimer);
 
-          if (resolved && wasReady && statusCode !== DisconnectReason.loggedOut) {
-            console.log(`WhatsApp: disconnected (${reason}), reconnecting in 3s...`);
-            setTimeout(() => { this.init().catch(() => {}); }, 3000);
-          } else if (!resolved) {
+          if (!resolved) {
             resolved = true;
-            reject(new Error(`Connection closed: ${reason}`));
+            reject(new Error("Connection closed: " + reason));
           }
         }
       };
@@ -250,15 +262,17 @@ class WhatsAppService {
         if (this.saveCredsFn) await this.saveCredsFn();
       });
 
+      // Long timeout to let user scan QR
       qrTimer = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          console.log("WhatsApp: QR timeout — no connection within 60s");
+          console.log("WhatsApp: QR timeout — no connection within " + (QR_TIMEOUT_MS / 1000) + "s");
           sock.ev.removeAllListeners("connection.update");
+          sock.ev.removeAllListeners("creds.update");
           sock.end(new Error("QR timeout"));
-          reject(new Error("QR timeout after 60s"));
+          reject(new Error("QR timeout after " + (QR_TIMEOUT_MS / 1000) + "s"));
         }
-      }, 60000);
+      }, QR_TIMEOUT_MS);
     });
   }
 
@@ -388,6 +402,10 @@ class WhatsAppService {
   }
 
   async destroy() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     if (this.sock) {
       try {
         this.sock.ev.removeAllListeners("connection.update");
