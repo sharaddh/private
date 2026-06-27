@@ -1,16 +1,22 @@
-import { connect } from "mongoose";
+import { connect, disconnect } from "mongoose";
 import bcrypt from "bcrypt";
-import { PORT, MONGO_URI, REDIS_URL } from "./config";
+import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
-import { initCache } from "./services/cache";
+import { initCache, destroyCache } from "./services/cache";
 import { whatsapp } from "./services/whatsapp";
 import { User } from "./models/user";
 
+let server: ReturnType<typeof app.listen> | null = null;
+
 async function seedAdmin() {
-  const count = await User.countDocuments();
-  if (count === 0) {
-    const passwordHash = await bcrypt.hash("admin123", 10);
-    await User.create({ username: "admin", passwordHash, role: "owner" });
+  try {
+    const count = await User.countDocuments();
+    if (count === 0) {
+      const passwordHash = await bcrypt.hash("admin123", 10);
+      await User.create({ username: "admin", passwordHash, role: "owner" });
+    }
+  } catch (err) {
+    console.error("Seed admin failed:", err);
   }
 }
 
@@ -20,37 +26,49 @@ async function start() {
     process.exit(1);
   }
 
-  await connect(MONGO_URI);
-  console.log("Connected to MongoDB");
+  try {
+    await connect(MONGO_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+  } catch (err) {
+    console.error("MongoDB connection failed:", err);
+    process.exit(1);
+  }
 
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);
       await redis.connect();
-      console.log("Connected to Redis");
-    } catch (err) {
-      console.warn("Redis connection failed — server will continue without cache");
+    } catch {
+      // Redis is optional
     }
-  } else {
-    console.log("REDIS_URL not set — running without cache");
   }
 
   await seedAdmin();
 
-  whatsapp.init().then(() => {
-    console.log("WhatsApp service initialized");
-  }).catch((err) => {
-    console.error("WhatsApp initialization failed:", (err as Error)?.message || err);
-    if ((err as Error)?.stack) console.error("Stack:", (err as Error).stack!.split("\n").slice(0, 3).join("\n"));
-    console.log("Server will continue without WhatsApp");
+  whatsapp.init().catch(() => {
+    // WhatsApp is optional
   });
 
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} [${NODE_ENV}]`);
   });
 }
 
+async function gracefulShutdown(signal: string) {
+  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
+  server?.close();
+  await destroyCache().catch(() => {});
+  await disconnect().catch(() => {});
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
 start().catch((err) => {
-  console.error(err);
+  console.error("Failed to start server:", err);
   process.exit(1);
 });
