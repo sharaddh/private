@@ -5,6 +5,7 @@ import { useCachedData } from "../hooks/useCachedData";
 import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
+import { useAuth } from "../context/AuthContext";
 import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users } from "lucide-react";
 
 interface Customer {
@@ -24,6 +25,7 @@ export default function Customers() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { isStaff } = useAuth();
   const { data: rawList, loading } = useCachedData<Customer[]>("/api/customers", () => api.get("/api/customers"));
 
   useEffect(() => {
@@ -150,10 +152,12 @@ export default function Customers() {
                       className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400 transition-colors" title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors" title="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                    {!isStaff && (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors" title="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                     <ArrowRight size={18} className="text-gray-300 dark:text-gray-600 ml-1" />
                   </div>
                 </div>
