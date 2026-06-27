@@ -8,6 +8,8 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isStaff: boolean;
   login: (token: string, refresh: string) => void;
   logout: () => void;
   setUser: (user: Record<string, unknown>) => void;
@@ -58,11 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, user }));
   }, []);
 
+  const role = state.user?.role as string | undefined;
+  const isAdmin = !!state.token && role !== "staff";
+  const isStaff = !!state.token && role === "staff";
+
   return (
     <AuthContext.Provider
       value={{
         ...state,
         isAuthenticated: !!state.token,
+        isAdmin,
+        isStaff,
         login,
         logout,
         setUser,
