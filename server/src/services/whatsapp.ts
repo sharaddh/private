@@ -33,6 +33,7 @@ class WhatsAppService {
   private _pairingCode: string | null = null;
   private initializing = false;
   private initPromise: Promise<void> | null = null;
+  private initGen = 0;
   private messageQueue: QueueItem[] = [];
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private drainInProgress = false;
@@ -61,19 +62,6 @@ class WhatsAppService {
   }
 
   private stealthPatched = false;
-
-  private patchPuppeteer() {
-    if (this.stealthPatched) return;
-    puppeteerExtra.use(StealthPlugin());
-    const Module = require("module");
-    const orig = Module.prototype.require;
-    Module.prototype.require = function (id: string) {
-      if (id === "puppeteer") return puppeteerExtra;
-      return orig.apply(this, arguments);
-    };
-    this.stealthPatched = true;
-    console.log("WhatsApp: puppeteer-extra stealth patched");
-  }
 
   private async resolveExecutablePath(): Promise<string | undefined> {
     const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
@@ -123,7 +111,17 @@ class WhatsAppService {
   }
 
   private async createClient() {
-    this.patchPuppeteer();
+    // Inject puppeteer-extra with stealth BEFORE Client constructor runs
+    // (whatsapp-web.js loads puppeteer at module load time, too late for require hook)
+    if (!this.stealthPatched) {
+      puppeteerExtra.use(StealthPlugin());
+      try {
+        (Client as any).puppeteer = puppeteerExtra;
+      } catch {}
+      this.stealthPatched = true;
+      console.log("WhatsApp: injected puppeteer-extra stealth via Client.puppeteer");
+    }
+
     const executablePath = await this.resolveExecutablePath();
     const args = [
       "--no-sandbox",
@@ -157,8 +155,14 @@ class WhatsAppService {
     if (this.client) return;
     if (this.initializing) return this.initPromise;
     this.initializing = true;
+    const gen = ++this.initGen;
 
-    this.initPromise = this.doInit();
+    this.initPromise = this.doInit().finally(() => {
+      if (gen === this.initGen) {
+        this.initializing = false;
+        this.initPromise = null;
+      }
+    });
 
     return this.initPromise;
   }
@@ -174,6 +178,7 @@ class WhatsAppService {
         console.error(`WhatsApp init attempt ${attempt}/3 failed:`, err?.message || err);
         if (err?.stack) console.error("Stack:", err.stack.split("\n").slice(0, 4).join("\n"));
         await this.destroy();
+        this._error = null;
         this.cleanSession();
         if (attempt < 3) {
           const delay = attempt * 10000;
@@ -227,16 +232,18 @@ class WhatsAppService {
         };
 
         const onDisconnected = (reason: string) => {
+          const wasReady = this._ready;
           this._ready = false;
           this.stopHeartbeat();
           this.client = null;
-          this.initializing = false;
-          this.initPromise = null;
           if (qrTimer) clearTimeout(qrTimer);
           console.log("WhatsApp client disconnected:", reason);
-          if (reason !== "LOGOUT") {
-            console.log("Auto-reconnecting WhatsApp...");
-            this.init().catch(() => {});
+          this.initGen++;
+          this.initializing = false;
+          this.initPromise = null;
+          if (reason !== "LOGOUT" && wasReady) {
+            console.log("Auto-reconnecting WhatsApp in 3s...");
+            setTimeout(() => { this.init().catch(() => {}); }, 3000);
           }
         };
 
@@ -248,7 +255,12 @@ class WhatsAppService {
           this.initializing = false;
           this.initPromise = null;
           if (qrTimer) clearTimeout(qrTimer);
-          resolve();
+          client.removeListener("qr", onQr);
+          client.removeListener("ready", onReady);
+          client.removeListener("disconnected", onDisconnected);
+          client.removeListener("auth_failure", onAuthFailure);
+          client.destroy().catch(() => {});
+          reject(new Error("Auth failure: " + (msg || "unknown")));
         };
 
         client.on("qr", onQr);
@@ -340,15 +352,20 @@ class WhatsAppService {
   private startHeartbeat() {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(async () => {
-      if (!this.client || !this._ready) return;
+      if (!this.client) return;
       try {
         const state = await this.client.getState();
         if (state === "CONNECTED") return;
-        console.log("WhatsApp heartbeat: state is", state, "— marking not ready");
-        this._ready = false;
-      } catch {
-        this._ready = false;
+        console.log("WhatsApp heartbeat: state is", state, "— triggering reconnect");
+      } catch (err) {
+        console.log("WhatsApp heartbeat: getState() threw — triggering reconnect:", err);
       }
+      this._ready = false;
+      this.stopHeartbeat();
+      this.client = null;
+      this.initializing = false;
+      this.initPromise = null;
+      this.init().catch(() => {});
     }, 5 * 60 * 1000);
   }
 
