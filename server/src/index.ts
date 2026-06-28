@@ -1,23 +1,32 @@
-import { connect, disconnect } from "mongoose";
-import bcrypt from "bcrypt";
+import mongoose, { connect, disconnect } from "mongoose";
 import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
- import { User } from "./models/user";
 
 let server: ReturnType<typeof app.listen> | null = null;
 
-async function seedAdmin() {
-  try {
-    const count = await User.countDocuments();
-    if (count === 0) {
-      const passwordHash = await bcrypt.hash("admin123", 10);
-      await User.create({ username: "admin", passwordHash, role: "owner" });
-    }
-  } catch (err) {
-    console.error("Seed admin failed:", err);
+// Catch Baileys AES-GCM decryption errors from stale/incompatible auth creds.
+// Clear the session and restart WhatsApp so a fresh QR scan can begin.
+process.on("uncaughtException", async (err) => {
+  const msg = err?.message || "";
+  if (msg.includes("Unsupported state") || msg.includes("unable to authenticate data")) {
+    console.error("WhatsApp: auth decryption failed, clearing stale session:", msg);
+    try {
+      if (mongoose.connection.db) {
+        await mongoose.connection.db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+      }
+    } catch {}
+    // Restart WhatsApp after a short delay
+    setTimeout(() => {
+      import("./services/whatsapp").then(({ whatsapp }) => {
+        whatsapp.reconnect().catch(() => {});
+      });
+    }, 2000);
+    return;
   }
-}
+  console.error("Unhandled exception:", err);
+  process.exit(1);
+});
 
 async function start() {
   if (!MONGO_URI) {
@@ -44,8 +53,6 @@ async function start() {
       // Redis is optional
     }
   }
-    await seedAdmin();
-
 
   // Lazy-init WhatsApp: import and init in background after server starts
   setTimeout(() => {
