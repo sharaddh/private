@@ -228,7 +228,6 @@ class WhatsAppService {
         if (connection === "close") {
           const wasReady = this._ready;
           this._ready = false;
-          this.sock = null;
 
           const statusCode = lastDisconnect?.error?.output?.statusCode;
           const reason = statusCode !== undefined ? (DisconnectReason as any)[statusCode] || "Unknown" : "Unknown";
@@ -243,6 +242,25 @@ class WhatsAppService {
             errMsg,
             errStack: errStack.split("\n")[0],
           });
+
+          // After a successful pairing, Baileys closes the socket and
+          // internally creates a new one with the updated credentials
+          // (restartRequired). Don't interfere — the same event emitter
+          // will fire connection: "open" once the new socket connects.
+          if (statusCode === DisconnectReason.restartRequired) {
+            this.cancelReconnect();
+            if (qrTimer) clearTimeout(qrTimer);
+            qrTimer = setTimeout(() => {
+              if (!resolved) {
+                resolved = true;
+                console.log("WhatsApp: timeout waiting for restart reconnect");
+                reject(new Error("Timeout waiting for restart reconnect"));
+              }
+            }, QR_TIMEOUT_MS);
+            return;
+          }
+
+          this.sock = null;
 
           const needsReAuth =
             statusCode === DisconnectReason.loggedOut ||
@@ -260,7 +278,7 @@ class WhatsAppService {
 
           // If connection closed before auth completed, clear partial session
           // so the next attempt starts completely fresh
-          if (!resolved && this.saveCredsFn) {
+          if (!resolved) {
             console.log("WhatsApp: connection closed before auth completed, clearing partial session");
             try {
               const db = mongoose.connection.db;
