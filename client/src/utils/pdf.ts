@@ -47,7 +47,7 @@ const success: [number, number, number] = [5, 150, 105];
 const danger: [number, number, number] = [220, 38, 38];
 const warning: [number, number, number] = [217, 119, 6];
 
-const C = "Rs.";
+const C = "₹";
 
 function fmt(n: number): string {
   return `${C} ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

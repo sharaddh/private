@@ -3,6 +3,8 @@ import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
 import { Order } from "../models/order";
+import { Bill } from "../models/bill";
+import { Payment } from "../models/payment";
 import { success, created, notFound } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
@@ -45,8 +47,18 @@ export async function update(req: Request, res: Response) {
 }
 
 export async function remove(req: Request, res: Response) {
-  const customer = await Customer.findByIdAndDelete(req.params.id).lean();
+  const customer = await Customer.findById(req.params.id).lean();
   if (!customer) return notFound(res, "Customer not found");
+
+  await Promise.all([
+    Customer.findByIdAndDelete(req.params.id),
+    Visit.deleteMany({ customerId: req.params.id }),
+    Order.deleteMany({ customerId: req.params.id }),
+    Bill.deleteMany({ customerId: req.params.id }),
+    Prescription.deleteMany({ customerId: req.params.id }),
+    Payment.deleteMany({ customerId: req.params.id }),
+  ]);
+
   return success(res, customer, "Deleted successfully");
 }
 

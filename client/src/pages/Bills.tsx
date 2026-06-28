@@ -4,7 +4,8 @@ import { useApiGet } from "../hooks/useApi";
 import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
-import { Printer, MessageCircle, FileText as PdfIcon } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from "lucide-react";
 import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
 
@@ -20,6 +21,7 @@ export default function Bills() {
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
   const toast = useToast();
+  const { isStaff } = useAuth();
 
   const fetchBills = useCallback(() => {
     setLoading(true);
@@ -190,6 +192,17 @@ export default function Bills() {
     downloadBillPdf(bill, customer, settings || {});
   }
 
+  async function handleDelete(bill: Record<string, unknown>) {
+    if (!confirm("Delete this bill permanently?")) return;
+    const res = await api.del(`/api/bills/${bill._id}`);
+    if (res.success) {
+      setList((prev) => prev.filter((b) => b._id !== bill._id));
+      toast.success("Bill deleted");
+    } else {
+      toast.error(res.message || "Failed to delete");
+    }
+  }
+
   async function sendWhatsApp(bill: Record<string, unknown>) {
     const customer = resolveCustomer(bill);
     const num = customer?.mobile?.toString().replace(/\D/g, "").replace(/^0+/, "");
@@ -254,6 +267,11 @@ export default function Bills() {
             <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Thermal Receipt (80mm)">
               <Printer size={15} />
             </button>
+            {!isStaff && (
+              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Delete">
+                <Trash2 size={15} />
+              </button>
+            )}
           </div>
         )}
       />
