@@ -6,49 +6,42 @@ import { signAccess, signRefresh } from "../utils/jwt";
 import { JWT_SECRET } from "../config";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth";
-
 export async function register(req: Request, res: Response) {
-  // Removed the role check that restricted access to "owner" only
-  // const authReq = req as AuthRequest; 
-  // if (!authReq.user || authReq.user.role !== "owner") { 
-  //   throw new AppError(403, "Only admin can create new users"); 
-  // }
-
   const { username, password, name, mobile, role } = req.body;
 
+  // 1. Validate input
   if (!username?.trim() || !password?.trim()) {
     throw new AppError(400, "Username and password required");
   }
 
+  // 2. Check for existing user
   const existing = await User.findOne({ username }).lean();
   if (existing) {
     throw new AppError(409, "Username already exists");
   }
 
+  // 3. Hash password and create user
   const passwordHash = await bcrypt.hash(password, 10);
-
-  // Logic note: The original code forced the role to "staff" or "owner".
-  // For public registration, you typically default new users to a limited role like "user" or "staff"
-  // to prevent privilege escalation where a user registers themselves as "owner".
-  const user = await User.create({
-    username,
-    passwordHash,
-    name: name || "",
-    mobile: mobile || "",
-    role: role === "staff" ? "staff" : "owner" // Changed default fallback to "user" for safety
+  const user = await User.create({ 
+    username, 
+    passwordHash, 
+    name: name || "", 
+    mobile: mobile || "", 
+    role: role === "staff" ? "staff" : "owner" 
   });
 
-  return res.json({
-    success: true,
-    data: {
-      id: user._id,
-      username: user.username,
-      name: user.name,
-      mobile: user.mobile,
-      role: user.role
-    }
+  // 4. Return success response
+  return res.json({ 
+    success: true, 
+    data: { 
+      id: user._id, 
+      username: user.username, 
+      name: user.name, 
+      mobile: user.mobile, 
+      role: user.role 
+    } 
   });
-}   
+}
 
 export async function login(req: Request, res: Response) {
   const { username, password } = req.body;
