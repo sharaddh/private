@@ -44,17 +44,10 @@ export default function NewVisit() {
   });
 
   // Order
-  const [orderFrame, setOrderFrame] = useState("");
-  const [orderFrameBrand, setOrderFrameBrand] = useState("");
-  const [orderFrameModel, setOrderFrameModel] = useState("");
-  const [orderFrameColor, setOrderFrameColor] = useState("");
-  const [orderFramePrice, setOrderFramePrice] = useState(0);
-  const [orderLens, setOrderLens] = useState("");
-  const [orderLensBrand, setOrderLensBrand] = useState("");
-  const [lensFeatures, setLensFeatures] = useState<string[]>([]);
-  const [orderLensIndex, setOrderLensIndex] = useState("");
-  const [orderLensPrice, setOrderLensPrice] = useState(0);
-  const [orderCoating, setOrderCoating] = useState("");
+  interface FrameItem { sku: string; brand: string; model: string; color: string; price: number; }
+  interface LensItem { sku: string; brand: string; features: string[]; index: string; price: number; coating: string; }
+  const [orderFrames, setOrderFrames] = useState<FrameItem[]>([{ sku: "", brand: "", model: "", color: "", price: 0 }]);
+  const [orderLenses, setOrderLenses] = useState<LensItem[]>([{ sku: "", brand: "", features: [], index: "", price: 0, coating: "" }]);
   const [orderAccessories, setOrderAccessories] = useState<{ name: string; price: number }[]>([]);
   const [orderDeliveryDate, setOrderDeliveryDate] = useState("");
 
@@ -115,17 +108,8 @@ export default function NewVisit() {
       }
       if (o.success && o.data.length > 0) {
         const last = o.data[0];
-        setOrderFrame(last.frame || "");
-        setOrderFrameBrand(last.frameBrand || "");
-        setOrderFrameModel(last.frameModel || "");
-        setOrderFrameColor(last.frameColor || "");
-        setOrderFramePrice(last.framePrice || 0);
-        setOrderLens(last.lens || "");
-        setOrderLensBrand(last.lensBrand || "");
-        setLensFeatures((last.lensType || "").split(", ").filter(Boolean));
-        setOrderLensIndex(last.lensIndex || "");
-        setOrderLensPrice(last.lensPrice || 0);
-        setOrderCoating(last.coating || "");
+        setOrderFrames([{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }]);
+        setOrderLenses([{ sku: last.lens || "", brand: last.lensBrand || "", features: (last.lensType || "").split(", ").filter(Boolean), index: last.lensIndex || "", price: last.lensPrice || 0, coating: last.coating || "" }]);
         if (last.accessories) setOrderAccessories(last.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
 
         const items: { description: string; qty: number; price: number }[] = [];
@@ -263,6 +247,21 @@ export default function NewVisit() {
     setBillItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
   }
 
+  function addFrame() { setOrderFrames((prev) => [...prev, { sku: "", brand: "", model: "", color: "", price: 0 }]); }
+  function removeFrame(idx: number) { if (orderFrames.length > 1) setOrderFrames((prev) => prev.filter((_, i) => i !== idx)); }
+  function updateFrame(idx: number, field: keyof FrameItem, value: any) {
+    setOrderFrames((prev) => prev.map((f, i) => (i === idx ? { ...f, [field]: value } : f)));
+  }
+
+  function addLens() { setOrderLenses((prev) => [...prev, { sku: "", brand: "", features: [], index: "", price: 0, coating: "" }]); }
+  function removeLens(idx: number) { if (orderLenses.length > 1) setOrderLenses((prev) => prev.filter((_, i) => i !== idx)); }
+  function updateLens(idx: number, field: keyof LensItem, value: any) {
+    setOrderLenses((prev) => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
+  }
+  function toggleLensFeature(idx: number, feat: string) {
+    setOrderLenses((prev) => prev.map((l, i) => i === idx ? { ...l, features: l.features.includes(feat) ? l.features.filter((f) => f !== feat) : [...l.features, feat] } : l));
+  }
+
   function addAccessory() { setOrderAccessories((prev) => [...prev, { name: "", price: 0 }]); }
   function updateAccessory(idx: number, field: "name" | "price", value: string | number) {
     setOrderAccessories((prev) => prev.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
@@ -275,11 +274,11 @@ export default function NewVisit() {
     const res = await api.get<any>(`/api/inventory/qr/${encodeURIComponent(sku)}`);
     if (res.success && res.data) {
       const item = res.data;
-      setOrderFrame(item.sku || "");
-      setOrderFrameBrand(item.brand || "");
-      setOrderFrameModel(item.model || "");
-      setOrderFrameColor(item.color || "");
-      setOrderFramePrice(item.sellingPrice || item.purchasePrice || 0);
+      updateFrame(0, "sku", item.sku || "");
+      updateFrame(0, "brand", item.brand || "");
+      updateFrame(0, "model", item.model || "");
+      updateFrame(0, "color", item.color || "");
+      updateFrame(0, "price", item.sellingPrice || item.purchasePrice || 0);
       setScanModal(false);
       setScanInput("");
     }
@@ -289,20 +288,24 @@ export default function NewVisit() {
     if (visitType === "service") return;
     const items: { description: string; qty: number; price: number }[] = [];
     if (visitType === "other") {
-      if (orderFrame) items.push({ description: orderFrame, qty: 1, price: orderFramePrice });
+      orderFrames.filter((f) => f.sku).forEach((f) => items.push({ description: f.sku, qty: 1, price: f.price }));
       orderAccessories.filter((a) => a.name).forEach((a) => items.push({ description: a.name, qty: 1, price: a.price }));
       if (items.length > 0) setBillItems(items);
       return;
     }
-    const hasFrame = orderFrame || orderFrameBrand || orderFrameModel;
-    if (visitType !== "new_lens" && visitType !== "contact_lens" && hasFrame) {
-      const frameDesc = orderFrame || `${orderFrameBrand} ${orderFrameModel}`.trim();
-      items.push({ description: `Frame - ${frameDesc}`, qty: 1, price: orderFramePrice });
+    const showFrame = visitType !== "new_lens" && visitType !== "contact_lens";
+    if (showFrame) {
+      orderFrames.filter((f) => f.sku || f.brand || f.model).forEach((f) => {
+        const desc = f.sku || `${f.brand} ${f.model}`.trim();
+        items.push({ description: `Frame - ${desc}`, qty: 1, price: f.price });
+      });
     }
-    const hasLens = orderLens || orderLensBrand || lensFeatures.length > 0 || orderLensIndex;
-    if (visitType !== "frame_change" && hasLens) {
-      const lensDesc = orderLens || `${orderLensBrand || ""} ${lensFeatures.join(", ") || ""}`.trim() || "Lens";
-      items.push({ description: `Lens - ${lensDesc}`, qty: 1, price: orderLensPrice });
+    const showLens = visitType !== "frame_change";
+    if (showLens) {
+      orderLenses.filter((l) => l.sku || l.brand || l.features.length > 0 || l.index).forEach((l) => {
+        const desc = l.sku || `${l.brand || ""} ${l.features.join(", ") || ""}`.trim() || "Lens";
+        items.push({ description: `Lens - ${desc}`, qty: 1, price: l.price });
+      });
     }
     orderAccessories.filter((a) => a.name).forEach((a) => {
       if (!items.some((i) => i.description === a.name)) items.push({ description: a.name, qty: 1, price: a.price });
@@ -362,14 +365,16 @@ export default function NewVisit() {
       };
 
       if (visitType !== "service") {
+        const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
+        const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
         payload.order = {
-          frame: orderFrame || undefined, frameBrand: orderFrameBrand || undefined,
-          frameModel: orderFrameModel || undefined, frameColor: orderFrameColor || undefined,
-          framePrice: orderFramePrice || 0,
-          lens: orderLens || undefined, lensBrand: orderLensBrand || undefined,
-          lensType: lensFeatures.join(", ") || undefined, lensIndex: orderLensIndex || undefined,
-          lensPrice: orderLensPrice || 0,
-          coating: orderCoating || undefined,
+          frame: firstFrame.sku || undefined, frameBrand: firstFrame.brand || undefined,
+          frameModel: firstFrame.model || undefined, frameColor: firstFrame.color || undefined,
+          framePrice: firstFrame.price || 0,
+          lens: firstLens.sku || undefined, lensBrand: firstLens.brand || undefined,
+          lensType: firstLens.features.join(", ") || undefined, lensIndex: firstLens.index || undefined,
+          lensPrice: firstLens.price || 0,
+          coating: firstLens.coating || undefined,
           accessories: orderAccessories.map((a) => a.name),
           deliveryDate: orderDeliveryDate || undefined,
         };
@@ -797,18 +802,20 @@ export default function NewVisit() {
                 {otherSubType && (
                   <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{otherSubType} Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Product Name</label>
-                        <input className="input-field text-base" placeholder="Name" value={orderFrame}
-                          onChange={(e) => setOrderFrame(e.target.value)} />
+                    {orderFrames.map((f, idx) => (
+                      <div key={idx} className="flex gap-3 mb-2 items-start">
+                        <input className="input-field flex-1 text-base" placeholder="Product name" value={f.sku}
+                          onChange={(e) => updateFrame(idx, "sku", e.target.value)} />
+                        <input type="number" min="0" step="0.01" className="input-field w-28 text-base" placeholder="Price" value={f.price}
+                          onChange={(e) => updateFrame(idx, "price", Number(e.target.value))} />
+                        {orderFrames.length > 1 && (
+                          <button onClick={() => removeFrame(idx)} className="p-2 mt-0.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={15} /></button>
+                        )}
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderFramePrice}
-                          onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
-                      </div>
-                    </div>
+                    ))}
+                    <button onClick={addFrame} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 font-medium mt-1">
+                      <Plus size={14} /> Add Item
+                    </button>
                   </div>
                 )}
               </div>
@@ -820,7 +827,7 @@ export default function NewVisit() {
                       <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                         <Tag size={20} />
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Frame</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Frames</h3>
                       <button type="button" onClick={() => { setScanModal(true); setScanInput(""); }}
                         className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
                         <QrCode size={14} /> Scan
@@ -830,33 +837,48 @@ export default function NewVisit() {
                         <Camera size={14} /> Camera
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
-                        <input className="input-field text-base" placeholder="Brand" value={orderFrameBrand}
-                          onChange={(e) => setOrderFrameBrand(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Model</label>
-                        <input className="input-field text-base" placeholder="Model" value={orderFrameModel}
-                          onChange={(e) => setOrderFrameModel(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
-                        <input className="input-field text-base" placeholder="Color" value={orderFrameColor}
-                          onChange={(e) => setOrderFrameColor(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderFramePrice}
-                          onChange={(e) => setOrderFramePrice(Number(e.target.value))} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name / Description</label>
-                        <input className="input-field text-base" placeholder="Frame name" value={orderFrame}
-                          onChange={(e) => setOrderFrame(e.target.value)} />
-                      </div>
+                    <div className="space-y-4">
+                      {orderFrames.map((f, idx) => (
+                        <div key={idx} className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-200 dark:border-dark-700">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Frame #{idx + 1}</span>
+                            {orderFrames.length > 1 && (
+                              <button onClick={() => removeFrame(idx)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={14} /></button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
+                              <input className="input-field text-base" placeholder="Brand" value={f.brand}
+                                onChange={(e) => updateFrame(idx, "brand", e.target.value)} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Model</label>
+                              <input className="input-field text-base" placeholder="Model" value={f.model}
+                                onChange={(e) => updateFrame(idx, "model", e.target.value)} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
+                              <input className="input-field text-base" placeholder="Color" value={f.color}
+                                onChange={(e) => updateFrame(idx, "color", e.target.value)} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
+                              <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={f.price}
+                                onChange={(e) => updateFrame(idx, "price", Number(e.target.value))} />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name / Description</label>
+                              <input className="input-field text-base" placeholder="Frame name or SKU" value={f.sku}
+                                onChange={(e) => updateFrame(idx, "sku", e.target.value)} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    <button onClick={addFrame} className="mt-3 flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                      <Plus size={14} /> Add Another Frame
+                    </button>
                   </div>
                 )}
 
@@ -866,61 +888,72 @@ export default function NewVisit() {
                       <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center text-sky-600 dark:text-sky-400">
                         <Eye size={20} />
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Lens</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Lenses</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
-                        <input className="input-field text-base" placeholder="Brand" value={orderLensBrand}
-                          onChange={(e) => setOrderLensBrand(e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Index</label>
-                        <input className="input-field text-base" placeholder="1.56" value={orderLensIndex}
-                          onChange={(e) => setOrderLensIndex(e.target.value)} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                        <input className="input-field text-base" placeholder="Lens description" value={orderLens}
-                          onChange={(e) => setOrderLens(e.target.value)} />
-                      </div>
+                    <div className="space-y-4">
+                      {orderLenses.map((l, idx) => (
+                        <div key={idx} className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-200 dark:border-dark-700">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lens #{idx + 1}</span>
+                            {orderLenses.length > 1 && (
+                              <button onClick={() => removeLens(idx)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={14} /></button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
+                              <input className="input-field text-base" placeholder="Brand" value={l.brand}
+                                onChange={(e) => updateLens(idx, "brand", e.target.value)} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Index</label>
+                              <input className="input-field text-base" placeholder="1.56" value={l.index}
+                                onChange={(e) => updateLens(idx, "index", e.target.value)} />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                              <input className="input-field text-base" placeholder="Lens description" value={l.sku}
+                                onChange={(e) => updateLens(idx, "sku", e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="mb-4">
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Features</label>
+                            <div className="flex flex-wrap gap-2">
+                              {lensFeatureOptions.map((feat) => {
+                                const selected = l.features.includes(feat);
+                                return (
+                                  <button key={feat} type="button" onClick={() => toggleLensFeature(idx, feat)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                      selected
+                                        ? "bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-700 dark:text-sky-300"
+                                        : "bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
+                                    }`}>
+                                    {feat}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                <span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5" />Coating / Add-on
+                              </label>
+                              <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={l.coating}
+                                onChange={(e) => updateLens(idx, "coating", e.target.value)} />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
+                              <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={l.price}
+                                onChange={(e) => updateLens(idx, "price", Number(e.target.value))} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="mb-4">
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Features</label>
-                      <div className="flex flex-wrap gap-2">
-                        {lensFeatureOptions.map((feat) => {
-                          const selected = lensFeatures.includes(feat);
-                          return (
-                            <button key={feat} type="button" onClick={() => {
-                              setLensFeatures((prev) =>
-                                selected ? prev.filter((f) => f !== feat) : [...prev, feat]
-                              );
-                            }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                selected
-                                  ? "bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-700 dark:text-sky-300"
-                                  : "bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
-                              }`}>
-                              {feat}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                          <span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5" />Coating / Add-on
-                        </label>
-                        <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={orderCoating}
-                          onChange={(e) => setOrderCoating(e.target.value)} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
-                        <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={orderLensPrice}
-                          onChange={(e) => setOrderLensPrice(Number(e.target.value))} />
-                      </div>
-                    </div>
+                    <button onClick={addLens} className="mt-3 flex items-center gap-1.5 text-sm text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 font-medium">
+                      <Plus size={14} /> Add Another Lens
+                    </button>
                   </div>
                 )}
 
