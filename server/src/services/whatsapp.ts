@@ -152,6 +152,15 @@ class WhatsAppService {
       console.log("WhatsApp: connected successfully");
     } catch (err: any) {
       const msg = err?.message || "Failed to connect to WhatsApp";
+      if (msg === "RESTART_REQUIRED") {
+        // Pairing succeeded; creds saved to MongoDB. Re-init with the
+        // new session. Don't destroy — that would cancel the reconnect.
+        console.log("WhatsApp: pairing complete, restarting with saved session");
+        this.initializing = false;
+        this.initPromise = null;
+        await this.init();
+        return;
+      }
       console.error("WhatsApp init failed:", msg);
       await this.destroy();
       this._error = msg;
@@ -243,20 +252,25 @@ class WhatsAppService {
             errStack: errStack.split("\n")[0],
           });
 
-          // After a successful pairing, Baileys closes the socket and
-          // internally creates a new one with the updated credentials
-          // (restartRequired). Don't interfere — the same event emitter
-          // will fire connection: "open" once the new socket connects.
+          // After a successful pairing, Baileys closes the socket
+          // (restartRequired). The new creds are saved to MongoDB.
+          // Clean up and let doInit() re-init with the saved session.
           if (statusCode === DisconnectReason.restartRequired) {
             this.cancelReconnect();
             if (qrTimer) clearTimeout(qrTimer);
-            qrTimer = setTimeout(() => {
-              if (!resolved) {
-                resolved = true;
-                console.log("WhatsApp: timeout waiting for restart reconnect");
-                reject(new Error("Timeout waiting for restart reconnect"));
-              }
-            }, QR_TIMEOUT_MS);
+            if (this.sock) {
+              try {
+                this.sock.ev.removeAllListeners("connection.update");
+                this.sock.ev.removeAllListeners("creds.update");
+              } catch {}
+            }
+            this.sock = null;
+            this._qr = null;
+            this._qrBase64 = null;
+            if (!resolved) {
+              resolved = true;
+              reject(new Error("RESTART_REQUIRED"));
+            }
             return;
           }
 
