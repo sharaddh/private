@@ -31,7 +31,7 @@ export default function Settings() {
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
   const [staffSaving, setStaffSaving] = useState(false);
-  const [editingAccount, setEditingAccount] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(true);
   const [editName, setEditName] = useState((user?.name as string) || "");
   const [editMobile, setEditMobile] = useState((user?.mobile as string) || "");
   const [editPassword, setEditPassword] = useState("");
