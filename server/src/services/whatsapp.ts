@@ -98,7 +98,7 @@ async function useMongoDBAuthState(): Promise<{
   return { state: { creds, keys }, saveCreds };
 }
 
-const QR_TIMEOUT_MS = 60000;
+const QR_TIMEOUT_MS = 120000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 5000;
 
@@ -147,9 +147,10 @@ class WhatsAppService {
       await this.tryInit();
       console.log("WhatsApp: connected successfully");
     } catch (err: any) {
-      console.error("WhatsApp init failed:", err?.message || err);
-      this._error = err?.message || "Failed to connect to WhatsApp";
+      const msg = err?.message || "Failed to connect to WhatsApp";
+      console.error("WhatsApp init failed:", msg);
       await this.destroy();
+      this._error = msg;
     }
   }
 
@@ -178,7 +179,7 @@ class WhatsAppService {
         emitOwnEvents: false,
         generateHighQualityLinkPreview: false,
         keepAliveIntervalMs: 30000,
-        connectTimeoutMs: 60000,
+        connectTimeoutMs: 120000,
         defaultQueryTimeoutMs: 60000,
         transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
       });
