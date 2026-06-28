@@ -22,6 +22,7 @@ const Workspace = lazy(() => import("./pages/Workspace"));
 const NewVisit = lazy(() => import("./pages/NewVisit"));
 const ItemScan = lazy(() => import("./pages/ItemScan"));
 const Login = lazy(() => import("./pages/Login"));
+const StaffLogin = lazy(() => import("./pages/StaffLogin"));
 const Register = lazy(() => import("./pages/Register"));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/settings" element={<SuspendedPage page="settings"><Settings /></SuspendedPage>} />
           <Route path="/whatsapp" element={<SuspendedPage page="settings"><WhatsAppPage /></SuspendedPage>} />
           <Route path="/login" element={<SuspendedPage page="login"><Login /></SuspendedPage>} />
+          <Route path="/staff-login" element={<SuspendedPage page="login"><StaffLogin /></SuspendedPage>} />
           <Route path="/register" element={<SuspendedPage page="register"><Register /></SuspendedPage>} />
         </Routes>
       </ErrorBoundary>

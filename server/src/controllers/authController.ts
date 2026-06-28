@@ -34,6 +34,30 @@ export async function login(req: Request, res: Response) {
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
+  if (user.role === "staff") {
+    throw new AppError(403, "Staff must use the staff login page");
+  }
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) {
+    throw new AppError(400, "Invalid credentials");
+  }
+  const access = signAccess({ sub: user._id, username: user.username, role: user.role });
+  const refresh = signRefresh({ sub: user._id });
+  return res.json({ success: true, data: { user: { id: user._id, username: user.username, name: user.name, mobile: user.mobile, role: user.role }, access, refresh } });
+}
+
+export async function staffLogin(req: Request, res: Response) {
+  const { username, password } = req.body;
+  if (!username?.trim() || !password?.trim()) {
+    throw new AppError(400, "Username and password required");
+  }
+  const user = await User.findOne({ username }).lean();
+  if (!user) {
+    throw new AppError(400, "Invalid credentials");
+  }
+  if (user.role !== "staff") {
+    throw new AppError(403, "Admins must use the admin login page");
+  }
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) {
     throw new AppError(400, "Invalid credentials");

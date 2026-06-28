@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, Shield } from "lucide-react";
 
-export default function Login() {
+export default function StaffLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +21,7 @@ export default function Login() {
     e.preventDefault();
     setError(""); setIsLoading(true);
     try {
-      const res = await api.post("/api/auth/login", { username, password });
+      const res = await api.post("/api/auth/staff-login", { username, password });
       if (res.success) {
         login(res.data.access, res.data.refresh);
         navigate("/", { replace: true });
@@ -31,14 +31,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50 dark:from-dark-900 dark:via-dark-850 dark:to-dark-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-accent-50/20 to-gray-50 dark:from-dark-900 dark:via-dark-850 dark:to-dark-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-accent-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/20">
-            <span className="text-white font-bold text-xl">K</span>
+          <div className="w-14 h-14 bg-gradient-to-br from-accent-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-accent-500/20">
+            <Shield className="text-white" size={22} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KMJ Optical</h1>
-          <p className="text-sm text-gray-500 mt-1">Admin Login</p>
+          <p className="text-sm text-gray-500 mt-1">Staff Login</p>
         </div>
 
         <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-soft-lg border border-gray-100 dark:border-dark-700/80 p-6">
@@ -70,7 +70,7 @@ export default function Login() {
             </button>
           </form>
           <p className="text-center text-sm text-gray-500 mt-4">
-            Staff? <Link to="/staff-login" className="text-primary-600 hover:text-primary-700 font-medium">Login here</Link>
+            Admin? <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">Login here</Link>
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import api from "../api";
 
 interface AuthState {
   token: string | null;
@@ -35,12 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (state.token) {
-      fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${state.token}` },
-      })
-        .then((r) => r.json())
-        .then((d) => { if (d.success) setState((s) => ({ ...s, user: d.data })); })
-        .catch(() => {});
+      api.get("/api/auth/me").then((d) => {
+        if (d.success) setState((s) => ({ ...s, user: d.data }));
+        else logout();
+      }).catch(() => logout());
     }
   }, [state.token]);
 
