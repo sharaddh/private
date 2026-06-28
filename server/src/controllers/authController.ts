@@ -35,7 +35,7 @@ export async function register(req: Request, res: Response) {
     passwordHash,
     name: name || "",
     mobile: mobile || "",
-    role: role === "staff" ? "staff" : "user" // Changed default fallback to "user" for safety
+    role: role === "staff" ? "staff" : "owner" // Changed default fallback to "user" for safety
   });
 
   return res.json({
