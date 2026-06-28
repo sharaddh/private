@@ -11,6 +11,7 @@ import PDFKit from "pdfkit";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
+import { asyncHandler } from "../middleware/asyncHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 
 const router = Router();
@@ -43,7 +44,7 @@ const statusUpdateSchema = z.object({
   advanceQuantity: z.number().optional(),
 });
 
-router.get("/", authenticate, cacheRoute(30), async (req, res) => {
+router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
   const { customerId, startDate, endDate } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
@@ -77,7 +78,7 @@ router.get("/", authenticate, cacheRoute(30), async (req, res) => {
   );
 
   res.json({ success: true, data: enriched });
-});
+}));
 
 router.post("/", authenticate, audit, async (req, res) => {
   try {
@@ -92,11 +93,11 @@ router.post("/", authenticate, audit, async (req, res) => {
   }
 });
 
-router.get("/:id", authenticate, async (req, res) => {
+router.get("/:id", authenticate, asyncHandler(async (req, res) => {
   const o = await Order.findById(req.params.id).populate("customerId", "name mobile");
   if (!o) return res.status(404).json({ success: false, message: "Not found" });
   res.json({ success: true, data: o });
-});
+}));
 
 router.put("/:id", authenticate, audit, async (req, res) => {
   try {
@@ -111,7 +112,7 @@ router.put("/:id", authenticate, audit, async (req, res) => {
 });
 
 // PATCH /:id/classify — set classification
-router.patch("/:id/classify", authenticate, async (req, res) => {
+router.patch("/:id/classify", authenticate, asyncHandler(async (req, res) => {
   const { classification } = req.body;
   if (!["pending", "stock", "buy", "order"].includes(classification)) {
     return res.status(400).json({ success: false, message: "Invalid classification" });
@@ -121,10 +122,10 @@ router.patch("/:id/classify", authenticate, async (req, res) => {
   invalidateCache("/api/orders");
   invalidateCache("/api/dashboard");
   res.json({ success: true, data: o });
-});
+}));
 
 // PATCH /:id/review — toggle reviewed flag
-router.patch("/:id/review", authenticate, async (req, res) => {
+router.patch("/:id/review", authenticate, asyncHandler(async (req, res) => {
   const o = await Order.findByIdAndUpdate(
     req.params.id,
     { $set: { reviewed: req.body.reviewed } },
@@ -134,7 +135,7 @@ router.patch("/:id/review", authenticate, async (req, res) => {
   invalidateCache("/api/orders");
   invalidateCache("/api/dashboard");
   res.json({ success: true, data: o });
-});
+}));
 
 // PATCH /:id/status — validated status transition with partial advancement support
 router.patch("/:id/status", authenticate, async (req, res) => {
