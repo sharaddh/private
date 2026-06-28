@@ -36,11 +36,18 @@ export async function create(req: Request, res: Response) {
   const { name, mobile } = req.body;
   if (!name?.trim()) throw new AppError(400, "Name is required");
   if (!mobile?.trim()) throw new AppError(400, "Mobile is required");
-  const customer = await Customer.create(req.body);
+  const existing = await Customer.findOne({ mobile: mobile.trim() }).lean();
+  if (existing) throw new AppError(409, "A customer with this mobile number already exists");
+  const customer = await Customer.create({ ...req.body, mobile: mobile.trim() });
   return created(res, customer);
 }
 
 export async function update(req: Request, res: Response) {
+  const { mobile } = req.body;
+  if (mobile?.trim()) {
+    const existing = await Customer.findOne({ mobile: mobile.trim(), _id: { $ne: req.params.id } }).lean();
+    if (existing) throw new AppError(409, "A customer with this mobile number already exists");
+  }
   const customer = await Customer.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true }).lean();
   if (!customer) return notFound(res, "Customer not found");
   return success(res, customer);
