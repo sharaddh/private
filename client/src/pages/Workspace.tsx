@@ -6,7 +6,7 @@ import {
   Search, UserPlus, Phone, User, Eye, ShoppingCart,
   CreditCard, Truck, Check, ChevronRight, ChevronLeft, Save,
   X, Plus, Printer, ArrowRight, AlertCircle, MessageCircle,
-  RotateCcw, Clock, DollarSign, Edit3, Info, RefreshCw,
+  RotateCcw, Clock, Receipt, Edit3, Info, RefreshCw,
   Calendar, Tag, Repeat, FileText, History, EyeOff
 } from "lucide-react";
 
@@ -547,7 +547,7 @@ export default function Workspace() {
     { key: "customer", label: "Customer", icon: User },
     { key: "examination", label: "Prescription", icon: Eye },
     { key: "order", label: "Products", icon: ShoppingCart },
-    { key: "billing", label: "Bill", icon: DollarSign },
+    { key: "billing", label: "Bill", icon: Receipt },
     { key: "payment", label: "Payment", icon: CreditCard },
   ] as const;
   const currentIdx = steps.findIndex((s) => s.key === step);

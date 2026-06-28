@@ -6,7 +6,7 @@ const CustomerSchema = new Schema(
     name: { type: String, required: true, index: true },
     age: { type: Number },
     gender: { type: String },
-    mobile: { type: String, index: true },
+    mobile: { type: String, index: true, unique: true },
     alternateMobile: { type: String },
     address: { type: String },
     city: { type: String },

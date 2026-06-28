@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import QRCode from "qrcode";
-import { ArrowLeft, Package, Printer, QrCode, Tag, DollarSign, User, Building, Layers, Eye } from "lucide-react";
+import { ArrowLeft, Package, Printer, QrCode, Tag, User, Building, Layers, Eye } from "lucide-react";
 
 export default function ItemScan() {
   const { code } = useParams();
@@ -173,13 +173,13 @@ export default function ItemScan() {
               </div>
               <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <DollarSign size={12} /> Purchase Price
+                  <Tag size={12} /> Purchase Price
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.purchasePrice || 0}</p>
               </div>
               <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <DollarSign size={12} /> Selling Price
+                  <Tag size={12} /> Selling Price
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.sellingPrice || 0}</p>
               </div>

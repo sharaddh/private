@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
-import { Users, DollarSign, Clock, Package, TrendingUp, AlertTriangle } from "lucide-react";
+import { Users, TrendingUp, Clock, Package, AlertTriangle } from "lucide-react";
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("customers");
@@ -27,7 +27,7 @@ export default function Reports() {
 
   const tabs = [
     { key: "customers", label: "Customers", icon: Users },
-    { key: "sales", label: "Sales", icon: DollarSign },
+    { key: "sales", label: "Sales", icon: TrendingUp },
     { key: "pending", label: "Pending", icon: Clock },
     { key: "inventory", label: "Inventory", icon: Package },
   ];

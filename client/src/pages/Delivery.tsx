@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import api from "../api";
 import { useCachedData } from "../hooks/useCachedData";
 import PageSkeleton from "../components/PageSkeleton";
-import { Eye, Clock, Package, Truck, DollarSign } from "lucide-react";
+import { Eye, Clock, Package, Truck, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DateRangePicker from "../components/DateRangePicker";
 
@@ -61,7 +61,7 @@ export default function Delivery() {
         </div>
         <div className="card text-center py-6">
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <DollarSign size={24} className="text-blue-500" />
+            <Wallet size={24} className="text-blue-500" />
           </div>
           <p className="text-3xl font-bold text-primary-600">₹{totalRevenue.toLocaleString()}</p>
           <p className="text-sm font-medium text-gray-500 mt-1">Total Revenue</p>

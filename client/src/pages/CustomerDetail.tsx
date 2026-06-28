@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import {
-  ArrowLeft, Mail, Phone, MapPin, Calendar, DollarSign, Eye, ClipboardList,
+  ArrowLeft, Mail, Phone, MapPin, Calendar, Receipt, Eye, ClipboardList,
   ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User,
   ChevronRight, Clock, Activity, AlertCircle, CheckCircle
 } from "lucide-react";
@@ -135,7 +135,7 @@ export default function CustomerDetail() {
     { key: "overview", label: "Overview", icon: User },
     { key: "visits", label: `Visits (${visits.length})`, icon: ClipboardList },
     { key: "prescriptions", label: `Prescriptions (${prescriptions.length})`, icon: Eye },
-    { key: "bills", label: `Bills (${bills.length})`, icon: DollarSign },
+    { key: "bills", label: `Bills (${bills.length})`, icon: Receipt },
     { key: "orders", label: `Orders (${orders.length})`, icon: ShoppingCart },
   ] as const;
 
@@ -664,7 +664,7 @@ export default function CustomerDetail() {
               {linkedBill && (
                 <div className="card p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <DollarSign size={16} className="text-emerald-500" />
+                    <Receipt size={16} className="text-emerald-500" />
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Bill</h3>
                     <span className="text-[10px] text-gray-400 ml-auto">{linkedBill.billNumber}</span>
                   </div>

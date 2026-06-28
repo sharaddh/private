@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { get, post } from "../api";
+import { invalidateCache } from "../hooks/useCache";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -131,6 +132,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         ...(drawerForm.address.trim() && { address: drawerForm.address.trim() }),
       });
       if (res.success) {
+        invalidateCache("/api/customers");
         setShowAddDrawer(false);
         toast.success("Customer created successfully");
         navigate(`/customers/${res.data?._id}`);

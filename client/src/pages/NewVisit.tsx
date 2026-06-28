@@ -5,7 +5,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import {
-  ArrowLeft, Eye, ShoppingCart, DollarSign, CreditCard, Plus, Save, X, MessageCircle,
+  ArrowLeft, Eye, ShoppingCart, Receipt, CreditCard, Plus, Save, X, MessageCircle,
   AlertCircle, Info, Tag, Sun, ChevronRight, ChevronLeft, Check, Calendar, Phone, User, Clock, FileText,
   QrCode, Search, Camera
 } from "lucide-react";
@@ -439,7 +439,7 @@ export default function NewVisit() {
     { key: "type", label: "Visit", icon: Plus },
     { key: "prescription", label: "Prescription", icon: Eye },
     { key: "products", label: "Products", icon: ShoppingCart },
-    { key: "billing", label: "Billing & Payment", icon: DollarSign },
+    { key: "billing", label: "Billing & Payment", icon: Receipt },
     { key: "summary", label: "Summary", icon: CreditCard },
   ];
   const visitSteps = (visitType === "service" || visitType === "other")
@@ -1018,7 +1018,7 @@ export default function NewVisit() {
           <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
               <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <DollarSign size={20} />
+                <Receipt size={20} />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Billing & Payment</h2>
@@ -1142,7 +1142,7 @@ export default function NewVisit() {
             </div>
             {billItems.some((i) => i.description) && (
               <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-3"><DollarSign size={14} className="text-gray-400" /> Bill</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-3"><Receipt size={14} className="text-gray-400" /> Bill</h3>
                 <div className="space-y-1.5">
                   {billItems.filter((i) => i.description).map((i, idx) => (
                     <div key={idx} className="flex justify-between text-sm text-gray-600 dark:text-gray-400">

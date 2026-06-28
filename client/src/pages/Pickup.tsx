@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
 import PageSkeleton from "../components/PageSkeleton";
-import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, DollarSign, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical } from "lucide-react";
+import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();

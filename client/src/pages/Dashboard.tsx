@@ -10,7 +10,7 @@ import { SalesTrendChart, PaymentModeChart, OrderStatusChart } from "../componen
 import { useToast } from "../context/ToastContext";
 import {
   Users, ShoppingCart, FileText, Package, Truck,
-  TrendingUp, DollarSign, Clock, AlertTriangle, ArrowRight,
+  TrendingUp, Clock, AlertTriangle, ArrowRight,
   Glasses, Eye, Plus, Check, Trash2,
   Search, ChevronDown, ChevronUp, Send, FlaskConical, QrCode,
 } from "lucide-react";
@@ -143,7 +143,7 @@ export default function Dashboard() {
           {/* Main stat cards — key metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard title={`${periodLabel} Sales`} value={`₹${(salesValue || 0).toLocaleString()}`} icon={<TrendingUp size={22} />} color="primary" />
-            <StatCard title={`Collection`} value={`₹${(collectionValue || 0).toLocaleString()}`} icon={<DollarSign size={22} />} color="emerald" />
+            <StatCard title={`Collection`} value={`₹${(collectionValue || 0).toLocaleString()}`} icon={<TrendingUp size={22} />} color="emerald" />
             <StatCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={22} />} color="amber" />
             <StatCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={22} />} color="red" onClick={() => navigate("/inventory")} />
           </div>
