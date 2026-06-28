@@ -229,6 +229,17 @@ class WhatsAppService {
 
           const statusCode = lastDisconnect?.error?.output?.statusCode;
           const reason = statusCode !== undefined ? (DisconnectReason as any)[statusCode] || "Unknown" : "Unknown";
+          const errMsg = lastDisconnect?.error?.message || lastDisconnect?.error?.toString() || "no error";
+          const errStack = lastDisconnect?.error?.stack || "";
+
+          console.log("WhatsApp: connection closed", {
+            reason,
+            statusCode,
+            wasReady,
+            resolved,
+            errMsg,
+            errStack: errStack.split("\n")[0],
+          });
 
           const needsReAuth =
             statusCode === DisconnectReason.loggedOut ||
@@ -244,11 +255,21 @@ class WhatsAppService {
             this.scheduleReconnect();
           }
 
+          // If connection closed before auth completed, clear partial session
+          // so the next attempt starts completely fresh
+          if (!resolved && this.saveCredsFn) {
+            console.log("WhatsApp: connection closed before auth completed, clearing partial session");
+            try {
+              const db = mongoose.connection.db;
+              if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+            } catch {}
+          }
+
           if (qrTimer) clearTimeout(qrTimer);
 
           if (!resolved) {
             resolved = true;
-            reject(new Error("Connection closed: " + reason));
+            reject(new Error("Connection closed: " + reason + " — " + errMsg));
           }
         }
       };
