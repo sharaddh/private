@@ -6,7 +6,6 @@ import makeWASocket, {
   initAuthCreds,
   BufferJSON,
   Browsers,
-  fetchLatestBaileysVersion,
 } from "@whiskeysockets/baileys";
 import * as QR from "qrcode";
 import { Buffer } from "buffer";
@@ -158,7 +157,6 @@ class WhatsAppService {
     this.saveCredsFn = saveCreds;
 
     const isLoggedIn = !!state.creds.me?.id;
-    const { version } = await fetchLatestBaileysVersion();
 
     return new Promise<void>((resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
@@ -170,17 +168,16 @@ class WhatsAppService {
 
       const sock = makeWASocket({
         auth: state,
-        version,
         printQRInTerminal: false,
         browser: Browsers.macOS("Chrome"),
         syncFullHistory: false,
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
+        emitOwnEvents: false,
         generateHighQualityLinkPreview: false,
-        keepAliveIntervalMs: 15000,
-        connectTimeoutMs: 120000,
+        keepAliveIntervalMs: 30000,
+        connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
         transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
-        getMessage: async () => undefined,
       });
 
       this.sock = sock;
