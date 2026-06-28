@@ -192,7 +192,7 @@ class WhatsAppService {
         generateHighQualityLinkPreview: false,
         keepAliveIntervalMs: 30000,
         connectTimeoutMs: 120000,
-        defaultQueryTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 120000,
         transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
       });
 

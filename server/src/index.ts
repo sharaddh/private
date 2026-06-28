@@ -45,6 +45,25 @@ async function start() {
     process.exit(1);
   }
 
+  // Drop stale unique indexes that block customer creation (MongoDB 8.x rejects
+  // duplicate nulls in unique indexes). customerId and mobile were previously
+  // unique but the frontend never sends customerId, and mobile allowed empty
+  // strings that became null.
+  try {
+    const customers = mongoose.connection.db.collection("customers");
+    const indexes = await customers.indexes();
+    for (const idx of indexes) {
+      if ((idx.key?.customerId || idx.key?.mobile) && idx.unique) {
+        await customers.dropIndex(idx.name);
+        console.log("Dropped stale unique index: " + idx.name);
+      }
+    }
+  } catch (e: any) {
+    if (!e?.message?.includes?.("index not found")) {
+      console.warn("Could not check/drop indexes:", e?.message);
+    }
+  }
+
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);
