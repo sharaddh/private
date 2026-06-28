@@ -143,27 +143,14 @@ class WhatsAppService {
   }
 
   private async doInit(): Promise<void> {
-    let lastError: any;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        await this.tryInit();
-        console.log("WhatsApp: connected successfully");
-        return;
-      } catch (err: any) {
-        lastError = err;
-        console.error(`WhatsApp init attempt ${attempt}/${MAX_RETRIES} failed:`, err?.message || err);
-        await this.destroy();
-        if (attempt < MAX_RETRIES) {
-          const delay = RETRY_BASE_DELAY * attempt;
-          console.log(`WhatsApp: retrying in ${delay}ms...`);
-          await new Promise((r) => setTimeout(r, delay));
-        }
-      }
+    try {
+      await this.tryInit();
+      console.log("WhatsApp: connected successfully");
+    } catch (err: any) {
+      console.error("WhatsApp init failed:", err?.message || err);
+      this._error = err?.message || "Failed to connect to WhatsApp";
+      await this.destroy();
     }
-    console.error("WhatsApp: all init attempts failed");
-    this._error = lastError?.message || "Init failed after " + MAX_RETRIES + " attempts";
-    this.initializing = false;
-    this.initPromise = null;
   }
 
   private async tryInit(): Promise<void> {
