@@ -173,8 +173,8 @@ export default function WhatsApp() {
                 <span className="text-sm font-medium">Connection Error</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                WhatsApp failed to start. The server will auto-retry up to 3 times.
-                If the issue persists, Chromium may not be installed on the server.
+                WhatsApp failed to start. The server will keep retrying automatically.
+                If the issue persists, try clicking "Retry Connection" below.
               </p>
               <button
                 onClick={handleReinit}
