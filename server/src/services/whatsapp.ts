@@ -196,7 +196,7 @@ class WhatsAppService {
       const onConnectionUpdate = async (update: any) => {
         const { connection, lastDisconnect, qr, isNewLogin } = update;
 
-        if (qr && !resolved && !isLoggedIn) {
+        if (qr && !resolved) {
           this._qr = qr;
           this._ready = false;
           this._error = null;
