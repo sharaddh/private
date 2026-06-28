@@ -1,23 +1,9 @@
 import { connect, disconnect } from "mongoose";
-import bcrypt from "bcrypt";
 import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
-import { User } from "./models/user";
 
 let server: ReturnType<typeof app.listen> | null = null;
-
-async function seedAdmin() {
-  try {
-    const count = await User.countDocuments();
-    if (count === 0) {
-      const passwordHash = await bcrypt.hash("admin123", 10);
-      await User.create({ username: "admin", passwordHash, role: "owner" });
-    }
-  } catch (err) {
-    console.error("Seed admin failed:", err);
-  }
-}
 
 async function start() {
   if (!MONGO_URI) {
@@ -44,8 +30,6 @@ async function start() {
       // Redis is optional
     }
   }
-
-  await seedAdmin();
 
   // Lazy-init WhatsApp: import and init in background after server starts
   setTimeout(() => {

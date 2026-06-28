@@ -5,7 +5,7 @@ import * as authController from "../controllers/authController";
 
 const router = Router();
 
-router.post("/register", authenticate, asyncHandler(authController.register));
+router.post("/register", asyncHandler(authController.register));
 router.post("/login", asyncHandler(authController.login));
 router.post("/staff-login", asyncHandler(authController.staffLogin));
 router.post("/refresh", asyncHandler(authController.refresh));
