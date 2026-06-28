@@ -6,7 +6,6 @@ import makeWASocket, {
   initAuthCreds,
   BufferJSON,
   Browsers,
-  fetchLatestBaileysVersion,
 } from "@whiskeysockets/baileys";
 import * as QR from "qrcode";
 import { Buffer } from "buffer";
@@ -98,6 +97,11 @@ async function useMongoDBAuthState(): Promise<{
   return { state: { creds, keys }, saveCreds };
 }
 
+// Hardcoded WA Web version that's currently accepted.
+// fetchLatestBaileysVersion() is unreliable on Render (GitHub fetch may fail,
+// falling back to stale default). Keep this updated if version rejection occurs.
+const WA_VERSION: [number, number, number] = [2, 3000, 1035194821];
+
 const QR_TIMEOUT_MS = 120000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 5000;
@@ -159,7 +163,6 @@ class WhatsAppService {
     this.saveCredsFn = saveCreds;
 
     const isLoggedIn = !!state.creds.me?.id;
-    const { version } = await fetchLatestBaileysVersion();
 
     return new Promise<void>((resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
@@ -171,7 +174,7 @@ class WhatsAppService {
 
       const sock = makeWASocket({
         auth: state,
-        version,
+        version: WA_VERSION,
         printQRInTerminal: false,
         browser: Browsers.macOS("Chrome"),
         syncFullHistory: false,
