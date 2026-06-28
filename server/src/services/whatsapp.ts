@@ -97,9 +97,9 @@ async function useMongoDBAuthState(): Promise<{
   return { state: { creds, keys }, saveCreds };
 }
 
-const MAX_RETRIES = 5;
-const QR_TIMEOUT_MS = 120000;
-const RETRY_BASE_DELAY = 5000;
+const QR_TIMEOUT_MS = 60000;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_BASE_DELAY = 5000;
 
 class WhatsAppService {
   private sock: ReturnType<typeof makeWASocket> | null = null;
@@ -111,8 +111,9 @@ class WhatsAppService {
   private initializing = false;
   private initPromise: Promise<void> | null = null;
   private initGen = 0;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private messageQueue: QueueItem[] = [];
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempts = 0;
   private drainInProgress = false;
   private saveCredsFn: (() => Promise<void>) | null = null;
 
@@ -124,6 +125,7 @@ class WhatsAppService {
   get queueLength() { return this.messageQueue.length; }
 
   async init() {
+    this.reconnectAttempts = 0;
     if (this.sock) return;
     if (this.initializing) return this.initPromise;
     this.initializing = true;
@@ -237,14 +239,18 @@ class WhatsAppService {
           const statusCode = lastDisconnect?.error?.output?.statusCode;
           const reason = statusCode !== undefined ? (DisconnectReason as any)[statusCode] || "Unknown" : "Unknown";
 
-          if (statusCode === DisconnectReason.loggedOut) {
-            console.log("WhatsApp: logged out, clearing session");
-            if (this.saveCredsFn) {
-              try {
-                const db = mongoose.connection.db;
-                if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
-              } catch {}
-            }
+          const needsReAuth =
+            statusCode === DisconnectReason.loggedOut ||
+            statusCode === DisconnectReason.badSession;
+
+          if (needsReAuth) {
+            console.log("WhatsApp: " + (DisconnectReason as any)[statusCode] + ", clearing session for re-auth");
+            try {
+              const db = mongoose.connection.db;
+              if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+            } catch {}
+          } else {
+            this.scheduleReconnect();
           }
 
           if (qrTimer) clearTimeout(qrTimer);
@@ -401,11 +407,31 @@ class WhatsAppService {
     return { status: "initializing", queueLength: this.messageQueue.length };
   }
 
-  async destroy() {
-    if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
-      this.retryTimer = null;
+  private scheduleReconnect() {
+    this.cancelReconnect();
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.error("WhatsApp: max reconnect attempts reached, giving up");
+      this._error = "Connection lost. Click 'Retry Connection' to try again.";
+      return;
     }
+    this.reconnectAttempts++;
+    const delay = RECONNECT_BASE_DELAY * this.reconnectAttempts;
+    console.log(`WhatsApp: scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.init().catch(() => {});
+    }, delay);
+  }
+
+  private cancelReconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  async destroy() {
+    this.cancelReconnect();
     if (this.sock) {
       try {
         this.sock.ev.removeAllListeners("connection.update");
@@ -420,6 +446,7 @@ class WhatsAppService {
     this._pairingCode = null;
     this._error = null;
     this.initializing = false;
+    this.initPromise = null;
     this.saveCredsFn = null;
   }
 
@@ -429,8 +456,6 @@ class WhatsAppService {
       if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
     } catch {}
     await this.destroy();
-    this.initializing = false;
-    this.initPromise = null;
   }
 
   async reconnect() {
