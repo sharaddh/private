@@ -174,13 +174,13 @@ class WhatsAppService {
         printQRInTerminal: false,
         browser: Browsers.macOS("Chrome"),
         syncFullHistory: false,
-        markOnlineOnConnect: true,
-        emitOwnEvents: false,
+        markOnlineOnConnect: false,
         generateHighQualityLinkPreview: false,
-        keepAliveIntervalMs: 30000,
-        connectTimeoutMs: 60000,
+        keepAliveIntervalMs: 15000,
+        connectTimeoutMs: 120000,
         defaultQueryTimeoutMs: 60000,
         transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10000 },
+        getMessage: async () => undefined,
       });
 
       this.sock = sock;
