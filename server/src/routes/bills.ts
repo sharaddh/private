@@ -110,13 +110,29 @@ router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
   const p = req.body;
   const bill = await Bill.findById(req.params.id);
   if (!bill) throw new AppError(404, "Not found");
+
+  const oldAdvance = bill.advancePaid || 0;
+
   if (p.items) {
     bill.subtotal = (p.items || []).reduce((s: number, it: any) => s + ((it.quantity || 1) * (it.unitPrice || 0)), 0);
     bill.totalAmount = bill.subtotal - (p.discount ?? bill.discount) + (p.tax ?? bill.tax);
-    bill.pendingAmount = bill.totalAmount - (p.advancePaid ?? bill.advancePaid);
   }
+
   Object.assign(bill, p);
+
+  // Always recalculate pendingAmount when advancePaid or items/discount/tax change
+  bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - (bill.advancePaid || 0));
+
   await bill.save();
+
+  // Adjust customer pendingAmount by the advance difference
+  const advanceDiff = (bill.advancePaid || 0) - oldAdvance;
+  if (Math.abs(advanceDiff) > 0.01) {
+    await Customer.findByIdAndUpdate(bill.customerId, {
+      $inc: { pendingAmount: -advanceDiff },
+    });
+  }
+
   await Promise.all([
     invalidateCache("/api/bills"),
     invalidateCache("/api/dashboard"),

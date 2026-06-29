@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import api from "../api";
-import { useApiGet } from "../hooks/useApi";
 import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
@@ -26,14 +25,20 @@ export default function Bills() {
   const fetchBills = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ startDate, endDate });
-    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`).then((d) => { if (d.success) setList(d.data || []); }).finally(() => setLoading(false));
+    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`)
+      .then((d) => { if (d.success) setList(d.data || []); })
+      .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
   const fetchSettings = useCallback(() => {
-    api.get<Record<string, unknown>>("/api/settings").then((d) => { if (d.success) setSettings(d.data || null); });
+    api.get<Record<string, unknown>>("/api/settings")
+      .then((d) => { if (d.success) setSettings(d.data || null); });
   }, []);
 
-  useState(() => { fetchBills(); fetchSettings(); });
+  useEffect(() => { 
+    fetchBills(); 
+    fetchSettings(); 
+  }, [fetchBills, fetchSettings]);
 
   function resolveCustomer(bill: Record<string, unknown>): Record<string, unknown> | null {
     if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId as Record<string, unknown>;
@@ -43,109 +48,190 @@ export default function Bills() {
   function handlePrint(bill: Record<string, unknown>) {
     const w = window.open("", "_blank");
     if (!w) return;
+    
+    // Cleanly extract variables to remove redundancies in the HTML template
     const shop = (settings?.shopName as string) || "KMJ Optical";
     const address = (settings?.shopAddress as string) || "";
     const phone = (settings?.shopPhone as string) || "";
     const email = (settings?.shopEmail as string) || "";
     const logo = (settings?.logo as string) || "";
     const customer = resolveCustomer(bill);
-    const items = ((bill.items as Record<string, unknown>[]) || []).map((it) => `
+    
+    // Formatting currency safely here to avoid messy inline HTML logic
+    const subtotal = ((bill.subtotal as number) || 0).toFixed(2);
+    const discount = bill.discount ? (bill.discount as number).toFixed(2) : null;
+    const tax = bill.tax ? (bill.tax as number).toFixed(2) : null;
+    const totalAmount = ((bill.totalAmount as number) || 0).toFixed(2);
+    const advancePaid = bill.advancePaid ? (bill.advancePaid as number).toFixed(2) : null;
+    const pendingAmount = ((bill.pendingAmount as number) || 0);
+    const billDate = new Date(bill.createdAt as string).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const isCancelled = bill.status === "Cancelled";
+
+    const items = ((bill.items as Record<string, unknown>[]) || []).map((it, idx) => {
+      const qty = (it.quantity as number) || 1;
+      const unitPrice = (it.unitPrice as number) || 0;
+      return `
       <tr>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;color:#374151">${it.description || ""}</td>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:center;color:#374151">${it.quantity || 1}</td>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151">₹${((it.unitPrice as number) || 0).toFixed(2)}</td>
-        <td style="padding:8px 10px;border:1px solid #e5e7eb;font-size:12px;text-align:right;color:#374151;font-weight:500">₹${(((it.quantity as number) || 1) * ((it.unitPrice as number) || 0)).toFixed(2)}</td>
-      </tr>`).join("");
+        <td class="center">${idx + 1}</td>
+        <td>${it.description || "—"}</td>
+        <td class="center">${qty}</td>
+        <td class="right">₹${unitPrice.toFixed(2)}</td>
+        <td class="right bold">₹${(qty * unitPrice).toFixed(2)}</td>
+      </tr>`;
+    }).join("");
+
     w.document.write(`<!DOCTYPE html>
-<html><head><title>Invoice ${bill.billNumber}</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice ${bill.billNumber || ""}</title>
 <style>
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  body{font-family:system-ui,sans-serif;margin:0;padding:0;color:#111827;background:#fff}
-  .page{max-width:800px;margin:auto;padding:30px}
-  .top-bar{background:#1e40af;height:6px;margin:-30px -30px 0}
-  .header-row{display:flex;align-items:center;gap:16px;margin:28px 0 20px}
-  .header-row img{width:60px;height:60px;object-fit:contain}
-  .shop-details h1{margin:0;font-size:24px;color:#111827}
-  .shop-details p{margin:2px 0 0;font-size:11px;color:#6b7280}
-  .invoice-badge{background:#1e40af;color:#fff;padding:6px 18px;border-radius:6px;font-size:13px;font-weight:bold;margin-left:auto;letter-spacing:0.5px}
-  hr{border:none;border-top:1px solid #e5e7eb;margin:16px 0}
-  .info-grid{display:flex;gap:40px;margin:16px 0}
-  .info-col{flex:1}
-  .info-col .label{font-size:9px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
-  .info-col .value{font-size:13px;color:#111827;margin-bottom:10px}
-  .info-col .sub-label{font-size:9px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;margin-bottom:2px}
-  table{width:100%;border-collapse:collapse;margin:16px 0}
-  th{background:#1e40af;color:#fff;padding:8px 10px;font-size:11px;font-weight:600;text-align:left}
-  th.center{text-align:center}
-  th.right{text-align:right}
-  tr:nth-child(even){background:#f9fafb}
-  .totals-box{margin-left:auto;width:55%;background:#eff2ff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px}
-  .totals-box .row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#374151}
-  .totals-box .bold{font-weight:bold;font-size:15px;color:#111827}
-  .totals-box .green{color:#059669}
-  .totals-box .orange{color:#d97706}
-  .totals-box .red{color:#dc2626}
-  .totals-box .divider{border-top:2px solid #1e40af;margin:4px 0;padding-top:4px}
-  .words{font-size:11px;color:#6b7280;margin-top:12px;font-style:italic}
-  .footer-row{display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af}
-  .terms{font-size:10px;color:#6b7280;margin-top:16px}
-  .terms strong{color:#111827}
-  .terms p{margin:2px 0}
-</style></head><body>
-<div class="page">
-  <div class="top-bar"></div>
-  <div class="header-row">
-    ${logo ? `<img src="${logo}" alt="Logo" />` : ""}
-    <div class="shop-details">
-      <h1>${shop}</h1>
-      ${address ? `<p>${address}</p>` : ""}
-      ${phone || email ? `<p>${[phone, email].filter(Boolean).join("  |  ")}</p>` : ""}
+  :root { --brand: #1e3a8a; --text: #1f2937; --muted: #6b7280; --border: #e5e7eb; --bg: #f9fafb; }
+  @media print { 
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+    .invoice-container { padding: 10px !important; } 
+  }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: var(--text); line-height: 1.5; }
+  .invoice-container { max-width: 800px; margin: 0 auto; padding: 40px; }
+  
+  /* Header Section */
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid var(--brand); padding-bottom: 20px; }
+  .company-info { display: flex; gap: 20px; align-items: center; }
+  .logo { max-width: 80px; max-height: 80px; object-fit: contain; }
+  .company-details h1 { margin: 0 0 4px 0; font-size: 24px; color: var(--brand); font-weight: 700; }
+  .company-details p { margin: 2px 0; font-size: 13px; color: var(--muted); }
+  
+  .invoice-meta { text-align: right; }
+  .invoice-meta h2 { margin: 0 0 8px 0; font-size: 32px; color: ${isCancelled ? '#dc2626' : 'var(--brand)'}; text-transform: uppercase; letter-spacing: 1px; }
+  .invoice-meta p { margin: 4px 0; font-size: 14px; }
+  .invoice-meta .label { color: var(--muted); margin-right: 8px; }
+  .invoice-meta .value { font-weight: 600; }
+
+  /* Customer Details */
+  .bill-to { background: var(--bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid var(--border); }
+  .bill-to h3 { margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
+  .bill-to p { margin: 4px 0; font-size: 14px; }
+  .bill-to .customer-name { font-size: 16px; font-weight: 600; color: var(--text); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  th { background: var(--brand); color: white; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; font-weight: 600; }
+  th.right, td.right { text-align: right; }
+  th.center, td.center { text-align: center; }
+  td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .bold { font-weight: 600; }
+
+  /* Summary Section */
+  .summary-container { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+  .amount-words { flex: 1; padding-right: 40px; font-size: 12px; color: var(--muted); font-style: italic; }
+  .totals-box { width: 320px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--muted); }
+  .totals-row .val { color: var(--text); font-weight: 500; }
+  .totals-row.discount { color: #dc2626; }
+  .totals-row.discount .val { color: #dc2626; }
+  .totals-row.tax { color: #059669; }
+  .totals-row.tax .val { color: #059669; }
+  
+  .grand-total { border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 12px 0; margin-top: 8px; font-size: 18px; font-weight: 700; color: var(--brand); }
+  .grand-total .val { color: var(--brand); }
+  
+  .balance-due { background: ${pendingAmount > 0 ? '#fffbeb' : '#ecfdf5'}; color: ${pendingAmount > 0 ? '#b45309' : '#047857'}; padding: 12px; border-radius: 6px; margin-top: 12px; font-weight: 700; font-size: 15px; }
+
+  /* Footer */
+  .footer { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; font-size: 12px; color: var(--muted); }
+  .terms h4 { margin: 0 0 6px 0; font-size: 12px; color: var(--text); text-transform: uppercase; }
+  .terms p { margin: 2px 0; }
+  .signature { text-align: center; }
+  .sig-line { width: 160px; border-top: 1px solid var(--text); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="invoice-container">
+  
+  <div class="header">
+    <div class="company-info">
+      ${logo ? `<img src="${logo}" class="logo" alt="Logo" />` : ""}
+      <div class="company-details">
+        <h1>${shop}</h1>
+        ${address ? `<p>${address}</p>` : ""}
+        ${phone || email ? `<p>${[phone, email].filter(Boolean).join(" | ")}</p>` : ""}
+      </div>
     </div>
-    <div class="invoice-badge">TAX INVOICE</div>
+    <div class="invoice-meta">
+      <h2>${isCancelled ? 'CANCELLED' : 'TAX INVOICE'}</h2>
+      <p><span class="label">Invoice No:</span> <span class="value">${bill.billNumber || "—"}</span></p>
+      <p><span class="label">Date:</span> <span class="value">${billDate}</span></p>
+    </div>
   </div>
-  <hr />
-  <div class="info-grid">
-    <div class="info-col">
-      <div class="label">Invoice No.</div>
-      <div class="value" style="font-weight:600">${bill.billNumber || "—"}</div>
-      <div class="sub-label">Date</div>
-      <div class="value">${new Date(bill.createdAt as string).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
-      <div class="sub-label">Status</div>
-      <div class="value" style="color:${bill.status === "Cancelled" ? "#dc2626" : "#111827"}">${String(bill.status || "Active")}</div>
-    </div>
-    <div class="info-col">
-      <div class="label">Bill To</div>
-      <div class="value" style="font-weight:600;font-size:15px">${customer?.name || "—"}</div>
-      ${customer?.mobile ? `<div class="value" style="font-weight:400;font-size:12px">Mobile: ${customer.mobile}</div>` : ""}
-      ${customer?.address ? `<div class="value" style="font-weight:400;font-size:12px">${customer.address}</div>` : ""}
-    </div>
+
+  <div class="bill-to">
+    <h3>Billed To</h3>
+    <p class="customer-name">${customer?.name || "Cash Customer"}</p>
+    ${customer?.mobile ? `<p>Phone: ${customer.mobile}</p>` : ""}
+    ${customer?.address ? `<p>${customer.address}</p>` : ""}
   </div>
+
   <table>
-    <tr><th style="width:36px">#</th><th>Description</th><th class="center" style="width:60px">Qty</th><th class="right" style="width:100px">Unit Price</th><th class="right" style="width:100px">Total</th></tr>
-    ${items || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af">No items</td></tr>'}
+    <thead>
+      <tr>
+        <th class="center" style="width:40px">#</th>
+        <th>Description</th>
+        <th class="center" style="width:80px">Qty</th>
+        <th class="right" style="width:120px">Unit Price</th>
+        <th class="right" style="width:120px">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items || '<tr><td colspan="5" class="center" style="padding: 30px; color: #9ca3af;">No items found</td></tr>'}
+    </tbody>
   </table>
-  <div class="totals-box">
-    <div class="row"><span>Subtotal</span><span>₹${((bill.subtotal as number) || 0).toFixed(2)}</span></div>
-    ${bill.discount ? `<div class="row red"><span>Discount</span><span>-₹${(bill.discount as number).toFixed(2)}</span></div>` : ""}
-    ${bill.tax ? `<div class="row green"><span>GST</span><span>+₹${(bill.tax as number).toFixed(2)}</span></div>` : ""}
-    <div class="row bold divider"><span>Total Amount</span><span>₹${((bill.totalAmount as number) || 0).toFixed(2)}</span></div>
-    ${bill.advancePaid ? `<div class="row green"><span>Paid</span><span>₹${(bill.advancePaid as number).toFixed(2)}</span></div>` : ""}
-    ${bill.pendingAmount && (bill.pendingAmount as number) > 0 ? `<div class="row bold orange divider"><span>Balance Due</span><span>₹${(bill.pendingAmount as number).toFixed(2)}</span></div>` : ""}
+
+  <div class="summary-container">
+    <div class="amount-words">
+      ${bill.totalAmount ? `Amount in words:<br/><strong>${numberToWords(Math.round(bill.totalAmount as number))}</strong>` : ""}
+    </div>
+    
+    <div class="totals-box">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span class="val">₹{subtotal}</span>
+      </div>
+      ${discount ? `<div class="totals-row discount"><span>Discount</span><span class="val">-₹${discount}</span></div>` : ""}
+      ${tax ? `<div class="totals-row tax"><span>Tax (GST)</span><span class="val">+₹${tax}</span></div>` : ""}
+      
+      <div class="totals-row grand-total">
+        <span>Total Amount</span>
+        <span class="val">₹{totalAmount}</span>
+      </div>
+      
+      ${advancePaid ? `<div class="totals-row"><span>Amount Paid</span><span class="val">₹${advancePaid}</span></div>` : ""}
+      
+      <div class="totals-row balance-due">
+        <span>Balance Due</span>
+        <span class="val">₹${pendingAmount.toFixed(2)}</span>
+      </div>
+    </div>
   </div>
-  ${bill.totalAmount ? `<div class="words">Amount in Words: ${numberToWords(Math.round(bill.totalAmount as number))}</div>` : ""}
-  <div class="terms">
-    <strong>Terms &amp; Conditions:</strong>
-    <p>1. All items are subject to a 7-day inspection period.</p>
-    <p>2. Prescription accuracy should be verified within 3 days of delivery.</p>
-    <p>3. This is a computer-generated invoice.</p>
+
+  <div class="footer">
+    <div class="terms">
+      <h4>Terms & Conditions</h4>
+      <p>1. All items are subject to a 7-day inspection period.</p>
+      <p>2. Prescription accuracy should be verified within 3 days.</p>
+      <p>3. This is a computer-generated invoice.</p>
+    </div>
+    <div class="signature">
+      <div class="sig-line"></div>
+      <p>Authorised Signatory</p>
+    </div>
   </div>
-  <div class="footer-row">
-    <span>Authorised Signatory</span>
-    <span>Thank you for choosing ${shop}! 🙏</span>
-  </div>
+
 </div>
-<script>window.print()</script>
-</body></html>`);
+<script>
+  window.onload = function() { window.print(); }
+</script>
+</body>
+</html>`);
     w.document.close();
   }
 
@@ -162,7 +248,9 @@ export default function Bills() {
          margin: 0; padding: 4mm; width: 72mm; color: #000; background: #fff;
          white-space: pre-wrap; }
   @media print { body { margin: 0; padding: 2mm; } }
-</style></head><body>${receipt.replace(/\n/g, "<br>")}</body></html>`);
+</style></head><body>${receipt.replace(/\n/g, "<br>")}
+<script>window.onload = function() { window.print(); }</script>
+</body></html>`);
     w.document.close();
   }
 
@@ -210,6 +298,7 @@ export default function Bills() {
     toast.info("Sending WhatsApp...");
     const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = (settings?.shopName as string) || "KMJ Optical";
+    
     try {
       const doc = generateBillPdf(bill, customer || {}, settings || {});
       const base64 = doc.output("datauristring").split(",")[1];
@@ -220,10 +309,13 @@ export default function Bills() {
     } catch {
       // fallback to text
     }
+    
     const items = ((bill.items as Record<string, unknown>[]) || []).map((i) =>
       `${i.description} x${i.quantity || 1} = ₹${(((i.quantity as number) || 1) * ((i.unitPrice as number) || 0)).toFixed(0)}`
     ).join("\n");
-    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹${(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹${(bill.tax as number).toFixed(0)}` : ""}\n*Total:* ₹${((bill.totalAmount as number) || 0).toFixed(0)}\n*Paid:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*Pending:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\nThank you! 🙏`;
+    
+    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹{(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹{(bill.tax as number).toFixed(0)}` : ""}\n*Total:* ₹{((bill.totalAmount as number) || 0).toFixed(0)}\n*Paid:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*Pending:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\nThank you! 🙏`;
+    
     const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
@@ -249,7 +341,7 @@ export default function Bills() {
             return c ? c.name : typeof v === "string" ? (v as string).slice(-6) : "—";
           }},
           { key: "subtotal", label: "Subtotal", render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
-          { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹${((v as number) || 0).toFixed(2)}</span> },
+          { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
           { key: "pendingAmount", label: "Pending", render: (v) => (
             <span className={(v as number) > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : "Paid"}</span>
           )},

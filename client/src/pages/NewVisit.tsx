@@ -585,21 +585,20 @@ export default function NewVisit() {
           </div>
         </div>
         {/* Step pills */}
-        <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-gray-100 dark:border-dark-700 overflow-x-auto">
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-dark-700 overflow-x-auto">
           {visitSteps.map((s, i) => {
             const Icon = s.icon;
             const isActive = visitStep === s.key;
             const isPast = currentStepIdx > i;
             return (
               <div key={s.key}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                  isActive
-                    ? "bg-primary-600 text-white shadow-sm"
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${isActive
+                    ? "bg-primary-600 text-white shadow-md scale-105"
                     : isPast
-                    ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                    : "bg-gray-100 dark:bg-dark-700 text-gray-400 dark:text-gray-500"
-                }`}>
-                {isPast ? <Check size={11} /> : <Icon size={11} />}
+                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                      : "bg-gray-100 dark:bg-dark-700 text-gray-400 dark:text-gray-500"
+                  }`}>
+                {isPast ? <Check size={14} /> : <Icon size={14} />}
                 <span>{s.label}</span>
               </div>
             );
@@ -615,219 +614,222 @@ export default function NewVisit() {
 
       {/* ===== STEP 1: VISIT TYPE ===== */}
       {visitStep === "type" && (
-        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
-            <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
-              <Plus size={20} />
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-soft-lg p-7 space-y-6">
+          <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-700">
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/40 rounded-2xl flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm">
+              <Plus size={24} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">What kind of visit?</h2>
-              <p className="text-sm text-gray-500">Select the type of service for {customer.name}.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">What kind of visit?</h2>
+              <p className="text-sm text-gray-500">Select the type of service for <span className="font-semibold text-gray-700 dark:text-gray-300">{customer.name}</span>.</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
             {visitTypes.map((vt) => {
               const Icon = vt.icon;
               const isActive = visitType === vt.value;
               return (
                 <button key={vt.value} type="button" onClick={() => setVisitType(vt.value as any)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                    isActive
-                      ? "border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm"
-                      : "border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
-                  }`}>
-                  <Icon size={26} className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400"} />
+                  className={`flex flex-col items-center gap-3 p-5 rounded-2xl border-2 text-sm font-semibold transition-all active:scale-[0.97] ${isActive
+                      ? "border-primary-500 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-md"
+                      : "border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600 hover:shadow-sm"
+                    }`}>
+                  <Icon size={28} className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400"} />
                   <span className="leading-tight text-center font-semibold">{vt.label}</span>
-                  <span className="text-[10px] opacity-60">{vt.desc}</span>
+                  <span className="text-[10px] opacity-70">{vt.desc}</span>
                 </button>
               );
             })}
           </div>
-          <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar size={16} className="text-gray-400" />
+          <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+            <div className="flex items-center gap-2.5 mb-5">
+              <Calendar size={18} className="text-gray-400" />
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Visit Details</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   <Calendar size={14} className="inline mr-1.5 text-gray-400" />Visit Date
                 </label>
-                <input type="date" className="input-field text-base" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+                <input type="date" className="input-field text-base py-2.5" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   <User size={14} className="inline mr-1.5 text-gray-400" />Doctor
                 </label>
-                <input className="input-field text-base" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
+                <input className="input-field text-base py-2.5" placeholder="Doctor name" value={visitDoctor} onChange={(e) => setVisitDoctor(e.target.value)} />
               </div>
             </div>
           </div>
         </div>
       )}
 
-        {/* ===== STEP 2: PRESCRIPTION ===== */}
-        {visitStep === "prescription" && (
-          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
-              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <Eye size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prescription</h2>
-                <p className="text-sm text-gray-500">Previous values pre-filled. Changed fields highlighted.</p>
-              </div>
+      {/* ===== STEP 2: PRESCRIPTION ===== */}
+      {visitStep === "prescription" && (
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-soft-lg p-7 space-y-6">
+          <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-700">
+            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm">
+              <Eye size={24} />
             </div>
-            {prevPrescription && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
-                <Info size={15} /> Changed fields highlighted in amber.
-              </div>
-            )}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {(["rightEye", "leftEye"] as const).map((side) => {
-                const label = side === "rightEye" ? "Right Eye (OD)" : "Left Eye (OS)";
-                const data = prescription[side];
-                return (
-                  <div key={side} className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold ${side === "rightEye" ? "bg-blue-500" : "bg-emerald-500"}`}>
-                        {side === "rightEye" ? "R" : "L"}
-                      </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{label}</h3>
-                    </div>
-                    {(["dv", "nv", "pc"] as const).map((type) => (
-                      <div key={type} className="mb-4 last:mb-0">
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                          {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
-                        </p>
-                        <div className="grid grid-cols-4 gap-2">
-                          {(["sph", "cyl", "axis", "va"] as const).map((field) => {
-                            const changed = isChanged(side, type, field);
-                            const prevVal = getPrevValue(side, type, field);
-                            const fieldLabels: Record<string, string> = { sph: "SPH", cyl: "CYL", axis: "AXIS", va: "VA" };
-                            return (
-                              <div key={field}>
-                                <label className="text-[10px] font-medium text-gray-400 dark:text-gray-500 block mb-0.5">{fieldLabels[field]}</label>
-                                <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
-                                  className={`input-field py-2 text-sm ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
-                                  value={data[type]?.[field] ?? ""}
-                                  onChange={(e) => updateEye(side, type, field, e.target.value)} />
-                                {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Prescription</h2>
+              <p className="text-sm text-gray-500">Previous values pre-filled. Changed fields highlighted.</p>
             </div>
           </div>
-        )}
-
-        {/* ===== STEP 3: PRODUCTS ===== */}
-        {visitStep === "products" && (
-          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
-              <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/40 rounded-xl flex items-center justify-center text-violet-600 dark:text-violet-400">
-                <ShoppingCart size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Products</h2>
-                <p className="text-sm text-gray-500">Add frame, lens, coating, and accessories.</p>
-              </div>
+          {prevPrescription && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-5 py-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+              <Info size={16} /> Changed fields highlighted in amber.
             </div>
-            {visitType === "service" ? (
-              <div className="space-y-5">
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-5 py-3 flex items-start gap-3 text-sm text-amber-700 dark:text-amber-300">
-                  <Clock size={18} className="flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Service / Repair</p>
-                    <p className="text-xs mt-0.5 opacity-80">Free service — add chargeable items below if applicable, or leave empty for a free visit.</p>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {(["rightEye", "leftEye"] as const).map((side) => {
+              const label = side === "rightEye" ? "Right Eye (OD)" : "Left Eye (OS)";
+              const data = prescription[side];
+              return (
+                <div key={side} className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-3 mb-5 pb-3 border-b border-gray-200 dark:border-dark-700">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm ${side === "rightEye" ? "bg-blue-500" : "bg-emerald-500"}`}>
+                      {side === "rightEye" ? "R" : "L"}
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{label}</h3>
                   </div>
+                  {(["dv", "nv", "pc"] as const).map((type) => (
+                    <div key={type} className="mb-5 last:mb-0">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                        {type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Peripheral Curve"}
+                      </p>
+                      <div className="grid grid-cols-4 gap-3">
+                        {(["sph", "cyl", "axis", "va"] as const).map((field) => {
+                          const changed = isChanged(side, type, field);
+                          const prevVal = getPrevValue(side, type, field);
+                          const fieldLabels: Record<string, string> = { sph: "SPH", cyl: "CYL", axis: "AXIS", va: "VA" };
+                          return (
+                            <div key={field}>
+                              <label className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 block mb-1">{fieldLabels[field]}</label>
+                              <input type={field === "va" ? "text" : "number"} step={field === "va" ? undefined : "0.25"}
+                                className={`input-field py-2.5 text-sm ${changed ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-600" : ""}`}
+                                value={data[type]?.[field] ?? ""}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => updateEye(side, type, field, e.target.value)} />
+                              {changed && prevVal && <span className="text-[9px] text-amber-500 block mt-0.5">was {prevVal}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Tag size={15} className="text-gray-400" />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ===== STEP 3: PRODUCTS ===== */}
+      {visitStep === "products" && (
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-soft-lg p-7 space-y-6">
+          <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-700">
+            <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-sm">
+              <ShoppingCart size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Products</h2>
+              <p className="text-sm text-gray-500">Add frame, lens, coating, and accessories.</p>
+            </div>
+          </div>
+          {visitType === "service" ? (
+            <div className="space-y-5">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-5 py-3 flex items-start gap-3 text-sm text-amber-700 dark:text-amber-300">
+                <Clock size={18} className="flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Service / Repair</p>
+                  <p className="text-xs mt-0.5 opacity-80">Free service — add chargeable items below if applicable, or leave empty for a free visit.</p>
+                </div>
+              </div>
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <Tag size={16} className="text-gray-400" />
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Service Items</h3>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {billItems.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-start bg-white dark:bg-dark-800 p-3 rounded-xl border border-gray-200 dark:border-dark-700">
+                      <div key={idx} className="flex gap-3 items-start bg-white dark:bg-dark-800 p-4 rounded-2xl border border-gray-200 dark:border-dark-700">
                         <div className="flex-1">
-                          <input className="input-field text-sm" placeholder="Service description (e.g. Frame adjustment)" value={item.description}
+                          <input className="input-field text-sm py-2.5" placeholder="Service description (e.g. Frame adjustment)" value={item.description}
                             onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
                         </div>
-                        <div className="w-16">
-                          <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
+                        <div className="w-20">
+                          <input type="number" min="1" className="input-field text-sm text-center py-2.5" placeholder="Qty" value={item.qty}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
                         </div>
-                        <div className="w-24">
-                          <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
+                        <div className="w-28">
+                          <input type="number" min="0" step="0.01" className="input-field text-sm text-right py-2.5" placeholder="Price" value={item.price}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
                         </div>
-                        <div className="w-16 text-right pt-2.5 text-sm font-medium">₹{(item.qty * item.price).toFixed(0)}</div>
+                        <div className="w-20 text-right pt-3 text-sm font-semibold">₹{(item.qty * item.price).toFixed(0)}</div>
                         <button onClick={() => removeBillItem(idx)}
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-red-400"><X size={16} /></button>
                       </div>
                     ))}
                     <button onClick={addBillItem}
-                      className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                      className="flex items-center gap-2 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 px-1 py-1">
                       <Plus size={16} /> Add Service Item
                     </button>
                   </div>
                 </div>
-              </div>
-            ) : visitType === "other" ? (
-              <div className="space-y-5">
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Tag size={15} className="text-gray-400" />
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Product Type</h3>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {otherSubTypes.map((st) => (
-                      <button key={st} type="button" onClick={() => setOtherSubType(st)}
-                        className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${
-                          otherSubType === st
-                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
-                            : "border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
-                        }`}>
-                        {st}
-                      </button>
-                    ))}
-                  </div>
+            </div>
+          ) : visitType === "other" ? (
+            <div className="space-y-5">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag size={15} className="text-gray-400" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Product Type</h3>
                 </div>
-                {otherSubType && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{otherSubType} Details</h3>
-                    {orderFrames.map((f, idx) => (
-                      <div key={idx} className="flex gap-3 mb-2 items-start">
-                        <input className="input-field flex-1 text-base" placeholder="Product name" value={f.sku}
-                          onChange={(e) => updateFrame(idx, "sku", e.target.value)} />
-                        <input type="number" min="0" step="0.01" className="input-field w-28 text-base" placeholder="Price" value={f.price}
-                          onChange={(e) => updateFrame(idx, "price", Number(e.target.value))} />
-                        {orderFrames.length > 1 && (
-                          <button onClick={() => removeFrame(idx)} className="p-2 mt-0.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={15} /></button>
-                        )}
-                      </div>
-                    ))}
-                    <button onClick={addFrame} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 font-medium mt-1">
-                      <Plus size={14} /> Add Item
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {otherSubTypes.map((st) => (
+                    <button key={st} type="button" onClick={() => setOtherSubType(st)}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${otherSubType === st
+                          ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                          : "border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-600"
+                        }`}>
+                      {st}
                     </button>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {visitType !== "new_lens" && visitType !== "contact_lens" && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
-                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <Tag size={20} />
-                      </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Frames</h3>
+              {otherSubType && (
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{otherSubType} Details</h3>
+                  {orderFrames.map((f, idx) => (
+                    <div key={idx} className="flex gap-3 mb-2 items-start">
+                      <input className="input-field flex-1 text-base" placeholder="Product name" value={f.sku}
+                        onChange={(e) => updateFrame(idx, "sku", e.target.value)} />
+                      <input type="number" min="0" step="0.01" className="input-field w-28 text-base" placeholder="Price" value={f.price}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => updateFrame(idx, "price", Number(e.target.value))} />
+                      {orderFrames.length > 1 && (
+                        <button onClick={() => removeFrame(idx)} className="p-2 mt-0.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={15} /></button>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={addFrame} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 font-medium mt-1">
+                    <Plus size={14} /> Add Item
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {visitType !== "new_lens" && visitType !== "contact_lens" && (
+                    <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
+                        <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+                          <Tag size={20} />
+                        </div>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Frame</h3>
                       <button type="button" onClick={() => { setScanModal(true); setScanInput(""); }}
                         className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
                         <QrCode size={14} /> Scan
@@ -839,36 +841,37 @@ export default function NewVisit() {
                     </div>
                     <div className="space-y-4">
                       {orderFrames.map((f, idx) => (
-                        <div key={idx} className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-200 dark:border-dark-700">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Frame #{idx + 1}</span>
+                          <div key={idx} className="bg-white dark:bg-dark-800 rounded-2xl p-5 border border-gray-200 dark:border-dark-700 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Frame #{idx + 1}</span>
                             {orderFrames.length > 1 && (
                               <button onClick={() => removeFrame(idx)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={14} /></button>
                             )}
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><Tag size={12} className="inline mr-1 text-gray-400" />Brand</label>
                               <input className="input-field text-base" placeholder="Brand" value={f.brand}
                                 onChange={(e) => updateFrame(idx, "brand", e.target.value)} />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Model</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><Eye size={12} className="inline mr-1 text-gray-400" />Model</label>
                               <input className="input-field text-base" placeholder="Model" value={f.model}
                                 onChange={(e) => updateFrame(idx, "model", e.target.value)} />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><Sun size={12} className="inline mr-1 text-gray-400" />Color</label>
                               <input className="input-field text-base" placeholder="Color" value={f.color}
                                 onChange={(e) => updateFrame(idx, "color", e.target.value)} />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price (₹)</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><span style={{ fontFamily: "initial" }}>₹</span> Price</label>
                               <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={f.price}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => updateFrame(idx, "price", Number(e.target.value))} />
                             </div>
                             <div className="col-span-2">
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name / Description</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><QrCode size={12} className="inline mr-1 text-gray-400" />SKU / Description</label>
                               <input className="input-field text-base" placeholder="Frame name or SKU" value={f.sku}
                                 onChange={(e) => updateFrame(idx, "sku", e.target.value)} />
                             </div>
@@ -882,72 +885,71 @@ export default function NewVisit() {
                   </div>
                 )}
 
-                {visitType !== "frame_change" && (
-                  <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
-                      <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center text-sky-600 dark:text-sky-400">
-                        <Eye size={20} />
+                  {visitType !== "frame_change" && (
+                    <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-dark-700">
+                        <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-sm">
+                          <Eye size={20} />
+                        </div>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Lens</h3>
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Lenses</h3>
-                    </div>
                     <div className="space-y-4">
                       {orderLenses.map((l, idx) => (
-                        <div key={idx} className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-200 dark:border-dark-700">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lens #{idx + 1}</span>
+                          <div key={idx} className="bg-white dark:bg-dark-800 rounded-2xl p-5 border border-gray-200 dark:border-dark-700 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lens #{idx + 1}</span>
                             {orderLenses.length > 1 && (
                               <button onClick={() => removeLens(idx)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={14} /></button>
                             )}
                           </div>
                           <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Brand</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><Tag size={12} className="inline mr-1 text-gray-400" />Brand</label>
                               <input className="input-field text-base" placeholder="Brand" value={l.brand}
                                 onChange={(e) => updateLens(idx, "brand", e.target.value)} />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Index</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><span style={{ fontFamily: "initial" }}>#</span> Index</label>
                               <input className="input-field text-base" placeholder="1.56" value={l.index}
                                 onChange={(e) => updateLens(idx, "index", e.target.value)} />
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                  <span style={{ fontFamily: "initial" }}>✦</span> Coating / Add-on
+                                </label>
+                                <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={l.coating}
+                                  onChange={(e) => updateLens(idx, "coating", e.target.value)} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><span style={{ fontFamily: "initial" }}>₹</span> Price</label>
+                                <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={l.price}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => updateLens(idx, "price", Number(e.target.value))} />
+                              </div>
                             <div className="col-span-2">
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1"><Eye size={12} className="inline mr-1 text-gray-400" />Description</label>
                               <input className="input-field text-base" placeholder="Lens description" value={l.sku}
                                 onChange={(e) => updateLens(idx, "sku", e.target.value)} />
                             </div>
                           </div>
                           <div className="mb-4">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Features</label>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2"><span style={{ fontFamily: "initial" }}>◆</span> Features</label>
                             <div className="flex flex-wrap gap-2">
                               {lensFeatureOptions.map((feat) => {
                                 const selected = l.features.includes(feat);
                                 return (
                                   <button key={feat} type="button" onClick={() => toggleLensFeature(idx, feat)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                      selected
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selected
                                         ? "bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-700 dark:text-sky-300"
                                         : "bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
-                                    }`}>
+                                      }`}>
                                     {feat}
                                   </button>
                                 );
                               })}
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-dark-700">
-                            <div className="col-span-2">
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                <span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5" />Coating / Add-on
-                              </label>
-                              <input className="input-field text-base" placeholder="e.g. AR, Blue Cut, UV" value={l.coating}
-                                onChange={(e) => updateLens(idx, "coating", e.target.value)} />
-                            </div>
-                            <div className="col-span-2">
-                              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lens Price (₹)</label>
-                              <input type="number" min="0" step="0.01" className="input-field text-base" placeholder="0" value={l.price}
-                                onChange={(e) => updateLens(idx, "price", Number(e.target.value))} />
-                            </div>
-                          </div>
+
                         </div>
                       ))}
                     </div>
@@ -956,227 +958,234 @@ export default function NewVisit() {
                     </button>
                   </div>
                 )}
+              </div>
 
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Plus size={15} className="text-gray-400" />
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <Plus size={16} className="text-gray-400" />
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Accessories</h3>
                   </div>
                   {orderAccessories.map((acc, idx) => (
-                    <div key={idx} className="flex gap-2 mb-2 items-center">
-                      <input className="input-field flex-1 text-base" placeholder="Item name" value={acc.name}
+                    <div key={idx} className="flex gap-3 mb-3 items-center">
+                      <input className="input-field flex-1 text-base py-2.5" placeholder="Item name" value={acc.name}
                         onChange={(e) => updateAccessory(idx, "name", e.target.value)} />
-                      <input type="number" min="0" className="input-field w-28 text-base" placeholder="Price" value={acc.price}
+                      <input type="number" min="0" className="input-field w-28 text-base py-2.5" placeholder="Price" value={acc.price}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => updateAccessory(idx, "price", Number(e.target.value))} />
                       <button onClick={() => removeAccessory(idx)}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 dark:text-red-300"><X size={15} /></button>
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-red-400 dark:text-red-300"><X size={16} /></button>
                     </div>
                   ))}
                   <button onClick={addAccessory}
-                    className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                    className="flex items-center gap-1.5 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 mt-1">
                     <Plus size={14} /> Add Accessory
                   </button>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calendar size={15} className="text-gray-400" />
+                <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <Calendar size={16} className="text-gray-400" />
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Delivery</h3>
                   </div>
-                  <div className="max-w-xs">
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery Date</label>
-                    <input type="date" className="input-field text-base" value={orderDeliveryDate}
-                      onChange={(e) => setOrderDeliveryDate(e.target.value)} />
-                    <div className="flex gap-1.5 mt-1.5">
-                      {[
-                        { label: "Today", days: 0 },
-                        { label: "Tomorrow", days: 1 },
-                        { label: "3 Days", days: 3 },
-                        { label: "5 Days", days: 5 },
-                        { label: "7 Days", days: 7 },
-                      ].map((s) => {
-                        const d = new Date();
-                        d.setDate(d.getDate() + s.days);
-                        const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-                        const active = orderDeliveryDate === dateStr;
-                        return (
-                          <button key={s.label} type="button" onClick={() => setOrderDeliveryDate(dateStr)}
-                            className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${
-                              active ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 dark:bg-dark-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
+                <div className="max-w-xs">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery Date</label>
+                  <input type="date" className="input-field text-base" value={orderDeliveryDate}
+                    onChange={(e) => setOrderDeliveryDate(e.target.value)} />
+                  <div className="flex gap-1.5 mt-1.5">
+                    {[
+                      { label: "Today", days: 0 },
+                      { label: "Tomorrow", days: 1 },
+                      { label: "3 Days", days: 3 },
+                      { label: "5 Days", days: 5 },
+                      { label: "7 Days", days: 7 },
+                    ].map((s) => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + s.days);
+                      const dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+                      const active = orderDeliveryDate === dateStr;
+                      return (
+                        <button key={s.label} type="button" onClick={() => setOrderDeliveryDate(dateStr)}
+                          className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${active ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 dark:bg-dark-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
                             }`}>
-                            {s.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                          {s.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Scan Frame Modal */}
-        <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Point your scanner at the QR code or type the SKU below.</p>
-            <div className="flex gap-2">
-              <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder="Scan or type SKU..." value={scanInput}
-                onChange={(e) => setScanInput(e.target.value.toUpperCase())}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScanFrame(); } }}
-                autoFocus />
-              <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title="Use camera">
-                <Camera size={16} />
-              </button>
-              <button onClick={() => handleScanFrame()} className="btn-primary flex items-center gap-1.5 px-4">
-                <Search size={16} /> Find
-              </button>
             </div>
-            <p className="text-xs text-gray-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
-          </div>
-        </Modal>
+          )}
+        </div>
+      )}
 
-        {showCameraScanner && (
-          <CameraScanner
-            onScan={(code) => {
-              setShowCameraScanner(false);
-              handleScanFrame(code);
-            }}
-            onClose={() => setShowCameraScanner(false)}
-          />
-        )}
+      {/* Scan Frame Modal */}
+      <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Point your scanner at the QR code or type the SKU below.</p>
+          <div className="flex gap-2">
+            <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder="Scan or type SKU..." value={scanInput}
+              onChange={(e) => setScanInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScanFrame(); } }}
+              autoFocus />
+            <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title="Use camera">
+              <Camera size={16} />
+            </button>
+            <button onClick={() => handleScanFrame()} className="btn-primary flex items-center gap-1.5 px-4">
+              <Search size={16} /> Find
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
+        </div>
+      </Modal>
+
+      {showCameraScanner && (
+        <CameraScanner
+          onScan={(code) => {
+            setShowCameraScanner(false);
+            handleScanFrame(code);
+          }}
+          onClose={() => setShowCameraScanner(false)}
+        />
+      )}
 
         {/* ===== STEP 4: BILLING (with Payment fields) ===== */}
         {visitStep === "billing" && (
-          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
-              <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <Receipt size={20} />
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-soft-lg p-7 space-y-6">
+            <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm">
+                <Receipt size={24} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Billing & Payment</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Billing & Payment</h2>
                 <p className="text-sm text-gray-500">Items auto-filled from products. Set discount, advance, and collect payment.</p>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-5 border border-gray-100 dark:border-dark-700">
-              <div className="flex items-center gap-2 mb-3">
-                <ShoppingCart size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Bill Items</h3>
-              </div>
-              <div className="space-y-2">
-                {billItems.map((item, idx) => (
-                  <div key={idx} className="flex gap-2 items-start bg-white dark:bg-dark-800 p-3 rounded-xl border border-gray-200 dark:border-dark-700">
-                    <div className="flex-1">
-                      <input className="input-field text-sm" placeholder="Item description" value={item.description}
-                        onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
-                    </div>
-                    <div className="w-16">
-                      <input type="number" min="1" className="input-field text-sm text-center" placeholder="Qty" value={item.qty}
-                        onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
-                    </div>
-                    <div className="w-24">
-                      <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder="Price" value={item.price}
-                        onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
-                    </div>
-                    <div className="w-16 text-right pt-2.5 text-sm font-medium">₹{(item.qty * item.price).toFixed(0)}</div>
-                    <button onClick={() => removeBillItem(idx)}
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+          <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-6 border border-gray-100 dark:border-dark-700">
+            <div className="flex items-center gap-2.5 mb-4">
+              <ShoppingCart size={16} className="text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Bill Items</h3>
+              <button onClick={syncBillFromOrder} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors">
+                <Plus size={12} /> Refresh from Products
+              </button>
+            </div>
+            <div className="space-y-3">
+              {billItems.map((item, idx) => (
+                <div key={idx} className="flex gap-3 items-start bg-white dark:bg-dark-800 p-4 rounded-2xl border border-gray-200 dark:border-dark-700">
+                  <div className="flex-1">
+                    <input className="input-field text-sm py-2.5" placeholder="Item description" value={item.description}
+                      onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
                   </div>
-                ))}
-                <button onClick={addBillItem}
-                  className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-                  <Plus size={16} /> Add Item
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-red-400" /> Discount (₹)
-                </label>
-                <input type="number" min="0" step="0.01" className="input-field text-base" value={billDiscount}
-                  onChange={(e) => setBillDiscount(Number(e.target.value))} />
-              </div>
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-400" /> Advance Paid (₹)
-                </label>
-                <input type="number" min="0" step="0.01" className="input-field text-base" value={advancePaid}
-                  onChange={(e) => setAdvancePaid(Number(e.target.value))} />
-              </div>
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" /> Payment Mode
-                </label>
-                <div className="flex gap-1.5">
-                  {["Cash", "UPI", "Card"].map((mode) => (
-                    <button key={mode} type="button" onClick={() => setPaymentMode(mode)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        paymentMode === mode
-                          ? "bg-primary-600 text-white border-primary-600"
-                          : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700"
-                      }`}>{mode}</button>
-                  ))}
+                  <div className="w-20">
+                    <input type="number" min="1" className="input-field text-sm text-center py-2.5" placeholder="Qty" value={item.qty}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => updateBillItem(idx, "qty", Number(e.target.value))} />
+                  </div>
+                  <div className="w-28">
+                    <input type="number" min="0" step="0.01" className="input-field text-sm text-right py-2.5" placeholder="Price" value={item.price}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
+                  </div>
+                  <div className="w-20 text-right pt-3 text-sm font-semibold">₹{(item.qty * item.price).toFixed(0)}</div>
+                  <button onClick={() => removeBillItem(idx)}
+                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-red-400"><X size={16} /></button>
                 </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-gray-50 to-white dark:from-dark-750 dark:to-dark-800 rounded-xl p-5 border border-gray-200 dark:border-dark-700">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Payment Summary</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Subtotal</span><span className="font-medium">₹{billSubtotal.toFixed(0)}</span>
-                </div>
-                {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400">
-                  <span>Discount</span><span className="font-medium">-₹{billDiscount.toFixed(0)}</span>
-                </div>}
-                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-300 dark:border-dark-600">
-                  <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
-                </div>
-                {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                  <span>Advance Paid</span><span className="font-medium">-₹{advancePaid.toFixed(0)}</span>
-                </div>}
-                <div className="flex justify-between text-amber-600 dark:text-amber-400 font-semibold pt-1 border-t border-dashed border-gray-200 dark:border-dark-700">
-                  <span>Remaining Balance</span>
-                  <span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                <FileText size={13} className="text-gray-400" /> Payment Notes (optional)
-              </label>
-              <input className="input-field text-base" placeholder="Any notes about this payment" value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)} />
+              ))}
+              <button onClick={addBillItem}
+                className="flex items-center gap-2 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 px-1 py-1">
+                <Plus size={16} /> Add Item
+              </button>
             </div>
           </div>
-        )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1.5">
+                <span style={{ fontFamily: "initial" }}>₹</span> Discount
+              </label>
+              <input type="number" min="0" step="0.01" className="input-field text-base py-2.5" value={billDiscount}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setBillDiscount(Number(e.target.value))} />
+            </div>
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1.5">
+                <CreditCard size={14} className="text-gray-400" /> Advance Paid
+              </label>
+              <input type="number" min="0" step="0.01" className="input-field text-base py-2.5" value={advancePaid}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setAdvancePaid(Number(e.target.value))} />
+            </div>
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1.5">
+                <ShoppingCart size={14} className="text-gray-400" /> Payment Mode
+              </label>
+              <div className="flex gap-2">
+                {["Cash", "UPI", "Card"].map((mode) => (
+                  <button key={mode} type="button" onClick={() => setPaymentMode(mode)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${paymentMode === mode
+                        ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+                        : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-dark-700 hover:border-gray-300 dark:hover:border-dark-600"
+                      }`}>{mode}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-gray-50 to-white dark:from-dark-750 dark:to-dark-800 rounded-2xl p-6 border border-gray-200 dark:border-dark-700">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Payment Summary</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Subtotal</span><span className="font-semibold">₹{billSubtotal.toFixed(0)}</span>
+              </div>
+              {billDiscount > 0 && <div className="flex justify-between text-red-600 dark:text-red-400">
+                <span>Discount</span><span className="font-semibold">-₹{billDiscount.toFixed(0)}</span>
+              </div>}
+              <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-3 border-t-2 border-gray-300 dark:border-dark-600">
+                <span>Total</span><span>₹{billTotal.toFixed(0)}</span>
+              </div>
+              {advancePaid > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                <span>Advance Paid</span><span className="font-semibold">-₹{advancePaid.toFixed(0)}</span>
+              </div>}
+              <div className="flex justify-between text-amber-600 dark:text-amber-400 font-bold pt-2 border-t border-dashed border-gray-200 dark:border-dark-700">
+                <span>Remaining Balance</span>
+                <span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1.5">
+              <FileText size={14} className="text-gray-400" /> Payment Notes (optional)
+            </label>
+            <input className="input-field text-base py-2.5" placeholder="Any notes about this payment" value={paymentNotes}
+              onChange={(e) => setPaymentNotes(e.target.value)} />
+          </div>
+        </div>
+      )}
 
         {/* ===== STEP 5: SUMMARY ===== */}
         {visitStep === "summary" && (
-          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-dark-700">
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400">
-                <Check size={20} />
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-soft-lg p-7 space-y-6">
+            <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-700">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-sm">
+                <Check size={24} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Final Summary</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Final Summary</h2>
                 <p className="text-sm text-gray-500">Review all details before completing the visit.</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><User size={14} className="text-gray-400" /> Customer</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><User size={15} className="text-gray-400" /> Customer</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{customer.name} — {customer.mobile}</p>
               </div>
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><Calendar size={14} className="text-gray-400" /> Visit</h3>
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><Calendar size={15} className="text-gray-400" /> Visit</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{visitDate} {visitDoctor && `| Dr. ${visitDoctor}`}</p>
               </div>
             </div>
             {billItems.some((i) => i.description) && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-3"><Receipt size={14} className="text-gray-400" /> Bill</h3>
-                <div className="space-y-1.5">
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-3"><Receipt size={15} className="text-gray-400" /> Bill</h3>
+                <div className="space-y-2">
                   {billItems.filter((i) => i.description).map((i, idx) => (
                     <div key={idx} className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                       <span>{i.description} x{i.qty}</span>
@@ -1184,47 +1193,47 @@ export default function NewVisit() {
                     </div>
                   ))}
                   {billDiscount > 0 && <hr className="border-gray-200 dark:border-dark-600" />}
-                  {billDiscount > 0 && <div className="flex justify-between text-sm text-red-600"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
+                  {billDiscount > 0 && <div className="flex justify-between text-sm text-red-600 font-medium"><span>Discount</span><span>-₹{billDiscount.toFixed(0)}</span></div>}
                   <hr className="border-gray-300 dark:border-dark-600" />
                   <div className="flex justify-between font-bold text-gray-900 dark:text-white text-base"><span>Total</span><span>₹{billTotal.toFixed(0)}</span></div>
-                  {advancePaid > 0 && <div className="flex justify-between text-sm text-emerald-600 font-medium"><span>Advance Paid</span><span>₹{advancePaid.toFixed(0)}</span></div>}
-                  <div className="flex justify-between text-sm text-amber-600 font-medium"><span>Remaining Balance</span><span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span></div>
+                  {advancePaid > 0 && <div className="flex justify-between text-sm text-emerald-600 font-semibold"><span>Advance Paid</span><span>₹{advancePaid.toFixed(0)}</span></div>}
+                  <div className="flex justify-between text-sm text-amber-600 font-bold"><span>Remaining Balance</span><span>₹{Math.max(0, billTotal - advancePaid).toFixed(0)}</span></div>
                 </div>
               </div>
             )}
             {paymentAmount > 0 && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 border border-gray-100 dark:border-dark-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><CreditCard size={14} className="text-gray-400" /> Payment</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Mode: {paymentMode} | Amount: ₹{paymentAmount.toFixed(0)}{paymentNotes ? ` | Notes: ${paymentNotes}` : ""}</p>
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-2xl p-5 border border-gray-100 dark:border-dark-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2 mb-2"><CreditCard size={15} className="text-gray-400" /> Payment</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Mode: <span className="font-semibold">{paymentMode}</span> | Amount: <span className="font-semibold">₹{paymentAmount.toFixed(0)}</span>{paymentNotes ? ` | Notes: ${paymentNotes}` : ""}</p>
               </div>
             )}
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Navigation */}
         {visitStep !== "done" && (
           <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-200 dark:border-dark-700">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               {currentStepIdx > 0 && (
-                <button onClick={goBack} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                  <ChevronLeft size={16} /> Back
+                <button onClick={goBack} className="btn-secondary gap-2 px-6 py-3 text-base font-semibold">
+                  <ChevronLeft size={18} /> Back
                 </button>
               )}
-              <button onClick={() => navigate(`/customers/${id}`)} className="btn-secondary text-sm px-3 py-2">Cancel</button>
+              <button onClick={() => navigate(`/customers/${id}`)} className="btn-secondary px-5 py-3 text-base font-semibold">Cancel</button>
             </div>
             <div>
               {currentStepIdx < visitSteps.length - 1 ? (
                 <button onClick={goNext} disabled={!canProceed()}
-                  className="btn-primary flex items-center gap-1.5 text-sm px-5 py-2">
-                  Continue <ChevronRight size={16} />
+                  className="btn-primary gap-2 px-7 py-3 text-base font-semibold shadow-soft-lg">
+                  Continue <ChevronRight size={18} />
                 </button>
               ) : (
                 <button onClick={handleSave} disabled={saving}
-                  className="btn-success flex items-center gap-2 px-6 py-2.5">
+                  className="btn-success gap-2 px-8 py-3.5 text-base font-semibold shadow-soft-lg">
                   {saving ? (
-                    <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
+                    <><div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
                   ) : (
-                    <><Save size={16} /> Save & Complete</>
+                    <><Save size={18} /> Save & Complete</>
                   )}
                 </button>
               )}

@@ -26,6 +26,9 @@ export default function CustomerDetail() {
   const [editingVisit, setEditingVisit] = useState(false);
   const [editVisitForm, setEditVisitForm] = useState<any>({});
   const [savingVisit, setSavingVisit] = useState(false);
+  const [editingBillAdvance, setEditingBillAdvance] = useState(false);
+  const [editBillAdvanceAmount, setEditBillAdvanceAmount] = useState(0);
+  const [savingBillAdvance, setSavingBillAdvance] = useState(false);
 
   const linkedPrescription = useMemo(() => {
     if (!selectedVisit) return null;
@@ -99,10 +102,37 @@ export default function CustomerDetail() {
     }
   }
 
+  async function handleBillAdvanceSave() {
+    setSavingBillAdvance(true);
+    try {
+      const res: any = await api.put(`/api/bills/${linkedBill._id}`, {
+        advancePaid: Number(editBillAdvanceAmount),
+      });
+      if (res.success) {
+        setBills((prev: any[]) => prev.map((b: any) => b._id === res.data._id ? res.data : b));
+        setEditingBillAdvance(false);
+        // Refresh customer to get updated pendingAmount
+        const custRes: any = await api.get(`/api/customers/${id}`);
+        if (custRes.success) setCustomer(custRes.data);
+        // Also update linked payment if exists
+        const paymentsRes: any = await api.get(`/api/payments?billId=${linkedBill._id}`);
+        if (paymentsRes.success && paymentsRes.data?.length > 0) {
+          const payment = paymentsRes.data[0];
+          await api.put(`/api/payments/${payment._id}`, {
+            amount: Number(editBillAdvanceAmount),
+          });
+        }
+      }
+    } finally {
+      setSavingBillAdvance(false);
+    }
+  }
+
   function openVisitDetail(v: any) {
     setSelectedVisit(v);
     setEditVisitForm({ visitDate: v.visitDate?.split("T")[0] || "", doctorName: v.doctorName || "", remarks: v.remarks || "" });
     setEditingVisit(false);
+    setEditingBillAdvance(false);
   }
 
   async function sendWhatsApp(phone: string, bill: any) {
@@ -227,7 +257,7 @@ export default function CustomerDetail() {
             </div>
           </div>
           {!editing && (
-            <button onClick={() => setEditing(true)} className="btn-ghost text-sm gap-1.5">
+            <button onClick={() => setEditing(true)} className="btn-primary btn-sm flex items-center gap-1.5">
               <Edit3 size={15} /> Edit
             </button>
           )}
@@ -368,6 +398,10 @@ export default function CustomerDetail() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); openVisitDetail(v); }}
+                        className="btn-primary btn-xs flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye size={13} /> View
+                      </button>
                       <span className="text-xs text-gray-400">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                       <ChevronRight size={15} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                     </div>
@@ -487,7 +521,7 @@ export default function CustomerDetail() {
               </div>
               <div className="flex items-center gap-2">
                 {!editingVisit && (
-                  <button onClick={() => { setEditingVisit(true); }} className="btn-ghost btn-sm flex items-center gap-1.5">
+                  <button onClick={() => { setEditingVisit(true); }} className="btn-primary btn-sm flex items-center gap-1.5">
                     <Edit3 size={14} /> Edit
                   </button>
                 )}
@@ -713,12 +747,36 @@ export default function CustomerDetail() {
                       <span>Total</span>
                       <span>₹{(linkedBill.totalAmount || 0).toFixed(2)}</span>
                     </div>
-                    {linkedBill.advancePaid ? (
-                      <div className="flex justify-between text-emerald-600">
+                    {linkedBill.advancePaid !== undefined && (
+                      <div className="flex justify-between text-emerald-600 items-center">
                         <span>Paid</span>
-                        <span>₹{linkedBill.advancePaid.toFixed(2)}</span>
+                        {editingBillAdvance ? (
+                          <div className="flex items-center gap-1.5">
+                            <input type="number" min="0" step="0.01"
+                              className="input-field w-24 text-xs py-1 text-right"
+                              value={editBillAdvanceAmount}
+                              onFocus={(e) => e.target.select()}
+                              onChange={(e) => setEditBillAdvanceAmount(Number(e.target.value))} />
+                            <button onClick={handleBillAdvanceSave} disabled={savingBillAdvance}
+                              className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded text-emerald-600">
+                              {savingBillAdvance ? <div className="animate-spin w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" /> : <Save size={13} />}
+                            </button>
+                            <button onClick={() => setEditingBillAdvance(false)}
+                              className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-400">
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span>₹{linkedBill.advancePaid.toFixed(2)}</span>
+                            <button onClick={() => { setEditBillAdvanceAmount(linkedBill.advancePaid || 0); setEditingBillAdvance(true); }}
+                              className="btn-primary btn-xs flex items-center gap-1 py-0.5 px-1.5">
+                              <Edit3 size={11} /> Edit
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : null}
+                    )}
                     {(linkedBill.pendingAmount || 0) > 0 ? (
                       <div className="flex justify-between text-amber-600 font-semibold">
                         <span>Balance Due</span>

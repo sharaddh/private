@@ -14,8 +14,10 @@ const router = Router();
 const createSchema = z.object({ customerId: z.string(), billId: z.string().optional(), amount: z.number().min(0.01), paymentMode: z.string().optional(), paymentDate: z.string().optional(), notes: z.string().optional() });
 
 router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, customerId, billId } = req.query;
   const filter: Record<string, unknown> = {};
+  if (customerId) filter.customerId = customerId;
+  if (billId) filter.billId = billId;
   if (startDate || endDate) {
     filter.paymentDate = {};
     if (startDate) {

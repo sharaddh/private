@@ -38,224 +38,365 @@ interface PdfSettings {
   logo?: string;
 }
 
-const primary: [number, number, number] = [30, 64, 175];
-const primaryLight: [number, number, number] = [239, 242, 255];
-const gray: [number, number, number] = [107, 114, 128];
-const dark: [number, number, number] = [17, 24, 39];
-const border: [number, number, number] = [229, 231, 235];
-const success: [number, number, number] = [5, 150, 105];
-const danger: [number, number, number] = [220, 38, 38];
-const warning: [number, number, number] = [217, 119, 6];
+type RGB = [number, number, number];
 
-const C = "₹";
+// ---------------------------------------------------------------------------
+// Design tokens
+// ---------------------------------------------------------------------------
+const primary: RGB = [30, 64, 175];
+const primaryLight: RGB = [239, 242, 255];
+const slate50: RGB = [248, 250, 252];
+const gray: RGB = [107, 114, 128];
+const dark: RGB = [17, 24, 39];
+const border: RGB = [229, 231, 235];
+const success: RGB = [5, 150, 105];
+const danger: RGB = [220, 38, 38];
+const warning: RGB = [217, 119, 6];
 
-function fmt(n: number): string {
-  return `${C} ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const CURRENCY = "Rs.";
+const PAGE_W = 210;
+const PAGE_H = 297;
+const MARGIN = 15;
+const CONTENT_W = PAGE_W - MARGIN * 2;
+const FOOTER_RESERVE = 24; // mm kept clear at the bottom of every page
+
+function fmt(n?: number): string {
+  return `${CURRENCY}${(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function numberToWords(n: number): string {
-  if (n === 0) return "Zero";
-  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const value = Math.round(n || 0);
+  if (value <= 0) return "Zero Rupees Only";
+
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+  ];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-  const convertBelow1000 = (num: number): string => {
+
+  const belowThousand = (num: number): string => {
     if (num === 0) return "";
     if (num < 20) return ones[num];
     if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? " " + ones[num % 10] : "");
-    return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 ? " and " + convertBelow1000(num % 100) : "");
+    return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 ? " " + belowThousand(num % 100) : "");
   };
-  const convert = (num: number): string => {
-    if (num === 0) return "";
-    if (num < 1000) return convertBelow1000(num);
-    const thousands = Math.floor(num / 1000);
-    const remainder = num % 1000;
-    return convertBelow1000(thousands) + " Thousand" + (remainder ? " " + convert(remainder) : "");
-  };
-  const lakh = Math.floor(n / 100000);
-  const remaining = n % 100000;
-  let result = "";
-  if (lakh > 0) result += convert(lakh) + " Lakh ";
-  result += convert(remaining);
-  return result.trim() + " Rupees Only";
+
+  const parts: string[] = [];
+  let remainder = value;
+
+  const crore = Math.floor(remainder / 1e7);
+  remainder %= 1e7;
+  const lakh = Math.floor(remainder / 1e5);
+  remainder %= 1e5;
+  const thousand = Math.floor(remainder / 1e3);
+  remainder %= 1e3;
+
+  if (crore) parts.push(belowThousand(crore) + " Crore");
+  if (lakh) parts.push(belowThousand(lakh) + " Lakh");
+  if (thousand) parts.push(belowThousand(thousand) + " Thousand");
+  if (remainder) parts.push(belowThousand(remainder));
+
+  return parts.join(" ").trim() + " Rupees Only";
 }
 
-export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings) {
-  const doc = new jsPDF("p", "mm", "a4");
-  const pageW = 210;
-  const margin = 15;
-  const contentW = pageW - margin * 2;
-  let y = 0;
-// --- Configuration ---
-const logoSize = 50; 
-const headerHeight = 50; 
-const cursorY = 7; // Start below top bar
-
-// --- Background ---
-doc.setFillColor(primary[0], primary[1], primary[2]);
-doc.rect(0, 0, pageW, 7, "F");
-
-doc.setFillColor(247, 248, 252);
-doc.rect(0, 7, pageW, headerHeight, "F");
-
-// --- 1. Draw Logo (Left) ---
-const logoX = margin;
-const logoY = cursorY + 2; // Fixed top padding for logo
-
-if (settings.logo) {
-  let format = "JPEG";
-  if (settings.logo.startsWith("data:image/png")) format = "PNG";
-  else if (settings.logo.startsWith("data:image/gif")) format = "GIF";
-  else if (settings.logo.startsWith("data:image/webp")) format = "WEBP";
-
-  try {
-    doc.addImage(settings.logo, format, logoX, logoY, logoSize, logoSize);
-  } catch (e) {
-    try { doc.addImage(settings.logo, "PNG", logoX, logoY, logoSize, logoSize); } 
-    catch { try { doc.addImage(settings.logo, "JPEG", logoX, logoY, logoSize, logoSize); } catch {} }
-  }
+// ---------------------------------------------------------------------------
+// Small drawing helpers
+// ---------------------------------------------------------------------------
+function setText(doc: jsPDF, c: RGB) {
+  doc.setTextColor(c[0], c[1], c[2]);
+}
+function setFill(doc: jsPDF, c: RGB) {
+  doc.setFillColor(c[0], c[1], c[2]);
+}
+function setDraw(doc: jsPDF, c: RGB) {
+  doc.setDrawColor(c[0], c[1], c[2]);
 }
 
-// --- 2. Calculate Text Vertical Center (Right) ---
-const rightMargin = 15; 
-const rightX = pageW - rightMargin;
-
-// Get font heights to measure accurately
-doc.setFont("helvetica", "bold");
-doc.setFontSize(12);
-const titleHeight = doc.getLineHeight();
-
-doc.setFont("helvetica", "normal");
-doc.setFontSize(9);
-const infoHeight = doc.getLineHeight();
-
-// Gather active info lines 
-const infoLines = [];
-if (settings.shopAddress) infoLines.push(settings.shopAddress);
-if (settings.shopPhone) infoLines.push(`Phone: ${settings.shopPhone}`);
-if (settings.shopEmail) infoLines.push(`Email: ${settings.shopEmail}`);
-
-// --- ZERO VERTICAL GAP SETTINGS ---
-const titleGap = -6; // Tiny spacing below the shop name for readability
-const lineGap = -6;  // Zero spacing between the contact lines
-
-// Calculate the EXACT total height of the text block dynamically
-let textBlockHeight = titleHeight;
-if (infoLines.length > 0) {
-  textBlockHeight += titleGap;
-  textBlockHeight += (infoLines.length * infoHeight);
-  textBlockHeight += ((infoLines.length - 1) * lineGap);
+/** Lighten a color toward white — used for status-pill backgrounds. */
+function tint(c: RGB, amount = 0.88): RGB {
+  return [
+    Math.round(c[0] + (255 - c[0]) * amount),
+    Math.round(c[1] + (255 - c[1]) * amount),
+    Math.round(c[2] + (255 - c[2]) * amount),
+  ];
 }
 
-// Find the vertical center of the logo
-const logoCenterY = logoY + (logoSize / 2);
+/** Lightweight header repeated on page 2+ so continuation pages stay identifiable. */
+function drawContinuationHeader(doc: jsPDF, billNumber?: string) {
+  setFill(doc, primary);
+  doc.rect(0, 0, PAGE_W, 3, "F");
 
-// Calculate the starting Y position for the Title
-let currentTextY = logoCenterY - (textBlockHeight / 2) + (titleHeight * 0.8);
-
-// --- 3. Draw Text (Right Aligned on Same Axis) ---
-
-// Draw the Shop Name (Title)
-doc.setFont("helvetica", "bold");
-doc.setFontSize(12);
-doc.setTextColor(dark[0], dark[1], dark[2]);
-doc.text(settings.shopName || "Optical Shop", rightX, currentTextY, { align: "right" });
-
-// Draw the Info Lines
-doc.setFont("helvetica", "normal");
-doc.setFontSize(9);
-doc.setTextColor(gray[0], gray[1], gray[2]);
-
-if (infoLines.length > 0) {
-  // Move down to the first info line
-  currentTextY += titleGap + infoHeight; 
-  doc.text(infoLines[0], rightX, currentTextY, { align: "right" });
-
-  // Move down for any remaining lines (Since lineGap is 0, this is tightly stacked)
-  for (let i = 1; i < infoLines.length; i++) {
-    currentTextY += lineGap + infoHeight;
-    doc.text(infoLines[i], rightX, currentTextY, { align: "right" });
-  }
-}
-
-// --- Divider Line ---
-const lineY = cursorY + headerHeight; 
-doc.setDrawColor(border[0], border[1], border[2]);
-doc.setLineWidth(0.5);
-doc.line(margin, lineY, pageW - margin, lineY);
-doc.setLineWidth(0.1);
-
-y = lineY + 6;
-  const leftColX = margin;
-  const rightColX = pageW / 2 + 5;
-
-  doc.setFontSize(6.5);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("INVOICE NO.", leftColX, y);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text(bill.billNumber || "—", leftColX, y + 4);
-  const yAfterBillNo = y + 9;
-
-  doc.setFontSize(6.5);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("INVOICE DATE", leftColX, yAfterBillNo);
-  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  const billDate = bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-  doc.text(billDate, leftColX, yAfterBillNo + 4);
-  const yAfterDate = yAfterBillNo + 9;
-
-  doc.setFontSize(6.5);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.text("BILL TO", rightColX, y);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text(customer.name || "—", rightColX, y + 4);
-
-  let custLineY = y + 10;
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
+  setText(doc, gray);
+  doc.text(`Invoice ${billNumber ? `#${billNumber}` : ""}`.trim(), MARGIN, 13);
 
-  const custDetails: { label: string; value?: string }[] = [];
+  setDraw(doc, border);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, 17, PAGE_W - MARGIN, 17);
+  doc.setLineWidth(0.1);
+}
+
+/** Ensures `needed` mm of vertical space remain on the page; starts a new page (with continuation header) otherwise. */
+function ensureSpace(doc: jsPDF, y: number, needed: number, billNumber?: string): number {
+  if (y + needed > PAGE_H - FOOTER_RESERVE) {
+    doc.addPage();
+    drawContinuationHeader(doc, billNumber);
+    return MARGIN + 18;
+  }
+  return y;
+}
+
+// ---------------------------------------------------------------------------
+// Section builders
+// ---------------------------------------------------------------------------
+
+/** Shop branding band: logo (aspect-ratio preserved) + shop name/contact, right-aligned. */
+function drawHeader(doc: jsPDF, settings: PdfSettings): number {
+  const accentH = 4;
+  const headerTop = accentH;
+  const headerH = 38;
+  const headerCenterY = headerTop + headerH / 2;
+
+  setFill(doc, primary);
+  doc.rect(0, 0, PAGE_W, accentH, "F");
+
+  setFill(doc, slate50);
+  doc.rect(0, headerTop, PAGE_W, headerH, "F");
+
+  // --- Logo: fit inside a box, preserving aspect ratio (no stretching/overflow) ---
+  if (settings.logo) {
+    const maxLogoW = 64;
+    const maxLogoH = 50;
+    let logoW = maxLogoW;
+    let logoH = maxLogoH;
+
+    let format: "PNG" | "JPEG" | "GIF" | "WEBP" = "PNG";
+    if (settings.logo.startsWith("data:image/jpeg") || settings.logo.startsWith("data:image/jpg")) format = "JPEG";
+    else if (settings.logo.startsWith("data:image/gif")) format = "GIF";
+    else if (settings.logo.startsWith("data:image/webp")) format = "WEBP";
+
+    try {
+      const props = doc.getImageProperties(settings.logo);
+      const aspect = props.width / props.height;
+      logoW = maxLogoW;
+      logoH = logoW / aspect;
+      if (logoH > maxLogoH) {
+        logoH = maxLogoH;
+        logoW = logoH * aspect;
+      }
+    } catch {
+      // Couldn't read dimensions — fall back to the default box above.
+    }
+
+    const logoX = MARGIN;
+    const logoY = headerCenterY - logoH / 2;
+    try {
+      doc.addImage(settings.logo, format, logoX, logoY, logoW, logoH);
+    } catch {
+      try {
+        doc.addImage(settings.logo, "PNG", logoX, logoY, logoW, logoH);
+      } catch {
+        try {
+          doc.addImage(settings.logo, "JPEG", logoX, logoY, logoW, logoH);
+        } catch {
+          /* give up silently — a missing logo shouldn't break the invoice */
+        }
+      }
+    }
+  }
+
+  // --- Shop name + contact lines, right-aligned, centered on the header band ---
+  const rightX = PAGE_W - MARGIN;
+
+  const scale = doc.internal.scaleFactor;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  const titleLH = doc.getLineHeight() / scale;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const infoLH = doc.getLineHeight() / scale;
+
+  const infoLines: string[] = [];
+  if (settings.shopAddress) infoLines.push(settings.shopAddress);
+  if (settings.shopPhone) infoLines.push(`Phone: ${settings.shopPhone}`);
+  if (settings.shopEmail) infoLines.push(`Email: ${settings.shopEmail}`);
+
+  const titleGap = 1.6;
+  const lineGap = 0.8;
+  let blockHeight = titleLH;
+  if (infoLines.length) {
+    blockHeight += titleGap + infoLines.length * infoLH + (infoLines.length - 1) * lineGap;
+  }
+
+  let cy = headerCenterY - blockHeight / 2 + titleLH * 0.78;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  setText(doc, dark);
+  doc.text(settings.shopName || "Optical Shop", rightX, cy, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  setText(doc, gray);
+  infoLines.forEach((line, i) => {
+    cy += i === 0 ? titleGap + infoLH : lineGap + infoLH;
+    doc.text(line, rightX, cy, { align: "right" });
+  });
+
+  // Divider
+  const lineY = headerTop + headerH;
+  setDraw(doc, border);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, lineY, PAGE_W - MARGIN, lineY);
+  doc.setLineWidth(0.1);
+
+  return lineY + 8;
+}
+
+function resolveStatus(bill: PdfBill): { label: string; color: RGB } {
+  const raw = (bill.status || "").toLowerCase();
+  if (raw.includes("cancel")) return { label: "CANCELLED", color: danger };
+  if (raw.includes("partial")) return { label: "PARTIALLY PAID", color: warning };
+  if (raw.includes("pending") || raw.includes("due")) return { label: "PENDING", color: warning };
+  if (raw.includes("paid")) return { label: "PAID", color: success };
+  if (bill.pendingAmount && bill.pendingAmount > 0) return { label: "PENDING", color: warning };
+  return { label: "PAID", color: success };
+}
+
+function drawStatusPill(doc: jsPDF, label: string, color: RGB, x: number, baselineY: number) {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  const textW = doc.getTextWidth(label);
+  const padX = 2.6;
+  const pillW = textW + padX * 2;
+  const pillH = 4.6;
+
+  setFill(doc, tint(color));
+  doc.roundedRect(x, baselineY - pillH + 1.1, pillW, pillH, pillH / 2, pillH / 2, "F");
+  setText(doc, color);
+  doc.text(label, x + padX, baselineY);
+}
+
+/** Left: big "INVOICE" mark + invoice no./date/status. Right: "Billed To" customer block. */
+function drawMetaSection(doc: jsPDF, bill: PdfBill, customer: PdfCustomer, startY: number): number {
+  const leftX = MARGIN;
+  const rightColX = PAGE_W / 2 + 6;
+  const labelColW = 26;
+
+  // --- Left column ---
+  let y = startY;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  setText(doc, primary);
+  doc.text("INVOICE", leftX, y);
+  y += 8;
+
+  const rowGap = 5.4;
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  setText(doc, gray);
+  doc.text("INVOICE NO.", leftX, y);
+  doc.setFontSize(10);
+  setText(doc, dark);
+  doc.text(bill.billNumber || "—", leftX + labelColW, y);
+  y += rowGap;
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  setText(doc, gray);
+  doc.text("DATE", leftX, y);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  setText(doc, dark);
+  const billDate = bill.createdAt
+    ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
+  doc.text(billDate, leftX + labelColW, y);
+  y += rowGap;
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  setText(doc, gray);
+  doc.text("STATUS", leftX, y);
+  const status = resolveStatus(bill);
+  drawStatusPill(doc, status.label, status.color, leftX + labelColW, y);
+
+  const leftBottom = y + 3;
+
+  // --- Right column: Billed To ---
+  let ry = startY;
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  setText(doc, gray);
+  doc.text("BILLED TO", rightColX, ry);
+  ry += 6;
+
+  doc.setFontSize(11.5);
+  doc.setFont("helvetica", "bold");
+  setText(doc, dark);
+  doc.text(customer.name || "—", rightColX, ry);
+  ry += 5.5;
+
+  doc.setFontSize(8.5);
+  setText(doc, gray);
+
+  const custDetails: { label: string; value: string }[] = [];
   if (customer.mobile) custDetails.push({ label: "Mobile", value: customer.mobile });
   if (customer.customerId) custDetails.push({ label: "Customer ID", value: customer.customerId });
   if (customer.address) custDetails.push({ label: "Address", value: customer.address });
-  custDetails.forEach((d, i) => {
+
+  custDetails.forEach((d) => {
     doc.setFont("helvetica", "bold");
-    doc.text(`${d.label}: `, rightColX, custLineY + i * 4.5);
+    setText(doc, gray);
+    doc.text(`${d.label}: `, rightColX, ry);
     const labelW = doc.getTextWidth(`${d.label}: `);
+
     doc.setFont("helvetica", "normal");
-    doc.text(d.value || "", rightColX + labelW, custLineY + i * 4.5);
+    setText(doc, dark);
+    const maxW = PAGE_W - MARGIN - rightColX - labelW;
+    const wrapped = doc.splitTextToSize(d.value, Math.max(maxW, 20));
+    doc.text(wrapped, rightColX + labelW, ry);
+    ry += 4.6 * wrapped.length;
   });
-  custLineY += custDetails.length * 4.5;
 
-  y = Math.max(yAfterDate + 9, custLineY + 2);
+  return Math.max(leftBottom, ry) + 6;
+}
 
-  const tableBody = (bill.items || []).map((it) => [
+function drawItemsTable(doc: jsPDF, bill: PdfBill, startY: number): number {
+  const tableBody = (bill.items || []).map((it, i) => [
+    `${i + 1}`,
     it.description || "Item",
     String(it.quantity || 1),
     fmt(it.unitPrice || 0),
     fmt((it.quantity || 1) * (it.unitPrice || 0)),
   ]);
-
   if (tableBody.length === 0) {
-    tableBody.push(["No items", "—", "—", "—"]);
+    tableBody.push(["1", "No items", "—", "—", "—"]);
   }
 
-  const tableStartY = y + 2;
+  // Exact-sum column widths so the table always fills CONTENT_W precisely.
+  const col0W = 10;
+  const remaining = CONTENT_W - col0W;
+  const colQtyW = remaining * 0.12;
+  const colPriceW = remaining * 0.24;
+  const colTotalW = remaining * 0.24;
+  const colDescW = remaining - colQtyW - colPriceW - colTotalW;
+
   (doc as any).autoTable({
-    startY: tableStartY,
+    startY,
     head: [["#", "Description", "Qty", "Unit Price", "Total"]],
-    body: tableBody.map((row, i) => [`${i + 1}`, ...row]),
+    body: tableBody,
     theme: "grid",
     headStyles: {
-      fillColor: primary as any,
+      fillColor: primary,
       textColor: [255, 255, 255],
       fontStyle: "bold",
       fontSize: 9,
@@ -264,133 +405,180 @@ y = lineY + 6;
     },
     bodyStyles: {
       fontSize: 9,
-      textColor: dark as any,
+      textColor: dark,
       cellPadding: 3,
     },
     columnStyles: {
-      0: { cellWidth: 9, halign: "center" },
-      1: { cellWidth: contentW * 0.38 },
-      2: { cellWidth: contentW * 0.11, halign: "center" },
-      3: { cellWidth: contentW * 0.21, halign: "right" },
-      4: { cellWidth: contentW * 0.21, halign: "right" },
+      0: { cellWidth: col0W, halign: "center" },
+      1: { cellWidth: colDescW },
+      2: { cellWidth: colQtyW, halign: "center" },
+      3: { cellWidth: colPriceW, halign: "right" },
+      4: { cellWidth: colTotalW, halign: "right" },
     },
-    alternateRowStyles: {
-      fillColor: [249, 250, 251] as any,
-    },
-    margin: { left: margin, right: margin },
-    tableWidth: contentW,
-    tableLineColor: border as any,
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    margin: { left: MARGIN, right: MARGIN, top: 18, bottom: FOOTER_RESERVE },
+    tableWidth: CONTENT_W,
+    tableLineColor: border,
     tableLineWidth: 0.2,
+    didDrawPage: (data: any) => {
+      // If the table itself spans multiple pages, keep continuation pages identifiable.
+      if (data.pageNumber > 1) drawContinuationHeader(doc, bill.billNumber);
+    },
   });
 
-  y = (doc as any).lastAutoTable.finalY + 6;
+  return (doc as any).lastAutoTable.finalY + 8;
+}
 
-  const totalX = contentW * 0.45 + margin;
-  const totalW = contentW * 0.55;
+function drawTotalsBox(doc: jsPDF, bill: PdfBill, startY: number): number {
+  const totalW = 85;
+  const totalX = PAGE_W - MARGIN - totalW;
 
-  const totalItems: { label: string; value: string; bold?: boolean; color?: [number, number, number] }[] = [
+  const rows: { label: string; value: string; bold?: boolean; color?: RGB }[] = [
     { label: "Subtotal", value: fmt(bill.subtotal || 0) },
   ];
-  if (bill.discount) {
-    totalItems.push({ label: "Discount", value: `- ${fmt(bill.discount)}`, color: danger });
-  }
-  if (bill.tax) {
-    totalItems.push({ label: "GST", value: `+ ${fmt(bill.tax)}`, color: success });
-  }
-  totalItems.push({ label: "Total Amount", value: fmt(bill.totalAmount || 0), bold: true });
-  if (bill.advancePaid) {
-    totalItems.push({ label: "Paid", value: fmt(bill.advancePaid), color: success });
-  }
-  if (bill.pendingAmount && bill.pendingAmount > 0) {
-    totalItems.push({ label: "Balance Due", value: fmt(bill.pendingAmount), color: warning, bold: true });
-  }
+  rows.push({ label: "Discount", value: `- ${fmt(bill.discount || 0)}`, color: danger });
+  rows.push({ label: "GST", value: `+ ${fmt(bill.tax || 0)}`, color: success });
+  rows.push({ label: "Total Amount", value: fmt(bill.totalAmount || 0), bold: true });
+  rows.push({ label: "Paid", value: fmt(bill.advancePaid || 0), color: success });
+  rows.push({ label: "Balance Due", value: fmt(bill.pendingAmount || 0), color: warning, bold: true });
 
-  const totalRowH = 7.5;
-  const totalPad = 3;
-  const boxH = totalItems.length * (totalRowH + totalPad) + totalPad + 2;
+  const rowH = 7;
+  const padTop = 4;
+  const boxH = rows.length * rowH + padTop * 2;
 
-  doc.setFillColor(primaryLight[0], primaryLight[1], primaryLight[2]);
-  doc.roundedRect(totalX, y, totalW, boxH, 4, 4, "F");
-  doc.setDrawColor(border[0], border[1], border[2]);
-  doc.roundedRect(totalX, y, totalW, boxH, 4, 4, "S");
+  const y = ensureSpace(doc, startY, boxH + 4, bill.billNumber);
 
-  let ty = y + totalPad + totalRowH / 2 + 2;
-  totalItems.forEach((item, i) => {
-    doc.setFont("helvetica", item.bold ? "bold" : "normal");
-    doc.setFontSize(item.bold ? 10 : 9);
-    const c = item.color || dark;
-    doc.setTextColor(c[0], c[1], c[2]);
-    doc.text(item.label, totalX + 8, ty);
-    doc.text(item.value, totalX + totalW - 8, ty, { align: "right" });
-    const lastHighlightIdx = bill.pendingAmount && bill.pendingAmount > 0 ? totalItems.length - 1 : totalItems.length - 2;
-    if (i === lastHighlightIdx) {
-      doc.setDrawColor(primary[0], primary[1], primary[2]);
-      doc.setLineWidth(0.6);
-      doc.line(totalX + 8, ty + 3, totalX + totalW - 8, ty + 3);
+  setFill(doc, primaryLight);
+  doc.roundedRect(totalX, y, totalW, boxH, 3, 3, "F");
+  setDraw(doc, border);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(totalX, y, totalW, boxH, 3, 3, "S");
+  doc.setLineWidth(0.1);
+
+  // Divide the running calculation (subtotal → total) from the payment status rows that follow it.
+  const totalIdx = rows.findIndex((r) => r.label === "Total Amount");
+
+  let ty = y + padTop + rowH * 0.68;
+  rows.forEach((row, i) => {
+    doc.setFont("helvetica", row.bold ? "bold" : "normal");
+    doc.setFontSize(row.bold ? 10 : 9);
+    setText(doc, row.color || dark);
+    doc.text(row.label, totalX + 7, ty);
+    doc.text(row.value, totalX + totalW - 7, ty, { align: "right" });
+
+    if (i === totalIdx && i < rows.length - 1) {
+      setDraw(doc, primary);
+      doc.setLineWidth(0.5);
+      doc.line(totalX + 7, ty + rowH * 0.5, totalX + totalW - 7, ty + rowH * 0.5);
       doc.setLineWidth(0.1);
     }
-    ty += totalRowH + totalPad;
+    ty += rowH;
   });
 
-  y += boxH + 8;
+  return y + boxH + 8;
+}
 
-  if (bill.totalAmount && bill.totalAmount > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.setTextColor(gray[0], gray[1], gray[2]);
-    doc.text("AMOUNT IN WORDS", margin, y);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(dark[0], dark[1], dark[2]);
-    doc.setFontSize(9);
-    const amountWords = numberToWords(Math.round(bill.totalAmount));
-    doc.text(amountWords, margin, y + 5);
-    y += 14;
-  }
+function drawAmountInWords(doc: jsPDF, bill: PdfBill, startY: number): number {
+  if (!bill.totalAmount || bill.totalAmount <= 0) return startY;
 
-  doc.setDrawColor(border[0], border[1], border[2]);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
-  doc.setLineWidth(0.1);
-  y += 5;
+  const words = numberToWords(bill.totalAmount);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9.5);
+  const wrapped = doc.splitTextToSize(words, CONTENT_W);
+  const needed = 5 + wrapped.length * 4.2 + 6;
 
-  const termsY = y;
+  const y = ensureSpace(doc, startY, needed, bill.billNumber);
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(dark[0], dark[1], dark[2]);
-  doc.text("Terms & Conditions", margin, termsY);
+  doc.setFontSize(7.5);
+  setText(doc, gray);
+  doc.text("AMOUNT IN WORDS", MARGIN, y);
 
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(gray[0], gray[1], gray[2]);
-  doc.setFontSize(7);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9.5);
+  setText(doc, dark);
+  doc.text(wrapped, MARGIN, y + 5);
+
+  return y + 5 + wrapped.length * 4.2 + 6;
+}
+
+function drawTermsAndThanks(doc: jsPDF, bill: PdfBill, settings: PdfSettings, startY: number): void {
   const terms = [
     "1. Goods once sold will not be taken back or exchanged.",
     "2. Prescription accuracy must be verified within 3 days of delivery.",
     "3. Warranty covers manufacturing defects only; does not cover scratches or breakage.",
     "4. This is a computer-generated invoice and does not require a physical signature.",
   ];
-  terms.forEach((t, i) => {
-    doc.text(t, margin, termsY + 5 + i * 4);
-  });
+  const blockH = 6 + 5 + terms.length * 4 + 12;
+  let y = ensureSpace(doc, startY, blockH, bill.billNumber);
 
-  y = termsY + 5 + terms.length * 4 + 8;
+  setDraw(doc, border);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+  doc.setLineWidth(0.1);
+  y += 6;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  setText(doc, dark);
+  doc.text("Terms & Conditions", MARGIN, y);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.2);
+  setText(doc, gray);
+  terms.forEach((t, i) => doc.text(t, MARGIN, y + 5 + i * 4));
+
+  y += 5 + terms.length * 4 + 8;
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10);
-  doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.text(`Thank you for choosing ${settings.shopName || "us"}!`, pageW / 2, y, { align: "center" });
+  setText(doc, primary);
+  doc.text(`Thank you for choosing ${settings.shopName || "us"}!`, PAGE_W / 2, y, { align: "center" });
+}
 
-  const footerY = 280;
-  doc.setDrawColor(border[0], border[1], border[2]);
-  doc.setLineWidth(0.3);
-  doc.line(margin, footerY, pageW - margin, footerY);
-  doc.setLineWidth(0.1);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.setTextColor(gray[0], gray[1], gray[2]);
+function stampFooters(doc: jsPDF, settings: PdfSettings) {
+  const totalPages = doc.getNumberOfPages();
+  const footerY = PAGE_H - 17;
   const footerParts = [settings.shopAddress, settings.shopPhone, settings.shopEmail].filter(Boolean);
-  doc.text(footerParts.join("  |  "), pageW / 2, footerY + 6, { align: "center" });
-  doc.setFontSize(6);
-  doc.text(`Invoice generated on ${new Date().toLocaleString("en-IN")}`, pageW / 2, footerY + 11, { align: "center" });
+
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+
+    setDraw(doc, border);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, footerY, PAGE_W - MARGIN, footerY);
+    doc.setLineWidth(0.1);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    setText(doc, gray);
+    if (footerParts.length) {
+      doc.text(footerParts.join("   |   "), PAGE_W / 2, footerY + 5, { align: "center" });
+    }
+
+    doc.setFontSize(6);
+    doc.text(`Page ${i} of ${totalPages}`, PAGE_W - MARGIN, footerY + 9.5, { align: "right" });
+
+    if (i === totalPages) {
+      doc.text(`Invoice generated on ${new Date().toLocaleString("en-IN")}`, MARGIN, footerY + 9.5);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public API (unchanged signatures — drop-in replacement)
+// ---------------------------------------------------------------------------
+
+export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings) {
+  const doc = new jsPDF("p", "mm", "a4");
+
+  let y = drawHeader(doc, settings);
+  y = drawMetaSection(doc, bill, customer, y);
+  y = drawItemsTable(doc, bill, y);
+  y = drawTotalsBox(doc, bill, y);
+  y = drawAmountInWords(doc, bill, y);
+  drawTermsAndThanks(doc, bill, settings, y);
+  stampFooters(doc, settings);
 
   return doc;
 }
@@ -407,29 +595,43 @@ export function openBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfS
   window.open(url, "_blank");
 }
 
+// ---------------------------------------------------------------------------
+// Thermal (40-column) receipt — plain text, for receipt printers
+// ---------------------------------------------------------------------------
+
 function padCenter(str: string, width: number): string {
   if (str.length >= width) return str;
   const left = Math.floor((width - str.length) / 2);
   return " ".repeat(left) + str;
 }
 
+/** Right-aligns a currency amount against a label within a fixed character width. */
+function moneyLine(label: string, amount: number, width: number, sign: "" | "+" | "-" = ""): string {
+  const value = `${sign}${CURRENCY}${Math.abs(amount || 0).toFixed(2)}`;
+  const used = label.length + value.length + 2; // 2 leading spaces
+  const padding = Math.max(width - used, 1);
+  return `  ${label}${" ".repeat(padding)}${value}`;
+}
+
 export function generateThermalReceipt(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings): string {
-  const L = "----------------------------------------";
+  const WIDTH = 40;
+  const L = "-".repeat(WIDTH);
   const shopName = settings.shopName || "OPTICAL SHOP";
   const address = settings.shopAddress || "";
   const phone = settings.shopPhone || "";
   const email = settings.shopEmail || "";
-  const billDate = bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  const billDate = bill.createdAt
+    ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
 
   const lines: string[] = [];
 
   lines.push("");
-  lines.push(padCenter("TAX INVOICE", 40));
-  lines.push(padCenter("─".repeat(40), 40));
-  lines.push(padCenter(shopName, 40));
-  if (address) lines.push(padCenter(address, 40));
-  if (phone) lines.push(padCenter(`Ph: ${phone}`, 40));
-  if (email) lines.push(padCenter(email, 40));
+  lines.push(padCenter("TAX INVOICE", WIDTH));
+  lines.push(padCenter(shopName, WIDTH));
+  if (address) lines.push(padCenter(address, WIDTH));
+  if (phone) lines.push(padCenter(`Ph: ${phone}`, WIDTH));
+  if (email) lines.push(padCenter(email, WIDTH));
   lines.push(L);
   lines.push(`  Bill #: ${bill.billNumber || "—"}`);
   lines.push(`  Date:   ${billDate}`);
@@ -448,32 +650,26 @@ export function generateThermalReceipt(bill: PdfBill, customer: PdfCustomer, set
       const desc = it.description || "Item";
       const qty = it.quantity || 1;
       const price = it.unitPrice || 0;
-      const total = (it.quantity || 1) * (it.unitPrice || 0);
+      const total = qty * price;
       lines.push(`  ${i + 1}. ${desc}`);
-      lines.push(`     Qty: ${qty}  x  ₹${price.toFixed(2)}  =  ₹${total.toFixed(2)}`);
+      lines.push(`     Qty: ${qty}  x  ${CURRENCY}${price.toFixed(2)}  =  ${CURRENCY}${total.toFixed(2)}`);
     });
   }
 
   lines.push(L);
-  lines.push(`  Subtotal:${" ".repeat(20)}₹${(bill.subtotal || 0).toFixed(2)}`);
-  if (bill.discount) {
-    lines.push(`  Discount:${" ".repeat(21)}-₹${bill.discount.toFixed(2)}`);
-  }
-  if (bill.tax) {
-    lines.push(`  GST:${" ".repeat(26)}+₹${bill.tax.toFixed(2)}`);
-  }
-  lines.push(`  TOTAL AMOUNT:${" ".repeat(16)}₹${(bill.totalAmount || 0).toFixed(2)}`);
-  if (bill.advancePaid) {
-    lines.push(`  Paid:${" ".repeat(25)}₹${bill.advancePaid.toFixed(2)}`);
-  }
+  lines.push(moneyLine("Subtotal:", bill.subtotal || 0, WIDTH));
+  if (bill.discount) lines.push(moneyLine("Discount:", bill.discount, WIDTH, "-"));
+  if (bill.tax) lines.push(moneyLine("GST:", bill.tax, WIDTH, "+"));
+  lines.push(moneyLine("TOTAL:", bill.totalAmount || 0, WIDTH));
+  if (bill.advancePaid) lines.push(moneyLine("Paid:", bill.advancePaid, WIDTH));
   if (bill.pendingAmount && bill.pendingAmount > 0) {
-    lines.push(`  Balance Due:${" ".repeat(17)}₹${bill.pendingAmount.toFixed(2)}`);
+    lines.push(moneyLine("Balance Due:", bill.pendingAmount, WIDTH));
   }
 
   lines.push(L);
-  lines.push(padCenter("Thank you for choosing us!", 40));
+  lines.push(padCenter("Thank you for choosing us!", WIDTH));
   lines.push("");
-  lines.push(padCenter(`Generated on ${new Date().toLocaleString("en-IN")}`, 40));
+  lines.push(padCenter(`Generated on ${new Date().toLocaleString("en-IN")}`, WIDTH));
   lines.push("");
 
   return lines.join("\n");
