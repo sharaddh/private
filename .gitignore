@@ -33,3 +33,5 @@ dist-ssr
 # WhatsApp auth
 .wwebjs_auth/
 .wwebjs_cache/
+
+client/public/*.pdf
