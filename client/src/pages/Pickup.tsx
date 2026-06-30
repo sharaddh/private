@@ -581,8 +581,8 @@ export default function Pickup() {
 
               {/* Confirm Delivery modal */}
               {showConfirmDeliver && (
-                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowConfirmDeliver(false)}>
-                  <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowConfirmDeliver(false)}>
+                  <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-lg border border-gray-200 dark:border-dark-600 animate-scale-in" onClick={(e) => e.stopPropagation()}>
                     <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Package size={24} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
