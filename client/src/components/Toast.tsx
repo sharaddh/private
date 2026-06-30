@@ -31,7 +31,7 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
   const Icon = icons[type];
 
   return (
-    <div className={`fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl shadow-glass text-sm font-medium animate-slide-up ${styles[type]}`}>
+    <div className={`fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-lg animate-slide-up ${styles[type]}`}>
       <Icon size={18} />
       <span>{message}</span>
       <button onClick={onClose} className="ml-2 hover:opacity-70">
