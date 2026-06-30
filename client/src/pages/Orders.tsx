@@ -320,9 +320,9 @@ export default function Orders() {
 
       {/* Advance quantity modal */}
       {advanceModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setAdvanceModal(null)}>
-          <div className="bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600 p-5 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in" onClick={() => setAdvanceModal(null)}>
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-600 p-6 max-w-sm w-full mx-4 shadow-lg animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center mx-auto mb-3">
               <ArrowUpRight size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white text-center mb-1">Mark as "{advanceModal.nextStatus}"</h3>
