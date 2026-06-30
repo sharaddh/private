@@ -106,7 +106,7 @@ export default function Customers() {
       </div>
 
       {filteredList.length === 0 ? (
-        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-dark-500">
+        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-dark-500 bg-surface-50/50 dark:bg-dark-750/50">
           <div className="w-16 h-16 bg-gray-50 dark:bg-dark-750 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users size={32} className="text-gray-300 dark:text-gray-600" />
           </div>
