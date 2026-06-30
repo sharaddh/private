@@ -242,7 +242,7 @@ export default function Pickup() {
               const totalPrice = (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
               return (
                 <div key={o._id} onClick={() => pickReadyOrder(o)}
-                  className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all">
+                  className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}

@@ -106,7 +106,7 @@ export default function Customers() {
       </div>
 
       {filteredList.length === 0 ? (
-        <div className="card text-center py-16">
+        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-dark-500">
           <div className="w-16 h-16 bg-gray-50 dark:bg-dark-750 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users size={32} className="text-gray-300 dark:text-gray-600" />
           </div>
@@ -125,7 +125,7 @@ export default function Customers() {
           <p className="text-sm text-gray-500">{filteredList.length} customer(s)</p>
           {filteredList.map((c) => (
             <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all"
+              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">

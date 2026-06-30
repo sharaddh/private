@@ -209,7 +209,7 @@ export default function Orders() {
             const pending = o.billInfo?.pendingAmount || 0;
             return (
               <div key={o._id}
-                className="group bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600 overflow-hidden">
+                className="group bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-600 overflow-hidden hover:shadow-md transition-all duration-300">
                 {/* Top section */}
                 <div className="p-5 pb-3">
                   <div className="flex items-center justify-between mb-3">
