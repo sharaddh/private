@@ -197,12 +197,12 @@ export default function Pickup() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+    <div className="max-w-4xl mx-auto space-y-5 pb-20">
       {/* Header */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm p-5">
+      <div className="card">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white shadow-sm">
+            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
               <Package size={20} />
             </div>
             <div>
@@ -242,9 +242,9 @@ export default function Pickup() {
               const totalPrice = (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
               return (
                 <div key={o._id} onClick={() => pickReadyOrder(o)}
-                  className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+                  className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -318,10 +318,10 @@ export default function Pickup() {
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{customers.length} customer(s) found</p>
           {customers.map((c: any) => (
             <div key={c._id} onClick={() => selectCustomer(c)}
-              className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all duration-200 cursor-pointer p-4">
+              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
+                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
@@ -338,12 +338,12 @@ export default function Pickup() {
 
       {/* Selected customer flow */}
       {selectedCustomer && (
-        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm">
+        <div className="card">
           {/* Customer header */}
-          <div className="p-5 border-b border-gray-100 dark:border-dark-700">
+          <div className="p-4 border-b border-gray-200 dark:border-dark-600">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg">
+                <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                   {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div>
@@ -581,7 +581,7 @@ export default function Pickup() {
 
               {/* Confirm Delivery modal */}
               {showConfirmDeliver && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowConfirmDeliver(false)}>
+                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50" onClick={() => setShowConfirmDeliver(false)}>
                   <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
                     <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Package size={24} className="text-emerald-600 dark:text-emerald-400" />
