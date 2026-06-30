@@ -83,7 +83,7 @@ export default function Delivery() {
       ) : (
         <div className="grid gap-3">
           {list.map((o: any) => (
-            <div key={o._id} className="card hover:shadow-soft-lg transition-shadow">
+            <div key={o._id} className="card">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
