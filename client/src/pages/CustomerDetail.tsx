@@ -179,7 +179,7 @@ export default function CustomerDetail() {
       <div className="card">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-2xl flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-2xl flex-shrink-0">
+            <div className="w-14 h-14 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-2xl flex-shrink-0">
               {customer.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
             <div className="flex-1">
@@ -512,7 +512,7 @@ export default function CustomerDetail() {
 
       {selectedVisit && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setSelectedVisit(null)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setSelectedVisit(null)} />
           <div className="relative w-full max-w-2xl bg-white dark:bg-dark-800 shadow-2xl overflow-y-auto animate-slide-in-right">
             <div className="sticky top-0 z-10 bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
