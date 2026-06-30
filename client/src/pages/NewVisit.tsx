@@ -471,7 +471,7 @@ export default function NewVisit() {
     const mobile = customer?.mobile || "";
     return (
       <div className="max-w-2xl mx-auto space-y-4 pb-20">
-        <div className="card text-center py-8">
+        <div className="card text-center py-8 border-dashed border-emerald-300 dark:border-emerald-700">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check size={32} className="text-emerald-600 dark:text-emerald-400" />
           </div>
