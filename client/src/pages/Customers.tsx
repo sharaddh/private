@@ -125,11 +125,11 @@ export default function Customers() {
           <p className="text-sm text-gray-500">{filteredList.length} customer(s)</p>
           {filteredList.map((c) => (
             <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-              className="card cursor-pointer hover:bg-primary-50/30 dark:hover:bg-primary-900/10 hover:shadow-soft-lg transition-all"
+              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-lg flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div className="min-w-0">
@@ -168,35 +168,35 @@ export default function Customers() {
       )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Customer" : "Add Customer"} size="lg">
-        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-2.5 rounded-lg text-sm mb-3">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Name *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
               <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input type="email" className="input-field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile *</label>
               <input className="input-field" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alt Mobile</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alt Mobile</label>
               <input className="input-field" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
               <input className="input-field" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Age</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
               <input type="number" className="input-field" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
               <select className="input-field" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
                 <option value="">Select</option>
                 <option value="Male">Male</option>
@@ -205,15 +205,15 @@ export default function Customers() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tags</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
               <input className="input-field" placeholder="tag1, tag2" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
               <textarea className="input-field" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-700">
+          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-dark-600">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Customer"}</button>
           </div>
