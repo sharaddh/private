@@ -151,8 +151,8 @@ export default function Dashboard() {
           {/* Navigation stat cards — larger, clickable */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
             <button onClick={() => navigate("/customers")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
-              <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
+              <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
                 <Users size={20} className="text-primary-600 dark:text-primary-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.customers}</p>
@@ -160,8 +160,8 @@ export default function Dashboard() {
               {data.newCustomersToday > 0 && <p className="text-[11px] text-primary-600 font-semibold mt-0.5">+{data.newCustomersToday} today</p>}
             </button>
             <button onClick={() => navigate("/orders")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
-              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
+              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
                 <ShoppingCart size={20} className="text-blue-600 dark:text-blue-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.orders}</p>
@@ -169,8 +169,8 @@ export default function Dashboard() {
               <p className="text-[11px] text-blue-600 font-semibold mt-0.5">+{ordersValue} {periodLabel.toLowerCase()}</p>
             </button>
             <button onClick={() => navigate("/bills")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
-              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
+              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
                 <FileText size={20} className="text-emerald-600 dark:text-emerald-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.bills}</p>
@@ -178,8 +178,8 @@ export default function Dashboard() {
               {data.todaySales > 0 && <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">₹{(data.todaySales / (data.todayBills || 1)).toFixed(0)} avg</p>}
             </button>
             <button onClick={() => navigate("/pickup")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
-              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
+              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
                 <Truck size={20} className="text-purple-600 dark:text-purple-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.readyDeliveries || 0}</p>
@@ -187,8 +187,8 @@ export default function Dashboard() {
               <p className="text-[11px] text-purple-600 font-semibold mt-0.5">for pickup</p>
             </button>
             <button onClick={() => navigate("/inventory")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
-              <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
+              <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
                 <Package size={20} className="text-cyan-600 dark:text-cyan-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.inventory}</p>
