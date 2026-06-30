@@ -579,7 +579,7 @@ export default function Workspace() {
     const mobile = customer?.mobile || selectedCustomer?.mobile || "";
     return (
       <div className="max-w-2xl mx-auto space-y-4 pt-4 pb-20">
-        <div className="card text-center py-6">
+        <div className="card text-center py-6 border-dashed border-gray-300 dark:border-dark-500">
           <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
             <Check size={28} className="text-emerald-600 dark:text-emerald-400" />
           </div>
