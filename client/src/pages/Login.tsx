@@ -31,19 +31,19 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50 dark:from-dark-900 dark:via-dark-850 dark:to-dark-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-surface-50 dark:bg-dark-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-accent-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/20">
+          <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-primary-500/20">
             <span className="text-white font-bold text-xl">K</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KMJ Optical</h1>
           <p className="text-sm text-gray-500 mt-1">Admin Login</p>
         </div>
 
-        <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-soft-lg border border-gray-100 dark:border-dark-700/80 p-6">
+        <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-md border border-gray-200 dark:border-dark-600 p-6">
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -57,19 +57,19 @@ export default function Login() {
                 <input type={showPassword ? "text" : "password"} placeholder="Enter password" value={password}
                   onChange={(e) => setPassword(e.target.value)} required className="input-field pr-10" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             <button type="submit" disabled={isLoading}
-              className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2">
+              className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg">
               {isLoading ? (
                 <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Signing in...</>
               ) : <><LogIn size={18} /> Sign in</>}
             </button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-4">
+          <p className="text-center text-sm text-gray-500 mt-5">
             Staff? <Link to="/staff-login" className="text-primary-600 hover:text-primary-700 font-medium">Login here</Link>
           </p>
         </div>
