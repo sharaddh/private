@@ -69,7 +69,7 @@ export default function Table({
     <div className="space-y-4">
       {searchable && (
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -80,19 +80,19 @@ export default function Table({
         </div>
       )}
 
-      <div className="overflow-x-auto bg-white/70 dark:bg-dark-800/70 backdrop-blur-xl rounded-2xl border border-surface-200/50 dark:border-dark-600/30 shadow-glass">
+      <div className="overflow-x-auto bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-600">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-surface-200/50 dark:border-dark-600/30">
+            <tr className="border-b border-gray-200 dark:border-dark-600 bg-surface-50 dark:bg-dark-750">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
-                  className={`px-4 py-4 text-left text-xs font-semibold text-muted-500 uppercase tracking-wider ${
-                    col.sortable !== false ? "cursor-pointer hover:text-muted-700 dark:hover:text-muted-300 select-none" : ""
+                  className={`px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${
+                    col.sortable !== false ? "cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" : ""
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {col.label}
                     {sortKey === col.key && (
                       sortDir === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
@@ -101,22 +101,22 @@ export default function Table({
                 </th>
               ))}
               {actions && (
-                <th                 className="px-4 py-4 text-left text-xs font-semibold text-muted-500 dark:text-muted-400 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-200/40 dark:divide-dark-600/20">
+          <tbody className="divide-y divide-gray-100 dark:divide-dark-700">
             {paged.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-4 py-12 text-center text-muted-400 dark:text-muted-500"
+                  className="px-4 py-16 text-center text-gray-400"
                 >
-                  <div className="flex flex-col items-center gap-2">
-                    <Search size={24} className="text-muted-300 dark:text-muted-600" />
-                    <span>No data available</span>
+                  <div className="flex flex-col items-center gap-3">
+                    <Search size={28} className="text-gray-300 dark:text-gray-600" />
+                    <span className="text-sm">No data available</span>
                   </div>
                 </td>
               </tr>
@@ -125,17 +125,17 @@ export default function Table({
                 <tr
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-surface-100/40 dark:hover:bg-dark-700/40 transition-colors ${
+                  className={`hover:bg-surface-50 dark:hover:bg-dark-750 transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-4 text-sm text-muted-700 dark:text-muted-300 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-4 text-sm whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-sm whitespace-nowrap">
                       {actions(row)}
                     </td>
                   )}
@@ -148,16 +148,16 @@ export default function Table({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               const start = Math.max(0, Math.min(page - 2, totalPages - 5));
@@ -166,9 +166,9 @@ export default function Table({
                 <button
                   key={pg}
                   onClick={() => setPage(pg)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium ${
+                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     pg === page
-                      ? "bg-primary-600 text-white"
+                      ? "bg-primary-600 text-white shadow-sm"
                       : "hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-600 dark:text-gray-400"
                   }`}
                 >
@@ -179,9 +179,9 @@ export default function Table({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
