@@ -513,7 +513,7 @@ export default function CustomerDetail() {
       {selectedVisit && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-black/30" onClick={() => setSelectedVisit(null)} />
-          <div className="relative w-full max-w-2xl bg-white dark:bg-dark-800 shadow-2xl overflow-y-auto animate-slide-in-right">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-dark-800 border-l border-gray-200 dark:border-dark-600 shadow-2xl overflow-y-auto animate-slide-in-right">
             <div className="sticky top-0 z-10 bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <Calendar size={18} className="text-primary-500" />
