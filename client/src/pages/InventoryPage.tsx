@@ -201,7 +201,7 @@ export default function InventoryPage() {
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               categoryFilter === c
                 ? "bg-primary-600 text-white shadow-soft"
-                : "bg-white/50 dark:bg-dark-700/50 backdrop-blur-sm text-muted-600 dark:text-muted-400 hover:bg-white/80 dark:hover:bg-dark-600/80 border border-surface-200/40 dark:border-dark-600/30"
+                : "bg-white dark:bg-dark-800 text-muted-600 dark:text-muted-400 hover:bg-gray-50 dark:hover:bg-dark-700 border border-gray-300 dark:border-dark-600"
             }`}>
             {c}
           </button>
@@ -365,7 +365,7 @@ export default function InventoryPage() {
           <p className="text-xs text-muted-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
           {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
-            <div className="bg-white/60 dark:bg-dark-800/60 backdrop-blur-sm rounded-xl p-4 space-y-2 border border-surface-200/40 dark:border-dark-600/30">
+            <div className="bg-white dark:bg-dark-800 rounded-lg p-4 space-y-2 border border-gray-200 dark:border-dark-600">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold text-muted-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
                 <div className="flex gap-1">
