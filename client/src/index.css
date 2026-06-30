@@ -52,6 +52,24 @@ body {
   animation: scale-in 0.2s ease-out;
 }
 
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -101,7 +119,7 @@ body {
   }
 
   .card-hover {
-    @apply card hover:shadow-md cursor-pointer transition-all duration-300 hover:-translate-y-0.5;
+    @apply card hover:shadow-md cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 dark:hover:border-dark-500;
   }
 
   .card-header {
