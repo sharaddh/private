@@ -176,8 +176,8 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-glass-lg overflow-hidden max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div className="card overflow-hidden max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
             {useCamera ? <Camera size={18} className="text-primary-600" /> : <Search size={18} className="text-primary-600" />}
@@ -222,7 +222,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         {!useCamera && (
           <div className="px-5 py-6 space-y-3">
             {error && (
-              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 rounded-xl">
+              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 rounded-xl border border-amber-200 dark:border-amber-800">
                 <AlertTriangle size={16} className="flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -250,7 +250,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
         {useCamera && !starting && (
           <>
-            <div className="flex items-center justify-center gap-2 px-5 py-3 text-xs text-gray-400 border-t border-gray-100 dark:border-dark-700">
+            <div className="flex items-center justify-center gap-2 px-5 py-3 text-xs text-gray-400 border-t border-gray-200 dark:border-dark-600">
               <CameraOff size={13} />
               {scanTimer > 8 && <span className="text-amber-500 font-medium">Still scanning... try bringing the QR closer.</span>}
               {scanTimer <= 8 && <span>Press Esc or click outside to cancel</span>}
