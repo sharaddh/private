@@ -119,21 +119,21 @@ export default function Dashboard() {
           <h1 className="page-title">{greeting}!</h1>
           <p className="page-subtitle">Here's what's happening at your shop.</p>
         </div>
-        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2.5 px-5 py-2.5 text-sm font-semibold rounded-xl">
-          <QrCode size={20} /> Scan Barcode
+        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2">
+          <QrCode size={18} /> Scan Barcode
         </button>
       </div>
 
       {!isStaff && (
         <>
           {/* Time period selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {(["today", "week", "month"] as const).map((p) => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-150 ${
                   period === p
-                    ? "bg-primary-600 text-white shadow-md"
-                    : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700"
+                    ? "bg-primary-600 text-white"
+                    : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
                 }`}>
                 {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
               </button>
@@ -149,51 +149,51 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation stat cards — larger, clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
             <button onClick={() => navigate("/customers")}
-              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
-                <Users size={22} className="text-primary-600 dark:text-primary-400" />
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
+              <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Users size={20} className="text-primary-600 dark:text-primary-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.customers}</p>
-              <p className="text-sm font-medium text-gray-500 mt-1">Customers</p>
-              {data.newCustomersToday > 0 && <p className="text-[11px] text-primary-500 font-semibold mt-0.5">+{data.newCustomersToday} today</p>}
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.customers}</p>
+              <p className="text-sm font-medium text-gray-500 mt-0.5">Customers</p>
+              {data.newCustomersToday > 0 && <p className="text-[11px] text-primary-600 font-semibold mt-0.5">+{data.newCustomersToday} today</p>}
             </button>
             <button onClick={() => navigate("/orders")}
-              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
-                <ShoppingCart size={22} className="text-blue-600 dark:text-blue-400" />
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
+              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <ShoppingCart size={20} className="text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.orders}</p>
-              <p className="text-sm font-medium text-gray-500 mt-1">Orders</p>
-              <p className="text-[11px] text-blue-500 font-semibold mt-0.5">+{ordersValue} {periodLabel.toLowerCase()}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.orders}</p>
+              <p className="text-sm font-medium text-gray-500 mt-0.5">Orders</p>
+              <p className="text-[11px] text-blue-600 font-semibold mt-0.5">+{ordersValue} {periodLabel.toLowerCase()}</p>
             </button>
             <button onClick={() => navigate("/bills")}
-              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
-                <FileText size={22} className="text-emerald-600 dark:text-emerald-400" />
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
+              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <FileText size={20} className="text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.bills}</p>
-              <p className="text-sm font-medium text-gray-500 mt-1">Bills</p>
-              {data.todaySales > 0 && <p className="text-[11px] text-emerald-500 font-semibold mt-0.5">₹{(data.todaySales / (data.todayBills || 1)).toFixed(0)} avg</p>}
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.bills}</p>
+              <p className="text-sm font-medium text-gray-500 mt-0.5">Bills</p>
+              {data.todaySales > 0 && <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">₹{(data.todaySales / (data.todayBills || 1)).toFixed(0)} avg</p>}
             </button>
             <button onClick={() => navigate("/pickup")}
-              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
-                <Truck size={22} className="text-purple-600 dark:text-purple-400" />
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
+              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Truck size={20} className="text-purple-600 dark:text-purple-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.readyDeliveries || 0}</p>
-              <p className="text-sm font-medium text-gray-500 mt-1">Ready</p>
-              <p className="text-[11px] text-purple-500 font-semibold mt-0.5">for pickup</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.readyDeliveries || 0}</p>
+              <p className="text-sm font-medium text-gray-500 mt-0.5">Ready</p>
+              <p className="text-[11px] text-purple-600 font-semibold mt-0.5">for pickup</p>
             </button>
             <button onClick={() => navigate("/inventory")}
-              className="card text-center py-5 px-3 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform">
-                <Package size={22} className="text-cyan-600 dark:text-cyan-400" />
+              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all duration-150 group">
+              <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Package size={20} className="text-cyan-600 dark:text-cyan-400" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{data.counts.inventory}</p>
-              <p className="text-sm font-medium text-gray-500 mt-1">Inventory</p>
-              <p className="text-[11px] text-red-500 font-semibold mt-0.5">{data.lowStock} low stock</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.inventory}</p>
+              <p className="text-sm font-medium text-gray-500 mt-0.5">Inventory</p>
+              <p className="text-[11px] text-red-600 font-semibold mt-0.5">{data.lowStock} low stock</p>
             </button>
           </div>
 
@@ -213,37 +213,37 @@ export default function Dashboard() {
       {/* Two-column layout: To-Do + Incomplete Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* To-Do widget */}
-        <div className="card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card lg:col-span-2">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">To-Do</h3>
-            <span className="text-xs font-semibold text-gray-400 bg-gray-100 dark:bg-dark-700 px-2 py-0.5 rounded-full">{activeTodos.length} pending</span>
+            <span className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-dark-700 px-2 py-0.5 rounded">{activeTodos.length} pending</span>
           </div>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <input type="text" placeholder="Add a task..." value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTodo()}
-              className="flex-1 text-sm px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-850 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all placeholder-gray-400" />
+              className="flex-1 text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all placeholder-gray-400" />
             <button onClick={addTodo} disabled={!newTask.trim()}
-              className="p-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-xl text-white transition-all">
-              <Plus size={18} />
+              className="p-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-lg text-white transition-all">
+              <Plus size={16} />
             </button>
           </div>
-          <div className="space-y-1 max-h-[320px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-0.5 max-h-[320px] overflow-y-auto scrollbar-thin pr-1">
             {todos.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">No tasks yet</p>
+              <p className="text-gray-400 text-sm text-center py-5">No tasks yet</p>
             ) : (
               [...activeTodos, ...doneTodos].map((t) => (
-                <div key={t._id as string} className={`flex items-center gap-2.5 py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 group transition-all ${t.done ? "opacity-50" : ""}`}>
+                <div key={t._id as string} className={`flex items-center gap-2 py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 group transition-all ${t.done ? "opacity-50" : ""}`}>
                   <button onClick={() => toggleTodo(t._id as string, t.done as boolean)}
-                    className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-400"}`}>
-                    {t.done && <Check size={11} className="text-white" />}
+                    className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-500"}`}>
+                    {t.done && <Check size={10} className="text-white" />}
                   </button>
                   <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>
                     {t.task as string}
                   </span>
                   <button onClick={() => deleteTodo(t._id as string)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
-                    <Trash2 size={14} />
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
+                    <Trash2 size={13} />
                   </button>
                 </div>
               ))
@@ -252,25 +252,25 @@ export default function Dashboard() {
         </div>
 
         {/* Incomplete Orders */}
-        <div className="card p-5 lg:col-span-3">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card lg:col-span-3">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Incomplete Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-semibold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
-              View all <ArrowRight size={15} />
+            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+              View all <ArrowRight size={14} />
             </button>
           </div>
           {data.incompleteOrders.length > 0 && (
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
               {(["pending", "stock", "buy", "order"] as const).map((c) => {
                 const count = data.incompleteOrders.filter((o) => (o.classification || "pending") === c).length;
                 const colors: Record<string, string> = {
                   pending: "bg-gray-100 dark:bg-dark-700 text-gray-500",
-                  stock: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300",
-                  buy: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300",
-                  order: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300",
+                  stock: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300",
+                  buy: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300",
+                  order: "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300",
                 };
                 return (
-                  <span key={c} className={`text-[11px] font-bold px-3 py-1 rounded-full ${colors[c]}`}>
+                  <span key={c} className={`text-[11px] font-medium px-2 py-0.5 rounded ${colors[c]}`}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}: {count}
                   </span>
                 );
@@ -280,17 +280,17 @@ export default function Dashboard() {
                 const hasItems = data.incompleteOrders.some((o) => (o.classification || "pending") === type);
                 return hasItems ? (
                   <button key={type} onClick={() => sendDemand(type)} disabled={sendingDemand === type}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 shadow-md hover:shadow-lg active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
-                    <Send size={16} />
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
+                    <Send size={13} />
                     {sendingDemand === type ? "Sending..." : `Send ${type === "buy" ? "Purchase" : "Lab Order"}`}
                   </button>
                 ) : null;
               })}
             </div>
           )}
-          <div className="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin pr-1">
+          <div className="space-y-1.5 max-h-[520px] overflow-y-auto scrollbar-thin">
             {data.incompleteOrders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">All orders complete</p>
+              <p className="text-gray-400 text-sm text-center py-6">All orders complete</p>
             ) : (
               data.incompleteOrders.map((o) => {
                 const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
@@ -299,36 +299,36 @@ export default function Dashboard() {
                 const demand = o.prescription ? buildDemand(o.prescription, o) : null;
                 const cls = (o.classification as string) || "pending";
                 return (
-                  <div key={o._id as string} className={`rounded-xl border transition-all border-gray-100 dark:border-dark-700 hover:border-gray-200 dark:hover:border-dark-600`}>
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 dark:border-dark-700/50">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{o.status as string}</span>
+                  <div key={o._id as string} className="border border-gray-200 dark:border-dark-600 rounded-lg">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-dark-700">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{o.status as string}</span>
                         {!demand && (
-                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-dark-700 text-gray-500">Plain</span>
+                          <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 dark:bg-dark-700 text-gray-500">Plain</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         {(["stock", "order", "buy"] as const).map((c) => (
                           <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+                            className={`px-2 py-1 rounded text-xs font-medium transition-all duration-150 ${
                               cls === c
-                                ? c === "stock" ? "bg-emerald-500 text-white shadow-sm"
-                                  : c === "order" ? "bg-blue-500 text-white shadow-sm"
-                                  : "bg-amber-500 text-white shadow-sm"
-                                : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700 hover:text-gray-700 dark:hover:text-gray-300"
+                                ? c === "stock" ? "bg-emerald-500 text-white"
+                                  : c === "order" ? "bg-blue-500 text-white"
+                                  : "bg-amber-500 text-white"
+                                : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
                             }`}>
                             {c === "stock" ? "Stock" : c === "order" ? "Order" : "Purchase"}
                           </button>
                         ))}
                         <button onClick={() => toggleExpand(o._id as string)}
-                          className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                       </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row">
-                      <div className="flex-1 px-4 py-2.5">
+                      <div className="flex-1 px-3 py-2">
                         {demand ? (
                           <div className="space-y-0.5">
                             <div className="text-sm font-bold text-gray-900 dark:text-white">{demand.heading}</div>
@@ -338,7 +338,7 @@ export default function Dashboard() {
                             {demand.footer && <div className="text-xs text-gray-400 pt-0.5">{demand.footer}</div>}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-0.5">
                             <span className="font-semibold text-gray-900 dark:text-white">{o.lensBrand || o.lens || "Lens"}</span>
                             <span className="text-xs">·</span>
                             <span>Plain (no power)</span>
@@ -346,29 +346,29 @@ export default function Dashboard() {
                         )}
                       </div>
 
-                      <div className="sm:w-48 px-4 py-2.5 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
+                      <div className="sm:w-44 px-3 py-2 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
                         <div className="text-sm font-bold text-gray-900 dark:text-white">{cName || "—"}</div>
                         {cMobile && <div className="text-xs text-gray-400">{cMobile}</div>}
                         {o.frameBrand && (
                           <button onClick={() => navigate(`/inventory?q=${encodeURIComponent(o.frameBrand as string)}`)}
-                            className="flex sm:justify-end items-center gap-1 mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-all w-full sm:text-right">
-                            <Glasses size={12} /> {o.frameBrand as string}{o.frameModel ? ` (${o.frameModel as string})` : ""}
+                            className="flex sm:justify-end items-center gap-1 mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-all w-full sm:text-right">
+                            <Glasses size={11} /> {o.frameBrand as string}{o.frameModel ? ` (${o.frameModel as string})` : ""}
                           </button>
                         )}
                         {o.frameColor && <div className="text-[10px] text-gray-400">{o.frameColor as string}{o.frameSize ? ` / ${o.frameSize as string}` : ""}</div>}
                         {(o.stockStatus?.frameBrand || o.stockStatus?.lensBrand) && (
-                          <div className="flex sm:justify-end gap-1.5 mt-2 flex-wrap">
+                          <div className="flex sm:justify-end gap-1 mt-1.5 flex-wrap">
                             {(() => {
                               const fs = o.stockStatus?.frameBrand;
                               if (fs) {
                                 const total = fs.shop + fs.warehouse;
                                 if (total > 0) return (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
                                     Frame: {fs.shop} shop / {fs.warehouse} warehouse
                                   </span>
                                 );
                                 if (o.frameBrand) return (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">Frame: out of stock</span>
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300">Frame: out of stock</span>
                                 );
                               }
                               return null;
@@ -378,12 +378,12 @@ export default function Dashboard() {
                               if (ls) {
                                 const total = ls.shop + ls.warehouse;
                                 if (total > 0) return (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
                                     Lens: {ls.shop} shop / {ls.warehouse} warehouse
                                   </span>
                                 );
                                 if (o.lensBrand) return (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">Lens: out of stock</span>
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300">Lens: out of stock</span>
                                 );
                               }
                               return null;
@@ -394,8 +394,8 @@ export default function Dashboard() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-4 pb-3 pt-0 border-t border-gray-100 dark:border-dark-700 mx-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs pt-3">
+                      <div className="px-3 pb-2 pt-0 border-t border-gray-100 dark:border-dark-700 mx-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-xs pt-2">
                           {o.frame && <Detail label="Frame" value={o.frame as string} />}
                           {o.frameBrand && <Detail label="Frame Brand" value={o.frameBrand as string} />}
                           {o.frameModel && <Detail label="Frame Model" value={o.frameModel as string} />}
@@ -428,21 +428,21 @@ export default function Dashboard() {
       {!isStaff && (
         <>
       {/* Bottom row: Recent Customers, Recent Orders, Pending Bills */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="card">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Customers</h3>
-            <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">View all</button>
+            <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">View all</button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {data.recentCustomers.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">No customers yet</p>
+              <p className="text-gray-400 text-sm text-center py-5">No customers yet</p>
             ) : (
               data.recentCustomers.slice(0, 5).map((c) => (
                 <div key={c._id as string} onClick={() => navigate(`/customers/${c._id as string}`)}
-                  className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
+                  className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
                       {String(c.name ?? "?").charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -459,33 +459,33 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
-              View all <ArrowRight size={15} />
+            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
+              View all <ArrowRight size={14} />
             </button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {data.recentOrders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">No orders yet</p>
+              <p className="text-gray-400 text-sm text-center py-5">No orders yet</p>
             ) : (
               data.recentOrders.slice(0, 6).map((o) => {
                 const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
                 return (
-                  <div key={o._id as string} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">
+                  <div key={o._id as string} className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">
                         {(cName?.charAt(0) || "?").toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</span>
-                          <span className={`badge text-[10px] px-2 py-0.5 font-semibold ${o.status === "Delivered" ? "badge-green" : o.status === "Cancelled" ? "badge-red" : o.status === "Ready" ? "badge-blue" : o.status === "In Lab" ? "badge-yellow" : "badge-gray"}`}>{String(o.status || "Draft")}</span>
+                          <span className={`badge text-[10px] px-1.5 py-0.5 ${o.status === "Delivered" ? "badge-green" : o.status === "Cancelled" ? "badge-red" : o.status === "Ready" ? "badge-blue" : o.status === "In Lab" ? "badge-yellow" : "badge-gray"}`}>{String(o.status || "Draft")}</span>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {o.frameBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Glasses size={11} /> {o.frameBrand as string}</span>}
-                          {o.lensBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Eye size={11} /> {o.lensBrand as string}</span>}
+                        <div className="flex flex-wrap gap-1.5 mt-0.5">
+                          {o.frameBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Glasses size={10} /> {o.frameBrand as string}</span>}
+                          {o.lensBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Eye size={10} /> {o.lensBrand as string}</span>}
                         </div>
                       </div>
                     </div>
@@ -496,25 +496,25 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Pending Bills</h3>
-            <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
-              View all <ArrowRight size={15} />
+            <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
+              View all <ArrowRight size={14} />
             </button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {data.pendingBills.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">No pending bills</p>
+              <p className="text-gray-400 text-sm text-center py-5">No pending bills</p>
             ) : (
               data.pendingBills.slice(0, 6).map((b) => {
                 const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "";
                 const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
                 return (
                   <div key={b._id as string} onClick={() => navigate("/bills")}
-                    className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all group">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-sm flex-shrink-0">
+                    className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all group">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-sm flex-shrink-0">
                         {(cName?.charAt(0) || "?").toUpperCase()}
                       </div>
                       <div className="min-w-0">
