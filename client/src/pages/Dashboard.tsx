@@ -213,7 +213,7 @@ export default function Dashboard() {
       {/* Two-column layout: To-Do + Incomplete Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* To-Do widget */}
-        <div className="card lg:col-span-2">
+        <div className="card hover:shadow-md transition-shadow duration-300 lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">To-Do</h3>
             <span className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-dark-700 px-2 py-0.5 rounded">{activeTodos.length} pending</span>
@@ -222,7 +222,7 @@ export default function Dashboard() {
             <input type="text" placeholder="Add a task..." value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTodo()}
-              className="flex-1 text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all placeholder-gray-400" />
+              className="input-field flex-1 text-sm py-2" />
             <button onClick={addTodo} disabled={!newTask.trim()}
               className="p-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-lg text-white transition-all">
               <Plus size={16} />
@@ -252,7 +252,7 @@ export default function Dashboard() {
         </div>
 
         {/* Incomplete Orders */}
-        <div className="card lg:col-span-3">
+        <div className="card hover:shadow-md transition-shadow duration-300 lg:col-span-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Incomplete Orders</h3>
             <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
@@ -429,7 +429,7 @@ export default function Dashboard() {
         <>
       {/* Bottom row: Recent Customers, Recent Orders, Pending Bills */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="card">
+        <div className="card hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Customers</h3>
             <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">View all</button>
@@ -459,7 +459,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Orders</h3>
             <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
@@ -496,7 +496,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Pending Bills</h3>
             <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
