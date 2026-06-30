@@ -16,14 +16,14 @@ export default function Form({
   isLoading = false,
 }: FormProps) {
   return (
-    <div className="bg-white dark:bg-dark-800 p-6 rounded-xl border border-surface-100 dark:border-dark-700 shadow-soft mb-6">
-      {title && <h3 className="text-lg font-semibold text-muted-900 dark:text-white mb-4">{title}</h3>}
+    <div className="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-600 mb-6">
+      {title && <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h3>}
       <form onSubmit={onSubmit} className="space-y-4">
         {children}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-muted-400 dark:disabled:bg-muted-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.98]"
+          className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-300 active:scale-[0.98] shadow-sm hover:shadow-md"
         >
           {isLoading ? "Loading..." : submitLabel}
         </button>
@@ -42,7 +42,7 @@ export function FormGroup({ label, error, children }: FormGroupProps) {
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           {label}
         </label>
       )}
@@ -62,7 +62,7 @@ export function Input({ label, error, ...props }: InputProps) {
     <FormGroup label={label} error={error}>
       <input
         {...props}
-        className="w-full px-4 py-2.5 border border-surface-200 dark:border-dark-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all duration-200 bg-white dark:bg-dark-800 text-muted-900 dark:text-white placeholder-muted-400"
+        className="w-full px-4 py-2.5 border border-gray-300 dark:border-dark-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-dark-800 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm"
       />
     </FormGroup>
   );
@@ -79,7 +79,7 @@ export function Select({ label, error, options, ...props }: SelectProps) {
     <FormGroup label={label} error={error}>
       <select
         {...props}
-        className="w-full px-4 py-2.5 border border-surface-200 dark:border-dark-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all duration-200 bg-white dark:bg-dark-800 text-muted-900 dark:text-white"
+        className="w-full px-4 py-2.5 border border-gray-300 dark:border-dark-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-dark-800 text-gray-900 dark:text-white shadow-sm"
       >
         <option value="">Select an option</option>
         {options.map((opt) => (
