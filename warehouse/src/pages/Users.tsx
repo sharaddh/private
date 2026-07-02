@@ -21,7 +21,7 @@ export default function Users() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const res = await api.get<WarehouseUser[]>("/api/auth/warehouse-users");
-    if (res.success && res.data) setUsers(res.data);
+    if (res.success && Array.isArray(res.data)) setUsers(res.data);
     setLoading(false);
   }, []);
 

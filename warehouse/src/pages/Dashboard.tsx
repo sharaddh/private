@@ -24,7 +24,11 @@ export default function Dashboard() {
       api.get<Stats>("/api/inventory/stats"),
       api.get<any[]>("/api/auth/warehouse-users").catch(() => ({ success: false })),
     ]).then(([statsRes, usersRes]) => {
-      if (statsRes.success) setStats(statsRes.data as Stats);
+      if (statsRes.success) {
+        const d = statsRes.data as Stats;
+        if (!Array.isArray(d.recentItems)) d.recentItems = [];
+        setStats(d);
+      }
       if (usersRes.success && usersRes.data) setUserCount(usersRes.data.length);
       setLoading(false);
     }).catch(() => setLoading(false));
