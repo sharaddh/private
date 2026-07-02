@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { Package, AlertTriangle, TrendingUp, ArrowRight } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { Package, AlertTriangle, TrendingUp, Users, ArrowRight } from "lucide-react";
 
 interface Stats {
   totalItems: number;
@@ -13,14 +14,18 @@ interface Stats {
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [userCount, setUserCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isOwner } = useAuth();
 
   useEffect(() => {
-    api.get<Stats>("/api/inventory/stats").then((d) => {
-      if (d.success) {
-        setStats(d.data as Stats);
-      }
+    Promise.all([
+      api.get<Stats>("/api/inventory/stats"),
+      api.get<any[]>("/api/auth/warehouse-users").catch(() => ({ success: false })),
+    ]).then(([statsRes, usersRes]) => {
+      if (statsRes.success) setStats(statsRes.data as Stats);
+      if (usersRes.success && usersRes.data) setUserCount(usersRes.data.length);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -40,7 +45,7 @@ export default function Dashboard() {
         <p className="text-sm text-gray-500 mt-1">Overview of warehouse inventory</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
@@ -80,6 +85,18 @@ export default function Dashboard() {
           <p className="text-2xl font-bold text-gray-900">{stats?.warehouseItems || 0}</p>
           <p className="text-sm text-gray-500">Warehouse Items</p>
         </div>
+
+        {isOwner && (
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Users size={20} className="text-amber-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{userCount}</p>
+            <p className="text-sm text-gray-500">Warehouse Users</p>
+          </div>
+        )}
       </div>
 
       <div className="card p-5">

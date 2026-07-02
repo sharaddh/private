@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
-  LayoutDashboard, Package, PlusCircle, LogOut, Menu, X, ChevronLeft,
+  LayoutDashboard, Package, PlusCircle, Users, UserPlus, LogOut, Menu, X, ChevronLeft,
 } from "lucide-react";
 
 const sidebarMenu = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/inventory", label: "Inventory", icon: Package },
   { path: "/inventory/new", label: "Add Item", icon: PlusCircle },
+  { path: "/users", label: "Users", icon: Users },
+  { path: "/users/new", label: "Add User", icon: UserPlus },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -16,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isOwner } = useAuth();
 
   const isAuthPage = location.pathname === "/login";
   if (isAuthPage) return <>{children}</>;
@@ -64,7 +66,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
-          {sidebarMenu.map((item) => {
+          {sidebarMenu.filter((m) => isOwner || !m.path.startsWith("/users")).map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
