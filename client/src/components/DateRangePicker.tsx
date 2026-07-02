@@ -23,10 +23,27 @@ function format(d: Date): string {
 
 export default function DateRangePicker({ startDate, endDate, onChange, count, label = "record" }: DateRangePickerProps) {
   const today = new Date();
-  const [activePreset, setActivePreset] = useState("");
+
+  function isActivePreset(preset: typeof presets[0]): boolean {
+    if (preset.days !== null) {
+      const s = new Date(today);
+      s.setDate(s.getDate() - preset.days);
+      return startDate === format(s) && endDate === format(today);
+    }
+    if (preset.label === "This Week") {
+      const s = new Date(today);
+      const day = s.getDay();
+      s.setDate(s.getDate() - (day === 0 ? 6 : day - 1));
+      return startDate === format(s) && endDate === format(today);
+    }
+    if (preset.label === "This Month") {
+      const s = new Date(today.getFullYear(), today.getMonth(), 1);
+      return startDate === format(s) && endDate === format(today);
+    }
+    return false;
+  }
 
   function applyPreset(preset: typeof presets[0]) {
-    setActivePreset(preset.label);
     if (preset.days !== null) {
       const s = new Date(today);
       s.setDate(s.getDate() - preset.days);
