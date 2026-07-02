@@ -60,12 +60,10 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
   }
 
   function shift(d: number) {
-    const diff = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24);
     const s = new Date(startDate);
     s.setDate(s.getDate() + d);
     const e = new Date(endDate);
     e.setDate(e.getDate() + d);
-    setActivePreset("");
     if (e <= today) onChange(format(s), format(e));
     else {
       onChange(format(s), format(today));
@@ -76,7 +74,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
     <div className="flex items-center gap-1.5 flex-wrap">
       <div className="flex items-center gap-1 flex-wrap">
         {presets.map((p) => {
-          const isActive = activePreset === p.label;
+          const isActive = isActivePreset(p);
           return (
             <button key={p.label} onClick={() => applyPreset(p)}
               className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-150 ${
@@ -93,10 +91,10 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
         <button onClick={() => shift(-1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 transition-all duration-300 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-600 shadow-sm">
           <ChevronLeft size={14} />
         </button>
-        <input type="date" value={startDate} onChange={(e) => { setActivePreset(""); onChange(e.target.value, endDate); }}
+        <input type="date" value={startDate} onChange={(e) => { onChange(e.target.value, endDate); }}
           className="text-xs font-medium py-1.5 pl-2 pr-1 rounded-xl border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 w-28 hover:border-gray-400 dark:hover:border-dark-500 cursor-pointer shadow-sm" />
         <span className="text-xs font-medium text-gray-400">—</span>
-        <input type="date" value={endDate} onChange={(e) => { setActivePreset(""); onChange(startDate, e.target.value); }}
+        <input type="date" value={endDate} onChange={(e) => { onChange(startDate, e.target.value); }}
           className="text-xs font-medium py-1.5 pl-2 pr-1 rounded-xl border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 w-28 hover:border-gray-400 dark:hover:border-dark-500 cursor-pointer shadow-sm" />
         <button onClick={() => shift(1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 transition-all duration-300 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-600 shadow-sm">
           <ChevronRight size={14} />
