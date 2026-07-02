@@ -364,7 +364,7 @@ export default function NewVisit() {
         notes: prescription.notes || undefined,
       };
 
-      if (visitType !== "service") {
+      if (visitType !== "service" && visitType !== "other") {
         const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
         const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
         payload.order = {
