@@ -8,7 +8,9 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  isOwner: boolean;
+  isWarehouseUser: boolean;
+  login: (token: string, user?: Record<string, unknown>) => void;
   logout: () => void;
 }
 
@@ -23,17 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }));
 
   useEffect(() => {
-    if (state.token) {
+    if (state.token && !state.user) {
       api.get("/api/auth/me").then((d) => {
         if (d.success) setState((s) => ({ ...s, user: d.data }));
         else logout();
       }).catch(() => logout());
     }
-  }, [state.token]);
+  }, [state.token, state.user]);
 
-  const login = useCallback((token: string) => {
+  const login = useCallback((token: string, user?: Record<string, unknown>) => {
     try { localStorage.setItem(STORAGE_KEY, token); } catch {}
-    setState({ token, user: null });
+    setState({ token, user: user || null });
   }, []);
 
   const logout = useCallback(() => {
@@ -42,8 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ token: null, user: null });
   }, []);
 
+  const isOwner = state.user?.role === "owner";
+  const isWarehouseUser = state.user?.role === "warehouse";
+
   return (
-    <AuthContext.Provider value={{ ...state, isAuthenticated: !!state.token, login, logout }}>
+    <AuthContext.Provider value={{ ...state, isAuthenticated: !!state.token, isOwner, isWarehouseUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
