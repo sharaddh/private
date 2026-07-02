@@ -26,7 +26,7 @@ interface InventoryItem {
 const emptyForm = {
   sku: "", category: "Frame", inventoryType: "spectacles",
   brand: "", model: "", color: "", size: "", gender: "",
-  supplier: "", quantity: 0, location: "warehouse" as const,
+  supplier: "", quantity: 0, location: "warehouse" as "warehouse" | "shop",
   purchasePrice: 0, sellingPrice: 0, description: "",
 };
 
