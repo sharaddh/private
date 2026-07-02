@@ -1,7 +1,9 @@
 import mongoose, { connect, disconnect } from "mongoose";
+import bcrypt from "bcrypt";
 import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
+import { User } from "./models/user";
 
 let server: ReturnType<typeof app.listen> | null = null;
 
@@ -62,6 +64,21 @@ async function start() {
     if (!e?.message?.includes?.("index not found")) {
       console.warn("Could not check/drop indexes:", e?.message);
     }
+  }
+
+  // Seed default users if none exist
+  try {
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      const hash = await bcrypt.hash("admin123", 10);
+      await User.create({ username: "admin", passwordHash: hash, name: "Admin", role: "owner" });
+      await User.create({ username: "warehouse", passwordHash: hash, name: "Warehouse Staff", role: "warehouse" });
+      console.log("  Default users created:");
+      console.log("    Owner:     admin / admin123");
+      console.log("    Warehouse: warehouse / admin123");
+    }
+  } catch (e: any) {
+    console.warn("Could not seed users:", e?.message);
   }
 
   if (REDIS_URL) {
