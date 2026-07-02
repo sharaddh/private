@@ -6,7 +6,7 @@ import { Users, TrendingUp, Clock, Package, AlertTriangle } from "lucide-react";
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("customers");
   const [loading, setLoading] = useState(true);
-  const [customerData, setCustomerData] = useState<any>(null);
+  const [customerData, setCustomerData] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any[]>([]);
   const [invData, setInvData] = useState<any>(null);
@@ -20,7 +20,7 @@ export default function Reports() {
     ]).then(([rev, inv, cust, bills]) => {
       if (rev.success) setSalesData(rev.data);
       if (inv.success) setInvData(inv.data);
-      if (cust.success) setCustomerData(cust.data);
+      if (cust.success && Array.isArray(cust.data)) setCustomerData(cust.data);
       if (bills.success) setPendingData((bills.data || []).filter((b: any) => (b.pendingAmount || 0) > 0));
     }).finally(() => setLoading(false));
   }, []);
