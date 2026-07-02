@@ -68,17 +68,16 @@ export default function Orders() {
   const [advanceQty, setAdvanceQty] = useState(1);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
-  const params = new URLSearchParams({ startDate, endDate });
-  const cacheKey = `/api/orders?${params.toString()}`;
-  const { data: rawList, loading, refetch } = useCachedData<any[]>(cacheKey,
-    () => api.get("/api/orders?" + params.toString()),
-    [startDate, endDate]
-  );
-  const [list, setList] = useState<any[]>(() => rawList || []);
+  const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (rawList) setList(rawList);
-  }, [rawList]);
+  const fetchOrders = useCallback(async () => {
+    const params = new URLSearchParams({ startDate, endDate });
+    const res = await api.get<any[]>("/api/orders?" + params.toString());
+    if (res.success && res.data) setList(res.data);
+  }, [startDate, endDate]);
+
+  useEffect(() => { fetchOrders().finally(() => setLoading(false)); }, [fetchOrders]);
 
   function openAdvanceModal(order: any) {
     const next = VALID_NEXT[order.status];
