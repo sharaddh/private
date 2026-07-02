@@ -7,7 +7,7 @@
     "install-all": "npm install && npm install --prefix client && npm install --prefix server",
     "postinstall": "npm install --prefix client && npm install --prefix server && npm install --prefix warehouse",
     "dev": "concurrently -n server,client,warehouse -c blue,green,yellow \"npm run dev --prefix server\" \"npm run dev --prefix client\" \"npm run dev --prefix warehouse\"",
-    "build": "npm run build --prefix client && npm run build --prefix server",
+    "build": "npm run build --prefix client && npm run build --prefix server && npm run build --prefix warehouse",
     "start": "npm start --prefix server",
     "client": "npm run dev --prefix client",
     "server": "npm run dev --prefix server"
