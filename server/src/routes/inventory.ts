@@ -31,6 +31,28 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+router.get("/stats", authenticate, asyncHandler(async (req, res) => {
+  const [totalItems, lowStock, warehouseItems, totalValueResult] = await Promise.all([
+    Inventory.countDocuments(),
+    Inventory.countDocuments({ quantity: { $lte: 5 } }),
+    Inventory.countDocuments({ location: "warehouse" }),
+    Inventory.aggregate([
+      { $group: { _id: null, total: { $sum: { $multiply: ["$purchasePrice", "$quantity"] } } } },
+    ]),
+  ]);
+  const recentItems = await Inventory.find().sort({ createdAt: -1 }).limit(5).lean();
+  res.json({
+    success: true,
+    data: {
+      totalItems,
+      lowStock,
+      warehouseItems,
+      totalValue: totalValueResult[0]?.total || 0,
+      recentItems,
+    },
+  });
+}));
+
 router.get("/", authenticate, cacheRoute(60), asyncHandler(async (req, res) => {
   const q = (req.query.q as string) || "";
   const filter = q
