@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { Customer } from "../models/customer";
 import { success, created, notFound } from "../utils/response";
-import { AppError } from "../utils/AppError";
+import { AppError } from "../middleware/errorHandler";
 
-export async function list(req: Request, res: Response) {
+export async function getAll(req: Request, res: Response) {
   const { phone, search, page = "1", limit = "20" } = req.query;
   const filter: any = {};
   if (phone) filter.mobile = { $regex: phone as string, $options: "i" };
