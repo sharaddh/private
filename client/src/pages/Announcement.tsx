@@ -41,7 +41,11 @@ export default function Announcement() {
       api.get("/api/customers"),
       api.get("/api/settings"),
     ]).then(([c, s]) => {
-      if (c.success) { setCustomers(c.data || []); setFiltered(c.data || []); }
+      if (c.success) {
+        const data = Array.isArray(c.data) ? c.data : [];
+        setCustomers(data);
+        setFiltered(data);
+      }
       if (s.success) setSettings(s.data);
     }).finally(() => setLoading(false));
     checkStatus();
