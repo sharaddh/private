@@ -102,6 +102,22 @@ if (distIndex && fs.existsSync(distIndex)) {
   }));
 }
 
+if (warehouseIndex && fs.existsSync(warehouseIndex)) {
+  app.use("/warehouse", express.static(warehouseDistPath, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+    },
+  }));
+  app.get("/warehouse*", (req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.sendFile(warehouseIndex);
+  });
+}
+
 app.get("*", (req, res) => {
   if (req.path.startsWith("/api")) {
     return res.status(404).json({ success: false, message: "API route not found" });
