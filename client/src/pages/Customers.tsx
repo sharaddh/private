@@ -30,8 +30,9 @@ export default function Customers() {
 
   useEffect(() => {
     if (rawList) {
-      setList(rawList);
-      setFilteredList(rawList);
+      const customers = Array.isArray(rawList) ? rawList : (rawList as any).data || [];
+      setList(customers);
+      setFilteredList(customers);
     }
   }, [rawList]);
 
