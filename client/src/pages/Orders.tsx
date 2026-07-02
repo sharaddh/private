@@ -30,7 +30,7 @@ function DotProgress({ status, forwardedCount, quantity }: { status: string; for
               ? "ring-2 ring-primary-500/50 bg-primary-500 text-white"
               : "bg-gray-200 dark:bg-dark-600 text-gray-400 dark:text-gray-500"
           }`}>
-            {i < currentIdx ? "✓" : i + 1}
+            {i < currentIdx ? "\u2713" : i + 1}
           </div>
           {i < 3 && (
             <div className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 relative overflow-hidden ${
@@ -62,20 +62,26 @@ const STATUS_THEME: Record<string, { dot: string; badge: string }> = {
 
 export default function Orders() {
   const toast = useToast();
+  const { isStaff } = useAuth();
   const [filter, setFilter] = useState<string>("all");
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [advanceModal, setAdvanceModal] = useState<{ order: any; nextStatus: string } | null>(null);
   const [advanceQty, setAdvanceQty] = useState(1);
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
+  const [showAll, setShowAll] = useState(false);
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = useCallback(async () => {
-    const params = new URLSearchParams({ startDate, endDate });
+    const params = new URLSearchParams();
+    if (!showAll) {
+      params.set("startDate", startDate);
+      params.set("endDate", endDate);
+    }
     const res = await api.get<any[]>("/api/orders?" + params.toString());
     if (res.success && res.data) setList(res.data);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, showAll]);
 
   useEffect(() => { fetchOrders().finally(() => setLoading(false)); }, [fetchOrders]);
 
@@ -92,34 +98,19 @@ export default function Orders() {
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchOrders]);
 
-  function openAdvanceModal(order: any) {
-    const next = VALID_NEXT[order.status];
-    if (!next) return;
-    const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
-    setAdvanceQty(remaining);
-    setAdvanceModal({ order, nextStatus: next });
-  }
-
-  async function confirmAdvance() {
-    if (!advanceModal) return;
-    const { order, nextStatus } = advanceModal;
-    const prevStatus = order.status;
+  async function doAdvance(order: any, nextStatus: string, advQty: number) {
     const qty = order.quantity || 1;
     const remaining = qty - (order.forwardedCount || 0);
-    const advQty = Math.min(advanceQty, remaining);
-    if (advQty <= 0) { setAdvanceModal(null); return; }
-    const isPartial = advQty < remaining;
+    if (advQty <= 0) return;
     setStatusLoading(order._id);
-    setAdvanceModal(null);
     setList((prev) => prev.map((o) => o._id === order._id ? {
       ...o,
-      forwardedCount: isPartial ? (o.forwardedCount || 0) + advQty : 0,
-      status: isPartial ? o.status : nextStatus,
+      forwardedCount: advQty < remaining ? (o.forwardedCount || 0) + advQty : 0,
+      status: advQty < remaining ? o.status : nextStatus,
     } : o));
     try {
-      const res = await api.patch(`/api/orders/${order._id}/status`, { status: nextStatus, advanceQuantity: advQty });
+      const res = await api.patch<{ partial?: boolean }>(`/api/orders/${order._id}/status`, { status: nextStatus, advanceQuantity: advQty });
       if (!res.success) {
-        setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus, forwardedCount: order.forwardedCount || 0 } : o));
         toast.error(res.message || "Failed to update status");
       } else if (res.data?.partial) {
         toast.success(`${advQty} of ${qty} pair(s) moved to "${nextStatus}"`);
@@ -129,16 +120,33 @@ export default function Orders() {
         toast.success(`Order moved to "${nextStatus}"`);
       }
     } catch {
-      setList((prev) => prev.map((o) => o._id === order._id ? { ...o, status: prevStatus, forwardedCount: order.forwardedCount || 0 } : o));
       toast.error("Failed to update status");
     }
-    finally { setStatusLoading(null); }
+    finally { setStatusLoading(null); fetchOrders(); }
+  }
+
+  function openAdvanceModal(order: any) {
+    const next = VALID_NEXT[order.status];
+    if (!next) return;
+    const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
+    if (remaining <= 1) { doAdvance(order, next, 1); return; }
+    setAdvanceQty(remaining);
+    setAdvanceModal({ order, nextStatus: next });
+  }
+
+  async function confirmAdvance() {
+    if (!advanceModal) return;
+    const { order, nextStatus } = advanceModal;
+    const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
+    const advQty = Math.min(advanceQty, remaining);
+    setAdvanceModal(null);
+    await doAdvance(order, nextStatus, advQty);
   }
 
   function customerName(o: any): string {
     if (typeof o.customerId === "object" && o.customerId?.name) return o.customerId.name;
     if (typeof o.customerId === "string") return o.customerId.slice(-6);
-    return "—";
+    return "\u2014";
   }
 
   function customerMobile(o: any): string {
@@ -206,7 +214,17 @@ export default function Orders() {
         ))}
       </div>
 
-      <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={filteredList.length} label="order" />
+      <div className="flex items-center gap-2 flex-wrap">
+        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); setShowAll(false); }} count={filteredList.length} label="order" />
+        <button onClick={() => setShowAll(!showAll)}
+          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+            showAll
+              ? "bg-primary-600 text-white"
+              : "text-gray-600 dark:text-gray-400 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
+          }`}>
+          All Orders
+        </button>
+      </div>
 
       {/* Orders grid */}
       {filteredList.length === 0 ? (
@@ -251,7 +269,7 @@ export default function Orders() {
                     ) : null}
                     {o.lensBrand && (
                       <span className="inline-flex items-center gap-1 text-[11px] bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 px-2 py-0.5 rounded-md text-sky-700 dark:text-sky-300 font-medium truncate max-w-full">
-                        <Eye size={11} className="text-sky-500 dark:text-sky-400 flex-shrink-0" /> {o.lensBrand}{o.lens ? ` · ${o.lens}` : ""}
+                        <Eye size={11} className="text-sky-500 dark:text-sky-400 flex-shrink-0" /> {o.lensBrand}{o.lens ? ` \u00B7 ${o.lens}` : ""}
                       </span>
                     )}
                     {(o.accessories || []).map((a: string, i: number) => {
@@ -277,7 +295,7 @@ export default function Orders() {
                     )}
                     {o.billInfo?.totalAmount > 0 && (
                       <span className="font-bold text-gray-900 dark:text-white tracking-tight">
-                        ₹{o.billInfo.totalAmount.toLocaleString()}
+                        \u20B9{o.billInfo.totalAmount.toLocaleString()}
                         {pending > 0 && <span className="text-[10px] text-amber-500 font-medium ml-1">({pending})</span>}
                       </span>
                     )}
@@ -307,7 +325,7 @@ export default function Orders() {
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 active:scale-[0.98] transition-all duration-150">
                       <Eye size={16} /> View
                     </button>
-                    {VALID_NEXT[o.status] ? (
+                    {!isStaff && VALID_NEXT[o.status] ? (
                       <button type="button" disabled={statusLoading === o._id} onClick={() => openAdvanceModal(o)}
                         className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                         {statusLoading === o._id ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
@@ -337,11 +355,11 @@ export default function Orders() {
             <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center mx-auto mb-3">
               <ArrowUpRight size={20} className="text-primary-600 dark:text-primary-400" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white text-center mb-1">Mark as "{advanceModal.nextStatus}"</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white text-center mb-1">Mark as &quot;{advanceModal.nextStatus}&quot;</h3>
             <p className="text-xs text-gray-500 text-center mb-4">
               {advanceModal.order.quantity > 1
                 ? `How many of ${advanceModal.order.quantity} pair(s) to advance?`
-                : `Advance this order to "${advanceModal.nextStatus}"?`}
+                : `Advance this order to &quot;${advanceModal.nextStatus}&quot;?`}
             </p>
             {advanceModal.order.quantity > 1 && (
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -378,4 +396,3 @@ export default function Orders() {
     </div>
   );
 }
-

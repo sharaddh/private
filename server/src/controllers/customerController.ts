@@ -1,29 +1,25 @@
 import { Request, Response } from "express";
 import { Customer } from "../models/customer";
-import { Visit } from "../models/visit";
-import { Prescription } from "../models/prescription";
-import { Order } from "../models/order";
-import { Bill } from "../models/bill";
-import { Payment } from "../models/payment";
 import { success, created, notFound } from "../utils/response";
-import { AppError } from "../middleware/errorHandler";
+import { AppError } from "../utils/AppError";
 
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-export async function getAll(req: Request, res: Response) {
-  const q = (req.query.q as string) || "";
-  const phone = req.query.phone as string;
-  if (phone) {
-    const customers = await Customer.find({ mobile: { $regex: escapeRegex(phone), $options: "i" } }).lean();
-    return success(res, customers);
+export async function list(req: Request, res: Response) {
+  const { phone, search, page = "1", limit = "20" } = req.query;
+  const filter: any = {};
+  if (phone) filter.mobile = { $regex: phone as string, $options: "i" };
+  if (search) {
+    const s = search as string;
+    filter.$or = [
+      { name: { $regex: s, $options: "i" } },
+      { mobile: { $regex: s, $options: "i" } },
+    ];
   }
-  const filter = q
-    ? { $or: [{ name: { $regex: escapeRegex(q), $options: "i" } }, { mobile: { $regex: escapeRegex(q), $options: "i" } }, { customerId: { $regex: escapeRegex(q), $options: "i" } }] }
-    : {};
-  const customers = await Customer.find(filter).sort({ createdAt: -1 }).limit(100).lean();
-  return success(res, customers);
+  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+  const [data, total] = await Promise.all([
+    Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit as string)).lean(),
+    Customer.countDocuments(filter),
+  ]);
+  return success(res, { data, total, page: parseInt(page as string), pages: Math.ceil(total / parseInt(limit as string)) });
 }
 
 export async function getById(req: Request, res: Response) {
@@ -36,62 +32,37 @@ export async function create(req: Request, res: Response) {
   const { name, mobile } = req.body;
   if (!name?.trim()) throw new AppError(400, "Name is required");
   if (!mobile?.trim()) throw new AppError(400, "Mobile is required");
-  const existing = await Customer.findOne({ mobile: mobile.trim() }).lean();
-  if (existing) throw new AppError(409, "A customer with this mobile number already exists");
   const customer = await Customer.create({ ...req.body, mobile: mobile.trim() });
   return created(res, customer);
 }
 
 export async function update(req: Request, res: Response) {
-  const { mobile } = req.body;
-  if (mobile?.trim()) {
-    const existing = await Customer.findOne({ mobile: mobile.trim(), _id: { $ne: req.params.id } }).lean();
-    if (existing) throw new AppError(409, "A customer with this mobile number already exists");
-  }
   const customer = await Customer.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true }).lean();
   if (!customer) return notFound(res, "Customer not found");
   return success(res, customer);
 }
 
 export async function remove(req: Request, res: Response) {
-  const customer = await Customer.findById(req.params.id).lean();
+  const customer = await Customer.findByIdAndDelete(req.params.id).lean();
   if (!customer) return notFound(res, "Customer not found");
-
-  await Promise.all([
-    Customer.findByIdAndDelete(req.params.id),
-    Visit.deleteMany({ customerId: req.params.id }),
-    Order.deleteMany({ customerId: req.params.id }),
-    Bill.deleteMany({ customerId: req.params.id }),
-    Prescription.deleteMany({ customerId: req.params.id }),
-    Payment.deleteMany({ customerId: req.params.id }),
-  ]);
-
-  return success(res, customer, "Deleted successfully");
+  return success(res, customer);
 }
 
 export async function getSummary(req: Request, res: Response) {
   const customer = await Customer.findById(req.params.id).lean();
   if (!customer) return notFound(res, "Customer not found");
-
-  const [visits, prescs, orders] = await Promise.all([
-    Visit.find({ customerId: customer._id }).sort({ visitDate: -1 }).limit(5).lean(),
-    Prescription.find({ customerId: customer._id }).sort({ createdAt: -1 }).limit(1).lean(),
-    Order.find({ customerId: customer._id }).sort({ createdAt: -1 }).limit(3).lean(),
+  const [visitCount, orderCount, billTotal] = await Promise.all([
+    (global as any).mongoose.model("Visit").countDocuments({ customerId: req.params.id }),
+    (global as any).mongoose.model("Order").countDocuments({ customerId: req.params.id }),
+    (global as any).mongoose.model("Bill").aggregate([
+      { $match: { customerId: req.params.id } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]),
   ]);
-
-  const lastVisit = visits[0] || null;
-  const lastPresc = prescs[0] || null;
-  const lastOrder = orders[0] || null;
-  const labOrders = orders.filter((o) => o.status === "In Lab" || o.status === "Ordered");
-  const readyOrders = orders.filter((o) => o.status === "Ready");
-
   return success(res, {
-    customer,
-    lastVisit,
-    lastPrescription: lastPresc,
-    lastOrder,
-    recentOrders: orders,
-    labOrders: labOrders.length,
-    readyOrders: readyOrders.length,
+    ...customer,
+    visitCount,
+    orderCount,
+    totalBilled: billTotal[0]?.total || 0,
   });
 }

@@ -58,11 +58,29 @@ function findDistPath(candidates: string[]): string {
   return "";
 }
 
-const clientDist = path.resolve(__dirname, "../../client/dist");
-const possiblePaths = [clientDist, path.resolve(__dirname, "../client/dist"), path.resolve(process.cwd(), "client/dist")];
-const distPath = findDistPath(possiblePaths);
+function findIndexHtml(): string {
+  const fromDirname = path.resolve(__dirname, "../../client/dist/index.html");
+  const fromDirname2 = path.resolve(__dirname, "../client/dist/index.html");
+  const fromCwd = path.resolve(process.cwd(), "client/dist/index.html");
+  const fromCwd2 = path.resolve(process.cwd(), "../client/dist/index.html");
+  const candidates = [fromDirname, fromDirname2, fromCwd, fromCwd2];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return "";
+}
 
-if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
+const clientDist = path.resolve(__dirname, "../../client/dist");
+const possiblePaths = [
+  clientDist,
+  path.resolve(__dirname, "../client/dist"),
+  path.resolve(process.cwd(), "client/dist"),
+  path.resolve(process.cwd(), "../client/dist"),
+];
+const distPath = findDistPath(possiblePaths);
+const distIndex = distPath ? path.join(distPath, "index.html") : "";
+
+if (distIndex && fs.existsSync(distIndex)) {
   app.use(express.static(distPath, {
     maxAge: "1y",
     immutable: true,
@@ -72,32 +90,19 @@ if (distPath && fs.existsSync(path.join(distPath, "index.html"))) {
       }
     },
   }));
-
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api")) {
-      res.status(404).json({ success: false, message: "API route not found" });
-      return;
-    }
-    const filePath = path.join(distPath, "index.html");
-    if (fs.existsSync(filePath)) {
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.sendFile(filePath);
-    } else {
-      res.status(200).json({ success: true, message: "KMJ ERP API" });
-    }
-  });
-} else {
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api")) return res.status(404).json({ success: false, message: "API route not found" });
-    const fallbackPath = path.resolve(process.cwd(), "client/dist/index.html");
-    if (fs.existsSync(fallbackPath)) {
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.sendFile(fallbackPath);
-    } else {
-      res.status(200).json({ success: true, message: "KMJ ERP API" });
-    }
-  });
 }
+
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ success: false, message: "API route not found" });
+  }
+  const indexHtml = findIndexHtml();
+  if (indexHtml) {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    return res.sendFile(indexHtml);
+  }
+  res.status(200).json({ success: true, message: "KMJ ERP API" });
+});
 
 app.use(errorHandler);
 
