@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
-import { useCachedData } from "../hooks/useCachedData";
+import { useAuth } from "../context/AuthContext";
 import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
