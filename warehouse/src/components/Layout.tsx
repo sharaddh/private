@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isAuthPage = location.pathname === "/login";
   if (isAuthPage) return <>{children}</>;
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || (path !== "/" && location.pathname.startsWith(path));
 
   function handleLogout() {
     logout();
@@ -101,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Menu size={18} />
             </button>
             <h2 className="text-base font-semibold text-gray-900">
-              {sidebarMenu.find((m) => m.path === location.pathname)?.label || "Warehouse"}
+              {sidebarMenu.find((m) => m.path === location.pathname || (m.path !== "/" && location.pathname.startsWith(m.path)))?.label || "Warehouse"}
             </h2>
           </div>
         </header>
