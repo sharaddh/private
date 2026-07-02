@@ -26,6 +26,7 @@ if (API_URL) {
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.NODE_ENV === "production" ? "/warehouse/" : "/",
   server: {
     port: 5174,
     proxy,
