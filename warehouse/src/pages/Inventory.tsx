@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+﻿import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api";
-import { Search, Package, Plus, Edit3, Trash2, X, AlertTriangle } from "lucide-react";
+import { Search, Package, Plus, Edit3, Trash2, X } from "lucide-react";
 
 interface InventoryItem {
   _id: string;
@@ -47,7 +47,6 @@ export default function Inventory() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
