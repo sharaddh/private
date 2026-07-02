@@ -17,17 +17,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get<Stats>("/api/inventory?limit=5").then((d) => {
+    api.get<Stats>("/api/inventory/stats").then((d) => {
       if (d.success) {
-        const items = (d.data as any) || [];
-        const totalValue = items.reduce((sum: number, i: any) => sum + (i.purchasePrice || 0) * (i.quantity || 0), 0);
-        setStats({
-          totalItems: items.length,
-          lowStock: items.filter((i: any) => (i.quantity || 0) <= 5).length,
-          totalValue,
-          warehouseItems: items.filter((i: any) => i.location === "warehouse").length,
-          recentItems: items.slice(0, 5),
-        });
+        setStats(d.data as Stats);
       }
       setLoading(false);
     }).catch(() => setLoading(false));
