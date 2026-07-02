@@ -394,13 +394,7 @@ export default function NewVisit() {
           delete payload.order.framePrice;
           delete payload.order.coating;
         }
-        if (visitType === "other") {
-          delete payload.order.frameBrand; delete payload.order.frameModel;
-          delete payload.order.frameColor;
-          delete payload.order.lens; delete payload.order.lensBrand;
-          delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
-          delete payload.order.coating;
-        }
+
       }
 
       const validItems = billItems.filter((i) => i.description && i.price > 0);
