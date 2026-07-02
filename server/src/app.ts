@@ -80,6 +80,16 @@ const possiblePaths = [
 const distPath = findDistPath(possiblePaths);
 const distIndex = distPath ? path.join(distPath, "index.html") : "";
 
+const warehouseDist = path.resolve(__dirname, "../../warehouse/dist");
+const warehousePossiblePaths = [
+  warehouseDist,
+  path.resolve(__dirname, "../warehouse/dist"),
+  path.resolve(process.cwd(), "warehouse/dist"),
+  path.resolve(process.cwd(), "../warehouse/dist"),
+];
+const warehouseDistPath = findDistPath(warehousePossiblePaths);
+const warehouseIndex = warehouseDistPath ? path.join(warehouseDistPath, "index.html") : "";
+
 if (distIndex && fs.existsSync(distIndex)) {
   app.use(express.static(distPath, {
     maxAge: "1y",
