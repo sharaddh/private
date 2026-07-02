@@ -21,10 +21,10 @@ export default function Login() {
     e.preventDefault();
     setError(""); setIsLoading(true);
     try {
-      const res = await api.post("/api/auth/login", { username, password });
+      const res = await api.post("/api/auth/warehouse-login", { username, password });
       if (res.success) {
         api.setRefreshToken(res.data.refresh);
-        login(res.data.access);
+        login(res.data.access, res.data.user);
         navigate("/", { replace: true });
       } else {
         setError(res.message || "Login failed");
