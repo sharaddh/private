@@ -79,6 +79,19 @@ export default function Orders() {
 
   useEffect(() => { fetchOrders().finally(() => setLoading(false)); }, [fetchOrders]);
 
+  // Poll every 30s for real-time updates
+  useEffect(() => {
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
+
+  // Refetch on window focus
+  useEffect(() => {
+    const onFocus = () => fetchOrders();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchOrders]);
+
   function openAdvanceModal(order: any) {
     const next = VALID_NEXT[order.status];
     if (!next) return;
@@ -365,3 +378,4 @@ export default function Orders() {
     </div>
   );
 }
+
