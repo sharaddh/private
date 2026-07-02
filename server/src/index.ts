@@ -81,7 +81,10 @@ async function start() {
   }, 1000);
 
   server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} [${NODE_ENV}]`);
+    console.log(`\n  KMJ Optical ERP Server [${NODE_ENV}]`);
+    console.log(`  API:        http://localhost:${PORT}/api`);
+    console.log(`  Client:     http://localhost:${PORT}`);
+    console.log(`  Warehouse:  http://localhost:${PORT}/warehouse\n`);
   });
 }
 
