@@ -40,7 +40,7 @@ const createSchema = z.object({
 const statusUpdateSchema = z.object({
   status: z.string(),
   collectPayment: z.number().optional(),
-  paymentMode: z.string().optional(),
+  paymentMode: z.enum(["Cash", "UPI", "Card", "Bank Transfer"]).optional(),
   advanceQuantity: z.number().optional(),
 });
 
@@ -219,8 +219,10 @@ router.patch("/:id/status", authenticate, async (req, res) => {
 
     // Handle due collection on delivery (full transition only)
     if (status === "Delivered" && newForwarded >= qty && collectPayment && collectPayment > 0) {
-      const bill = await Bill.findOne({ customerId: order.customerId })
-        .sort({ createdAt: -1 });
+      let bill = await Bill.findOne({ visitId: order.visitId || order._id });
+      if (!bill) {
+        bill = await Bill.findOne({ customerId: order.customerId }).sort({ createdAt: -1 });
+      }
       if (bill && bill.pendingAmount > 0) {
         const payment = new Payment({
           customerId: order.customerId,
@@ -237,11 +239,9 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         result.payment = payment;
         result.bill = bill;
 
-        const customer = await Customer.findById(order.customerId);
-        if (customer) {
-          customer.pendingAmount = Math.max(0, (customer.pendingAmount || 0) - collectPayment);
-          await customer.save();
-        }
+        await Customer.findByIdAndUpdate(order.customerId, {
+          $inc: { pendingAmount: -collectPayment },
+        });
       }
     }
 

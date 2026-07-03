@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Toast from "../components/Toast";
 import PageSkeleton from "../components/PageSkeleton";
-import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical } from "lucide-react";
+import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();
@@ -50,7 +50,8 @@ export default function Pickup() {
     setIsLoading(true);
     try {
       const res = await api.get(`/api/customers?phone=${encodeURIComponent(num)}`);
-      if (res.success && res.data.length > 0) { setCustomers(res.data); setMessage(""); }
+      const custList = (res.data?.data || res.data || []) as any[];
+      if (res.success && custList.length > 0) { setCustomers(custList); setMessage(""); }
       else { setCustomers([]); setMessage("No customer found with this number"); }
     } finally { setIsLoading(false); setSelectedCustomer(null); setOrders([]); setSelectedOrder(null); setBill(null); }
   }
@@ -62,9 +63,10 @@ export default function Pickup() {
     setIsLoading(true);
     try {
       const res = await api.get(`/api/customers?phone=${encodeURIComponent(mobile)}`);
-      if (res.success && res.data.length > 0) {
-        setCustomers(res.data);
-        const c = res.data[0];
+      const custList = (res.data?.data || res.data || []) as any[];
+      if (res.success && custList.length > 0) {
+        setCustomers(custList);
+        const c = custList[0];
         setSelectedCustomer(c);
         const [ordersRes, billsRes] = await Promise.all([
           api.get(`/api/orders?customerId=${c._id}`), api.get("/api/bills"),
@@ -72,7 +74,10 @@ export default function Pickup() {
         if (ordersRes.success) setOrders((ordersRes.data || []).filter((o2: any) => o2.status === "Ready"));
         let custBills: any[] = [];
         if (billsRes.success) {
-          custBills = (billsRes.data || []).filter((b: any) => b.customerId === c._id);
+          custBills = (billsRes.data || []).filter((b: any) => {
+          const cid = typeof b.customerId === "object" ? b.customerId?._id : b.customerId;
+          return cid === c._id;
+        });
           setBills(custBills);
         }
         setSelectedOrder(o);
@@ -84,18 +89,6 @@ export default function Pickup() {
   async function syncBillForOrder(o: any, custBills?: any[]): Promise<any> {
     const targetId = o.visitId || o._id;
     let b = (custBills || bills).find((b: any) => b.visitId === targetId) || null;
-    if (!b && o.billInfo?._id) {
-      try {
-        const res = await api.get(`/api/bills/${o.billInfo._id}`);
-        if (res.success) {
-          b = res.data;
-          setBills((prev) => {
-            const exists = prev.some((x) => x._id === b._id);
-            return exists ? prev : [...prev, b];
-          });
-        }
-      } catch {}
-    }
     setBill(b);
     if (!b) {
       const items: { description: string; qty: number; price: number }[] = [];
@@ -126,8 +119,10 @@ export default function Pickup() {
         if (pending.length === 0) setMessage("No orders ready for pickup");
       }
       if (billsRes.success) {
-        const custBills = (billsRes.data || []).filter((b: any) => b.customerId === c._id)
-          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const custBills = (billsRes.data || []).filter((b: any) => {
+          const cid = typeof b.customerId === "object" ? b.customerId?._id : b.customerId;
+          return cid === c._id;
+        }).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setBills(custBills);
       }
     } finally { setIsLoading(false); }
@@ -168,7 +163,7 @@ export default function Pickup() {
     const items = billItems.filter((i) => i.description && i.price > 0);
     if (items.length === 0) { setMessage("Add at least one item with description and price"); return; }
     const res = await api.post("/api/bills", {
-      customerId: selectedCustomer._id, visitId: selectedOrder.visitId,
+      customerId: selectedCustomer._id, visitId: selectedOrder.visitId || selectedOrder._id,
       items: items.map((i) => ({ description: i.description, quantity: i.qty, unitPrice: i.price })),
       discount: billDiscount, tax: 0, advancePaid: 0,
     });
@@ -176,7 +171,10 @@ export default function Pickup() {
       setBill(res.data); setCollectAmount(res.data.pendingAmount || 0); setShowCreateBill(false);
       setMessage("✓ Bill created successfully");
       const billsRes = await api.get("/api/bills");
-      if (billsRes.success) setBills((billsRes.data || []).filter((b: any) => b.customerId === selectedCustomer._id));
+      if (billsRes.success) setBills((billsRes.data || []).filter((b: any) => {
+        const cid = typeof b.customerId === "object" ? b.customerId?._id : b.customerId;
+        return cid === selectedCustomer._id;
+      }));
       setToast({ message: "Bill created", type: "success" });
     } else { setMessage(res.message || "Failed to create bill"); }
   }
