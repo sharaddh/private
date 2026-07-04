@@ -488,14 +488,12 @@ export default function CustomerNewVisit() {
 
       {step === "prescription" && (
         <div className="space-y-5">
-          <div className="flex items-center gap-3 mb-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={usePrescription}
-                onChange={(e) => setUsePrescription(e.target.checked)}
-                className="w-4 h-4 rounded border-dark-500 text-primary-400 focus:ring-primary-400" />
-              <span className="text-sm font-medium text-white/70">Use prescription</span>
-            </label>
-          </div>
+          <label className="flex items-center gap-2.5 cursor-pointer p-4 bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-lg transition-all hover:bg-white/10 mb-1">
+            <input type="checkbox" checked={usePrescription}
+              onChange={(e) => setUsePrescription(e.target.checked)}
+              className="w-4 h-4 rounded accent-primary-600" />
+            <span className="text-sm font-medium text-white/80">Use prescription</span>
+          </label>
 
           {usePrescription && (
             <>
