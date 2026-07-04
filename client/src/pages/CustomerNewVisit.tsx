@@ -977,6 +977,45 @@ export default function CustomerNewVisit() {
           </button>
         </div>
       )}
+
+      {/* Scan QR Modal */}
+      <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500">Enter SKU or barcode to auto-fill frame details.</p>
+          <input className="input-field" placeholder="SKU or barcode" autoFocus
+            onChange={async (e) => {
+              const q = e.target.value.trim();
+              if (q.length > 2) {
+                const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
+                if (res.success && res.data.length > 0) {
+                  const item = res.data[0];
+                  const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+                  const next = [...orderFrames, newFrame];
+                  setOrderFrames(next);
+                  syncBillFromOrder(next, orderLenses, orderAccessories);
+                  setScanModal(false);
+                }
+              }
+            }} />
+          <button onClick={() => { setScanModal(false); setCameraActive(true); }}
+            className="w-full text-center py-2 text-xs font-semibold text-primary-600 hover:text-primary-700 border border-dashed border-gray-300 dark:border-dark-600 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all flex items-center justify-center gap-1.5">
+            <ScanLine size={14} /> Use Camera
+          </button>
+        </div>
+      </Modal>
+      {cameraActive && (
+        <CameraScanner onScan={async (code) => {
+          const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
+          if (res.success && res.data.length > 0) {
+            const item = res.data[0];
+            const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+            const next = [...orderFrames, newFrame];
+            setOrderFrames(next);
+            syncBillFromOrder(next, orderLenses, orderAccessories);
+          }
+          setCameraActive(false);
+        }} onClose={() => setCameraActive(false)} />
+      )}
     </div>
   );
 }
