@@ -283,8 +283,26 @@ export default function CustomerNewVisit() {
       const res = await api.post("/api/workspace/transaction", payload);
       if (res.success) {
         toast.success("Visit created successfully!");
-        savingRef.current = false;
-        navigate(`/customers/${id}?visitId=${res.data?.visit?._id || ""}`);
+
+        const customerMobile = customer?.mobile || "";
+        if (customerMobile && res.data?.bill) {
+          greetingSent.current = false;
+          setCountdown(3);
+          countdownRef.current = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownRef.current);
+                countdownRef.current = null;
+                sendGreeting(res.data, customer);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else {
+          savingRef.current = false;
+          navigate(`/customers/${id}?visitId=${res.data?.visit?._id || ""}`);
+        }
       } else {
         toast.error(res.message || "Failed to save");
         setSaving(false);
@@ -293,6 +311,21 @@ export default function CustomerNewVisit() {
       toast.error(e.message || "Something went wrong");
       setSaving(false);
     }
+  }
+
+  async function sendGreeting(data: any, cust: any) {
+    if (greetingSent.current) return;
+    greetingSent.current = true;
+    try {
+      const customerMobile = cust?.mobile || "";
+      const shopName = settings?.shopName || "KMJ Optical";
+      const customerName = cust?.name || "";
+      const num = customerMobile.replace(/\D/g, "");
+      const fullNum = num.length === 10 ? `91${num}` : num;
+      const msg = `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`;
+      await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    } catch { /* silent */ }
+    navigate(`/customers/${id}?visitId=${data?.visit?._id || ""}`);
   }
 
   function searchInventory(q: string, type: "frame", idx: number) {
@@ -926,8 +959,10 @@ export default function CustomerNewVisit() {
               className="btn-success px-6 py-2.5 text-sm flex items-center gap-2 font-semibold disabled:opacity-50 shadow-sm">
               {saving ? (
                 <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
+              ) : countdown > 0 ? (
+                <><MessageCircle size={16} /> WhatsApp in {countdown}s</>
               ) : (
-                <><Save size={16} /> Save</>
+                <><Save size={16} /> Save & Send WhatsApp</>
               )}
             </button>
           </div>
