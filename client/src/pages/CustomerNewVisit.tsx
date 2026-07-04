@@ -47,12 +47,12 @@ function EyeRow({ label, data, onChange }: { label: string; data: any; onChange:
   const fields = ["sph", "cyl", "axis", "va", "add"];
   return (
     <div className="text-xs">
-      <span className="font-medium text-gray-700 dark:text-gray-300 block mb-1">{label}</span>
+      <span className="font-medium text-white/70 block mb-1">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {fields.map((f) => (
           <input key={f} placeholder={f.toUpperCase()} value={data?.[f] || ""}
             onChange={(e) => onChange({ ...data, [f]: e.target.value })}
-            className="w-14 text-center border border-gray-200 dark:border-dark-600 bg-gray-50 dark:bg-dark-750 rounded-lg py-1 text-xs text-gray-900 dark:text-gray-200 placeholder-gray-400" />
+            className="w-14 text-center border border-white/10 bg-white/5 rounded-lg py-1 text-xs text-white/80 placeholder-white/30" />
         ))}
       </div>
     </div>
@@ -372,7 +372,7 @@ export default function CustomerNewVisit() {
   }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
-  if (!customer) return <div className="p-8 text-center text-gray-500">Customer not found</div>;
+  if (!customer) return <div className="p-8 text-center text-white/50">Customer not found</div>;
 
   const stepKeys = steps.map(s => s.key);
   const currentIdx = stepKeys.indexOf(step);
@@ -380,28 +380,29 @@ export default function CustomerNewVisit() {
   const finalTotal = Math.max(0, totalAmount - discountVal);
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen" style={{ background: "#121212" }}>
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(`/customers/${id}`)}
-            className="btn-ghost btn-sm flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-1.5">
+            className="btn-ghost btn-sm flex items-center gap-1 text-white/50 hover:text-white/70 p-1.5">
             <ArrowLeft size={18} />
           </button>
-          <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-base">
+          <div className="w-9 h-9 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-400 font-bold text-base">
             {customer.name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">New Visit</h1>
-            <p className="text-xs text-gray-500">{customer.name}</p>
+            <h1 className="text-lg font-bold text-white">New Visit</h1>
+            <p className="text-xs text-white/50">{customer.name}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center gap-1.5 text-xs text-white/40">
           <Clock size={12} />
           <span>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-dark-800 rounded-xl p-2 shadow-sm border border-gray-200 dark:border-dark-600 mb-5">
+      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-2 shadow-lg mb-5">
         <div className="flex items-center">
           {steps.map((s, i) => {
             const done = currentIdx > i;
@@ -410,13 +411,13 @@ export default function CustomerNewVisit() {
               <button key={s.key} disabled={!done && !active}
                 onClick={() => { if (done || active) setStep(s.key); }}
                 className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-medium transition-all relative
-                  ${done ? "text-primary-600 dark:text-primary-400 cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20" : ""}
-                  ${active ? "text-gray-900 dark:text-white bg-gray-100 dark:bg-dark-700" : ""}
-                  ${!done && !active ? "text-gray-300 dark:text-gray-600" : ""}`}>
+                  ${done ? "text-primary-400 cursor-pointer hover:bg-primary-500/10" : ""}
+                  ${active ? "text-white bg-white/10" : ""}
+                  ${!done && !active ? "text-white/30" : ""}`}>
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                  ${done ? "bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400" : ""}
+                  ${done ? "bg-primary-500/15 text-primary-400" : ""}
                   ${active ? "bg-primary-600 text-white" : ""}
-                  ${!done && !active ? "bg-gray-100 dark:bg-dark-700 text-gray-300 dark:text-gray-600" : ""}`}>
+                  ${!done && !active ? "bg-white/10 text-white/30" : ""}`}>
                   {done ? <CheckCircle size={14} /> : i + 1}
                 </div>
                 <span className="hidden sm:inline">{s.label}</span>
@@ -428,8 +429,8 @@ export default function CustomerNewVisit() {
 
       {step === "service" && (
         <div className="space-y-5">
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Activity size={16} className="text-primary-500" /> Visit Type
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -440,8 +441,8 @@ export default function CustomerNewVisit() {
                     onClick={() => setVisitType(vt.value)}
                     className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-medium border transition-all
                       ${visitType === vt.value
-                        ? "bg-primary-50 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300 shadow-sm"
-                        : "bg-gray-50 dark:bg-dark-750 border-gray-200 dark:border-dark-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-dark-500"}`}>
+                        ? "bg-primary-500/10 border-primary-500/30 text-primary-300 shadow-sm"
+                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/20"}`}>
                     <Icon size={16} />
                     {vt.label}
                   </button>
@@ -450,35 +451,35 @@ export default function CustomerNewVisit() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Calendar size={16} className="text-primary-500" /> Visit Details
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Date</label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Date</label>
                 <input type="date" value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
-                  className="input-field text-sm" />
+                  className="pos-input text-sm" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Doctor</label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Doctor</label>
                 <input placeholder="Doctor name (optional)" value={visitDoctor}
                   onChange={(e) => setVisitDoctor(e.target.value)}
-                  className="input-field text-sm" />
+                  className="pos-input text-sm" />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Remarks</label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Remarks</label>
                 <input placeholder="Any remarks" value={visitRemarks}
                   onChange={(e) => setVisitRemarks(e.target.value)}
-                  className="input-field text-sm" />
+                  className="pos-input text-sm" />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end">
             <button onClick={() => setStep("prescription")}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
               Next <ChevronRight size={16} />
             </button>
           </div>
@@ -491,16 +492,16 @@ export default function CustomerNewVisit() {
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={usePrescription}
                 onChange={(e) => setUsePrescription(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-dark-500 text-primary-600 focus:ring-primary-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Use prescription</span>
+                className="w-4 h-4 rounded border-dark-500 text-primary-400 focus:ring-primary-400" />
+              <span className="text-sm font-medium text-white/70">Use prescription</span>
             </label>
           </div>
 
           {usePrescription && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                     <Eye size={16} className="text-primary-500" /> Right Eye (O.D.)
                   </h3>
                   <div className="space-y-4">
@@ -511,8 +512,8 @@ export default function CustomerNewVisit() {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                     <Eye size={16} className="text-primary-500" /> Left Eye (O.S.)
                   </h3>
                   <div className="space-y-4">
@@ -525,25 +526,25 @@ export default function CustomerNewVisit() {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+              <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">PD (Pupillary Distance)</label>
+                    <label className="text-xs font-medium text-white/50 mb-1.5 block">PD (Pupillary Distance)</label>
                     <input placeholder="e.g. 62" value={prescription.pd}
                       onChange={(e) => setPrescription((p) => ({ ...p, pd: e.target.value }))}
-                      className="input-field text-sm" />
+                      className="pos-input text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Problems</label>
+                    <label className="text-xs font-medium text-white/50 mb-1.5 block">Problems</label>
                     <input placeholder="e.g. headaches" value={prescription.problems}
                       onChange={(e) => setPrescription((p) => ({ ...p, problems: e.target.value }))}
-                      className="input-field text-sm" />
+                      className="pos-input text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Notes</label>
+                    <label className="text-xs font-medium text-white/50 mb-1.5 block">Notes</label>
                     <input placeholder="Additional notes" value={prescription.notes}
                       onChange={(e) => setPrescription((p) => ({ ...p, notes: e.target.value }))}
-                      className="input-field text-sm" />
+                      className="pos-input text-sm" />
                   </div>
                 </div>
               </div>
@@ -552,7 +553,7 @@ export default function CustomerNewVisit() {
 
           <div className="flex justify-end">
             <button onClick={() => setStep("order")}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
               Next <ChevronRight size={16} />
             </button>
           </div>
@@ -561,9 +562,9 @@ export default function CustomerNewVisit() {
 
       {step === "order" && (
         <div className="space-y-5">
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <Eye size={16} className="text-primary-500" /> Frames ({orderFrames.length})
               </h2>
               <div className="flex gap-2">
@@ -572,41 +573,41 @@ export default function CustomerNewVisit() {
                   <ScanLine size={14} /> Scan
                 </button>
                 <button onClick={() => setOrderFrames((prev) => [...prev, { sku: "", brand: "", model: "", color: "", price: 0 }])}
-                  className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                  className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
                   <Plus size={14} /> Add Frame
                 </button>
               </div>
             </div>
             {orderFrames.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6">No frames added yet</p>
+              <p className="text-xs text-white/40 text-center py-6">No frames added yet</p>
             ) : (
               <div className="space-y-2">
                 {orderFrames.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2 relative">
+                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 relative">
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-2">
                       <input placeholder="SKU" value={f.sku}
                         onChange={(e) => { updateFrame(i, "sku", e.target.value); searchInventory(e.target.value, "frame", i); }}
                         onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Brand" value={f.brand}
                         onChange={(e) => updateFrame(i, "brand", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Model" value={f.model}
                         onChange={(e) => updateFrame(i, "model", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Color" value={f.color}
                         onChange={(e) => updateFrame(i, "color", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
                         <input type="number" placeholder="Price" value={f.price || ""}
                           onChange={(e) => updateFrame(i, "price", Number(e.target.value))}
                           onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="input-field text-xs py-1.5 pl-5" />
+                          className="pos-input text-xs py-1.5 pl-5" />
                       </div>
                     </div>
                     {suggestionsFor?.type === "frame" && suggestionsFor.idx === i && isFocused && suggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10">
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10">
                         {suggestions.map((s: any, si: number) => (
                           <button key={si} type="button"
                             onMouseDown={() => {
@@ -618,15 +619,15 @@ export default function CustomerNewVisit() {
                               setSuggestions([]);
                               setSuggestionsFor(null);
                             }}
-                            className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-dark-700 flex items-center gap-3">
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 flex items-center gap-3">
                             <span className="font-medium">{s.sku}</span>
-                            <span className="text-gray-500">{s.brand} {s.model}</span>
-                            <span className="text-gray-400 ml-auto"> · ₹{s.sellingPrice || 0}</span>
+                            <span className="text-white/50">{s.brand} {s.model}</span>
+                            <span className="text-white/40 ml-auto"> · ₹{s.sellingPrice || 0}</span>
                           </button>
                         ))}
                       </div>
                     )}
-                    <button onClick={() => removeFrame(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                    <button onClick={() => removeFrame(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
@@ -635,47 +636,47 @@ export default function CustomerNewVisit() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <Tag size={16} className="text-primary-500" /> Lenses ({orderLenses.length})
               </h2>
               <button onClick={() => setOrderLenses((prev) => [...prev, { sku: "", brand: "", features: [], index: "", price: 0, coating: "" }])}
-                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
                 <Plus size={14} /> Add Lens
               </button>
             </div>
             {orderLenses.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6">No lenses added yet</p>
+              <p className="text-xs text-white/40 text-center py-6">No lenses added yet</p>
             ) : (
               <div className="space-y-2">
                 {orderLenses.map((l, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-6 gap-2">
                       <input placeholder="SKU" value={l.sku}
                         onChange={(e) => updateLens(i, "sku", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Brand" value={l.brand}
                         onChange={(e) => updateLens(i, "brand", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Type (comma sep)" value={l.features.join(", ")}
                         onChange={(e) => updateLens(i, "features", e.target.value.split(",").map((s: string) => s.trim()))}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <input placeholder="Index" value={l.index}
                         onChange={(e) => updateLens(i, "index", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
                         <input type="number" placeholder="Price" value={l.price || ""}
                           onChange={(e) => updateLens(i, "price", Number(e.target.value))}
                           onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="input-field text-xs py-1.5 pl-5" />
+                          className="pos-input text-xs py-1.5 pl-5" />
                       </div>
                       <input placeholder="Coating" value={l.coating}
                         onChange={(e) => updateLens(i, "coating", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                     </div>
-                    <button onClick={() => removeLens(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                    <button onClick={() => removeLens(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
@@ -684,35 +685,35 @@ export default function CustomerNewVisit() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <Grid3X3 size={16} className="text-primary-500" /> Accessories ({orderAccessories.length})
               </h2>
               <button onClick={() => setOrderAccessories((prev) => [...prev, { name: "", price: 0 }])}
-                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
                 <Plus size={14} /> Add Accessory
               </button>
             </div>
             {orderAccessories.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6">No accessories added yet</p>
+              <p className="text-xs text-white/40 text-center py-6">No accessories added yet</p>
             ) : (
               <div className="space-y-2">
                 {orderAccessories.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       <input placeholder="Name" value={a.name}
                         onChange={(e) => updateAccessory(i, "name", e.target.value)}
-                        className="input-field text-xs py-1.5" />
+                        className="pos-input text-xs py-1.5" />
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
                         <input type="number" placeholder="Price" value={a.price || ""}
                           onChange={(e) => updateAccessory(i, "price", Number(e.target.value))}
                           onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="input-field text-xs py-1.5 pl-5" />
+                          className="pos-input text-xs py-1.5 pl-5" />
                       </div>
                     </div>
-                    <button onClick={() => removeAccessory(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                    <button onClick={() => removeAccessory(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
@@ -723,7 +724,7 @@ export default function CustomerNewVisit() {
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
             <button onClick={() => { syncBillFromOrder(orderFrames, orderLenses, orderAccessories); setStep("billing"); }}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5 flex-1 justify-center">
+              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5 flex-1 justify-center">
               Sync to Billing <ChevronRight size={16} />
             </button>
           </div>
@@ -732,53 +733,53 @@ export default function CustomerNewVisit() {
 
       {step === "billing" && (
         <div className="space-y-5">
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <FileText size={16} className="text-primary-500" /> Bill Items ({billItems.length})
               </h2>
               <button onClick={() => setBillItems((prev) => [...prev, { description: "", price: 0, qty: 1 }])}
-                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
                 <Plus size={14} /> Add Item
               </button>
             </div>
             {billItems.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6">No bill items. Add items or sync from order.</p>
+              <p className="text-xs text-white/40 text-center py-6">No bill items. Add items or sync from order.</p>
             ) : (
               <div className="space-y-2">
                 {billItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
                     <input placeholder="Description" value={item.description}
                       onChange={(e) => updateBillItem(i, "description", e.target.value)}
-                      className="input-field text-xs py-1.5 flex-1" />
+                      className="pos-input text-xs py-1.5 flex-1" />
                     <div className="relative w-20">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
                       <input type="number" placeholder="Price" value={item.price || ""}
                         onChange={(e) => updateBillItem(i, "price", Number(e.target.value))}
                         onWheel={(e) => (e.target as HTMLElement).blur()}
-                        className="input-field text-xs py-1.5 pl-5 w-full" />
+                        className="pos-input text-xs py-1.5 pl-5 w-full" />
                     </div>
                     <input type="number" placeholder="Qty" value={item.qty || 1} min="1"
                       onChange={(e) => updateBillItem(i, "qty", Math.max(1, Number(e.target.value)))}
                       onWheel={(e) => (e.target as HTMLElement).blur()}
-                      className="input-field text-xs py-1.5 w-14 text-center" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-16 text-right">₹{(item.price * item.qty).toFixed(0)}</span>
-                    <button onClick={() => removeBillItem(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                      className="pos-input text-xs py-1.5 w-14 text-center" />
+                    <span className="text-xs font-semibold text-white/70 w-16 text-right">₹{(item.price * item.qty).toFixed(0)}</span>
+                    <button onClick={() => removeBillItem(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
                 ))}
               </div>
             )}
-            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200 dark:border-dark-600">
-              <span className="text-sm text-gray-500">Total Amount</span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString()}</span>
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10">
+              <span className="text-sm text-white/50">Total Amount</span>
+              <span className="text-2xl font-bold text-white">₹{totalAmount.toLocaleString()}</span>
             </div>
           </div>
 
           <div className="flex justify-end">
             <button onClick={() => setStep("payment")}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
               Next <ChevronRight size={16} />
             </button>
           </div>
@@ -788,61 +789,61 @@ export default function CustomerNewVisit() {
       {step === "payment" && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+              <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                 <Percent size={16} className="text-primary-500" /> Discount
               </h2>
               <div className="flex gap-2 mb-3">
                 <button onClick={() => setDiscountType("percent")}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "percent" ? "bg-primary-600 text-white shadow-sm" : "text-gray-500"}`}>%</button>
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "percent" ? "bg-primary-600 text-white shadow-sm" : "text-white/50"}`}>%</button>
                 <button onClick={() => setDiscountType("amount")}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "amount" ? "bg-primary-600 text-white shadow-sm" : "text-gray-500"}`}>₹</button>
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "amount" ? "bg-primary-600 text-white shadow-sm" : "text-white/50"}`}>₹</button>
               </div>
               {discountType === "percent" ? (
                 <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-white/40">%</span>
                   <input type="number" placeholder="Discount %" value={discountPercent || ""}
                     onChange={(e) => setDiscountPercent(Number(e.target.value))}
                     onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="input-field text-sm pl-7" />
+                    className="pos-input text-sm pl-7" />
                 </div>
               ) : (
                 <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
                   <input type="number" placeholder="Discount amount" value={discountAmount || ""}
                     onChange={(e) => setDiscountAmount(Number(e.target.value))}
                     onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="input-field text-sm pl-7" />
+                    className="pos-input text-sm pl-7" />
                 </div>
               )}
               {discountVal > 0 && (
-                <p className="text-xs text-gray-500 mt-2">- ₹{discountVal.toLocaleString()}</p>
+                <p className="text-xs text-white/50 mt-2">- ₹{discountVal.toLocaleString()}</p>
               )}
             </div>
 
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+              <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                 <CreditCard size={16} className="text-primary-500" /> Payment
               </h2>
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">Mode</label>
+                  <label className="text-xs font-medium text-white/50 mb-1.5 block">Mode</label>
                   <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}
-                    className="input-field text-sm">
+                    className="pos-input text-sm">
                     {["Cash", "UPI", "Card", "Bank Transfer", "Insurance"].map((m) => (
                       <option key={m}>{m}</option>
                     ))}
                   </select>
                 </div>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">₹</span>
                   <input type="number" placeholder="Amount collected" value={advancePaid || ""}
                     onChange={(e) => setAdvancePaid(Number(e.target.value))}
                     onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="input-field text-sm pl-8" />
+                    className="pos-input text-sm pl-8" />
                 </div>
-                <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-dark-600">
-                  <span className="text-gray-500">Total</span>
+                <div className="flex justify-between text-sm pt-2 border-t border-white/10">
+                  <span className="text-white/50">Total</span>
                   <span className="font-medium">₹{totalAmount.toLocaleString()}</span>
                 </div>
                 {discountVal > 0 && (
@@ -851,7 +852,7 @@ export default function CustomerNewVisit() {
                     <span className="font-medium text-red-500">- ₹{discountVal.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-gray-900 dark:text-white">
+                <div className="flex justify-between font-bold text-white">
                   <span>Final Total</span>
                   <span>₹{finalTotal.toLocaleString()}</span>
                 </div>
@@ -860,7 +861,7 @@ export default function CustomerNewVisit() {
                   <span className="font-semibold">₹{advancePaid.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-semibold">
-                  <span className="text-gray-500">Balance</span>
+                  <span className="text-white/50">Balance</span>
                   <span className={advancePaid >= finalTotal ? "text-green-600" : "text-amber-600"}>
                     {advancePaid >= finalTotal ? "₹0 (Paid)" : `₹${Math.max(0, finalTotal - advancePaid).toLocaleString()}`}
                   </span>
@@ -869,29 +870,29 @@ export default function CustomerNewVisit() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
+            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Truck size={16} className="text-primary-500" /> Delivery
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Delivery Address</label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Delivery Address</label>
                 <textarea placeholder="Address (optional)" value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="input-field text-sm" rows={2} />
+                  className="pos-input text-sm" rows={2} />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Expected Delivery Date</label>
+                <label className="text-xs font-medium text-white/50 mb-1.5 block">Expected Delivery Date</label>
                 <input type="date" value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="input-field text-sm" />
+                  className="pos-input text-sm" />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end">
             <button onClick={() => setStep("confirmation")}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
               Review <ChevronRight size={16} />
             </button>
           </div>
@@ -901,87 +902,87 @@ export default function CustomerNewVisit() {
       {/* ==================== STEP: CONFIRMATION ==================== */}
       {step === "confirmation" && (
         <div className="space-y-5">
-          <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
+          <div className="flex items-center gap-3 pb-3 border-b border-white/[0.06]">
             <CheckCircle size={18} className="text-primary-500" />
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">Confirmation</h2>
-              <p className="text-xs text-gray-500">Review all details before saving</p>
+              <h2 className="text-base font-bold text-white">Confirmation</h2>
+              <p className="text-xs text-white/50">Review all details before saving</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Service</h4>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{VISIT_TYPES.find(t => t.value === visitType)?.label || visitType}</p>
-              <p className="text-xs text-gray-500">{visitDate} {visitDoctor ? `· ${visitDoctor}` : ""}</p>
-              {visitRemarks && <p className="text-xs text-gray-500 mt-1">{visitRemarks}</p>}
+            <div className="bg-white/5 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Service</h4>
+              <p className="text-sm font-semibold text-white/80">{VISIT_TYPES.find(t => t.value === visitType)?.label || visitType}</p>
+              <p className="text-xs text-white/50">{visitDate} {visitDoctor ? `· ${visitDoctor}` : ""}</p>
+              {visitRemarks && <p className="text-xs text-white/50 mt-1">{visitRemarks}</p>}
             </div>
             {usePrescription && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Prescription</h4>
-                {prescription.pd && <p className="text-xs text-gray-600 dark:text-gray-400">PD: {prescription.pd}</p>}
-                {prescription.problems && <p className="text-xs text-gray-600 dark:text-gray-400">Problems: {prescription.problems}</p>}
-                {prescription.notes && <p className="text-xs text-gray-600 dark:text-gray-400">Notes: {prescription.notes}</p>}
+              <div className="bg-white/5 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Prescription</h4>
+                {prescription.pd && <p className="text-xs text-white/50">PD: {prescription.pd}</p>}
+                {prescription.problems && <p className="text-xs text-white/50">Problems: {prescription.problems}</p>}
+                {prescription.notes && <p className="text-xs text-white/50">Notes: {prescription.notes}</p>}
               </div>
             )}
             {orderFrames.length > 0 && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Frames</h4>
+              <div className="bg-white/5 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Frames</h4>
                 {orderFrames.map((f, i) => (
-                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{f.brand} {f.model} ({f.color}) · ₹{f.price}</p>
+                  <p key={i} className="text-xs text-white/50">{f.brand} {f.model} ({f.color}) · ₹{f.price}</p>
                 ))}
               </div>
             )}
             {orderLenses.length > 0 && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lenses</h4>
+              <div className="bg-white/5 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Lenses</h4>
                 {orderLenses.map((l, i) => (
-                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{l.brand} {l.features.join(", ")} {l.coating} · ₹{l.price}</p>
+                  <p key={i} className="text-xs text-white/50">{l.brand} {l.features.join(", ")} {l.coating} · ₹{l.price}</p>
                 ))}
               </div>
             )}
             {orderAccessories.length > 0 && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Accessories</h4>
+              <div className="bg-white/5 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Accessories</h4>
                 {orderAccessories.map((a, i) => (
-                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{a.name} · ₹{a.price}</p>
+                  <p key={i} className="text-xs text-white/50">{a.name} · ₹{a.price}</p>
                 ))}
               </div>
             )}
-            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Billing</h4>
+            <div className="bg-white/5 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Billing</h4>
               {billItems.filter(i => i.description && i.price > 0).map((item, i) => (
-                <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{item.description} x{item.qty} = ₹{(item.price * item.qty).toFixed(0)}</p>
+                <p key={i} className="text-xs text-white/50">{item.description} x{item.qty} = ₹{(item.price * item.qty).toFixed(0)}</p>
               ))}
-              <div className="border-t border-gray-200 dark:border-dark-600 mt-2 pt-2 flex justify-between">
-                <span className="text-sm font-bold text-gray-800 dark:text-gray-200">Total</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString()}</span>
+              <div className="border-t border-white/10 mt-2 pt-2 flex justify-between">
+                <span className="text-sm font-bold text-white/80">Total</span>
+                <span className="text-sm font-bold text-white">₹{totalAmount.toLocaleString()}</span>
               </div>
               {discountVal > 0 && (
                 <div className="flex justify-between text-xs mt-1">
-                  <span className="text-gray-500">Discount</span>
+                  <span className="text-white/50">Discount</span>
                   <span className="text-red-500">-₹{discountVal.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between text-xs mt-1">
-                <span className="text-gray-500">Advance</span>
+                <span className="text-white/50">Advance</span>
                 <span className="text-green-600 font-semibold">₹{advancePaid.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs mt-1">
-                <span className="text-gray-500">Balance</span>
+                <span className="text-white/50">Balance</span>
                 <span className="font-semibold">₹{Math.max(0, finalTotal - advancePaid).toLocaleString()}</span>
               </div>
             </div>
             {deliveryAddress && (
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Delivery</h4>
-                <p className="text-xs text-gray-600 dark:text-gray-400">{deliveryAddress}</p>
-                {deliveryDate && <p className="text-xs text-gray-500">Expected: {deliveryDate}</p>}
+              <div className="bg-white/5 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Delivery</h4>
+                <p className="text-xs text-white/50">{deliveryAddress}</p>
+                {deliveryDate && <p className="text-xs text-white/50">Expected: {deliveryDate}</p>}
               </div>
             )}
           </div>
 
-          <div className="flex justify-between pt-3 border-t border-gray-100 dark:border-dark-700">
+          <div className="flex justify-between pt-3 border-t border-white/[0.06]">
             <button onClick={() => setStep("payment")} className="btn-secondary px-4 py-2 text-sm flex items-center gap-1.5">
               <ChevronLeft size={15} /> Back
             </button>
@@ -1011,8 +1012,8 @@ export default function CustomerNewVisit() {
       {/* Scan QR Modal */}
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">Enter SKU or barcode to auto-fill frame details.</p>
-          <input className="input-field" placeholder="SKU or barcode" autoFocus
+          <p className="text-xs text-white/50">Enter SKU or barcode to auto-fill frame details.</p>
+          <input className="pos-input" placeholder="SKU or barcode" autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
@@ -1028,7 +1029,7 @@ export default function CustomerNewVisit() {
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2 text-xs font-semibold text-primary-600 hover:text-primary-700 border border-dashed border-gray-300 dark:border-dark-600 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all flex items-center justify-center gap-1.5">
+            className="w-full text-center py-2 text-xs font-semibold text-primary-400 border border-dashed border-white/20 rounded-lg hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
             <ScanLine size={14} /> Use Camera
           </button>
         </div>
@@ -1046,6 +1047,7 @@ export default function CustomerNewVisit() {
           setCameraActive(false);
         }} onClose={() => setCameraActive(false)} />
       )}
+      </div>
     </div>
   );
 }

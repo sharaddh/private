@@ -178,6 +178,42 @@ body {
     @apply text-2xl font-bold tracking-tight;
   }
 
+  .glass-card {
+    @apply bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-lg;
+  }
+
+  .glass-card-hover {
+    @apply glass-card hover:bg-white/[0.10] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300;
+  }
+
+  .hero-card-sales {
+    @apply glass-card bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/20;
+  }
+
+  .hero-card-orders {
+    @apply glass-card bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/20;
+  }
+
+  .hero-card-payments {
+    @apply glass-card bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/20;
+  }
+
+  .floating-action-btn {
+    @apply w-14 h-14 rounded-full flex items-center justify-center shadow-lg backdrop-blur-xl border border-white/[0.12] hover:scale-110 transition-all duration-300 cursor-pointer active:scale-95;
+  }
+
+  .pos-input {
+    @apply bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/30 transition-all;
+  }
+
+  .pos-btn {
+    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5;
+  }
+
+  .pos-btn-primary {
+    @apply pos-btn bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/20;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
