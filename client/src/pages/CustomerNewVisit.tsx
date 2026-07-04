@@ -756,7 +756,101 @@ export default function CustomerNewVisit() {
         </div>
       )}
 
-      {currentIdx > 0 && (
+      {/* ==================== STEP: CONFIRMATION ==================== */}
+      {step === "confirmation" && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
+            <CheckCircle size={18} className="text-primary-500" />
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Confirmation</h2>
+              <p className="text-xs text-gray-500">Review all details before saving</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Service</h4>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{VISIT_TYPES.find(t => t.value === visitType)?.label || visitType}</p>
+              <p className="text-xs text-gray-500">{visitDate} {visitDoctor ? `· ${visitDoctor}` : ""}</p>
+              {visitRemarks && <p className="text-xs text-gray-500 mt-1">{visitRemarks}</p>}
+            </div>
+            {usePrescription && (
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Prescription</h4>
+                {prescription.pd && <p className="text-xs text-gray-600 dark:text-gray-400">PD: {prescription.pd}</p>}
+                {prescription.problems && <p className="text-xs text-gray-600 dark:text-gray-400">Problems: {prescription.problems}</p>}
+                {prescription.notes && <p className="text-xs text-gray-600 dark:text-gray-400">Notes: {prescription.notes}</p>}
+              </div>
+            )}
+            {orderFrames.length > 0 && (
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Frames</h4>
+                {orderFrames.map((f, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{f.brand} {f.model} ({f.color}) · ₹{f.price}</p>
+                ))}
+              </div>
+            )}
+            {orderLenses.length > 0 && (
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lenses</h4>
+                {orderLenses.map((l, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{l.brand} {l.features.join(", ")} {l.coating} · ₹{l.price}</p>
+                ))}
+              </div>
+            )}
+            {orderAccessories.length > 0 && (
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Accessories</h4>
+                {orderAccessories.map((a, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{a.name} · ₹{a.price}</p>
+                ))}
+              </div>
+            )}
+            <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Billing</h4>
+              {billItems.filter(i => i.description && i.price > 0).map((item, i) => (
+                <p key={i} className="text-xs text-gray-600 dark:text-gray-400">{item.description} x{item.qty} = ₹{(item.price * item.qty).toFixed(0)}</p>
+              ))}
+              <div className="border-t border-gray-200 dark:border-dark-600 mt-2 pt-2 flex justify-between">
+                <span className="text-sm font-bold text-gray-800 dark:text-gray-200">Total</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString()}</span>
+              </div>
+              {discountVal > 0 && (
+                <div className="flex justify-between text-xs mt-1">
+                  <span className="text-gray-500">Discount</span>
+                  <span className="text-red-500">-₹{discountVal.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-gray-500">Advance</span>
+                <span className="text-green-600 font-semibold">₹{advancePaid.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-gray-500">Balance</span>
+                <span className="font-semibold">₹{Math.max(0, finalTotal - advancePaid).toLocaleString()}</span>
+              </div>
+            </div>
+            {deliveryAddress && (
+              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Delivery</h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{deliveryAddress}</p>
+                {deliveryDate && <p className="text-xs text-gray-500">Expected: {deliveryDate}</p>}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between pt-3 border-t border-gray-100 dark:border-dark-700">
+            <button onClick={() => setStep("payment")} className="btn-secondary px-4 py-2 text-sm flex items-center gap-1.5">
+              <ChevronLeft size={15} /> Back
+            </button>
+            <button className="btn-success px-6 py-2.5 text-sm flex items-center gap-2 font-semibold shadow-sm" disabled>
+              <Save size={16} /> Save
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentIdx > 0 && step !== "confirmation" && (
         <div className="flex justify-between pt-4">
           <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
             className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
