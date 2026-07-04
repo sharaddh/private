@@ -160,6 +160,27 @@ export default function CustomerNewVisit() {
   function setRight(k: string, v: any) { setPrescription((p) => ({ ...p, rightEye: { ...p.rightEye, [k]: v } })); }
   function setLeft(k: string, v: any) { setPrescription((p) => ({ ...p, leftEye: { ...p.leftEye, [k]: v } })); }
 
+  function updateFrame(i: number, field: string, value: any) {
+    setOrderFrames((prev) => prev.map((f, idx) => idx === i ? { ...f, [field]: value } : f));
+  }
+
+  function removeFrame(i: number) {
+    setOrderFrames((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function searchInventory(q: string, type: "frame", idx: number) {
+    if (searchTimer) clearTimeout(searchTimer);
+    if (q.length < 2) { setSuggestions([]); setSuggestionsFor(null); return; }
+    const t = setTimeout(async () => {
+      const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
+      if (res.success) {
+        setSuggestions(res.data || []);
+        setSuggestionsFor(res.data.length > 0 ? { type, idx } : null);
+      }
+    }, 300);
+    setSearchTimer(t);
+  }
+
   if (loading) return <PageSkeleton page="customerdetail" />;
   if (!customer) return <div className="p-8 text-center text-gray-500">Customer not found</div>;
 
@@ -346,7 +367,92 @@ export default function CustomerNewVisit() {
         </div>
       )}
 
-      {step !== "service" && step !== "prescription" && (
+      {step === "order" && (
+        <div className="space-y-5">
+          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Eye size={16} className="text-primary-500" /> Frames ({orderFrames.length})
+              </h2>
+              <div className="flex gap-2">
+                <button onClick={() => setScanModal(true)}
+                  className="btn-ghost btn-sm flex items-center gap-1.5 text-xs">
+                  <ScanLine size={14} /> Scan
+                </button>
+                <button onClick={() => setOrderFrames((prev) => [...prev, { sku: "", brand: "", model: "", color: "", price: 0 }])}
+                  className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                  <Plus size={14} /> Add Frame
+                </button>
+              </div>
+            </div>
+            {orderFrames.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No frames added yet</p>
+            ) : (
+              <div className="space-y-2">
+                {orderFrames.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <input placeholder="SKU" value={f.sku}
+                        onChange={(e) => { updateFrame(i, "sku", e.target.value); searchInventory(e.target.value, "frame", i); }}
+                        onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Brand" value={f.brand}
+                        onChange={(e) => updateFrame(i, "brand", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Model" value={f.model}
+                        onChange={(e) => updateFrame(i, "model", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Color" value={f.color}
+                        onChange={(e) => updateFrame(i, "color", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <input type="number" placeholder="Price" value={f.price || ""}
+                          onChange={(e) => updateFrame(i, "price", Number(e.target.value))}
+                          onWheel={(e) => (e.target as HTMLElement).blur()}
+                          className="input-field text-xs py-1.5 pl-5" />
+                      </div>
+                    </div>
+                    {suggestionsFor?.type === "frame" && suggestionsFor.idx === i && isFocused && suggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10">
+                        {suggestions.map((s: any, si: number) => (
+                          <button key={si} type="button"
+                            onMouseDown={() => {
+                              updateFrame(i, "sku", s.sku || "");
+                              updateFrame(i, "brand", s.brand || "");
+                              updateFrame(i, "model", s.model || "");
+                              updateFrame(i, "color", s.color || "");
+                              updateFrame(i, "price", s.sellingPrice || 0);
+                              setSuggestions([]);
+                              setSuggestionsFor(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-dark-700 flex items-center gap-3">
+                            <span className="font-medium">{s.sku}</span>
+                            <span className="text-gray-500">{s.brand} {s.model}</span>
+                            <span className="text-gray-400 ml-auto"> · ₹{s.sellingPrice || 0}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <button onClick={() => removeFrame(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button onClick={() => setStep("billing")}
+              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              Next <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step !== "service" && step !== "prescription" && step !== "order" && (
         <div className="flex justify-between pt-4">
           <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
             className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
