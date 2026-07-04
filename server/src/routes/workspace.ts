@@ -88,9 +88,12 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
   // Bill + Payment
   if (body.bill) {
     const bill = new Bill({
+      billNumber: `BILL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       customerId: customer._id,
       visitId: result.visit?._id,
       items: body.bill.items || [],
+      subtotal: body.bill.subtotal || 0,
+      discount: body.bill.discount || 0,
       totalAmount: body.bill.totalAmount || 0,
       pendingAmount: body.bill.totalAmount - (body.payment?.amount || 0),
       advancePaid: body.payment?.amount || 0,
