@@ -43,6 +43,22 @@ const steps = [
   { key: "confirmation", label: "Confirm", icon: CheckCircle, desc: "Review & save" },
 ];
 
+function EyeRow({ label, data, onChange }: { label: string; data: any; onChange: (v: any) => void }) {
+  const fields = ["sph", "cyl", "axis", "va", "add"];
+  return (
+    <div className="text-xs">
+      <span className="font-medium text-gray-700 dark:text-gray-300 block mb-1">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {fields.map((f) => (
+          <input key={f} placeholder={f.toUpperCase()} value={data?.[f] || ""}
+            onChange={(e) => onChange({ ...data, [f]: e.target.value })}
+            className="w-14 text-center border border-gray-200 dark:border-dark-600 bg-gray-50 dark:bg-dark-750 rounded-lg py-1 text-xs text-gray-900 dark:text-gray-200 placeholder-gray-400" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerNewVisit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -140,6 +156,9 @@ export default function CustomerNewVisit() {
   const countdownRef = useRef<any>(null);
   const savingRef = useRef(false);
   const greetingSent = useRef(false);
+
+  function setRight(k: string, v: any) { setPrescription((p) => ({ ...p, rightEye: { ...p.rightEye, [k]: v } })); }
+  function setLeft(k: string, v: any) { setPrescription((p) => ({ ...p, leftEye: { ...p.leftEye, [k]: v } })); }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
   if (!customer) return <div className="p-8 text-center text-gray-500">Customer not found</div>;
@@ -253,7 +272,81 @@ export default function CustomerNewVisit() {
         </div>
       )}
 
-      {step !== "service" && (
+      {step === "prescription" && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={usePrescription}
+                onChange={(e) => setUsePrescription(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-dark-500 text-primary-600 focus:ring-primary-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Use prescription</span>
+            </label>
+          </div>
+
+          {usePrescription && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Eye size={16} className="text-primary-500" /> Right Eye (O.D.)
+                  </h3>
+                  <div className="space-y-4">
+                    {["dv", "nv", "pc"].map((k) => (
+                      <EyeRow key={k} label={k === "dv" ? "Distance Vision" : k === "nv" ? "Near Vision" : "Progressive Corridor"}
+                        data={prescription.rightEye[k]}
+                        onChange={(v) => setRight(k, v)} />
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Eye size={16} className="text-primary-500" /> Left Eye (O.S.)
+                  </h3>
+                  <div className="space-y-4">
+                    {["dv", "nv", "pc"].map((k) => (
+                      <EyeRow key={k} label={k === "dv" ? "Distance Vision" : k === "nv" ? "Near Vision" : "Progressive Corridor"}
+                        data={prescription.leftEye[k]}
+                        onChange={(v) => setLeft(k, v)} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">PD (Pupillary Distance)</label>
+                    <input placeholder="e.g. 62" value={prescription.pd}
+                      onChange={(e) => setPrescription((p) => ({ ...p, pd: e.target.value }))}
+                      className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Problems</label>
+                    <input placeholder="e.g. headaches" value={prescription.problems}
+                      onChange={(e) => setPrescription((p) => ({ ...p, problems: e.target.value }))}
+                      className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Notes</label>
+                    <input placeholder="Additional notes" value={prescription.notes}
+                      onChange={(e) => setPrescription((p) => ({ ...p, notes: e.target.value }))}
+                      className="input-field text-sm" />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-end">
+            <button onClick={() => setStep("order")}
+              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              Next <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step !== "service" && step !== "prescription" && (
         <div className="flex justify-between pt-4">
           <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
             className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
