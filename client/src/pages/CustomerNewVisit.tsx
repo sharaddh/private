@@ -153,6 +153,11 @@ export default function CustomerNewVisit() {
     })();
   }, [id]);
 
+  useEffect(() => {
+    const total = billItems.reduce((s, i) => s + i.price * i.qty, 0);
+    setTotalAmount(total);
+  }, [billItems]);
+
   const countdownRef = useRef<any>(null);
   const savingRef = useRef(false);
   const greetingSent = useRef(false);
@@ -182,6 +187,28 @@ export default function CustomerNewVisit() {
 
   function removeAccessory(i: number) {
     setOrderAccessories((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function syncBillFromOrder(frames: typeof orderFrames, lenses: typeof orderLenses, accessories: typeof orderAccessories) {
+    const items: Array<{ description: string; price: number; qty: number }> = [];
+    frames.forEach((f) => {
+      if (f.brand || f.price) items.push({ description: `Frame - ${f.brand} ${f.model}`.trim(), price: f.price, qty: 1 });
+    });
+    lenses.forEach((l) => {
+      if (l.brand || l.price) items.push({ description: `Lens - ${l.brand} ${l.features.join(" ")}`.trim(), price: l.price, qty: 1 });
+    });
+    accessories.forEach((a) => {
+      if (a.name || a.price) items.push({ description: a.name, price: a.price, qty: 1 });
+    });
+    setBillItems(items.length > 0 ? items : []);
+  }
+
+  function updateBillItem(i: number, field: string, value: any) {
+    setBillItems((prev) => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+  }
+
+  function removeBillItem(i: number) {
+    setBillItems((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   function searchInventory(q: string, type: "frame", idx: number) {
@@ -545,8 +572,63 @@ export default function CustomerNewVisit() {
             )}
           </div>
 
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+            <button onClick={() => { syncBillFromOrder(orderFrames, orderLenses, orderAccessories); setStep("billing"); }}
+              className="btn-primary flex items-center gap-2 px-6 py-2.5 flex-1 justify-center">
+              Sync to Billing <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "billing" && (
+        <div className="space-y-5">
+          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FileText size={16} className="text-primary-500" /> Bill Items ({billItems.length})
+              </h2>
+              <button onClick={() => setBillItems((prev) => [...prev, { description: "", price: 0, qty: 1 }])}
+                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                <Plus size={14} /> Add Item
+              </button>
+            </div>
+            {billItems.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No bill items. Add items or sync from order.</p>
+            ) : (
+              <div className="space-y-2">
+                {billItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                    <input placeholder="Description" value={item.description}
+                      onChange={(e) => updateBillItem(i, "description", e.target.value)}
+                      className="input-field text-xs py-1.5 flex-1" />
+                    <div className="relative w-20">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                      <input type="number" placeholder="Price" value={item.price || ""}
+                        onChange={(e) => updateBillItem(i, "price", Number(e.target.value))}
+                        onWheel={(e) => (e.target as HTMLElement).blur()}
+                        className="input-field text-xs py-1.5 pl-5 w-full" />
+                    </div>
+                    <input type="number" placeholder="Qty" value={item.qty || 1} min="1"
+                      onChange={(e) => updateBillItem(i, "qty", Math.max(1, Number(e.target.value)))}
+                      onWheel={(e) => (e.target as HTMLElement).blur()}
+                      className="input-field text-xs py-1.5 w-14 text-center" />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-16 text-right">₹{(item.price * item.qty).toFixed(0)}</span>
+                    <button onClick={() => removeBillItem(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200 dark:border-dark-600">
+              <span className="text-sm text-gray-500">Total Amount</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
+
           <div className="flex justify-end">
-            <button onClick={() => setStep("billing")}
+            <button onClick={() => setStep("payment")}
               className="btn-primary flex items-center gap-2 px-6 py-2.5">
               Next <ChevronRight size={16} />
             </button>
@@ -554,7 +636,16 @@ export default function CustomerNewVisit() {
         </div>
       )}
 
-      {step !== "service" && step !== "prescription" && step !== "order" && (
+      {step !== "service" && step !== "prescription" && step !== "order" && step !== "billing" && (
+        <div className="flex justify-between pt-4">
+          <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
+            className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
+            <ChevronLeft size={16} /> Back
+          </button>
+        </div>
+      )}
+
+      {(step === "service" || step === "prescription" || step === "order" || step === "billing") && currentIdx > 0 && (
         <div className="flex justify-between pt-4">
           <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
             className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
