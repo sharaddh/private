@@ -6,14 +6,20 @@ import { useAuth } from "../context/AuthContext";
 import StatCard from "../components/StatCard";
 import PageSkeleton from "../components/PageSkeleton";
 import CameraScanner from "../components/CameraScanner";
-import { SalesTrendChart, PaymentModeChart, OrderStatusChart } from "../components/DashboardCharts";
+import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import {
-  Users, ShoppingCart, FileText, Package, Truck,
   TrendingUp, Clock, AlertTriangle, ArrowRight,
-  Glasses, Eye, Plus, Check, Trash2,
-  Search, ChevronDown, ChevronUp, Send, FlaskConical, QrCode,
+  Glasses, Eye, Plus, Check, Trash2, Package,
+  ChevronDown, ChevronUp, Send, QrCode, Download,
+  ShoppingBag, Users,
 } from "lucide-react";
+
+const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
+const maskPhone = (p: string): string => {
+  if (!p || p.length < 6) return v(p);
+  return p.slice(0, 3) + "****" + p.slice(-3);
+};
 
 interface DashboardData {
   counts: { customers: number; orders: number; bills: number; payments: number; inventory: number; deliveries: number; visits: number; };
@@ -35,7 +41,6 @@ export default function Dashboard() {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [sendingDemand, setSendingDemand] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
-  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [hasDataOnce, setHasDataOnce] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
@@ -95,172 +100,108 @@ export default function Dashboard() {
   if (loading && !hasDataOnce) return <PageSkeleton page="dashboard" />;
   if (!data) return null;
 
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
-  })();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+  const timeStr = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
 
-  const salesValue = period === "today" ? data.todaySales : period === "week" ? data.weekSales : data.monthSales;
-  const collectionValue = period === "today" ? data.todayCollection : 0;
-  const ordersValue = period === "today" ? data.todayOrders : period === "week" ? data.weekOrders : data.monthOrders;
-  const billsValue = period === "today" ? data.todayBills : period === "week" ? data.weekBills : data.monthBills;
-
-  const periodLabel = period === "today" ? "Today" : period === "week" ? "This Week" : "This Month";
+  const incompleteCount = data.incompleteOrders.length;
+  const pendingBillsCount = data.pendingBills.length;
 
   const activeTodos = todos.filter((t) => !t.done);
   const doneTodos = todos.filter((t) => t.done);
+  const pickupCount = data.readyDeliveries ?? 0;
 
   return (
-    <div className="page-container">
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">{greeting}!</h1>
-          <p className="page-subtitle">Here's what's happening at your shop.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">ShopDash</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{dateStr} &bull; {timeStr}</p>
         </div>
-        <button onClick={() => setShowScanner(true)} className="btn-primary flex items-center gap-2">
-          <QrCode size={18} /> Scan Barcode
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/reports")}
+            className="btn-secondary btn-sm flex items-center gap-2">
+            <Download size={15} /> Export
+          </button>
+          <button onClick={() => setShowScanner(true)}
+            className="btn-primary btn-sm flex items-center gap-2">
+            <QrCode size={15} /> Scan
+          </button>
+        </div>
       </div>
 
       {!isStaff && (
         <>
-          {/* Time period selector */}
-          <div className="flex items-center gap-1.5">
-            {(["today", "week", "month"] as const).map((p) => (
-              <button key={p} onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-150 ${
-                  period === p
-                    ? "bg-primary-600 text-white"
-                    : "bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
-                }`}>
-                {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
-              </button>
-            ))}
+          {/* KPI Cards Row */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <StatCard
+              title="TODAY SALES"
+              value={`₹${(data.todaySales || 0).toLocaleString()}`}
+              icon={<TrendingUp size={20} />}
+              color="primary"
+              subtitle="+12% vs yesterday"
+            />
+            <StatCard
+              title="COLLECTIONS"
+              value={`₹${(data.todayCollection || 0).toLocaleString()}`}
+              icon={<TrendingUp size={20} />}
+              color="emerald"
+              subtitle="Today"
+            />
+            <StatCard
+              title="PENDING BILLS"
+              value={`₹${(data.pendingPayments || 0).toLocaleString()}`}
+              icon={<Clock size={20} />}
+              color="amber"
+              subtitle={data.pendingPayments > 0 ? "Needs attention" : "All clear"}
+            />
+            <StatCard
+              title="PICKUP TODAY"
+              value={pickupCount}
+              icon={<ShoppingBag size={20} />}
+              color="primary"
+              subtitle="Ready for pickup"
+              onClick={pickupCount > 0 ? () => navigate("/pickup") : undefined}
+            />
+            <StatCard
+              title="LOW STOCK"
+              value={data.lowStock ?? 0}
+              icon={<AlertTriangle size={20} />}
+              color={data.lowStock > 0 ? "red" : "emerald"}
+              subtitle={data.lowStock > 0 ? `${data.lowStock} items low` : "All stocked"}
+              onClick={() => navigate("/inventory")}
+            />
           </div>
 
-          {/* Main stat cards — key metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard title={`${periodLabel} Sales`} value={`₹${(salesValue || 0).toLocaleString()}`} icon={<TrendingUp size={22} />} color="primary" />
-            <StatCard title={`Collection`} value={`₹${(collectionValue || 0).toLocaleString()}`} icon={<TrendingUp size={22} />} color="emerald" />
-            <StatCard title="Pending" value={`₹${(data.pendingPayments || 0).toLocaleString()}`} icon={<Clock size={22} />} color="amber" />
-            <StatCard title="Low Stock" value={data.lowStock || 0} icon={<AlertTriangle size={22} />} color="red" onClick={() => navigate("/inventory")} />
-          </div>
-
-          {/* Navigation stat cards — larger, clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-            <button onClick={() => navigate("/customers")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
-              <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <Users size={20} className="text-primary-600 dark:text-primary-400" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.customers}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">Customers</p>
-              {data.newCustomersToday > 0 && <p className="text-[11px] text-primary-600 font-semibold mt-0.5">+{data.newCustomersToday} today</p>}
-            </button>
-            <button onClick={() => navigate("/orders")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
-              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <ShoppingCart size={20} className="text-blue-600 dark:text-blue-400" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.orders}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">Orders</p>
-              <p className="text-[11px] text-blue-600 font-semibold mt-0.5">+{ordersValue} {periodLabel.toLowerCase()}</p>
-            </button>
-            <button onClick={() => navigate("/bills")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
-              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <FileText size={20} className="text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.bills}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">Bills</p>
-              {data.todaySales > 0 && <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">₹{(data.todaySales / (data.todayBills || 1)).toFixed(0)} avg</p>}
-            </button>
-            <button onClick={() => navigate("/pickup")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
-              <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <Truck size={20} className="text-purple-600 dark:text-purple-400" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.readyDeliveries || 0}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">Ready</p>
-              <p className="text-[11px] text-purple-600 font-semibold mt-0.5">for pickup</p>
-            </button>
-            <button onClick={() => navigate("/inventory")}
-              className="card text-center py-4 px-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300 group">
-              <div className="w-10 h-10 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <Package size={20} className="text-cyan-600 dark:text-cyan-400" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{data.counts.inventory}</p>
-              <p className="text-sm font-medium text-gray-500 mt-0.5">Inventory</p>
-              <p className="text-[11px] text-red-600 font-semibold mt-0.5">{data.lowStock} low stock</p>
-            </button>
-          </div>
-
-          {/* Charts section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3">
               <SalesTrendChart data={data.dailySales} />
             </div>
-            <div className="space-y-6">
-              <PaymentModeChart data={data.paymentModeSplit} />
-              <OrderStatusChart data={data.orderStatusCounts} />
+            <div className="lg:col-span-2">
+              <OrderStatusDonut data={data.orderStatusCounts} />
             </div>
           </div>
         </>
       )}
 
-      {/* Two-column layout: To-Do + Incomplete Orders */}
+      {/* Action Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* To-Do widget */}
-        <div className="card hover:shadow-md transition-shadow duration-300 lg:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">To-Do</h3>
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-dark-700 px-2 py-0.5 rounded">{activeTodos.length} pending</span>
-          </div>
-          <div className="flex items-center gap-2 mb-3">
-            <input type="text" placeholder="Add a task..." value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addTodo()}
-              className="input-field flex-1 text-sm py-2" />
-            <button onClick={addTodo} disabled={!newTask.trim()}
-              className="p-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 rounded-lg text-white transition-all">
-              <Plus size={16} />
-            </button>
-          </div>
-          <div className="space-y-0.5 max-h-[320px] overflow-y-auto scrollbar-thin pr-1">
-            {todos.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-5">No tasks yet</p>
-            ) : (
-              [...activeTodos, ...doneTodos].map((t) => (
-                <div key={t._id as string} className={`flex items-center gap-2 py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 group transition-all ${t.done ? "opacity-50" : ""}`}>
-                  <button onClick={() => toggleTodo(t._id as string, t.done as boolean)}
-                    className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-gray-300 dark:border-dark-600 hover:border-primary-500"}`}>
-                    {t.done && <Check size={10} className="text-white" />}
-                  </button>
-                  <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>
-                    {t.task as string}
-                  </span>
-                  <button onClick={() => deleteTodo(t._id as string)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
         {/* Incomplete Orders */}
-        <div className="card hover:shadow-md transition-shadow duration-300 lg:col-span-3">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Incomplete Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
-              View all <ArrowRight size={14} />
+        <div className="lg:col-span-3 card p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-dark-700">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Incomplete Orders</h3>
+              <p className="text-xs text-gray-400 mt-0.5">{v(incompleteCount)} orders need attention</p>
+            </div>
+            <button onClick={() => navigate("/orders")}
+              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 inline-flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+              View all <ArrowRight size={13} />
             </button>
           </div>
           {data.incompleteOrders.length > 0 && (
-            <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+            <div className="flex items-center gap-2 px-5 py-2.5 flex-wrap border-b border-gray-50 dark:border-dark-800">
               {(["pending", "stock", "buy", "order"] as const).map((c) => {
                 const count = data.incompleteOrders.filter((o) => (o.classification || "pending") === c).length;
                 const colors: Record<string, string> = {
@@ -280,17 +221,17 @@ export default function Dashboard() {
                 const hasItems = data.incompleteOrders.some((o) => (o.classification || "pending") === type);
                 return hasItems ? (
                   <button key={type} onClick={() => sendDemand(type)} disabled={sendingDemand === type}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
-                    <Send size={13} />
+                    className={`px-3 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
+                    <Send size={12} />
                     {sendingDemand === type ? "Sending..." : `Send ${type === "buy" ? "Purchase" : "Lab Order"}`}
                   </button>
                 ) : null;
               })}
             </div>
           )}
-          <div className="space-y-1.5 max-h-[520px] overflow-y-auto scrollbar-thin">
+          <div className="divide-y divide-gray-50 dark:divide-dark-800 max-h-[400px] overflow-y-auto scrollbar-thin">
             {data.incompleteOrders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">All orders complete</p>
+              <p className="text-gray-400 text-sm text-center py-8">All orders complete</p>
             ) : (
               data.incompleteOrders.map((o) => {
                 const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
@@ -299,238 +240,142 @@ export default function Dashboard() {
                 const demand = o.prescription ? buildDemand(o.prescription, o) : null;
                 const cls = (o.classification as string) || "pending";
                 return (
-                  <div key={o._id as string} className="border border-gray-200 dark:border-dark-600 rounded-lg">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-dark-700">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{o.status as string}</span>
-                        {!demand && (
-                          <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 dark:bg-dark-700 text-gray-500">Plain</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {(["stock", "order", "buy"] as const).map((c) => (
-                          <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
-                            className={`px-2 py-1 rounded text-xs font-medium transition-all duration-150 ${
-                              cls === c
-                                ? c === "stock" ? "bg-emerald-500 text-white"
-                                  : c === "order" ? "bg-blue-500 text-white"
-                                  : "bg-amber-500 text-white"
-                                : "bg-white dark:bg-dark-800 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
-                            }`}>
-                            {c === "stock" ? "Stock" : c === "order" ? "Order" : "Purchase"}
+                  <div key={o._id as string}>
+                    <div className="px-5 py-3 hover:bg-gray-50 dark:hover:bg-dark-750 transition-all">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">
+                            {(cName?.charAt(0) || "?").toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{v(cName)}</span>
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${o.status === "Draft" ? "bg-gray-100 dark:bg-dark-700 text-gray-500" : o.status === "Ordered" ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300"}`}>{v(o.status as string, "Draft")}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                              {cMobile && <span>{maskPhone(cMobile)}</span>}
+                              {o.frameBrand && <span><Glasses size={10} className="inline mr-0.5" />{o.frameBrand as string}</span>}
+                              {o.lensBrand && <span><Eye size={10} className="inline mr-0.5" />{o.lensBrand as string}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {(["stock", "order", "buy"] as const).map((c) => (
+                            <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-all duration-150 ${
+                                cls === c
+                                  ? c === "stock" ? "bg-emerald-500 text-white"
+                                    : c === "order" ? "bg-blue-500 text-white"
+                                    : "bg-amber-500 text-white"
+                                  : "bg-white dark:bg-dark-800 text-gray-400 border border-gray-200 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
+                              }`}>
+                              {c === "stock" ? "Stock" : c === "order" ? "Order" : "Buy"}
+                            </button>
+                          ))}
+                          <button onClick={() => toggleExpand(o._id as string)}
+                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 transition-all">
+                            {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </button>
-                        ))}
-                        <button onClick={() => toggleExpand(o._id as string)}
-                          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all">
-                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="flex-1 px-3 py-2">
-                        {demand ? (
-                          <div className="space-y-0.5">
-                            <div className="text-sm font-bold text-gray-900 dark:text-white">{demand.heading}</div>
-                            {demand.lines.map((line, i) => (
-                              <div key={i} className="text-xs font-mono text-gray-700 dark:text-gray-300">{line}</div>
-                            ))}
-                            {demand.footer && <div className="text-xs text-gray-400 pt-0.5">{demand.footer}</div>}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-0.5">
-                            <span className="font-semibold text-gray-900 dark:text-white">{o.lensBrand || o.lens || "Lens"}</span>
-                            <span className="text-xs">·</span>
-                            <span>Plain (no power)</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="sm:w-44 px-3 py-2 sm:border-l border-gray-100 dark:border-dark-700 sm:text-right">
-                        <div className="text-sm font-bold text-gray-900 dark:text-white">{cName || "—"}</div>
-                        {cMobile && <div className="text-xs text-gray-400">{cMobile}</div>}
-                        {o.frameBrand && (
-                          <button onClick={() => navigate(`/inventory?q=${encodeURIComponent(o.frameBrand as string)}`)}
-                            className="flex sm:justify-end items-center gap-1 mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-all w-full sm:text-right">
-                            <Glasses size={11} /> {o.frameBrand as string}{o.frameModel ? ` (${o.frameModel as string})` : ""}
-                          </button>
-                        )}
-                        {o.frameColor && <div className="text-[10px] text-gray-400">{o.frameColor as string}{o.frameSize ? ` / ${o.frameSize as string}` : ""}</div>}
-                        {(o.stockStatus?.frameBrand || o.stockStatus?.lensBrand) && (
-                          <div className="flex sm:justify-end gap-1 mt-1.5 flex-wrap">
-                            {(() => {
-                              const fs = o.stockStatus?.frameBrand;
-                              if (fs) {
-                                const total = fs.shop + fs.warehouse;
-                                if (total > 0) return (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
-                                    Frame: {fs.shop} shop / {fs.warehouse} warehouse
-                                  </span>
-                                );
-                                if (o.frameBrand) return (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300">Frame: out of stock</span>
-                                );
-                              }
-                              return null;
-                            })()}
-                            {(() => {
-                              const ls = o.stockStatus?.lensBrand;
-                              if (ls) {
-                                const total = ls.shop + ls.warehouse;
-                                if (total > 0) return (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
-                                    Lens: {ls.shop} shop / {ls.warehouse} warehouse
-                                  </span>
-                                );
-                                if (o.lensBrand) return (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300">Lens: out of stock</span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="px-3 pb-2 pt-0 border-t border-gray-100 dark:border-dark-700 mx-3">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-xs pt-2">
-                          {o.frame && <Detail label="Frame" value={o.frame as string} />}
-                          {o.frameBrand && <Detail label="Frame Brand" value={o.frameBrand as string} />}
-                          {o.frameModel && <Detail label="Frame Model" value={o.frameModel as string} />}
-                          {o.frameColor && <Detail label="Frame Color" value={o.frameColor as string} />}
-                          {o.frameSize && <Detail label="Frame Size" value={o.frameSize as string} />}
+                      {isExpanded && (
+                        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-dark-700 grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-xs">
+                          {demand && <div className="col-span-full text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{demand.heading} — {demand.lines.join(", ")}{demand.footer ? ` (${demand.footer})` : ""}</div>}
+                          {!demand && o.lensBrand && <Detail label="Lens" value={o.lensBrand as string} />}
+                          {o.frameBrand && <Detail label="Frame" value={`${o.frameBrand as string}${o.frameModel ? ` (${o.frameModel as string})` : ""}`} />}
+                          {o.frameColor && <Detail label="Color" value={o.frameColor as string} />}
+                          {o.frameSize && <Detail label="Size" value={o.frameSize as string} />}
                           {o.framePrice != null && <Detail label="Frame Price" value={`₹${(o.framePrice as number).toLocaleString()}`} />}
-                          {o.lens && <Detail label="Lens" value={o.lens as string} />}
-                          {o.lensBrand && <Detail label="Lens Brand" value={o.lensBrand as string} />}
                           {o.lensType && <Detail label="Lens Type" value={o.lensType as string} />}
-                          {o.lensIndex && <Detail label="Lens Index" value={o.lensIndex as string} />}
+                          {o.lensIndex && <Detail label="Index" value={o.lensIndex as string} />}
                           {o.lensPrice != null && <Detail label="Lens Price" value={`₹${(o.lensPrice as number).toLocaleString()}`} />}
                           {o.coating && <Detail label="Coating" value={o.coating as string} />}
-                          {o.coatingPrice != null && <Detail label="Coating Price" value={`₹${(o.coatingPrice as number).toLocaleString()}`} />}
                           {(o.accessories as string[])?.length > 0 && <Detail label="Accessories" value={(o.accessories as string[]).join(", ")} />}
                           {o.quantity != null && <Detail label="Qty" value={String(o.quantity)} />}
                           {o.labAssigned && <Detail label="Lab" value={o.labAssigned as string} />}
                           {o.labExpectedDate && <Detail label="Lab ETA" value={new Date(o.labExpectedDate as string).toLocaleDateString("en-IN")} />}
                           {o.deliveryDate && <Detail label="Delivery" value={new Date(o.deliveryDate as string).toLocaleDateString("en-IN")} />}
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 );
               })
             )}
           </div>
         </div>
-      </div>
 
-      {!isStaff && (
-        <>
-      {/* Bottom row: Recent Customers, Recent Orders, Pending Bills */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="card hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Customers</h3>
-            <button onClick={() => navigate("/customers")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">View all</button>
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Actions */}
+          <div className="card">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
+            <div className="space-y-1.5">
+              <button onClick={() => navigate("/orders?status=incomplete")}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
+                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Incomplete Orders</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{v(incompleteCount)}</span>
+                  <ArrowRight size={14} className="text-gray-300 dark:text-dark-500 group-hover:text-primary-500 transition-all" />
+                </span>
+              </button>
+              <button onClick={() => navigate("/bills?status=pending")}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
+                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Pending Bills</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-red-600 dark:text-red-400">{v(pendingBillsCount)}</span>
+                  <ArrowRight size={14} className="text-gray-300 dark:text-dark-500 group-hover:text-primary-500 transition-all" />
+                </span>
+              </button>
+              <button onClick={() => navigate("/pickup")}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
+                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Ready for Pickup</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">{v(pickupCount)}</span>
+                  <ArrowRight size={14} className="text-gray-300 dark:text-dark-500 group-hover:text-primary-500 transition-all" />
+                </span>
+              </button>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            {data.recentCustomers.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-5">No customers yet</p>
-            ) : (
-              data.recentCustomers.slice(0, 5).map((c) => (
-                <div key={c._id as string} onClick={() => navigate(`/customers/${c._id as string}`)}
-                  className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
-                      {String(c.name ?? "?").charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{c.name as string}</p>
-                      <p className="text-xs text-gray-400 truncate">{String(c.mobile ?? "—")}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-medium text-gray-400 flex-shrink-0">
-                    {c.createdAt ? new Date(c.createdAt as string).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
-                  </span>
+
+          {/* Recent Customers */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Customers</h3>
+              <button onClick={() => navigate("/customers")}
+                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 px-2 py-1 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+                View all
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {data.recentCustomers.length === 0 ? (
+                <div className="text-center py-6">
+                  <Users size={24} className="text-gray-300 dark:text-dark-500 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">No recent customers</p>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="card hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Recent Orders</h3>
-            <button onClick={() => navigate("/orders")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
-            </button>
-          </div>
-          <div className="space-y-0.5">
-            {data.recentOrders.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-5">No orders yet</p>
-            ) : (
-              data.recentOrders.slice(0, 6).map((o) => {
-                const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
-                return (
-                  <div key={o._id as string} className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 transition-all group">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">
-                        {(cName?.charAt(0) || "?").toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</span>
-                          <span className={`badge text-[10px] px-1.5 py-0.5 ${o.status === "Delivered" ? "badge-green" : o.status === "Cancelled" ? "badge-red" : o.status === "Ready" ? "badge-blue" : o.status === "In Lab" ? "badge-yellow" : "badge-gray"}`}>{String(o.status || "Draft")}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-0.5">
-                          {o.frameBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Glasses size={10} /> {o.frameBrand as string}</span>}
-                          {o.lensBrand && <span className="text-xs text-gray-400 inline-flex items-center gap-1"><Eye size={10} /> {o.lensBrand as string}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="card hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Pending Bills</h3>
-            <button onClick={() => navigate("/bills")} className="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all inline-flex items-center gap-1">
-              View all <ArrowRight size={14} />
-            </button>
-          </div>
-          <div className="space-y-0.5">
-            {data.pendingBills.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-5">No pending bills</p>
-            ) : (
-              data.pendingBills.slice(0, 6).map((b) => {
-                const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "";
-                const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
-                return (
-                  <div key={b._id as string} onClick={() => navigate("/bills")}
-                    className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all group">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-sm flex-shrink-0">
-                        {(cName?.charAt(0) || "?").toUpperCase()}
+              ) : (
+                data.recentCustomers.slice(0, 5).map((c) => (
+                  <div key={v(c._id as string)} onClick={() => navigate(`/customers/${c._id as string}`)}
+                    className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-750 cursor-pointer transition-all">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
+                        {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</p>
-                        {cMobile && <p className="text-xs text-gray-400 truncate">{cMobile}</p>}
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{v(c.name as string)}</p>
+                        <p className="text-xs text-gray-400">{maskPhone(String(c.mobile ?? ""))}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">₹{((b.pendingAmount as number) || 0).toLocaleString()}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0">
+                      {c.createdAt ? new Date(c.createdAt as string).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+                    </span>
                   </div>
-                );
-              })
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
-      </>)}
+
       {showScanner && (
         <CameraScanner
           onScan={(code) => {
