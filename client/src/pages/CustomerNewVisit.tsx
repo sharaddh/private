@@ -382,13 +382,13 @@ export default function CustomerNewVisit() {
   return (
     <div className="min-h-screen" style={{ background: "#121212" }}>
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center justify-between mb-5">
+      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-lg flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(`/customers/${id}`)}
-            className="btn-ghost btn-sm flex items-center gap-1 text-white/50 hover:text-white/70 p-1.5">
-            <ArrowLeft size={18} />
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all">
+            <ArrowLeft size={16} />
           </button>
-          <div className="w-9 h-9 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-400 font-bold text-base">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg shadow-primary-500/20">
             {customer.name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <div>
@@ -396,13 +396,13 @@ export default function CustomerNewVisit() {
             <p className="text-xs text-white/50">{customer.name}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-white/40">
+        <div className="flex items-center gap-1.5 text-xs text-white/40 bg-white/10 px-3 py-1.5 rounded-lg">
           <Clock size={12} />
           <span>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
         </div>
       </div>
 
-      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-2 shadow-lg mb-5">
+      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-2 shadow-lg">
         <div className="flex items-center">
           {steps.map((s, i) => {
             const done = currentIdx > i;
@@ -410,15 +410,15 @@ export default function CustomerNewVisit() {
             return (
               <button key={s.key} disabled={!done && !active}
                 onClick={() => { if (done || active) setStep(s.key); }}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-xs font-medium transition-all relative
+                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all relative
                   ${done ? "text-primary-400 cursor-pointer hover:bg-primary-500/10" : ""}
-                  ${active ? "text-white bg-white/10" : ""}
+                  ${active ? "text-white bg-primary-500/15" : ""}
                   ${!done && !active ? "text-white/30" : ""}`}>
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                  ${done ? "bg-primary-500/15 text-primary-400" : ""}
-                  ${active ? "bg-primary-600 text-white" : ""}
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all
+                  ${done ? "bg-primary-500/20 text-primary-400" : ""}
+                  ${active ? "bg-primary-600 text-white shadow-sm shadow-primary-500/20" : ""}
                   ${!done && !active ? "bg-white/10 text-white/30" : ""}`}>
-                  {done ? <CheckCircle size={14} /> : i + 1}
+                  {done ? <CheckCircle size={15} /> : i + 1}
                 </div>
                 <span className="hidden sm:inline">{s.label}</span>
               </button>
