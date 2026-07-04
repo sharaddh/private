@@ -10,7 +10,7 @@ import {
   ChevronLeft, ChevronRight, Save, Plus, Trash2, Calendar, X,
   Camera, Activity, Search, Clock, FileText, AlertCircle,
   RefreshCw, Maximize2, Circle, Wrench, Percent, MessageCircle,
-  Tag, Grid3X3, ScanLine, FileCheck
+  Tag, Grid3X3, ScanLine, FileCheck, Truck
 } from "lucide-react";
 
 function cleanEyeSet(e: any) {
@@ -211,6 +211,11 @@ export default function CustomerNewVisit() {
     setBillItems((prev) => prev.filter((_, idx) => idx !== i));
   }
 
+  function calcDiscount() {
+    if (discountType === "percent") return (totalAmount * discountPercent) / 100;
+    return discountAmount;
+  }
+
   function searchInventory(q: string, type: "frame", idx: number) {
     if (searchTimer) clearTimeout(searchTimer);
     if (q.length < 2) { setSuggestions([]); setSuggestionsFor(null); return; }
@@ -229,6 +234,8 @@ export default function CustomerNewVisit() {
 
   const stepKeys = steps.map(s => s.key);
   const currentIdx = stepKeys.indexOf(step);
+  const discountVal = calcDiscount();
+  const finalTotal = Math.max(0, totalAmount - discountVal);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -636,16 +643,120 @@ export default function CustomerNewVisit() {
         </div>
       )}
 
-      {step !== "service" && step !== "prescription" && step !== "order" && step !== "billing" && (
-        <div className="flex justify-between pt-4">
-          <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
-            className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
-            <ChevronLeft size={16} /> Back
-          </button>
+      {step === "payment" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Percent size={16} className="text-primary-500" /> Discount
+              </h2>
+              <div className="flex gap-2 mb-3">
+                <button onClick={() => setDiscountType("percent")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "percent" ? "bg-primary-600 text-white shadow-sm" : "text-gray-500"}`}>%</button>
+                <button onClick={() => setDiscountType("amount")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "amount" ? "bg-primary-600 text-white shadow-sm" : "text-gray-500"}`}>₹</button>
+              </div>
+              {discountType === "percent" ? (
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                  <input type="number" placeholder="Discount %" value={discountPercent || ""}
+                    onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    className="input-field text-sm pl-7" />
+                </div>
+              ) : (
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                  <input type="number" placeholder="Discount amount" value={discountAmount || ""}
+                    onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    className="input-field text-sm pl-7" />
+                </div>
+              )}
+              {discountVal > 0 && (
+                <p className="text-xs text-gray-500 mt-2">- ₹{discountVal.toLocaleString()}</p>
+              )}
+            </div>
+
+            <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <CreditCard size={16} className="text-primary-500" /> Payment
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">Mode</label>
+                  <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}
+                    className="input-field text-sm">
+                    {["Cash", "UPI", "Card", "Bank Transfer", "Insurance"].map((m) => (
+                      <option key={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                  <input type="number" placeholder="Amount collected" value={advancePaid || ""}
+                    onChange={(e) => setAdvancePaid(Number(e.target.value))}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    className="input-field text-sm pl-8" />
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-dark-600">
+                  <span className="text-gray-500">Total</span>
+                  <span className="font-medium">₹{totalAmount.toLocaleString()}</span>
+                </div>
+                {discountVal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-red-500">Discount</span>
+                    <span className="font-medium text-red-500">- ₹{discountVal.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-gray-900 dark:text-white">
+                  <span>Final Total</span>
+                  <span>₹{finalTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Collected</span>
+                  <span className="font-semibold">₹{advancePaid.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span className="text-gray-500">Balance</span>
+                  <span className={advancePaid >= finalTotal ? "text-green-600" : "text-amber-600"}>
+                    {advancePaid >= finalTotal ? "₹0 (Paid)" : `₹${Math.max(0, finalTotal - advancePaid).toLocaleString()}`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Truck size={16} className="text-primary-500" /> Delivery
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Delivery Address</label>
+                <textarea placeholder="Address (optional)" value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="input-field text-sm" rows={2} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Expected Delivery Date</label>
+                <input type="date" value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  className="input-field text-sm" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button onClick={() => setStep("confirmation")}
+              className="btn-primary flex items-center gap-2 px-6 py-2.5">
+              Review <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       )}
 
-      {(step === "service" || step === "prescription" || step === "order" || step === "billing") && currentIdx > 0 && (
+      {currentIdx > 0 && (
         <div className="flex justify-between pt-4">
           <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
             className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
