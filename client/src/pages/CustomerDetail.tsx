@@ -278,7 +278,7 @@ export default function CustomerDetail() {
           <p className="text-sm text-gray-500">Pending Amount</p>
         </div>
         <div className="card text-center py-5 flex flex-col items-center justify-center">
-          <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary btn-sm flex items-center gap-2">
+          <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary btn-sm flex items-center gap-2">
             <Plus size={16} /> New Visit
           </button>
           <p className="text-xs text-gray-400 mt-2">with prescription</p>
@@ -370,7 +370,7 @@ export default function CustomerDetail() {
           <div className="card">
             <div className="card-header">
               <h3 className="section-title">All Visits ({visits.length})</h3>
-              <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary btn-sm flex items-center gap-1.5">
+              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary btn-sm flex items-center gap-1.5">
                 <Plus size={15} /> Add Visit
               </button>
             </div>
@@ -416,7 +416,7 @@ export default function CustomerDetail() {
           <div className="space-y-4">
             <div className="card-header">
               <h3 className="section-title">Prescriptions ({prescriptions.length})</h3>
-              <button onClick={() => navigate(`/customers/${id}/new-visit`)} className="btn-primary btn-sm flex items-center gap-1.5">
+              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary btn-sm flex items-center gap-1.5">
                 <Plus size={15} /> Add Prescription
               </button>
             </div>
