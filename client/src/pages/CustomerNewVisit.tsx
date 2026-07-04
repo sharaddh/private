@@ -103,6 +103,7 @@ export default function CustomerNewVisit() {
   const [scanModal, setScanModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
@@ -214,6 +215,84 @@ export default function CustomerNewVisit() {
   function calcDiscount() {
     if (discountType === "percent") return (totalAmount * discountPercent) / 100;
     return discountAmount;
+  }
+
+  async function saveTransaction() {
+    if (savingRef.current) return;
+    setSaving(true);
+    try {
+      const payload: any = { customerId: id };
+
+      if (usePrescription || visitDoctor || visitRemarks || visitDate) {
+        payload.visit = {};
+        if (visitDate) payload.visit.visitDate = visitDate;
+        if (visitDoctor) payload.visit.doctorName = visitDoctor;
+        if (visitRemarks) payload.visit.remarks = visitRemarks;
+        payload.prescription = {
+          rightEye: cleanEyeSet(prescription.rightEye),
+          leftEye: cleanEyeSet(prescription.leftEye),
+          pd: prescription.pd || undefined,
+          notes: prescription.notes || undefined,
+          problems: prescription.problems || undefined,
+        };
+      }
+
+      if (visitType !== "service" && visitType !== "other") {
+        const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
+        const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
+        payload.order = {
+          frame: firstFrame.sku || undefined, frameBrand: firstFrame.brand || undefined,
+          frameModel: firstFrame.model || undefined, frameColor: firstFrame.color || undefined,
+          framePrice: firstFrame.price || 0,
+          lens: firstLens.sku || undefined, lensBrand: firstLens.brand || undefined,
+          lensType: firstLens.features.join(", ") || undefined, lensIndex: firstLens.index || undefined,
+          lensPrice: firstLens.price || 0,
+          coating: firstLens.coating || undefined,
+          accessories: orderAccessories.map((a) => a.name).filter(Boolean),
+          deliveryDate: deliveryDate || undefined,
+        };
+        if (visitType === "frame_change") {
+          delete payload.order.lens; delete payload.order.lensBrand;
+          delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
+          delete payload.order.coating;
+        }
+        if (visitType === "new_lens" || visitType === "contact_lens") {
+          delete payload.order.frame; delete payload.order.frameBrand;
+          delete payload.order.frameModel; delete payload.order.frameColor;
+          delete payload.order.framePrice;
+        }
+        if (visitType === "contact_lens") delete payload.order.coating;
+      }
+
+      const validItems = billItems.filter((i) => i.description && i.price > 0);
+      const discount = calcDiscount();
+      if (validItems.length > 0) {
+        payload.bill = {
+          items: validItems.map((i) => ({ description: i.description, quantity: i.qty || 1, unitPrice: i.price })),
+          subtotal: totalAmount,
+          discount,
+          totalAmount: Math.max(0, totalAmount - discount),
+          advancePaid,
+          pendingAmount: Math.max(0, totalAmount - discount - advancePaid),
+        };
+        payload.payment = { amount: advancePaid, mode: paymentMode };
+      }
+
+      if (deliveryAddress) payload.delivery = { address: deliveryAddress, expectedDeliveryDate: deliveryDate || undefined };
+
+      const res = await api.post("/api/workspace/transaction", payload);
+      if (res.success) {
+        toast.success("Visit created successfully!");
+        savingRef.current = false;
+        navigate(`/customers/${id}?visitId=${res.data?.visit?._id || ""}`);
+      } else {
+        toast.error(res.message || "Failed to save");
+        setSaving(false);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Something went wrong");
+      setSaving(false);
+    }
   }
 
   function searchInventory(q: string, type: "frame", idx: number) {
@@ -843,8 +922,13 @@ export default function CustomerNewVisit() {
             <button onClick={() => setStep("payment")} className="btn-secondary px-4 py-2 text-sm flex items-center gap-1.5">
               <ChevronLeft size={15} /> Back
             </button>
-            <button className="btn-success px-6 py-2.5 text-sm flex items-center gap-2 font-semibold shadow-sm" disabled>
-              <Save size={16} /> Save
+            <button onClick={saveTransaction} disabled={saving || (advancePaid <= 0 && advancePaid < finalTotal)}
+              className="btn-success px-6 py-2.5 text-sm flex items-center gap-2 font-semibold disabled:opacity-50 shadow-sm">
+              {saving ? (
+                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
+              ) : (
+                <><Save size={16} /> Save</>
+              )}
             </button>
           </div>
         </div>
