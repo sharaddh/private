@@ -176,8 +176,8 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div className="card overflow-hidden max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="card overflow-hidden max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
             {useCamera ? <Camera size={18} className="text-primary-600" /> : <Search size={18} className="text-primary-600" />}
