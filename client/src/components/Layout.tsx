@@ -277,10 +277,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       </nav>
 
       {showAddDrawer && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowAddDrawer(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddDrawer(false)}>
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-t-2xl shadow-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-2xl shadow-lg max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-dark-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
