@@ -103,8 +103,6 @@ export default function CustomerNewVisit() {
   const [scanModal, setScanModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [saving, setSaving] = useState(false);
-
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
