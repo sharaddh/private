@@ -151,6 +151,31 @@ export default function CustomerNewVisit() {
       }
       if (settingsRes.success) setSettings(settingsRes.data);
       setLoading(false);
+
+      try {
+        const saved = sessionStorage.getItem(`visitDraft_${id}`);
+        if (saved) {
+          const d = JSON.parse(saved);
+          if (d.step) setStep(d.step);
+          if (d.visitType) setVisitType(d.visitType);
+          if (d.visitDate) setVisitDate(d.visitDate);
+          if (d.visitDoctor !== undefined) setVisitDoctor(d.visitDoctor);
+          if (d.visitRemarks !== undefined) setVisitRemarks(d.visitRemarks);
+          if (d.usePrescription !== undefined) setUsePrescription(d.usePrescription);
+          if (d.prescription) setPrescription(d.prescription);
+          if (d.orderFrames) setOrderFrames(d.orderFrames);
+          if (d.orderLenses) setOrderLenses(d.orderLenses);
+          if (d.orderAccessories) setOrderAccessories(d.orderAccessories);
+          if (d.billItems) setBillItems(d.billItems);
+          if (d.advancePaid !== undefined) setAdvancePaid(d.advancePaid);
+          if (d.paymentMode) setPaymentMode(d.paymentMode);
+          if (d.discountPercent !== undefined) setDiscountPercent(d.discountPercent);
+          if (d.discountAmount !== undefined) setDiscountAmount(d.discountAmount);
+          if (d.discountType) setDiscountType(d.discountType);
+          if (d.deliveryAddress !== undefined) setDeliveryAddress(d.deliveryAddress);
+          if (d.deliveryDate !== undefined) setDeliveryDate(d.deliveryDate);
+        }
+      } catch {}
     })();
   }, [id]);
 
@@ -158,6 +183,12 @@ export default function CustomerNewVisit() {
     const total = billItems.reduce((s, i) => s + i.price * i.qty, 0);
     setTotalAmount(total);
   }, [billItems]);
+
+  useEffect(() => {
+    if (!id || loading) return;
+    const data = { step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate };
+    sessionStorage.setItem(`visitDraft_${id}`, JSON.stringify(data));
+  }, [id, loading, step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate]);
 
   const countdownRef = useRef<any>(null);
   const savingRef = useRef(false);
@@ -283,6 +314,7 @@ export default function CustomerNewVisit() {
       const res = await api.post("/api/workspace/transaction", payload);
       if (res.success) {
         toast.success("Visit created successfully!");
+        sessionStorage.removeItem(`visitDraft_${id}`);
 
         const customerMobile = customer?.mobile || "";
         if (customerMobile && res.data?.bill) {
