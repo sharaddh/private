@@ -168,6 +168,22 @@ export default function CustomerNewVisit() {
     setOrderFrames((prev) => prev.filter((_, idx) => idx !== i));
   }
 
+  function updateLens(i: number, field: string, value: any) {
+    setOrderLenses((prev) => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+  }
+
+  function removeLens(i: number) {
+    setOrderLenses((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function updateAccessory(i: number, field: string, value: any) {
+    setOrderAccessories((prev) => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a));
+  }
+
+  function removeAccessory(i: number) {
+    setOrderAccessories((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
   function searchInventory(q: string, type: "frame", idx: number) {
     if (searchTimer) clearTimeout(searchTimer);
     if (q.length < 2) { setSuggestions([]); setSuggestionsFor(null); return; }
@@ -390,7 +406,7 @@ export default function CustomerNewVisit() {
             ) : (
               <div className="space-y-2">
                 {orderFrames.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2 relative">
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-2">
                       <input placeholder="SKU" value={f.sku}
                         onChange={(e) => { updateFrame(i, "sku", e.target.value); searchInventory(e.target.value, "frame", i); }}
@@ -435,6 +451,92 @@ export default function CustomerNewVisit() {
                       </div>
                     )}
                     <button onClick={() => removeFrame(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Tag size={16} className="text-primary-500" /> Lenses ({orderLenses.length})
+              </h2>
+              <button onClick={() => setOrderLenses((prev) => [...prev, { sku: "", brand: "", features: [], index: "", price: 0, coating: "" }])}
+                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                <Plus size={14} /> Add Lens
+              </button>
+            </div>
+            {orderLenses.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No lenses added yet</p>
+            ) : (
+              <div className="space-y-2">
+                {orderLenses.map((l, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-6 gap-2">
+                      <input placeholder="SKU" value={l.sku}
+                        onChange={(e) => updateLens(i, "sku", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Brand" value={l.brand}
+                        onChange={(e) => updateLens(i, "brand", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Type (comma sep)" value={l.features.join(", ")}
+                        onChange={(e) => updateLens(i, "features", e.target.value.split(",").map((s: string) => s.trim()))}
+                        className="input-field text-xs py-1.5" />
+                      <input placeholder="Index" value={l.index}
+                        onChange={(e) => updateLens(i, "index", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <input type="number" placeholder="Price" value={l.price || ""}
+                          onChange={(e) => updateLens(i, "price", Number(e.target.value))}
+                          onWheel={(e) => (e.target as HTMLElement).blur()}
+                          className="input-field text-xs py-1.5 pl-5" />
+                      </div>
+                      <input placeholder="Coating" value={l.coating}
+                        onChange={(e) => updateLens(i, "coating", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                    </div>
+                    <button onClick={() => removeLens(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-dark-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Grid3X3 size={16} className="text-primary-500" /> Accessories ({orderAccessories.length})
+              </h2>
+              <button onClick={() => setOrderAccessories((prev) => [...prev, { name: "", price: 0 }])}
+                className="btn-primary btn-sm flex items-center gap-1.5 text-xs">
+                <Plus size={14} /> Add Accessory
+              </button>
+            </div>
+            {orderAccessories.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6">No accessories added yet</p>
+            ) : (
+              <div className="space-y-2">
+                {orderAccessories.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-dark-750 rounded-xl px-3 py-2">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <input placeholder="Name" value={a.name}
+                        onChange={(e) => updateAccessory(i, "name", e.target.value)}
+                        className="input-field text-xs py-1.5" />
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
+                        <input type="number" placeholder="Price" value={a.price || ""}
+                          onChange={(e) => updateAccessory(i, "price", Number(e.target.value))}
+                          onWheel={(e) => (e.target as HTMLElement).blur()}
+                          className="input-field text-xs py-1.5 pl-5" />
+                      </div>
+                    </div>
+                    <button onClick={() => removeAccessory(i)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400 flex-shrink-0">
                       <X size={14} />
                     </button>
                   </div>
