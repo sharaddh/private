@@ -4,51 +4,39 @@ export default function PageSkeleton({ page }: { page: string }) {
   switch (page) {
     case "dashboard":
       return (
-        <div className="page-container space-y-6">
+        <div className="bg-white dark:bg-dark-900 min-h-screen space-y-5 px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Skeleton className="h-8 w-56" />
-              <Skeleton className="h-4 w-72" />
+              <Skeleton className="h-6 w-56" />
+              <Skeleton className="h-3 w-48" />
             </div>
           </div>
-          <SkeletonStats count={4} />
-          <SkeletonStatCards count={5} />
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="card p-4 lg:col-span-1">
-              <Skeleton className="h-5 w-16 mb-3" />
-              <Skeleton className="h-8 w-full mb-3 rounded-lg" />
-              <SkeletonList items={4} />
-            </div>
-            <div className="card p-4 lg:col-span-3">
-              <Skeleton className="h-5 w-32 mb-3" />
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="rounded-lg border border-gray-100 dark:border-dark-700 p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Skeleton className="h-4 w-4 rounded" />
-                      <Skeleton className="h-4 w-16 rounded-full" />
-                      <div className="flex-1" />
-                      <Skeleton className="h-4 w-4 rounded" />
-                    </div>
-                    <div className="flex">
-                      <div className="flex-1 space-y-1">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                      <Skeleton className="h-12 w-32" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <SkeletonStats count={7} />
+          <SkeletonStats count={8} />
+          <SkeletonStats count={8} />
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div className="lg:col-span-3"><Skeleton className="h-56 w-full rounded-2xl" /></div>
+            <div className="lg:col-span-2"><Skeleton className="h-56 w-full rounded-2xl" /></div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="card p-4">
-                <Skeleton className="h-5 w-28 mb-3" />
+              <div key={i} className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+                <Skeleton className="h-4 w-28 mb-3" />
                 <SkeletonList items={4} />
               </div>
             ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+                <Skeleton className="h-4 w-28 mb-3" />
+                <SkeletonList items={4} />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+            <Skeleton className="h-4 w-32 mb-3" />
+            <Skeleton className="h-24 w-full rounded-xl" />
           </div>
         </div>
       );
