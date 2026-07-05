@@ -69,7 +69,7 @@ export default function Table({
     <div className="space-y-4">
       {searchable && (
         <div className="relative">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -80,16 +80,16 @@ export default function Table({
         </div>
       )}
 
-      <div className="overflow-x-auto bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-600">
+      <div className="overflow-x-auto bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-dark-600 bg-surface-50 dark:bg-dark-750">
+            <tr className="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
-                  className={`px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${
-                    col.sortable !== false ? "cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none" : ""
+                  className={`px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider ${
+                    col.sortable !== false ? "cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 select-none" : ""
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -101,21 +101,21 @@ export default function Table({
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-dark-700">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {paged.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-4 py-16 text-center text-gray-400"
+                  className="px-4 py-16 text-center text-slate-400"
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <Search size={28} className="text-gray-300 dark:text-gray-600" />
+                    <Search size={28} className="text-slate-300 dark:text-slate-600" />
                     <span className="text-sm">No data available</span>
                   </div>
                 </td>
@@ -125,12 +125,12 @@ export default function Table({
                 <tr
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-surface-50 dark:hover:bg-dark-750 transition-colors ${
+                  className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
                     </td>
                   ))}
@@ -148,14 +148,14 @@ export default function Table({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
@@ -169,7 +169,7 @@ export default function Table({
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     pg === page
                       ? "bg-primary-600 text-white shadow-sm"
-                      : "hover:bg-gray-100 dark:hover:bg-dark-700 text-gray-600 dark:text-gray-400"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   {pg + 1}
@@ -179,7 +179,7 @@ export default function Table({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={16} />
             </button>
