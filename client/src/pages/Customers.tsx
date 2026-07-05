@@ -125,28 +125,28 @@ export default function Customers() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">{filteredList.length} customer(s)</p>
+          <p className="text-sm text-slate-500">{filteredList.length} customer(s)</p>
           {filteredList.map((c) => (
             <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300"
+              className="card cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-300"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
+                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-500/10 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white truncate">{c.name}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-gray-500">
+                    <p className="font-semibold text-slate-900 dark:text-white truncate">{c.name}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
                       {c.mobile && <span className="flex items-center gap-1"><Phone size={12} /> {c.mobile}</span>}
                       {c.email && <span className="truncate">{c.email}</span>}
-                      {c.customerId && <span className="text-xs text-gray-400">ID: {c.customerId}</span>}
+                      {c.customerId && <span className="text-xs text-slate-400">ID: {c.customerId}</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm text-gray-500">{c.totalVisits || 0} visits</p>
+                    <p className="text-sm text-slate-500">{c.totalVisits || 0} visits</p>
                     <p className="text-sm font-semibold text-emerald-600">₹{(c.totalSpent || 0).toLocaleString()}</p>
                     {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-500 font-medium">₹{c.pendingAmount} due</p>}
                   </div>
@@ -161,7 +161,7 @@ export default function Customers() {
                         <Trash2 size={16} />
                       </button>
                     )}
-                    <ArrowRight size={18} className="text-gray-300 dark:text-gray-600 ml-1" />
+                    <ArrowRight size={18} className="text-slate-300 dark:text-slate-600 ml-1" />
                   </div>
                 </div>
               </div>
@@ -170,57 +170,198 @@ export default function Customers() {
         </div>
       )}
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Customer" : "Add Customer"} size="lg">
-        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-2.5 rounded-lg text-sm mb-3">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
-              <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowForm(false)}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editing ? "Edit Customer" : "Add Customer"}</h3>
+              <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"><X size={18} /></button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input type="email" className="input-field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile *</label>
-              <input className="input-field" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alt Mobile</label>
-              <input className="input-field" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
-              <input className="input-field" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
-              <input type="number" className="input-field" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
-              <select className="input-field" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-              <input className="input-field" placeholder="tag1, tag2" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <textarea className="input-field" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            <div className="flex-1 overflow-y-auto p-6">
+              {error && <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 px-3 py-2.5 rounded-xl text-sm mb-3">{error}</div>}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="card p-4">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                    <UserPlus size={16} className="text-primary-500" /> Personal Info
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name *</label>
+                      <input className="input-field text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Age</label>
+                      <input type="number" className="input-field text-sm" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Gender</label>
+                      <select className="input-field text-sm" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                    <Phone size={16} className="text-primary-500" /> Contact
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Mobile *</label>
+                      <input className="input-field text-sm" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Alt Mobile</label>
+                      <input className="input-field text-sm" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Email</label>
+                      <input type="email" className="input-field text-sm" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                    <MapPin size={16} className="text-primary-500" /> Address
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Address</label>
+                      <textarea className="input-field text-sm" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">City</label>
+                      <input className="input-field text-sm" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                    <Tag size={16} className="text-primary-500" /> Tags
+                  </h3>
+                  <input className="input-field text-sm" placeholder="tag1, tag2" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+                  <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
+                  <button type="submit" disabled={isLoading} className="btn-primary shadow-sm">{isLoading ? "Saving..." : editing ? "Update Customer" : "Add Customer"}</button>
+                </div>
+              </form>
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-dark-600">
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Customer"}</button>
+        </div>
+      )}
+
+      <Modal open={showDetail} onClose={() => setShowDetail(false)} title="Customer Details" size="lg">
+        {detailCustomer && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-500/5 to-primary-500/10 rounded-2xl border border-primary-200/50 dark:border-primary-500/10">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-sm">
+                {detailCustomer.name?.charAt(0)?.toUpperCase() || "?"}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{detailCustomer.name}</h2>
+                <p className="text-sm text-slate-500">{detailCustomer.customerId && `ID: ${detailCustomer.customerId}`}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-xl p-3 border border-emerald-100 dark:border-emerald-500/10 text-center">
+                <Activity size={16} className="text-emerald-600 mx-auto mb-1" />
+                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{detailCustomer.totalVisits || 0}</p>
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">Visits</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10 text-center">
+                <DollarSign size={16} className="text-blue-600 mx-auto mb-1" />
+                <p className="text-lg font-bold text-blue-700 dark:text-blue-300">₹{(detailCustomer.totalSpent || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70 font-medium">Spent</p>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10 text-center">
+                <DollarSign size={16} className="text-amber-600 mx-auto mb-1" />
+                <p className="text-lg font-bold text-amber-700 dark:text-amber-300">₹{(detailCustomer.pendingAmount || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 font-medium">Pending</p>
+              </div>
+            </div>
+
+            <div className="card p-4">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                <UserPlus size={16} className="text-primary-500" /> Personal Info
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Age</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.age || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Gender</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.gender || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Member Since</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.createdAt ? new Date(detailCustomer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-4">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                <Phone size={16} className="text-primary-500" /> Contact
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Mobile</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.mobile || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Alt Mobile</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.alternateMobile || "—"}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[11px] text-slate-400 font-medium">Email</p>
+                  <p className="text-slate-700 dark:text-slate-300">{detailCustomer.email || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-4">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                <MapPin size={16} className="text-primary-500" /> Address
+              </h3>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{detailCustomer.address ? `${detailCustomer.address}${detailCustomer.city ? `, ${detailCustomer.city}` : ""}` : "—"}</p>
+            </div>
+
+            {detailCustomer.tags && detailCustomer.tags.length > 0 && (
+              <div className="card p-4">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                  <Tag size={16} className="text-primary-500" /> Tags
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {detailCustomer.tags.map((t, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 rounded-lg text-[11px] font-medium">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+              <button onClick={() => setShowDetail(false)} className="btn-secondary">Close</button>
+              <button onClick={() => { setShowDetail(false); openEdit(detailCustomer); }}
+                className="btn-primary flex items-center gap-2 shadow-sm">
+                <Edit2 size={16} /> Edit
+              </button>
+              <button onClick={() => { setShowDetail(false); navigate(`/customers/${detailCustomer._id}`); }}
+                className="btn-primary flex items-center gap-2 shadow-sm bg-gradient-to-r from-primary-500 to-primary-600">
+                <Eye size={16} /> View Full Profile
+              </button>
+            </div>
           </div>
-        </form>
+        )}
       </Modal>
     </div>
   );
