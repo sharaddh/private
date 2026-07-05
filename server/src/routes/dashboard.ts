@@ -73,9 +73,11 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
     const sameDayLastWeekEnd = new Date(sameDayLastWeek);
     sameDayLastWeekEnd.setDate(sameDayLastWeekEnd.getDate() + 1);
 
-const calcTrend = (current: number, previous: number): string => {
-      if (previous === 0) return current > 0 ? "N/A" : "0";
-      return ((current - previous) / previous * 100).toFixed(1);
+    const calcTrend = (current: number, previous: number): string => {
+      if (!previous) return current > 0 ? "N/A" : "0";
+      const pct = (current - previous) / previous * 100;
+      if (Math.abs(pct) > 1000) return "N/A";
+      return pct.toFixed(1);
     };
 
     const [todaySales, todayCollection, weekSales, monthSales, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders, todayOrdersCount, weekOrdersCount, monthOrdersCount, todayBillsCount, weekBillsCount, monthBillsCount, dailySalesData, paymentModeData, orderStatusData, sameDayLastWeekSales] =

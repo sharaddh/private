@@ -11,10 +11,9 @@ function formatDateLabel(dateStr: string): string {
 
 export function SalesTrendChart({ data, dark }: { data: { date: string; total: number }[]; dark?: boolean }) {
   if (!data || data.length === 0) return null;
-  const mid = Math.floor(data.length / 2);
-  const firstHalf = data.slice(0, mid).reduce((s, d) => s + d.total, 0);
-  const secondHalf = data.slice(mid).reduce((s, d) => s + d.total, 0);
-  const chartTrend = !firstHalf && secondHalf > 0 ? "N/A" : firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf * 100).toFixed(1) : "0";
+  const recent7 = data.slice(-7).reduce((s, d) => s + d.total, 0);
+  const prev7 = data.slice(-14, -7).reduce((s, d) => s + d.total, 0);
+  const chartTrend = !prev7 && recent7 > 0 ? "N/A" : prev7 > 0 ? ((recent7 - prev7) / prev7 * 100).toFixed(1) : "0";
   const trendUp = chartTrend === "N/A" ? true : Number(chartTrend) >= 0;
   return (
     <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300`}>
