@@ -27,6 +27,8 @@ const OrderSchema = new Schema(
     labRemarks: { type: String },
   reviewed: { type: Boolean, default: false },
   classification: { type: String, enum: ["pending", "stock", "buy", "order"], default: "pending" },
+  rightLensStatus: { type: String, enum: ["pending", "stock", "buy", "order"], default: "pending" },
+  leftLensStatus: { type: String, enum: ["pending", "stock", "buy", "order"], default: "pending" },
   },
   { timestamps: true }
 );
