@@ -372,7 +372,7 @@ export default function Dashboard() {
           <div>
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Sales</p>
             <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">Γé╣{(d.todaySales || 0).toLocaleString()}</p>
-            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {Number(d.salesTrend) >= 0 ? "+" : ""}{d.salesTrend}% vs last week</p>
+            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} vs last week</p>
           </div>
           <div>
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Collection</p>
@@ -420,7 +420,7 @@ export default function Dashboard() {
     <div>
       <SectionHeader title="Key Metrics" />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-3">
-        <MetricCard label="Today's Sales" value={`Γé╣${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={`${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
+        <MetricCard label="Today's Sales" value={`Γé╣${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
         <MetricCard label="Today's Collection" value={`Γé╣${(d.todayCollection || 0).toLocaleString()}`} icon={CircleDollarSign} color="#6366f1" subtitle="today" />
         <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
         <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`Γé╣${(d.pendingPayments || 0).toLocaleString()} due`} />

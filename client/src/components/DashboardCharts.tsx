@@ -11,6 +11,11 @@ function formatDateLabel(dateStr: string): string {
 
 export function SalesTrendChart({ data, dark }: { data: { date: string; total: number }[]; dark?: boolean }) {
   if (!data || data.length === 0) return null;
+  const mid = Math.floor(data.length / 2);
+  const firstHalf = data.slice(0, mid).reduce((s, d) => s + d.total, 0);
+  const secondHalf = data.slice(mid).reduce((s, d) => s + d.total, 0);
+  const chartTrend = !firstHalf && secondHalf > 0 ? "N/A" : firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf * 100).toFixed(1) : "0";
+  const trendUp = chartTrend === "N/A" ? true : Number(chartTrend) >= 0;
   return (
     <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300`}>
       <div className="flex items-center justify-between mb-4">
@@ -18,7 +23,7 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
           <h3 className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>Sales Trend</h3>
           <p className={`text-xs ${dark ? "text-white/40" : "text-gray-500"} mt-0.5`}>Last 30 days</p>
         </div>
-        <span className={`text-xs font-medium ${dark ? "text-emerald-400 bg-emerald-500/15" : "text-emerald-600 bg-emerald-50 border border-emerald-200"} px-2 py-0.5 rounded-md`}>+12%</span>
+        <span className={`text-xs font-medium ${dark ? `${trendUp ? "text-emerald-400 bg-emerald-500/15" : "text-red-400 bg-red-500/15"}` : `${trendUp ? "text-emerald-600 bg-emerald-50 border border-emerald-200" : "text-red-600 bg-red-50 border border-red-200"}`} px-2 py-0.5 rounded-md`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
       </div>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
