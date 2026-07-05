@@ -394,12 +394,24 @@ router.delete("/:id", authenticate, audit, async (req, res) => {
 // POST /demand-send — generate demand PDF and send via WhatsApp
 router.post("/demand-send", authenticate, async (req, res) => {
   try {
-    const { type } = req.body;
+    const { type, orderIds } = req.body;
     if (!["buy", "order"].includes(type)) {
       return res.status(400).json({ success: false, message: 'Type must be "buy" or "order"' });
     }
 
-    const orders = await Order.find({ classification: type })
+    // Find orders where either eye matches the type (or legacy classification matches)
+    const query: Record<string, unknown> = {
+      $or: [
+        { rightLensStatus: type },
+        { leftLensStatus: type },
+        { classification: type },
+      ],
+    };
+    if (Array.isArray(orderIds) && orderIds.length > 0) {
+      query._id = { $in: orderIds };
+    }
+
+    const orders = await Order.find(query)
       .populate("customerId", "name mobile")
       .populate("visitId")
       .sort({ createdAt: -1 })
@@ -418,12 +430,84 @@ router.post("/demand-send", authenticate, async (req, res) => {
       ? await Prescription.find({ visitId: { $in: visitIds } }).lean()
       : [];
     const rxMap = new Map(prescriptions.map(p => [p.visitId!.toString(), p]));
-    const enriched = orders.map(o => {
+    const ordersWithRx = orders.map(o => {
       const vid = ((o.visitId as any)?._id || o.visitId)?.toString();
       return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
     });
 
-    const pdfBuffer = await generateDemandPdf(enriched, type);
+    // Build per-eye entries
+    interface DemandEntry {
+      eye: string;
+      customerName: string;
+      lensLabel: string;
+      coating: string;
+      rxStr: string;
+    }
+
+    const entries: DemandEntry[] = [];
+    for (const o of ordersWithRx) {
+      const cName = (o.customerId as any)?.name || "—";
+      const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ") || "—";
+      const coating = o.coating || "—";
+      const rx = o.prescription;
+      const rDV = rx?.rightEye?.dv;
+      const lDV = rx?.leftEye?.dv;
+      const rNV = rx?.rightEye?.nv;
+      const lNV = rx?.leftEye?.nv;
+
+      function formatRxStr(dv: any, nv: any, pd: any): string {
+        const parts: string[] = [];
+        if (dv?.sph != null) {
+          const s = dv.sph > 0 ? `+${dv.sph}` : `${dv.sph}`;
+          const c = dv.cyl != null ? (dv.cyl > 0 ? `/${+dv.cyl}` : `/${dv.cyl}`) : "";
+          const a = dv.axis != null ? `x${dv.axis}` : "";
+          parts.push(`${s}${c}${a}`);
+          if (nv?.sph != null) parts.push(`Add ${(nv.sph - dv.sph).toFixed(2)}`);
+        }
+        if (pd) parts.push(`PD ${pd}`);
+        return parts.join("  ") || "—";
+      }
+
+      const isRight = (o.rightLensStatus as string) === type;
+      const isLeft = (o.leftLensStatus as string) === type;
+
+      if (isRight) {
+        entries.push({
+          eye: "R",
+          customerName: cName,
+          lensLabel,
+          coating,
+          rxStr: formatRxStr(rDV, rNV, rx?.pd),
+        });
+      }
+      if (isLeft) {
+        entries.push({
+          eye: "L",
+          customerName: cName,
+          lensLabel,
+          coating,
+          rxStr: formatRxStr(lDV, lNV, rx?.pd),
+        });
+      }
+      // Fallback for legacy classification
+      if (!isRight && !isLeft && (o.classification as string) === type) {
+        entries.push({
+          eye: "R/L",
+          customerName: cName,
+          lensLabel,
+          coating,
+          rxStr: (rDV?.sph != null || lDV?.sph != null)
+            ? `R: ${formatRxStr(rDV, rNV, "")}  L: ${formatRxStr(lDV, lNV, "")}${rx?.pd ? `  PD ${rx.pd}` : ""}`
+            : "—",
+        });
+      }
+    }
+
+    if (entries.length === 0) {
+      return res.status(404).json({ success: false, message: `No ${type} items found` });
+    }
+
+    const pdfBuffer = await generateDemandPdf(entries, type);
     const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
     const filename = type === "buy" ? "Purchase_List.pdf" : "Lab_Order_List.pdf";
     const caption = type === "buy"
@@ -458,17 +542,10 @@ router.post("/demand-send", authenticate, async (req, res) => {
     if (!sent && waStatus.status === "connected" && !sendError) {
       console.log("Demand PDF sendMedia returned false, trying text fallback");
       try {
-        const items = enriched.map((o: any) => {
-          const cName = o.customerId?.name || "—";
-          const rx = o.prescription;
-          const r = rx?.rightEye?.dv;
-          const l = rx?.leftEye?.dv;
-          const rxStr = r?.sph != null
-            ? `R: ${r.sph}/${r.cyl || 0}x${r.axis || 0}  L: ${l?.sph || 0}/${l?.cyl || 0}x${l?.axis || 0}`
-            : "No Rx";
-          return `${cName} - ${o.frameBrand || ""} ${o.lensBrand || ""} | ${rxStr}`;
-        }).join("\n");
-        const textMsg = `${title}\n\n${items}\n\nTotal: ${enriched.length} items`;
+        const items = entries.map(e =>
+          `${e.eye}  ${e.customerName} - ${e.lensLabel} | ${e.coating} | ${e.rxStr}`
+        ).join("\n");
+        const textMsg = `${title}\n\n${items}\n\nTotal: ${entries.length} items`;
         await whatsapp.sendMessage(normalized, textMsg);
       } catch (e2: any) {
         console.error(`Demand text fallback also failed: ${e2.message}`);
@@ -481,7 +558,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
       waConnected: waStatus.status === "connected",
       phone: normalized,
       filename,
-      count: enriched.length,
+      count: entries.length,
       sizeKB: parseFloat(sizeKB),
       sendError,
     };
