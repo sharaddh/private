@@ -6,7 +6,7 @@ import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users } from "lucide-react";
+import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, DollarSign, Eye } from "lucide-react";
 
 interface Customer {
   _id: string; customerId: string; name: string; email?: string;
@@ -21,6 +21,8 @@ export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
   const [form, setForm] = useState({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -90,31 +92,31 @@ export default function Customers() {
           <h1 className="page-title">Customers</h1>
           <p className="page-subtitle">Search, view, and manage customer profiles.</p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <UserPlus size={18} />
+        <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-sm hover:shadow-lg">
+          <Plus size={18} />
           <span className="hidden sm:inline">Add Customer</span>
           <span className="sm:hidden">Add</span>
         </button>
       </div>
 
       <div className="relative">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input type="text" placeholder="Search by name, mobile, email, or ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="input-field pl-11 text-base bg-white dark:bg-dark-800"
+          className="input-field pl-11 text-base"
         />
       </div>
 
       {filteredList.length === 0 ? (
-        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-dark-500 bg-surface-50/50 dark:bg-dark-750/50">
-          <div className="w-16 h-16 bg-gray-50 dark:bg-dark-750 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users size={32} className="text-gray-300 dark:text-gray-600" />
+        <div className="card text-center py-16 border-dashed border-slate-300 dark:border-slate-600">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users size={32} className="text-slate-300 dark:text-slate-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
             {searchQuery ? "No customers found" : "No customers yet"}
           </h3>
-          <p className="text-sm text-gray-500 mb-5">
+          <p className="text-sm text-slate-500 mb-5">
             {searchQuery ? `No results matching "${searchQuery}"` : "Start by adding your first customer."}
           </p>
           <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
