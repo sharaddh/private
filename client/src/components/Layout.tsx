@@ -141,33 +141,33 @@ export default function Layout({ children }: { children: ReactNode }) {
   const mobileNav = allMobileNav.filter(m => !isStaff || m.staff);
 
   return (
-    <div className="flex h-screen bg-surface-50 dark:bg-dark-900 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {mobileOpen && (
         <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-dark-850 border-r border-gray-200 dark:border-dark-600 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full shadow-sm ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-dark-600">
+      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-700/50 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full shadow-sm ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 bg-primary-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
               <span className="text-white font-bold text-sm">K</span>
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">KMJ Optical</h1>
-                <p className="text-[9px] text-gray-500 font-medium">ERP System</p>
+                <h1 className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">KMJ Optical</h1>
+                <p className="text-[9px] text-slate-500 font-medium">ERP System</p>
               </div>
             )}
           </div>
           <button onClick={() => setSidebarOpen(false)}
-            className={`p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
+            className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
             <ChevronLeft size={14} />
           </button>
           <button onClick={() => setSidebarOpen(true)}
-            className={`p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
+            className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
             <Menu size={14} />
           </button>
-          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 lg:hidden">
+          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 lg:hidden transition-all">
             <X size={14} />
           </button>
         </div>
@@ -178,11 +178,12 @@ export default function Layout({ children }: { children: ReactNode }) {
             const active = isActive(item.path);
             return (
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group ${active
-                  ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium shadow-sm"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-700"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group hover:-translate-y-0.5 ${
+                  active
+                    ? "bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 font-semibold shadow-sm"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50"
                 }`}>
-                <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300"} />
+                <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300"} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
                 {active && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400" />}
               </Link>
@@ -192,38 +193,38 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white dark:bg-dark-850 border-b border-gray-200 dark:border-dark-600 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 shadow-sm">
+        <header className="h-14 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-500 lg:hidden transition-all duration-300">
+            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 lg:hidden transition-all duration-300">
               <Menu size={20} />
             </button>
-            <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-500 hidden lg:flex transition-all duration-300">
+            <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hidden lg:flex transition-all duration-300">
               <Menu size={18} />
             </button>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white hidden sm:block">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white hidden sm:block">
               {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
             </h2>
           </div>
 
           <div ref={searchRef} className="relative flex-1 max-w-xs lg:max-w-sm mx-2 lg:mx-4">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-600 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 shadow-sm" />
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 shadow-sm" />
             {searchOpen && searchQuery.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50 animate-scale-in">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50 animate-scale-in">
                 {searchResults.length > 0 ? (
                   searchResults.map((c) => (
                     <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-700 text-left border-b border-gray-100 dark:border-dark-700 last:border-0 transition-colors">
-                      <div className="w-8 h-8 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left border-b border-slate-100 dark:border-slate-700/30 last:border-0 transition-colors">
+                      <div className="w-8 h-8 bg-primary-50 dark:bg-primary-500/10 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
                         {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{String(c.name ?? "")}</p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{String(c.name ?? "")}</p>
+                        <p className="text-xs text-slate-500 truncate">
                           {c.mobile && <><Phone size={10} className="inline mr-0.5" />{String(c.mobile)} • </>}
                           {String(c.customerId ?? "")}
                         </p>
@@ -231,11 +232,11 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </button>
                   ))
                 ) : (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">No customer found</div>
+                  <div className="px-4 py-6 text-center text-sm text-slate-400">No customer found</div>
                 )}
-                <div className="px-4 pb-3 pt-2 border-t border-gray-100 dark:border-dark-700">
+                <div className="px-4 pb-3 pt-2 border-t border-slate-100 dark:border-slate-700/30">
                   <button onClick={goAddCustomer}
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-all duration-300 shadow-sm hover:shadow-md">
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5">
                     <UserPlus size={15} /> Add New Customer
                   </button>
                 </div>
@@ -252,7 +253,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.4)]">
-        <div className="bg-white dark:bg-dark-850 border-t border-gray-200 dark:border-dark-600">
+        <div className="bg-white dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center justify-around h-[64px] px-2 pb-1">
             {mobileNav.map((item) => {
               const Icon = item.icon;
@@ -263,10 +264,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                   to={item.path}
                   className="nav-link flex-1 max-w-[72px] py-1"
                 >
-                  <div className={`nav-link-icon ${active ? "text-primary-600 dark:text-primary-400" : "text-gray-400 dark:text-gray-500"}`}>
+                  <div className={`nav-link-icon ${active ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500"}`}>
                     <Icon size={active ? 22 : 20} className={`transition-all duration-300 ${active ? "scale-110" : ""}`} />
                   </div>
-                  <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-gray-400 dark:text-gray-500"}`}>
+                  <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-slate-400 dark:text-slate-500"}`}>
                     {item.label}
                   </span>
                 </Link>
@@ -278,51 +279,51 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {showAddDrawer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddDrawer(false)}>
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto bg-white dark:bg-dark-800 rounded-2xl shadow-lg max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-dark-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-200 dark:border-slate-700/50">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
                   <UserPlus size={18} />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">New Customer</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">New Customer</h3>
               </div>
-              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 transition-colors">
+              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors">
                 <X size={18} />
               </button>
             </div>
             <div className="p-6 space-y-4">
               {drawerError && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{drawerError}</div>
+                <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">{drawerError}</div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Full Name *</label>
                 <input className="input-field" value={drawerForm.name}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Enter customer name" autoFocus />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Mobile *</label>
                 <input className="input-field" value={drawerForm.mobile}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, "") }))}
                   placeholder="Phone number" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
                   <input className="input-field" type="email" value={drawerForm.email}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="Email" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Age</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Age</label>
                   <input className="input-field" type="number" value={drawerForm.age}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, age: e.target.value }))}
                     placeholder="Age" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Gender</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
                   <select className="input-field" value={drawerForm.gender}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, gender: e.target.value }))}>
                     <option value="">Select</option>
@@ -332,14 +333,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">City</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">City</label>
                   <input className="input-field" value={drawerForm.city}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
                     placeholder="City" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Address</label>
                 <textarea className="input-field" rows={2} value={drawerForm.address}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Address (optional)" />
