@@ -124,6 +124,19 @@ router.patch("/:id/classify", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: o });
 }));
 
+// PATCH /:id/classify-eye — per-eye lens classification
+router.patch("/:id/classify-eye", authenticate, asyncHandler(async (req, res) => {
+  const { eye, status } = req.body;
+  if (!["right", "left"].includes(eye)) return res.status(400).json({ success: false, message: 'eye must be "right" or "left"' });
+  if (!["pending", "stock", "buy", "order"].includes(status)) return res.status(400).json({ success: false, message: "Invalid status" });
+  const field = eye === "right" ? "rightLensStatus" : "leftLensStatus";
+  const o = await Order.findByIdAndUpdate(req.params.id, { $set: { [field]: status } }, { new: true });
+  if (!o) return res.status(404).json({ success: false, message: "Not found" });
+  invalidateCache("/api/orders");
+  invalidateCache("/api/dashboard");
+  res.json({ success: true, data: o });
+}));
+
 // PATCH /:id/review — toggle reviewed flag
 router.patch("/:id/review", authenticate, asyncHandler(async (req, res) => {
   const o = await Order.findByIdAndUpdate(
@@ -259,143 +272,107 @@ function formatDemandRx(sph?: number, cyl?: number, axis?: number): string {
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
 }
 
-function generateDemandPdf(orders: any[], type: "buy" | "order"): Promise<Buffer> {
+interface DemandEntry {
+  eye: string;
+  customerName: string;
+  lensLabel: string;
+  coating: string;
+  rxStr: string;
+}
+
+function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFKit({ size: "A4", margin: 20 });
+    const doc = new PDFKit({ size: "A4", margins: { top: 25, bottom: 25, left: 22, right: 22 } });
     const buffers: Buffer[] = [];
     doc.on("data", (chunk) => buffers.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
 
     const pw = doc.page.width;
-    const m = 20;
+    const m = 22;
     const cw = pw - 2 * m;
     let y = m;
+    const pageH = doc.page.height;
 
     const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
-    const label = type === "buy" ? "Items to Purchase" : "Items to Order from Lab";
 
-    doc.rect(0, 0, pw, 22).fillColor("#4f46e5").fill();
-    doc.fontSize(16).font("Helvetica-Bold").fillColor("white");
-    doc.text(title, pw / 2, 14, { align: "center" });
+    // ── Header band ──
+    doc.rect(0, 0, pw, 28).fillColor("#1e293b").fill();
+    doc.fontSize(14).font("Helvetica-Bold").fillColor("white");
+    doc.text(title, m, 9, { align: "center" });
 
-    y = 36;
+    // ── Info line ──
+    y = 38;
+    doc.fontSize(8).font("Helvetica").fillColor("#64748b");
+    doc.text(`Date: ${new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}`, m, y);
+    doc.text(`Items: ${entries.length}`, m + 220, y);
+    doc.text(`KMJ Optical`, m + cw - 60, y);
 
-    doc.fontSize(9).font("Helvetica").fillColor("#6b7280");
-    doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, m, y);
-    doc.text(`Total Items: ${orders.length}`, m + 200, y);
-    y += 16;
-
-    orders.forEach((o, idx) => {
-      const cName = o.customerId?.name || "—";
-      const cMobile = o.customerId?.mobile || "";
-      const rx = o.prescription;
-      const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ") || "";
-      const coating = o.coating || "";
-      const qty = o.quantity || 1;
-
-      // Card header
-      doc.rect(m, y, cw, 16).fillColor("#f1f5f9").fill();
-      doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b");
-      doc.text(`#${idx + 1}  ${cName}  ${cMobile}`, m + 6, y + 4);
-      doc.fontSize(8).font("Helvetica").fillColor("#6b7280");
-      doc.text(`Qty: ${qty}`, m + cw - 40, y + 4);
-      y += 16;
-
-      // Items in two columns
-      const leftX = m + 6;
-      const rightX = m + cw / 2 + 6;
-      let col = leftX;
-      let itemY = y;
-
-      if (o.frameBrand) {
-        doc.fontSize(8).font("Helvetica-Bold").fillColor("#4f46e5");
-        doc.text("Frame:", col, itemY);
-        doc.font("Helvetica").fillColor("#374151");
-        doc.text(`${o.frameBrand}${o.frameModel ? ` (${o.frameModel})` : ""}${o.frameColor ? ` - ${o.frameColor}` : ""}`, col + 38, itemY);
-        itemY += 10;
-      }
-
-      if (lensLabel || coating) {
-        doc.fontSize(8).font("Helvetica-Bold").fillColor("#0891b2");
-        doc.text("Lens:", col, itemY);
-        doc.font("Helvetica").fillColor("#374151");
-        doc.text(`${lensLabel}${coating ? ` | Coating: ${coating}` : ""}`, col + 30, itemY);
-        itemY += 10;
-      }
-
-      if (o.accessories?.length) {
-        doc.fontSize(7).font("Helvetica").fillColor("#6b7280");
-        doc.text(`Acc: ${o.accessories.join(", ")}`, col, itemY);
-        itemY += 9;
-      }
-
-      // Prescription on right column
-      const rDV = rx?.rightEye?.dv;
-      const lDV = rx?.leftEye?.dv;
-      const rNV = rx?.rightEye?.nv;
-      const lNV = rx?.leftEye?.nv;
-
-      if (rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null) {
-        let rxY = y;
-        doc.fontSize(7).font("Courier-Bold").fillColor("#374151");
-        doc.text("RX", rightX, rxY);
-        rxY += 9;
-        doc.font("Courier").fillColor("#374151");
-
-        const sameRx =
-          (rDV?.sph === lDV?.sph && rDV?.cyl === lDV?.cyl && rDV?.axis === lDV?.axis) &&
-          (rNV?.sph === lNV?.sph && rNV?.cyl === lNV?.cyl && rNV?.axis === lNV?.axis);
-
-        if (sameRx) {
-          const dv = formatDemandRx(rDV?.sph || lDV?.sph, rDV?.cyl || lDV?.cyl, rDV?.axis || lDV?.axis);
-          const add = (rDV?.sph != null && rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-          doc.text(`${dv}${add ? `  ADD ${add}` : ""}  PD: ${rx?.pd || "—"}`, rightX, rxY);
-          rxY += 9;
-        } else {
-          if (rDV?.sph != null) {
-            const rDv = formatDemandRx(rDV.sph, rDV.cyl, rDV.axis);
-            const addR = (rNV?.sph != null) ? (rNV.sph - rDV.sph).toFixed(2) : null;
-            doc.text(`R: ${rDv}${addR ? `  ADD ${addR}` : ""}`, rightX, rxY);
-            rxY += 9;
-          }
-          if (lDV?.sph != null) {
-            const lDv = formatDemandRx(lDV.sph, lDV.cyl, lDV.axis);
-            const addL = (lNV?.sph != null) ? (lNV.sph - lDV.sph).toFixed(2) : null;
-            doc.text(`L: ${lDv}${addL ? `  ADD ${addL}` : ""}`, rightX, rxY);
-            rxY += 9;
-          }
-          if (rx?.pd) {
-            doc.text(`PD: ${rx.pd}`, rightX, rxY);
-            rxY += 9;
-          }
-        }
-
-        if (rNV?.sph != null || lNV?.sph != null) {
-          if (sameRx) {
-            doc.text(`NV: ${formatDemandRx(rNV?.sph || lNV?.sph, rNV?.cyl || lNV?.cyl, rNV?.axis || lNV?.axis)}`, rightX, rxY);
-          } else {
-            doc.text(`R NV: ${rNV?.sph != null ? formatDemandRx(rNV.sph, rNV.cyl, rNV.axis) : "—"}  L NV: ${lNV?.sph != null ? formatDemandRx(lNV.sph, lNV.cyl, lNV.axis) : "—"}`, rightX, rxY);
-          }
-          rxY += 9;
-        }
-
-        itemY = Math.max(itemY, rxY);
-      }
-
-      y = Math.max(itemY, y + 30) + 6;
-
-      if (y > 270) {
+    function checkPage(h: number) {
+      if (y + h > pageH - 35) {
         doc.addPage();
         y = m;
+        return true;
       }
+      return false;
+    }
+
+    // ── Table header ──
+    y += 14;
+    checkPage(18);
+    doc.rect(m, y, cw, 16).fillColor("#f8fafc").fill();
+    doc.rect(m, y, cw, 16).lineWidth(0.5).strokeColor("#e2e8f0").stroke();
+    doc.fontSize(7).font("Helvetica-Bold").fillColor("#475569");
+    const cols = [
+      { x: m + 6, w: 18 },
+      { x: m + 24, w: 16 },
+      { x: m + 42, w: 64 },
+      { x: m + 108, w: 68 },
+      { x: m + 178, w: 52 },
+      { x: m + 232, w: cw - 238 },
+    ];
+    doc.text("#", cols[0].x, y + 4, { width: cols[0].w });
+    doc.text("Eye", cols[1].x, y + 4, { width: cols[1].w });
+    doc.text("Customer", cols[2].x, y + 4, { width: cols[2].w });
+    doc.text("Lens", cols[3].x, y + 4, { width: cols[3].w });
+    doc.text("Coating", cols[4].x, y + 4, { width: cols[4].w });
+    doc.text("Prescription", cols[5].x, y + 4, { width: cols[5].w });
+    y += 16;
+
+    // ── Rows ──
+    entries.forEach((e, idx) => {
+      const rowH = 18;
+      checkPage(rowH);
+
+      // Row background (alternating)
+      if (idx % 2 === 1) {
+        doc.rect(m, y, cw, rowH).fillColor("#fafafa").fill();
+      }
+
+      // Border
+      doc.rect(m, y, cw, rowH).lineWidth(0.3).strokeColor("#e2e8f0").stroke();
+
+      doc.fontSize(7.5).font("Helvetica").fillColor("#1e293b");
+      doc.text(String(idx + 1), cols[0].x, y + 5, { width: cols[0].w });
+      doc.fontSize(7).font("Helvetica-Bold").fillColor(e.eye === "R" ? "#0891b2" : "#f59e0b");
+      doc.text(e.eye, cols[1].x, y + 5, { width: cols[1].w });
+      doc.fontSize(7).font("Helvetica").fillColor("#1e293b");
+      doc.text(e.customerName, cols[2].x, y + 5, { width: cols[2].w, ellipsis: true });
+      doc.fontSize(7).fillColor("#0891b2");
+      doc.text(e.lensLabel, cols[3].x, y + 5, { width: cols[3].w, ellipsis: true });
+      doc.fontSize(7).fillColor("#6366f1");
+      doc.text(e.coating, cols[4].x, y + 5, { width: cols[4].w, ellipsis: true });
+      doc.fontSize(6.5).font("Courier").fillColor("#475569");
+      doc.text(e.rxStr, cols[5].x, y + 5, { width: cols[5].w });
+
+      y += rowH;
     });
 
-    // Footer
-    if (y < 270) {
-      doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(m, 275).lineTo(pw - m, 275).stroke();
-      doc.fontSize(8).font("Helvetica").fillColor("#9ca3af");
-      doc.text(`Generated by KMJ Optical ERP  |  ${title}`, pw / 2, 283, { align: "center" });
+    // ── Footer ──
+    if (y < pageH - 50) {
+      doc.strokeColor("#cbd5e1").lineWidth(0.5).moveTo(m, y + 8).lineTo(m + cw, y + 8).stroke();
+      doc.fontSize(7).font("Helvetica").fillColor("#94a3b8");
+      doc.text(`Generated by KMJ Optical ERP  |  ${title}  |  ${entries.length} items`, m, y + 14, { align: "center" });
     }
 
     doc.end();
