@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApiGet } from "../hooks/useApi";
@@ -30,7 +30,7 @@ interface DashboardData {
   salesTrend: string;
 }
 
-const v = <T,>(val: T | null | undefined, fallback: T | string = "ΓÇö"): T | string => val ?? fallback;
+const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
 
 const maskPhone = (p: string): string => {
   if (!p || p.length < 6) return v(p) as string;
@@ -40,8 +40,8 @@ const maskPhone = (p: string): string => {
 function formatRx(sph?: number, cyl?: number, axis?: number): string {
   const s = sph != null ? (sph > 0 ? `+${sph}` : `${sph}`) : "";
   const c = cyl != null ? (cyl > 0 ? `+${cyl}` : `${cyl}`) : "";
-  const a = axis != null ? `├ù${axis}` : "";
-  if (!s && !c) return "ΓÇö";
+  const a = axis != null ? `°${axis}` : "";
+  if (!s && !c) return "—";
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
 }
 
@@ -63,7 +63,7 @@ const paymentModeColors: Record<string, string> = {
   Cash: "#10b981", UPI: "#6366f1", Card: "#f59e0b", "Bank Transfer": "#06b6d4",
 };
 
-// ΓöÇΓöÇΓöÇ Sub-components ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Sub-components
 
 function UserAvatar({ name, className = "" }: { name: string; className?: string }) {
   const initial = (name || "?").charAt(0).toUpperCase();
@@ -217,7 +217,7 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
   );
 }
 
-// ΓöÇΓöÇΓöÇ Main Dashboard ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Main Dashboard
 
 export default function Dashboard() {
   const { data, loading, refetch } = useApiGet<DashboardData>("/api/dashboard/stats");
@@ -292,7 +292,7 @@ export default function Dashboard() {
       } else if (d.waConnected === false) {
         toast.error("WhatsApp not connected. Scan QR code on WhatsApp page.");
       } else if (d.queued) {
-        toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued ΓÇö will send when connected`);
+        toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued — will send when connected`);
       } else {
         toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError as string}` : ""}`);
       }
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
   const totalStock = (ss: { shop?: number; warehouse?: number } | null | undefined) => (ss?.shop ?? 0) + (ss?.warehouse ?? 0);
 
-  // ΓöÇΓöÇ Header ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Header
 
   const renderHeader = () => (
     <div className="flex items-center justify-between gap-4">
@@ -339,7 +339,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 mt-1.5 text-sm text-slate-500 dark:text-slate-400">
             <Calendar className="w-3.5 h-3.5" />
             <span>{dateStr}</span>
-            <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
             <Clock className="w-3.5 h-3.5" />
             <span>{timeStr}</span>
           </div>
@@ -361,7 +361,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Hero Section ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Hero Section
 
   const renderHero = () => (
     <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-500 to-indigo-600 dark:from-primary-700 dark:via-primary-600 dark:to-indigo-700 rounded-3xl p-6 md:p-8 shadow-xl shadow-primary-500/20 dark:shadow-primary-900/30">
@@ -371,12 +371,12 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           <div>
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Sales</p>
-            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">Γé╣{(d.todaySales || 0).toLocaleString()}</p>
+            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
             <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} vs last week</p>
           </div>
           <div>
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Collection</p>
-            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">Γé╣{(d.todayCollection || 0).toLocaleString()}</p>
+            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
             <p className="text-white/50 text-xs mt-1.5">{d.newCustomersToday ?? 0} new customers today</p>
           </div>
           <div>
@@ -389,14 +389,14 @@ export default function Dashboard() {
             <p className="text-sm font-semibold text-white mt-3 leading-relaxed">
               Business is performing{Number(d.todaySales) > 0 ? " well today" : " steady today"}.
             </p>
-            <p className="text-white/50 text-xs mt-1">Γé╣{(d.weekSales || 0).toLocaleString()} this week</p>
+            <p className="text-white/50 text-xs mt-1">₹{(d.weekSales || 0).toLocaleString()} this week</p>
           </div>
         </div>
       </div>
     </div>
   );
 
-  // ΓöÇΓöÇ Quick Actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Quick Actions
 
   const renderQuickActions = () => (
     <div>
@@ -414,16 +414,16 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ KPI Metrics ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // KPI Metrics
 
   const renderKPIs = () => (
     <div>
       <SectionHeader title="Key Metrics" />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-3">
-        <MetricCard label="Today's Sales" value={`Γé╣${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
-        <MetricCard label="Today's Collection" value={`Γé╣${(d.todayCollection || 0).toLocaleString()}`} icon={CircleDollarSign} color="#6366f1" subtitle="today" />
+        <MetricCard label="Today's Sales" value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
+        <MetricCard label="Today's Collection" value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={CircleDollarSign} color="#6366f1" subtitle="today" />
         <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
-        <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`Γé╣${(d.pendingPayments || 0).toLocaleString()} due`} />
+        <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
         <MetricCard label="Ready for Pickup" value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle="awaiting collection" />
         <MetricCard label="New Customers" value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle="joined today" />
         <MetricCard label="Low Stock Items" value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle="items need restock" />
@@ -432,7 +432,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Charts ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Charts
 
   const renderCharts = () => {
     if (d.dailySales?.length === 0 && d.orderStatusCounts?.length === 0) return null;
@@ -448,7 +448,7 @@ export default function Dashboard() {
     );
   };
 
-  // ΓöÇΓöÇ Needs Attention ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Needs Attention
 
   const renderNeedsAttention = () => {
     interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
@@ -470,7 +470,7 @@ export default function Dashboard() {
     );
   };
 
-  // ΓöÇΓöÇ Lens Demand ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Lens Demand
 
   const renderLensDemand = () => {
     const allIds = draftOrders.map((o) => o._id as string);
@@ -591,7 +591,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-base font-bold text-slate-900 dark:text-white truncate">{cName || "ΓÇö"}</span>
+                              <span className="text-base font-bold text-slate-900 dark:text-white truncate">{cName || "—"}</span>
                               {!!(cMobile) && <span className="text-sm text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-400 dark:text-slate-500">
@@ -659,7 +659,7 @@ export default function Dashboard() {
     );
   };
 
-  // ΓöÇΓöÇ Recent Orders ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Recent Orders
 
   const renderRecentOrders = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
@@ -670,7 +670,7 @@ export default function Dashboard() {
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title="No orders yet" description="Create your first order to get started." actionLabel="New Order" onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
-          const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
           return (
             <div key={o._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id as string}`)}>
@@ -687,11 +687,11 @@ export default function Dashboard() {
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {o.createdAt ? formatTimeAgo(o.createdAt as string) : ""}
-                  {!!(o.frameBrand) ? ` ┬╖ ${o.frameBrand as string}` : ""}
-                  {!!(o.lensBrand) ? ` ┬╖ ${o.lensBrand as string}` : ""}
+                  {!!(o.frameBrand) ? ` · ${o.frameBrand as string}` : ""}
+                  {!!(o.lensBrand) ? ` · ${o.lensBrand as string}` : ""}
                 </p>
               </div>
-              <StatusBadge status={(o.status as string) || "ΓÇö"} />
+              <StatusBadge status={(o.status as string) || "—"} />
             </div>
           );
         })}
@@ -699,7 +699,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Pending Bills ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Pending Bills
 
   const renderPendingBills = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
@@ -710,7 +710,7 @@ export default function Dashboard() {
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={CircleDollarSign} title="All bills cleared" description="No pending bills to collect." />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
-          const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
           return (
             <div key={b._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
@@ -720,7 +720,7 @@ export default function Dashboard() {
                 {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="text-right flex items-center gap-3 flex-shrink-0">
-                <p className="text-base font-bold text-red-600 dark:text-red-400 whitespace-nowrap">Γé╣{((b.pendingAmount as number) || 0).toLocaleString()}</p>
+                <p className="text-base font-bold text-red-600 dark:text-red-400 whitespace-nowrap">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id as string}`)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
                   Collect
@@ -733,7 +733,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Today's Deliveries ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Today's Deliveries
 
   const renderDeliveries = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
@@ -744,7 +744,7 @@ export default function Dashboard() {
         {d.todayDeliveries.length === 0 ? (
           <EmptyState icon={Truck} title="No deliveries today" description="All deliveries for today are completed." />
         ) : d.todayDeliveries.map((dl, idx) => {
-          const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).mobile as string : "";
           return (
             <div key={dl._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
@@ -759,7 +759,7 @@ export default function Dashboard() {
                 {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <StatusBadge status={(dl.status as string) || "ΓÇö"} />
+                <StatusBadge status={(dl.status as string) || "—"} />
                 <button onClick={() => navigate(`/delivery?order=${dl._id as string}`)}
                   className="p-2.5 rounded-xl text-sm font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
                   <PackageCheck className="w-4 h-4" />
@@ -772,7 +772,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Recent Customers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Recent Customers
 
   const renderRecentCustomers = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
@@ -788,15 +788,15 @@ export default function Dashboard() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{v(c.name as string)}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                <span>{c.mobile ? maskPhone(c.mobile as string) : "ΓÇö"}</span>
-                <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+                <span>{c.mobile ? maskPhone(c.mobile as string) : "—"}</span>
+                <span className="text-slate-300 dark:text-slate-600">·</span>
                 <span>{c.createdAt ? formatTimeAgo(c.createdAt as string) : ""}</span>
-                <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+                <span className="text-slate-300 dark:text-slate-600">·</span>
                 <span>{(c.totalVisits as number) ?? 0} visits</span>
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-base font-bold text-slate-900 dark:text-white">Γé╣{((c.totalSpent as number) || 0).toLocaleString()}</p>
+              <p className="text-base font-bold text-slate-900 dark:text-white">₹{((c.totalSpent as number) || 0).toLocaleString()}</p>
             </div>
           </div>
         ))}
@@ -804,7 +804,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Todo ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Todo
 
   const renderTodo = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5">
@@ -848,7 +848,7 @@ export default function Dashboard() {
     </div>
   );
 
-  // ΓöÇΓöÇ Payments ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Payments
 
   const renderPayments = () => {
     if (!d.paymentModeSplit?.length) return null;
@@ -872,7 +872,7 @@ export default function Dashboard() {
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">{p.mode}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
                 </div>
-                <p className="text-base font-bold text-slate-900 dark:text-white flex-shrink-0">Γé╣{p.total.toLocaleString()}</p>
+                <p className="text-base font-bold text-slate-900 dark:text-white flex-shrink-0">₹{p.total.toLocaleString()}</p>
               </div>
             );
           })}
@@ -881,7 +881,7 @@ export default function Dashboard() {
     );
   };
 
-  // ΓöÇΓöÇ Summary Accordion ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Summary Accordion
 
   const renderSummary = () => {
     const rows: { label: string; value: string | number; color?: string }[] = [
@@ -892,11 +892,11 @@ export default function Dashboard() {
       { label: "Total Inventory", value: d.counts.inventory, color: "#f472b6" },
       { label: "Total Deliveries", value: d.counts.deliveries, color: "#2dd4bf" },
       { label: "Total Visits", value: d.counts.visits, color: "#fb923c" },
-      { label: "Today Sales", value: `Γé╣${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Week Sales", value: `Γé╣${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Month Sales", value: `Γé╣${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Today Collection", value: `Γé╣${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
-      { label: "Pending Payments", value: `Γé╣${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
+      { label: "Today Sales", value: `₹${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Week Sales", value: `₹${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Month Sales", value: `₹${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Today Collection", value: `₹${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
+      { label: "Pending Payments", value: `₹${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
       { label: "Today Orders", value: d.todayOrders, color: "#a78bfa" },
       { label: "Week Orders", value: d.weekOrders, color: "#a78bfa" },
       { label: "Month Orders", value: d.monthOrders, color: "#a78bfa" },
@@ -917,7 +917,7 @@ export default function Dashboard() {
           <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-90" />
           <div className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Summary ΓÇö All Metrics</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Summary — All Metrics</span>
           </div>
           <span className="text-xs text-slate-400 dark:text-slate-500">({rows.length} metrics)</span>
         </summary>
@@ -935,7 +935,7 @@ export default function Dashboard() {
     );
   };
 
-  // ΓöÇΓöÇ Main Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Main Render
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 min-h-screen">
@@ -986,4 +986,3 @@ export default function Dashboard() {
   );
 }
 
-// Dashboard component
