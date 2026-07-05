@@ -9,34 +9,40 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-export function SalesTrendChart({ data }: { data: { date: string; total: number }[] }) {
+export function SalesTrendChart({ data, dark }: { data: { date: string; total: number }[]; dark?: boolean }) {
   if (!data || data.length === 0) return null;
   return (
-    <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-lg">
+    <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-white">Sales Trend</h3>
-          <p className="text-xs text-white/40 mt-0.5">Last 30 days</p>
+          <h3 className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>Sales Trend</h3>
+          <p className={`text-xs ${dark ? "text-white/40" : "text-gray-500"} mt-0.5`}>Last 30 days</p>
         </div>
-        <span className="text-xs font-medium text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md">+12%</span>
+        <span className={`text-xs font-medium ${dark ? "text-emerald-400 bg-emerald-500/15" : "text-emerald-600 bg-emerald-50 border border-emerald-200"} px-2 py-0.5 rounded-md`}>+12%</span>
       </div>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
-              <linearGradient id="salesGradientDark" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 11, fill: "rgba(255,255,255,0.4)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "rgba(255,255,255,0.4)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.4)" : "rgba(107,114,128,0.6)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.4)" : "rgba(107,114,128,0.6)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
             <Tooltip
               labelFormatter={(label) => formatDateLabel(label)}
-              formatter={(value: number) => [`₹${value.toLocaleString()}`, "Sales"]}
-              contentStyle={{ fontSize: 13, borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(15,23,42,0.95)", color: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
+              formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Sales"]}
+              contentStyle={{
+                fontSize: 13, borderRadius: 8,
+                border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
+                background: dark ? "rgba(15,23,42,0.95)" : "#fff",
+                color: dark ? "#fff" : "#111",
+                boxShadow: dark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.08)",
+              }}
             />
-            <Area type="monotone" dataKey="total" stroke="#818cf8" strokeWidth={2} fill="url(#salesGradientDark)" />
+            <Area type="monotone" dataKey="total" stroke="#818cf8" strokeWidth={2} fill="url(#salesGradient)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -44,15 +50,15 @@ export function SalesTrendChart({ data }: { data: { date: string; total: number 
   );
 }
 
-export function OrderStatusDonut({ data }: { data: { status: string; count: number }[] }) {
+export function OrderStatusDonut({ data, dark }: { data: { status: string; count: number }[]; dark?: boolean }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-lg h-full">
+    <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300 h-full`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-white">Order Status</h3>
-          <p className="text-xs text-white/40 mt-0.5">{total} total</p>
+          <h3 className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>Order Status</h3>
+          <p className={`text-xs ${dark ? "text-white/40" : "text-gray-500"} mt-0.5`}>{total} total</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -62,7 +68,12 @@ export function OrderStatusDonut({ data }: { data: { status: string; count: numb
               <Pie data={data} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={28} outerRadius={58} paddingAngle={3}>
                 {data.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
               </Pie>
-              <Tooltip formatter={(value: number) => [value, "Orders"]} contentStyle={{ fontSize: 13, borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(15,23,42,0.95)", color: "#fff" }} />
+              <Tooltip formatter={(value) => [Number(value), "Orders"]} contentStyle={{
+                fontSize: 13, borderRadius: 8,
+                border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
+                background: dark ? "rgba(15,23,42,0.95)" : "#fff",
+                color: dark ? "#fff" : "#111",
+              }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -70,8 +81,8 @@ export function OrderStatusDonut({ data }: { data: { status: string; count: numb
           {data.map((d, i) => (
             <div key={d.status} className="flex items-center gap-2 text-xs">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-              <span className="font-medium text-white/70">{d.status}</span>
-              <span className="text-white/40 ml-auto">{d.count}</span>
+              <span className={`font-medium ${dark ? "text-white/70" : "text-gray-700"}`}>{d.status}</span>
+              <span className={`${dark ? "text-white/40" : "text-gray-400"} ml-auto`}>{d.count}</span>
             </div>
           ))}
         </div>
