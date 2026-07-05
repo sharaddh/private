@@ -68,7 +68,17 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
-    const [todaySales, todayCollection, weekSales, monthSales, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders, todayOrdersCount, weekOrdersCount, monthOrdersCount, todayBillsCount, weekBillsCount, monthBillsCount, dailySalesData, paymentModeData, orderStatusData] =
+    const sameDayLastWeek = new Date(today);
+    sameDayLastWeek.setDate(sameDayLastWeek.getDate() - 7);
+    const sameDayLastWeekEnd = new Date(sameDayLastWeek);
+    sameDayLastWeekEnd.setDate(sameDayLastWeekEnd.getDate() + 1);
+
+    const calcTrend = (current: number, previous: number): string => {
+      if (!previous) return current ? "+100" : "0";
+      return ((current - previous) / previous * 100).toFixed(1);
+    };
+
+    const [todaySales, todayCollection, weekSales, monthSales, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders, todayOrdersCount, weekOrdersCount, monthOrdersCount, todayBillsCount, weekBillsCount, monthBillsCount, dailySalesData, paymentModeData, orderStatusData, sameDayLastWeekSales] =
       await Promise.all([
         Bill.aggregate([
           { $match: { createdAt: { $gte: today, $lt: tomorrow } } },
@@ -179,6 +189,10 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
         Order.aggregate([
           { $group: { _id: "$status", count: { $sum: 1 } } },
         ]),
+        Bill.aggregate([
+          { $match: { createdAt: { $gte: sameDayLastWeek, $lt: sameDayLastWeekEnd } } },
+          { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+        ]),
       ]);
 
     res.json({
@@ -207,6 +221,7 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
         dailySales: dailySalesData.map(d => ({ date: d._id, total: d.total })),
         paymentModeSplit: paymentModeData.map(d => ({ mode: d._id || "Unknown", total: d.total, count: d.count })),
         orderStatusCounts: orderStatusData.map(d => ({ status: d._id, count: d.count })),
+        salesTrend: calcTrend(todaySales[0]?.total || 0, sameDayLastWeekSales[0]?.total || 0),
       },
     });
 }));
