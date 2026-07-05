@@ -256,31 +256,58 @@ export default function Dashboard() {
     fetchTodos();
   }, [fetchTodos]);
 
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedOrders((prev) => {
+  const classifyEye = useCallback(async (id: string, eye: "right" | "left", status: string) => {
+    const res = await api.patch(`/api/orders/${id}/classify-eye`, { eye, status });
+    if (res.success) refetch();
+  }, [refetch]);
+
+  const toggleOrderSelection = useCallback((id: string) => {
+    setSelectedOrders((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }, []);
 
-  const classifyOrder = useCallback(async (id: string, classification: string) => {
-    const res = await api.patch(`/api/orders/${id}/classify`, { classification });
-    if (res.success) refetch();
-  }, [refetch]);
+  const toggleAllOrders = useCallback((ids: string[]) => {
+    setSelectedOrders((prev) => {
+      if (prev.size === ids.length) return new Set();
+      return new Set(ids);
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedOrders(new Set()), []);
 
   const sendDemand = useCallback(async (type: "buy" | "order") => {
+    const selected = Array.from(selectedOrders);
+    if (selected.length === 0) return;
     setSendingDemand(type);
-    const res = await api.post("/api/orders/demand-send", { type });
+    const res = await api.post("/api/orders/demand-send", { type, orderIds: selected });
     setSendingDemand(null);
     if (res.success) {
-      const d = res.data as Record<string, unknown> || res;
-      if (d.sent) toast.success(`${type === "buy" ? "Purchase" : "Lab Order"} list sent to your WhatsApp!`);
-      else if (d.waConnected === false) toast.error("WhatsApp not connected. Scan QR code on WhatsApp page.");
-      else if (d.queued) toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued — will send when connected`);
-      else toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError}` : ""}`);
-    } else toast.error(res.message || "Failed to send");
-  }, [toast]);
+      const d = (res.data as Record<string, unknown>) || res;
+      if (d.sent) {
+        toast.success(type === "buy" ? "Purchase list sent to WhatsApp!" : "Lab order list sent to WhatsApp!");
+      } else if (d.waConnected === false) {
+        toast.error("WhatsApp not connected. Scan QR code on WhatsApp page.");
+      } else if (d.queued) {
+        toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued ΓÇö will send when connected`);
+      } else {
+        toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError as string}` : ""}`);
+      }
+    } else {
+      toast.error(res.message || "Failed to send");
+    }
+  }, [selectedOrders, toast]);
+
+  useEffect(() => {
+    if (showScanner) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showScanner]);
 
   if (loading && !hasDataOnce) return <PageSkeleton page="dashboard" />;
   if (!data) return null;
@@ -291,436 +318,669 @@ export default function Dashboard() {
   const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
 
-  const incompleteCount = data.incompleteOrders.length;
-  const pendingBillsCount = data.pendingBills.length;
-  const pickupCount = data.readyDeliveries ?? 0;
-  const notificationCount = incompleteCount + pendingBillsCount;
-
+  const d = data;
   const activeTodos = todos.filter((t) => !t.done);
   const doneTodos = todos.filter((t) => t.done);
 
-  const formatTimeAgo = (dateStr: string): string => {
-    const d = new Date(dateStr);
-    const diff = Date.now() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  };
+  const draftOrders = d.incompleteOrders.filter((o) => (o.status as string) === "Draft");
 
-  return (
-    <div className="min-h-screen" style={{ background: "#121212" }}>
-      <div className="max-w-6xl mx-auto space-y-8 px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">{greeting}, Store Manager</h1>
-            <p className="text-sm text-white/50 mt-0.5">{dateStr} &bull; {timeStr}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="relative">
-              <Bell size={22} className="text-white/70 hover:text-white transition-all" />
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-lg shadow-red-500/30">{notificationCount > 9 ? "9+" : notificationCount}</span>
-            </button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/20 shadow-lg cursor-pointer hover:ring-white/40 transition-all">
-              SM
-            </div>
+  const totalStock = (ss: { shop?: number; warehouse?: number } | null | undefined) => (ss?.shop ?? 0) + (ss?.warehouse ?? 0);
+
+  // ΓöÇΓöÇ Header ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderHeader = () => (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            {greeting}, <span className="text-primary-600 dark:text-primary-400">Sharad</span>
+          </h1>
+          <div className="flex items-center gap-2 mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{dateStr}</span>
+            <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+            <Clock className="w-3.5 h-3.5" />
+            <span>{timeStr}</span>
           </div>
         </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button onClick={() => navigate("/workspace")}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-md">
+          <Plus className="w-3.5 h-3.5" />
+          New Sale
+        </button>
+        <button onClick={() => setShowScanner(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+          <ScanLine className="w-3.5 h-3.5" />
+          Scan
+        </button>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/20 dark:ring-slate-700 flex-shrink-0">S</div>
+      </div>
+    </div>
+  );
 
-        {!isStaff && (
+  // ΓöÇΓöÇ Hero Section ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderHero = () => (
+    <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-500 to-indigo-600 dark:from-primary-700 dark:via-primary-600 dark:to-indigo-700 rounded-3xl p-6 md:p-8 shadow-xl shadow-primary-500/20 dark:shadow-primary-900/30">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-indigo-300/10 rounded-full blur-2xl" />
+      <div className="relative">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Sales</p>
+            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">Γé╣{(d.todaySales || 0).toLocaleString()}</p>
+            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> +12% vs last week</p>
+          </div>
+          <div>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Collection</p>
+            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">Γé╣{(d.todayCollection || 0).toLocaleString()}</p>
+            <p className="text-white/50 text-xs mt-1.5">{d.newCustomersToday ?? 0} new customers today</p>
+          </div>
+          <div>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Orders</p>
+            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">{d.todayOrders}</p>
+            <p className="text-white/50 text-xs mt-1.5">{d.readyDeliveries ?? 0} ready for pickup</p>
+          </div>
+          <div>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Performance</p>
+            <p className="text-sm font-semibold text-white mt-3 leading-relaxed">
+              Business is performing{Number(d.todaySales) > 0 ? " well today" : " steady today"}.
+            </p>
+            <p className="text-white/50 text-xs mt-1">Γé╣{(d.weekSales || 0).toLocaleString()} this week</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ΓöÇΓöÇ Quick Actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderQuickActions = () => (
+    <div>
+      <SectionHeader title="Quick Actions" />
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+        <QuickActionCard icon={ShoppingCart} label="New Sale" subtitle="Create a new order" onClick={() => navigate("/workspace")} color="#6366f1" />
+        <QuickActionCard icon={UserPlus} label="Customers" subtitle="Manage your clients" onClick={() => navigate("/customers")} color="#10b981" />
+        <QuickActionCard icon={Boxes} label="Inventory" subtitle="Track stock & lenses" onClick={() => navigate("/inventory")} color="#f59e0b" />
+        <QuickActionCard icon={BarChart3} label="Reports" subtitle="View business insights" onClick={() => navigate("/reports")} color="#8b5cf6" />
+        <QuickActionCard icon={Receipt} label="Bills" subtitle="Manage pending payments" onClick={() => navigate("/bills")} color="#ef4444" />
+        <QuickActionCard icon={ClipboardList} label="Orders" subtitle="View all orders" onClick={() => navigate("/orders")} color="#06b6d4" />
+        <QuickActionCard icon={ScanLine} label="Scanner" subtitle="Scan product barcodes" onClick={() => setShowScanner(true)} color="#f97316" />
+        <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle="Send messages & PDFs" onClick={() => navigate("/whatsapp")} color="#22c55e" />
+      </div>
+    </div>
+  );
+
+  // ΓöÇΓöÇ KPI Metrics ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderKPIs = () => (
+    <div>
+      <SectionHeader title="Key Metrics" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-3">
+        <MetricCard label="Today's Sales" value={`Γé╣${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend="+12.4%" subtitle="vs last week" />
+        <MetricCard label="Today's Collection" value={`Γé╣${(d.todayCollection || 0).toLocaleString()}`} icon={CircleDollarSign} color="#6366f1" subtitle="today" />
+        <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
+        <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`Γé╣${(d.pendingPayments || 0).toLocaleString()} due`} />
+        <MetricCard label="Ready for Pickup" value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle="awaiting collection" />
+        <MetricCard label="New Customers" value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle="joined today" />
+        <MetricCard label="Low Stock Items" value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle="items need restock" />
+        <MetricCard label="Total Inventory" value={d.counts.inventory} icon={Boxes} color="#f472b6" subtitle="total SKUs" />
+      </div>
+    </div>
+  );
+
+  // ΓöÇΓöÇ Charts ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderCharts = () => {
+    if (d.dailySales?.length === 0 && d.orderStatusCounts?.length === 0) return null;
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <SalesTrendChart data={d.dailySales || []} dark={dark} />
+        </div>
+        <div className="lg:col-span-2">
+          <OrderStatusDonut data={d.orderStatusCounts || []} dark={dark} />
+        </div>
+      </div>
+    );
+  };
+
+  // ΓöÇΓöÇ Needs Attention ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderNeedsAttention = () => {
+    interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
+    const items: AlertItem[] = [];
+    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: "Pending Bills", value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: "Collect", onClick: () => navigate("/bills") });
+    if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: "Low Stock Items", value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
+    if (draftOrders.length > 0) items.push({ icon: FileText, label: "Draft Orders", value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
+    if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: "Today's Deliveries", value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
+    if (items.length === 0) return null;
+    return (
+      <div>
+        <SectionHeader title="Needs Attention" count={items.length} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {items.map((item) => (
+            <AlertCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} action={item.action} actionLabel={item.actionLabel} onClick={item.onClick} />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ΓöÇΓöÇ Lens Demand ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderLensDemand = () => {
+    const allIds = draftOrders.map((o) => o._id as string);
+
+    return (
+      <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-700/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
+              <Eye className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Lens Demand</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{draftOrders.length} draft{draftOrders.length !== 1 ? "s" : ""} pending classification</p>
+            </div>
+          </div>
+          {selectedOrders.size > 0 && (
+            <button onClick={clearSelection} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+              <X className="w-3.5 h-3.5" /> Clear selection
+            </button>
+          )}
+        </div>
+
+        {draftOrders.length === 0 ? (
+          <EmptyState icon={PackageCheck} title="All clear!" description="No draft orders pending lens classification." actionLabel="Create New Order" onAction={() => navigate("/workspace")} />
+        ) : (
           <>
-            {/* Hero Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="hero-card-sales rounded-2xl p-6" style={{ boxShadow: "0 0 40px rgba(0, 230, 118, 0.15)" }}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-medium tracking-wider text-white/60 uppercase">Total Sales</span>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                    <TrendingUp size={20} className="text-emerald-400" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-white tracking-tight mb-2">₹{(data.todaySales || 0).toLocaleString()}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md">+12% vs last week</span>
-                </div>
-              </div>
-
-              <div className="hero-card-orders rounded-2xl p-6" style={{ boxShadow: "0 0 40px rgba(255, 171, 0, 0.15)" }}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-medium tracking-wider text-white/60 uppercase">Orders in Progress</span>
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <ShoppingCart size={20} className="text-amber-400" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-white tracking-tight mb-2">{v(incompleteCount)}</p>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle size={13} className="text-amber-400" />
-                  <span className="text-xs font-medium text-amber-400">Attention Needed</span>
-                </div>
-              </div>
-
-              <div className="hero-card-payments rounded-2xl p-6" style={{ boxShadow: "0 0 40px rgba(255, 82, 82, 0.15)" }}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-medium tracking-wider text-white/60 uppercase">Pending Payments</span>
-                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                    <Wallet size={20} className="text-red-400" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-white tracking-tight mb-2">₹{(data.pendingPayments || 0).toLocaleString()}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-red-400">Urgent — needs resolution</span>
-                </div>
+            {/* Toolbar */}
+            <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex-wrap">
+              <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors">
+                <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
+                  onChange={() => toggleAllOrders(allIds)}
+                  className="w-4 h-4 rounded accent-primary-600" />
+                Select all ({draftOrders.length})
+              </label>
+              {selectedOrders.size > 0 && (
+                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-3 py-1 rounded-lg">{selectedOrders.size} selected</span>
+              )}
+              <div className="flex-1" />
+              <div className="flex items-center gap-2">
+                <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                  <ShoppingBag className="w-4 h-4" />
+                  {sendingDemand === "buy" ? "Sending..." : "Buy List"}
+                </button>
+                <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                  <Send className="w-4 h-4" />
+                  {sendingDemand === "order" ? "Sending..." : "Lab Order"}
+                </button>
               </div>
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-              <div className="lg:col-span-3">
-                <SalesTrendChart data={data.dailySales} />
-              </div>
-              <div className="lg:col-span-2">
-                <OrderStatusDonut data={data.orderStatusCounts} />
-              </div>
-            </div>
-          </>
-        )}
+            {/* Cards */}
+            <div className="max-h-[800px] overflow-y-auto scrollbar-thin p-5 space-y-4">
+              {draftOrders.map((o) => {
+                const id = o._id as string;
+                const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
+                const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+                const ss = o.stockStatus?.lensBrand;
+                const isSelected = selectedOrders.has(id);
+                const rx = o.prescription as Record<string, unknown> | undefined;
+                const rightEye = rx?.rightEye as Record<string, unknown> | undefined;
+                const leftEye = rx?.leftEye as Record<string, unknown> | undefined;
+                const rDV = rightEye?.dv as Record<string, unknown> | undefined;
+                const lDV = leftEye?.dv as Record<string, unknown> | undefined;
+                const rNV = rightEye?.nv as Record<string, unknown> | undefined;
+                const lNV = leftEye?.nv as Record<string, unknown> | undefined;
+                const rStatus = (o.rightLensStatus as string) || "pending";
+                const lStatus = (o.leftLensStatus as string) || "pending";
 
-        {/* Split View: Incomplete Orders + Pending Bills */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-          {/* Left Panel — Incomplete Orders */}
-          <div className="lg:col-span-3 glass-card p-0 overflow-hidden border-l-4 border-l-amber-500/60">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-              <div>
-                <h3 className="text-sm font-bold text-white">{v(incompleteCount)} Orders Need Attention</h3>
-                <p className="text-xs text-white/40 mt-0.5">Resume these orders to keep things moving</p>
-              </div>
-              <button onClick={() => navigate("/orders")}
-                className="text-xs font-medium text-primary-400 hover:text-primary-300 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 transition-all">
-                View all <ArrowRight size={13} />
-              </button>
-            </div>
-            {data.incompleteOrders.length > 0 && (
-              <div className="flex items-center gap-2 px-5 py-2.5 flex-wrap border-b border-white/[0.06]">
-                {(["pending", "stock", "buy", "order"] as const).map((c) => {
-                  const count = data.incompleteOrders.filter((o) => (o.classification || "pending") === c).length;
+                function formatEyeRx(dv: Record<string, unknown> | undefined, nv: Record<string, unknown> | undefined, pd: unknown): string | null {
+                  const parts: string[] = [];
+                  if (dv?.sph != null) {
+                    parts.push(formatRx(dv.sph as number, dv.cyl as number, dv.axis as number));
+                    if (nv?.sph != null) parts.push(`Add ${((nv.sph as number) - (dv.sph as number)).toFixed(2)}`);
+                    if (dv.va) parts.push(`VA:${dv.va}`);
+                  }
+                  if (nv?.sph != null && dv?.sph == null) {
+                    parts.push(formatRx(nv.sph as number, nv.cyl as number, nv.axis as number));
+                  }
+                  if (pd) parts.push(`PD ${pd}`);
+                  return parts.length ? parts.join("  ") : null;
+                }
+
+                const rRx = formatEyeRx(rDV, rNV, rx?.pd);
+                const lRx = formatEyeRx(lDV, lNV, rx?.pd);
+                const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ");
+
+                const stockTotal = totalStock(ss);
+                const stockColor = stockTotal > 5 ? "emerald" : stockTotal > 0 ? "amber" : "red";
+                const stockLabel = stockTotal > 5 ? "In Stock" : stockTotal > 0 ? "Limited" : "Out of Stock";
+
+                function StockBadge({ color, label }: { color: string; label: string }) {
                   const colors: Record<string, string> = {
-                    pending: "bg-white/5 text-white/50",
-                    stock: "bg-emerald-500/15 text-emerald-300",
-                    buy: "bg-amber-500/15 text-amber-300",
-                    order: "bg-blue-500/15 text-blue-300",
+                    emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/15",
+                    amber: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/15",
+                    red: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/15",
                   };
-                  return (
-                    <span key={c} className={`text-[11px] font-medium px-2 py-0.5 rounded ${colors[c]}`}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}: {count}
-                    </span>
-                  );
-                })}
-                <div className="flex-1" />
-                {(["buy", "order"] as const).map((type) => {
-                  const hasItems = data.incompleteOrders.some((o) => (o.classification || "pending") === type);
-                  return hasItems ? (
-                    <button key={type} onClick={() => sendDemand(type)} disabled={sendingDemand === type}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${type === "buy" ? "bg-amber-500/20 text-amber-300 hover:bg-amber-500/30" : "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"}`}>
-                      <Send size={12} />
-                      {sendingDemand === type ? "Sending..." : `Send ${type === "buy" ? "Purchase" : "Lab Order"}`}
-                    </button>
-                  ) : null;
-                })}
-              </div>
-            )}
-            <div className="divide-y divide-white/[0.04] max-h-[420px] overflow-y-auto scrollbar-thin">
-              {data.incompleteOrders.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-8">All orders complete</p>
-              ) : (
-                data.incompleteOrders.map((o) => {
-                  const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
-                  const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
-                  const isExpanded = expandedOrders.has(o._id as string);
-                  const demand = o.prescription ? buildDemand(o.prescription, o) : null;
-                  const cls = (o.classification as string) || "pending";
-                  return (
-                    <div key={o._id as string}>
-                      <div className="px-5 py-3.5 hover:bg-white/[0.03] transition-all">
+                  return <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border whitespace-nowrap ${colors[color] || colors.red}`}>{label}</span>;
+                }
+
+                return (
+                  <div
+                    key={id}
+                    className={`bg-white dark:bg-slate-900/50 border rounded-2xl p-5 shadow-sm transition-all duration-300 ${
+                      isSelected
+                        ? "border-primary-300 dark:border-primary-500/40 shadow-md ring-1 ring-primary-200 dark:ring-primary-500/20"
+                        : "border-slate-200 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-0.5"
+                    }`}
+                  >
+                    {/* Top row */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
+                        className="w-4 h-4 mt-1 rounded accent-primary-600 cursor-pointer flex-shrink-0" />
+                      <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/50 text-xs font-bold flex-shrink-0">
-                              {(cName?.charAt(0) || "?").toUpperCase()}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-base font-bold text-slate-900 dark:text-white truncate">{cName || "ΓÇö"}</span>
+                              {!!(cMobile) && <span className="text-sm text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-white truncate">{v(cName)}</span>
-                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${o.status === "Draft" ? "bg-white/10 text-white/50" : o.status === "Ordered" ? "bg-purple-500/20 text-purple-300" : "bg-amber-500/20 text-amber-300"}`}>{v(o.status as string, "Draft")}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-white/40 mt-0.5">
-                                {cMobile && <span>{maskPhone(cMobile)}</span>}
-                                {o.createdAt && <span>&bull; {formatTimeAgo(o.createdAt as string)}</span>}
-                                {o.frameBrand && <span><Glasses size={10} className="inline mr-0.5" />{o.frameBrand as string}</span>}
-                              </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-400 dark:text-slate-500">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{o.createdAt ? formatTimeAgo(o.createdAt as string) : ""}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <button onClick={() => navigate(`/workspace?order=${o._id as string}`)}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/20 transition-all">
-                              Resume Order
-                            </button>
-                            <button onClick={() => toggleExpand(o._id as string)}
-                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/70 transition-all">
-                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </button>
-                          </div>
-                        </div>
-                        {isExpanded && (
-                          <div className="mt-3 pt-3 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
-                            {demand && <div className="col-span-full text-xs font-medium text-white/60 mb-1">{demand.heading} — {demand.lines.join(", ")}{demand.footer ? ` (${demand.footer})` : ""}</div>}
-                            {!demand && o.lensBrand && <Detail label="Lens" value={o.lensBrand as string} />}
-                            {o.frameBrand && <Detail label="Frame" value={`${o.frameBrand as string}${o.frameModel ? ` (${o.frameModel as string})` : ""}`} />}
-                            {o.frameColor && <Detail label="Color" value={o.frameColor as string} />}
-                            {o.frameSize && <Detail label="Size" value={o.frameSize as string} />}
-                            {o.framePrice != null && <Detail label="Frame Price" value={`₹${(o.framePrice as number).toLocaleString()}`} />}
-                            {o.lensType && <Detail label="Lens Type" value={o.lensType as string} />}
-                            {o.lensIndex && <Detail label="Index" value={o.lensIndex as string} />}
-                            {o.lensPrice != null && <Detail label="Lens Price" value={`₹${(o.lensPrice as number).toLocaleString()}`} />}
-                            {o.coating && <Detail label="Coating" value={o.coating as string} />}
-                            {(o.accessories as string[])?.length > 0 && <Detail label="Accessories" value={(o.accessories as string[]).join(", ")} />}
-                            {o.quantity != null && <Detail label="Qty" value={String(o.quantity)} />}
-                            {o.labAssigned && <Detail label="Lab" value={o.labAssigned as string} />}
-                            {o.labExpectedDate && <Detail label="Lab ETA" value={new Date(o.labExpectedDate as string).toLocaleDateString("en-IN")} />}
-                            {o.deliveryDate && <Detail label="Delivery" value={new Date(o.deliveryDate as string).toLocaleDateString("en-IN")} />}
-                            <div className="col-span-full flex items-center gap-2 mt-1">
-                              {(["stock", "order", "buy"] as const).map((c) => (
-                                <button key={c} onClick={() => classifyOrder(o._id as string, cls === c ? "pending" : c)}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-150 ${
-                                    cls === c
-                                      ? c === "stock" ? "bg-emerald-500/30 text-emerald-300"
-                                        : c === "order" ? "bg-blue-500/30 text-blue-300"
-                                        : "bg-amber-500/30 text-amber-300"
-                                      : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
-                                  }`}>
-                                  {c === "stock" ? "Stock" : c === "order" ? "Order" : "Buy"}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Right Panel — Pending Bills + Quick Actions */}
-          <div className="lg:col-span-2 space-y-5">
-            {/* Pending Bills */}
-            <div className="glass-card p-0 overflow-hidden border-l-4 border-l-red-500/60">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-                <div>
-                  <h3 className="text-sm font-bold text-white">Outstanding Bills</h3>
-                  <p className="text-xs text-white/40 mt-0.5">{v(pendingBillsCount)} bills pending</p>
-                </div>
-                <button onClick={() => navigate("/bills")}
-                  className="text-xs font-medium text-primary-400 hover:text-primary-300 px-3 py-1.5 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 transition-all">
-                  View all
-                </button>
-              </div>
-              <div className="divide-y divide-white/[0.04] max-h-[280px] overflow-y-auto scrollbar-thin">
-                {data.pendingBills.length === 0 ? (
-                  <p className="text-white/30 text-sm text-center py-8">No pending bills</p>
-                ) : (
-                  data.pendingBills.slice(0, 6).map((b) => {
-                    const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "";
-                    const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
-                    return (
-                      <div key={v(b._id as string)} className="px-5 py-3.5 hover:bg-white/[0.03] transition-all">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-white">{cName || "—"}</p>
-                            {cMobile && <p className="text-xs text-white/40 mt-0.5">{maskPhone(cMobile)}</p>}
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-sm font-bold text-red-400">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
-                            <button
-                              className="text-[11px] font-medium text-primary-400 hover:text-primary-300 mt-1 px-2 py-0.5 rounded bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 transition-all">
-                              Send Reminder
+                            <StatusBadge status={(o.status as string) || "Draft"} />
+                            <button onClick={() => navigate(`/workspace?order=${id}`)}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-sm">
+                              Open <ArrowUpRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Low Stock Alert */}
-            {(data.lowStock ?? 0) > 0 && (
-              <div className="glass-card border-l-4 border-l-red-500/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                    <AlertTriangle size={18} className="text-red-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">Low Stock Alert</p>
-                    <p className="text-xs text-white/50">{v(data.lowStock)} items running low</p>
-                  </div>
-                  <button onClick={() => navigate("/inventory")}
-                    className="text-xs font-medium text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all">
-                    View
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* To-Do */}
-            <div className="glass-card">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-white">To-Do</h3>
-                <span className="text-xs font-medium text-white/50 bg-white/10 px-2 py-0.5 rounded">{activeTodos.length} pending</span>
-              </div>
-              <div className="flex items-center gap-2 mb-3">
-                <input type="text" placeholder="Add a task..." value={newTask}
-                  onChange={(e) => setNewTask(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addTodo()}
-                  className="pos-input flex-1" />
-                <button onClick={addTodo} disabled={!newTask.trim()}
-                  className="p-2.5 bg-primary-500/20 hover:bg-primary-500/30 disabled:opacity-40 rounded-xl text-primary-300 border border-primary-500/20 transition-all">
-                  <Plus size={16} />
-                </button>
-              </div>
-              <div className="space-y-0.5 max-h-[200px] overflow-y-auto scrollbar-thin pr-1">
-                {todos.length === 0 ? (
-                  <p className="text-white/30 text-sm text-center py-4">No tasks yet</p>
-                ) : (
-                  [...activeTodos, ...doneTodos].map((t) => (
-                    <div key={t._id as string} className={`flex items-center gap-2 py-2 px-2.5 rounded-lg hover:bg-white/[0.04] group transition-all ${t.done ? "opacity-40" : ""}`}>
-                      <button onClick={() => toggleTodo(t._id as string, t.done as boolean)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500/50 border-emerald-500/50" : "border-white/20 hover:border-primary-400"}`}>
-                        {t.done && <Check size={10} className="text-white" />}
-                      </button>
-                      <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-white/30" : "text-white/70"}`}>
-                        {t.task as string}
-                      </span>
-                      <button onClick={() => deleteTodo(t._id as string)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-all">
-                        <Trash2 size={13} />
-                      </button>
                     </div>
-                  ))
-                )}
-              </div>
+
+                    {/* Lens details */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 px-1">
+                      {!!(o.frameBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Frame:</span> {o.frameBrand as string}</span>}
+                      {!!(o.lensBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Lens:</span> {o.lensBrand as string}</span>}
+                      {!!(o.lensType) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Type:</span> {o.lensType as string}</span>}
+                      {!!(o.lensIndex) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Index:</span> {o.lensIndex as string}</span>}
+                      {!!(lensLabel) && !o.frameBrand && !o.lensBrand && <span className="text-sm text-slate-500 dark:text-slate-400">{lensLabel}</span>}
+                    </div>
+
+                    {/* Eye panels */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { eye: "right" as const, label: "RIGHT EYE", rxStr: rRx, status: rStatus, panelBg: "bg-cyan-50/50 dark:bg-cyan-500/5 border-cyan-100 dark:border-cyan-500/10", labelColor: "text-cyan-700 dark:text-cyan-300" },
+                        { eye: "left" as const, label: "LEFT EYE", rxStr: lRx, status: lStatus, panelBg: "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10", labelColor: "text-amber-700 dark:text-amber-300" },
+                      ].map((e) => (
+                        <div key={e.eye} className={`${e.panelBg} border rounded-xl p-4`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`text-xs font-extrabold tracking-wider ${e.labelColor}`}>{e.label}</span>
+                            <StockBadge color={stockColor} label={stockLabel} />
+                          </div>
+                          <div className="mb-3">
+                            {e.rxStr ? (
+                              <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200 break-all">{e.rxStr}</span>
+                            ) : (
+                              <span className="text-sm text-slate-400 dark:text-slate-600">No prescription</span>
+                            )}
+                          </div>
+                          <SegmentedControl
+                            options={[
+                              { label: "Stock", value: "stock" },
+                              { label: "Buy", value: "buy" },
+                              { label: "Order", value: "order" },
+                            ]}
+                            value={e.status}
+                            onChange={(s) => classifyEye(id, e.eye, s)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
+    );
+  };
 
-      {/* Floating Quick Actions */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
-        <button onClick={() => navigate("/workspace")} title="New Sale"
-          className="floating-action-btn bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40">
-          <Plus size={22} />
-        </button>
-        <button onClick={() => setShowScanner(true)} title="Scan Barcode"
-          className="floating-action-btn bg-white/10 text-white/80 hover:bg-white/20 hover:text-white">
-          <ScanLine size={22} />
-        </button>
-        <button onClick={() => navigate("/inventory")} title="View Inventory"
-          className="floating-action-btn bg-white/10 text-white/80 hover:bg-white/20 hover:text-white">
-          <Package size={20} />
-        </button>
-        <button onClick={() => navigate("/reports")} title="Print Report"
-          className="floating-action-btn bg-white/10 text-white/80 hover:bg-white/20 hover:text-white">
-          <Printer size={20} />
-        </button>
+  // ΓöÇΓöÇ Recent Orders ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderRecentOrders = () => (
+    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+        <SectionHeader title="Recent Orders" count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel="View all" />
       </div>
-
-      {showScanner && (
-        <CameraScanner
-          onScan={(code) => {
-            setShowScanner(false);
-            navigate(`/inventory/scan/${encodeURIComponent(code)}`);
-          }}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
+      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+        {d.recentOrders.length === 0 ? (
+          <EmptyState icon={ClipboardList} title="No orders yet" description="Create your first order to get started." actionLabel="New Order" onAction={() => navigate("/workspace")} />
+        ) : d.recentOrders.map((o, idx) => {
+          const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+          return (
+            <div key={o._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id as string}`)}>
+              <div className="relative flex-shrink-0">
+                <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
+                  <div className={`w-2 h-2 rounded-full ${o.status === "Delivered" ? "bg-emerald-500" : o.status === "Draft" ? "bg-slate-400" : o.status === "Ordered" ? "bg-purple-500" : o.status === "Ready" ? "bg-blue-500" : "bg-amber-500"}`} />
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
+                  {!!(cMobile) && <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {o.createdAt ? formatTimeAgo(o.createdAt as string) : ""}
+                  {!!(o.frameBrand) ? ` ┬╖ ${o.frameBrand as string}` : ""}
+                  {!!(o.lensBrand) ? ` ┬╖ ${o.lensBrand as string}` : ""}
+                </p>
+              </div>
+              <StatusBadge status={(o.status as string) || "ΓÇö"} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
-}
 
-function formatRx(sph?: number, cyl?: number, axis?: number): string {
-  const s = sph != null ? (sph > 0 ? `+${sph}` : `${sph}`) : "";
-  const c = cyl != null ? (cyl > 0 ? `+${cyl}` : `${cyl}`) : "";
-  const a = axis != null ? `×${axis}` : "";
-  if (!s && !c) return "—";
-  return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
-}
+  // ΓöÇΓöÇ Pending Bills ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-function buildDemand(rx: Record<string, unknown>, order: Record<string, unknown>): { heading: string; lines: string[]; footer: string } | null {
-  const right = rx?.rightEye as Record<string, unknown> | undefined;
-  const left = rx?.leftEye as Record<string, unknown> | undefined;
-  const rDV = right?.dv as Record<string, unknown> | undefined;
-  const lDV = left?.dv as Record<string, unknown> | undefined;
-  const rNV = right?.nv as Record<string, unknown> | undefined;
-  const lNV = left?.nv as Record<string, unknown> | undefined;
+  const renderPendingBills = () => (
+    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+        <SectionHeader title="Pending Bills" count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel="View all" />
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+        {d.pendingBills.length === 0 ? (
+          <EmptyState icon={CircleDollarSign} title="All bills cleared" description="No pending bills to collect." />
+        ) : d.pendingBills.slice(0, 6).map((b, idx) => {
+          const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
+          return (
+            <div key={b._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+              <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
+              </div>
+              <div className="text-right flex items-center gap-3 flex-shrink-0">
+                <p className="text-base font-bold text-red-600 dark:text-red-400 whitespace-nowrap">Γé╣{((b.pendingAmount as number) || 0).toLocaleString()}</p>
+                <button onClick={() => navigate(`/bills?id=${b._id as string}`)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+                  Collect
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-  const hasRx = rDV?.sph != null || lDV?.sph != null || rNV?.sph != null || lNV?.sph != null;
-  if (!hasRx) return null;
+  // ΓöÇΓöÇ Today's Deliveries ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  const lensLabel = [order.lensBrand, order.lensType, order.lensIndex].filter(Boolean).join(" ") || "";
+  const renderDeliveries = () => (
+    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+        <SectionHeader title="Today's Deliveries" count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel="View all" />
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+        {d.todayDeliveries.length === 0 ? (
+          <EmptyState icon={Truck} title="No deliveries today" description="All deliveries for today are completed." />
+        ) : d.todayDeliveries.map((dl, idx) => {
+          const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "ΓÇö";
+          const cMobile = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).mobile as string : "";
+          return (
+            <div key={dl._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+              <div className="relative flex-shrink-0">
+                <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
+                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-emerald-500" : dl.status === "Ready" ? "bg-blue-500" : dl.status === "In Transit" ? "bg-purple-500" : "bg-amber-500"}`} />
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <StatusBadge status={(dl.status as string) || "ΓÇö"} />
+                <button onClick={() => navigate(`/delivery?order=${dl._id as string}`)}
+                  className="p-2.5 rounded-xl text-sm font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+                  <PackageCheck className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-  function rxStr(e: string, dv: Record<string, unknown> | undefined, nv: Record<string, unknown> | undefined): string {
-    const parts: string[] = [];
-    if (dv?.sph != null) {
-      let s = formatRx(dv.sph as number, dv.cyl as number, dv.axis as number);
-      if (dv.va) s += ` VA:${dv.va}`;
-      parts.push(s);
-    }
-    if (nv?.sph != null) {
-      let s = formatRx(nv.sph as number, nv.cyl as number, nv.axis as number);
-      if (dv?.sph != null && nv.sph !== dv.sph) {
-        const add = ((nv.sph as number) - (dv.sph as number)).toFixed(2);
-        s += ` Add ${add}`;
-      }
-      if (nv.va) s += ` VA:${nv.va}`;
-      parts.push(s);
-    }
-    return parts.join(" | ");
-  }
+  // ΓöÇΓöÇ Recent Customers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  function eyeMatch(a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined): boolean {
-    if (!a && !b) return true;
-    if (!a || !b) return false;
-    return a.sph === b.sph && a.cyl === b.cyl && a.axis === b.axis;
-  }
+  const renderRecentCustomers = () => (
+    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+        <SectionHeader title="Recent Customers" count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel="View all" />
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+        {d.recentCustomers.length === 0 ? (
+          <EmptyState icon={Users} title="No customers yet" description="Start by adding your first customer." actionLabel="Add Customer" onAction={() => navigate("/customers")} />
+        ) : d.recentCustomers.map((c, idx) => (
+          <div key={c._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id as string}`)}>
+            <UserAvatar name={(c.name as string) || "?"} className="w-10 h-10 text-sm" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{v(c.name as string)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                <span>{c.mobile ? maskPhone(c.mobile as string) : "ΓÇö"}</span>
+                <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+                <span>{c.createdAt ? formatTimeAgo(c.createdAt as string) : ""}</span>
+                <span className="text-slate-300 dark:text-slate-600">┬╖</span>
+                <span>{(c.totalVisits as number) ?? 0} visits</span>
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-base font-bold text-slate-900 dark:text-white">Γé╣{((c.totalSpent as number) || 0).toLocaleString()}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-  const sameRx = eyeMatch(rDV, lDV) && eyeMatch(rNV, lNV);
-  const heading = sameRx ? `1p ${lensLabel}`.trim() : `1/2p ${lensLabel}`.trim();
+  // ΓöÇΓöÇ Todo ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  const lines: string[] = [];
-  if (sameRx) {
-    const rxLine = rxStr("R", rDV || lDV, rNV || lNV);
-    if (rxLine) lines.push(rxLine);
-  } else {
-    const rLine = rxStr("R", rDV, rNV);
-    const lLine = rxStr("L", lDV, lNV);
-    if (rLine) lines.push(`R: ${rLine}`);
-    if (lLine) lines.push(`L: ${lLine}`);
-  }
+  const renderTodo = () => (
+    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
+            <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">To-Do</h3>
+        </div>
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">{activeTodos.length} pending</span>
+      </div>
+      <div className="flex items-center gap-2 mb-4">
+        <input type="text" placeholder="Add a task..." value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addTodo()}
+          className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+        <button onClick={addTodo} disabled={!newTask.trim()}
+          className="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 disabled:opacity-40 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/20 transition-all hover:shadow-md hover:-translate-y-0.5">
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-thin pr-1">
+        {todos.length === 0 ? (
+          <EmptyState icon={CheckSquare} title="No tasks yet" description="Add a task above to get started." />
+        ) : (
+          [...activeTodos, ...doneTodos].map((t) => (
+            <div key={t._id as string} className={`flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.03] group transition-all ${t.done ? "opacity-40" : ""}`}>
+              <button onClick={() => toggleTodo(t._id as string, !!(t.done))}
+                className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-slate-300 dark:border-slate-600 hover:border-primary-400"}`}>
+                {!!(t.done) && <Check className="w-3 h-3 text-white" />}
+              </button>
+              <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-300"}`}>{t.task as string}</span>
+              <button onClick={() => deleteTodo(t._id as string)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 
-  const coating = order.coating ? `Coating: ${order.coating}` : "";
-  const pd = rx.pd ? `PD ${rx.pd}` : "";
-  const footer = [coating, pd].filter(Boolean).join(" · ");
+  // ΓöÇΓöÇ Payments ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-  return { heading, lines, footer };
-}
+  const renderPayments = () => {
+    if (!d.paymentModeSplit?.length) return null;
+    return (
+      <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+            <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Today's Payments</h3>
+        </div>
+        <div className="space-y-2.5">
+          {d.paymentModeSplit.map((p) => {
+            const Icon = paymentModeIcon[p.mode] || CircleDollarSign;
+            return (
+              <div key={p.mode} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-100 dark:border-slate-700/30 hover:shadow-sm transition-all">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#6366f1"}15` }}>
+                  <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#6366f1" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{p.mode}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
+                </div>
+                <p className="text-base font-bold text-slate-900 dark:text-white flex-shrink-0">Γé╣{p.total.toLocaleString()}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
-function Detail({ label, value }: { label: string; value: string }) {
+  // ΓöÇΓöÇ Summary Accordion ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  const renderSummary = () => {
+    const rows: { label: string; value: string | number; color?: string }[] = [
+      { label: "Total Customers", value: d.counts.customers, color: "#60a5fa" },
+      { label: "Total Orders", value: d.counts.orders, color: "#a78bfa" },
+      { label: "Total Bills", value: d.counts.bills, color: "#34d399" },
+      { label: "Total Payments", value: d.counts.payments, color: "#fbbf24" },
+      { label: "Total Inventory", value: d.counts.inventory, color: "#f472b6" },
+      { label: "Total Deliveries", value: d.counts.deliveries, color: "#2dd4bf" },
+      { label: "Total Visits", value: d.counts.visits, color: "#fb923c" },
+      { label: "Today Sales", value: `Γé╣${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Week Sales", value: `Γé╣${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Month Sales", value: `Γé╣${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: "Today Collection", value: `Γé╣${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
+      { label: "Pending Payments", value: `Γé╣${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
+      { label: "Today Orders", value: d.todayOrders, color: "#a78bfa" },
+      { label: "Week Orders", value: d.weekOrders, color: "#a78bfa" },
+      { label: "Month Orders", value: d.monthOrders, color: "#a78bfa" },
+      { label: "Today Bills", value: d.todayBills, color: "#34d399" },
+      { label: "Week Bills", value: d.weekBills, color: "#34d399" },
+      { label: "Month Bills", value: d.monthBills, color: "#34d399" },
+      { label: "Ready for Pickup", value: d.readyDeliveries ?? 0, color: "#2dd4bf" },
+      { label: "New Customers Today", value: d.newCustomersToday ?? 0, color: "#60a5fa" },
+      { label: "Low Stock Items", value: d.lowStock ?? 0, color: "#f87171" },
+      { label: "Draft Orders", value: draftOrders.length, color: "#fb923c" },
+      { label: "Pending Bills", value: d.pendingBills.length, color: "#f87171" },
+      { label: "Today Deliveries", value: d.todayDeliveries.length, color: "#2dd4bf" },
+    ];
+
+    return (
+      <details className="group bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+        <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer list-none hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-90" />
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Summary ΓÇö All Metrics</span>
+          </div>
+          <span className="text-xs text-slate-400 dark:text-slate-500">({rows.length} metrics)</span>
+        </summary>
+        <div className="px-6 pb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-0.5 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+            {rows.map((r) => (
+              <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/20 last:border-0">
+                <span className="text-sm text-slate-500 dark:text-slate-400">{r.label}</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>
+    );
+  };
+
+  // ΓöÇΓöÇ Main Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
   return (
-    <div className="flex items-center gap-1">
-      <span className="text-gray-400">{label}:</span>
-      <span className="font-medium text-gray-700 dark:text-gray-300">{value}</span>
+    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-6 px-4 md:px-6 py-6 md:py-8">
+        {renderHeader()}
+        {renderHero()}
+        {renderQuickActions()}
+        {renderKPIs()}
+        {renderCharts()}
+        {renderNeedsAttention()}
+        {renderLensDemand()}
+
+        {/* Bottom grid: Recent Orders, Pending Bills, Today's Deliveries */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {renderRecentOrders()}
+          {renderPendingBills()}
+          {renderDeliveries()}
+        </div>
+
+        {/* Bottom grid: Recent Customers, Todo, Payments */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {renderRecentCustomers()}
+          {renderTodo()}
+          {renderPayments()}
+        </div>
+
+        {renderSummary()}
+      </div>
+
+      {/* Scanner Modal */}
+      {showScanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowScanner(false)}>
+          <div className="relative w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowScanner(false)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 shadow-lg z-10 transition-all hover:-translate-y-0.5" aria-label="Close scanner">
+              <X className="w-4 h-4" />
+            </button>
+            <CameraScanner
+              onScan={(code) => {
+                setShowScanner(false);
+                navigate(`/inventory/scan/${encodeURIComponent(code)}`);
+              }}
+              onClose={() => setShowScanner(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
