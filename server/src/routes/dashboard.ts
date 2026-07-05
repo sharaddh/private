@@ -73,9 +73,8 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
     const sameDayLastWeekEnd = new Date(sameDayLastWeek);
     sameDayLastWeekEnd.setDate(sameDayLastWeekEnd.getDate() + 1);
 
-    const calcTrend = (current: number, previous: number): string => {
-      if (!previous && current > 0) return "N/A";
-      if (!previous) return "0";
+const calcTrend = (current: number, previous: number): string => {
+      if (previous === 0) return current > 0 ? "N/A" : "0";
       return ((current - previous) / previous * 100).toFixed(1);
     };
 
