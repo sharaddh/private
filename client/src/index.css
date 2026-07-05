@@ -84,23 +84,23 @@ body {
   }
 
   .btn-primary {
-    @apply btn bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md;
+    @apply btn bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-sm hover:shadow-lg hover:-translate-y-0.5;
   }
 
   .btn-secondary {
-    @apply btn bg-white dark:bg-dark-800 text-muted-600 dark:text-muted-300 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700 hover:border-gray-400 dark:hover:border-dark-500;
+    @apply btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md hover:-translate-y-0.5;
   }
 
   .btn-danger {
-    @apply btn bg-red-500 hover:bg-red-600 text-white shadow-sm hover:shadow-md;
+    @apply btn bg-red-500 hover:bg-red-600 text-white shadow-sm hover:shadow-lg hover:-translate-y-0.5;
   }
 
   .btn-success {
-    @apply btn bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm hover:shadow-md;
+    @apply btn bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm hover:shadow-lg hover:-translate-y-0.5;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent hover:bg-gray-100 dark:hover:bg-dark-700 text-muted-500 dark:text-muted-400 shadow-none hover:shadow-none;
+    @apply btn bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 shadow-none hover:shadow-none;
   }
 
   .btn-sm {
@@ -111,15 +111,15 @@ body {
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 border border-gray-300 dark:border-dark-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-dark-800 text-muted-900 dark:text-white placeholder-muted-400 shadow-sm;
+    @apply w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm;
   }
 
   .card {
-    @apply bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-xl p-5 shadow-sm transition-shadow duration-300;
+    @apply bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm transition-all duration-300;
   }
 
   .card-hover {
-    @apply card hover:shadow-md cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 dark:hover:border-dark-500;
+    @apply card hover:shadow-xl cursor-pointer hover:-translate-y-0.5 hover:border-slate-300 dark:hover:border-slate-600;
   }
 
   .card-header {
@@ -127,15 +127,15 @@ body {
   }
 
   .section-title {
-    @apply text-base font-semibold text-muted-900 dark:text-white;
+    @apply text-base font-semibold text-slate-900 dark:text-white;
   }
 
   .page-title {
-    @apply text-2xl font-bold text-muted-900 dark:text-white;
+    @apply text-2xl font-bold text-slate-900 dark:text-white tracking-tight;
   }
 
   .page-subtitle {
-    @apply text-sm text-muted-500 dark:text-muted-400 mt-0.5;
+    @apply text-sm text-slate-500 dark:text-slate-400 mt-0.5;
   }
 
   .badge {
@@ -143,27 +143,27 @@ body {
   }
 
   .badge-green {
-    @apply badge bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-800;
+    @apply badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/20;
   }
 
   .badge-blue {
-    @apply badge bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-primary-200 dark:ring-primary-800;
+    @apply badge bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 ring-1 ring-primary-200 dark:ring-primary-500/20;
   }
 
   .badge-yellow {
-    @apply badge bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800;
+    @apply badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/20;
   }
 
   .badge-red {
-    @apply badge bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-800;
+    @apply badge bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-500/20;
   }
 
   .badge-gray {
-    @apply badge bg-gray-100 dark:bg-dark-700 text-muted-600 dark:text-muted-400 ring-1 ring-gray-200 dark:ring-dark-600;
+    @apply badge bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-600/50;
   }
 
   .badge-purple {
-    @apply badge bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 ring-1 ring-purple-200 dark:ring-purple-800;
+    @apply badge bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 ring-1 ring-purple-200 dark:ring-purple-500/20;
   }
 
   .flex-center {
