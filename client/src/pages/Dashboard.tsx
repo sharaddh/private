@@ -984,3 +984,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+// Dashboard component
