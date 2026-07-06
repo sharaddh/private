@@ -15,6 +15,7 @@ router.get("/me", authenticate, asyncHandler(authController.me));
 router.put("/me", authenticate, asyncHandler(authController.updateMe));
 router.get("/users", authenticate, asyncHandler(authController.listUsers));
 router.get("/warehouse-users", authenticate, asyncHandler(authController.listWarehouseUsers));
+router.put("/users/:id", authenticate, asyncHandler(authController.updateUser));
 router.delete("/users/:id", authenticate, asyncHandler(authController.deleteUser));
 
 export default router;
