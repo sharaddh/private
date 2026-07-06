@@ -33,8 +33,8 @@ export async function branchScope(req: BranchRequest, _res: Response, next: Next
         ctx.run(requestCtx, () => next());
         return;
       }
-    } catch {
-      // Branch lookup failed
+    } catch (err) {
+      console.error("Branch scope lookup failed:", err);
     }
   }
   next();
