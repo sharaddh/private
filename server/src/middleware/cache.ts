@@ -1,11 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { cacheGet, cacheSet, cacheDel } from "../services/cache";
 
+function branchKey(req: Request): string {
+  const branchId = req.headers["x-branch-id"] as string || req.query._branch as string || "default";
+  return branchId;
+}
+
 export function cacheRoute(ttlSeconds = 60) {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET") return next();
 
-    const key = req.originalUrl;
+    const key = `${branchKey(req)}:${req.originalUrl}`;
     const cached = await cacheGet<{ body: unknown; status: number }>(key);
     if (cached) {
       res.set("x-cache", "HIT");
@@ -29,6 +34,6 @@ export async function invalidateCache(pattern: string): Promise<void> {
   await cacheDel(pattern);
   // Also invalidate dashboard since most mutations affect it
   if (!pattern.includes("/dashboard")) {
-    await cacheDel("/api/dashboard*");
+    await cacheDel("*:/api/dashboard*");
   }
 }
