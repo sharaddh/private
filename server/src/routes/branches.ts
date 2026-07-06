@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Branch } from "../models/branch";
+import { clearBranchCache } from "../models/db";
 import { authenticate } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
@@ -45,6 +46,8 @@ router.post("/", authenticate, asyncHandler(async (req, res) => {
     settings: req.body.settings || {},
   });
 
+  clearBranchCache();
+
   res.json({ success: true, data: branch });
 }));
 
@@ -55,6 +58,7 @@ router.put("/:id", authenticate, asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   ).lean();
   if (!branch) throw new AppError(404, "Branch not found");
+  clearBranchCache();
   res.json({ success: true, data: branch });
 }));
 
@@ -65,6 +69,7 @@ router.delete("/:id", authenticate, asyncHandler(async (req, res) => {
     { new: true }
   ).lean();
   if (!branch) throw new AppError(404, "Branch not found");
+  clearBranchCache();
   res.json({ success: true, message: "Branch deactivated" });
 }));
 
