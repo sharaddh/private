@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const CustomerSchema = new Schema(
+const CustomerSchemaObj = new Schema(
   {
     customerId: { type: String, index: true },
     name: { type: String, required: true, index: true },
@@ -18,7 +19,9 @@ const CustomerSchema = new Schema(
   { timestamps: true }
 );
 
-CustomerSchema.index({ totalSpent: -1 });
-CustomerSchema.index({ createdAt: -1 });
+CustomerSchemaObj.index({ totalSpent: -1 });
+CustomerSchemaObj.index({ createdAt: -1 });
 
-export const Customer = model("Customer", CustomerSchema);
+export const CustomerSchema = CustomerSchemaObj;
+const _Customer = model("Customer", CustomerSchemaObj);
+export const Customer = withBranch(_Customer, "Customer");
