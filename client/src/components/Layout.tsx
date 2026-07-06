@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
   Menu, X, Search, Phone, PlusCircle,
-  Megaphone, UserPlus, Hand, ChevronLeft,
+  Megaphone, UserPlus, Hand, ChevronLeft, Building2,
 } from "lucide-react";
 
 interface DrawerForm {
@@ -52,7 +52,7 @@ function getToken(): string | null {
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { isStaff } = useAuth();
+  const { isStaff, currentBranch } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,6 +244,12 @@ export default function Layout({ children }: { children: ReactNode }) {
             )}
           </div>
 
+          {currentBranch && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-xs font-medium text-primary-700 dark:text-primary-300">
+              <Building2 size={14} />
+              <span className="hidden sm:inline">{currentBranch.name}</span>
+            </div>
+          )}
           <div className="lg:hidden w-8" />
         </header>
 
