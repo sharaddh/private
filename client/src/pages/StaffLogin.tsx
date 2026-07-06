@@ -11,7 +11,7 @@ export default function StaffLogin() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setCurrentBranch } = useAuth();
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) navigate("/", { replace: true });
@@ -24,6 +24,10 @@ export default function StaffLogin() {
       const res = await api.post("/api/auth/staff-login", { username, password });
       if (res.success) {
         login(res.data.access, res.data.refresh);
+        if (res.data.branchId) {
+          localStorage.setItem("currentBranchId", res.data.branchId);
+          setCurrentBranch(res.data.branchId);
+        }
         navigate("/", { replace: true });
       } else { setError(res.message || "Login failed"); }
     } catch { setError("Connection error. Try again."); }
