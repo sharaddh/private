@@ -5,6 +5,8 @@ const TOKEN_KEYS = {
   REFRESH: "refreshToken",
 } as const;
 
+const BRANCH_KEY = "currentBranchId";
+
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -26,12 +28,22 @@ function getToken(): string | null {
   }
 }
 
+function getBranchId(): string | null {
+  try {
+    return localStorage.getItem(BRANCH_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function buildHeaders(isJson = true): Record<string, string> {
   const headers: Record<string, string> = {};
   if (isJson) headers["Content-Type"] = "application/json";
   headers["Accept"] = "application/json";
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  const branchId = getBranchId();
+  if (branchId) headers["x-branch-id"] = branchId;
   return headers;
 }
 
