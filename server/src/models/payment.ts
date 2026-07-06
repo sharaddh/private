@@ -1,6 +1,7 @@
 import { Schema, model, Types } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const PaymentSchema = new Schema(
+const PaymentSchemaObj = new Schema(
   {
     customerId: { type: Types.ObjectId, ref: "Customer", required: true },
     billId: { type: Types.ObjectId, ref: "Bill" },
@@ -12,8 +13,10 @@ const PaymentSchema = new Schema(
   { timestamps: true }
 );
 
-PaymentSchema.index({ customerId: 1, paymentDate: -1 });
-PaymentSchema.index({ paymentDate: -1 });
-PaymentSchema.index({ billId: 1 });
+PaymentSchemaObj.index({ customerId: 1, paymentDate: -1 });
+PaymentSchemaObj.index({ paymentDate: -1 });
+PaymentSchemaObj.index({ billId: 1 });
 
-export const Payment = model("Payment", PaymentSchema);
+export const PaymentSchema = PaymentSchemaObj;
+const _Payment = model("Payment", PaymentSchemaObj);
+export const Payment = withBranch(_Payment, "Payment");
