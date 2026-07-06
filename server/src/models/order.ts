@@ -1,6 +1,7 @@
 import { Schema, model, Types } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const OrderSchema = new Schema(
+const OrderSchemaObj = new Schema(
   {
     customerId: { type: Types.ObjectId, ref: "Customer", required: true, index: true },
     visitId: { type: Types.ObjectId, ref: "Visit" },
@@ -33,9 +34,11 @@ const OrderSchema = new Schema(
   { timestamps: true }
 );
 
-OrderSchema.index({ customerId: 1, createdAt: -1 });
-OrderSchema.index({ status: 1, createdAt: -1 });
-OrderSchema.index({ classification: 1, createdAt: -1 });
-OrderSchema.index({ createdAt: -1 });
+OrderSchemaObj.index({ customerId: 1, createdAt: -1 });
+OrderSchemaObj.index({ status: 1, createdAt: -1 });
+OrderSchemaObj.index({ classification: 1, createdAt: -1 });
+OrderSchemaObj.index({ createdAt: -1 });
 
-export const Order = model("Order", OrderSchema);
+export const OrderSchema = OrderSchemaObj;
+const _Order = model("Order", OrderSchemaObj);
+export const Order = withBranch(_Order, "Order");
