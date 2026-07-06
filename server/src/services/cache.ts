@@ -88,7 +88,9 @@ export async function cacheSet(key: string, data: unknown, ttl = DEFAULT_TTL): P
 export async function cacheDel(pattern: string): Promise<void> {
   if (!isConnected()) return;
   try {
-    const keys = await scanKeys(pattern);
+    // Match all branch variants (e.g. "branchId:/api/customers/..." or "default:/api/customers/...")
+    const branchPattern = pattern.startsWith("*:") ? pattern : `*:${pattern}`;
+    const keys = await scanKeys(branchPattern);
     if (keys.length > 0) {
       const pipeline = client!.pipeline();
       keys.forEach((k) => pipeline.del(k));
