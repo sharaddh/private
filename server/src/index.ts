@@ -4,6 +4,8 @@ import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
 import { User } from "./models/user";
+import { Branch } from "./models/branch";
+import { getBranchModels } from "./models/db";
 
 let server: ReturnType<typeof app.listen> | null = null;
 
