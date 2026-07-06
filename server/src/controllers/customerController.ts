@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { Customer } from "../models/customer";
+import { Visit } from "../models/visit";
+import { Order } from "../models/order";
+import { Bill } from "../models/bill";
 import { success, created, notFound } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
@@ -52,9 +55,9 @@ export async function getSummary(req: Request, res: Response) {
   const customer = await Customer.findById(req.params.id).lean();
   if (!customer) return notFound(res, "Customer not found");
   const [visitCount, orderCount, billTotal] = await Promise.all([
-    (global as any).mongoose.model("Visit").countDocuments({ customerId: req.params.id }),
-    (global as any).mongoose.model("Order").countDocuments({ customerId: req.params.id }),
-    (global as any).mongoose.model("Bill").aggregate([
+    Visit.countDocuments({ customerId: req.params.id }),
+    Order.countDocuments({ customerId: req.params.id }),
+    Bill.aggregate([
       { $match: { customerId: req.params.id } },
       { $group: { _id: null, total: { $sum: "$totalAmount" } } },
     ]),
