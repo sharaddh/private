@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { branchScope } from "../middleware/branch";
 import customers from "./customers";
 import auth from "./auth";
 import orders from "./orders";
@@ -15,23 +16,25 @@ import workspace from "./workspace";
 import whatsapp from "./whatsapp";
 import todos from "./todos";
 import cacheAdmin from "./cache-admin";
+import branches from "./branches";
 
 const router = Router();
 
-router.use("/customers", customers);
+router.use("/branches", branches);
 router.use("/auth", auth);
-router.use("/orders", orders);
-router.use("/todos", todos);
-router.use("/bills", bills);
-router.use("/payments", payments);
-router.use("/delivery", delivery);
-router.use("/inventory", inventory);
-router.use("/visits", visits);
-router.use("/prescriptions", prescriptions);
-router.use("/dashboard", dashboard);
-router.use("/reports", reports);
-router.use("/settings", settings);
-router.use("/workspace", workspace);
+router.use("/customers", branchScope, customers);
+router.use("/orders", branchScope, orders);
+router.use("/todos", branchScope, todos);
+router.use("/bills", branchScope, bills);
+router.use("/payments", branchScope, payments);
+router.use("/delivery", branchScope, delivery);
+router.use("/inventory", branchScope, inventory);
+router.use("/visits", branchScope, visits);
+router.use("/prescriptions", branchScope, prescriptions);
+router.use("/dashboard", branchScope, dashboard);
+router.use("/reports", branchScope, reports);
+router.use("/settings", branchScope, settings);
+router.use("/workspace", branchScope, workspace);
 router.use("/whatsapp", whatsapp);
 router.use("/cache", cacheAdmin);
 
