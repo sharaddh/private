@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const InventorySchema = new Schema(
+const InventorySchemaObj = new Schema(
   {
     sku: { type: String, index: true, unique: true },
     category: { type: String, enum: ["Frame", "Lens", "Accessories"], default: "Frame" },
@@ -20,4 +21,6 @@ const InventorySchema = new Schema(
   { timestamps: true }
 );
 
-export const Inventory = model("Inventory", InventorySchema);
+export const InventorySchema = InventorySchemaObj;
+const _Inventory = model("Inventory", InventorySchemaObj);
+export const Inventory = withBranch(_Inventory, "Inventory");

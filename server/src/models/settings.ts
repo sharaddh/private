@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const SettingsSchema = new Schema(
+const SettingsSchemaObj = new Schema(
   {
     shopName: { type: String, default: "KMJ Optical" },
     shopAddress: { type: String, default: "" },
@@ -12,4 +13,6 @@ const SettingsSchema = new Schema(
   { timestamps: true }
 );
 
-export const Settings = model("Settings", SettingsSchema);
+export const SettingsSchema = SettingsSchemaObj;
+const _Settings = model("Settings", SettingsSchemaObj);
+export const Settings = withBranch(_Settings, "Settings");
