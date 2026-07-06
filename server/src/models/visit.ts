@@ -1,6 +1,7 @@
 import { Schema, model, Types } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
-const VisitSchema = new Schema(
+const VisitSchemaObj = new Schema(
   {
     customerId: { type: Types.ObjectId, ref: "Customer", required: true, index: true },
     visitDate: { type: Date, default: Date.now, index: true },
@@ -12,4 +13,6 @@ const VisitSchema = new Schema(
   { timestamps: true }
 );
 
-export const Visit = model("Visit", VisitSchema);
+export const VisitSchema = VisitSchemaObj;
+const _Visit = model("Visit", VisitSchemaObj);
+export const Visit = withBranch(_Visit, "Visit");
