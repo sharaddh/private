@@ -10,20 +10,29 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setCurrentBranch } = useAuth();
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) navigate("/", { replace: true });
+    api.get("/api/branches/active").then((res) => {
+      if (res.success) setBranches(res.data);
+    }).catch(() => {});
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(""); setIsLoading(true);
     try {
-      const res = await api.post("/api/auth/login", { username, password });
+      const res = await api.post("/api/auth/login", { username, password, branchId: selectedBranchId || undefined });
       if (res.success) {
         login(res.data.access, res.data.refresh);
+        if (res.data.branchId) {
+          localStorage.setItem("currentBranchId", res.data.branchId);
+          setCurrentBranch(res.data.branchId);
+        }
         navigate("/", { replace: true });
       } else { setError(res.message || "Login failed"); }
     } catch { setError("Connection error. Try again."); }
@@ -61,6 +70,15 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch</label>
+              <select value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)} className="input-field">
+                <option value="">Select branch (optional)</option>
+                {branches.map((b: any) => (
+                  <option key={b._id} value={b._id}>{b.name}</option>
+                ))}
+              </select>
             </div>
             <button type="submit" disabled={isLoading}
               className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg">
