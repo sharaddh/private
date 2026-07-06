@@ -1,4 +1,5 @@
 import { Schema, model, Types } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
 const BillItemSchema = new Schema({
   description: { type: String },
@@ -7,7 +8,7 @@ const BillItemSchema = new Schema({
   total: { type: Number, default: 0 }
 });
 
-const BillSchema = new Schema(
+const BillSchemaObj = new Schema(
   {
     billNumber: { type: String, index: true, unique: true },
     customerId: { type: Types.ObjectId, ref: "Customer", required: true, index: true },
@@ -24,8 +25,10 @@ const BillSchema = new Schema(
   { timestamps: true }
 );
 
-BillSchema.index({ customerId: 1, createdAt: -1 });
-BillSchema.index({ pendingAmount: 1 });
-BillSchema.index({ createdAt: -1 });
+BillSchemaObj.index({ customerId: 1, createdAt: -1 });
+BillSchemaObj.index({ pendingAmount: 1 });
+BillSchemaObj.index({ createdAt: -1 });
 
-export const Bill = model("Bill", BillSchema);
+export const BillSchema = BillSchemaObj;
+const _Bill = model("Bill", BillSchemaObj);
+export const Bill = withBranch(_Bill, "Bill");
