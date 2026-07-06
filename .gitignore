@@ -34,4 +34,9 @@ dist-ssr
 .wwebjs_auth/
 .wwebjs_cache/
 
+# Temp & backup files
+*.bak
+*.patch
+temp-*
+
 client/public/*.pdf
