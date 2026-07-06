@@ -5,10 +5,29 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
-import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight, Plus, Trash2, X, Building2, Globe } from "lucide-react";
+
+interface Branch {
+  _id: string;
+  name: string;
+  code: string;
+  dbName: string;
+  address: string;
+  phone: string;
+  email: string;
+  isActive: boolean;
+  settings: {
+    shopName: string;
+    shopAddress: string;
+    shopPhone: string;
+    shopEmail: string;
+    adminWhatsApp: string;
+    logo: string;
+  };
+}
 
 export default function Settings() {
-  const { user, isStaff, setUser } = useAuth();
+  const { user, isStaff, setUser, setCurrentBranch, currentBranch, branches } = useAuth();
   const { dark, toggle: toggleTheme } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
@@ -30,6 +49,7 @@ export default function Settings() {
   const [users, setUsers] = useState<any[]>([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
+  const [staffBranch, setStaffBranch] = useState("");
   const [staffSaving, setStaffSaving] = useState(false);
   const [editingAccount, setEditingAccount] = useState(true);
   const [editName, setEditName] = useState((user?.name as string) || "");
@@ -37,6 +57,13 @@ export default function Settings() {
   const [editPassword, setEditPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveProfileMsg, setSaveProfileMsg] = useState("");
+
+  // Branch management
+  const [allBranches, setAllBranches] = useState<Branch[]>([]);
+  const [showAddBranch, setShowAddBranch] = useState(false);
+  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
 
   useEffect(() => {
     if (user?.role !== "staff") {
@@ -52,7 +79,14 @@ export default function Settings() {
   }, [user]);
 
   useEffect(() => {
-    api.get("/api/settings").then((d) => {
+    loadSettings();
+    loadBranches();
+  }, [currentBranch]);
+
+  async function loadSettings() {
+    setLoading(true);
+    try {
+      const d = await api.get("/api/settings");
       if (d.success && d.data) {
         setShopName(d.data.shopName || "KMJ Optical");
         setShopAddress(d.data.shopAddress || "");
@@ -62,8 +96,17 @@ export default function Settings() {
         setLogo(d.data.logo || "");
         setLogoPreview(d.data.logo || "");
       }
-    }).finally(() => setLoading(false));
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadBranches() {
+    try {
+      const d = await api.get("/api/branches");
+      if (d.success) setAllBranches(d.data || []);
+    } catch {}
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -160,13 +203,18 @@ export default function Settings() {
       toast.error("Username and password required");
       return;
     }
+    if (!staffBranch) {
+      toast.error("Please select a branch for this staff member");
+      return;
+    }
     setStaffSaving(true);
-    const res = await api.post("/api/auth/register", { ...staffForm, role: "staff" });
+    const res = await api.post("/api/auth/register", { ...staffForm, role: "staff", branchId: staffBranch });
     setStaffSaving(false);
     if (res.success) {
       toast.success("Staff account created");
       setShowAddStaff(false);
       setStaffForm({ username: "", password: "", name: "", mobile: "" });
+      setStaffBranch("");
       const list = await api.get("/api/auth/users");
       if (list.success) setUsers(list.data || []);
     } else {
@@ -185,6 +233,73 @@ export default function Settings() {
     }
   }
 
+  // Branch handlers
+  async function handleAddBranch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!branchForm.name.trim() || !branchForm.code.trim() || !branchForm.dbName.trim()) {
+      toast.error("Name, code, and database name are required");
+      return;
+    }
+    setBranchSaving(true);
+    const res = await api.post("/api/branches", branchForm);
+    setBranchSaving(false);
+    if (res.success) {
+      toast.success("Branch created");
+      setShowAddBranch(false);
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+      loadBranches();
+    } else {
+      toast.error(res.message || "Failed to create branch");
+    }
+  }
+
+  async function handleEditBranch(branch: Branch) {
+    setEditingBranch(branch);
+    setBranchForm({
+      name: branch.name,
+      code: branch.code,
+      dbName: branch.dbName,
+      address: branch.address || "",
+      phone: branch.phone || "",
+      email: branch.email || "",
+    });
+    setShowAddBranch(true);
+  }
+
+  async function handleUpdateBranch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingBranch || !branchForm.name.trim()) return;
+    setBranchSaving(true);
+    const res = await api.put(`/api/branches/${editingBranch._id}`, branchForm);
+    setBranchSaving(false);
+    if (res.success) {
+      toast.success("Branch updated");
+      setShowAddBranch(false);
+      setEditingBranch(null);
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+      loadBranches();
+    } else {
+      toast.error(res.message || "Failed to update branch");
+    }
+  }
+
+  async function handleDeleteBranch(id: string) {
+    if (!confirm("Deactivate this branch?")) return;
+    const res = await api.del(`/api/branches/${id}`);
+    if (res.success) {
+      toast.success("Branch deactivated");
+      loadBranches();
+    } else {
+      toast.error(res.message || "Failed to deactivate branch");
+    }
+  }
+
+  async function handleSwitchBranch(branchId: string) {
+    setCurrentBranch(branchId);
+    toast.success("Branch switched");
+    window.location.reload();
+  }
+
   if (loading) return <PageSkeleton page="settings" />;
 
   return (
@@ -193,6 +308,35 @@ export default function Settings() {
         <h1 className="page-title">Settings</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your ERP system preferences.</p>
       </div>
+
+      {!isStaff && branches.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Building2 size={20} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Active Branch</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Switch between branches</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {branches.map((b) => (
+              <button
+                key={b._id}
+                onClick={() => handleSwitchBranch(b._id)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  currentBranch?._id === b._id
+                    ? "bg-primary-600 text-white shadow-md"
+                    : "bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600"
+                }`}
+              >
+                {b.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {!isStaff && (
@@ -381,7 +525,7 @@ export default function Settings() {
                   <p className="text-xs text-gray-400">No staff accounts yet</p>
                 ) : (
                   <div className="space-y-2">
-                    {users.filter((u) => u.role === "staff").map((u) => (
+                    {users.filter((u: any) => u.role === "staff").map((u: any) => (
                       <div key={u.id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name || u.username}</p>
@@ -394,6 +538,59 @@ export default function Settings() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {!isStaff && (
+        <div className="card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Globe size={20} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Branch Management</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Add and manage store branches</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <button onClick={() => { setEditingBranch(null); setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" }); setShowAddBranch(true); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-colors">
+              <Plus size={14} /> Add Branch
+            </button>
+            {allBranches.length === 0 ? (
+              <p className="text-xs text-gray-400 mt-3">No branches created yet</p>
+            ) : (
+              <div className="space-y-2 mt-3">
+                {allBranches.map((b) => (
+                  <div key={b._id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${b.isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400"}`}>
+                          {b.isActive ? "Active" : "Inactive"}
+                        </span>
+                        {currentBranch?._id === b._id && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium">Current</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">{b.code} · {b.dbName}</p>
+                    </div>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button onClick={() => handleSwitchBranch(b._id)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors" title="Switch to this branch">
+                        <Building2 size={14} />
+                      </button>
+                      <button onClick={() => handleEditBranch(b)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors" title="Edit">
+                        <Save size={14} />
+                      </button>
+                      <button onClick={() => handleDeleteBranch(b._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Deactivate">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -499,9 +696,64 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile</label>
                 <input className="input-field" value={staffForm.mobile} onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })} placeholder="Phone number" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch *</label>
+                <select value={staffBranch} onChange={(e) => setStaffBranch(e.target.value)} required className="input-field">
+                  <option value="">Select branch</option>
+                  {allBranches.filter((b) => b.isActive).map((b) => (
+                    <option key={b._id} value={b._id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-600">
                 <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">Cancel</button>
                 <button type="submit" disabled={staffSaving} className="btn-primary">{staffSaving ? "Creating..." : "Create Staff"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAddBranch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }}>
+          <div className="fixed inset-0 bg-black/30" />
+          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md mx-4 bg-white dark:bg-dark-800 rounded-2xl shadow-xl border border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{editingBranch ? "Edit Branch" : "Add New Branch"}</h3>
+              <button onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={editingBranch ? handleUpdateBranch : handleAddBranch} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch Name *</label>
+                <input className="input-field" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} placeholder="e.g. Govindpuri" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch Code *</label>
+                <input className="input-field" value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} placeholder="e.g. GVP" required disabled={!!editingBranch} />
+                <p className="text-xs text-gray-400 mt-1">Short code used to identify the branch</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Database Name *</label>
+                <input className="input-field" value={branchForm.dbName} onChange={(e) => setBranchForm({ ...branchForm, dbName: e.target.value })} placeholder="e.g. kmj_govindpuri" required disabled={!!editingBranch} />
+                <p className="text-xs text-gray-400 mt-1">MongoDB database name for this branch's data</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
+                <textarea className="input-field" rows={2} value={branchForm.address} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Phone</label>
+                <input className="input-field" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                <input type="email" className="input-field" value={branchForm.email} onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })} />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-600">
+                <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={branchSaving} className="btn-primary">{branchSaving ? "Saving..." : (editingBranch ? "Update" : "Create")}</button>
               </div>
             </form>
           </div>

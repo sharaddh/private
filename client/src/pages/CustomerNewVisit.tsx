@@ -1,29 +1,24 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import {
-  ArrowLeft, User, Eye, ShoppingCart, CreditCard, CheckCircle,
-  ChevronLeft, ChevronRight, Save, Plus, Trash2, Calendar, X,
-  Camera, Activity, Search, Clock, FileText, AlertCircle,
-  RefreshCw, Maximize2, Circle, Wrench, Percent, MessageCircle,
-  Tag, Grid3X3, ScanLine, FileCheck, Truck
+  ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
+  Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
 } from "lucide-react";
-
-function cleanEyeSet(e: any) {
-  if (!e || typeof e !== "object") return undefined;
-  const out: any = {};
-  for (const k of ["dv", "nv", "pc"]) {
-    if (e[k] && typeof e[k] === "object") {
-      const vals = Object.entries(e[k]).filter(([_, v]) => v);
-      if (vals.length) out[k] = Object.fromEntries(vals);
-    }
-  }
-  return Object.keys(out).length ? out : undefined;
-}
+import PageHeader from "../components/NewvistePage/PageHeader";
+import VisitStepper from "../components/NewvistePage/VisitStepper";
+import VisitTypeSection from "../components/NewvistePage/VisitTypeSection";
+import PrescriptionPanel from "../components/NewvistePage/PrescriptionPanel";
+import OrderItems from "../components/NewvistePage/OrderItems";
+import BillingPanel from "../components/NewvistePage/BillingPanel";
+import PaymentPanel from "../components/NewvistePage/PaymentPanel";
+import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
+import BottomNav from "../components/NewvistePage/BottomNav";
 
 const VISIT_TYPES = [
   { value: "new", label: "New Glasses", icon: Eye },
@@ -43,20 +38,16 @@ const steps = [
   { key: "confirmation", label: "Confirm", icon: CheckCircle, desc: "Review & save" },
 ];
 
-function EyeRow({ label, data, onChange }: { label: string; data: any; onChange: (v: any) => void }) {
-  const fields = ["sph", "cyl", "axis", "va", "add"];
-  return (
-    <div className="text-xs">
-      <span className="font-medium text-white/70 block mb-1">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {fields.map((f) => (
-          <input key={f} placeholder={f.toUpperCase()} value={data?.[f] || ""}
-            onChange={(e) => onChange({ ...data, [f]: e.target.value })}
-            className="w-14 text-center border border-white/10 bg-white/5 rounded-lg py-1 text-xs text-white/80 placeholder-white/30" />
-        ))}
-      </div>
-    </div>
-  );
+function cleanEyeSet(e: any) {
+  if (!e || typeof e !== "object") return undefined;
+  const out: any = {};
+  for (const k of ["dv", "nv", "pc"]) {
+    if (e[k] && typeof e[k] === "object") {
+      const vals = Object.entries(e[k]).filter(([_, v]) => v);
+      if (vals.length) out[k] = Object.fromEntries(vals);
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 export default function CustomerNewVisit() {
@@ -103,6 +94,10 @@ export default function CustomerNewVisit() {
   const [scanModal, setScanModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const countdownRef = useRef<any>(null);
+  const savingRef = useRef(false);
+  const greetingSent = useRef(false);
+
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
@@ -119,13 +114,13 @@ export default function CustomerNewVisit() {
       ]);
       if (custRes.success) {
         setCustomer(custRes.data);
-        if (visitsRes.success && visitsRes.data.length > 0) {
+        if (visitsRes.success && visitsRes.data && visitsRes.data.length > 0) {
           const last = visitsRes.data[0];
           setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : new Date().toISOString().split("T")[0]);
           setVisitDoctor(last.doctorName || "");
           setVisitRemarks(last.remarks || "");
         }
-        if (prescRes.success && prescRes.data.length > 0) {
+        if (prescRes.success && prescRes.data && prescRes.data.length > 0) {
           const prev = prescRes.data[0];
           setPrescription({
             rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
@@ -134,7 +129,7 @@ export default function CustomerNewVisit() {
           });
           setUsePrescription(true);
         }
-        if (ordersRes.success && ordersRes.data.length > 0) {
+        if (ordersRes.success && ordersRes.data && ordersRes.data.length > 0) {
           const last = ordersRes.data[0];
           if (last.frame) {
             setOrderFrames([{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }]);
@@ -177,23 +172,73 @@ export default function CustomerNewVisit() {
     })();
   }, [id]);
 
+  // Calculate Total Bill dynamically
   useEffect(() => {
     const total = billItems.reduce((s, i) => s + i.price * i.qty, 0);
     setTotalAmount(total);
   }, [billItems]);
 
+  // Backup draft
   useEffect(() => {
     if (!id || loading) return;
     const data = { step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate };
     sessionStorage.setItem(`visitDraft_${id}`, JSON.stringify(data));
   }, [id, loading, step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate]);
 
-  const countdownRef = useRef<any>(null);
-  const savingRef = useRef(false);
-  const greetingSent = useRef(false);
+  // 🌟 REAL-TIME AUTOMATIC SYNC 🌟
+  // This watches your cart and updates the bill silently in the background
+  useEffect(() => {
+    if (loading) return; 
 
-  function setRight(k: string, v: any) { setPrescription((p) => ({ ...p, rightEye: { ...p.rightEye, [k]: v } })); }
-  function setLeft(k: string, v: any) { setPrescription((p) => ({ ...p, leftEye: { ...p.leftEye, [k]: v } })); }
+    const autoItems: Array<{ description: string; price: number; qty: number }> = [];
+    
+    // Add Frames
+    orderFrames.forEach((f) => {
+      if (f.brand || f.model || f.price > 0 || f.sku) {
+        autoItems.push({ 
+          description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ""}`.trim(), 
+          price: Number(f.price) || 0, 
+          qty: 1 
+        });
+      }
+    });
+
+    // Add Lenses
+    orderLenses.forEach((l) => {
+      if (l.brand || l.features.length > 0 || l.price > 0 || l.sku) {
+        const featuresStr = l.features.length > 0 ? l.features.join(" + ") : "Standard";
+        const indexStr = l.index ? `(Index: ${l.index})` : "";
+        autoItems.push({ 
+          description: `Lens: ${l.brand} ${featuresStr} ${indexStr}`.replace(/\s+/g, ' ').trim(), 
+          price: Number(l.price) || 0, 
+          qty: 1 
+        });
+      }
+    });
+
+    // Add Accessories
+    orderAccessories.forEach((a) => {
+      if (a.name || a.price > 0) {
+        autoItems.push({ 
+          description: `Acc: ${a.name || "Accessory"}`, 
+          price: Number(a.price) || 0, 
+          qty: 1 
+        });
+      }
+    });
+
+    setBillItems((prev) => {
+      // Keep any manual items the user added themselves (doesn't start with Frame:, Lens:, or Acc:)
+      const manualItems = prev.filter(p => 
+        !p.description.startsWith("Frame:") && 
+        !p.description.startsWith("Lens:") && 
+        !p.description.startsWith("Acc:")
+      );
+      
+      return [...autoItems, ...manualItems];
+    });
+
+  }, [orderFrames, orderLenses, orderAccessories, loading]);
 
   function updateFrame(i: number, field: string, value: any) {
     setOrderFrames((prev) => prev.map((f, idx) => idx === i ? { ...f, [field]: value } : f));
@@ -219,19 +264,8 @@ export default function CustomerNewVisit() {
     setOrderAccessories((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  function syncBillFromOrder(frames: typeof orderFrames, lenses: typeof orderLenses, accessories: typeof orderAccessories) {
-    const items: Array<{ description: string; price: number; qty: number }> = [];
-    frames.forEach((f) => {
-      if (f.brand || f.price) items.push({ description: `Frame - ${f.brand} ${f.model}`.trim(), price: f.price, qty: 1 });
-    });
-    lenses.forEach((l) => {
-      if (l.brand || l.price) items.push({ description: `Lens - ${l.brand} ${l.features.join(" ")}`.trim(), price: l.price, qty: 1 });
-    });
-    accessories.forEach((a) => {
-      if (a.name || a.price) items.push({ description: a.name, price: a.price, qty: 1 });
-    });
-    setBillItems(items.length > 0 ? items : []);
-  }
+  // Blank prop placeholder for the OrderItems component (Real sync is handled by the useEffect above!)
+  function syncBillFromOrder() {}
 
   function updateBillItem(i: number, field: string, value: any) {
     setBillItems((prev) => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
@@ -315,7 +349,8 @@ export default function CustomerNewVisit() {
         sessionStorage.removeItem(`visitDraft_${id}`);
 
         const customerMobile = customer?.mobile || "";
-        if (customerMobile && res.data?.bill) {
+        const resData = res.data as any;
+        if (customerMobile && resData?.bill) {
           greetingSent.current = false;
           setCountdown(3);
           countdownRef.current = setInterval(() => {
@@ -323,7 +358,7 @@ export default function CustomerNewVisit() {
               if (prev <= 1) {
                 clearInterval(countdownRef.current);
                 countdownRef.current = null;
-                sendGreeting(res.data, customer);
+                sendGreeting(resData, customer);
                 return 0;
               }
               return prev - 1;
@@ -331,7 +366,7 @@ export default function CustomerNewVisit() {
           }, 1000);
         } else {
           savingRef.current = false;
-          navigate(`/customers/${id}?visitId=${res.data?.visit?._id || ""}`);
+          navigate(`/customers/${id}?visitId=${resData?.visit?._id || ""}`);
         }
       } else {
         toast.error(res.message || "Failed to save");
@@ -365,14 +400,14 @@ export default function CustomerNewVisit() {
       const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
       if (res.success) {
         setSuggestions(res.data || []);
-        setSuggestionsFor(res.data.length > 0 ? { type, idx } : null);
+        setSuggestionsFor(res.data && res.data.length > 0 ? { type, idx } : null);
       }
     }, 300);
     setSearchTimer(t);
   }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
-  if (!customer) return <div className="p-8 text-center text-white/50">Customer not found</div>;
+  if (!customer) return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center"><p className="text-sm text-slate-500 dark:text-slate-400">Customer not found</p></div>;
 
   const stepKeys = steps.map(s => s.key);
   const currentIdx = stepKeys.indexOf(step);
@@ -380,672 +415,185 @@ export default function CustomerNewVisit() {
   const finalTotal = Math.max(0, totalAmount - discountVal);
 
   return (
-    <div className="min-h-screen" style={{ background: "#121212" }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-slate-50 dark:bg-slate-900"
+    >
+      <PageHeader
+        customer={customer}
+        id={id!}
+        navigate={navigate}
+        step={step}
+        visitType={visitType}
+        loading={loading}
+        saving={saving}
+      />
+
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-lg flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/customers/${id}`)}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all">
-            <ArrowLeft size={16} />
-          </button>
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg shadow-primary-500/20">
-            {customer.name?.charAt(0)?.toUpperCase() || "?"}
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">New Visit</h1>
-            <p className="text-xs text-white/50">{customer.name}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-white/40 bg-white/10 px-3 py-1.5 rounded-lg">
-          <Clock size={12} />
-          <span>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-        </div>
-      </div>
+        <VisitStepper
+          steps={steps}
+          currentIdx={currentIdx}
+          setStep={setStep}
+        />
 
-      <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-2 shadow-lg">
-        <div className="flex items-center">
-          {steps.map((s, i) => {
-            const done = currentIdx > i;
-            const active = currentIdx === i;
-            return (
-              <button key={s.key} disabled={!done && !active}
-                onClick={() => { if (done || active) setStep(s.key); }}
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all relative
-                  ${done ? "text-primary-400 cursor-pointer hover:bg-primary-500/10" : ""}
-                  ${active ? "text-white bg-primary-500/15" : ""}
-                  ${!done && !active ? "text-white/30" : ""}`}>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all
-                  ${done ? "bg-primary-500/20 text-primary-400" : ""}
-                  ${active ? "bg-primary-600 text-white shadow-sm shadow-primary-500/20" : ""}
-                  ${!done && !active ? "bg-white/10 text-white/30" : ""}`}>
-                  {done ? <CheckCircle size={15} /> : i + 1}
-                </div>
-                <span className="hidden sm:inline">{s.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {step === "service" && (
-        <div className="space-y-5">
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <Activity size={16} className="text-primary-500" /> Visit Type
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {VISIT_TYPES.map((vt) => {
-                const Icon = vt.icon;
-                return (
-                  <button key={vt.value}
-                    onClick={() => setVisitType(vt.value)}
-                    className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-medium border transition-all
-                      ${visitType === vt.value
-                        ? "bg-primary-500/10 border-primary-500/30 text-primary-300 shadow-sm"
-                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/20"}`}>
-                    <Icon size={16} />
-                    {vt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <Calendar size={16} className="text-primary-500" /> Visit Details
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-medium text-white/50 mb-1.5 block">Date</label>
-                <input type="date" value={visitDate}
-                  onChange={(e) => setVisitDate(e.target.value)}
-                  className="pos-input text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-white/50 mb-1.5 block">Doctor</label>
-                <input placeholder="Doctor name (optional)" value={visitDoctor}
-                  onChange={(e) => setVisitDoctor(e.target.value)}
-                  className="pos-input text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-white/50 mb-1.5 block">Remarks</label>
-                <input placeholder="Any remarks" value={visitRemarks}
-                  onChange={(e) => setVisitRemarks(e.target.value)}
-                  className="pos-input text-sm" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button onClick={() => setStep("prescription")}
-              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === "prescription" && (
-        <div className="space-y-5">
-          <label className="flex items-center gap-2.5 cursor-pointer p-4 bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-lg transition-all hover:bg-white/10 mb-1">
-            <input type="checkbox" checked={usePrescription}
-              onChange={(e) => setUsePrescription(e.target.checked)}
-              className="w-4 h-4 rounded accent-primary-600" />
-            <span className="text-sm font-medium text-white/80">Use prescription</span>
-          </label>
-
-          {usePrescription && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                    <Eye size={16} className="text-primary-500" /> Right Eye (O.D.)
-                  </h3>
-                  <div className="space-y-4">
-                    {["dv", "nv", "pc"].map((k) => (
-                      <EyeRow key={k} label={k === "dv" ? "Distance Vision" : k === "nv" ? "Near Vision" : "Progressive Corridor"}
-                        data={prescription.rightEye[k]}
-                        onChange={(v) => setRight(k, v)} />
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                    <Eye size={16} className="text-primary-500" /> Left Eye (O.S.)
-                  </h3>
-                  <div className="space-y-4">
-                    {["dv", "nv", "pc"].map((k) => (
-                      <EyeRow key={k} label={k === "dv" ? "Distance Vision" : k === "nv" ? "Near Vision" : "Progressive Corridor"}
-                        data={prescription.leftEye[k]}
-                        onChange={(v) => setLeft(k, v)} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-white/50 mb-1.5 block">PD (Pupillary Distance)</label>
-                    <input placeholder="e.g. 62" value={prescription.pd}
-                      onChange={(e) => setPrescription((p) => ({ ...p, pd: e.target.value }))}
-                      className="pos-input text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-white/50 mb-1.5 block">Problems</label>
-                    <input placeholder="e.g. headaches" value={prescription.problems}
-                      onChange={(e) => setPrescription((p) => ({ ...p, problems: e.target.value }))}
-                      className="pos-input text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-white/50 mb-1.5 block">Notes</label>
-                    <input placeholder="Additional notes" value={prescription.notes}
-                      onChange={(e) => setPrescription((p) => ({ ...p, notes: e.target.value }))}
-                      className="pos-input text-sm" />
-                  </div>
-                </div>
-              </div>
-            </>
+        <AnimatePresence mode="wait">
+          {step === "service" && (
+            <VisitTypeSection
+              key="service"
+              visitType={visitType}
+              setVisitType={setVisitType}
+              visitDate={visitDate}
+              setVisitDate={setVisitDate}
+              visitDoctor={visitDoctor}
+              setVisitDoctor={setVisitDoctor}
+              visitRemarks={visitRemarks}
+              setVisitRemarks={setVisitRemarks}
+            />
           )}
 
-          <div className="flex justify-end">
-            <button onClick={() => setStep("order")}
-              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+          {step === "prescription" && (
+            <PrescriptionPanel
+              key="prescription"
+              usePrescription={usePrescription}
+              setUsePrescription={setUsePrescription}
+              prescription={prescription}
+              setPrescription={setPrescription}
+            />
+          )}
 
-      {step === "order" && (
-        <div className="space-y-5">
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <Eye size={16} className="text-primary-500" /> Frames ({orderFrames.length})
-              </h2>
-              <div className="flex gap-2">
-                <button onClick={() => setScanModal(true)}
-                  className="btn-ghost btn-sm flex items-center gap-1.5 text-xs">
-                  <ScanLine size={14} /> Scan
-                </button>
-                <button onClick={() => setOrderFrames((prev) => [...prev, { sku: "", brand: "", model: "", color: "", price: 0 }])}
-                  className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
-                  <Plus size={14} /> Add Frame
-                </button>
-              </div>
-            </div>
-            {orderFrames.length === 0 ? (
-              <p className="text-xs text-white/40 text-center py-6">No frames added yet</p>
-            ) : (
-              <div className="space-y-2">
-                {orderFrames.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 relative">
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-2">
-                      <input placeholder="SKU" value={f.sku}
-                        onChange={(e) => { updateFrame(i, "sku", e.target.value); searchInventory(e.target.value, "frame", i); }}
-                        onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Brand" value={f.brand}
-                        onChange={(e) => updateFrame(i, "brand", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Model" value={f.model}
-                        onChange={(e) => updateFrame(i, "model", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Color" value={f.color}
-                        onChange={(e) => updateFrame(i, "color", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
-                        <input type="number" placeholder="Price" value={f.price || ""}
-                          onChange={(e) => updateFrame(i, "price", Number(e.target.value))}
-                          onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="pos-input text-xs py-1.5 pl-5" />
-                      </div>
-                    </div>
-                    {suggestionsFor?.type === "frame" && suggestionsFor.idx === i && isFocused && suggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-lg max-h-48 overflow-y-auto z-10">
-                        {suggestions.map((s: any, si: number) => (
-                          <button key={si} type="button"
-                            onMouseDown={() => {
-                              updateFrame(i, "sku", s.sku || "");
-                              updateFrame(i, "brand", s.brand || "");
-                              updateFrame(i, "model", s.model || "");
-                              updateFrame(i, "color", s.color || "");
-                              updateFrame(i, "price", s.sellingPrice || 0);
-                              setSuggestions([]);
-                              setSuggestionsFor(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 flex items-center gap-3">
-                            <span className="font-medium">{s.sku}</span>
-                            <span className="text-white/50">{s.brand} {s.model}</span>
-                            <span className="text-white/40 ml-auto"> · ₹{s.sellingPrice || 0}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <button onClick={() => removeFrame(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {step === "order" && (
+            <OrderItems
+              key="order"
+              orderFrames={orderFrames}
+              setOrderFrames={setOrderFrames}
+              updateFrame={updateFrame}
+              removeFrame={removeFrame}
+              orderLenses={orderLenses}
+              setOrderLenses={setOrderLenses}
+              updateLens={updateLens}
+              removeLens={removeLens}
+              orderAccessories={orderAccessories}
+              setOrderAccessories={setOrderAccessories}
+              updateAccessory={updateAccessory}
+              removeAccessory={removeAccessory}
+              syncBillFromOrder={syncBillFromOrder}
+              setStep={setStep}
+              onScan={() => setScanModal(true)}
+              searchInventory={searchInventory}
+              suggestions={suggestions}
+              suggestionsFor={suggestionsFor}
+              setSuggestions={setSuggestions}
+              setSuggestionsFor={setSuggestionsFor}
+              isFocused={isFocused}
+              setIsFocused={setIsFocused}
+            />
+          )}
 
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <Tag size={16} className="text-primary-500" /> Lenses ({orderLenses.length})
-              </h2>
-              <button onClick={() => setOrderLenses((prev) => [...prev, { sku: "", brand: "", features: [], index: "", price: 0, coating: "" }])}
-                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
-                <Plus size={14} /> Add Lens
-              </button>
-            </div>
-            {orderLenses.length === 0 ? (
-              <p className="text-xs text-white/40 text-center py-6">No lenses added yet</p>
-            ) : (
-              <div className="space-y-2">
-                {orderLenses.map((l, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-6 gap-2">
-                      <input placeholder="SKU" value={l.sku}
-                        onChange={(e) => updateLens(i, "sku", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Brand" value={l.brand}
-                        onChange={(e) => updateLens(i, "brand", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Type (comma sep)" value={l.features.join(", ")}
-                        onChange={(e) => updateLens(i, "features", e.target.value.split(",").map((s: string) => s.trim()))}
-                        className="pos-input text-xs py-1.5" />
-                      <input placeholder="Index" value={l.index}
-                        onChange={(e) => updateLens(i, "index", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
-                        <input type="number" placeholder="Price" value={l.price || ""}
-                          onChange={(e) => updateLens(i, "price", Number(e.target.value))}
-                          onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="pos-input text-xs py-1.5 pl-5" />
-                      </div>
-                      <input placeholder="Coating" value={l.coating}
-                        onChange={(e) => updateLens(i, "coating", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                    </div>
-                    <button onClick={() => removeLens(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {step === "billing" && (
+            <BillingPanel
+              key="billing"
+              billItems={billItems}
+              setBillItems={setBillItems}
+              updateBillItem={updateBillItem}
+              removeBillItem={removeBillItem}
+              totalAmount={totalAmount}
+            />
+          )}
 
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <Grid3X3 size={16} className="text-primary-500" /> Accessories ({orderAccessories.length})
-              </h2>
-              <button onClick={() => setOrderAccessories((prev) => [...prev, { name: "", price: 0 }])}
-                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
-                <Plus size={14} /> Add Accessory
-              </button>
-            </div>
-            {orderAccessories.length === 0 ? (
-              <p className="text-xs text-white/40 text-center py-6">No accessories added yet</p>
-            ) : (
-              <div className="space-y-2">
-                {orderAccessories.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      <input placeholder="Name" value={a.name}
-                        onChange={(e) => updateAccessory(i, "name", e.target.value)}
-                        className="pos-input text-xs py-1.5" />
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
-                        <input type="number" placeholder="Price" value={a.price || ""}
-                          onChange={(e) => updateAccessory(i, "price", Number(e.target.value))}
-                          onWheel={(e) => (e.target as HTMLElement).blur()}
-                          className="pos-input text-xs py-1.5 pl-5" />
-                      </div>
-                    </div>
-                    <button onClick={() => removeAccessory(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {step === "payment" && (
+            <PaymentPanel
+              key="payment"
+              discountType={discountType}
+              setDiscountType={setDiscountType}
+              discountPercent={discountPercent}
+              setDiscountPercent={setDiscountPercent}
+              discountAmount={discountAmount}
+              setDiscountAmount={setDiscountAmount}
+              discountVal={discountVal}
+              totalAmount={totalAmount}
+              advancePaid={advancePaid}
+              setAdvancePaid={setAdvancePaid}
+              paymentMode={paymentMode}
+              setPaymentMode={setPaymentMode}
+              finalTotal={finalTotal}
+              deliveryAddress={deliveryAddress}
+              setDeliveryAddress={setDeliveryAddress}
+              deliveryDate={deliveryDate}
+              setDeliveryDate={setDeliveryDate}
+            />
+          )}
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
-            <button onClick={() => { syncBillFromOrder(orderFrames, orderLenses, orderAccessories); setStep("billing"); }}
-              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5 flex-1 justify-center">
-              Sync to Billing <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+          {step === "confirmation" && (
+            <ConfirmationDashboard
+              key="confirmation"
+              visitType={visitType}
+              visitDate={visitDate}
+              visitDoctor={visitDoctor}
+              visitRemarks={visitRemarks}
+              usePrescription={usePrescription}
+              prescription={prescription}
+              orderFrames={orderFrames}
+              orderLenses={orderLenses}
+              orderAccessories={orderAccessories}
+              billItems={billItems}
+              totalAmount={totalAmount}
+              discountVal={discountVal}
+              finalTotal={finalTotal}
+              advancePaid={advancePaid}
+              deliveryAddress={deliveryAddress}
+              deliveryDate={deliveryDate}
+            />
+          )}
+        </AnimatePresence>
+      </div>
 
-      {step === "billing" && (
-        <div className="space-y-5">
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileText size={16} className="text-primary-500" /> Bill Items ({billItems.length})
-              </h2>
-              <button onClick={() => setBillItems((prev) => [...prev, { description: "", price: 0, qty: 1 }])}
-                className="pos-btn-primary btn-sm flex items-center gap-1.5 text-xs">
-                <Plus size={14} /> Add Item
-              </button>
-            </div>
-            {billItems.length === 0 ? (
-              <p className="text-xs text-white/40 text-center py-6">No bill items. Add items or sync from order.</p>
-            ) : (
-              <div className="space-y-2">
-                {billItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                    <input placeholder="Description" value={item.description}
-                      onChange={(e) => updateBillItem(i, "description", e.target.value)}
-                      className="pos-input text-xs py-1.5 flex-1" />
-                    <div className="relative w-20">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
-                      <input type="number" placeholder="Price" value={item.price || ""}
-                        onChange={(e) => updateBillItem(i, "price", Number(e.target.value))}
-                        onWheel={(e) => (e.target as HTMLElement).blur()}
-                        className="pos-input text-xs py-1.5 pl-5 w-full" />
-                    </div>
-                    <input type="number" placeholder="Qty" value={item.qty || 1} min="1"
-                      onChange={(e) => updateBillItem(i, "qty", Math.max(1, Number(e.target.value)))}
-                      onWheel={(e) => (e.target as HTMLElement).blur()}
-                      className="pos-input text-xs py-1.5 w-14 text-center" />
-                    <span className="text-xs font-semibold text-white/70 w-16 text-right">₹{(item.price * item.qty).toFixed(0)}</span>
-                    <button onClick={() => removeBillItem(i)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-400 flex-shrink-0">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/10">
-              <span className="text-sm text-white/50">Total Amount</span>
-              <span className="text-2xl font-bold text-white">₹{totalAmount.toLocaleString()}</span>
-            </div>
-          </div>
+      <BottomNav
+        currentIdx={currentIdx}
+        step={step}
+        setStep={setStep}
+        stepKeys={stepKeys}
+        saveTransaction={saveTransaction}
+        saving={saving}
+        countdown={countdown}
+      />
 
-          <div className="flex justify-end">
-            <button onClick={() => setStep("payment")}
-              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === "payment" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-              <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <Percent size={16} className="text-primary-500" /> Discount
-              </h2>
-              <div className="flex gap-2 mb-3">
-                <button onClick={() => setDiscountType("percent")}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "percent" ? "bg-primary-600 text-white shadow-sm" : "text-white/50"}`}>%</button>
-                <button onClick={() => setDiscountType("amount")}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${discountType === "amount" ? "bg-primary-600 text-white shadow-sm" : "text-white/50"}`}>₹</button>
-              </div>
-              {discountType === "percent" ? (
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-white/40">%</span>
-                  <input type="number" placeholder="Discount %" value={discountPercent || ""}
-                    onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                    onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="pos-input text-sm pl-7" />
-                </div>
-              ) : (
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-white/40">₹</span>
-                  <input type="number" placeholder="Discount amount" value={discountAmount || ""}
-                    onChange={(e) => setDiscountAmount(Number(e.target.value))}
-                    onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="pos-input text-sm pl-7" />
-                </div>
-              )}
-              {discountVal > 0 && (
-                <p className="text-xs text-white/50 mt-2">- ₹{discountVal.toLocaleString()}</p>
-              )}
-            </div>
-
-            <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-              <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <CreditCard size={16} className="text-primary-500" /> Payment
-              </h2>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-white/50 mb-1.5 block">Mode</label>
-                  <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}
-                    className="pos-input text-sm">
-                    {["Cash", "UPI", "Card", "Bank Transfer", "Insurance"].map((m) => (
-                      <option key={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">₹</span>
-                  <input type="number" placeholder="Amount collected" value={advancePaid || ""}
-                    onChange={(e) => setAdvancePaid(Number(e.target.value))}
-                    onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="pos-input text-sm pl-8" />
-                </div>
-                <div className="flex justify-between text-sm pt-2 border-t border-white/10">
-                  <span className="text-white/50">Total</span>
-                  <span className="font-medium">₹{totalAmount.toLocaleString()}</span>
-                </div>
-                {discountVal > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-red-500">Discount</span>
-                    <span className="font-medium text-red-500">- ₹{discountVal.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-white">
-                  <span>Final Total</span>
-                  <span>₹{finalTotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Collected</span>
-                  <span className="font-semibold">₹{advancePaid.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-semibold">
-                  <span className="text-white/50">Balance</span>
-                  <span className={advancePaid >= finalTotal ? "text-green-600" : "text-amber-600"}>
-                    {advancePaid >= finalTotal ? "₹0 (Paid)" : `₹${Math.max(0, finalTotal - advancePaid).toLocaleString()}`}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-xl p-5 shadow-lg">
-            <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <Truck size={16} className="text-primary-500" /> Delivery
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-white/50 mb-1.5 block">Delivery Address</label>
-                <textarea placeholder="Address (optional)" value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  className="pos-input text-sm" rows={2} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-white/50 mb-1.5 block">Expected Delivery Date</label>
-                <input type="date" value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="pos-input text-sm" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button onClick={() => setStep("confirmation")}
-              className="pos-btn-primary flex items-center gap-2 px-6 py-2.5">
-              Review <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== STEP: CONFIRMATION ==================== */}
-      {step === "confirmation" && (
-        <div className="space-y-5">
-          <div className="flex items-center gap-3 pb-3 border-b border-white/[0.06]">
-            <CheckCircle size={18} className="text-primary-500" />
-            <div>
-              <h2 className="text-base font-bold text-white">Confirmation</h2>
-              <p className="text-xs text-white/50">Review all details before saving</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Service</h4>
-              <p className="text-sm font-semibold text-white/80">{VISIT_TYPES.find(t => t.value === visitType)?.label || visitType}</p>
-              <p className="text-xs text-white/50">{visitDate} {visitDoctor ? `· ${visitDoctor}` : ""}</p>
-              {visitRemarks && <p className="text-xs text-white/50 mt-1">{visitRemarks}</p>}
-            </div>
-            {usePrescription && (
-              <div className="bg-white/5 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Prescription</h4>
-                {prescription.pd && <p className="text-xs text-white/50">PD: {prescription.pd}</p>}
-                {prescription.problems && <p className="text-xs text-white/50">Problems: {prescription.problems}</p>}
-                {prescription.notes && <p className="text-xs text-white/50">Notes: {prescription.notes}</p>}
-              </div>
-            )}
-            {orderFrames.length > 0 && (
-              <div className="bg-white/5 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Frames</h4>
-                {orderFrames.map((f, i) => (
-                  <p key={i} className="text-xs text-white/50">{f.brand} {f.model} ({f.color}) · ₹{f.price}</p>
-                ))}
-              </div>
-            )}
-            {orderLenses.length > 0 && (
-              <div className="bg-white/5 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Lenses</h4>
-                {orderLenses.map((l, i) => (
-                  <p key={i} className="text-xs text-white/50">{l.brand} {l.features.join(", ")} {l.coating} · ₹{l.price}</p>
-                ))}
-              </div>
-            )}
-            {orderAccessories.length > 0 && (
-              <div className="bg-white/5 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Accessories</h4>
-                {orderAccessories.map((a, i) => (
-                  <p key={i} className="text-xs text-white/50">{a.name} · ₹{a.price}</p>
-                ))}
-              </div>
-            )}
-            <div className="bg-white/5 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Billing</h4>
-              {billItems.filter(i => i.description && i.price > 0).map((item, i) => (
-                <p key={i} className="text-xs text-white/50">{item.description} x{item.qty} = ₹{(item.price * item.qty).toFixed(0)}</p>
-              ))}
-              <div className="border-t border-white/10 mt-2 pt-2 flex justify-between">
-                <span className="text-sm font-bold text-white/80">Total</span>
-                <span className="text-sm font-bold text-white">₹{totalAmount.toLocaleString()}</span>
-              </div>
-              {discountVal > 0 && (
-                <div className="flex justify-between text-xs mt-1">
-                  <span className="text-white/50">Discount</span>
-                  <span className="text-red-500">-₹{discountVal.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-xs mt-1">
-                <span className="text-white/50">Advance</span>
-                <span className="text-green-600 font-semibold">₹{advancePaid.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs mt-1">
-                <span className="text-white/50">Balance</span>
-                <span className="font-semibold">₹{Math.max(0, finalTotal - advancePaid).toLocaleString()}</span>
-              </div>
-            </div>
-            {deliveryAddress && (
-              <div className="bg-white/5 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Delivery</h4>
-                <p className="text-xs text-white/50">{deliveryAddress}</p>
-                {deliveryDate && <p className="text-xs text-white/50">Expected: {deliveryDate}</p>}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-between pt-3 border-t border-white/[0.06]">
-            <button onClick={() => setStep("payment")} className="btn-secondary px-4 py-2 text-sm flex items-center gap-1.5">
-              <ChevronLeft size={15} /> Back
-            </button>
-            <button onClick={saveTransaction} disabled={saving || (advancePaid <= 0 && advancePaid < finalTotal)}
-              className="btn-success px-6 py-2.5 text-sm flex items-center gap-2 font-semibold disabled:opacity-50 shadow-sm">
-              {saving ? (
-                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
-              ) : countdown > 0 ? (
-                <><MessageCircle size={16} /> WhatsApp in {countdown}s</>
-              ) : (
-                <><Save size={16} /> Save & Send WhatsApp</>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentIdx > 0 && step !== "confirmation" && (
-        <div className="flex justify-between pt-4">
-          <button onClick={() => setStep(stepKeys[Math.max(0, currentIdx - 1)])}
-            className="btn-ghost flex items-center gap-1.5 text-sm px-4 py-2">
-            <ChevronLeft size={16} /> Back
-          </button>
-        </div>
-      )}
-
-      {/* Scan QR Modal */}
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
         <div className="space-y-3">
-          <p className="text-xs text-white/50">Enter SKU or barcode to auto-fill frame details.</p>
-          <input className="pos-input" placeholder="SKU or barcode" autoFocus
+          <p className="text-xs text-slate-500 dark:text-slate-400">Enter SKU or barcode to auto-fill frame details.</p>
+          <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="SKU or barcode" autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
                 const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
-                if (res.success && res.data.length > 0) {
+                if (res.success && res.data && res.data.length > 0) {
                   const item = res.data[0];
                   const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
                   const next = [...orderFrames, newFrame];
                   setOrderFrames(next);
-                  syncBillFromOrder(next, orderLenses, orderAccessories);
                   setScanModal(false);
                 }
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2 text-xs font-semibold text-primary-400 border border-dashed border-white/20 rounded-lg hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
+            className="w-full text-center py-2.5 text-xs font-semibold text-primary-600 dark:text-primary-400 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
             <ScanLine size={14} /> Use Camera
           </button>
         </div>
       </Modal>
+
       {cameraActive && (
         <CameraScanner onScan={async (code) => {
           const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
-          if (res.success && res.data.length > 0) {
+          if (res.success && res.data && res.data.length > 0) {
             const item = res.data[0];
             const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
             const next = [...orderFrames, newFrame];
             setOrderFrames(next);
-            syncBillFromOrder(next, orderLenses, orderAccessories);
           }
           setCameraActive(false);
         }} onClose={() => setCameraActive(false)} />
       )}
-      </div>
-    </div>
+    </motion.div>
   );
 }
