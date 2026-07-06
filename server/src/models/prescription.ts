@@ -1,4 +1,5 @@
 import { Schema, model, Types } from "mongoose";
+import { withBranch } from "../utils/branchProxy";
 
 const EyeSchema = new Schema({
   sph: { type: Number },
@@ -7,7 +8,7 @@ const EyeSchema = new Schema({
   va: { type: String }
 });
 
-const PrescriptionSchema = new Schema(
+const PrescriptionSchemaObj = new Schema(
   {
     customerId: { type: Types.ObjectId, ref: "Customer", required: true },
     visitId: { type: Types.ObjectId, ref: "Visit" },
@@ -19,7 +20,9 @@ const PrescriptionSchema = new Schema(
   { timestamps: true }
 );
 
-PrescriptionSchema.index({ customerId: 1, createdAt: -1 });
-PrescriptionSchema.index({ visitId: 1 });
+PrescriptionSchemaObj.index({ customerId: 1, createdAt: -1 });
+PrescriptionSchemaObj.index({ visitId: 1 });
 
-export const Prescription = model("Prescription", PrescriptionSchema);
+export const PrescriptionSchema = PrescriptionSchemaObj;
+const _Prescription = model("Prescription", PrescriptionSchemaObj);
+export const Prescription = withBranch(_Prescription, "Prescription");
