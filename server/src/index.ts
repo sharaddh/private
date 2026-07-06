@@ -83,6 +83,44 @@ async function start() {
     console.warn("Could not seed users:", e?.message);
   }
 
+  // Seed default branch if none exist
+  try {
+    const branchCount = await Branch.countDocuments();
+    if (branchCount === 0) {
+      const branch = await Branch.create({
+        name: "Govindpuri",
+        code: "GVP",
+        dbName: "kmj_govindpuri",
+        isActive: true,
+        settings: { shopName: "KMJ Optical - Govindpuri" },
+      });
+      console.log(`  Default branch created: ${branch.name} (${branch.code})`);
+
+      // Copy existing collections to branch database
+      const branchModels = getBranchModels(branch.dbName);
+      const collections = ["customers", "visits", "prescriptions", "orders", "bills", "payments", "inventory", "deliveries", "settings", "todos"];
+      for (const collName of collections) {
+        const sourceColl = mongoose.connection.db.collection(collName);
+        const targetColl = mongoose.connection.useDb(branch.dbName).collection(collName);
+        const sourceCount = await sourceColl.countDocuments();
+        const targetCount = await targetColl.countDocuments();
+        if (sourceCount > 0 && targetCount === 0) {
+          const docs = await sourceColl.find({}).toArray();
+          await targetColl.insertMany(docs);
+          console.log(`    Migrated ${docs.length} documents from ${collName}`);
+        }
+      }
+
+      // Assign branch to admin user
+      await User.updateMany(
+        { role: "owner" },
+        { $set: { branches: [branch._id] } }
+      );
+    }
+  } catch (e: any) {
+    console.warn("Could not seed branch:", e?.message);
+  }
+
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);
