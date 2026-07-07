@@ -17,6 +17,7 @@ import whatsapp from "./whatsapp";
 import todos from "./todos";
 import cacheAdmin from "./cache-admin";
 import branches from "./branches";
+import recalculate from "./recalculate";
 
 const router = Router();
 
@@ -37,5 +38,6 @@ router.use("/settings", branchScope, settings);
 router.use("/workspace", branchScope, workspace);
 router.use("/whatsapp", whatsapp);
 router.use("/cache", cacheAdmin);
+router.use("/recalculate", recalculate);
 
 export default router;
