@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
 import { Settings } from "../models/settings";
@@ -62,7 +62,7 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
     $inc: { totalSpent: total, pendingAmount },
   });
 
-  // Send WhatsApp — fire and forget (non-blocking)
+  // Send WhatsApp ΓÇö fire and forget (non-blocking)
   const customer = await Customer.findById(p.customerId).lean();
   if (customer?.mobile) {
     (async () => {
@@ -83,7 +83,7 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
             shopPhone: settings?.shopPhone || "", shopEmail: settings?.shopEmail || "", logo: settings?.logo || "",
           }
         );
-        const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${total.toFixed(2)}.`;
+        const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
           await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, message);
         }
@@ -143,6 +143,9 @@ router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
 router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
   const b = await Bill.findByIdAndDelete(req.params.id).lean();
   if (!b) throw new AppError(404, "Not found");
+  await Customer.findByIdAndUpdate(b.customerId, {
+    $inc: { totalSpent: -(b.totalAmount || 0), pendingAmount: -(b.pendingAmount || 0) },
+  });
   await Promise.all([
     invalidateCache("/api/bills"),
     invalidateCache("/api/dashboard"),
