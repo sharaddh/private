@@ -9,7 +9,7 @@ import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
-  TrendingUp, IndianRupee, ScanLine, Boxes, CircleDollarSign, PackageCheck,
+  TrendingUp, IndianRupee, ScanLine, Boxes, PackageCheck,
   Clock, Activity, Plus, Check, Trash2, ArrowUpRight, UserPlus, FileText,
   BarChart3, AlertTriangle, AlertCircle, CreditCard, Smartphone, Building2,
   X, ChevronRight, ShoppingCart, CheckSquare, Send, Eye, MessageSquare,
@@ -76,22 +76,22 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-full">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
-          <Icon className="w-5 h-5" style={{ color }} />
+    <div className="flex flex-col bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-full">
+      <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
+        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
+          <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
         </div>
         {trend && (
-          <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-lg whitespace-nowrap flex-shrink-0">
-            <TrendingUp className="w-3 h-3" />
+          <span className="flex items-center gap-0.5 text-[10px] md:text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+            <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3" />
             {trend}
           </span>
         )}
       </div>
-      <div className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1 line-clamp-1" style={{ color }}>{value}</div>
+      <div className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-0.5 md:mb-1 break-words" style={{ color }}>{value}</div>
       <div className="mt-auto">
-        <div className="text-sm font-medium text-slate-500 dark:text-slate-400 line-clamp-1">{label}</div>
-        {subtitle && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">{subtitle}</div>}
+        <div className="text-[11px] md:text-sm font-medium text-slate-500 dark:text-slate-400 break-words">{label}</div>
+        {subtitle && <div className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mt-0.5 break-words">{subtitle}</div>}
       </div>
     </div>
   );
@@ -419,9 +419,9 @@ export default function Dashboard() {
   const renderKPIs = () => (
     <div>
       <SectionHeader title="Key Metrics" />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
         <MetricCard label="Today's Sales" value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
-        <MetricCard label="Today's Collection" value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={CircleDollarSign} color="#6366f1" subtitle="today" />
+        <MetricCard label="Today's Collection" value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle="today" />
         <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
         <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
         <MetricCard label="Ready for Pickup" value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle="awaiting collection" />
@@ -708,7 +708,7 @@ export default function Dashboard() {
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.pendingBills.length === 0 ? (
-          <EmptyState icon={CircleDollarSign} title="All bills cleared" description="No pending bills to collect." />
+          <EmptyState icon={IndianRupee} title="All bills cleared" description="No pending bills to collect." />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
           const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
@@ -862,7 +862,7 @@ export default function Dashboard() {
         </div>
         <div className="space-y-2.5">
           {d.paymentModeSplit.map((p) => {
-            const Icon = paymentModeIcon[p.mode] || CircleDollarSign;
+            const Icon = paymentModeIcon[p.mode] || IndianRupee;
             return (
               <div key={p.mode} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-100 dark:border-slate-700/30 hover:shadow-sm transition-all">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#6366f1"}15` }}>
