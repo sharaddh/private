@@ -111,7 +111,9 @@ router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
   const bill = await Bill.findById(req.params.id);
   if (!bill) throw new AppError(404, "Not found");
 
+  const oldTotal = bill.totalAmount || 0;
   const oldAdvance = bill.advancePaid || 0;
+  const oldPending = bill.pendingAmount || 0;
 
   if (p.items) {
     bill.subtotal = (p.items || []).reduce((s: number, it: any) => s + ((it.quantity || 1) * (it.unitPrice || 0)), 0);
@@ -125,12 +127,17 @@ router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
 
   await bill.save();
 
-  // Adjust customer pendingAmount by the advance difference
-  const advanceDiff = (bill.advancePaid || 0) - oldAdvance;
-  if (Math.abs(advanceDiff) > 0.01) {
-    await Customer.findByIdAndUpdate(bill.customerId, {
-      $inc: { pendingAmount: -advanceDiff },
-    });
+  const newTotal = bill.totalAmount || 0;
+  const newPending = bill.pendingAmount || 0;
+  const totalDiff = newTotal - oldTotal;
+  const pendingDiff = newPending - oldPending;
+
+  const customerUpdates: Record<string, number> = {};
+  if (Math.abs(totalDiff) > 0.01) customerUpdates.totalSpent = totalDiff;
+  if (Math.abs(pendingDiff) > 0.01) customerUpdates.pendingAmount = pendingDiff;
+
+  if (Object.keys(customerUpdates).length > 0) {
+    await Customer.findByIdAndUpdate(bill.customerId, { $inc: customerUpdates });
   }
 
   await Promise.all([
