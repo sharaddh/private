@@ -9,6 +9,7 @@ import { Delivery } from "../models/delivery";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { invalidateCache } from "../middleware/cache";
 
 const router = Router();
 
@@ -62,6 +63,7 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
     });
     await visit.save();
     result.visit = visit;
+    await Customer.findByIdAndUpdate(customer._id, { $inc: { totalVisits: 1 } });
 
     if (body.prescription) {
       const prescription = new Prescription({
@@ -95,12 +97,20 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
       subtotal: body.bill.subtotal || 0,
       discount: body.bill.discount || 0,
       totalAmount: body.bill.totalAmount || 0,
-      pendingAmount: body.bill.totalAmount - (body.payment?.amount || 0),
       advancePaid: body.payment?.amount || 0,
+      pendingAmount: Math.max(0, (body.bill.totalAmount || 0) - (body.payment?.amount || 0)),
       paymentMode: body.payment?.mode || "Cash",
     });
     await bill.save();
     result.bill = bill;
+
+    const billTotalAmount = body.bill.totalAmount || 0;
+    const billPendingAmount = Math.max(0, billTotalAmount - (body.payment?.amount || 0));
+    if (billTotalAmount > 0) {
+      await Customer.findByIdAndUpdate(customer._id, {
+        $inc: { totalSpent: billTotalAmount, pendingAmount: billPendingAmount },
+      });
+    }
 
     if (body.payment?.amount > 0) {
       const payment = new Payment({
@@ -126,6 +136,13 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
     await delivery.save();
     result.delivery = delivery;
   }
+
+  await Promise.all([
+    invalidateCache("/api/customers"),
+    invalidateCache("/api/visits"),
+    invalidateCache("/api/bills"),
+    invalidateCache("/api/dashboard"),
+  ]);
 
   res.json({ success: true, data: result });
 }));
