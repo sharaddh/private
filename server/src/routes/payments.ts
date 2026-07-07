@@ -95,14 +95,36 @@ router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
     });
   }
 
-  await invalidateCache("/api/payments");
+  await Promise.all([
+    invalidateCache("/api/payments"),
+    invalidateCache("/api/bills"),
+    invalidateCache("/api/dashboard"),
+  ]);
   res.json({ success: true, data: oldPayment });
 }));
 
 router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
   const p = await Payment.findByIdAndDelete(req.params.id).lean();
   if (!p) throw new AppError(404, "Not found");
-  await invalidateCache("/api/payments");
+
+  // Reverse bill advance adjustment
+  if (p.billId) {
+    const bill = await Bill.findById(p.billId);
+    if (bill) {
+      bill.advancePaid = Math.max(0, (bill.advancePaid || 0) - p.amount);
+      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
+      await bill.save();
+    }
+  }
+
+  // Reverse customer pendingAmount adjustment (create decremented, so delete increments)
+  await Customer.findByIdAndUpdate(p.customerId, { $inc: { pendingAmount: p.amount } });
+
+  await Promise.all([
+    invalidateCache("/api/payments"),
+    invalidateCache("/api/bills"),
+    invalidateCache("/api/dashboard"),
+  ]);
   res.json({ success: true, message: "Deleted" });
 }));
 
