@@ -6,7 +6,7 @@ import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { useAuth } from "../context/AuthContext";
-import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, DollarSign, Eye } from "lucide-react";
+import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, IndianRupee, Eye, Calendar, MapPinned } from "lucide-react";
 
 interface Customer {
   _id: string; customerId: string; name: string; email?: string;
@@ -27,8 +27,9 @@ export default function Customers() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { isStaff } = useAuth();
-  const { data: rawList, loading } = useCachedData<Customer[]>("/api/customers", () => api.get("/api/customers"));
+  const { isStaff, user } = useAuth();
+  const { data: rawList, loading, refetch } = useCachedData<Customer[]>("/api/customers", () => api.get("/api/customers"));
+  const [recalculating, setRecalculating] = useState(false);
 
   useEffect(() => {
     if (rawList) {
@@ -92,11 +93,31 @@ export default function Customers() {
           <h1 className="page-title">Customers</h1>
           <p className="page-subtitle">Search, view, and manage customer profiles.</p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-sm hover:shadow-lg">
-          <Plus size={18} />
-          <span className="hidden sm:inline">Add Customer</span>
-          <span className="sm:hidden">Add</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {!isStaff && (
+            <button onClick={async () => {
+              setRecalculating(true);
+              const res = await api.post("/api/recalculate/customer-totals", {});
+              if (res.success) {
+                refetch(true);
+                const d = res.data as any;
+                alert(`Fixed ${d?.updated || 0} customer records`);
+              } else {
+                alert("Recalculation failed: " + (res.message || "Unknown error"));
+              }
+              setRecalculating(false);
+            }} disabled={recalculating}
+              className="btn-secondary flex items-center gap-1.5 text-sm">
+              <Activity size={16} />
+              {recalculating ? "Fixing..." : "Fix Data"}
+            </button>
+          )}
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-sm hover:shadow-lg">
+            <Plus size={18} />
+            <span className="hidden sm:inline">Add Customer</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+        </div>
       </div>
 
       <div className="relative">
@@ -128,40 +149,91 @@ export default function Customers() {
           <p className="text-sm text-slate-500">{filteredList.length} customer(s)</p>
           {filteredList.map((c) => (
             <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-              className="card cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all duration-300"
+              className="group relative card cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-500/10 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm flex-shrink-0">
-                    {c.name?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-900 dark:text-white truncate">{c.name}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-slate-500">
-                      {c.mobile && <span className="flex items-center gap-1"><Phone size={12} /> {c.mobile}</span>}
-                      {c.email && <span className="truncate">{c.email}</span>}
-                      {c.customerId && <span className="text-xs text-slate-400">ID: {c.customerId}</span>}
-                    </div>
-                  </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary-500/[0.02] dark:to-primary-400/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="relative flex items-center gap-4">
+                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base flex-shrink-0 shadow-sm overflow-hidden ${
+                  (c.pendingAmount || 0) > 0
+                    ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                    : "bg-gradient-to-br from-primary-500 to-primary-600 text-white"
+                }`}>
+                  {c.name?.charAt(0)?.toUpperCase() || "?"}
+                  {(c.pendingAmount || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-800" />
+                  )}
                 </div>
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm text-slate-500">{c.totalVisits || 0} visits</p>
-                    <p className="text-sm font-semibold text-emerald-600">₹{(c.totalSpent || 0).toLocaleString()}</p>
-                    {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-500 font-medium">₹{c.pendingAmount} due</p>}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-900 dark:text-white truncate">{c.name}</h3>
+                    {c.customerId && (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded shrink-0">
+                        #{c.customerId.replace("CUST-", "").slice(-6)}
+                      </span>
+                    )}
+                    {c.age && (
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{c.age}y{c.gender ? `, ${c.gender}` : ""}</span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                    {c.mobile && (
+                      <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Phone size={11} className="text-slate-400 dark:text-slate-500" />
+                        {c.mobile.replace(/^0+/, "")}
+                      </span>
+                    )}
+                    {c.city && (
+                      <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <MapPinned size={11} className="text-slate-400 dark:text-slate-500" /> {c.city}
+                      </span>
+                    )}
+                  </div>
+
+                  {c.tags && c.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {c.tags.slice(0, 3).map((t, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full text-[10px] font-medium">{t}</span>
+                      ))}
+                      {c.tags.length > 3 && (
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 px-1">+{c.tags.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">
+                      <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{c.totalVisits || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-lg">
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">₹{(c.totalSpent || 0).toLocaleString()}</span>
+                    </div>
+                    {(c.pendingAmount || 0) > 0 ? (
+                      <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-lg">
+                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">₹{(c.pendingAmount || 0).toLocaleString()} due</span>
+                      </div>
+                    ) : (c.totalVisits || 0) > 0 ? (
+                      <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">Cleared</span>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-0.5 -mr-1">
                     <button onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                      className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg text-primary-600 dark:text-primary-400 transition-colors" title="Edit">
-                      <Edit2 size={16} />
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors" title="Edit">
+                      <Edit2 size={13} />
                     </button>
                     {!isStaff && (
                       <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors" title="Delete">
-                        <Trash2 size={16} />
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete">
+                        <Trash2 size={13} />
                       </button>
                     )}
-                    <ArrowRight size={18} className="text-slate-300 dark:text-slate-600 ml-1" />
+                    <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors" />
                   </div>
                 </div>
               </div>
@@ -278,12 +350,12 @@ export default function Customers() {
                 <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">Visits</p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10 text-center">
-                <DollarSign size={16} className="text-blue-600 mx-auto mb-1" />
+                <IndianRupee size={16} className="text-blue-600 mx-auto mb-1" />
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-300">₹{(detailCustomer.totalSpent || 0).toLocaleString()}</p>
                 <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70 font-medium">Spent</p>
               </div>
               <div className="bg-amber-50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10 text-center">
-                <DollarSign size={16} className="text-amber-600 mx-auto mb-1" />
+                <IndianRupee size={16} className="text-amber-600 mx-auto mb-1" />
                 <p className="text-lg font-bold text-amber-700 dark:text-amber-300">₹{(detailCustomer.pendingAmount || 0).toLocaleString()}</p>
                 <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 font-medium">Pending</p>
               </div>
