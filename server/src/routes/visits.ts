@@ -54,6 +54,7 @@ router.put("/:id", authenticate, asyncHandler(async (req, res) => {
 router.delete("/:id", authenticate, asyncHandler(async (req, res) => {
   const v = await Visit.findByIdAndDelete(req.params.id).lean();
   if (!v) throw new AppError(404, "Not found");
+  await Customer.findByIdAndUpdate(v.customerId, { $inc: { totalVisits: -1 } });
   await invalidateCache("/api/visits");
   res.json({ success: true, message: "Deleted" });
 }));
