@@ -303,96 +303,63 @@ export default function Settings() {
   if (loading) return <PageSkeleton page="settings" />;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="page-title">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your ERP system preferences.</p>
-      </div>
-
-      {!isStaff && branches.length > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Building2 size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Active Branch</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Switch between branches</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
+    <div className="max-w-4xl mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="page-title">Settings</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Configure your preferences</p>
+        </div>
+        {!isStaff && branches.length > 0 && (
+          <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-dark-700 rounded-lg p-1">
             {branches.map((b) => (
               <button
                 key={b._id}
                 onClick={() => handleSwitchBranch(b._id)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   currentBranch?._id === b._id
-                    ? "bg-primary-600 text-white shadow-md"
-                    : "bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600"
+                    ? "bg-white dark:bg-dark-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
               >
                 {b.name}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!isStaff && (
         <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
-              <User size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Shop Profile</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Update shop information & logo</p>
-            </div>
-          </div>
-          <form onSubmit={handleSave} className="space-y-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <User size={16} className="text-primary-600 dark:text-primary-400" />
+            Shop Profile
+          </h3>
+          <form onSubmit={handleSave} className="space-y-3">
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{error}</div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded-lg text-sm">{error}</div>
             )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop Logo</label>
+            <div className="flex items-center gap-4">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-primary-400 transition-colors"
+                className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 transition-colors shrink-0 overflow-hidden"
               >
                 {logoPreview ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <img src={logoPreview} alt="Logo" className="max-h-24 max-w-48 object-contain" />
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Click to change</p>
-                  </div>
+                  <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500">
-                    <Image size={32} />
-                    <p className="text-sm">Upload Logo</p>
-                    <p className="text-xs">PNG, JPG (max 2MB)</p>
-                  </div>
+                  <Image size={20} className="text-gray-400" />
                 )}
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+              <div className="flex-1 space-y-2">
+                <input className="input-field text-sm" placeholder="Shop name" value={shopName} onChange={(e) => setShopName(e.target.value)} />
+                <input className="input-field text-sm" placeholder="Phone" value={shopPhone} onChange={(e) => setShopPhone(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Shop Name</label>
-              <input className="input-field" value={shopName} onChange={(e) => setShopName(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
-              <textarea className="input-field" rows={2} value={shopAddress} onChange={(e) => setShopAddress(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Phone</label>
-              <input className="input-field" value={shopPhone} onChange={(e) => setShopPhone(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-              <input type="email" className="input-field" value={shopEmail} onChange={(e) => setShopEmail(e.target.value)} />
-            </div>
-            <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
-              {saved ? "Saved!" : <><Save size={18} /> Save Settings</>}
+            <textarea className="input-field text-sm" rows={2} placeholder="Address" value={shopAddress} onChange={(e) => setShopAddress(e.target.value)} />
+            <input type="email" className="input-field text-sm" placeholder="Email" value={shopEmail} onChange={(e) => setShopEmail(e.target.value)} />
+            <button type="submit" disabled={saving} className="btn-primary text-sm w-full">
+              {saved ? "Saved!" : "Save Settings"}
             </button>
           </form>
         </div>
@@ -400,144 +367,84 @@ export default function Settings() {
 
         {!isStaff && (
         <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400">
-              <MessageCircle size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">WhatsApp Integration</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Configure automated messaging</p>
-            </div>
-          </div>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Admin WhatsApp Number</label>
-              <input className="input-field" placeholder="e.g. 919XXXXXXXXX" value={adminWhatsApp}
-                onChange={(e) => setAdminWhatsApp(e.target.value)} />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                Bills will be sent from this number. Include country code (e.g., 91 for India).
-              </p>
-            </div>
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">WhatsApp Connection</h4>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <MessageCircle size={16} className="text-green-600 dark:text-green-400" />
+            WhatsApp
+          </h3>
+          <div className="space-y-3">
+            <input className="input-field text-sm" placeholder="e.g. 919XXXXXXXXX" value={adminWhatsApp}
+              onChange={(e) => setAdminWhatsApp(e.target.value)} />
+            <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-3">
               {waStatus === "connected" && (
-                <div className="space-y-3">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full" />
+                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                     <span className="text-sm font-medium">Connected</span>
                   </div>
-                  <button
-                    onClick={async () => {
-                      setWaDisconnecting(true);
-                      await api.post("/api/whatsapp/disconnect", {});
-                      setWaDisconnecting(false);
-                      setWaStatus("disconnected");
-                    }}
-                    disabled={waDisconnecting}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    <LogOut size={16} />
-                    {waDisconnecting ? "Disconnecting..." : "Logout & Reset WhatsApp"}
-                  </button>
+                  <button onClick={async () => { setWaDisconnecting(true); await api.post("/api/whatsapp/disconnect", {}); setWaDisconnecting(false); setWaStatus("disconnected"); }}
+                    disabled={waDisconnecting} className="text-xs text-red-600 hover:text-red-700 font-medium">{waDisconnecting ? "Disconnecting..." : "Disconnect"}</button>
                 </div>
               )}
               {waStatus === "qr" && waQr && (
-                <div className="text-center space-y-3">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Scan this QR code with WhatsApp to connect</p>
-                  <img src={waQr} alt="WhatsApp QR" className="mx-auto w-48 h-48" />
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Open WhatsApp → Menu → Linked Devices → Link a Device
-                  </p>
-                  <button
-                    onClick={async () => {
-                      setWaDisconnecting(true);
-                      await api.post("/api/whatsapp/disconnect", {});
-                      setWaDisconnecting(false);
-                      setWaStatus("disconnected");
-                    }}
-                    disabled={waDisconnecting}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    <LogOut size={16} />
-                    {waDisconnecting ? "Disconnecting..." : "Cancel & Reset"}
-                  </button>
+                <div className="text-center space-y-2">
+                  <p className="text-xs text-gray-500">Scan QR with WhatsApp</p>
+                  <img src={waQr} alt="QR" className="mx-auto w-36 h-36" />
+                  <button onClick={async () => { setWaDisconnecting(true); await api.post("/api/whatsapp/disconnect", {}); setWaDisconnecting(false); setWaStatus("disconnected"); }}
+                    disabled={waDisconnecting} className="text-xs text-red-600 font-medium">{waDisconnecting ? "Disconnecting..." : "Cancel"}</button>
                 </div>
               )}
-              {waStatus === "disconnected" && (
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">WhatsApp session cleared. A new QR code will appear shortly for re-linking.</p>
-                </div>
-              )}
-              {waStatus === "initializing" && (
-                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span className="text-sm">Connecting...</span>
-                </div>
-              )}
-              {waStatus === "error" && (
-                <p className="text-sm text-red-500">Connection error. Restart the server.</p>
-              )}
-              {waStatus === "checking" && (
-                <p className="text-sm text-gray-400">Checking status...</p>
-              )}
+              {waStatus === "disconnected" && <p className="text-xs text-gray-500">Disconnected. QR will appear shortly.</p>}
+              {waStatus === "initializing" && <div className="flex items-center gap-2 text-xs text-gray-500"><RefreshCw size={14} className="animate-spin" /> Connecting...</div>}
+              {waStatus === "error" && <p className="text-xs text-red-500">Connection error. Restart server.</p>}
+              {waStatus === "checking" && <p className="text-xs text-gray-400">Checking...</p>}
             </div>
-          </form>
+            <button onClick={handleSave} className="btn-primary text-sm w-full">Save WhatsApp</button>
+          </div>
         </div>
         )}
 
         {!isStaff && (
         <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Shield size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Security</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Manage access and security</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Admin Role</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Owner / Operator</p>
-            </div>
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✓ All API routes secured</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">JWT authentication required for all endpoints</p>
-            </div>
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✓ Registration Protected</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Only admin can create new users (no open registration)</p>
-            </div>
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">✓ Rate Limiting Active</p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">200 requests per minute per IP</p>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Shield size={16} className="text-amber-600 dark:text-amber-400" />
+            Security
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Role</p>
+                <p className="text-xs text-gray-500">Owner / Operator</p>
+              </div>
+              <span className="text-[10px] px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full font-medium">Admin</span>
             </div>
             {user?.role !== "staff" && (
-              <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Staff Accounts</p>
-                  <button onClick={() => setShowAddStaff(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                    <Plus size={14} /> Add Staff
+              <div className="p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Staff</p>
+                  <button onClick={() => setShowAddStaff(true)} className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700">
+                    + Add
                   </button>
                 </div>
-                {users.length === 0 ? (
-                  <p className="text-xs text-gray-400">No staff accounts yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {users.filter((u: any) => u.role === "staff").map((u: any) => (
-                      <div key={u.id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name || u.username}</p>
-                          <p className="text-xs text-gray-400">@{u.username}{u.mobile ? ` · ${u.mobile}` : ""}</p>
+                {(() => {
+                  const branchStaff = users.filter((u: any) => u.role === "staff" && u.branches?.some((b: any) => (b._id || b) === currentBranch?._id));
+                  return branchStaff.length === 0 ? (
+                    <p className="text-xs text-gray-400">No staff for this branch</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {branchStaff.map((u: any) => (
+                        <div key={u.id} className="flex items-center justify-between py-1.5 px-2 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-600">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name || u.username}</p>
+                            <p className="text-xs text-gray-400">@{u.username}{u.mobile ? ` · ${u.mobile}` : ""}</p>
+                          </div>
+                          <button onClick={() => handleDeleteUser(u.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 size={12} />
+                          </button>
                         </div>
-                        <button onClick={() => handleDeleteUser(u.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -546,47 +453,36 @@ export default function Settings() {
 
         {!isStaff && (
         <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Globe size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Branch Management</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Add and manage store branches</p>
-            </div>
-          </div>
-          <div className="space-y-3">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Globe size={16} className="text-indigo-600 dark:text-indigo-400" />
+            Branches
+          </h3>
+          <div className="space-y-2">
             <button onClick={() => { setEditingBranch(null); setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" }); setShowAddBranch(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg transition-colors">
-              <Plus size={14} /> Add Branch
+              className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 mb-2 inline-block">
+              + Add Branch
             </button>
             {allBranches.length === 0 ? (
-              <p className="text-xs text-gray-400 mt-3">No branches created yet</p>
+              <p className="text-xs text-gray-400">No branches</p>
             ) : (
-              <div className="space-y-2 mt-3">
+              <div className="space-y-1.5">
                 {allBranches.map((b) => (
                   <div key={b._id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${b.isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400"}`}>
-                          {b.isActive ? "Active" : "Inactive"}
-                        </span>
-                        {currentBranch?._id === b._id && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium">Current</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 truncate">{b.code} · {b.dbName}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${b.isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400"}`}>
+                        {b.isActive ? "Active" : "Inactive"}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
-                      <button onClick={() => handleSwitchBranch(b._id)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors" title="Switch to this branch">
-                        <Building2 size={14} />
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <button onClick={() => handleSwitchBranch(b._id)} className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded text-gray-400 hover:text-primary-500 transition-colors" title="Switch">
+                        <Building2 size={12} />
                       </button>
-                      <button onClick={() => handleEditBranch(b)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors" title="Edit">
-                        <Save size={14} />
+                      <button onClick={() => handleEditBranch(b)} className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded text-gray-400 hover:text-primary-500 transition-colors" title="Edit">
+                        <Save size={12} />
                       </button>
-                      <button onClick={() => handleDeleteBranch(b._id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Deactivate">
-                        <Trash2 size={14} />
+                      <button onClick={() => handleDeleteBranch(b._id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors" title="Deactivate">
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </div>
@@ -598,72 +494,66 @@ export default function Settings() {
         )}
 
         <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <User size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Account</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Profile, theme & session</p>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <User size={16} className="text-violet-600 dark:text-violet-400" />
+              Account
+            </h3>
+            {(() => {
+              const fullBranch = allBranches.find((b) => b._id === currentBranch?._id);
+              return currentBranch ? (
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-50 dark:bg-violet-900/20 rounded-md">
+                  <Building2 size={12} className="text-violet-500 dark:text-violet-400 shrink-0" />
+                  <span className="text-xs font-medium text-violet-700 dark:text-violet-300">{currentBranch.name}</span>
+                  {fullBranch?.phone && (
+                    <span className="text-xs text-violet-500 dark:text-violet-400">· {fullBranch.phone}</span>
+                  )}
+                </div>
+              ) : null;
+            })()}
           </div>
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
+          <div className="space-y-3">
+            <div className="p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">Profile</p>
                 <button onClick={() => editingAccount ? setEditingAccount(false) : handleEditAccount()} className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700">
                   {editingAccount ? "Cancel" : "Edit"}
                 </button>
               </div>
               {editingAccount ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
-                    <input className="input-field text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Your name" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Mobile</label>
-                    <input className="input-field text-sm" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="Phone number" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">New Password (leave blank to keep)</label>
-                    <input type="password" className="input-field text-sm" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="••••••••" />
-                  </div>
+                <div className="space-y-2">
+                  <input className="input-field text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
+                  <input className="input-field text-sm" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="Mobile" />
+                  <input type="password" className="input-field text-sm" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="New password" />
                   <button onClick={handleSaveProfile} disabled={savingProfile}
-                    className="btn-primary text-sm px-4 py-2">{savingProfile ? "Saving..." : "Save"}</button>
-                  {saveProfileMsg && <p className={`text-xs ${saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600"}`}>{saveProfileMsg}</p>}
+                    className="btn-primary text-sm px-3 py-1.5 w-full">{savingProfile ? "Saving..." : "Save"}</button>
+                  {saveProfileMsg && <p className={`text-xs text-center ${saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600"}`}>{saveProfileMsg}</p>}
                 </div>
               ) : (
                 <>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{(user?.name as string) || (user?.username as string) || "User"}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">@{user?.username as string}{user?.mobile ? ` · ${user?.mobile as string}` : ""}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 capitalize">{(user?.role as string) || "—"}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">@{user?.username as string}{user?.mobile ? ` · ${user?.mobile as string}` : ""}</p>
+                  <p className="text-xs text-gray-400 capitalize">{(user?.role as string) || "—"}</p>
                 </>
               )}
             </div>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-              <div className="flex items-center gap-3">
-                {dark ? <Moon size={18} className="text-gray-600 dark:text-gray-300" /> : <Sun size={18} className="text-gray-600 dark:text-gray-300" />}
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Theme</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{dark ? "Dark" : "Light"}</p>
-                </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
+              <div className="flex items-center gap-2">
+                {dark ? <Moon size={16} className="text-gray-500" /> : <Sun size={16} className="text-gray-500" />}
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{dark ? "Dark" : "Light"}</span>
               </div>
               <button onClick={toggleTheme}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${dark ? "bg-primary-600" : "bg-gray-300"}`}>
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${dark ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${dark ? "bg-primary-600" : "bg-gray-300"}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${dark ? "translate-x-[18px]" : "translate-x-0.5"}`} />
               </button>
             </div>
             <button onClick={handleLogout}
-              className="flex items-center justify-between w-full p-4 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group">
-              <div className="flex items-center gap-3">
-                <LogOut size={18} className="text-red-500" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Logout</p>
-                  <p className="text-xs text-red-500/70 dark:text-red-400/70">End current session</p>
-                </div>
+              className="flex items-center justify-between w-full p-3 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group">
+              <div className="flex items-center gap-2">
+                <LogOut size={16} className="text-red-500" />
+                <span className="text-sm font-medium text-red-600 dark:text-red-400">Logout</span>
               </div>
-              <ChevronRight size={16} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight size={14} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>
