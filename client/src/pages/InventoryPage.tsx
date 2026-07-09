@@ -201,7 +201,7 @@ export default function InventoryPage() {
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
               categoryFilter === c
                 ? "bg-primary-600 text-white shadow-soft"
-                : "bg-white dark:bg-dark-800 text-muted-600 dark:text-muted-400 hover:bg-gray-50 dark:hover:bg-dark-700 border border-gray-300 dark:border-dark-600"
+                : "bg-white dark:bg-slate-800 text-muted-600 dark:text-muted-400 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-300 dark:border-slate-600"
             }`}>
             {c}
           </button>
@@ -244,7 +244,7 @@ export default function InventoryPage() {
         searchPlaceholder="Search by SKU, brand, model, supplier..."
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-dark-700/60 rounded-lg text-muted-400" title="Print Label">
+            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-slate-700/60 rounded-lg text-muted-400" title="Print Label">
               <Printer size={15} />
             </button>
             <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50/60 dark:hover:bg-primary-900/20 rounded-lg text-primary-600"><Edit2 size={15} /></button>
@@ -340,7 +340,7 @@ export default function InventoryPage() {
               <textarea className="input-field" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional notes..." />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-dark-600/30">
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Item"}</button>
           </div>
@@ -365,7 +365,7 @@ export default function InventoryPage() {
           <p className="text-xs text-muted-400 text-center">Scanner devices auto-submit on scan. You can also type the SKU and press Enter.</p>
           {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
-            <div className="bg-white dark:bg-dark-800 rounded-lg p-4 space-y-2 border border-gray-200 dark:border-dark-600">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 space-y-2 border border-gray-200 dark:border-slate-600">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold text-muted-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
                 <div className="flex gap-1">
@@ -407,7 +407,7 @@ export default function InventoryPage() {
             <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Quantity Change (+/-)</label>
             <input type="number" className="input-field" value={adjust.qty} onChange={(e) => setAdjust({ ...adjust, qty: Number(e.target.value) })} placeholder="+5 or -3" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-dark-600/30">
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
             <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={isLoading} className="btn-success">{isLoading ? "Saving..." : "Apply Adjustment"}</button>
           </div>
