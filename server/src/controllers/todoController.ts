@@ -16,7 +16,12 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function update(req: Request, res: Response) {
-  const todo = await Todo.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true }).lean();
+  const { task, done, notes } = req.body;
+  const updates: Record<string, unknown> = {};
+  if (task !== undefined) updates.task = task;
+  if (done !== undefined) updates.done = done;
+  if (notes !== undefined) updates.notes = notes;
+  const todo = await Todo.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
   if (!todo) return notFound(res, "Todo not found");
   return success(res, todo);
 }
