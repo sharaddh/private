@@ -1,55 +1,162 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
-import { Users, TrendingUp, Clock, Package, AlertTriangle } from "lucide-react";
+import {
+  Users, TrendingUp, Clock, Package, AlertTriangle,
+  Download, Filter, ShoppingCart, Calendar,
+} from "lucide-react";
+
+const TABS = [
+  { key: "customers", label: "Customers", icon: Users },
+  { key: "sales", label: "Sales", icon: TrendingUp },
+  { key: "pending", label: "Pending", icon: Clock },
+  { key: "inventory", label: "Inventory", icon: Package },
+];
+
+const DATE_PRESETS = [
+  { label: "Today", days: 0 },
+  { label: "This Week", days: 7 },
+  { label: "This Month", days: 30 },
+  { label: "This Quarter", days: 90 },
+  { label: "This Year", days: 365 },
+  { label: "All", days: -1 },
+];
+
+function getDateRange(presetDays: number): { start: string; end: string } {
+  if (presetDays < 0) return { start: "", end: "" };
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - presetDays);
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState("customers");
+  const [activeTab, setActiveTab] = useState("sales");
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any[]>([]);
   const [invData, setInvData] = useState<any>(null);
+  const [topCustomers, setTopCustomers] = useState<any[]>([]);
+  const [datePreset, setDatePreset] = useState(2); // "This Month" default
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
-  useEffect(() => {
-    Promise.all([
-      api.get("/api/reports/revenue"),
+  const effectiveRange = useMemo(() => {
+    if (datePreset < 0) return getDateRange(datePreset);
+    return getDateRange(datePreset);
+  }, [datePreset]);
+
+  const dateRange = useMemo(() => {
+    if (customStart || customEnd) return { start: customStart, end: customEnd };
+    return effectiveRange;
+  }, [customStart, customEnd, effectiveRange]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (dateRange.start) params.set("start", dateRange.start);
+    if (dateRange.end) params.set("end", dateRange.end);
+    const qs = params.toString();
+
+    const [rev, inv, cust, bills, custReport] = await Promise.all([
+      api.get(`/api/reports/revenue${qs ? `?${qs}` : ""}`),
       api.get("/api/reports/inventory"),
       api.get("/api/customers"),
-      api.get("/api/bills"),
-    ]).then(([rev, inv, cust, bills]) => {
-      if (rev.success) setSalesData(rev.data);
-      if (inv.success) setInvData(inv.data);
-      if (cust.success && Array.isArray(cust.data)) setCustomerData(cust.data);
-      if (bills.success) setPendingData((bills.data || []).filter((b: any) => (b.pendingAmount || 0) > 0));
-    }).finally(() => setLoading(false));
-  }, []);
+      api.get(`/api/bills${qs ? `?startDate=${dateRange.start}&endDate=${dateRange.end}` : ""}`),
+      api.get("/api/reports/customers"),
+    ]);
+    if (rev.success) setSalesData(rev.data);
+    if (inv.success) setInvData(inv.data);
+    if (cust.success) {
+      const list = cust.data?.data || (Array.isArray(cust.data) ? cust.data : []);
+      setCustomerData(list);
+    }
+    if (bills.success) {
+      const billList = Array.isArray(bills.data) ? bills.data : bills.data?.data || [];
+      setPendingData(billList.filter((b: any) => (b.pendingAmount || 0) > 0));
+    }
+    if (custReport.success) {
+      setTopCustomers(custReport.data?.topCustomers || []);
+    }
+    setLoading(false);
+  }, [dateRange]);
 
-  const tabs = [
-    { key: "customers", label: "Customers", icon: Users },
-    { key: "sales", label: "Sales", icon: TrendingUp },
-    { key: "pending", label: "Pending", icon: Clock },
-    { key: "inventory", label: "Inventory", icon: Package },
-  ];
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  function handlePresetClick(index: number) {
+    setDatePreset(index);
+    setCustomStart("");
+    setCustomEnd("");
+  }
+
+  function exportCSV() {
+    if (!customerData?.length) return;
+    const headers = ["Name", "Mobile", "Visits", "Total Spent", "Pending Amount"];
+    const rows = customerData.map((c: any) => [
+      `"${(c.name || "").replace(/"/g, '""')}"`,
+      c.mobile || "",
+      c.totalVisits || 0,
+      c.totalSpent || 0,
+      c.pendingAmount || 0,
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reports-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPendingCSV() {
+    if (!pendingData?.length) return;
+    const headers = ["Bill", "Customer", "Total", "Pending", "Days"];
+    const rows = pendingData.map((b: any) => {
+      const name = typeof b.customerId === "object" && b.customerId?.name ? b.customerId.name : "—";
+      const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+      return [`"${b.billNumber || ""}"`, `"${name}"`, b.totalAmount || 0, b.pendingAmount || 0, days];
+    });
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reports-pending-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   if (loading) return <PageSkeleton page="reports" />;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="page-title">Reports</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Business insights and analytics.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Reports</h1>
+          <p className="page-subtitle">Business insights and analytics.</p>
+        </div>
+        <div className="flex gap-2">
+          {activeTab === "customers" && customerData?.length > 0 && (
+            <button onClick={exportCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> Export CSV</button>
+          )}
+          {activeTab === "pending" && pendingData?.length > 0 && (
+            <button onClick={exportPendingCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> Export CSV</button>
+          )}
+        </div>
       </div>
 
-      <div className="border-b border-gray-200 dark:border-dark-700">
-        <div className="flex gap-1">
-          {tabs.map((t) => {
+      {/* Tabs */}
+      <div className="border-b border-slate-200 dark:border-slate-700/50">
+        <div className="flex gap-1 overflow-x-auto">
+          {TABS.map((t) => {
             const Icon = t.icon;
             const isActive = activeTab === t.key;
             return (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  isActive ? "border-primary-600 text-primary-600 dark:text-primary-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors shrink-0 ${
+                  isActive ? "border-primary-600 text-primary-600 dark:text-primary-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}>
                 <Icon size={16} /> {t.label}
               </button>
@@ -58,51 +165,111 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Date Filters (Sales + Pending) */}
+      {(activeTab === "sales" || activeTab === "pending") && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Calendar size={14} className="text-slate-400" />
+          {DATE_PRESETS.map((p, i) => (
+            <button key={p.label} onClick={() => handlePresetClick(i)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                datePreset === i && !customStart
+                  ? "bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300"
+                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+              }`}
+            >{p.label}</button>
+          ))}
+          <span className="text-slate-300 dark:text-slate-600 text-xs px-1">|</span>
+          <input type="date" value={customStart}
+            onChange={(e) => { setCustomStart(e.target.value); setDatePreset(-1); }}
+            className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none" />
+          <span className="text-slate-400 text-xs">to</span>
+          <input type="date" value={customEnd}
+            onChange={(e) => { setCustomEnd(e.target.value); setDatePreset(-1); }}
+            className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none" />
+        </div>
+      )}
+
+      {/* ──────────────── CUSTOMERS ──────────────── */}
       {activeTab === "customers" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{customerData?.length || 0}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Customers</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">{customerData?.length || 0}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Total Customers</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {customerData?.filter((c: any) => c.totalVisits === 1).length || 0}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">New Customers</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">New Customers</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Returning Customers</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Returning Customers</p>
             </div>
           </div>
-          <div className="card">
-            <h3 className="section-title mb-4">All Customers</h3>
-            {(!customerData || customerData.length === 0) ? (
-              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No customers yet.</p>
-            ) : (
+
+          {topCustomers.length > 0 && (
+            <div className="card">
+              <h3 className="section-title mb-4">Top Customers by Spend</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-dark-700">
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Name</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Mobile</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Visits</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Total Spent</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Pending</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-700/50">
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">#</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Name</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Visits</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total Spent</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topCustomers.slice(0, 10).map((c: any, i: number) => (
+                      <tr key={c._id} className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                        <td className="py-2 px-3 text-slate-400 text-xs">{i + 1}</td>
+                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{c.name}</td>
+                        <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{c.totalVisits || 0}</td>
+                        <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
+                        <td className="py-2 px-3 text-right">
+                          <span className={c.pendingAmount > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"}>
+                            {(c.pendingAmount || 0) > 0 ? `₹${c.pendingAmount.toLocaleString()}` : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="card">
+            <h3 className="section-title mb-4">All Customers ({customerData?.length || 0})</h3>
+            {(!customerData || customerData.length === 0) ? (
+              <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-8">No customers yet.</p>
+            ) : (
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white dark:bg-slate-800">
+                    <tr className="border-b border-slate-200 dark:border-slate-700/50">
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Name</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Mobile</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Visits</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total Spent</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
                     </tr>
                   </thead>
                   <tbody>
                     {customerData?.map((c: any) => (
-                      <tr key={c._id} className="border-b border-gray-100 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700">
-                        <td className="py-2 px-3 font-medium">{c.name}</td>
-                        <td className="py-2 px-3 text-gray-500 dark:text-gray-400">{c.mobile || "—"}</td>
-                        <td className="py-2 px-3 text-right">{c.totalVisits || 0}</td>
+                      <tr key={c._id} className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                        <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{c.name}</td>
+                        <td className="py-2 px-3 text-slate-500 dark:text-slate-400">{c.mobile || "—"}</td>
+                        <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{c.totalVisits || 0}</td>
                         <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right">
-                          <span className={c.pendingAmount > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-gray-500 dark:text-gray-400"}>
+                          <span className={c.pendingAmount > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"}>
                             {(c.pendingAmount || 0) > 0 ? `₹${c.pendingAmount.toLocaleString()}` : "—"}
                           </span>
                         </td>
@@ -116,102 +283,119 @@ export default function Reports() {
         </div>
       )}
 
+      {/* ──────────────── SALES ──────────────── */}
       {activeTab === "sales" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
-            </div>
-            <div className="card text-center">
-              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                ₹{(salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount) : 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Avg Order Value</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Revenue</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Collection</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Collection</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">₹{((salesData?.totalRevenue || 0) - (salesData?.totalCollection || 0)).toLocaleString()}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Outstanding</p>
+            </div>
+            <div className="card text-center">
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                {salesData?.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(1)}%` : "—"}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Collection Ratio</p>
             </div>
           </div>
-          <div className="card">
-            <h3 className="section-title mb-4">Sales Summary</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Bills</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{salesData?.billCount || 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Payments</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">{salesData?.paymentCount || 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Avg Discount</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                  ₹{(salesData?.billCount > 0 ? ((salesData.totalRevenue - salesData.totalCollection) / salesData.billCount) : 0).toFixed(0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Collection Ratio</p>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {salesData?.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(0)}%` : "—"}
-                </p>
-              </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Bills</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{salesData?.billCount || 0}</p>
+            </div>
+            <div className="card">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Payments</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{salesData?.paymentCount || 0}</p>
+            </div>
+            <div className="card">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Avg Order Value</p>
+              <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
+                ₹{salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
+              </p>
+            </div>
+            <div className="card">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Discount</p>
+              <p className="text-xl font-bold text-red-500">₹{(salesData?.totalDiscount || 0).toLocaleString()}</p>
             </div>
           </div>
+
+          {salesData?.billCount === 0 && (
+            <div className="card text-center py-8">
+              <ShoppingCart size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-400 dark:text-slate-500">No sales data for this period.</p>
+            </div>
+          )}
         </div>
       )}
 
+      {/* ──────────────── PENDING ──────────────── */}
       {activeTab === "pending" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
               <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{pendingData.length}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Pending Bills</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Pending Bills</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-red-600 dark:text-red-400">
                 ₹{pendingData.reduce((s: number, b: any) => s + (b.pendingAmount || 0), 0).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Pending Amount</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Total Pending Amount</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                {pendingData.filter((b: any) => {
+                ₹{pendingData.reduce((s: number, b: any) => {
                   const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-                  return days > 30;
-                }).length}
+                  return days > 30 ? s + (b.pendingAmount || 0) : s;
+                }, 0).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Over 30 Days</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Over 30 Days (Amount)</p>
             </div>
           </div>
+
           <div className="card">
-            <h3 className="section-title mb-4">Pending Payments</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="section-title">Pending Payments</h3>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{pendingData.length} bills</span>
+            </div>
             {pendingData.length === 0 ? (
-              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No pending payments.</p>
+              <div className="text-center py-8">
+                <Clock size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                <p className="text-sm text-slate-400 dark:text-slate-500">No pending payments.</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-dark-700">
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Bill</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Customer ID</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Total</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Pending</th>
-                      <th className="text-right py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">Days</th>
+                  <thead className="sticky top-0 bg-white dark:bg-slate-800">
+                    <tr className="border-b border-slate-200 dark:border-slate-700/50">
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Bill</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Customer</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Days</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pendingData.map((b: any) => {
                       const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                      const custName = typeof b.customerId === "object" && b.customerId?.name ? b.customerId.name : "—";
                       return (
-                        <tr key={b._id} className="border-b border-gray-100 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700">
-                          <td className="py-2 px-3 font-medium">{b.billNumber || "—"}</td>
-                          <td className="py-2 px-3 text-gray-500 dark:text-gray-400">{b.customerId || "—"}</td>
-                          <td className="py-2 px-3 text-right">₹{(b.totalAmount || 0).toLocaleString()}</td>
+                        <tr key={b._id} className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                          <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{b.billNumber || "—"}</td>
+                          <td className="py-2 px-3 text-slate-500 dark:text-slate-400">{custName}</td>
+                          <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">₹{(b.totalAmount || 0).toLocaleString()}</td>
                           <td className="py-2 px-3 text-right text-amber-600 dark:text-amber-400 font-medium">₹{(b.pendingAmount || 0).toLocaleString()}</td>
                           <td className="py-2 px-3 text-right">
-                            <span className={days > 30 ? "text-red-600 dark:text-red-400 font-medium" : "text-gray-500 dark:text-gray-400"}>
+                            <span className={`font-medium ${days > 30 ? "text-red-600 dark:text-red-400" : days > 7 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"}`}>
                               {days}d
                             </span>
                           </td>
@@ -226,26 +410,44 @@ export default function Reports() {
         </div>
       )}
 
+      {/* ──────────────── INVENTORY ──────────────── */}
       {activeTab === "inventory" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{invData?.totalItems || 0}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Items</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">{invData?.totalItems || 0}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Total Items</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-red-600 dark:text-red-400">{invData?.lowStock?.length || 0}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Low Stock (≤5)</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{invData?.totalValue || 0}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Stock Value</p>
+              <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">₹{(invData?.totalValue || 0).toLocaleString()}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Stock Value</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{invData?.topSelling?.length || 0}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Top Items</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{invData?.byCategory?.length || 0}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Categories</p>
             </div>
           </div>
+
+          {invData?.byCategory?.length > 0 && (
+            <div className="card">
+              <h3 className="section-title mb-4">Stock by Category</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {invData.byCategory.map((cat: any) => (
+                  <div key={cat._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">{cat._id || "Uncategorized"}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{cat.count} items</p>
+                    </div>
+                    <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">{cat.totalQty} units</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {invData?.lowStock?.length > 0 && (
             <div className="card border border-red-200 dark:border-red-800">
@@ -255,10 +457,10 @@ export default function Reports() {
               </div>
               <div className="space-y-2">
                 {invData.lowStock.map((item: any) => (
-                  <div key={item._id} className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/20">
+                  <div key={item._id} className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-500/10">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.category || "Frame"}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.category || "Frame"}</p>
                     </div>
                     <span className="text-sm font-bold text-red-600 dark:text-red-400">{item.quantity || 0} left</span>
                   </div>
@@ -268,9 +470,9 @@ export default function Reports() {
           )}
 
           {(!invData?.lowStock || invData.lowStock.length === 0) && (
-            <div className="card">
-              <h3 className="section-title mb-4">All Stock</h3>
-              <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No inventory data available.</p>
+            <div className="card text-center py-8">
+              <Package size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+              <p className="text-sm text-slate-400 dark:text-slate-500">No inventory data available.</p>
             </div>
           )}
         </div>
