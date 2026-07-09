@@ -532,7 +532,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
     let sendError: string | null = null;
 
     try {
-      sent = await whatsapp.sendMedia(normalized, base64, filename, caption, true);
+      sent = await whatsapp.sendMedia(normalized, base64, filename, "application/pdf", caption, true);
     } catch (e: any) {
       sendError = e.message;
       console.error(`Demand PDF sendMedia threw: ${e.message}`);
