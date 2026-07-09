@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
-import { Package, AlertTriangle, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, ArrowRight } from "lucide-react";
 
 interface Stats {
   totalItems: number;
@@ -14,22 +13,16 @@ interface Stats {
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [userCount, setUserCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { isOwner } = useAuth();
 
   useEffect(() => {
-    Promise.all([
-      api.get<Stats>("/api/inventory/stats"),
-      api.get<any[]>("/api/auth/warehouse-users").catch(() => ({ success: false })),
-    ]).then(([statsRes, usersRes]) => {
-      if (statsRes.success) {
-        const d = statsRes.data as Stats;
+    api.get<Stats>("/api/inventory/stats").then((res) => {
+      if (res.success) {
+        const d = res.data as Stats;
         if (!Array.isArray(d.recentItems)) d.recentItems = [];
         setStats(d);
       }
-      if (usersRes.success && usersRes.data) setUserCount(usersRes.data.length);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -45,11 +38,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="page-title">Warehouse Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Overview of warehouse inventory</p>
+        <h1 className="page-title">Lens Warehouse Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">Overview of lens warehouse stock</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
@@ -57,7 +50,7 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">{stats?.totalItems || 0}</p>
-          <p className="text-sm text-gray-500">Total Items</p>
+          <p className="text-sm text-gray-500">Total Lens SKUs</p>
         </div>
 
         <div className="card p-5">
@@ -89,39 +82,22 @@ export default function Dashboard() {
           <p className="text-2xl font-bold text-gray-900">{stats?.warehouseItems || 0}</p>
           <p className="text-sm text-gray-500">Warehouse Items</p>
         </div>
-
-        {isOwner && (
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                <Users size={20} className="text-amber-600" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{userCount}</p>
-            <p className="text-sm text-gray-500">Warehouse Users</p>
-          </div>
-        )}
       </div>
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-gray-900">Quick Actions</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button onClick={() => navigate("/inventory/new")}
             className="flex items-center justify-between p-4 bg-cyan-50 rounded-xl hover:bg-cyan-100 transition-all group">
-            <span className="text-sm font-semibold text-cyan-700">Add New Item</span>
+            <span className="text-sm font-semibold text-cyan-700">Add New Lens</span>
             <ArrowRight size={18} className="text-cyan-500 group-hover:translate-x-0.5 transition-transform" />
           </button>
           <button onClick={() => navigate("/inventory")}
             className="flex items-center justify-between p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all group">
-            <span className="text-sm font-semibold text-blue-700">View Inventory</span>
+            <span className="text-sm font-semibold text-blue-700">View All Lenses</span>
             <ArrowRight size={18} className="text-blue-500 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-          <button onClick={() => navigate("/inventory?location=warehouse")}
-            className="flex items-center justify-between p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all group">
-            <span className="text-sm font-semibold text-purple-700">Warehouse Stock</span>
-            <ArrowRight size={18} className="text-purple-500 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </div>
