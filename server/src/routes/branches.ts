@@ -8,7 +8,7 @@ import { AppError } from "../middleware/errorHandler";
 const router = Router();
 
 router.get("/active", asyncHandler(async (_req, res) => {
-  const branches = await Branch.find({ isActive: true }).sort({ createdAt: 1 }).lean();
+  const branches = await Branch.find({ isActive: true }).sort({ createdAt: 1 }).select("-dbName -settings").lean();
   res.json({ success: true, data: branches });
 }));
 
@@ -51,10 +51,16 @@ router.post("/", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: branch });
 }));
 
+const allowedBranchFields = ["name", "address", "phone", "email", "settings"];
+
 router.put("/:id", authenticate, asyncHandler(async (req, res) => {
+  const updates: Record<string, unknown> = {};
+  for (const key of allowedBranchFields) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
   const branch = await Branch.findByIdAndUpdate(
     req.params.id,
-    { $set: req.body },
+    { $set: updates },
     { new: true, runValidators: true }
   ).lean();
   if (!branch) throw new AppError(404, "Branch not found");
