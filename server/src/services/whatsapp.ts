@@ -22,6 +22,7 @@ interface QueuedMedia {
   phone: string;
   base64: string;
   filename: string;
+  mimetype: string;
   caption?: string;
 }
 
@@ -121,6 +122,7 @@ class WhatsAppService {
   private reconnectAttempts = 0;
   private drainInProgress = false;
   private saveCredsFn: (() => Promise<void>) | null = null;
+  private _broadcastAborted = false;
 
   get ready() { return this._ready; }
   get qr() { return this._qr; }
@@ -354,7 +356,7 @@ class WhatsAppService {
       if (item.type === "text") {
         ok = await this.sendMessageNow(item.phone, item.message);
       } else {
-        ok = await this.sendMediaNow(item.phone, item.base64, item.filename, item.caption);
+        ok = await this.sendMediaNow(item.phone, item.base64, item.filename, item.mimetype, item.caption);
       }
       if (ok) sent++; else failed++;
       await new Promise((r) => setTimeout(r, 500));
@@ -376,17 +378,16 @@ class WhatsAppService {
     }
   }
 
-  private async sendMediaNow(phone: string, base64: string, filename: string, caption?: string): Promise<boolean> {
+  private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string): Promise<boolean> {
     if (!this.sock) return false;
     try {
       const jid = toJID(phone);
       const buffer = Buffer.from(base64, "base64");
-      await this.sock.sendMessage(jid, {
-        document: buffer,
-        fileName: filename,
-        mimetype: "application/pdf",
-        caption: caption || "",
-      });
+      const isImage = mimetype.startsWith("image/");
+      const msg = isImage
+        ? { image: buffer, caption: caption || "" }
+        : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
+      await this.sock.sendMessage(jid, msg);
       return true;
     } catch (err: any) {
       console.error("WhatsApp sendMedia error:", err?.message || err);
@@ -403,35 +404,75 @@ class WhatsAppService {
     return this.sendMessageNow(phone, message);
   }
 
-  async sendMedia(phone: string, base64: string, filename: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
+  async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
     if (!this._ready || !this.sock) {
-      this.messageQueue.push({ type: "media", phone, base64, filename, caption });
+      this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
       console.log(`WhatsApp: queued media message to ${phone} (queue: ${this.messageQueue.length})`);
       return false;
     }
     if (throwOnError) {
       const jid = toJID(phone);
       const buffer = Buffer.from(base64, "base64");
-      await this.sock.sendMessage(jid, {
-        document: buffer,
-        fileName: filename,
-        mimetype: "application/pdf",
-        caption: caption || "",
-      });
+      const isImage = mimetype.startsWith("image/");
+      const msg = isImage
+        ? { image: buffer, caption: caption || "" }
+        : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
+      await this.sock.sendMessage(jid, msg);
       return true;
     }
-    return this.sendMediaNow(phone, base64, filename, caption);
+    return this.sendMediaNow(phone, base64, filename, mimetype, caption);
   }
 
-  async broadcast(numbers: string[], message: string): Promise<{ sent: number; failed: number }> {
+  async broadcast(
+    numbers: string[],
+    message: string,
+    antiban?: { delayMin: number; delayMax: number; batchSize: number; pause: number },
+    media?: { base64: string; filename: string; mimetype: string }
+  ): Promise<{ sent: number; failed: number; results: { phone: string; status: "sent" | "failed" }[] }> {
     let sent = 0;
     let failed = 0;
-    for (const phone of numbers) {
-      const ok = await this.sendMessage(phone, message);
-      if (ok) sent++; else failed++;
-      await new Promise((r) => setTimeout(r, 1000));
+    const results: { phone: string; status: "sent" | "failed" }[] = [];
+    const delayMin = antiban?.delayMin ?? 2000;
+    const delayMax = antiban?.delayMax ?? 5000;
+    const batchSize = antiban?.batchSize ?? 20;
+    const batchPause = antiban?.pause ?? 15000;
+
+    for (let i = 0; i < numbers.length; i++) {
+      if (this._broadcastAborted) break;
+
+      const hasText = message.trim().length > 0;
+      let ok = true;
+
+      if (media) {
+        const caption = media.mimetype.startsWith("image/") && hasText ? message : undefined;
+        ok = await this.sendMedia(numbers[i], media.base64, media.filename, media.mimetype, caption);
+        if (ok && !media.mimetype.startsWith("image/") && hasText) {
+          await new Promise((r) => setTimeout(r, 500));
+          ok = await this.sendMessage(numbers[i], message);
+        }
+      }
+      if (hasText && !media) {
+        ok = await this.sendMessage(numbers[i], message);
+      }
+
+      if (ok) { sent++; results.push({ phone: numbers[i], status: "sent" }); }
+      else { failed++; results.push({ phone: numbers[i], status: "failed" }); }
+
+      const ms = delayMin + Math.random() * (delayMax - delayMin);
+      await new Promise((r) => setTimeout(r, ms));
+
+      if ((i + 1) % batchSize === 0 && i + 1 < numbers.length) {
+        const jitter = Math.random() * 5000;
+        await new Promise((r) => setTimeout(r, batchPause + jitter));
+      }
     }
-    return { sent, failed };
+
+    this._broadcastAborted = false;
+    return { sent, failed, results };
+  }
+
+  abortBroadcast() {
+    this._broadcastAborted = true;
   }
 
   async requestPairingCode(phoneNumber: string): Promise<string> {
