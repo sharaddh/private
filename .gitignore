@@ -40,3 +40,9 @@ dist-ssr
 temp-*
 
 client/public/*.pdf
+
+# Backup files
+*.full
+*.new
+*.v2
+ann.diff
