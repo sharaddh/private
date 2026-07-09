@@ -1,11 +1,23 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import api, { clearToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
-import { Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut, Sun, Moon, ChevronRight, Plus, Trash2, X, Building2, Globe } from "lucide-react";
+import {
+  Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut,
+  Sun, Moon, Trash2, X, Building2, Globe, Store, Phone, Mail, MapPin,
+  Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
+  QrCode, Wifi, WifiOff, ArrowRight, Settings2, Eye, EyeOff, Crown,
+} from "lucide-react";
+import SettingsHeader from "./settings/SettingsHeader";
+import SectionNav from "./settings/SectionNav";
+import type { Section } from "./settings/SectionNav";
+import SectionCard from "./settings/SectionCard";
+import { Input, Textarea, Select } from "./settings/FormField";
+import ThemeToggle from "./settings/ThemeToggle";
 
 interface Branch {
   _id: string;
@@ -25,6 +37,14 @@ interface Branch {
     logo: string;
   };
 }
+
+const ALL_SECTIONS: Section[] = [
+  { id: "general", label: "Shop", icon: <Store size={15} /> },
+  { id: "whatsapp", label: "WhatsApp", icon: <MessageCircle size={15} /> },
+  { id: "branches", label: "Branches", icon: <Building2 size={15} /> },
+  { id: "staff", label: "Staff", icon: <Shield size={15} /> },
+  { id: "account", label: "Account", icon: <User size={15} /> },
+];
 
 export default function Settings() {
   const { user, isStaff, setUser, setCurrentBranch, currentBranch, branches } = useAuth();
@@ -57,13 +77,26 @@ export default function Settings() {
   const [editPassword, setEditPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveProfileMsg, setSaveProfileMsg] = useState("");
-
-  // Branch management
   const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [showAddBranch, setShowAddBranch] = useState(false);
-  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
   const [branchSaving, setBranchSaving] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const visibleSections = useMemo(() =>
+    ALL_SECTIONS.filter((s) => isStaff ? s.id === "account" : true),
+    [isStaff]
+  );
+  const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || "account");
+  const [dragOver, setDragOver] = useState(false);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const getCurrentBranchStaff = useCallback(() => {
+    return users.filter(
+      (u: any) => u.role === "staff" && (u.branches || []).some((b: any) => ((b._id || b)?.toString()) === currentBranch?._id)
+    );
+  }, [users, currentBranch]);
 
   useEffect(() => {
     if (user?.role !== "staff") {
@@ -85,6 +118,14 @@ export default function Settings() {
 
   async function loadSettings() {
     setLoading(true);
+    setShopName("");
+    setShopAddress("");
+    setShopPhone("");
+    setShopEmail("");
+    setAdminWhatsApp("");
+    setLogo("");
+    setLogoPreview("");
+    setError("");
     try {
       const d = await api.get("/api/settings");
       if (d.success && d.data) {
@@ -95,7 +136,11 @@ export default function Settings() {
         setAdminWhatsApp(d.data.adminWhatsApp || "");
         setLogo(d.data.logo || "");
         setLogoPreview(d.data.logo || "");
+      } else {
+        setShopName("KMJ Optical");
       }
+    } catch {
+      setShopName("KMJ Optical");
     } finally {
       setLoading(false);
     }
@@ -138,6 +183,16 @@ export default function Settings() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (showAddStaff || showAddBranch || showLogoutConfirm) {
+      document.body.style.overflow = "hidden";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showAddStaff, showAddBranch, showLogoutConfirm]);
+
   function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,6 +203,29 @@ export default function Settings() {
       setLogo(dataUrl);
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setLogoPreview(dataUrl);
+      setLogo(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setDragOver(false);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -233,7 +311,6 @@ export default function Settings() {
     }
   }
 
-  // Branch handlers
   async function handleAddBranch(e: React.FormEvent) {
     e.preventDefault();
     if (!branchForm.name.trim() || !branchForm.code.trim() || !branchForm.dbName.trim()) {
@@ -246,7 +323,7 @@ export default function Settings() {
     if (res.success) {
       toast.success("Branch created");
       setShowAddBranch(false);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
       loadBranches();
     } else {
       toast.error(res.message || "Failed to create branch");
@@ -262,6 +339,9 @@ export default function Settings() {
       address: branch.address || "",
       phone: branch.phone || "",
       email: branch.email || "",
+      ownerName: branch.settings?.shopName || "",
+      ownerPhone: branch.settings?.shopPhone || "",
+      ownerEmail: branch.settings?.shopEmail || "",
     });
     setShowAddBranch(true);
   }
@@ -276,7 +356,7 @@ export default function Settings() {
       toast.success("Branch updated");
       setShowAddBranch(false);
       setEditingBranch(null);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
       loadBranches();
     } else {
       toast.error(res.message || "Failed to update branch");
@@ -300,355 +380,873 @@ export default function Settings() {
     window.location.reload();
   }
 
+  function scrollToSection(id: string) {
+    setActiveSection(id);
+    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const branchStaff = useMemo(() => getCurrentBranchStaff(), [getCurrentBranchStaff]);
+
   if (loading) return <PageSkeleton page="settings" />;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Settings</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Configure your preferences</p>
-        </div>
-        {!isStaff && branches.length > 0 && (
-          <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-dark-700 rounded-lg p-1">
-            {branches.map((b) => (
-              <button
-                key={b._id}
-                onClick={() => handleSwitchBranch(b._id)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  currentBranch?._id === b._id
-                    ? "bg-white dark:bg-dark-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                }`}
-              >
-                {b.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="max-w-4xl mx-auto">
+      <SettingsHeader
+        user={user}
+        currentBranch={currentBranch}
+        branches={branches}
+        isStaff={isStaff}
+        onSwitchBranch={handleSwitchBranch}
+        saved={saved}
+        saving={saving}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {!isStaff && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <User size={16} className="text-primary-600 dark:text-primary-400" />
-            Shop Profile
-          </h3>
-          <form onSubmit={handleSave} className="space-y-3">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded-lg text-sm">{error}</div>
-            )}
-            <div className="flex items-center gap-4">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-400 transition-colors shrink-0 overflow-hidden"
-              >
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
-                ) : (
-                  <Image size={20} className="text-gray-400" />
-                )}
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-              <div className="flex-1 space-y-2">
-                <input className="input-field text-sm" placeholder="Shop name" value={shopName} onChange={(e) => setShopName(e.target.value)} />
-                <input className="input-field text-sm" placeholder="Phone" value={shopPhone} onChange={(e) => setShopPhone(e.target.value)} />
-              </div>
-            </div>
-            <textarea className="input-field text-sm" rows={2} placeholder="Address" value={shopAddress} onChange={(e) => setShopAddress(e.target.value)} />
-            <input type="email" className="input-field text-sm" placeholder="Email" value={shopEmail} onChange={(e) => setShopEmail(e.target.value)} />
-            <button type="submit" disabled={saving} className="btn-primary text-sm w-full">
-              {saved ? "Saved!" : "Save Settings"}
-            </button>
-          </form>
-        </div>
-        )}
+      <SectionNav
+        sections={visibleSections}
+        activeSection={activeSection}
+        onSectionClick={scrollToSection}
+      />
 
+      <div className="space-y-8">
+        {/* ──────────────── GENERAL / SHOP ──────────────── */}
         {!isStaff && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <MessageCircle size={16} className="text-green-600 dark:text-green-400" />
-            WhatsApp
-          </h3>
-          <div className="space-y-3">
-            <input className="input-field text-sm" placeholder="e.g. 919XXXXXXXXX" value={adminWhatsApp}
-              onChange={(e) => setAdminWhatsApp(e.target.value)} />
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-3">
-              {waStatus === "connected" && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                    <span className="text-sm font-medium">Connected</span>
+          <div ref={(el) => { sectionRefs.current["general"] = el; }}>
+            <SectionCard icon={<Store size={16} />} title="Shop Profile" subtitle="Manage your store information and branding">
+              <form onSubmit={handleSave} className="space-y-5">
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex items-center gap-2.5 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-700 dark:text-red-300 text-sm"
+                    >
+                      <AlertCircle size={16} className="shrink-0" />
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    className={`relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden ${
+                      dragOver
+                        ? "border-primary-400 bg-primary-50 dark:bg-primary-500/10"
+                        : "border-slate-300 dark:border-slate-600 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50 dark:bg-slate-700/30"
+                    }`}
+                  >
+                    {logoPreview ? (
+                      <>
+                        <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Upload size={20} className="text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 text-slate-400">
+                        <Upload size={22} />
+                        <span className="text-[10px] font-medium">Upload Logo</span>
+                      </div>
+                    )}
                   </div>
-                  <button onClick={async () => { setWaDisconnecting(true); await api.post("/api/whatsapp/disconnect", {}); setWaDisconnecting(false); setWaStatus("disconnected"); }}
-                    disabled={waDisconnecting} className="text-xs text-red-600 hover:text-red-700 font-medium">{waDisconnecting ? "Disconnecting..." : "Disconnect"}</button>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Shop Name"
+                      icon={<Store size={15} />}
+                      value={shopName}
+                      onChange={(e) => setShopName(e.target.value)}
+                      placeholder="Your shop name"
+                    />
+                    <Input
+                      label="Phone"
+                      icon={<Phone size={15} />}
+                      value={shopPhone}
+                      onChange={(e) => setShopPhone(e.target.value)}
+                      placeholder="Contact number"
+                    />
+                  </div>
                 </div>
-              )}
-              {waStatus === "qr" && waQr && (
-                <div className="text-center space-y-2">
-                  <p className="text-xs text-gray-500">Scan QR with WhatsApp</p>
-                  <img src={waQr} alt="QR" className="mx-auto w-36 h-36" />
-                  <button onClick={async () => { setWaDisconnecting(true); await api.post("/api/whatsapp/disconnect", {}); setWaDisconnecting(false); setWaStatus("disconnected"); }}
-                    disabled={waDisconnecting} className="text-xs text-red-600 font-medium">{waDisconnecting ? "Disconnecting..." : "Cancel"}</button>
+
+                <Textarea
+                  label="Address"
+                  icon={<MapPin size={15} />}
+                  rows={2}
+                  value={shopAddress}
+                  onChange={(e) => setShopAddress(e.target.value)}
+                  placeholder="Shop address"
+                  className="pl-10"
+                />
+
+                <Input
+                  label="Email"
+                  icon={<Mail size={15} />}
+                  type="email"
+                  value={shopEmail}
+                  onChange={(e) => setShopEmail(e.target.value)}
+                  placeholder="shop@example.com"
+                />
+
+                <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                  <motion.button
+                    type="submit"
+                    disabled={saving}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-primary"
+                  >
+                    {saving ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={15} className="animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Save size={15} />
+                        Save Changes
+                      </span>
+                    )}
+                  </motion.button>
                 </div>
-              )}
-              {waStatus === "disconnected" && <p className="text-xs text-gray-500">Disconnected. QR will appear shortly.</p>}
-              {waStatus === "initializing" && <div className="flex items-center gap-2 text-xs text-gray-500"><RefreshCw size={14} className="animate-spin" /> Connecting...</div>}
-              {waStatus === "error" && <p className="text-xs text-red-500">Connection error. Restart server.</p>}
-              {waStatus === "checking" && <p className="text-xs text-gray-400">Checking...</p>}
-            </div>
-            <button onClick={handleSave} className="btn-primary text-sm w-full">Save WhatsApp</button>
+              </form>
+            </SectionCard>
           </div>
-        </div>
         )}
 
+        {/* ──────────────── WHATSAPP ──────────────── */}
         {!isStaff && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Shield size={16} className="text-amber-600 dark:text-amber-400" />
-            Security
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Role</p>
-                <p className="text-xs text-gray-500">Owner / Operator</p>
-              </div>
-              <span className="text-[10px] px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full font-medium">Admin</span>
-            </div>
-            {user?.role !== "staff" && (
-              <div className="p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Staff</p>
-                  <button onClick={() => setShowAddStaff(true)} className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700">
-                    + Add
-                  </button>
-                </div>
-                {(() => {
-                  const branchStaff = users.filter((u: any) => u.role === "staff" && u.branches?.some((b: any) => (b._id || b) === currentBranch?._id));
-                  return branchStaff.length === 0 ? (
-                    <p className="text-xs text-gray-400">No staff for this branch</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {branchStaff.map((u: any) => (
-                        <div key={u.id} className="flex items-center justify-between py-1.5 px-2 bg-white dark:bg-dark-800 rounded border border-gray-200 dark:border-dark-600">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{u.name || u.username}</p>
-                            <p className="text-xs text-gray-400">@{u.username}{u.mobile ? ` · ${u.mobile}` : ""}</p>
+          <div ref={(el) => { sectionRefs.current["whatsapp"] = el; }}>
+            <SectionCard icon={<MessageCircle size={16} />} title="WhatsApp Integration" subtitle="Connect WhatsApp for automated messaging">
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-4">
+                    <Input
+                      label="Admin WhatsApp Number"
+                      icon={<Smartphone size={15} />}
+                      value={adminWhatsApp}
+                      onChange={(e) => setAdminWhatsApp(e.target.value)}
+                      placeholder="e.g. 919XXXXXXXXX"
+                      helperText="Include country code without +"
+                    />
+                    <div className={`rounded-2xl border p-5 transition-all duration-500 ${
+                      waStatus === "connected"
+                        ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20"
+                        : waStatus === "error"
+                        ? "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20"
+                        : waStatus === "qr"
+                        ? "bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/20"
+                        : "bg-slate-50 dark:bg-slate-700/30 border-slate-200 dark:border-slate-700/50"
+                    }`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full ${
+                            waStatus === "connected" ? "bg-emerald-500 animate-pulse" :
+                            waStatus === "qr" ? "bg-blue-500 animate-pulse" :
+                            waStatus === "error" ? "bg-red-500" :
+                            waStatus === "initializing" ? "bg-amber-500 animate-pulse" :
+                            "bg-slate-400"
+                          }`} />
+                          <span className="text-sm font-medium text-slate-900 dark:text-white">
+                            {waStatus === "connected" ? "Connected" :
+                             waStatus === "qr" ? "Scan QR Code" :
+                             waStatus === "disconnected" ? "Disconnected" :
+                             waStatus === "initializing" ? "Initializing..." :
+                             waStatus === "error" ? "Connection Error" :
+                             "Checking..."}
+                          </span>
+                        </div>
+                        {(waStatus === "connected" || waStatus === "qr") && (
+                          <button
+                            onClick={async () => {
+                              setWaDisconnecting(true);
+                              await api.post("/api/whatsapp/disconnect", {});
+                              setWaDisconnecting(false);
+                              setWaStatus("disconnected");
+                            }}
+                            disabled={waDisconnecting}
+                            className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          >
+                            {waDisconnecting ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <WifiOff size={12} />
+                            )}
+                            {waDisconnecting ? "Disconnecting..." : "Disconnect"}
+                          </button>
+                        )}
+                      </div>
+                      {waStatus === "qr" && waQr && (
+                        <div className="flex justify-center py-4">
+                          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                            <img src={waQr} alt="WhatsApp QR" className="w-48 h-48" />
                           </div>
-                          <button onClick={() => handleDeleteUser(u.id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors">
-                            <Trash2 size={12} />
+                        </div>
+                      )}
+                      {waStatus === "connected" && (
+                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 size={16} />
+                          <span className="text-xs font-medium">WhatsApp is connected and ready</span>
+                        </div>
+                      )}
+                      {waStatus === "disconnected" && (
+                        <p className="text-xs text-slate-500">Disconnected. QR will appear shortly.</p>
+                      )}
+                      {waStatus === "initializing" && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Loader2 size={14} className="animate-spin" />
+                          Connecting to WhatsApp...
+                        </div>
+                      )}
+                      {waStatus === "error" && (
+                        <p className="text-xs text-red-500">Connection error. Please restart the server.</p>
+                      )}
+                      {waStatus === "checking" && (
+                        <p className="text-xs text-slate-400">Checking connection status...</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="hidden sm:flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 rounded-2xl border border-green-200 dark:border-green-500/20">
+                    <MessageCircle size={40} className="text-emerald-500 dark:text-emerald-400 mb-3" />
+                    <p className="text-sm font-medium text-slate-900 dark:text-white text-center">WhatsApp Messaging</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1">Send automated order updates and notifications to customers</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                  <motion.button
+                    onClick={handleSave}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-primary"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Save size={15} />
+                      Save WhatsApp Settings
+                    </span>
+                  </motion.button>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+        )}
+
+        {/* ──────────────── BRANCHES ──────────────── */}
+        {!isStaff && (
+          <div ref={(el) => { sectionRefs.current["branches"] = el; }}>
+            <SectionCard icon={<Globe size={16} />} title="Branch Management" subtitle="Manage all your business locations">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {allBranches.length} {allBranches.length === 1 ? "branch" : "branches"} configured
+                  </p>
+                  <motion.button
+                    onClick={() => {
+                      setEditingBranch(null);
+                      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
+                      setShowAddBranch(true);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-primary btn-sm"
+                  >
+                    <UserPlus size={14} />
+                    Add Branch
+                  </motion.button>
+                </div>
+
+                {allBranches.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 px-4 bg-slate-50 dark:bg-slate-700/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                    <Building2 size={36} className="text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No branches yet</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Add your first branch to get started</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {allBranches.map((b) => (
+                      <motion.div
+                        key={b._id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            b.isActive
+                              ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : "bg-slate-100 dark:bg-slate-700/50 text-slate-400"
+                          }`}>
+                            <Building2 size={18} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.name}</p>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                                b.isActive ? "badge-green" : "badge-gray"
+                              }`}>
+                                {b.isActive ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                              <span className="text-xs text-slate-500 dark:text-slate-400">{b.code}</span>
+                              {b.phone && (
+                                <span className="text-xs text-slate-400 dark:text-slate-500">· {b.phone}</span>
+                              )}
+                              {b.address && (
+                                <span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[200px]">· {b.address}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleSwitchBranch(b._id)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all"
+                            title="Switch to this branch"
+                          >
+                            <ArrowRight size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleEditBranch(b)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                            title="Edit branch"
+                          >
+                            <Save size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBranch(b._id)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                            title="Deactivate branch"
+                          >
+                            <Trash2 size={14} />
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </SectionCard>
           </div>
-        </div>
         )}
 
+        {/* ──────────────── STAFF & SECURITY ──────────────── */}
         {!isStaff && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Globe size={16} className="text-indigo-600 dark:text-indigo-400" />
-            Branches
-          </h3>
-          <div className="space-y-2">
-            <button onClick={() => { setEditingBranch(null); setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "" }); setShowAddBranch(true); }}
-              className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 mb-2 inline-block">
-              + Add Branch
-            </button>
-            {allBranches.length === 0 ? (
-              <p className="text-xs text-gray-400">No branches</p>
-            ) : (
-              <div className="space-y-1.5">
-                {allBranches.map((b) => (
-                  <div key={b._id} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-600">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{b.name}</p>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${b.isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400"}`}>
-                        {b.isActive ? "Active" : "Inactive"}
-                      </span>
+          <div ref={(el) => { sectionRefs.current["staff"] = el; }}>
+            <SectionCard icon={<Shield size={16} />} title="Staff & Security" subtitle="Manage team members and access control">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                      <Crown size={18} className="text-amber-600 dark:text-amber-400" />
                     </div>
-                    <div className="flex items-center gap-1 ml-2 shrink-0">
-                      <button onClick={() => handleSwitchBranch(b._id)} className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded text-gray-400 hover:text-primary-500 transition-colors" title="Switch">
-                        <Building2 size={12} />
-                      </button>
-                      <button onClick={() => handleEditBranch(b)} className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded text-gray-400 hover:text-primary-500 transition-colors" title="Edit">
-                        <Save size={12} />
-                      </button>
-                      <button onClick={() => handleDeleteBranch(b._id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500 transition-colors" title="Deactivate">
-                        <Trash2 size={12} />
-                      </button>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Administrator</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Full system access</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        )}
+                  <span className="badge-green">Admin</span>
+                </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <User size={16} className="text-violet-600 dark:text-violet-400" />
-              Account
-            </h3>
-            {(() => {
-              const fullBranch = allBranches.find((b) => b._id === currentBranch?._id);
-              return currentBranch ? (
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-violet-50 dark:bg-violet-900/20 rounded-md">
-                  <Building2 size={12} className="text-violet-500 dark:text-violet-400 shrink-0" />
-                  <span className="text-xs font-medium text-violet-700 dark:text-violet-300">{currentBranch.name}</span>
-                  {fullBranch?.phone && (
-                    <span className="text-xs text-violet-500 dark:text-violet-400">· {fullBranch.phone}</span>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">Team Members</p>
+                    <motion.button
+                      onClick={() => setShowAddStaff(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn-primary btn-sm"
+                    >
+                      <UserPlus size={14} />
+                      Add Staff
+                    </motion.button>
+                  </div>
+                  {branchStaff.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                      <User size={28} className="text-slate-300 dark:text-slate-600 mb-2" />
+                      <p className="text-sm text-slate-500 dark:text-slate-400">No staff for this branch</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Add team members to manage this location</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {branchStaff.map((u: any) => (
+                        <motion.div
+                          key={u.id}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                              {(u.name || u.username || "S").charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {u.name || u.username}
+                              </p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-slate-500 dark:text-slate-400">@{u.username}</span>
+                                {u.mobile && (
+                                  <span className="text-xs text-slate-400 dark:text-slate-500">· {u.mobile}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                            title="Delete user"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              ) : null;
-            })()}
-          </div>
-          <div className="space-y-3">
-            <div className="p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Profile</p>
-                <button onClick={() => editingAccount ? setEditingAccount(false) : handleEditAccount()} className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700">
-                  {editingAccount ? "Cancel" : "Edit"}
-                </button>
               </div>
-              {editingAccount ? (
-                <div className="space-y-2">
-                  <input className="input-field text-sm" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
-                  <input className="input-field text-sm" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="Mobile" />
-                  <input type="password" className="input-field text-sm" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="New password" />
-                  <button onClick={handleSaveProfile} disabled={savingProfile}
-                    className="btn-primary text-sm px-3 py-1.5 w-full">{savingProfile ? "Saving..." : "Save"}</button>
-                  {saveProfileMsg && <p className={`text-xs text-center ${saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600"}`}>{saveProfileMsg}</p>}
+            </SectionCard>
+          </div>
+        )}
+
+        {/* ──────────────── ACCOUNT ──────────────── */}
+        <div ref={(el) => { sectionRefs.current["account"] = el; }}>
+          <SectionCard icon={<User size={16} />} title="Login Credentials" subtitle="Your sign-in identity — used across all branches">
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row gap-4 p-5 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 rounded-2xl border border-violet-200 dark:border-violet-500/20">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-sm shrink-0">
+                  {(user?.username as string || "U").charAt(0).toUpperCase()}
                 </div>
-              ) : (
-                <>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{(user?.name as string) || (user?.username as string) || "User"}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">@{user?.username as string}{user?.mobile ? ` · ${user?.mobile as string}` : ""}</p>
-                  <p className="text-xs text-gray-400 capitalize">{(user?.role as string) || "—"}</p>
-                </>
-              )}
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
-              <div className="flex items-center gap-2">
-                {dark ? <Moon size={16} className="text-gray-500" /> : <Sun size={16} className="text-gray-500" />}
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{dark ? "Dark" : "Light"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base font-semibold text-slate-900 dark:text-white">
+                      @{user?.username as string}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/20">
+                      <Building2 size={10} />
+                      {currentBranch?.name || "—"}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      isStaff ? "badge-blue" : "badge-purple"
+                    }`}>
+                      {(user?.role as string) || "—"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Owner name, phone &amp; email are managed per branch in <strong>Shop Profile</strong> above
+                  </p>
+                </div>
               </div>
-              <button onClick={toggleTheme}
-                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${dark ? "bg-primary-600" : "bg-gray-300"}`}>
-                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${dark ? "translate-x-[18px]" : "translate-x-0.5"}`} />
-              </button>
-            </div>
-            <button onClick={handleLogout}
-              className="flex items-center justify-between w-full p-3 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group">
-              <div className="flex items-center gap-2">
-                <LogOut size={16} className="text-red-500" />
-                <span className="text-sm font-medium text-red-600 dark:text-red-400">Logout</span>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Key size={14} className="text-slate-500" />
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">Change Password</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Input
+                      label="New Password"
+                      icon={<Key size={15} />}
+                      type={showPassword ? "text" : "password"}
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Enter new password"
+                    />
+                    {editPassword && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-[38px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      onClick={handleSaveProfile}
+                      disabled={savingProfile}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn-primary btn-sm"
+                    >
+                      {savingProfile ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 size={14} className="animate-spin" />
+                          Saving...
+                        </span>
+                      ) : "Update Password"}
+                    </motion.button>
+                    <AnimatePresence mode="wait">
+                      {saveProfileMsg && (
+                        <motion.span
+                          key={saveProfileMsg}
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0 }}
+                          className={`text-xs ${
+                            saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {saveProfileMsg.includes("Error") ? (
+                            <span className="flex items-center gap-1">
+                              <AlertCircle size={12} />
+                              {saveProfileMsg}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 size={12} />
+                              {saveProfileMsg}
+                            </span>
+                          )}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </div>
-              <ChevronRight size={14} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
+
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">Appearance</p>
+                <ThemeToggle dark={dark} onToggle={toggleTheme} />
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">Danger Zone</p>
+                <motion.button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center justify-between w-full px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl border border-red-200 dark:border-red-500/20 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
+                      <LogOut size={16} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">Sign Out</p>
+                      <p className="text-xs text-red-500/70 dark:text-red-400/70">End your current session</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
+                </motion.button>
+              </div>
+            </div>
+          </SectionCard>
         </div>
       </div>
 
-      {showAddStaff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowAddStaff(false)}>
-          <div className="fixed inset-0 bg-black/30" />
-          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md mx-4 bg-white dark:bg-dark-800 rounded-2xl shadow-xl border border-gray-200 dark:border-dark-600">
-            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add Staff Account</h3>
-              <button onClick={() => setShowAddStaff(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleAddStaff} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name</label>
-                <input className="input-field" value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} placeholder="Staff name" />
+      {/* ──────────────── ADD STAFF DRAWER ──────────────── */}
+      <AnimatePresence>
+        {showAddStaff && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+              onClick={() => setShowAddStaff(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username *</label>
-                <input className="input-field" value={staffForm.username} onChange={(e) => setStaffForm({ ...staffForm, username: e.target.value })} placeholder="Login username" required />
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Staff Account</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Create a new team member account</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowAddStaff(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <X size={18} />
+                </motion.button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password *</label>
-                <input type="password" className="input-field" value={staffForm.password} onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })} placeholder="Password" required />
+              <div className="overflow-y-auto px-6 py-4">
+                <form onSubmit={handleAddStaff} className="space-y-4">
+                  <Input
+                    label="Full Name"
+                    icon={<User size={15} />}
+                    value={staffForm.name}
+                    onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
+                    placeholder="Staff full name"
+                  />
+                  <Input
+                    label="Username *"
+                    icon={<AtSign size={15} />}
+                    value={staffForm.username}
+                    onChange={(e) => setStaffForm({ ...staffForm, username: e.target.value })}
+                    placeholder="Login username"
+                    required
+                  />
+                  <Input
+                    label="Password *"
+                    icon={<Key size={15} />}
+                    type="password"
+                    value={staffForm.password}
+                    onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+                    placeholder="Secure password"
+                    required
+                  />
+                  <Input
+                    label="Mobile"
+                    icon={<Smartphone size={15} />}
+                    value={staffForm.mobile}
+                    onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
+                    placeholder="Phone number"
+                  />
+                  <Select
+                    label="Branch *"
+                    icon={<Building2 size={15} />}
+                    value={staffBranch}
+                    onChange={(e) => setStaffBranch(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a branch</option>
+                    {allBranches.filter((b) => b.isActive).map((b) => (
+                      <option key={b._id} value={b._id}>{b.name}</option>
+                    ))}
+                  </Select>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                    <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">Cancel</button>
+                    <motion.button
+                      type="submit"
+                      disabled={staffSaving}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn-primary"
+                    >
+                      {staffSaving ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 size={15} className="animate-spin" />
+                          Creating...
+                        </span>
+                      ) : "Create Staff"}
+                    </motion.button>
+                  </div>
+                </form>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile</label>
-                <input className="input-field" value={staffForm.mobile} onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })} placeholder="Phone number" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch *</label>
-                <select value={staffBranch} onChange={(e) => setStaffBranch(e.target.value)} required className="input-field">
-                  <option value="">Select branch</option>
-                  {allBranches.filter((b) => b.isActive).map((b) => (
-                    <option key={b._id} value={b._id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-600">
-                <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" disabled={staffSaving} className="btn-primary">{staffSaving ? "Creating..." : "Create Staff"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-      {showAddBranch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }}>
-          <div className="fixed inset-0 bg-black/30" />
-          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-md mx-4 bg-white dark:bg-dark-800 rounded-2xl shadow-xl border border-gray-200 dark:border-dark-600">
-            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-200 dark:border-dark-600">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{editingBranch ? "Edit Branch" : "Add New Branch"}</h3>
-              <button onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={editingBranch ? handleUpdateBranch : handleAddBranch} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch Name *</label>
-                <input className="input-field" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} placeholder="e.g. Govindpuri" required />
+      {/* ──────────────── ADD / EDIT BRANCH DRAWER ──────────────── */}
+      <AnimatePresence>
+        {showAddBranch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+              onClick={() => { setShowAddBranch(false); setEditingBranch(null); }}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Branch Code *</label>
-                <input className="input-field" value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} placeholder="e.g. GVP" required disabled={!!editingBranch} />
-                <p className="text-xs text-gray-400 mt-1">Short code used to identify the branch</p>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {editingBranch ? "Edit Branch" : "Add New Branch"}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {editingBranch ? "Update branch information" : "Create a new business location"}
+                  </p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => { setShowAddBranch(false); setEditingBranch(null); }}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <X size={18} />
+                </motion.button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Database Name *</label>
-                <input className="input-field" value={branchForm.dbName} onChange={(e) => setBranchForm({ ...branchForm, dbName: e.target.value })} placeholder="e.g. kmj_govindpuri" required disabled={!!editingBranch} />
-                <p className="text-xs text-gray-400 mt-1">MongoDB database name for this branch's data</p>
+              <div className="overflow-y-auto px-6 py-4">
+                <form onSubmit={editingBranch ? handleUpdateBranch : handleAddBranch} className="space-y-4">
+                  <Input
+                    label="Branch Name *"
+                    icon={<Building2 size={15} />}
+                    value={branchForm.name}
+                    onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
+                    placeholder="e.g. Govindpuri"
+                    required
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Branch Code *"
+                      icon={<AtSign size={15} />}
+                      value={branchForm.code}
+                      onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })}
+                      placeholder="e.g. GVP"
+                      required
+                      disabled={!!editingBranch}
+                      helperText="Short identification code"
+                    />
+                    <Input
+                      label="Database Name *"
+                      icon={<Globe size={15} />}
+                      value={branchForm.dbName}
+                      onChange={(e) => setBranchForm({ ...branchForm, dbName: e.target.value })}
+                      placeholder="e.g. kmj_govindpuri"
+                      required
+                      disabled={!!editingBranch}
+                      helperText="MongoDB database name"
+                    />
+                  </div>
+                  <Textarea
+                    label="Address"
+                    icon={<MapPin size={15} />}
+                    rows={2}
+                    value={branchForm.address}
+                    onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
+                    placeholder="Branch address"
+                    className="pl-10"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Phone"
+                      icon={<Phone size={15} />}
+                      value={branchForm.phone}
+                      onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
+                      placeholder="Contact number"
+                    />
+                    <Input
+                      label="Email"
+                      icon={<Mail size={15} />}
+                      type="email"
+                      value={branchForm.email}
+                      onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })}
+                      placeholder="branch@example.com"
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Owner Details</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input
+                        label="Owner Name"
+                        icon={<User size={15} />}
+                        value={branchForm.ownerName}
+                        onChange={(e) => setBranchForm({ ...branchForm, ownerName: e.target.value })}
+                        placeholder="e.g. Prakash Rathore"
+                      />
+                      <Input
+                        label="Owner Phone"
+                        icon={<Phone size={15} />}
+                        value={branchForm.ownerPhone}
+                        onChange={(e) => setBranchForm({ ...branchForm, ownerPhone: e.target.value })}
+                        placeholder="Owner contact number"
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <Input
+                        label="Owner Email"
+                        icon={<Mail size={15} />}
+                        type="email"
+                        value={branchForm.ownerEmail}
+                        onChange={(e) => setBranchForm({ ...branchForm, ownerEmail: e.target.value })}
+                        placeholder="owner@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                    <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">Cancel</button>
+                    <motion.button
+                      type="submit"
+                      disabled={branchSaving}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn-primary"
+                    >
+                      {branchSaving ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 size={15} className="animate-spin" />
+                          Saving...
+                        </span>
+                      ) : (editingBranch ? "Update Branch" : "Create Branch")}
+                    </motion.button>
+                  </div>
+                </form>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Address</label>
-                <textarea className="input-field" rows={2} value={branchForm.address} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ──────────────── LOGOUT CONFIRM DRAWER ──────────────── */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+              onClick={() => setShowLogoutConfirm(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 sm:max-w-sm sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Phone</label>
-                <input className="input-field" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })} />
+              <div className="p-6 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                  <LogOut size={24} className="text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Sign Out</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to end your session?</p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">Cancel</button>
+                  <motion.button
+                    onClick={handleLogout}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn-danger"
+                  >
+                    <LogOut size={15} />
+                    Sign Out
+                  </motion.button>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-                <input type="email" className="input-field" value={branchForm.email} onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })} />
-              </div>
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-600">
-                <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">Cancel</button>
-                <button type="submit" disabled={branchSaving} className="btn-primary">{branchSaving ? "Saving..." : (editingBranch ? "Update" : "Create")}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
