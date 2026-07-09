@@ -113,7 +113,12 @@ router.put("/:id/stock", authenticate, audit, asyncHandler(async (req, res) => {
 }));
 
 router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
-  const it = await Inventory.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true }).lean();
+  const allowed = ["brand", "model", "color", "size", "gender", "supplier", "quantity", "purchasePrice", "sellingPrice", "description", "category", "inventoryType", "location", "sku"];
+  const updates: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
+  const it = await Inventory.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true }).lean();
   if (!it) throw new AppError(404, "Not found");
   await invalidateCache("/api/inventory");
   res.json({ success: true, data: it });
