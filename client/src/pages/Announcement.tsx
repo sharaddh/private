@@ -137,8 +137,8 @@ export default function Announcement() {
   async function handleSend() {
     setShowConfirm(false);
     const phones = getSelectedPhones();
-    if (phones.length === 0) return;
-    if (!message.trim() && !mediaFile) return;
+    if (phones.length === 0) { alert("No customers with phone numbers selected."); return; }
+    if (!message.trim() && !mediaFile) { alert("Please enter a message or attach a file."); return; }
 
     setSending(true);
     setProgress({ sent: 0, failed: 0, total: phones.length });
