@@ -3,7 +3,7 @@ import React from "react";
 export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`animate-pulse rounded-xl bg-gray-200 dark:bg-dark-700 ${className || ""}`}
+      className={`animate-pulse rounded-xl bg-slate-200 dark:bg-slate-700 ${className || ""}`}
       {...props}
     />
   );
@@ -11,7 +11,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-600 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden">
       <div className="p-5 pb-3">
         <div className="flex items-center gap-3 mb-3">
           <Skeleton className="w-10 h-10 rounded-full" />
@@ -31,7 +31,7 @@ export function SkeletonCard() {
         </div>
       </div>
       <div className="px-5 pb-5 pt-0">
-        <div className="pt-3 border-t border-gray-200 dark:border-dark-600">
+        <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
           <Skeleton className="h-12 w-full rounded-xl" />
         </div>
       </div>
@@ -42,7 +42,7 @@ export function SkeletonCard() {
 export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-4 pb-2 border-b border-gray-200 dark:border-dark-600">
+      <div className="flex items-center gap-4 pb-2 border-b border-slate-200 dark:border-slate-600">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-4 flex-1" />
         ))}
