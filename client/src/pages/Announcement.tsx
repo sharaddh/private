@@ -251,6 +251,7 @@ export default function Announcement() {
               placeholder="Type your announcement message here..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              maxLength={5000}
             />
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{message.length} characters</p>
           </div>
