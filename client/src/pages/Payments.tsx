@@ -5,11 +5,7 @@ import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import DateRangePicker from "../components/DateRangePicker";
 import { IndianRupee, Receipt, TrendingUp } from "lucide-react";
-
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-}
+import { todayStr } from "../utils/date";
 
 export default function Payments() {
   const [startDate, setStartDate] = useState(todayStr());

@@ -7,11 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from "lucide-react";
 import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
-
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { todayStr } from "../utils/date";
 
 export default function Bills() {
   const [list, setList] = useState<Record<string, unknown>[]>([]);

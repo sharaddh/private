@@ -5,11 +5,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Truck, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DateRangePicker from "../components/DateRangePicker";
-
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-}
+import { todayStr } from "../utils/date";
 
 export default function Delivery() {
   const navigate = useNavigate();
