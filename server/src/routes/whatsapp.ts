@@ -69,7 +69,11 @@ router.post("/broadcast", authenticate, asyncHandler(async (req, res) => {
   const { numbers, message, antiban, media } = req.body;
   if (!numbers?.length) throw new AppError(400, "Numbers required");
   if (!message && !media) throw new AppError(400, "Message or media required");
-  const result = await whatsapp.broadcast(numbers, message || "", antiban, media || undefined);
+  const cleanNumbers = numbers
+    .map((n: string) => n.replace(/\D/g, ""))
+    .filter((n: string) => n.length >= 10);
+  if (!cleanNumbers.length) throw new AppError(400, "No valid phone numbers");
+  const result = await whatsapp.broadcast(cleanNumbers, message || "", antiban, media || undefined);
   res.json({ success: true, data: result });
 }));
 
