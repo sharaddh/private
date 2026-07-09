@@ -270,7 +270,7 @@ export default function Inventory() {
             <form onSubmit={handleSave} className="p-6 space-y-4">
               {formError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{formError}</div>}
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">SKU *</label>
-                <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="e.g. LENS-001" required /></div>
+                <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })} placeholder="e.g. LENS-001" required /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
                   <input className="input-field" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Brand" /></div>
