@@ -228,7 +228,7 @@ export default function Orders() {
 
       {/* Orders grid */}
       {filteredList.length === 0 ? (
-        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-dark-500 bg-surface-50/50 dark:bg-dark-750/50">
+        <div className="card text-center py-16 border-dashed border-gray-300 dark:border-slate-500 bg-surface-50/50 dark:bg-slate-700/50">
           <Package size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-gray-400 dark:text-gray-500 text-sm">No orders found</p>
         </div>

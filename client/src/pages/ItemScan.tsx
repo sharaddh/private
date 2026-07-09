@@ -100,7 +100,7 @@ export default function ItemScan() {
 
       <div className="card">
         <div className="flex items-start gap-5">
-          <div className="w-24 h-24 bg-white dark:bg-dark-700 rounded-2xl border-2 border-gray-200 dark:border-dark-600 flex items-center justify-center flex-shrink-0 p-2">
+          <div className="w-24 h-24 bg-white dark:bg-slate-700 rounded-2xl border-2 border-gray-200 dark:border-slate-600 flex items-center justify-center flex-shrink-0 p-2">
             <canvas ref={canvasRef} className="w-full h-full" />
           </div>
           <div className="flex-1 min-w-0">
@@ -117,14 +117,14 @@ export default function ItemScan() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-5">
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                   <Tag size={12} /> Category
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{category}</p>
               </div>
               {item.inventoryType && (
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <Layers size={12} /> Type
                   </div>
@@ -132,7 +132,7 @@ export default function ItemScan() {
                 </div>
               )}
               {gender && (
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <User size={12} /> Gender
                   </div>
@@ -140,7 +140,7 @@ export default function ItemScan() {
                 </div>
               )}
               {item.color && (
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <Eye size={12} /> Color
                   </div>
@@ -148,7 +148,7 @@ export default function ItemScan() {
                 </div>
               )}
               {item.size && (
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <Layers size={12} /> Size
                   </div>
@@ -156,14 +156,14 @@ export default function ItemScan() {
                 </div>
               )}
               {item.supplier && (
-                <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                     <Building size={12} /> Supplier
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.supplier}</p>
                 </div>
               )}
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                   <Package size={12} /> Stock
                 </div>
@@ -171,13 +171,13 @@ export default function ItemScan() {
                   {item.quantity || 0}
                 </p>
               </div>
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                   <Tag size={12} /> Purchase Price
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.purchasePrice || 0}</p>
               </div>
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-3">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                   <Tag size={12} /> Selling Price
                 </div>
@@ -186,7 +186,7 @@ export default function ItemScan() {
             </div>
 
             {item.description && (
-              <div className="mt-4 p-3 bg-gray-50 dark:bg-dark-750 rounded-xl">
+              <div className="mt-4 p-3 bg-gray-50 dark:bg-slate-700 rounded-xl">
                 <p className="text-xs text-gray-500 mb-1">Description</p>
                 <p className="text-sm text-gray-900 dark:text-white">{item.description}</p>
               </div>
