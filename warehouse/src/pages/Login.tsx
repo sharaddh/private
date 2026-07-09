@@ -43,8 +43,8 @@ export default function Login() {
           <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/20">
             <Package className="text-white" size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Warehouse</h1>
-          <p className="text-sm text-gray-500 mt-1">KMJ Optical — Inventory Management</p>
+          <h1 className="text-2xl font-bold text-gray-900">Lens Warehouse</h1>
+          <p className="text-sm text-gray-500 mt-1">KMJ Optical — Branch owners: use your same KMJ credentials</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
