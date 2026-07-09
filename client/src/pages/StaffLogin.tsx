@@ -35,7 +35,7 @@ export default function StaffLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-dark-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-surface-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-amber-500/20">

@@ -26,7 +26,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-dark-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-surface-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-primary-500/20">

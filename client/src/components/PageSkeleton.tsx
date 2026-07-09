@@ -4,7 +4,7 @@ export default function PageSkeleton({ page }: { page: string }) {
   switch (page) {
     case "dashboard":
       return (
-        <div className="bg-white dark:bg-dark-900 min-h-screen space-y-5 px-4 py-6">
+        <div className="bg-white dark:bg-slate-900 min-h-screen space-y-5 px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Skeleton className="h-6 w-56" />
@@ -20,7 +20,7 @@ export default function PageSkeleton({ page }: { page: string }) {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+              <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
                 <Skeleton className="h-4 w-28 mb-3" />
                 <SkeletonList items={4} />
               </div>
@@ -28,13 +28,13 @@ export default function PageSkeleton({ page }: { page: string }) {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+              <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
                 <Skeleton className="h-4 w-28 mb-3" />
                 <SkeletonList items={4} />
               </div>
             ))}
           </div>
-          <div className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-2xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
             <Skeleton className="h-4 w-32 mb-3" />
             <Skeleton className="h-24 w-full rounded-xl" />
           </div>

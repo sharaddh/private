@@ -40,7 +40,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-dark-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-surface-50 dark:bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-primary-500/20">
@@ -50,7 +50,7 @@ export default function Login() {
           <p className="text-sm text-gray-500 mt-1">Admin Login</p>
         </div>
 
-        <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-md border border-gray-200 dark:border-dark-600 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-gray-200 dark:border-slate-600 p-6">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
           )}
