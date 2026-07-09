@@ -5,6 +5,7 @@ const CustomerSchemaObj = new Schema(
   {
     customerId: { type: String, index: true },
     name: { type: String, required: true, index: true },
+    email: { type: String },
     age: { type: Number },
     gender: { type: String },
     mobile: { type: String, index: true },
