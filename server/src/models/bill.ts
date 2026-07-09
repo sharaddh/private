@@ -2,7 +2,7 @@ import { Schema, model, Types } from "mongoose";
 import { withBranch } from "../utils/branchProxy";
 
 const BillItemSchema = new Schema({
-  description: { type: String },
+  description: { type: String, required: true },
   quantity: { type: Number, default: 1 },
   unitPrice: { type: Number, default: 0 },
   total: { type: Number, default: 0 }
