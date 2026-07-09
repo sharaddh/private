@@ -6,6 +6,7 @@ import { Order } from "../models/order";
 import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
+import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -13,19 +14,46 @@ import { invalidateCache } from "../middleware/cache";
 
 const router = Router();
 
-const transactionSchema = {
-  customerId: { type: String },
-  customer: { type: Object },
-  visit: { type: Object },
-  prescription: { type: Object },
-  order: { type: Object },
-  bill: { type: Object },
-  payment: { type: Object },
-  delivery: { type: Object },
-};
+const transactionSchema = z.object({
+  customerId: z.string().optional(),
+  customer: z.object({
+    _id: z.string().optional(),
+    name: z.string().optional(),
+    mobile: z.string().optional(),
+    email: z.string().optional(),
+    age: z.number().optional(),
+    gender: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+  }).optional(),
+  visit: z.object({
+    visitDate: z.string().optional(),
+    doctorName: z.string().optional(),
+    shop: z.string().optional(),
+    remarks: z.string().optional(),
+  }).optional(),
+  prescription: z.record(z.unknown()).optional(),
+  order: z.record(z.unknown()).optional(),
+  bill: z.object({
+    items: z.array(z.unknown()).optional(),
+    subtotal: z.number().optional(),
+    discount: z.number().optional(),
+    totalAmount: z.number().optional(),
+  }).optional(),
+  payment: z.object({
+    amount: z.number().min(0).optional(),
+    mode: z.string().optional(),
+    paymentMode: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  delivery: z.object({
+    address: z.string().optional(),
+    expectedDeliveryDate: z.string().optional(),
+  }).optional(),
+});
 
 router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
-  const body = req.body;
+  const body = transactionSchema.parse(req.body);
   const result: any = {};
 
   // Customer
@@ -99,7 +127,6 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
       totalAmount: body.bill.totalAmount || 0,
       advancePaid: body.payment?.amount || 0,
       pendingAmount: Math.max(0, (body.bill.totalAmount || 0) - (body.payment?.amount || 0)),
-      paymentMode: body.payment?.mode || "Cash",
     });
     await bill.save();
     result.bill = bill;
@@ -117,8 +144,9 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
         customerId: customer._id,
         billId: bill._id,
         amount: body.payment.amount,
-        mode: body.payment.mode || "Cash",
-        type: "advance",
+        paymentMode: body.payment.paymentMode || body.payment.mode || "Cash",
+        paymentDate: new Date(),
+        notes: body.payment.notes || "Advance payment",
       });
       await payment.save();
       result.payment = payment;
