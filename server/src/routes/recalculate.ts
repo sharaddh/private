@@ -2,13 +2,13 @@ import { Router } from "express";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Bill } from "../models/bill";
-import { authenticate } from "../middleware/auth";
+import { authenticate, requireRole } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { invalidateCache } from "../middleware/cache";
 
 const router = Router();
 
-router.post("/customer-totals", authenticate, asyncHandler(async (req, res) => {
+router.post("/customer-totals", authenticate, requireRole("owner"), asyncHandler(async (req, res) => {
   const customers = await Customer.find({}).lean();
   const results: Array<{ customerId: string; name: string; mobile: string; old: any; new: any }> = [];
   let updated = 0;
