@@ -2,15 +2,13 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
-  LayoutDashboard, Package, PlusCircle, Users, UserPlus, LogOut, Menu, X, ChevronLeft,
+  LayoutDashboard, Package, PlusCircle, LogOut, Menu, X, ChevronLeft,
 } from "lucide-react";
 
 const sidebarMenu = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/inventory", label: "Inventory", icon: Package },
-  { path: "/inventory/new", label: "Add Item", icon: PlusCircle },
-  { path: "/users", label: "Users", icon: Users },
-  { path: "/users/new", label: "Add User", icon: UserPlus },
+  { path: "/inventory", label: "Lenses", icon: Package },
+  { path: "/inventory/new", label: "Add Lens", icon: PlusCircle },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -18,7 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, isOwner } = useAuth();
+  const { logout } = useAuth();
 
   const isAuthPage = location.pathname === "/login";
   if (isAuthPage) return <>{children}</>;
@@ -46,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-gray-900 leading-tight truncate">Warehouse</h1>
+                <h1 className="text-sm font-bold text-gray-900 leading-tight truncate">Lens Warehouse</h1>
                 <p className="text-[9px] text-gray-400 font-medium">KMJ Optical</p>
               </div>
             )}
@@ -66,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
-          {sidebarMenu.filter((m) => isOwner || !m.path.startsWith("/users")).map((item) => {
+          {sidebarMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
@@ -103,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Menu size={18} />
             </button>
             <h2 className="text-base font-semibold text-gray-900">
-              {sidebarMenu.find((m) => m.path === location.pathname || (m.path !== "/" && location.pathname.startsWith(m.path)))?.label || "Warehouse"}
+              {sidebarMenu.find((m) => m.path === location.pathname || (m.path !== "/" && location.pathname.startsWith(m.path)))?.label || "Lens Warehouse"}
             </h2>
           </div>
         </header>
