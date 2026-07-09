@@ -66,10 +66,16 @@ router.post("/init", authenticate, asyncHandler(async (req, res) => {
 }));
 
 router.post("/broadcast", authenticate, asyncHandler(async (req, res) => {
-  const { numbers, message } = req.body;
-  if (!numbers?.length || !message) throw new AppError(400, "Numbers and message required");
-  const result = await whatsapp.broadcast(numbers, message);
+  const { numbers, message, antiban, media } = req.body;
+  if (!numbers?.length) throw new AppError(400, "Numbers required");
+  if (!message && !media) throw new AppError(400, "Message or media required");
+  const result = await whatsapp.broadcast(numbers, message || "", antiban, media || undefined);
   res.json({ success: true, data: result });
+}));
+
+router.post("/broadcast/abort", authenticate, asyncHandler(async (req, res) => {
+  whatsapp.abortBroadcast();
+  res.json({ success: true, message: "Broadcast aborted" });
 }));
 
 export default router;
