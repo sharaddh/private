@@ -12,29 +12,38 @@ const router = Router();
 
 router.get("/revenue", authenticate, cacheRoute(60), asyncHandler(async (req, res) => {
   const { start, end } = req.query;
-  const filter: Record<string, unknown> = {};
+  const billFilter: Record<string, unknown> = {};
+  const paymentFilter: Record<string, unknown> = {};
   if (start || end) {
-    filter.createdAt = {};
-    if (start) (filter.createdAt as Record<string, unknown>).$gte = new Date(start as string);
-    if (end) (filter.createdAt as Record<string, unknown>).$lte = new Date(end as string);
+    billFilter.createdAt = {};
+    paymentFilter.paymentDate = {};
+    if (start) {
+      (billFilter.createdAt as Record<string, unknown>).$gte = new Date(start as string);
+      (paymentFilter.paymentDate as Record<string, unknown>).$gte = new Date(start as string);
+    }
+    if (end) {
+      (billFilter.createdAt as Record<string, unknown>).$lte = new Date(end as string);
+      (paymentFilter.paymentDate as Record<string, unknown>).$lte = new Date(end as string);
+    }
   }
-  const [revenue] = await Promise.all([
+  const [billAgg, paymentAgg] = await Promise.all([
     Bill.aggregate([
-      { $match: filter },
-      { $group: { _id: null, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
+      { $match: billFilter },
+      { $group: { _id: null, total: { $sum: "$totalAmount" }, count: { $sum: 1 }, discount: { $sum: "$discount" } } },
     ]),
     Payment.aggregate([
-      { $match: filter },
+      { $match: paymentFilter },
       { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
     ]),
   ]);
   res.json({
     success: true,
     data: {
-      totalRevenue: revenue[0]?.total || 0,
-      billCount: revenue[0]?.count || 0,
-      totalCollection: 0,
-      paymentCount: 0,
+      totalRevenue: billAgg[0]?.total || 0,
+      billCount: billAgg[0]?.count || 0,
+      totalDiscount: billAgg[0]?.discount || 0,
+      totalCollection: paymentAgg[0]?.total || 0,
+      paymentCount: paymentAgg[0]?.count || 0,
     },
   });
 }));
