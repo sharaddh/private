@@ -53,9 +53,10 @@ router.get("/:id", authenticate, asyncHandler(async (req, res) => {
 }));
 
 router.put("/:id", authenticate, asyncHandler(async (req, res) => {
-  const p = await Prescription.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true }).lean();
-  if (!p) throw new AppError(404, "Not found");
-  res.json({ success: true, data: p });
+  const p = createSchema.partial().parse(req.body);
+  const updated = await Prescription.findByIdAndUpdate(req.params.id, { $set: p }, { new: true, runValidators: true }).lean();
+  if (!updated) throw new AppError(404, "Not found");
+  res.json({ success: true, data: updated });
 }));
 
 router.delete("/:id", authenticate, asyncHandler(async (req, res) => {
