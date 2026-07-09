@@ -186,6 +186,10 @@ export default function Reports() {
           <input type="date" value={customEnd}
             onChange={(e) => { setCustomEnd(e.target.value); setDatePreset(-1); }}
             className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none" />
+          {(customStart || customEnd) && (
+            <button onClick={() => { setCustomStart(""); setCustomEnd(""); setDatePreset(2); }}
+              className="text-xs text-slate-400 hover:text-red-500 px-2">Clear</button>
+          )}
         </div>
       )}
 
