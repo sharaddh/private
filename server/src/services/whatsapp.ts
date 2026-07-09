@@ -28,17 +28,7 @@ interface QueuedMedia {
 
 type QueueItem = QueuedMessage | QueuedMedia;
 
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 10) return "91" + digits;
-  if (digits.length === 11 && digits.startsWith("0")) return "91" + digits.slice(1);
-  if (digits.length === 12 && digits.startsWith("91")) return digits;
-  return digits;
-}
-
-function toJID(phone: string): string {
-  return normalizePhone(phone) + "@s.whatsapp.net";
-}
+import { normalizePhone, toWhatsAppJID as toJID } from "../utils/phone";
 
 async function useMongoDBAuthState(): Promise<{
   state: AuthenticationState;
@@ -507,7 +497,7 @@ class WhatsAppService {
     console.log(`WhatsApp: scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      this.init().catch(() => {});
+      this.init().catch((err) => console.error("WhatsApp reconnect failed:", err));
     }, delay);
   }
 
