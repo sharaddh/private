@@ -12,7 +12,9 @@ import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
+import { normalizePhone } from "../utils/phone";
 
 const router = Router();
 
@@ -35,6 +37,23 @@ const createSchema = z.object({
   quantity: z.number().optional(),
   deliveryDate: z.string().optional(),
   status: z.string().optional()
+});
+
+const updateSchema = z.object({
+  customerId: z.string().optional(),
+  visitId: z.string().optional(),
+  frame: z.string().optional(),
+  lens: z.string().optional(),
+  coating: z.string().optional(),
+  accessories: z.array(z.string()).optional(),
+  quantity: z.number().optional(),
+  deliveryDate: z.string().optional(),
+  status: z.string().optional(),
+  classification: z.string().optional(),
+  rightLensStatus: z.string().optional(),
+  leftLensStatus: z.string().optional(),
+  reviewed: z.boolean().optional(),
+  forwardedCount: z.number().optional(),
 });
 
 const statusUpdateSchema = z.object({
@@ -80,18 +99,16 @@ router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
   res.json({ success: true, data: enriched });
 }));
 
-router.post("/", authenticate, audit, async (req, res) => {
-  try {
-    const p = createSchema.parse(req.body);
-    const order = new Order(p as any);
-    await order.save();
-    invalidateCache("/api/orders");
-    invalidateCache("/api/dashboard");
-    res.json({ success: true, data: order });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
+router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
+  const p = createSchema.parse(req.body);
+  const customer = await Customer.findById(p.customerId).lean();
+  if (!customer) throw new AppError(404, "Customer not found");
+  const order = new Order(p as any);
+  await order.save();
+  invalidateCache("/api/orders");
+  invalidateCache("/api/dashboard");
+  res.json({ success: true, data: order });
+}));
 
 router.get("/:id", authenticate, asyncHandler(async (req, res) => {
   const o = await Order.findById(req.params.id).populate("customerId", "name mobile");
@@ -99,17 +116,14 @@ router.get("/:id", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: o });
 }));
 
-router.put("/:id", authenticate, audit, async (req, res) => {
-  try {
-    const o = await Order.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
-    if (!o) return res.status(404).json({ success: false, message: "Not found" });
-    invalidateCache("/api/orders");
-    invalidateCache("/api/dashboard");
-    res.json({ success: true, data: o });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
+router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
+  const validated = updateSchema.parse(req.body);
+  const o = await Order.findByIdAndUpdate(req.params.id, { $set: validated }, { new: true });
+  if (!o) return res.status(404).json({ success: false, message: "Order not found" });
+  invalidateCache("/api/orders");
+  invalidateCache("/api/dashboard");
+  res.json({ success: true, data: o });
+}));
 
 // PATCH /:id/classify — set classification
 router.patch("/:id/classify", authenticate, asyncHandler(async (req, res) => {
@@ -195,11 +209,6 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         await delivery.save();
       }
       result.delivery = delivery;
-    }
-
-    function normalizePhone(phone: string): string {
-      const digits = phone.replace(/\D/g, "");
-      return digits.length === 10 ? `91${digits}` : digits;
     }
 
     // Auto-send WhatsApp when Ready for pickup (full transition only)
@@ -379,17 +388,13 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
   });
 }
 
-router.delete("/:id", authenticate, audit, async (req, res) => {
-  try {
-    const o = await Order.findByIdAndDelete(req.params.id);
-    if (!o) return res.status(404).json({ success: false, message: "Not found" });
-    invalidateCache("/api/orders");
-    invalidateCache("/api/dashboard");
-    res.json({ success: true, message: "Deleted" });
-  } catch (err: any) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
+router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
+  const o = await Order.findByIdAndDelete(req.params.id);
+  if (!o) throw new AppError(404, "Order not found");
+  invalidateCache("/api/orders");
+  invalidateCache("/api/dashboard");
+  res.json({ success: true, message: "Deleted" });
+}));
 
 // POST /demand-send — generate demand PDF and send via WhatsApp
 router.post("/demand-send", authenticate, async (req, res) => {
