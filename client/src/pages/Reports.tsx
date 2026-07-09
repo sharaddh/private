@@ -198,18 +198,18 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{customerData?.length || 0}</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">{(customerData?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Total Customers</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                {customerData?.filter((c: any) => c.totalVisits === 1).length || 0}
+                {(customerData?.filter((c: any) => c.totalVisits === 1).length || 0).toLocaleString()}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">New Customers</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                {customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0}
+                {(customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0).toLocaleString()}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Returning Customers</p>
             </div>
@@ -270,7 +270,7 @@ export default function Reports() {
                       <tr key={c._id} className="border-b border-slate-100 dark:border-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700/20">
                         <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">{c.name}</td>
                         <td className="py-2 px-3 text-slate-500 dark:text-slate-400">{c.mobile || "—"}</td>
-                        <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{c.totalVisits || 0}</td>
+                        <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">{(c.totalVisits || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right">
                           <span className={c.pendingAmount > 0 ? "text-amber-600 dark:text-amber-400 font-medium" : "text-slate-500 dark:text-slate-400"}>
@@ -419,11 +419,11 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{invData?.totalItems || 0}</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">{(invData?.totalItems || 0).toLocaleString()}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Total Items</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{invData?.lowStock?.length || 0}</p>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{(invData?.lowStock?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Low Stock (≤5)</p>
             </div>
             <div className="card text-center">
@@ -431,7 +431,7 @@ export default function Reports() {
               <p className="text-sm text-slate-500 dark:text-slate-400">Stock Value</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{invData?.byCategory?.length || 0}</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{(invData?.byCategory?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Categories</p>
             </div>
           </div>
