@@ -306,7 +306,7 @@ export default function NewVisit() {
       ) : (
         <>
           {/* Steps indicator */}
-          <div className="flex items-center justify-between bg-white dark:bg-dark-800 rounded-2xl p-2 shadow-sm border border-gray-200 dark:border-dark-600">
+          <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-sm border border-gray-200 dark:border-slate-600">
             {steps.map((s, i) => {
               const Icon = s.icon;
               const currentIdx = steps.findIndex((x) => x.key === step);
@@ -346,7 +346,7 @@ export default function NewVisit() {
                 <div className="space-y-1">
                   {searchResults.map((c) => (
                     <button key={c._id} type="button" onClick={() => selectCustomer(c)}
-                      className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700 transition-all">
+                      className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-dark-700 transition-all">
                       <div className="font-medium text-gray-900 dark:text-white">{c.name}</div>
                       <div className="text-xs text-gray-500">{c.mobile}{c.lastVisit ? ` · Last visit: ${c.lastVisit}` : ""}</div>
                     </button>
@@ -355,7 +355,7 @@ export default function NewVisit() {
               )}
 
               {searched && searchResults.length === 0 && (
-                <div className="text-center py-6 border-2 border-dashed border-gray-200 dark:border-dark-600 rounded-xl">
+                <div className="text-center py-6 border-2 border-dashed border-gray-200 dark:border-slate-600 rounded-xl">
                   <p className="text-sm text-gray-500 mb-3">No existing customer found with this number.</p>
                   <button onClick={() => { setIsNewCustomer(true); setCustomerForm({ ...customerForm, mobile: phoneSearch }); }}
                     className="btn-primary px-4 py-2">Add New Customer</button>
@@ -430,7 +430,7 @@ export default function NewVisit() {
                   {VISIT_TYPES.map((t) => (
                     <button key={t.value} type="button" onClick={() => setVisitType(t.value)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                        visitType === t.value ? "bg-primary-600 text-white" : "bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400"
+                        visitType === t.value ? "bg-primary-600 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400"
                       }`}>{t.label}</button>
                   ))}
                 </div>
@@ -457,7 +457,7 @@ export default function NewVisit() {
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="usePresc" checked={usePrescription}
                   onChange={(e) => setUsePrescription(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-dark-600 text-primary-600 focus:ring-primary-500" />
+                  className="rounded border-gray-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500" />
                 <label htmlFor="usePresc" className="text-sm font-medium text-gray-700 dark:text-gray-300">Add Prescription</label>
               </div>
 
@@ -474,13 +474,13 @@ export default function NewVisit() {
                             const typeLabel = type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Prism";
                             const fields = type === "pc" ? ["h", "v", "add"] : ["sph", "cyl", "axis", "prism", "add"];
                             return (
-                              <div key={type} className="border border-gray-200 dark:border-dark-600 rounded-xl p-3">
+                              <div key={type} className="border border-gray-200 dark:border-slate-600 rounded-xl p-3">
                                 <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1.5">{typeLabel}</p>
                                 <div className="space-y-1">
                                   {fields.map((f) => (
                                     <div key={f} className="flex items-center gap-1.5">
                                       <span className="text-[10px] font-medium text-gray-400 w-6 uppercase">{f}</span>
-                                      <input className="w-full text-xs py-1 px-1.5 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800"
+                                      <input className="w-full text-xs py-1 px-1.5 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800"
                                         value={(data[type] as any)?.[f] || ""}
                                         onChange={(e) => {
                                           const copy = { ...prescription };
@@ -538,14 +538,14 @@ export default function NewVisit() {
                       <button onClick={addFrame} className="text-xs text-primary-600 hover:text-primary-700 font-medium">+ Add Frame</button>
                     </div>
                     {orderFrames.map((f, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-dark-750 rounded-lg border border-gray-100 dark:border-dark-600">
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="SKU" value={f.sku} onChange={(e) => updateFrame(i, "sku", e.target.value)} />
+                      <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="SKU" value={f.sku} onChange={(e) => updateFrame(i, "sku", e.target.value)} />
                         <div className="relative flex-1 min-w-[100px]">
-                          <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-full" placeholder="Brand" value={f.brand}
+                          <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-full" placeholder="Brand" value={f.brand}
                             onChange={(e) => { updateFrame(i, "brand", e.target.value); searchInventory(e.target.value, i); }}
                             onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)} />
                           {suggestionsForIdx === i && isFocused && suggestions.length > 0 && (
-                            <div className="absolute z-10 top-full left-0 w-full mt-1 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-600 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                            <div className="absolute z-10 top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-lg max-h-40 overflow-y-auto">
                               {suggestions.map((s: any) => (
                                 <button key={s._id} type="button" onMouseDown={() => { updateFrame(i, "brand", s.brand); updateFrame(i, "model", s.model || ""); updateFrame(i, "sku", s.sku || ""); }}
                                   className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-dark-700">{s.brand}{s.model ? ` ${s.model}` : ""} <span className="text-gray-400">({s.sku})</span></button>
@@ -553,9 +553,9 @@ export default function NewVisit() {
                             </div>
                           )}
                         </div>
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="Model" value={f.model} onChange={(e) => updateFrame(i, "model", e.target.value)} />
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="Color" value={f.color} onChange={(e) => updateFrame(i, "color", e.target.value)} />
-                        <input type="number" className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="Price" value={f.price || ""} onChange={(e) => updateFrame(i, "price", Number(e.target.value))} />
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="Model" value={f.model} onChange={(e) => updateFrame(i, "model", e.target.value)} />
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="Color" value={f.color} onChange={(e) => updateFrame(i, "color", e.target.value)} />
+                        <input type="number" className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="Price" value={f.price || ""} onChange={(e) => updateFrame(i, "price", Number(e.target.value))} />
                         <button onClick={() => removeFrame(i)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                       </div>
                     ))}
@@ -574,20 +574,20 @@ export default function NewVisit() {
                       <button onClick={addLens} className="text-xs text-primary-600 hover:text-primary-700 font-medium">+ Add Lens</button>
                     </div>
                     {orderLenses.map((l, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-dark-750 rounded-lg border border-gray-100 dark:border-dark-600">
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="SKU" value={l.sku} onChange={(e) => updateLens(i, "sku", e.target.value)} />
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-28" placeholder="Brand" value={l.brand} onChange={(e) => updateLens(i, "brand", e.target.value)} />
+                      <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="SKU" value={l.sku} onChange={(e) => updateLens(i, "sku", e.target.value)} />
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-28" placeholder="Brand" value={l.brand} onChange={(e) => updateLens(i, "brand", e.target.value)} />
                         <div className="flex gap-1 flex-wrap">
                           {["Single Vision", "Bifocal", "Progressive", "Blue Cut", "Photochromic", "Anti-Glare"].map((f) => (
                             <button key={f} type="button" onClick={() => toggleFeature(i, f)}
                               className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
-                                l.features.includes(f) ? "bg-primary-100 dark:bg-primary-900/30 border-primary-300 text-primary-700 dark:text-primary-300" : "bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-600 text-gray-500"
+                                l.features.includes(f) ? "bg-primary-100 dark:bg-primary-900/30 border-primary-300 text-primary-700 dark:text-primary-300" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-500"
                               }`}>{f}</button>
                           ))}
                         </div>
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-16" placeholder="Index" value={l.index} onChange={(e) => updateLens(i, "index", e.target.value)} />
-                        <input type="number" className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="Price" value={l.price || ""} onChange={(e) => updateLens(i, "price", Number(e.target.value))} />
-                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 w-20" placeholder="Coating" value={l.coating} onChange={(e) => updateLens(i, "coating", e.target.value)} />
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-16" placeholder="Index" value={l.index} onChange={(e) => updateLens(i, "index", e.target.value)} />
+                        <input type="number" className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="Price" value={l.price || ""} onChange={(e) => updateLens(i, "price", Number(e.target.value))} />
+                        <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="Coating" value={l.coating} onChange={(e) => updateLens(i, "coating", e.target.value)} />
                         <button onClick={() => removeLens(i)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                       </div>
                     ))}
@@ -631,7 +631,7 @@ export default function NewVisit() {
                         const active = orderDeliveryDate === dateStr;
                         return (
                           <button key={s.label} type="button" onClick={() => setOrderDeliveryDate(dateStr)}
-                            className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${active ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 dark:bg-dark-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
+                            className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${active ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-600"
                               }`}>
                             {s.label}
                           </button>
@@ -707,7 +707,7 @@ export default function NewVisit() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-dark-750 rounded-xl p-4 space-y-2">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Total Bill</span>
                   <span className="font-semibold">\u20B9{totalAmount.toLocaleString()}</span>
@@ -716,7 +716,7 @@ export default function NewVisit() {
                   <span className="text-gray-500">Paid</span>
                   <span className="font-semibold text-green-600">\u20B9{advancePaid.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-dark-600">
+                <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-slate-600">
                   <span className="font-medium">Pending</span>
                   <span className="font-bold text-amber-600">\u20B9{Math.max(0, totalAmount - advancePaid).toLocaleString()}</span>
                 </div>

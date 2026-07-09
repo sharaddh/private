@@ -135,7 +135,7 @@ export default function WhatsApp() {
           )}
 
           {status === "initializing" && (
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-6 space-y-3">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                 <RefreshCw size={20} className="animate-spin" />
                 <span className="text-sm font-medium">Initializing...</span>
@@ -155,7 +155,7 @@ export default function WhatsApp() {
           )}
 
           {status === "disconnected" && (
-            <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-6 space-y-3">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                 <Info size={20} />
                 <span className="text-sm font-medium">Session Cleared</span>
