@@ -16,13 +16,13 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
   const chartTrend = !prev7 && recent7 > 0 ? "N/A" : prev7 > 0 ? ((recent7 - prev7) / prev7 * 100).toFixed(1) : "0";
   const trendUp = chartTrend === "N/A" ? true : Number(chartTrend) >= 0;
   return (
-    <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300`}>
+    <div className={`bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md border rounded-2xl p-5 transition-shadow duration-300`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>Sales Trend</h3>
-          <p className={`text-xs ${dark ? "text-white/40" : "text-gray-500"} mt-0.5`}>Last 30 days</p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Sales Trend</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Last 30 days</p>
         </div>
-        <span className={`text-xs font-medium ${dark ? `${trendUp ? "text-emerald-400 bg-emerald-500/15" : "text-red-400 bg-red-500/15"}` : `${trendUp ? "text-emerald-600 bg-emerald-50 border border-emerald-200" : "text-red-600 bg-red-50 border border-red-200"}`} px-2 py-0.5 rounded-md`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${trendUp ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-800" : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-800"}`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
       </div>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
@@ -33,8 +33,8 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.4)" : "rgba(107,114,128,0.6)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.4)" : "rgba(107,114,128,0.6)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 11, fill: "rgba(107,114,128,0.6)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "rgba(107,114,128,0.6)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
             <Tooltip
               labelFormatter={(label) => formatDateLabel(label)}
               formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Sales"]}
@@ -57,12 +57,13 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
 export function OrderStatusDonut({ data, dark }: { data: { status: string; count: number }[]; dark?: boolean }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.count, 0);
+  void dark;
   return (
-    <div className={`${dark ? "bg-dark-800 border-dark-600" : "bg-white border-gray-200 shadow-sm hover:shadow-md"} border rounded-2xl p-5 transition-shadow duration-300 h-full`}>
+    <div className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md border rounded-2xl p-5 transition-shadow duration-300 h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>Order Status</h3>
-          <p className={`text-xs ${dark ? "text-white/40" : "text-gray-500"} mt-0.5`}>{total} total</p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Order Status</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{total} total</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -85,8 +86,8 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
           {data.map((d, i) => (
             <div key={d.status} className="flex items-center gap-2 text-xs">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-              <span className={`font-medium ${dark ? "text-white/70" : "text-gray-700"}`}>{d.status}</span>
-              <span className={`${dark ? "text-white/40" : "text-gray-400"} ml-auto`}>{d.count}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{d.status}</span>
+              <span className="text-slate-400 dark:text-slate-500 ml-auto">{d.count}</span>
             </div>
           ))}
         </div>
