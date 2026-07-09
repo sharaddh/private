@@ -13,10 +13,20 @@ router.get("/", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: settings });
 }));
 
+const allowedSettings = [
+  "shopName", "shopPhone", "shopAddress", "gstin", "email", "invoicePrefix",
+  "defaultDiscount", "taxRate", "currency", "timezone", "whatsappNumber",
+  "orderMessage", "deliveryMessage", "receiptFooter", "theme"
+];
+
 router.put("/", authenticate, asyncHandler(async (req, res) => {
+  const updates: Record<string, unknown> = {};
+  for (const key of allowedSettings) {
+    if (req.body[key] !== undefined) updates[key] = req.body[key];
+  }
   const settings = await Settings.findOneAndUpdate(
     {},
-    { $set: req.body },
+    { $set: updates },
     { new: true, upsert: true, runValidators: true }
   ).lean();
   res.json({ success: true, data: settings });
