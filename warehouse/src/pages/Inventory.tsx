@@ -24,7 +24,7 @@ interface InventoryItem {
 }
 
 const emptyForm = {
-  sku: "", category: "Frame", inventoryType: "spectacles",
+  sku: "", category: "Lens", inventoryType: "lens",
   brand: "", model: "", color: "", size: "", gender: "",
   supplier: "", quantity: 0, location: "warehouse" as "warehouse" | "shop",
   purchasePrice: 0, sellingPrice: 0, description: "",
@@ -35,8 +35,8 @@ export default function Inventory() {
   const [filtered, setFiltered] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("Lens");
+  const [locationFilter, setLocationFilter] = useState("warehouse");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -93,8 +93,8 @@ export default function Inventory() {
     setEditing(item);
     setForm({
       sku: item.sku || "",
-      category: item.category || "Frame",
-      inventoryType: item.inventoryType || "spectacles",
+      category: item.category || "Lens",
+      inventoryType: item.inventoryType || "lens",
       brand: item.brand || "",
       model: item.model || "",
       color: item.color || "",
@@ -150,18 +150,18 @@ export default function Inventory() {
     setWithdrawing(false);
   }
 
-  const categories = ["Frame", "Lens", "Accessories"];
-  const locations = ["shop", "warehouse"];
+  const categories = ["Lens"];
+  const locations = ["warehouse", "shop"];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">{filtered.length} items</p>
+          <h1 className="page-title">Lens Warehouse</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage warehouse lens stock — {filtered.length} items</p>
         </div>
         <button onClick={openAdd} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> Add Item
+          <Plus size={18} /> Add Lens
         </button>
       </div>
 
@@ -188,8 +188,8 @@ export default function Inventory() {
       ) : filtered.length === 0 ? (
         <div className="card p-12 text-center">
           <Package size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 text-sm">No inventory items found</p>
-          <button onClick={openAdd} className="btn-primary mt-4">Add First Item</button>
+          <p className="text-gray-500 text-sm">No lens items found in warehouse</p>
+          <button onClick={openAdd} className="btn-primary mt-4">Add First Lens</button>
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -262,7 +262,7 @@ export default function Inventory() {
           <div onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">{editing ? "Edit Item" : "Add Item"}</h3>
+              <h3 className="text-lg font-bold text-gray-900">{editing ? "Edit Lens" : "Add Lens"}</h3>
               <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
                 <X size={18} />
               </button>
@@ -270,7 +270,7 @@ export default function Inventory() {
             <form onSubmit={handleSave} className="p-6 space-y-4">
               {formError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">{formError}</div>}
               <div><label className="block text-sm font-medium text-gray-700 mb-1.5">SKU *</label>
-                <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Unique SKU" required /></div>
+                <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="e.g. LENS-001" required /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
                   <input className="input-field" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Brand" /></div>
@@ -280,11 +280,11 @@ export default function Inventory() {
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
                   <select className="input-field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <option value="Lens">Lens</option>
                   </select></div>
                 <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
                   <select className="input-field" value={form.inventoryType} onChange={(e) => setForm({ ...form, inventoryType: e.target.value })}>
-                    {["spectacles","sunglasses","lens","accessory","hearing-aid","cleaner","case","other"].map((t) => <option key={t} value={t}>{t}</option>)}
+                    <option value="lens">Lens</option>
                   </select></div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -318,7 +318,7 @@ export default function Inventory() {
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" disabled={saving} className="btn-primary flex-1">
-                  {saving ? "Saving..." : editing ? "Update Item" : "Create Item"}
+                  {saving ? "Saving..." : editing ? "Update Lens" : "Create Lens"}
                 </button>
               </div>
             </form>
