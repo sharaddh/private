@@ -873,7 +873,7 @@ export default function CustomerDetail() {
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/30">
                           {linkedBill.items.map((it: any, i: number) => (
-                            <tr key={i}>
+                            <tr key={it._id || it.description || i}>
                               <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200">{it.description || "Item"}</td>
                               <td className="py-2.5 px-3 text-center text-slate-500">{it.quantity || 1}</td>
                               <td className="py-2.5 px-3 text-right text-slate-500">₹{(it.unitPrice || 0).toFixed(2)}</td>
