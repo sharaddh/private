@@ -7,10 +7,10 @@ import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
 import {
-  Save, User, Shield, Upload, MessageCircle, Image, RefreshCw, LogOut,
+  Save, User, Shield, Upload, MessageCircle, RefreshCw, LogOut,
   Sun, Moon, Trash2, X, Building2, Globe, Store, Phone, Mail, MapPin,
   Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
-  QrCode, Wifi, WifiOff, ArrowRight, Settings2, Eye, EyeOff, Crown,
+  WifiOff, ArrowRight, Eye, EyeOff, Crown,
 } from "lucide-react";
 import SettingsHeader from "./settings/SettingsHeader";
 import SectionNav from "./settings/SectionNav";
