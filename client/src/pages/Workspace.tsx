@@ -18,6 +18,7 @@ import VisitTypeSection from "../components/NewvistePage/VisitTypeSection";
 import PrescriptionPanel from "../components/NewvistePage/PrescriptionPanel";
 import OrderItems from "../components/NewvistePage/OrderItems";
 import BillingPanel from "../components/NewvistePage/BillingPanel";
+import { formatRxBrief } from "../utils/rx";
 import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
 import BottomNav from "../components/NewvistePage/BottomNav";
@@ -617,7 +618,7 @@ export default function Workspace() {
                   </div>
                   {customerSummary.lastPrescription?.rightEye?.dv?.sph != null && (
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                      Last Rx: {customerSummary.lastPrescription.rightEye.dv.sph} / {customerSummary.lastPrescription.leftEye?.dv?.sph || ""}
+                      Last Rx: {formatRxBrief(customerSummary.lastPrescription.rightEye.dv.sph, customerSummary.lastPrescription.rightEye.dv.cyl, customerSummary.lastPrescription.rightEye.dv.axis)}
                     </p>
                   )}
                 </div>
