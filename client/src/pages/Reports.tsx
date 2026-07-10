@@ -3,7 +3,7 @@ import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import {
   Users, TrendingUp, Clock, Package, AlertTriangle,
-  Download, Filter, ShoppingCart, Calendar,
+  Download, ShoppingCart, Calendar,
 } from "lucide-react";
 
 const TABS = [
