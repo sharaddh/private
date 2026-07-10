@@ -254,7 +254,7 @@ class WhatsAppService {
               try {
                 this.sock.ev.removeAllListeners("connection.update");
                 this.sock.ev.removeAllListeners("creds.update");
-              } catch {}
+              } catch (e) { /* listener removal is best-effort */ }
             }
             this.sock = null;
             this._qr = null;
@@ -277,7 +277,7 @@ class WhatsAppService {
             try {
               const db = mongoose.connection.db;
               if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
-            } catch {}
+            } catch (e) { /* auth_state cleanup is best-effort */ }
           } else {
             this.scheduleReconnect();
           }
@@ -289,7 +289,7 @@ class WhatsAppService {
             try {
               const db = mongoose.connection.db;
               if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
-            } catch {}
+            } catch (e) { /* partial session cleanup is best-effort */ }
           }
 
           if (qrTimer) clearTimeout(qrTimer);
@@ -515,7 +515,7 @@ class WhatsAppService {
         this.sock.ev.removeAllListeners("connection.update");
         this.sock.ev.removeAllListeners("creds.update");
         this.sock.end(new Error("Service destroy"));
-      } catch {}
+      } catch (e) { /* socket teardown is best-effort */ }
       this.sock = null;
     }
     this._ready = false;
@@ -532,7 +532,7 @@ class WhatsAppService {
     try {
       const db = mongoose.connection.db;
       if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
-    } catch {}
+    } catch (e) { /* auth_state cleanup is best-effort */ }
     await this.destroy();
   }
 
