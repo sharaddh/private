@@ -418,6 +418,7 @@ export default function Workspace() {
               if (prev <= 1) {
                 clearInterval(countdownRef.current);
                 countdownRef.current = null;
+                savingRef.current = false;
                 sendGreeting(resData, selectedCustomer);
                 return 0;
               }
