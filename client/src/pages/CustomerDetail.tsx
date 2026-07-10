@@ -5,8 +5,8 @@ import PageSkeleton from "../components/PageSkeleton";
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, Receipt, Eye, ClipboardList,
   ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User,
-  ChevronRight, Clock, Activity, AlertCircle, CheckCircle, MapPinned,
-  IdCard, Wallet, TrendingUp, Stethoscope, Pill, Sparkles
+  ChevronRight, Clock, Activity, MapPinned,
+  IdCard, Wallet, TrendingUp, Stethoscope, Sparkles
 } from "lucide-react";
 
 export default function CustomerDetail() {
