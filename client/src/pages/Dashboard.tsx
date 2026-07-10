@@ -7,6 +7,7 @@ import CameraScanner from "../components/CameraScanner";
 import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
+import { formatFullRx } from "../utils/rx";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
   TrendingUp, IndianRupee, ScanLine, Boxes, PackageCheck,
@@ -36,14 +37,6 @@ const maskPhone = (p: string): string => {
   if (!p || p.length < 6) return v(p) as string;
   return p.slice(0, 2) + "****" + p.slice(-2);
 };
-
-function formatRx(sph?: number, cyl?: number, axis?: number): string {
-  const s = sph != null ? (sph > 0 ? `+${sph}` : `${sph}`) : "";
-  const c = cyl != null ? (cyl > 0 ? `+${cyl}` : `${cyl}`) : "";
-  const a = axis != null ? `°${axis}` : "";
-  if (!s && !c) return "—";
-  return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
-}
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -542,21 +535,8 @@ export default function Dashboard() {
                 const rStatus = (o.rightLensStatus as string) || "pending";
                 const lStatus = (o.leftLensStatus as string) || "pending";
 
-                function formatEyeRx(dv: Record<string, unknown> | undefined, nv: Record<string, unknown> | undefined, pd: unknown): string | null {
-                  const parts: string[] = [];
-                  if (dv?.sph != null) {
-                    parts.push(formatRx(dv.sph as number, dv.cyl as number, dv.axis as number));
-                    if (nv?.sph != null) parts.push(`Add ${((nv.sph as number) - (dv.sph as number)).toFixed(2)}`);
-                    if (dv.va) parts.push(`VA:${dv.va}`);
-                  }
-                  if (nv?.sph != null && dv?.sph == null) {
-                    parts.push(formatRx(nv.sph as number, nv.cyl as number, nv.axis as number));
-                  }
-                  if (pd) parts.push(`PD ${pd}`);
-                  return parts.length ? parts.join("  ") : null;
-                }
-
-                const rRx = formatEyeRx(rDV, rNV, rx?.pd);
+                const rRx = formatFullRx(rDV, rNV, rx?.pd as string | number | undefined);
+                const lRx = formatFullRx(lDV, lNV);
                 const lRx = formatEyeRx(lDV, lNV, rx?.pd);
                 const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ");
 
