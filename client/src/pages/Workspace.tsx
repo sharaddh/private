@@ -204,8 +204,6 @@ export default function Workspace() {
     setOrderAccessories((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  function syncBillFromOrder() {}
-
   function updateBillItem(i: number, field: string, value: any) {
     setBillItems((prev) => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
   }
@@ -840,7 +838,6 @@ export default function Workspace() {
               setOrderAccessories={setOrderAccessories}
               updateAccessory={updateAccessory}
               removeAccessory={removeAccessory}
-              syncBillFromOrder={syncBillFromOrder}
               setStep={setStep}
               onScan={() => setScanModal(true)}
               searchInventory={searchInventory}
