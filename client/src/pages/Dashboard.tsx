@@ -13,7 +13,7 @@ import {
   Clock, Activity, Plus, Check, Trash2, ArrowUpRight, UserPlus, FileText,
   BarChart3, AlertTriangle, AlertCircle, CreditCard, Smartphone, Building2,
   X, ChevronRight, ShoppingCart, CheckSquare, Send, Eye, MessageSquare,
-  Calendar, LayoutDashboard, CircleUserRound, AlertOctagon,
+  Calendar, LayoutDashboard,
 } from "lucide-react";
 
 interface DashboardData {
