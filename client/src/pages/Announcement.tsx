@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
+import { useToast } from "../context/ToastContext";
 import {
   Send, Search, MessageCircle, Users, CheckSquare, Square,
   Smartphone, RefreshCw, CheckCircle, XCircle, Loader2,
@@ -22,6 +23,7 @@ interface SendResult {
 }
 
 export default function Announcement() {
+  const toast = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -137,8 +139,8 @@ export default function Announcement() {
   async function handleSend() {
     setShowConfirm(false);
     const phones = getSelectedPhones();
-    if (phones.length === 0) { alert("No customers with phone numbers selected."); return; }
-    if (!message.trim() && !mediaFile) { alert("Please enter a message or attach a file."); return; }
+    if (phones.length === 0) { toast.error("No customers with phone numbers selected."); return; }
+    if (!message.trim() && !mediaFile) { toast.error("Please enter a message or attach a file."); return; }
 
     setSending(true);
     setProgress({ sent: 0, failed: 0, total: phones.length });
