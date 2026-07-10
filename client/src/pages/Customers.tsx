@@ -6,6 +6,7 @@ import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, IndianRupee, Eye, Calendar, MapPinned } from "lucide-react";
 
 interface Customer {
@@ -16,6 +17,7 @@ interface Customer {
 }
 
 export default function Customers() {
+  const toast = useToast();
   const [list, setList] = useState<Customer[]>([]);
   const [filteredList, setFilteredList] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,9 +103,9 @@ export default function Customers() {
               if (res.success) {
                 refetch(true);
                 const d = res.data as any;
-                alert(`Fixed ${d?.updated || 0} customer records`);
+                toast.success(`Fixed ${d?.updated || 0} customer records`);
               } else {
-                alert("Recalculation failed: " + (res.message || "Unknown error"));
+                toast.error("Recalculation failed: " + (res.message || "Unknown error"));
               }
               setRecalculating(false);
             }} disabled={recalculating}
