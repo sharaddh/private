@@ -28,7 +28,7 @@ export default function Customers() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { isStaff, user } = useAuth();
-  const { data: rawList, loading, refetch } = useCachedData<Customer[]>("/api/customers", () => api.get("/api/customers"));
+  const { data: rawList, loading, refetch } = useCachedData<Customer[]>("/api/customers?limit=1000", () => api.get("/api/customers?limit=1000"));
   const [recalculating, setRecalculating] = useState(false);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function Customers() {
     try {
       const payload = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
       const res = editing ? await api.put(`/api/customers/${editing._id}`, payload) : await api.post("/api/customers", payload);
-      if (res.success) { invalidateCache("/api/customers"); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
+      if (res.success) { invalidateCache("/api/customers?limit=1000"); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
       else setError(res.message || "Operation failed");
     } catch { setError("An error occurred"); }
     finally { setIsLoading(false); }
