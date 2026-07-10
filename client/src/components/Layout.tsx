@@ -159,15 +159,15 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             )}
           </div>
-          <button onClick={() => setSidebarOpen(false)}
+          <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
             className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
             <ChevronLeft size={14} />
           </button>
-          <button onClick={() => setSidebarOpen(true)}
+          <button onClick={() => setSidebarOpen(true)} aria-label="Expand sidebar"
             className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
             <Menu size={14} />
           </button>
-          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 lg:hidden transition-all">
+          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 lg:hidden transition-all">
             <X size={14} />
           </button>
         </div>
@@ -195,10 +195,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 lg:hidden transition-all duration-300">
+            <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 lg:hidden transition-all duration-300">
               <Menu size={20} />
             </button>
-            <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hidden lg:flex transition-all duration-300">
+            <button onClick={() => setSidebarOpen(true)} aria-label="Open sidebar" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hidden lg:flex transition-all duration-300">
               <Menu size={18} />
             </button>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white hidden sm:block">
