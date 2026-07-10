@@ -58,7 +58,7 @@ export default function BillingPanel({ billItems, setBillItems, updateBillItem, 
           <div className="space-y-3">
             {billItems.map((item, i) => (
               <motion.div
-                key={i}
+                key={item._id || item.description || i}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl p-3"
