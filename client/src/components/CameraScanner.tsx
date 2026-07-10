@@ -19,7 +19,7 @@ function playBeep() {
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.stop(ctx.currentTime + 0.15);
-  } catch {}
+  } catch (e) { /* audio beep is best-effort */ }
 }
 
 export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
