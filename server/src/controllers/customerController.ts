@@ -7,7 +7,7 @@ import { success, created, notFound } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
 export async function getAll(req: Request, res: Response) {
-  const { phone, search, page = "1", limit = "20" } = req.query;
+  const { phone, search, page = "1", limit = "1000" } = req.query;
   const filter: any = {};
   if (phone) filter.mobile = { $regex: phone as string, $options: "i" };
   if (search) {
