@@ -6,7 +6,7 @@ import {
   Send, Search, MessageCircle, Users, CheckSquare, Square,
   Smartphone, RefreshCw, CheckCircle, XCircle, Loader2,
   X, Clock, Shield, AlertTriangle, Filter,
-  Hourglass, Paperclip, Image, FileText,
+  Hourglass, Paperclip, FileText,
 } from "lucide-react";
 
 const ANTIBAN_PRESETS = [
