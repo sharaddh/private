@@ -838,7 +838,7 @@ export default function Dashboard() {
                 {!!(t.done) && <Check className="w-3 h-3 text-white" />}
               </button>
               <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-300"}`}>{t.task as string}</span>
-              <button onClick={() => deleteTodo(t._id as string)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all">
+              <button onClick={() => deleteTodo(t._id as string)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
