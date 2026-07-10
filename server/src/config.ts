@@ -30,3 +30,7 @@ if (!JWT_SECRET && NODE_ENV === "production") {
   console.error("JWT_SECRET must be set in production");
   process.exit(1);
 }
+
+if (!JWT_SECRET && NODE_ENV !== "production") {
+  console.warn("⚠ JWT_SECRET is not set — using empty string. Tokens will be insecure.");
+}
