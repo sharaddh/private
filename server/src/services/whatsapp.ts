@@ -388,7 +388,7 @@ class WhatsAppService {
   async sendMessage(phone: string, message: string): Promise<boolean> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
-      console.log(`WhatsApp: queued text message to ${phone} (queue: ${this.messageQueue.length})`);
+      console.log(`WhatsApp: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
       return false;
     }
     return this.sendMessageNow(phone, message);
@@ -397,7 +397,7 @@ class WhatsAppService {
   async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
-      console.log(`WhatsApp: queued media message to ${phone} (queue: ${this.messageQueue.length})`);
+      console.log(`WhatsApp: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
       return false;
     }
     if (throwOnError) {
