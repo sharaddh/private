@@ -223,7 +223,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
         const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent) console.log(`WhatsApp: order ready message queued for ${customer.mobile}`);
+        if (!sent) console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
 
@@ -235,7 +235,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
         const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent) console.log(`WhatsApp: order delivered message queued for ${customer.mobile}`);
+        if (!sent) console.log(`WhatsApp: order delivered message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
 
@@ -530,7 +530,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
     const waStatus = await whatsapp.getStatus();
 
     const sizeKB = (pdfBuffer.length / 1024).toFixed(1);
-    console.log(`Demand PDF: ${filename}, ${sizeKB}KB, sending to ${normalized}, WA status: ${waStatus.status}`);
+    console.log(`Demand PDF: ${filename}, ${sizeKB}KB, WA status: ${waStatus.status}`);
 
     const base64 = pdfBuffer.toString("base64");
     let sent = false;
