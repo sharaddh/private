@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
-import PageSkeleton from "../components/PageSkeleton";
 import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Eye, Activity, ShoppingCart, CreditCard, CheckCircle, Calendar } from "lucide-react";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
@@ -36,7 +35,6 @@ export default function NewVisit() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [searchTimer, setSearchTimer] = useState<any>(null);
@@ -289,8 +287,6 @@ export default function NewVisit() {
     }
     setSaving(false);
   }
-
-  if (loading) return <PageSkeleton page="newvisit" />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
