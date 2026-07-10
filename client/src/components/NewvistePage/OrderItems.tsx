@@ -109,7 +109,7 @@ function OrderFrames({ orderFrames, updateFrame, removeFrame, onScan, searchInve
       <AnimatePresence>
         {orderFrames.map((f, i) => (
           <motion.div
-            key={i}
+            key={f.sku || f.brand || i}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -200,7 +200,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
       <AnimatePresence>
         {orderLenses.map((l, i) => (
           <motion.div
-            key={i}
+            key={l.sku || l.brand || i}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -301,7 +301,7 @@ function OrderAccessories({ orderAccessories, updateAccessory, removeAccessory, 
         <AnimatePresence>
           {orderAccessories.map((a, i) => (
             <motion.div
-              key={i}
+              key={a.sku || a.brand || i}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
