@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
-import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Eye, Activity, ShoppingCart, CreditCard, CheckCircle, Calendar, FileText } from "lucide-react";
+import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Eye, Activity, ShoppingCart, CreditCard, CheckCircle, Calendar } from "lucide-react";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 
