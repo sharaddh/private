@@ -120,7 +120,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         ...(drawerForm.address.trim() && { address: drawerForm.address.trim() }),
       });
       if (res.success) {
-        invalidateCache("/api/customers");
+        invalidateCache("/api/customers?limit=1000");
         setShowAddDrawer(false);
         toast.success("Customer created successfully");
         navigate(`/customers/${res.data?._id}`);
