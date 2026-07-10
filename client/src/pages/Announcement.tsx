@@ -395,7 +395,7 @@ export default function Announcement() {
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Per-Customer Status</p>
               <div className="space-y-1">
                 {results.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-1">
+                  <div key={r.phone || r.name || i} className="flex items-center justify-between text-xs py-1">
                     <span className="text-slate-700 dark:text-slate-300 truncate mr-2">{r.name}</span>
                     <span className={`flex items-center gap-1 shrink-0 ${
                       r.status === "sent" ? "text-emerald-600" : "text-red-600"
