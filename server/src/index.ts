@@ -76,8 +76,8 @@ async function start() {
       await User.create({ username: "admin", passwordHash: hash, name: "Admin", role: "owner" });
       await User.create({ username: "warehouse", passwordHash: hash, name: "Warehouse Staff", role: "warehouse" });
       console.log("  Default users created:");
-      console.log("    Owner:     admin / admin123");
-      console.log("    Warehouse: warehouse / admin123");
+      console.log("    Owner:     admin / ********");
+      console.log("    Warehouse: warehouse / ********");
     }
   } catch (e: any) {
     console.warn("Could not seed users:", e?.message);
