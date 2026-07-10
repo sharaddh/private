@@ -183,7 +183,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             {useCamera ? <Camera size={18} className="text-primary-600" /> : <Search size={18} className="text-primary-600" />}
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Scan QR Code</h3>
           </div>
-          <button onClick={onClose} title="Close (Esc)" className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+          <button onClick={onClose} title="Close (Esc)" aria-label="Close scanner" className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
             <X size={18} />
           </button>
         </div>
