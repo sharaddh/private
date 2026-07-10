@@ -62,7 +62,7 @@ async function scanKeys(pattern: string): Promise<string[]> {
       cursor = result[0];
       keys.push(...result[1]);
     } while (cursor !== "0");
-  } catch {}
+  } catch (e) { /* scan failure is non-fatal */ }
   return keys;
 }
 
@@ -82,7 +82,7 @@ export async function cacheSet(key: string, data: unknown, ttl = DEFAULT_TTL): P
   const value = typeof data === "string" ? data : JSON.stringify(data);
   try {
     await client!.setex(prefixed(key), ttl, value);
-  } catch {}
+  } catch (e) { /* set failure is non-fatal */ }
 }
 
 export async function cacheDel(pattern: string): Promise<void> {
@@ -96,7 +96,7 @@ export async function cacheDel(pattern: string): Promise<void> {
       keys.forEach((k) => pipeline.del(k));
       await pipeline.exec();
     }
-  } catch {}
+  } catch (e) { /* del failure is non-fatal */ }
 }
 
 export async function cacheKeys(pattern: string): Promise<string[]> {
