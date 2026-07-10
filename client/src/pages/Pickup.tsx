@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import Toast from "../components/Toast";
 import PageSkeleton from "../components/PageSkeleton";
+import { useToast } from "../context/ToastContext";
 import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
 
 export default function Pickup() {
   const navigate = useNavigate();
+  const globalToast = useToast();
   const [phone, setPhone] = useState("");
   const [settings, setSettings] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -22,7 +23,6 @@ export default function Pickup() {
   const [delivering, setDelivering] = useState(false);
   const [waStatus, setWaStatus] = useState<string>("checking");
   const [message, setMessage] = useState("");
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [showCreateBill, setShowCreateBill] = useState(false);
   const [billItems, setBillItems] = useState<{ description: string; qty: number; price: number }[]>([{ description: "", qty: 1, price: 0 }]);
   const [billDiscount, setBillDiscount] = useState(0);
@@ -175,7 +175,7 @@ export default function Pickup() {
         const cid = typeof b.customerId === "object" ? b.customerId?._id : b.customerId;
         return cid === selectedCustomer._id;
       }));
-      setToast({ message: "Bill created", type: "success" });
+      globalToast.success("Bill created");
     } else { setMessage(res.message || "Failed to create bill"); }
   }
 
@@ -187,10 +187,10 @@ export default function Pickup() {
     const res = await api.patch(`/api/orders/${selectedOrder._id}/status`, payload);
     if (res.success) {
       setMessage("✓ Order delivered successfully!");
-      setToast({ message: "Order delivered — notification sent", type: "success" });
+      globalToast.success("Order delivered — notification sent");
       fetchReadyOrders();
       selectCustomer(selectedCustomer); setSelectedOrder(null); setBill(null);
-    } else { setMessage(res.message || "Failed to deliver order"); setToast({ message: res.message || "Failed to deliver", type: "error" }); }
+    } else { setMessage(res.message || "Failed to deliver order"); globalToast.error(res.message || "Failed to deliver"); }
     setDelivering(false); setShowConfirmDeliver(false);
   }
 
@@ -608,11 +608,6 @@ export default function Pickup() {
       )}
 
       {isLoading && <PageSkeleton page="pickup" />}
-
-      {/* Toast */}
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
     </div>
   );
 }
