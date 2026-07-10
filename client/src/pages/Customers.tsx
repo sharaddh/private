@@ -195,7 +195,7 @@ export default function Customers() {
                   {c.tags && c.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {c.tags.slice(0, 3).map((t, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full text-[10px] font-medium">{t}</span>
+                        <span key={t} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full text-[10px] font-medium">{t}</span>
                       ))}
                       {c.tags.length > 3 && (
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 px-1">+{c.tags.length - 3}</span>
@@ -415,7 +415,7 @@ export default function Customers() {
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {detailCustomer.tags.map((t, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 rounded-lg text-[11px] font-medium">{t}</span>
+                    <span key={t} className="px-2 py-0.5 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 rounded-lg text-[11px] font-medium">{t}</span>
                   ))}
                 </div>
               </div>
