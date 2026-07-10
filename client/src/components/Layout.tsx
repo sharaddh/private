@@ -108,6 +108,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const handleCreateCustomer = useCallback(async () => {
     if (!drawerForm.name.trim()) { setDrawerError("Name is required"); return; }
     if (!drawerForm.mobile.trim()) { setDrawerError("Mobile is required"); return; }
+    const digits = drawerForm.mobile.replace(/\D/g, "");
+    if (digits.length < 10) { setDrawerError("Mobile must be at least 10 digits"); return; }
     setDrawerSaving(true); setDrawerError("");
     try {
       const res = await post("/api/customers", {
