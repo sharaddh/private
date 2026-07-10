@@ -970,14 +970,17 @@ export default function CustomerDetail() {
 }
 
 function EyeRow({ label, data }: { label: string; data: any }) {
+  const sph = data.sph != null ? (data.sph > 0 ? `+${Number(data.sph).toFixed(2)}` : Number(data.sph).toFixed(2)) : "—";
+  const cyl = data.cyl != null ? (data.cyl > 0 ? `+${Number(data.cyl).toFixed(2)}` : Number(data.cyl).toFixed(2)) : "—";
+  const axis = data.axis != null ? `× ${data.axis}` : "—";
   return (
     <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 last:mb-0">
       <span className="font-bold text-slate-700 dark:text-slate-300 bg-slate-200/50 dark:bg-slate-600/30 px-1.5 py-0.5 rounded text-[10px] mr-1.5">{label}</span>
-      <span className="text-slate-500">SPH</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{data.sph ?? "—"}</span>
+      <span className="text-slate-500">SPH</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{sph}</span>
       <span className="text-slate-400 mx-1">|</span>
-      <span className="text-slate-500">CYL</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{data.cyl ?? "—"}</span>
+      <span className="text-slate-500">CYL</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{cyl}</span>
       <span className="text-slate-400 mx-1">|</span>
-      <span className="text-slate-500">AXIS</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{data.axis ?? "—"}</span>
+      <span className="text-slate-500">AXIS</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{axis}</span>
       {data.va && <><span className="text-slate-400 mx-1">|</span><span className="text-slate-500">VA</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{data.va}</span></>}
     </div>
   );
