@@ -71,7 +71,7 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={28} outerRadius={58} paddingAngle={3}>
-                {data.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
+                {data.map((d, i) => <Cell key={d.status || i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
               </Pie>
               <Tooltip formatter={(value) => [Number(value), "Orders"]} contentStyle={{
                 fontSize: 13, borderRadius: 8,
