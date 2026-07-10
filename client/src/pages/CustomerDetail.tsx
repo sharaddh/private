@@ -254,7 +254,7 @@ export default function CustomerDetail() {
                     {customer.tags?.length > 0 && (
                       <div className="flex gap-2 mt-4">
                         {customer.tags.map((tag: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full ring-1 ring-white/30">{tag}</span>
+                          <span key={tag} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full ring-1 ring-white/30">{tag}</span>
                         ))}
                       </div>
                     )}
