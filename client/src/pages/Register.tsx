@@ -53,8 +53,8 @@ export default function Register() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mobile</label>
-              <input className="input-field" placeholder="+91 98765 43210" value={form.mobile}
-                onChange={(e) => setForm({ ...form, mobile: e.target.value })} required />
+              <input className="input-field" inputMode="numeric" placeholder="+91 98765 43210" value={form.mobile}
+                onChange={(e) => setForm({ ...form, mobile: e.target.value })} required minLength={10} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
