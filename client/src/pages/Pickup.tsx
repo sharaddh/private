@@ -499,7 +499,7 @@ export default function Pickup() {
                   <p className="text-xs text-amber-600 dark:text-amber-400">Items auto-filled from order. Adjust as needed.</p>
                   <div className="space-y-2">
                     {billItems.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-start bg-white dark:bg-slate-800 p-3 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                      <div key={item.description || idx} className="flex gap-2 items-start bg-white dark:bg-slate-800 p-3 rounded-xl border border-amber-100 dark:border-amber-900/40">
                         <div className="flex-1">
                           <input className="input-field text-sm" placeholder="Item description" value={item.description}
                             onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
