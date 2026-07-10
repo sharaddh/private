@@ -8,6 +8,7 @@ import {
   ChevronRight, Clock, Activity, MapPinned,
   IdCard, Wallet, TrendingUp, Stethoscope, Sparkles
 } from "lucide-react";
+import { formatEyeRx } from "../utils/rx";
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -373,11 +374,11 @@ export default function CustomerDetail() {
                   <div className="space-y-2">
                     <div className="bg-blue-50/50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10">
                       <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1">Right Eye</p>
-                      <p className="text-sm text-slate-800 dark:text-slate-200">SPH {prescriptions[0].rightEye?.dv?.sph ?? "—"} / CYL {prescriptions[0].rightEye?.dv?.cyl ?? "—"}</p>
+                      <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].rightEye?.dv?.sph, prescriptions[0].rightEye?.dv?.cyl, prescriptions[0].rightEye?.dv?.axis)}</p>
                     </div>
                     <div className="bg-amber-50/50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10">
                       <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">Left Eye</p>
-                      <p className="text-sm text-slate-800 dark:text-slate-200">SPH {prescriptions[0].leftEye?.dv?.sph ?? "—"} / CYL {prescriptions[0].leftEye?.dv?.cyl ?? "—"}</p>
+                      <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].leftEye?.dv?.sph, prescriptions[0].leftEye?.dv?.cyl, prescriptions[0].leftEye?.dv?.axis)}</p>
                     </div>
                     {prescriptions[0].pd && <p className="text-xs text-slate-500">PD: {prescriptions[0].pd}</p>}
                   </div>
