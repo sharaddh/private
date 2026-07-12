@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import api, { clearToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useTranslate } from "../context/TranslateContext";
 import { useToast } from "../context/ToastContext";
 import PageSkeleton from "../components/PageSkeleton";
 import {
   Save, User, Shield, Upload, MessageCircle, RefreshCw, LogOut,
   Sun, Moon, Trash2, X, Building2, Globe, Store, Phone, Mail, MapPin,
   Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
-  WifiOff, ArrowRight, Eye, EyeOff, Crown,
+  WifiOff, ArrowRight, Eye, EyeOff, Crown, Languages,
 } from "lucide-react";
 import SettingsHeader from "./settings/SettingsHeader";
 import SectionNav from "./settings/SectionNav";
@@ -49,6 +50,7 @@ const ALL_SECTIONS: Section[] = [
 export default function Settings() {
   const { user, isStaff, setUser, setCurrentBranch, currentBranch, branches } = useAuth();
   const { dark, toggle: toggleTheme } = useTheme();
+  const { lang, toggleLang, uiLang, toggleUiLang, uiT } = useTranslate();
   const toast = useToast();
   const navigate = useNavigate();
   const [shopName, setShopName] = useState("KMJ Optical");
@@ -84,9 +86,19 @@ export default function Settings() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const sectionLabelMap: Record<string, string> = {
+    general: uiT("Shop", "दुकान"),
+    whatsapp: "WhatsApp",
+    branches: uiT("Branches", "शाखाएँ"),
+    staff: uiT("Staff", "स्टाफ"),
+    account: uiT("Account", "खाता"),
+  };
   const visibleSections = useMemo(() =>
-    ALL_SECTIONS.filter((s) => isStaff ? s.id === "account" : true),
-    [isStaff]
+    ALL_SECTIONS.filter((s) => isStaff ? s.id === "account" : true).map((s) => ({
+      ...s,
+      label: sectionLabelMap[s.id] || s.label,
+    })),
+    [isStaff, uiT]
   );
   const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || "account");
   const [dragOver, setDragOver] = useState(false);
@@ -411,7 +423,7 @@ export default function Settings() {
         {/* ──────────────── GENERAL / SHOP ──────────────── */}
         {!isStaff && (
           <div ref={(el) => { sectionRefs.current["general"] = el; }}>
-            <SectionCard icon={<Store size={16} />} title="Shop Profile" subtitle="Manage your store information and branding">
+            <SectionCard icon={<Store size={16} />} title={uiT("Shop Profile", "दुकान प्रोफ़ाइल")} subtitle={uiT("Manage your store information and branding", "अपनी दुकान की जानकारी प्रबंधित करें")}>
               <form onSubmit={handleSave} className="space-y-5">
                 <AnimatePresence>
                   {error && (
@@ -520,7 +532,7 @@ export default function Settings() {
         {/* ──────────────── WHATSAPP ──────────────── */}
         {!isStaff && (
           <div ref={(el) => { sectionRefs.current["whatsapp"] = el; }}>
-            <SectionCard icon={<MessageCircle size={16} />} title="WhatsApp Integration" subtitle="Connect WhatsApp for automated messaging">
+            <SectionCard icon={<MessageCircle size={16} />} title={uiT("WhatsApp Integration", "WhatsApp इंटीग्रेशन")} subtitle={uiT("Connect WhatsApp for automated messaging", "स्वचालित संदेशों के लिए WhatsApp कनेक्ट करें")}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-4">
@@ -638,7 +650,7 @@ export default function Settings() {
         {/* ──────────────── BRANCHES ──────────────── */}
         {!isStaff && (
           <div ref={(el) => { sectionRefs.current["branches"] = el; }}>
-            <SectionCard icon={<Globe size={16} />} title="Branch Management" subtitle="Manage all your business locations">
+            <SectionCard icon={<Globe size={16} />} title={uiT("Branch Management", "शाखा प्रबंधन")} subtitle={uiT("Manage all your business locations", "अपने सभी व्यापार स्थान प्रबंधित करें")}>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -737,7 +749,7 @@ export default function Settings() {
         {/* ──────────────── STAFF & SECURITY ──────────────── */}
         {!isStaff && (
           <div ref={(el) => { sectionRefs.current["staff"] = el; }}>
-            <SectionCard icon={<Shield size={16} />} title="Staff & Security" subtitle="Manage team members and access control">
+            <SectionCard icon={<Shield size={16} />} title={uiT("Staff & Security", "स्टाफ और सुरक्षा")} subtitle={uiT("Manage team members and access control", "टीम के सदस्यों और पहुँच नियंत्रण का प्रबंधन करें")}>
               <div className="space-y-5">
                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
                   <div className="flex items-center gap-3">
@@ -815,7 +827,7 @@ export default function Settings() {
 
         {/* ──────────────── ACCOUNT ──────────────── */}
         <div ref={(el) => { sectionRefs.current["account"] = el; }}>
-          <SectionCard icon={<User size={16} />} title="Login Credentials" subtitle="Your sign-in identity — used across all branches">
+          <SectionCard icon={<User size={16} />} title={uiT("Login Credentials", "लॉगिन जानकारी")} subtitle={uiT("Your sign-in identity — used across all branches", "आपकी साइन-इन पहचान — सभी शाखाओं में उपयोग होती है")}>
             <div className="space-y-5">
               <div className="flex flex-col sm:flex-row gap-4 p-5 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 rounded-2xl border border-violet-200 dark:border-violet-500/20">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-sm shrink-0">
@@ -845,7 +857,7 @@ export default function Settings() {
               <div className="p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
                 <div className="flex items-center gap-2 mb-3">
                   <Key size={14} className="text-slate-500" />
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Change Password</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{uiT("Change Password", "पासवर्ड बदलें")}</p>
                 </div>
                 <div className="space-y-3">
                   <div className="relative">
@@ -912,12 +924,62 @@ export default function Settings() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">Appearance</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiT("Appearance", "थीम")}</p>
                 <ThemeToggle dark={dark} onToggle={toggleTheme} />
               </div>
 
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiLang === "hi" ? "ऐप भाषा" : "App Language"}</p>
+                <button
+                  onClick={toggleUiLang}
+                  className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/20 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center">
+                      <Globe size={16} className="text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {uiLang === "hi" ? "हिन्दी" : "English"}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {uiLang === "hi" ? "पूरा ऐप हिन्दी में दिखेगा" : "Entire app UI will be in English"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`w-10 h-6 rounded-full transition-colors relative ${uiLang === "hi" ? "bg-violet-500" : "bg-slate-300 dark:bg-slate-600"}`}>
+                    <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform" style={{ transform: uiLang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
+                  </div>
+                </button>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{lang === "hi" ? "संदेश भाषा" : "Message Language"}</p>
+                <button
+                  onClick={toggleLang}
+                  className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/20 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                      <Languages size={16} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {lang === "hi" ? "हिन्दी" : "English"}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {lang === "hi" ? "WhatsApp संदेश हिन्दी में जाएंगे" : "WhatsApp messages will be in English"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`w-10 h-6 rounded-full transition-colors relative ${lang === "hi" ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"}`}>
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${lang === "hi" ? "translate-x-4.5 left-0.5" : "left-0.5"}`} style={{ transform: lang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
+                  </div>
+                </button>
+              </div>
+
               <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">Danger Zone</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiT("Danger Zone", "खतरनाक क्षेत्र")}</p>
                 <motion.button
                   onClick={() => setShowLogoutConfirm(true)}
                   whileHover={{ scale: 1.01 }}
@@ -929,7 +991,7 @@ export default function Settings() {
                       <LogOut size={16} className="text-red-600 dark:text-red-400" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">Sign Out</p>
+                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">{uiT("Sign Out", "लॉग आउट")}</p>
                       <p className="text-xs text-red-500/70 dark:text-red-400/70">End your current session</p>
                     </div>
                   </div>
