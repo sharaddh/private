@@ -6,8 +6,10 @@ import PageSkeleton from "../components/PageSkeleton";
 import DateRangePicker from "../components/DateRangePicker";
 import { IndianRupee, Receipt, TrendingUp } from "lucide-react";
 import { todayStr } from "../utils/date";
+import { useTranslate } from "../context/TranslateContext";
 
 export default function Payments() {
+  const { uiT } = useTranslate();
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
   const params = new URLSearchParams({ startDate, endDate });
@@ -41,7 +43,7 @@ export default function Payments() {
     <div className="page-container max-w-full overflow-hidden">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
         <div>
-          <h1 className="page-title">Payments</h1>
+          <h1 className="page-title">{uiT("Payments", "भुगतान")}</h1>
           <p className="page-subtitle">View all payments recorded from visits, orders, and deliveries.</p>
         </div>
       </div>
@@ -56,7 +58,7 @@ export default function Payments() {
             <IndianRupee size={20} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total Collected</p>
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{uiT("Total", "कुल")} Collected</p>
             <p className="text-xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString("en-IN")}</p>
           </div>
         </div>
@@ -87,25 +89,25 @@ export default function Payments() {
       <div className="overflow-x-auto">
         <Table
           columns={[
-            { key: "customerId", label: "Customer", render: (v: any, row: any) => (
+            { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: any, row: any) => (
               <div className="min-w-0">
                 <p className="font-medium text-gray-900 dark:text-white truncate">{customerName(row)}</p>
                 {customerMobile(row) && <p className="text-[11px] text-gray-400 truncate">{customerMobile(row)}</p>}
               </div>
             )},
-            { key: "amount", label: "Amount", render: (v) => <span className="font-semibold text-emerald-600">₹{(v || 0).toLocaleString("en-IN")}</span> },
-            { key: "paymentMode", label: "Mode", render: (v) => (
+            { key: "amount", label: uiT("Amount", "राशि"), render: (v) => <span className="font-semibold text-emerald-600">₹{(v || 0).toLocaleString("en-IN")}</span> },
+            { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v) => (
               <span className={`badge ${
                 v === "Cash" ? "badge-green" :
                 v === "UPI" ? "badge-blue" :
                 v === "Card" ? "badge-purple" : "badge-yellow"
               }`}>{v || "Cash"}</span>
             )},
-            { key: "paymentDate", label: "Date", render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
+            { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
             { key: "notes", label: "Notes", render: (v) => <span className="text-gray-500">{v || "—"}</span> },
           ]}
           data={list}
-          searchPlaceholder="Search payments..."
+          searchPlaceholder={uiT("Search", "खोजें") + " payments..."}
         />
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   Users, TrendingUp, Clock, Package, AlertTriangle,
   Download, ShoppingCart, Calendar,
 } from "lucide-react";
+import { useTranslate } from "../context/TranslateContext";
 
 const TABS = [
   { key: "customers", label: "Customers", icon: Users },
@@ -31,6 +32,7 @@ function getDateRange(presetDays: number): { start: string; end: string } {
 }
 
 export default function Reports() {
+  const { uiT } = useTranslate();
   const [activeTab, setActiveTab] = useState("sales");
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any[]>([]);
@@ -134,7 +136,7 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">Reports</h1>
+          <h1 className="page-title">{uiT("Reports", "रिपोर्ट")}</h1>
           <p className="page-subtitle">Business insights and analytics.</p>
         </div>
         <div className="flex gap-2">
@@ -293,7 +295,7 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
               <p className="text-3xl font-bold text-slate-900 dark:text-white">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Revenue</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Total", "कुल")} {uiT("Revenue", "राजस्व")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
@@ -335,7 +337,7 @@ export default function Reports() {
           {salesData?.billCount === 0 && (
             <div className="card text-center py-8">
               <ShoppingCart size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-              <p className="text-sm text-slate-400 dark:text-slate-500">No sales data for this period.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{uiT("No data", "कोई डेटा नहीं")}</p>
             </div>
           )}
         </div>

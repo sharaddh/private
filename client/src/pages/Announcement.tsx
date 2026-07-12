@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
+import { useTranslate } from "../context/TranslateContext";
 import {
   Send, Search, MessageCircle, Users, CheckSquare, Square,
   Smartphone, RefreshCw, CheckCircle, XCircle, Loader2,
@@ -23,6 +24,7 @@ interface SendResult {
 }
 
 export default function Announcement() {
+  const { uiT } = useTranslate();
   const toast = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -199,8 +201,8 @@ export default function Announcement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">Announcements</h1>
-          <p className="page-subtitle">Send WhatsApp messages to your customers.</p>
+          <h1 className="page-title">{uiT("Announcements", "घोषणाएँ")}</h1>
+          <p className="page-subtitle">{uiT("Send WhatsApp messages to your customers.", "अपने ग्राहकों को WhatsApp संदेश भेजें।")}</p>
         </div>
       </div>
 
@@ -240,17 +242,17 @@ export default function Announcement() {
               <MessageCircle size={20} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">Compose Message</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">WhatsApp broadcast</p>
+              <h3 className="font-semibold text-slate-900 dark:text-white">{uiT("Compose Message", "संदेश लिखें")}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("WhatsApp broadcast", "WhatsApp प्रसारण")}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Message</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{uiT("Message", "संदेश")}</label>
             <textarea
               className="input-field resize-none"
               rows={8}
-              placeholder="Type your announcement message here..."
+              placeholder={uiT("Type your announcement message here...", "यहाँ अपना संदेश लिखें...")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               maxLength={5000}
@@ -260,7 +262,7 @@ export default function Announcement() {
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Attachment (optional)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{uiT("Attachment (optional)", "संलग्नक (वैकल्पिक)")}</label>
             <input
               ref={fileInputRef}
               type="file"
@@ -307,7 +309,7 @@ export default function Announcement() {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-sm text-slate-500 dark:text-slate-400 hover:border-primary-400 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all"
               >
-                <Paperclip size={16} /> Attach File (Image, PDF, Document...)
+                <Paperclip size={16} /> {uiT("Attach File (Image, PDF, Document...)", "फ़ाइल संलग्न करें (चित्र, PDF, दस्तावेज़...)")}
               </button>
             )}
           </div>
@@ -315,7 +317,7 @@ export default function Announcement() {
           {/* Anti-ban Preset */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-              <Shield size={14} /> Anti-Ban Speed
+              <Shield size={14} /> {uiT("Anti-Ban Speed", "एंटी-बैन स्पीड")}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {ANTIBAN_PRESETS.map((p) => (
@@ -344,9 +346,9 @@ export default function Announcement() {
             <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl">
               <Users size={18} className="text-slate-400" />
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{customers.length} Total Customers</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{customers.length} {uiT("Total Customers", "कुल ग्राहक")}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {selectedCount > 0 ? `${selectedCount} selected (${selectedPhones.length} with number)` : "No customers selected"}
+                  {selectedCount > 0 ? `${selectedCount} ${uiT("selected", "चयनित")} (${selectedPhones.length} ${uiT("with number", "नंबर के साथ")})` : uiT("No customers selected", "कोई ग्राहक चयनित नहीं")}
                 </p>
               </div>
             </div>
@@ -354,8 +356,8 @@ export default function Announcement() {
               <div className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-500/10 rounded-xl">
                 <Hourglass size={18} className="text-primary-500" />
                 <div>
-                  <p className="text-sm font-medium text-primary-700 dark:text-primary-300">Previously Sent</p>
-                  <p className="text-xs text-primary-500/70">{allPhones.length - remainingCount} sent · {remainingCount} remaining</p>
+                  <p className="text-sm font-medium text-primary-700 dark:text-primary-300">{uiT("Previously Sent", "पहले भेजे गए")}</p>
+                  <p className="text-xs text-primary-500/70">{allPhones.length - remainingCount} {uiT("sent", "भेजा गया")} · {remainingCount} {uiT("remaining", "शेष")}</p>
                 </div>
               </div>
             )}
@@ -417,7 +419,7 @@ export default function Announcement() {
             {sending ? (
               <><Loader2 size={18} className="animate-spin" /> Sending...</>
             ) : (
-              <><Send size={18} /> Send to {selectedCount > 0 ? `${selectedCount} customer${selectedCount > 1 ? "s" : ""}` : "Selected"}</>
+              <><Send size={18} /> {uiT("Send to", "भेजें")} {selectedCount > 0 ? `${selectedCount} customer${selectedCount > 1 ? "s" : ""}` : "Selected"}</>
             )}
           </button>
 
@@ -431,7 +433,7 @@ export default function Announcement() {
         {/* Right: Customer List */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Customers</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white">{uiT("Customers", "ग्राहक")}</h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {filtered.length} of {customers.length}
             </span>
@@ -442,7 +444,7 @@ export default function Announcement() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
-              placeholder="Search by name, mobile, or ID..."
+              placeholder={uiT("Search by name, mobile, or ID...", "नाम, मोबाइल या ID से खोजें...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -457,9 +459,9 @@ export default function Announcement() {
               onChange={(e) => setFilterHasPhone(e.target.value as any)}
               className="text-xs bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none"
             >
-              <option value="all">All</option>
-              <option value="yes">Has Phone</option>
-              <option value="no">No Phone</option>
+              <option value="all">{uiT("All", "सभी")}</option>
+              <option value="yes">{uiT("Has Phone", "फ़ोन है")}</option>
+              <option value="no">{uiT("No Phone", "फ़ोन नहीं")}</option>
             </select>
           </div>
 
@@ -469,7 +471,7 @@ export default function Announcement() {
               className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2"
             >
               {selectAll ? <CheckSquare size={16} /> : <Square size={16} />}
-              {selectAll ? "Deselect All" : "Select All"}
+              {selectAll ? uiT("Deselect All", "सभी हटाएं") : uiT("Select All", "सभी चुनें")}
             </button>
           )}
 
@@ -477,7 +479,7 @@ export default function Announcement() {
             {filtered.length === 0 ? (
               <div className="text-center py-8 text-slate-400 dark:text-slate-500">
                 <Users size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No customers found</p>
+                <p className="text-sm">{uiT("No customers found", "कोई ग्राहक नहीं मिला")}</p>
               </div>
             ) : (
               filtered.map((c) => {
@@ -545,7 +547,7 @@ export default function Announcement() {
                 <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Confirm Broadcast</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{uiT("Confirm Broadcast", "प्रसारण की पुष्टि करें")}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                   Send to <strong>{selectedPhones.length}</strong> customer{selectedPhones.length !== 1 ? "s" : ""}
                 </p>
@@ -577,14 +579,14 @@ export default function Announcement() {
 
                 <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-700/50 rounded-xl px-4 py-3 text-xs text-amber-700 dark:text-amber-300 mb-4">
                   <p className="font-medium mb-1 flex items-center gap-1.5">
-                    <AlertTriangle size={13} /> Message preview:
+                    <AlertTriangle size={13} /> {uiT("Message preview:", "संदेश पूर्वावलोकन:")}
                   </p>
                   <p className="opacity-80 italic">"{message.slice(0, 100)}{message.length > 100 ? "..." : ""}"</p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl px-4 py-3 text-xs text-slate-600 dark:text-slate-400 mb-4">
                   <div className="flex items-center gap-1.5 font-medium mb-1">
-                    <Shield size={13} /> Anti-Ban Protection
+                    <Shield size={13} /> {uiT("Anti-Ban Protection", "एंटी-बैन सुरक्षा")}
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                     <span>Delay: {antibanPreset.delay.min / 1000}s – {antibanPreset.delay.max / 1000}s</span>
@@ -595,9 +597,9 @@ export default function Announcement() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button onClick={() => setShowConfirm(false)} className="btn-secondary flex-1">Cancel</button>
+                  <button onClick={() => setShowConfirm(false)} className="btn-secondary flex-1">{uiT("Cancel", "रद्द करें")}</button>
                   <button onClick={handleSend} className="btn-primary flex-1 flex items-center justify-center gap-1.5">
-                    <Send size={16} /> Send Now
+                    <Send size={16} /> {uiT("Send Now", "अभी भेजें")}
                   </button>
                 </div>
               </div>

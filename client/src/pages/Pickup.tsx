@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
+import { useTranslate } from "../context/TranslateContext";
 import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
 
 export default function Pickup() {
+  const { uiT } = useTranslate();
   const navigate = useNavigate();
   const globalToast = useToast();
   const [phone, setPhone] = useState("");
@@ -204,7 +206,7 @@ export default function Pickup() {
               <Package size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Pickup</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{uiT("Pickup", "पिकअप")}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">Collect ready orders and manage deliveries.</p>
             </div>
           </div>
@@ -537,7 +539,7 @@ export default function Pickup() {
                     <button onClick={handleCreateBill} className="btn-primary flex items-center gap-2 px-6 py-3">
                       <Plus size={18} /> Create Bill — ₹{billTotal.toFixed(0)}
                     </button>
-                    <button onClick={() => setShowCreateBill(false)} className="btn-secondary px-6 py-3">Cancel</button>
+                    <button onClick={() => setShowCreateBill(false)} className="btn-secondary px-6 py-3">{uiT("Cancel", "रद्द करें")}</button>
                   </div>
                 </div>
               ) : (
@@ -597,7 +599,7 @@ export default function Pickup() {
                         {delivering ? "Delivering..." : "Confirm Delivery"}
                       </button>
                       <button onClick={() => setShowConfirmDeliver(false)} disabled={delivering}
-                        className="w-full btn-secondary py-3.5 text-base">Cancel</button>
+                        className="w-full btn-secondary py-3.5 text-base">{uiT("Cancel", "रद्द करें")}</button>
                     </div>
                   </div>
                 </div>

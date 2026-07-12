@@ -5,8 +5,10 @@ import {
   MessageCircle, RefreshCw, LogOut, Smartphone,
   CheckCircle, XCircle, AlertTriangle, Info
 } from "lucide-react";
+import { useTranslate } from "../context/TranslateContext";
 
 export default function WhatsApp() {
+  const { uiT } = useTranslate();
   const [status, setStatus] = useState<string>("checking");
   const [qr, setQr] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -68,7 +70,7 @@ export default function WhatsApp() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">WhatsApp</h1>
+          <h1 className="page-title">{uiT("WhatsApp Connection", "WhatsApp कनेक्शन")}</h1>
           <p className="page-subtitle">Connect WhatsApp to send bills and announcements</p>
         </div>
       </div>
@@ -80,7 +82,7 @@ export default function WhatsApp() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">WhatsApp Web Connection</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{uiT("Connect WhatsApp", "WhatsApp कनेक्ट करें")}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Link your WhatsApp account to send automated messages
             </p>
@@ -91,7 +93,7 @@ export default function WhatsApp() {
             <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-6 space-y-4">
               <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400">
                 <CheckCircle size={24} />
-                <span className="text-base font-semibold">Connected</span>
+                <span className="text-base font-semibold">{uiT("Connected", "जुड़ा हुआ")}</span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Your WhatsApp is active. Bills and announcements will be sent automatically.
@@ -102,7 +104,7 @@ export default function WhatsApp() {
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
               >
                 <LogOut size={16} />
-                {disconnecting ? "Disconnecting..." : "Logout & Reset"}
+                {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Disconnect", "डिस्कनेक्ट करें")}
               </button>
             </div>
           )}
@@ -112,7 +114,7 @@ export default function WhatsApp() {
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
                 <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
                   <Smartphone size={20} />
-                  <span className="text-sm font-semibold">Scan to Connect</span>
+                  <span className="text-sm font-semibold">{uiT("Scan the QR code", "QR कोड स्कैन करें")}</span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Open WhatsApp on your phone → Menu → Linked Devices → Link a Device
@@ -129,7 +131,7 @@ export default function WhatsApp() {
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
               >
                 <LogOut size={16} />
-                {disconnecting ? "Cancelling..." : "Cancel & Reset"}
+                {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Cancel", "रद्द करें")}
               </button>
             </div>
           )}
@@ -149,7 +151,7 @@ export default function WhatsApp() {
                 className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
               >
                 <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
-                {reinitializing ? "Reinitializing..." : "Restart Connection"}
+                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
               </button>
             </div>
           )}
@@ -158,7 +160,7 @@ export default function WhatsApp() {
             <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                 <Info size={20} />
-                <span className="text-sm font-medium">Session Cleared</span>
+                <span className="text-sm font-medium">{uiT("Disconnected", "डिस्कनेक्ट")}</span>
               </div>
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 Session has been reset. A new QR code will appear shortly.
@@ -182,7 +184,7 @@ export default function WhatsApp() {
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 mx-auto"
               >
                 <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
-                {reinitializing ? "Restarting..." : "Retry Connection"}
+                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
               </button>
             </div>
           )}

@@ -65,22 +65,47 @@ router.get("/monthly", authenticate, cacheRoute(120), asyncHandler(async (req, r
 }));
 
 router.get("/customers", authenticate, cacheRoute(120), asyncHandler(async (req, res) => {
-  const [topCustomers, newCustomers] = await Promise.all([
-    Customer.find().sort({ totalSpent: -1 }).limit(20).lean(),
+  const { start, end, city, tag, type } = req.query;
+  const custFilter: Record<string, unknown> = {};
+  if (start || end) {
+    custFilter.createdAt = {};
+    if (start) (custFilter.createdAt as Record<string, unknown>).$gte = new Date(start as string);
+    if (end) (custFilter.createdAt as Record<string, unknown>).$lte = new Date(end as string);
+  }
+  if (city) custFilter.city = city;
+  if (tag) custFilter.tags = tag;
+  if (type === "new") custFilter.totalVisits = { $lte: 1 };
+  if (type === "returning") custFilter.totalVisits = { $gt: 1 };
+
+  const [topCustomers, newCustomers, totalCustomers, cityBreakdown] = await Promise.all([
+    Customer.find(custFilter).sort({ totalSpent: -1 }).limit(20).lean(),
     Customer.aggregate([
+      { $match: custFilter },
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
       { $sort: { _id: -1 } },
       { $limit: 30 },
     ]),
+    Customer.countDocuments(custFilter),
+    Customer.aggregate([
+      { $match: custFilter },
+      { $group: { _id: "$city", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
   ]);
-  res.json({ success: true, data: { topCustomers, newCustomers } });
+  res.json({ success: true, data: { topCustomers, newCustomers, totalCustomers, cityBreakdown } });
 }));
 
 router.get("/inventory", authenticate, cacheRoute(60), asyncHandler(async (req, res) => {
+  const { category } = req.query;
+  const invFilter: Record<string, unknown> = {};
+  if (category) invFilter.category = category;
+
   const [allItems, lowStock, byCategory] = await Promise.all([
-    Inventory.find().lean(),
-    Inventory.find({ quantity: { $lte: 5 } }).sort({ quantity: 1 }).lean(),
+    Inventory.find(invFilter).lean(),
+    Inventory.find({ ...invFilter, quantity: { $lte: 5 } }).sort({ quantity: 1 }).lean(),
     Inventory.aggregate([
+      ...(category ? [{ $match: { category } }] : []),
       { $group: { _id: "$category", count: { $sum: 1 }, totalQty: { $sum: "$quantity" } } },
     ]),
   ]);

@@ -6,8 +6,10 @@ import { Eye, Clock, Package, Truck, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DateRangePicker from "../components/DateRangePicker";
 import { todayStr } from "../utils/date";
+import { useTranslate } from "../context/TranslateContext";
 
 export default function Delivery() {
+  const { uiT } = useTranslate();
   const navigate = useNavigate();
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
@@ -41,8 +43,8 @@ export default function Delivery() {
   return (
     <div className="page-container">
       <div>
-        <h1 className="page-title">Delivery History</h1>
-        <p className="page-subtitle">All delivered orders.</p>
+        <h1 className="page-title">{uiT("Delivery", "डिलीवरी")}</h1>
+        <p className="page-subtitle">{uiT("All delivered orders.", "सभी डिलीवर किए गए ऑर्डर।")}</p>
       </div>
 
       <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="delivery" />
@@ -53,7 +55,7 @@ export default function Delivery() {
             <Package size={24} className="text-emerald-500" />
           </div>
           <p className="text-3xl font-bold text-emerald-600">{list.length}</p>
-          <p className="text-sm font-medium text-gray-500 mt-1">Total Delivered</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">{uiT("Delivered", "डिलीवर हो गया")}</p>
         </div>
         <div className="card text-center py-6">
           <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
