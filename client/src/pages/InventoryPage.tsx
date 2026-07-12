@@ -7,8 +7,10 @@ import PageSkeleton from "../components/PageSkeleton";
 import CameraScanner from "../components/CameraScanner";
 import QRCode from "qrcode";
 import { Plus, Edit2, Trash2, Package, Printer, QrCode, Search, Camera } from "lucide-react";
+import { useTranslate } from "../context/TranslateContext";
 
 export default function InventoryPage() {
+  const { uiT } = useTranslate();
   const [showForm, setShowForm] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -155,18 +157,18 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="page-title">Inventory</h1>
+          <h1 className="page-title">{uiT("Inventory", "इन्वेंट्री")}</h1>
           <p className="text-sm text-muted-500 mt-1">Manage frames, lenses, and accessories stock.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => { setScanModal(true); setScanInput(""); setScannedItem(null); setScanError(""); setScanLoading(false); }} className="btn-secondary flex items-center gap-2">
-            <QrCode size={18} /> Scan QR
+            <QrCode size={18} /> {uiT("Scan QR Code", "QR कोड स्कैन करें")}
           </button>
           <button onClick={() => setShowAdjust(true)} className="btn-secondary flex items-center gap-2">
-            <Package size={18} /> Adjust Stock
+            <Package size={18} /> {uiT("Adjust Stock", "स्टॉक समायोजित करें")}
           </button>
           <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-            <Plus size={18} /> <span className="hidden sm:inline">Add Item</span>
+            <Plus size={18} /> <span className="hidden sm:inline">{uiT("Add Item", "आइटम जोड़ें")}</span>
           </button>
         </div>
       </div>
@@ -211,21 +213,21 @@ export default function InventoryPage() {
       {filteredList.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-muted-400">
           <Package size={48} className="mb-3 opacity-30" />
-          <p className="text-sm">No items found in this category.</p>
+          <p className="text-sm">{uiT("No items found", "कोई आइटम नहीं मिला")}</p>
         </div>
       )}
 
       <Table
         columns={[
-          { key: "sku", label: "SKU" },
+          { key: "sku", label: uiT("SKU", "SKU") },
           { key: "category", label: "Category", render: (v, row: any) => (
             <span className="flex flex-col gap-0.5">
               <span className={`badge ${categoryLabel(v)}`}>{v || "Frame"}</span>
               {row.inventoryType && <span className="text-[10px] text-muted-400 capitalize">{row.inventoryType}</span>}
             </span>
           )},
-          { key: "brand", label: "Brand" },
-          { key: "model", label: "Model" },
+          { key: "brand", label: uiT("Brand", "ब्रांड") },
+          { key: "model", label: uiT("Model", "मॉडल") },
           { key: "color", label: "Color" },
           { key: "gender", label: "Gender", render: (v) => v ? <span className="text-xs">{v}</span> : null },
           { key: "location", label: "Location", render: (v) => (
@@ -233,18 +235,18 @@ export default function InventoryPage() {
               {v === "warehouse" ? "Warehouse" : "Shop"}
             </span>
           )},
-          { key: "quantity", label: "Stock", render: (v) => (
+          { key: "quantity", label: uiT("Stock", "स्टॉक"), render: (v) => (
             <span className={`font-medium ${v > 10 ? "text-emerald-600 dark:text-emerald-400" : v > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
               {v || 0}
             </span>
           )},
-          { key: "sellingPrice", label: "Price", render: (v) => `₹${(v || 0).toFixed(2)}` },
+          { key: "sellingPrice", label: uiT("Price", "मूल्य"), render: (v) => `₹${(v || 0).toFixed(2)}` },
         ]}
         data={filteredList}
-        searchPlaceholder="Search by SKU, brand, model, supplier..."
+        searchPlaceholder={uiT("Search", "खोजें") + "..."}
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-slate-700/60 rounded-lg text-muted-400" title="Print Label">
+            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-slate-700/60 rounded-lg text-muted-400" title={uiT("Print Label", "लेबल प्रिंट करें")}>
               <Printer size={15} />
             </button>
             <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50/60 dark:hover:bg-primary-900/20 rounded-lg text-primary-600"><Edit2 size={15} /></button>
@@ -253,7 +255,7 @@ export default function InventoryPage() {
         )}
       />
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? "Edit Item" : "Add Inventory Item"} size="lg">
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? uiT("Edit", "संपादित करें") + " " + uiT("Add Item", "आइटम जोड़ें") : uiT("Add Item", "आइटम जोड़ें")} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
             <div>
@@ -341,20 +343,20 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? "Saving..." : editing ? "Update" : "Add Item"}</button>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
+            <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? uiT("Save", "सहेजें") + "..." : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}</button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan QR Code" size="sm">
+      <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan QR Code", "QR कोड स्कैन करें")} size="sm">
         <div className="space-y-4">
           <p className="text-sm text-muted-500">Point your scanner at the QR code or type the SKU below.</p>
           <div className="flex gap-2">
             <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder="Scan or type SKU..." value={scanInput}
               onChange={(e) => setScanInput(e.target.value.toUpperCase())}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScanLookup(); } }} autoFocus />
-            <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title="Use camera">
+            <button onClick={() => { setScanModal(false); setShowCameraScanner(true); }} className="btn-secondary flex items-center gap-1.5" title={uiT("Use camera", "कैमरा उपयोग करें")}>
               <Camera size={16} />
             </button>
             <button onClick={() => handleScanLookup()} disabled={scanLoading} className="btn-primary flex items-center gap-1.5 px-4">
@@ -392,7 +394,7 @@ export default function InventoryPage() {
         </div>
       </Modal>
 
-      <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title="Adjust Stock">
+      <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
         <form onSubmit={handleAdjustStock} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">Select Item</label>
@@ -408,7 +410,7 @@ export default function InventoryPage() {
             <input type="number" className="input-field" value={adjust.qty} onChange={(e) => setAdjust({ ...adjust, qty: Number(e.target.value) })} placeholder="+5 or -3" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
-            <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">Cancel</button>
+            <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
             <button type="submit" disabled={isLoading} className="btn-success">{isLoading ? "Saving..." : "Apply Adjustment"}</button>
           </div>
         </form>

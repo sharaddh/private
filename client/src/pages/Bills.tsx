@@ -4,6 +4,7 @@ import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
+import { useTranslate } from "../context/TranslateContext";
 import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from "lucide-react";
 import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
@@ -17,6 +18,7 @@ export default function Bills() {
   const [endDate, setEndDate] = useState(todayStr);
   const toast = useToast();
   const { isStaff } = useAuth();
+  const { t, uiT } = useTranslate();
 
   const fetchBills = useCallback(() => {
     setLoading(true);
@@ -298,8 +300,11 @@ export default function Bills() {
     try {
       const doc = generateBillPdf(bill, customer || {}, settings || {});
       const base64 = doc.output("datauristring").split(",")[1];
-      const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
-      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
+      const caption = t(
+        `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
+        `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
+      );
+      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
       if (mediaRes.success && mediaRes.sent) { toast.success("Bill sent on WhatsApp"); return; }
       if (mediaRes.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
     } catch {
@@ -310,8 +315,19 @@ export default function Bills() {
       `${i.description} x${i.quantity || 1} = ₹${(((i.quantity as number) || 1) * ((i.unitPrice as number) || 0)).toFixed(0)}`
     ).join("\n");
     
-    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*Discount:* -₹{(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*Tax:* +₹{(bill.tax as number).toFixed(0)}` : ""}\n*Total:* ₹{((bill.totalAmount as number) || 0).toFixed(0)}\n*Paid:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*Pending:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\nThank you! 🙏`;
-    
+    const billLabel = t("Bill", "बिल");
+    const dateLabel = t("Date", "तारीख");
+    const customerLabel = t("Customer", "ग्राहक");
+    const mobileLabel = t("Mobile", "मोबाइल");
+    const itemsLabel = t("Items", "आइटम");
+    const subtotalLabel = t("Subtotal", "उप-कुल");
+    const discountLabel = t("Discount", "छूट");
+    const taxLabel = t("Tax", "कर");
+    const totalLabel = t("Total", "कुल");
+    const paidLabel = t("Paid", "भुगतान");
+    const pendingLabel = t("Pending", "बाकी");
+    const thankYou = t("Thank you!", "धन्यवाद!");
+    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹{(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹{(bill.tax as number).toFixed(0)}` : ""}\n*${totalLabel}:* ₹${((bill.totalAmount as number) || 0).toFixed(0)}\n*${paidLabel}:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*${pendingLabel}:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\n${thankYou} 🙏`;
     const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
@@ -323,7 +339,7 @@ export default function Bills() {
   return (
     <div className="page-container">
       <div>
-        <h1 className="page-title">Bills</h1>
+        <h1 className="page-title">{uiT("Bills", "बिल")}</h1>
         <p className="page-subtitle">View and manage invoices created through visits and orders.</p>
       </div>
 
@@ -332,31 +348,31 @@ export default function Bills() {
       <Table
         columns={[
           { key: "billNumber", label: "Bill #" },
-          { key: "customerId", label: "Customer", render: (v: unknown, row: Record<string, unknown>) => {
+          { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: unknown, row: Record<string, unknown>) => {
             const c = resolveCustomer(row);
             return c ? c.name : typeof v === "string" ? (v as string).slice(-6) : "—";
           }},
-          { key: "subtotal", label: "Subtotal", render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
-          { key: "totalAmount", label: "Total", render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
-          { key: "pendingAmount", label: "Pending", render: (v) => (
-            <span className={(v as number) > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : "Paid"}</span>
+          { key: "subtotal", label: uiT("Subtotal", "उप-कुल"), render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
+          { key: "totalAmount", label: uiT("Total", "कुल"), render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
+          { key: "pendingAmount", label: uiT("Pending", "बाकी"), render: (v) => (
+            <span className={(v as number) > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : uiT("Paid", "भुगतान")}</span>
           )},
         ]}
         data={list}
-        searchPlaceholder="Search bills..."
+        searchPlaceholder={uiT("Search bills...", "बिल खोजें...")}
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400" title="WhatsApp" aria-label="Send WhatsApp">
+            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400" title={uiT("WhatsApp", "WhatsApp")} aria-label="Send WhatsApp">
               <MessageCircle size={15} />
             </button>
-            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Download PDF" aria-label="Download PDF">
+            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title={uiT("Download PDF", "PDF डाउनलोड करें")} aria-label="Download PDF">
               <PdfIcon size={15} />
             </button>
-            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title="Thermal Receipt (80mm)" aria-label="Thermal print">
+            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title={uiT("Thermal Receipt (80mm)", "थर्मल रसीद (80mm)")} aria-label="Thermal print">
               <Printer size={15} />
             </button>
             {!isStaff && (
-              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Delete" aria-label="Delete bill">
+              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title={uiT("Delete", "हटाएं")} aria-label="Delete bill">
                 <Trash2 size={15} />
               </button>
             )}

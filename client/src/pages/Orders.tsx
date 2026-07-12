@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
+import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
@@ -63,6 +64,7 @@ const STATUS_THEME: Record<string, { dot: string; badge: string }> = {
 export default function Orders() {
   const toast = useToast();
   const { isStaff } = useAuth();
+  const { uiT } = useTranslate();
   const [filter, setFilter] = useState<string>("all");
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [advanceModal, setAdvanceModal] = useState<{ order: any; nextStatus: string } | null>(null);
@@ -170,7 +172,7 @@ export default function Orders() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Orders</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{uiT("Orders", "ऑर्डर")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Orders generated from visits.</p>
         </div>
       </div>
@@ -181,7 +183,7 @@ export default function Orders() {
           { key: "all", label: "Total", value: stats.total, color: "text-gray-900 dark:text-white" },
           { key: "Ordered", label: "Ordered", value: stats.ordered, color: "text-purple-600 dark:text-purple-400" },
           { key: "In Lab", label: "In Lab", value: stats.inLab, color: "text-amber-600 dark:text-amber-400" },
-          { key: "Ready", label: "Ready", value: stats.ready, color: "text-blue-600 dark:text-blue-400" },
+          { key: "Ready", label: uiT("Ready", "तैयार"), value: stats.ready, color: "text-blue-600 dark:text-blue-400" },
         ].map((s) => (
           <button key={s.key} type="button" onClick={() => setFilter(s.key)}
             className={`card text-center py-4 px-3 cursor-pointer transition-all duration-150 ${
@@ -200,8 +202,8 @@ export default function Orders() {
           { key: "Draft", label: "Draft" },
           { key: "Ordered", label: "Ordered" },
           { key: "In Lab", label: "In Lab" },
-          { key: "Ready", label: "Ready" },
-          { key: "Delivered", label: "Delivered" },
+          { key: "Ready", label: uiT("Ready", "तैयार") },
+          { key: "Delivered", label: uiT("Delivered", "डिलीवर हो गया") },
         ].map((f) => (
                 <button key={f.key} type="button" onClick={() => setFilter(f.key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-150 ${
@@ -230,7 +232,7 @@ export default function Orders() {
       {filteredList.length === 0 ? (
         <div className="card text-center py-16 border-dashed border-gray-300 dark:border-slate-500 bg-surface-50/50 dark:bg-slate-700/50">
           <Package size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-gray-400 dark:text-gray-500 text-sm">No orders found</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">{uiT("No orders found", "कोई ऑर्डर नहीं मिला")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -388,7 +390,7 @@ export default function Orders() {
                   : `Mark All as ${advanceModal.nextStatus}`}
               </button>
               <button onClick={() => setAdvanceModal(null)} disabled={statusLoading === advanceModal.order._id}
-                className="w-full btn-secondary py-2.5">Cancel</button>
+                className="w-full btn-secondary py-2.5">{uiT("Cancel", "रद्द करें")}</button>
             </div>
           </div>
         </div>
