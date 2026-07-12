@@ -274,10 +274,11 @@ router.patch("/:id/status", authenticate, async (req, res) => {
 });
 
 function formatDemandRx(sph?: number, cyl?: number, axis?: number): string {
-  const s = sph != null ? (sph > 0 ? `+${sph}` : `${sph}`) : "";
-  const c = cyl != null ? (cyl > 0 ? `+${cyl}` : `${cyl}`) : "";
-  const a = axis != null ? `x${axis}` : "";
-  if (!s && !c) return "-";
+  const fmtVal = (v: number) => v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+  const s = sph != null ? fmtVal(sph) : "";
+  const c = cyl != null ? fmtVal(cyl) : "";
+  const a = axis != null ? `× ${axis}` : "";
+  if (!s && !c) return "—";
   return `${s}${c ? ` / ${c}` : ""}${a ? ` ${a}` : ""}`;
 }
 
@@ -463,11 +464,12 @@ router.post("/demand-send", authenticate, async (req, res) => {
       function formatRxStr(dv: any, nv: any, pd: any): string {
         const parts: string[] = [];
         if (dv?.sph != null) {
-          const s = dv.sph > 0 ? `+${dv.sph}` : `${dv.sph}`;
-          const c = dv.cyl != null ? (dv.cyl > 0 ? `/${+dv.cyl}` : `/${dv.cyl}`) : "";
-          const a = dv.axis != null ? `x${dv.axis}` : "";
-          parts.push(`${s}${c}${a}`);
-          if (nv?.sph != null) parts.push(`Add ${(nv.sph - dv.sph).toFixed(2)}`);
+          const fmtVal = (v: number) => v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+          const s = fmtVal(dv.sph);
+          const c = dv.cyl != null ? ` / ${fmtVal(dv.cyl)}` : "";
+          const a = dv.axis != null ? ` × ${dv.axis}` : "";
+          parts.push(`SPH ${s}${c}${a}`);
+          if (nv?.sph != null) parts.push(`ADD ${fmtVal(nv.sph - dv.sph)}`);
         }
         if (pd) parts.push(`PD ${pd}`);
         return parts.join("  ") || "—";

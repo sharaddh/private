@@ -50,6 +50,18 @@ export function formatFullRx(
   return parts.length ? parts.join("\n") : null;
 }
 
+export function cleanEyeSet(e: any): Record<string, Record<string, any>> | undefined {
+  if (!e || typeof e !== "object") return undefined;
+  const out: Record<string, Record<string, any>> = {};
+  for (const k of ["dv", "nv", "pc"] as const) {
+    if (e[k] && typeof e[k] === "object") {
+      const vals = Object.entries(e[k]).filter(([_, v]) => v);
+      if (vals.length) out[k] = Object.fromEntries(vals);
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export function formatRxBrief(sph?: number, cyl?: number, axis?: number): string {
   if (sph == null && cyl == null) return "—";
   const s = sph != null ? fmtVal(sph) : "—";

@@ -4,20 +4,7 @@ import { useToast } from "../context/ToastContext";
 import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Eye, Activity, ShoppingCart, CreditCard, CheckCircle, Calendar } from "lucide-react";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
-
-// ---- helpers ----
-function cleanEyeSet(e: any) {
-  if (!e || typeof e !== "object") return undefined;
-  const out: any = {};
-  for (const k of ["dv", "nv", "pc"]) {
-    if (e[k] && typeof e[k] === "object") {
-      const vals = Object.entries(e[k]).filter(([_, v]) => v);
-      if (vals.length) out[k] = Object.fromEntries(vals);
-    }
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
+import { cleanEyeSet } from "../utils/rx";
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
 const VISIT_TYPES = [
   { value: "new", label: "New Glasses" },
