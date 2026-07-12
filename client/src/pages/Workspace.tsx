@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
+import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
@@ -18,7 +19,7 @@ import VisitTypeSection from "../components/NewvistePage/VisitTypeSection";
 import PrescriptionPanel from "../components/NewvistePage/PrescriptionPanel";
 import OrderItems from "../components/NewvistePage/OrderItems";
 import BillingPanel from "../components/NewvistePage/BillingPanel";
-import { formatRxBrief } from "../utils/rx";
+import { formatRxBrief, cleanEyeSet } from "../utils/rx";
 import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
 import BottomNav from "../components/NewvistePage/BottomNav";
@@ -39,30 +40,18 @@ const VISIT_TYPES = [
   { value: "other", label: "Other", icon: Eye },
 ];
 
-const steps = [
-  { key: "service", label: "Service", icon: Activity, desc: "Visit type" },
-  { key: "prescription", label: "Examination", icon: Eye, desc: "Vision test" },
-  { key: "order", label: "Order", icon: ShoppingCart, desc: "Frame & lens" },
-  { key: "billing", label: "Billing", icon: CreditCard, desc: "Items & pricing" },
-  { key: "payment", label: "Payment", icon: Percent, desc: "Collect & confirm" },
-  { key: "confirmation", label: "Confirm", icon: CheckCircle, desc: "Review & save" },
-];
-
-function cleanEyeSet(e: any) {
-  if (!e || typeof e !== "object") return undefined;
-  const out: any = {};
-  for (const k of ["dv", "nv", "pc"]) {
-    if (e[k] && typeof e[k] === "object") {
-      const vals = Object.entries(e[k]).filter(([_, v]) => v);
-      if (vals.length) out[k] = Object.fromEntries(vals);
-    }
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
 export default function Workspace() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { t, uiT } = useTranslate();
+  const steps = [
+    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
+    { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
+    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
+    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य निर्धारण") },
+    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
+    { key: "confirmation", label: uiT("Confirm", "पुष्टि करें"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
+  ];
   const phoneRef = useRef<HTMLInputElement>(null);
 
   const [settings, setSettings] = useState<any>(null);
@@ -447,7 +436,10 @@ export default function Workspace() {
       const customerName = cust?.name || "";
       const num = customerMobile.replace(/\D/g, "");
       const fullNum = num.length === 10 ? `91${num}` : num;
-      const msg = `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`;
+      const msg = t(
+        `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
+        `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
+      );
       await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     } catch { /* silent */ }
     navigate(`/customers/${cust?._id || ""}?visitId=${data?.visit?._id || ""}`);
@@ -480,7 +472,7 @@ export default function Workspace() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           <div className="card">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">New Visit</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{uiT("New Visit", "नई विज़िट")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Enter phone number to search existing customers or add a new one.</p>
 
             <div className="flex gap-3 mb-6">
@@ -626,7 +618,7 @@ export default function Workspace() {
 
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setStep("service")} className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2">
-                  <Activity size={15} /> New Visit
+                  <Activity size={15} /> {uiT("New Visit", "नई विज़िट")}
                 </button>
                 <button onClick={() => selectedCustomer._id && navigate(`/customers/${selectedCustomer._id}`)} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
                   <History size={15} /> Full History
@@ -639,11 +631,14 @@ export default function Workspace() {
                 {selectedCustomer.mobile && (
                   <button onClick={async () => {
                     const num = selectedCustomer.mobile.replace(/\D/g, "");
-                    const msg = `Hi ${selectedCustomer.name}, this is ${settings?.shopName || "KMJ Optical"}.`;
+                    const msg = t(
+                      `Hi ${selectedCustomer.name}, this is ${settings?.shopName || "KMJ Optical"}.`,
+                      `नमस्ते ${selectedCustomer.name}, यह ${settings?.shopName || "KMJ Optical"} है।`
+                    );
                     await api.post("/api/whatsapp/send", { phone: `91${num}`, message: msg });
                   }}
                     className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                    <MessageCircle size={15} /> WhatsApp
+                    <MessageCircle size={15} /> {uiT("WhatsApp", "WhatsApp")}
                   </button>
                 )}
               </div>
@@ -695,7 +690,7 @@ export default function Workspace() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
           <div className="card">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">New Customer</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{uiT("New Customer", "नया ग्राहक")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Fill in the details to create a new customer.</p>
 
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-5">

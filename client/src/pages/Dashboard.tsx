@@ -7,6 +7,7 @@ import CameraScanner from "../components/CameraScanner";
 import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
+import { useTranslate } from "../context/TranslateContext";
 import { formatFullRx } from "../utils/rx";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
@@ -223,6 +224,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const toast = useToast();
   const { dark, toggle } = useTheme();
+  const { uiT } = useTranslate();
 
   useEffect(() => { if (data) setHasDataOnce(true); }, [data]);
 
@@ -308,7 +310,7 @@ export default function Dashboard() {
 
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? uiT("Good morning", "शुभ प्रभात") : hour < 17 ? uiT("Good afternoon", "नमस्ते") : uiT("Good evening", "शुभ संध्या");
   const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
 
@@ -342,7 +344,7 @@ export default function Dashboard() {
         <button onClick={() => navigate("/workspace")}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-md">
           <Plus className="w-3.5 h-3.5" />
-          New Sale
+          {uiT("New Sale", "नई बिक्री")}
         </button>
         <button onClick={() => setShowScanner(true)}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
@@ -363,9 +365,9 @@ export default function Dashboard() {
       <div className="relative">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Sales</p>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Today's Sales", "आज की बिक्री")}</p>
             <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
-            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} vs last week</p>
+            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह की तुलना में")}</p>
           </div>
           <div>
             <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Collection</p>
@@ -393,16 +395,16 @@ export default function Dashboard() {
 
   const renderQuickActions = () => (
     <div>
-      <SectionHeader title="Quick Actions" />
+      <SectionHeader title={uiT("Quick Actions", "त्वरित कार्य")} />
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
-        <QuickActionCard icon={ShoppingCart} label="New Sale" subtitle="Create a new order" onClick={() => navigate("/workspace")} color="#6366f1" />
-        <QuickActionCard icon={UserPlus} label="Customers" subtitle="Manage your clients" onClick={() => navigate("/customers")} color="#10b981" />
-        <QuickActionCard icon={Boxes} label="Inventory" subtitle="Track stock & lenses" onClick={() => navigate("/inventory")} color="#f59e0b" />
-        <QuickActionCard icon={BarChart3} label="Reports" subtitle="View business insights" onClick={() => navigate("/reports")} color="#8b5cf6" />
-        <QuickActionCard icon={Receipt} label="Bills" subtitle="Manage pending payments" onClick={() => navigate("/bills")} color="#ef4444" />
-        <QuickActionCard icon={ClipboardList} label="Orders" subtitle="View all orders" onClick={() => navigate("/orders")} color="#06b6d4" />
-        <QuickActionCard icon={ScanLine} label="Scanner" subtitle="Scan product barcodes" onClick={() => setShowScanner(true)} color="#f97316" />
-        <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle="Send messages & PDFs" onClick={() => navigate("/whatsapp")} color="#22c55e" />
+        <QuickActionCard icon={ShoppingCart} label={uiT("New Sale", "नई बिक्री")} subtitle={uiT("Create a new order", "नया ऑर्डर बनाएं")} onClick={() => navigate("/workspace")} color="#6366f1" />
+        <QuickActionCard icon={UserPlus} label={uiT("Customers", "ग्राहक")} subtitle={uiT("Manage your clients", "अपने ग्राहकों का प्रबंधन करें")} onClick={() => navigate("/customers")} color="#10b981" />
+        <QuickActionCard icon={Boxes} label={uiT("Inventory", "इन्वेंट्री")} subtitle={uiT("Track stock & lenses", "स्टॉक और लेंस ट्रैक करें")} onClick={() => navigate("/inventory")} color="#f59e0b" />
+        <QuickActionCard icon={BarChart3} label={uiT("Reports", "रिपोर्ट")} subtitle={uiT("View business insights", "व्यापार जानकारी देखें")} onClick={() => navigate("/reports")} color="#8b5cf6" />
+        <QuickActionCard icon={Receipt} label={uiT("Bills", "बिल")} subtitle={uiT("Manage pending payments", "लंबित भुगतान प्रबंधित करें")} onClick={() => navigate("/bills")} color="#ef4444" />
+        <QuickActionCard icon={ClipboardList} label={uiT("Orders", "ऑर्डर")} subtitle={uiT("View all orders", "सभी ऑर्डर देखें")} onClick={() => navigate("/orders")} color="#06b6d4" />
+        <QuickActionCard icon={ScanLine} label={uiT("Scanner", "स्कैनर")} subtitle={uiT("Scan product barcodes", "उत्पाद बारकोड स्कैन करें")} onClick={() => setShowScanner(true)} color="#f97316" />
+        <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle={uiT("Send messages & PDFs", "संदेश और PDF भेजें")} onClick={() => navigate("/whatsapp")} color="#22c55e" />
       </div>
     </div>
   );
@@ -411,16 +413,16 @@ export default function Dashboard() {
 
   const renderKPIs = () => (
     <div>
-      <SectionHeader title="Key Metrics" />
+      <SectionHeader title={uiT("Key Metrics", "मुख्य मापदंड")} />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-        <MetricCard label="Today's Sales" value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle="vs last week" />
-        <MetricCard label="Today's Collection" value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle="today" />
+        <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
+        <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
         <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
-        <MetricCard label="Pending Bills" value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
-        <MetricCard label="Ready for Pickup" value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle="awaiting collection" />
-        <MetricCard label="New Customers" value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle="joined today" />
-        <MetricCard label="Low Stock Items" value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle="items need restock" />
-        <MetricCard label="Total Inventory" value={d.counts.inventory} icon={Boxes} color="#f472b6" subtitle="total SKUs" />
+        <MetricCard label={uiT("Pending Bills", "लंबित बिल")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
+        <MetricCard label={uiT("Ready for Pickup", "पिकअप के लिए तैयार")} value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle={uiT("awaiting collection", "संग्रह की प्रतीक्षा में")} />
+        <MetricCard label={uiT("New Customers", "नए ग्राहक")} value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle={uiT("joined today", "आज जुड़े")} />
+        <MetricCard label={uiT("Low Stock Items", "कम स्टॉक आइटम")} value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle={uiT("items need restock", "आइटम को रीस्टॉक की आवश्यकता")} />
+        <MetricCard label={uiT("Total Inventory", "कुल इन्वेंट्री")} value={d.counts.inventory} icon={Boxes} color="#f472b6" subtitle={uiT("total SKUs", "कुल SKU")} />
       </div>
     </div>
   );
@@ -446,14 +448,14 @@ export default function Dashboard() {
   const renderNeedsAttention = () => {
     interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
     const items: AlertItem[] = [];
-    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: "Pending Bills", value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: "Collect", onClick: () => navigate("/bills") });
-    if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: "Low Stock Items", value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
+    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bills", "लंबित बिल"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: "Collect", onClick: () => navigate("/bills") });
+    if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
     if (draftOrders.length > 0) items.push({ icon: FileText, label: "Draft Orders", value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
-    if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: "Today's Deliveries", value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
+    if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
     if (items.length === 0) return null;
     return (
       <div>
-        <SectionHeader title="Needs Attention" count={items.length} />
+        <SectionHeader title={uiT("Needs Attention", "ध्यान दें")} count={items.length} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {items.map((item) => (
             <AlertCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} action={item.action} actionLabel={item.actionLabel} onClick={item.onClick} />
@@ -488,7 +490,7 @@ export default function Dashboard() {
         </div>
 
         {draftOrders.length === 0 ? (
-          <EmptyState icon={PackageCheck} title="All clear!" description="No draft orders pending lens classification." actionLabel="Create New Order" onAction={() => navigate("/workspace")} />
+          <EmptyState icon={PackageCheck} title={uiT("All clear!", "सब साफ!")} description={uiT("No draft orders pending lens classification.", "लेंस वर्गीकरण के लिए कोई ड्राफ्ट ऑर्डर लंबित नहीं।")} actionLabel={uiT("Create New Order", "नया ऑर्डर बनाएं")} onAction={() => navigate("/workspace")} />
         ) : (
           <>
             {/* Toolbar */}
@@ -536,8 +538,7 @@ export default function Dashboard() {
                 const lStatus = (o.leftLensStatus as string) || "pending";
 
                 const rRx = formatFullRx(rDV, rNV, rx?.pd as string | number | undefined);
-                const lRx = formatFullRx(lDV, lNV);
-                const lRx = formatEyeRx(lDV, lNV, rx?.pd);
+                const lRx = formatFullRx(lDV, lNV, rx?.pd as string | number | undefined);
                 const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ");
 
                 const stockTotal = totalStock(ss);
@@ -644,11 +645,11 @@ export default function Dashboard() {
   const renderRecentOrders = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
-        <SectionHeader title="Recent Orders" count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel="View all" />
+        <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.recentOrders.length === 0 ? (
-          <EmptyState icon={ClipboardList} title="No orders yet" description="Create your first order to get started." actionLabel="New Order" onAction={() => navigate("/workspace")} />
+          <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
           const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
@@ -684,11 +685,11 @@ export default function Dashboard() {
   const renderPendingBills = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
-        <SectionHeader title="Pending Bills" count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel="View all" />
+        <SectionHeader title={uiT("Pending Bills", "लंबित बिल")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.pendingBills.length === 0 ? (
-          <EmptyState icon={IndianRupee} title="All bills cleared" description="No pending bills to collect." />
+          <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
           const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
@@ -718,11 +719,11 @@ export default function Dashboard() {
   const renderDeliveries = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
-        <SectionHeader title="Today's Deliveries" count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel="View all" />
+        <SectionHeader title={uiT("Today's Deliveries", "आज की डिलीवरी")} count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.todayDeliveries.length === 0 ? (
-          <EmptyState icon={Truck} title="No deliveries today" description="All deliveries for today are completed." />
+          <EmptyState icon={Truck} title={uiT("No deliveries today", "आज कोई डिलीवरी नहीं")} description={uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।")} />
         ) : d.todayDeliveries.map((dl, idx) => {
           const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).mobile as string : "";
@@ -757,11 +758,11 @@ export default function Dashboard() {
   const renderRecentCustomers = () => (
     <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
-        <SectionHeader title="Recent Customers" count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel="View all" />
+        <SectionHeader title={uiT("Recent Customers", "हाल के ग्राहक")} count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.recentCustomers.length === 0 ? (
-          <EmptyState icon={Users} title="No customers yet" description="Start by adding your first customer." actionLabel="Add Customer" onAction={() => navigate("/customers")} />
+          <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
         ) : d.recentCustomers.map((c, idx) => (
           <div key={c._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id as string}`)}>
             <UserAvatar name={(c.name as string) || "?"} className="w-10 h-10 text-sm" />
@@ -809,7 +810,7 @@ export default function Dashboard() {
       </div>
       <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-thin pr-1">
         {todos.length === 0 ? (
-          <EmptyState icon={CheckSquare} title="No tasks yet" description="Add a task above to get started." />
+          <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
             <div key={t._id as string} className={`flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.03] group transition-all ${t.done ? "opacity-40" : ""}`}>
