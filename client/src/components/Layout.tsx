@@ -4,6 +4,7 @@ import { get, post } from "../api";
 import { invalidateCache } from "../hooks/useCache";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
+import { useTranslate } from "../context/TranslateContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
@@ -53,6 +54,27 @@ function getToken(): string | null {
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { isStaff, currentBranch } = useAuth();
+  const { uiT } = useTranslate();
+
+  const trLabel = useCallback((label: string) => {
+    const map: Record<string, string> = {
+      "New Visit": uiT("New Visit", "नई विज़िट"),
+      "Dashboard": uiT("Dashboard", "डैशबोर्ड"),
+      "Customers": uiT("Customers", "ग्राहक"),
+      "Orders": uiT("Orders", "ऑर्डर"),
+      "Bills": uiT("Bills", "बिल"),
+      "Inventory": uiT("Inventory", "इन्वेंट्री"),
+      "Delivery": uiT("Delivery", "डिलीवरी"),
+      "Pickup": uiT("Pickup", "पिकअप"),
+      "Payments": uiT("Payments", "भुगतान"),
+      "Announcements": uiT("Announcements", "घोषणाएँ"),
+      "Reports": uiT("Reports", "रिपोर्ट"),
+      "WhatsApp": uiT("WhatsApp", "WhatsApp"),
+      "Settings": uiT("Settings", "सेटिंग्स"),
+      "Home": uiT("Home", "होम"),
+    };
+    return map[label] || label;
+  }, [uiT]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -186,7 +208,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50"
                 }`}>
                 <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300"} />
-                {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                {sidebarOpen && <span className="text-sm">{trLabel(item.label)}</span>}
                 {active && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400" />}
               </Link>
             );
@@ -276,7 +298,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <Icon size={active ? 22 : 20} className={`transition-all duration-300 ${active ? "scale-110" : ""}`} />
                   </div>
                   <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-slate-400 dark:text-slate-500"}`}>
-                    {item.label}
+                    {trLabel(item.label)}
                   </span>
                 </Link>
               );
