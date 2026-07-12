@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { useCachedData } from "../hooks/useCachedData";
 import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { useTranslate } from "../context/TranslateContext";
 import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, IndianRupee, Eye, Calendar, MapPinned } from "lucide-react";
 
 interface Customer {
@@ -19,7 +19,7 @@ interface Customer {
 export default function Customers() {
   const toast = useToast();
   const [list, setList] = useState<Customer[]>([]);
-  const [filteredList, setFilteredList] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -30,25 +30,38 @@ export default function Customers() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { isStaff, user } = useAuth();
-  const { data: rawList, loading, refetch } = useCachedData<Customer[]>("/api/customers?limit=1000", () => api.get("/api/customers?limit=1000"));
+  const { uiT } = useTranslate();
   const [recalculating, setRecalculating] = useState(false);
 
-  useEffect(() => {
-    if (rawList) {
-      const customers = Array.isArray(rawList) ? rawList : (rawList as any).data || [];
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/customers?limit=1000");
+      const raw = res.data as any;
+      const customers = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
       setList(customers);
-      setFilteredList(customers);
+    } catch {
+      setList([]);
+    } finally {
+      setLoading(false);
     }
-  }, [rawList]);
+  }, []);
 
-  useEffect(() => {
+  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+
+  const refetch = useCallback((invalidate?: boolean) => {
+    if (invalidate) invalidateCache("/api/customers?limit=1000");
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  const filteredList = useMemo(() => {
     const q = searchQuery.trim();
-    if (!q) { setFilteredList(list); return; }
+    if (!q) return list;
     const lower = q.toLowerCase();
-    setFilteredList(list.filter((c) =>
+    return list.filter((c) =>
       c.name?.toLowerCase().includes(lower) || c.mobile?.includes(q) ||
       c.customerId?.toLowerCase().includes(lower) || c.email?.toLowerCase().includes(lower)
-    ));
+    );
   }, [searchQuery, list]);
 
   function openCreate() {
@@ -92,7 +105,7 @@ export default function Customers() {
     <div className="page-container">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="page-title">Customers</h1>
+          <h1 className="page-title">{uiT("Customers", "ग्राहक")}</h1>
           <p className="page-subtitle">Search, view, and manage customer profiles.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -116,19 +129,80 @@ export default function Customers() {
           )}
           <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-sm hover:shadow-lg">
             <Plus size={18} />
-            <span className="hidden sm:inline">Add Customer</span>
-            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline">{uiT("Add Customer", "ग्राहक जोड़ें")}</span>
+            <span className="sm:hidden">{uiT("Add Customer", "ग्राहक जोड़ें")}</span>
           </button>
         </div>
       </div>
 
       <div className="relative">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="text" placeholder="Search by name, mobile, email, or ID..."
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <input type="text" placeholder={uiT("Search by name, mobile, email, or ID...", "नाम, मोबाइल, ईमेल या आईडी से खोजें...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input-field pl-11 text-base"
         />
+        {searchQuery.trim() && (
+          <div className="absolute z-40 top-full mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-80 overflow-y-auto">
+            {filteredList.length > 0 ? (
+              <>
+                <div className="px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700/50">
+                  {filteredList.length} matching customer(s)
+                </div>
+                {filteredList.map((c) => (
+                  <div key={c._id}
+                    onClick={() => navigate(`/customers/${c._id}`)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-700/30 last:border-b-0"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                      (c.pendingAmount || 0) > 0
+                        ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                        : "bg-gradient-to-br from-primary-500 to-primary-600 text-white"
+                    }`}>
+                      {c.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">{c.name}</span>
+                        {c.customerId && (
+                          <span className="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-slate-700/50 px-1.5 py-0.5 rounded">
+                            #{c.customerId.replace("CUST-", "").slice(-6)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {c.mobile && (
+                          <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <Phone size={10} /> {c.mobile.replace(/^0+/, "")}
+                          </span>
+                        )}
+                        {c.city && (
+                          <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <MapPinned size={10} /> {c.city}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                No customers matching "{searchQuery}"
+              </div>
+            )}
+            <div
+              onClick={() => { setSearchQuery(""); openCreate(); }}
+              className="flex items-center gap-3 px-4 py-3 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 cursor-pointer transition-colors rounded-b-xl"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary-500 text-white flex items-center justify-center flex-shrink-0">
+                <Plus size={18} />
+              </div>
+              <span className="font-semibold text-sm text-primary-600 dark:text-primary-400">{uiT("Add Customer", "ग्राहक जोड़ें")}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {filteredList.length === 0 ? (
@@ -137,13 +211,13 @@ export default function Customers() {
             <Users size={32} className="text-slate-300 dark:text-slate-500" />
           </div>
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {searchQuery ? "No customers found" : "No customers yet"}
+            {searchQuery ? uiT("No customers found", "कोई ग्राहक नहीं मिला") : "No customers yet"}
           </h3>
           <p className="text-sm text-slate-500 mb-5">
             {searchQuery ? `No results matching "${searchQuery}"` : "Start by adding your first customer."}
           </p>
           <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
-            <UserPlus size={18} /> Add Customer
+            <UserPlus size={18} /> {uiT("Add Customer", "ग्राहक जोड़ें")}
           </button>
         </div>
       ) : (
@@ -226,12 +300,12 @@ export default function Customers() {
 
                   <div className="flex flex-col gap-0.5 -mr-1">
                     <button onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors" title="Edit">
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors" title={uiT("Edit", "संपादित करें")}>
                       <Edit2 size={13} />
                     </button>
                     {!isStaff && (
                       <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete">
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title={uiT("Delete", "हटाएं")}>
                         <Trash2 size={13} />
                       </button>
                     )}
@@ -248,7 +322,7 @@ export default function Customers() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowForm(false)}>
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editing ? "Edit Customer" : "Add Customer"}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</h3>
               <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
@@ -260,20 +334,20 @@ export default function Customers() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name *</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Name", "नाम")} *</label>
                       <input className="input-field text-sm" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Age</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Age", "आयु")}</label>
                       <input type="number" className="input-field text-sm" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Gender</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Gender", "लिंग")}</label>
                       <select className="input-field text-sm" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
                         <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option value="Male">{uiT("Male", "पुरुष")}</option>
+                        <option value="Female">{uiT("Female", "महिला")}</option>
+                        <option value="Other">{uiT("Other", "अन्य")}</option>
                       </select>
                     </div>
                   </div>
@@ -285,7 +359,7 @@ export default function Customers() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Mobile *</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Mobile", "मोबाइल")} *</label>
                       <input className="input-field text-sm" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
                     </div>
                     <div>
@@ -293,7 +367,7 @@ export default function Customers() {
                       <input className="input-field text-sm" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Email</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Email", "ईमेल")}</label>
                       <input type="email" className="input-field text-sm" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                     </div>
                   </div>
@@ -301,15 +375,15 @@ export default function Customers() {
 
                 <div className="card p-4">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                    <MapPin size={16} className="text-primary-500" /> Address
+                    <MapPin size={16} className="text-primary-500" /> {uiT("Address", "पता")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Address</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Address", "पता")}</label>
                       <textarea className="input-field text-sm" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">City</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("City", "शहर")}</label>
                       <input className="input-field text-sm" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                     </div>
                   </div>
@@ -323,8 +397,8 @@ export default function Customers() {
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
-                  <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
-                  <button type="submit" disabled={isLoading} className="btn-primary shadow-sm">{isLoading ? "Saving..." : editing ? "Update Customer" : "Add Customer"}</button>
+                  <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
+                  <button type="submit" disabled={isLoading} className="btn-primary shadow-sm">{isLoading ? "Saving..." : editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</button>
                 </div>
               </form>
             </div>
@@ -332,7 +406,7 @@ export default function Customers() {
         </div>
       )}
 
-      <Modal open={showDetail} onClose={() => setShowDetail(false)} title="Customer Details" size="lg">
+      <Modal open={showDetail} onClose={() => setShowDetail(false)} title={uiT("Customer Details", "ग्राहक विवरण")} size="lg">
         {detailCustomer && (
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-primary-500/5 to-primary-500/10 rounded-2xl border border-primary-200/50 dark:border-primary-500/10">
@@ -369,11 +443,11 @@ export default function Customers() {
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Age</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Age", "आयु")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.age || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Gender</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Gender", "लिंग")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.gender || "—"}</p>
                 </div>
                 <div>
@@ -389,7 +463,7 @@ export default function Customers() {
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Mobile</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Mobile", "मोबाइल")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.mobile || "—"}</p>
                 </div>
                 <div>
@@ -397,7 +471,7 @@ export default function Customers() {
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.alternateMobile || "—"}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[11px] text-slate-400 font-medium">Email</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Email", "ईमेल")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.email || "—"}</p>
                 </div>
               </div>
@@ -405,7 +479,7 @@ export default function Customers() {
 
             <div className="card p-4">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                <MapPin size={16} className="text-primary-500" /> Address
+                <MapPin size={16} className="text-primary-500" /> {uiT("Address", "पता")}
               </h3>
               <p className="text-sm text-slate-700 dark:text-slate-300">{detailCustomer.address ? `${detailCustomer.address}${detailCustomer.city ? `, ${detailCustomer.city}` : ""}` : "—"}</p>
             </div>
@@ -427,7 +501,7 @@ export default function Customers() {
               <button onClick={() => setShowDetail(false)} className="btn-secondary">Close</button>
               <button onClick={() => { setShowDetail(false); openEdit(detailCustomer); }}
                 className="btn-primary flex items-center gap-2 shadow-sm">
-                <Edit2 size={16} /> Edit
+                <Edit2 size={16} /> {uiT("Edit", "संपादित करें")}
               </button>
               <button onClick={() => { setShowDetail(false); navigate(`/customers/${detailCustomer._id}`); }}
                 className="btn-primary flex items-center gap-2 shadow-sm bg-gradient-to-r from-primary-500 to-primary-600">

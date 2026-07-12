@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
+import { useTranslate } from "../context/TranslateContext";
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, Receipt, Eye, ClipboardList,
   ShoppingCart, Edit3, Plus, Save, X, MessageCircle, FileText, User,
@@ -13,6 +14,7 @@ import { formatEyeRx } from "../utils/rx";
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, uiT } = useTranslate();
   const [searchParams] = useSearchParams();
   const [customer, setCustomer] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
@@ -148,8 +150,11 @@ export default function CustomerDetail() {
         const { generateBillPdf } = await import("../utils/pdf");
         const doc = generateBillPdf(bill, custData, settings || {});
         const base64 = doc.output("datauristring").split(",")[1];
-        const caption = `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`;
-        const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption });
+        const caption = t(
+          `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
+          `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
+        );
+        const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
         if (mediaRes.success) return;
         console.warn("WhatsApp PDF send failed:", mediaRes?.message);
       }
@@ -159,16 +164,28 @@ export default function CustomerDetail() {
     const items = (bill?.items || []).map((i: any) =>
       `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
     ).join("\n");
-    const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Subtotal:* ₹${(bill?.subtotal || 0).toFixed(0)}${bill?.discount ? `\n*Discount:* -₹${bill.discount.toFixed(0)}` : ""}${bill?.tax ? `\n*Tax:* +₹${bill.tax.toFixed(0)}` : ""}\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
+    const billLabel = t("Bill", "बिल");
+    const dateLabel = t("Date", "तारीख");
+    const customerLabel = t("Customer", "ग्राहक");
+    const mobileLabel = t("Mobile", "मोबाइल");
+    const itemsLabel = t("Items", "आइटम");
+    const subtotalLabel = t("Subtotal", "उप-कुल");
+    const discountLabel = t("Discount", "छूट");
+    const taxLabel = t("Tax", "कर");
+    const totalLabel = t("Total", "कुल");
+    const paidLabel = t("Paid", "भुगतान");
+    const pendingLabel = t("Pending", "बाकी");
+    const thankYou = t("Thank you!", "धन्यवाद!");
+    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill?.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill?.subtotal || 0).toFixed(0)}${bill?.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ""}${bill?.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ""}\n*${totalLabel}:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
     try { await api.post("/api/whatsapp/send", { phone: fullNum, message: msg }); } catch (e) { /* WhatsApp send is best-effort */ };
   }
 
   const tabs = [
-    { key: "overview", label: "Overview", icon: User },
-    { key: "visits", label: `Visits (${visits.length})`, icon: ClipboardList },
-    { key: "prescriptions", label: `Prescriptions (${prescriptions.length})`, icon: Eye },
-    { key: "bills", label: `Bills (${bills.length})`, icon: Receipt },
-    { key: "orders", label: `Orders (${orders.length})`, icon: ShoppingCart },
+    { key: "overview", label: uiT("Overview", "अवलोकन"), icon: User },
+    { key: "visits", label: `${uiT("Visits", "विज़िट")} (${visits.length})`, icon: ClipboardList },
+    { key: "prescriptions", label: `${uiT("Prescriptions", "प्रिस्क्रिप्शन")} (${prescriptions.length})`, icon: Eye },
+    { key: "bills", label: `${uiT("Bills", "बिल")} (${bills.length})`, icon: Receipt },
+    { key: "orders", label: `${uiT("Orders", "ऑर्डर")} (${orders.length})`, icon: ShoppingCart },
   ] as const;
 
   return (
@@ -193,15 +210,15 @@ export default function CustomerDetail() {
                     <input className="input-field text-lg font-bold bg-white/90" value={editForm.name || ""}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
                     <div className="grid grid-cols-2 gap-3">
-                      <input className="input-field bg-white/90" placeholder="Mobile" value={editForm.mobile || ""}
+                      <input className="input-field bg-white/90" placeholder={uiT("Mobile", "मोबाइल")} value={editForm.mobile || ""}
                         onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder="Email" value={editForm.email || ""}
+                      <input className="input-field bg-white/90" placeholder={uiT("Email", "ईमेल")} value={editForm.email || ""}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder="Age" type="number" value={editForm.age || ""}
+                      <input className="input-field bg-white/90" placeholder={uiT("Age", "आयु")} type="number" value={editForm.age || ""}
                         onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} />
                       <select className="input-field bg-white/90" value={editForm.gender || ""}
                         onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}>
-                        <option value="">Gender</option>
+                        <option value="">{uiT("Gender", "लिंग")}</option>
                         <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                       </select>
                       <input className="input-field bg-white/90" placeholder="City" value={editForm.city || ""}
@@ -209,16 +226,16 @@ export default function CustomerDetail() {
                       <input className="input-field bg-white/90" placeholder="Alt Mobile" value={editForm.alternateMobile || ""}
                         onChange={(e) => setEditForm({ ...editForm, alternateMobile: e.target.value })} />
                       <div className="col-span-2">
-                        <textarea className="input-field bg-white/90" placeholder="Address" rows={2} value={editForm.address || ""}
+                        <textarea className="input-field bg-white/90" placeholder={uiT("Address", "पता")} rows={2} value={editForm.address || ""}
                           onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={handleEditSave} disabled={saving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-1.5 text-sm">
-                        <Save size={15} /> {saving ? "Saving..." : "Save"}
+                        <Save size={15} /> {saving ? "Saving..." : uiT("Save", "सहेजें")}
                       </button>
                       <button onClick={() => setEditing(false)} className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-xl transition-all duration-300 backdrop-blur-sm flex items-center gap-1.5 text-sm">
-                        <X size={15} /> Cancel
+                        <X size={15} /> {uiT("Cancel", "रद्द करें")}
                       </button>
                     </div>
                   </div>
@@ -279,7 +296,7 @@ export default function CustomerDetail() {
           </div>
           <div className="min-w-0">
             <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{customer.totalVisits || 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Total Visits</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Total Visits", "कुल विज़िट")}</p>
           </div>
         </div>
         <div className="card flex items-center gap-4 p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
@@ -288,7 +305,7 @@ export default function CustomerDetail() {
           </div>
           <div className="min-w-0">
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">₹{(customer.totalSpent || 0).toLocaleString()}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Total Spent</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Total Spent", "कुल खर्च")}</p>
           </div>
         </div>
         <div className="card flex items-center gap-4 p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
@@ -297,7 +314,7 @@ export default function CustomerDetail() {
           </div>
           <div className="min-w-0">
             <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">₹{(customer.pendingAmount || 0).toLocaleString()}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pending Amount</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Pending Amount", "बाकी राशि")}</p>
           </div>
         </div>
         <div onClick={() => navigate(`/customers/${id}/create-visit`)}
@@ -677,7 +694,7 @@ export default function CustomerDetail() {
               <div className="flex items-center gap-2">
                 {!editingVisit && (
                   <button onClick={() => { setEditingVisit(true); }} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                    <Edit3 size={14} /> Edit
+                    <Edit3 size={14} /> {uiT("Edit", "संपादित करें")}
                   </button>
                 )}
                 <button onClick={() => setSelectedVisit(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
@@ -707,10 +724,10 @@ export default function CustomerDetail() {
                     </div>
                     <div className="flex gap-2 pt-1">
                       <button onClick={handleVisitSave} disabled={savingVisit} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                        <Save size={14} /> {savingVisit ? "Saving..." : "Save"}
+                        <Save size={14} /> {savingVisit ? "Saving..." : uiT("Save", "सहेजें")}
                       </button>
                       <button onClick={() => setEditingVisit(false)} className="btn-secondary flex items-center gap-1.5">
-                        <X size={14} /> Cancel
+                        <X size={14} /> {uiT("Cancel", "रद्द करें")}
                       </button>
                     </div>
                   </div>
@@ -930,7 +947,7 @@ export default function CustomerDetail() {
                             <span className="font-semibold">₹{linkedBill.advancePaid.toFixed(2)}</span>
                             <button onClick={() => { setEditBillAdvanceAmount(linkedBill.advancePaid || 0); setEditingBillAdvance(true); }}
                               className="px-2 py-1 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-lg text-[10px] font-medium hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors flex items-center gap-1">
-                              <Edit3 size={10} /> Edit
+                              <Edit3 size={10} /> {uiT("Edit", "संपादित करें")}
                             </button>
                           </div>
                         )}
@@ -946,7 +963,7 @@ export default function CustomerDetail() {
                   <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30">
                     <button onClick={() => sendWhatsApp(customer?.mobile, linkedBill)}
                       className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-medium hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5">
-                      <MessageCircle size={13} /> Send Bill
+                      <MessageCircle size={13} /> {uiT("Send Bill", "बिल भेजें")}
                     </button>
                   </div>
                 </div>

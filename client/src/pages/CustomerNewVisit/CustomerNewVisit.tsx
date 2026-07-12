@@ -3,9 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "../../api";
 import { useToast } from "../../context/ToastContext";
+import { useTranslate } from "../../context/TranslateContext";
 import PageSkeleton from "../../components/PageSkeleton";
 import Modal from "../../components/Modal";
 import CameraScanner from "../../components/CameraScanner";
+import { cleanEyeSet } from "../../utils/rx";
 import {
   ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
   Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
@@ -38,22 +40,11 @@ const steps = [
   { key: "confirmation", label: "Confirm", icon: CheckCircle, desc: "Review & save" },
 ];
 
-function cleanEyeSet(e: any) {
-  if (!e || typeof e !== "object") return undefined;
-  const out: any = {};
-  for (const k of ["dv", "nv", "pc"]) {
-    if (e[k] && typeof e[k] === "object") {
-      const vals = Object.entries(e[k]).filter(([_, v]) => v);
-      if (vals.length) out[k] = Object.fromEntries(vals);
-    }
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
 export default function CustomerNewVisit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslate();
 
   const [customer, setCustomer] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
@@ -387,7 +378,10 @@ export default function CustomerNewVisit() {
       const customerName = cust?.name || "";
       const num = customerMobile.replace(/\D/g, "");
       const fullNum = num.length === 10 ? `91${num}` : num;
-      const msg = `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`;
+      const msg = t(
+        `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
+        `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
+      );
       await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     } catch { /* silent */ }
     navigate(`/customers/${id}?visitId=${data?.visit?._id || ""}`);
