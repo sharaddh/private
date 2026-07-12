@@ -32,8 +32,8 @@ const transactionSchema = z.object({
     shop: z.string().optional(),
     remarks: z.string().optional(),
   }).optional(),
-  prescription: z.record(z.unknown()).optional(),
-  order: z.record(z.unknown()).optional(),
+  prescription: z.record(z.string(), z.unknown()).optional(),
+  order: z.record(z.string(), z.unknown()).optional(),
   bill: z.object({
     items: z.array(z.unknown()).optional(),
     subtotal: z.number().optional(),
@@ -139,7 +139,7 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
       });
     }
 
-    if (body.payment?.amount > 0) {
+    if (body.payment?.amount != null && body.payment.amount > 0) {
       const payment = new Payment({
         customerId: customer._id,
         billId: bill._id,

@@ -34,9 +34,10 @@ router.post("/send", authenticate, asyncHandler(async (req, res) => {
 }));
 
 router.post("/send-media", authenticate, asyncHandler(async (req, res) => {
-  const { phone, base64, filename, caption } = req.body;
+  const { phone, base64, filename, caption, mimetype } = req.body;
   if (!phone || !base64 || !filename) throw new AppError(400, "Phone, base64 and filename required");
-  const ok = await whatsapp.sendMedia(phone, base64, filename, caption);
+  const mime = mimetype || (filename.endsWith(".pdf") ? "application/pdf" : filename.endsWith(".png") ? "image/png" : filename.endsWith(".jpg") || filename.endsWith(".jpeg") ? "image/jpeg" : "application/octet-stream");
+  const ok = await whatsapp.sendMedia(phone, base64, filename, mime, caption);
   const status = await whatsapp.getStatus();
   res.json({
     success: true,

@@ -23,7 +23,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(compression({ level: 6, threshold: 1024 }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "25mb" }));
 if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 app.use(audit);
 

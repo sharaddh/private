@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
 import { Settings } from "../models/settings";
@@ -85,7 +85,7 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
         );
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
-          await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, message);
+          await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
         }
       } catch {
         // WhatsApp notification is optional
