@@ -10,21 +10,26 @@ import { getBranchModels } from "./models/db";
 let server: ReturnType<typeof app.listen> | null = null;
 
 // Catch Baileys AES-GCM decryption errors from stale/incompatible auth creds.
-// Clear the session and restart WhatsApp so a fresh QR scan can begin.
+// Clear all branch sessions and restart WhatsApp so a fresh QR scan can begin.
 process.on("uncaughtException", async (err) => {
   const msg = err?.message || "";
   if (msg.includes("Unsupported state") || msg.includes("unable to authenticate data")) {
-    console.error("WhatsApp: auth decryption failed, clearing stale session:", msg);
+    console.error("WhatsApp: auth decryption failed, clearing stale sessions:", msg);
     try {
-      if (mongoose.connection.db) {
-        await mongoose.connection.db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
-      }
+      const { whatsappManager } = await import("./services/whatsapp");
+      await whatsappManager.clearAllStaleAuth();
     } catch {}
     // Restart WhatsApp after a short delay
-    setTimeout(() => {
-      import("./services/whatsapp").then(({ whatsapp }) => {
-        whatsapp.reconnect().catch(() => {});
-      });
+    setTimeout(async () => {
+      const { whatsappManager } = await import("./services/whatsapp");
+      const branches = await Branch.find({ isActive: true }).lean();
+      const branchKeys = branches.map((b) => (b as any)._id.toString());
+      if (branchKeys.length > 0) {
+        await whatsappManager.initAll(branchKeys).catch(() => {});
+      } else {
+        const def = whatsappManager.getInstance();
+        await def.init().catch(() => {});
+      }
     }, 2000);
     return;
   }
@@ -130,11 +135,27 @@ async function start() {
     }
   }
 
-  // Lazy-init WhatsApp: import and init in background after server starts
+  // Lazy-init WhatsApp for all active branches
+  async function initBranchWhatsApps() {
+    try {
+      const { whatsappManager } = await import("./services/whatsapp");
+      const branches = await Branch.find({ isActive: true }).lean();
+      const branchKeys = branches.map((b) => (b as any)._id.toString());
+      if (branchKeys.length > 0) {
+        console.log(`WhatsApp: initializing for ${branchKeys.length} branch(es)...`);
+        await whatsappManager.initAll(branchKeys);
+      } else {
+        // No branches yet, init default instance
+        const def = whatsappManager.getInstance();
+        await def.init().catch(() => {});
+      }
+    } catch (e) {
+      console.error("WhatsApp init failed:", e);
+    }
+  }
+
   setTimeout(() => {
-    import("./services/whatsapp").then(({ whatsapp }) => {
-      whatsapp.init().catch(() => {});
-    });
+    initBranchWhatsApps();
   }, 1000);
 
   server = app.listen(PORT, () => {

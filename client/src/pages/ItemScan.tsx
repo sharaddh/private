@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
+import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
 import QRCode from "qrcode";
 import { ArrowLeft, Package, Printer, QrCode, Tag, User, Building, Layers, Eye } from "lucide-react";
@@ -8,6 +9,7 @@ import { ArrowLeft, Package, Printer, QrCode, Tag, User, Building, Layers, Eye }
 export default function ItemScan() {
   const { code } = useParams();
   const navigate = useNavigate();
+  const { uiT } = useTranslate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -75,12 +77,12 @@ export default function ItemScan() {
     return (
       <div className="space-y-6">
         <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft size={16} /> Back
+           <ArrowLeft size={16} /> {uiT("Back")}
         </button>
         <div className="card text-center py-12">
           <Package size={48} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-500 text-lg">{error}</p>
-          <p className="text-sm text-gray-400 mt-1">Code: {code}</p>
+          <p className="text-sm text-gray-400 mt-1">{uiT("Code:")} {code}</p>
         </div>
       </div>
     );
@@ -95,7 +97,7 @@ export default function ItemScan() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft size={16} /> Back
+        <ArrowLeft size={16} /> {uiT("Back")}
       </button>
 
       <div className="card">
@@ -106,12 +108,12 @@ export default function ItemScan() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{item.brand || "Item"} {item.model || ""}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{item.brand || uiT("Item")} {item.model || ""}</h1>
                 <p className="text-sm text-gray-500 font-mono mt-0.5">{item.sku}</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={handlePrint} className="btn-secondary btn-sm flex items-center gap-1.5">
-                  <Printer size={15} /> Print Label
+                  <Printer size={15} /> {uiT("Print Label")}
                 </button>
               </div>
             </div>
@@ -119,14 +121,14 @@ export default function ItemScan() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-5">
               <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Tag size={12} /> Category
+                   <Tag size={12} /> {uiT("Category")}
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{category}</p>
               </div>
               {item.inventoryType && (
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                    <Layers size={12} /> Type
+                     <Layers size={12} /> {uiT("Type")}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{item.inventoryType}</p>
                 </div>
@@ -134,7 +136,7 @@ export default function ItemScan() {
               {gender && (
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                    <User size={12} /> Gender
+                     <User size={12} /> {uiT("Gender")}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{gender}</p>
                 </div>
@@ -142,7 +144,7 @@ export default function ItemScan() {
               {item.color && (
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                    <Eye size={12} /> Color
+                     <Eye size={12} /> {uiT("Color")}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.color}</p>
                 </div>
@@ -150,7 +152,7 @@ export default function ItemScan() {
               {item.size && (
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                    <Layers size={12} /> Size
+                     <Layers size={12} /> {uiT("Size")}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.size}</p>
                 </div>
@@ -158,14 +160,14 @@ export default function ItemScan() {
               {item.supplier && (
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                    <Building size={12} /> Supplier
+                     <Building size={12} /> {uiT("Supplier")}
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.supplier}</p>
                 </div>
               )}
               <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Package size={12} /> Stock
+                   <Package size={12} /> {uiT("Stock")}
                 </div>
                 <p className={`text-sm font-semibold ${(item.quantity || 0) > 5 ? "text-emerald-600" : (item.quantity || 0) > 0 ? "text-amber-600" : "text-red-600"}`}>
                   {item.quantity || 0}
@@ -173,13 +175,13 @@ export default function ItemScan() {
               </div>
               <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Tag size={12} /> Purchase Price
+                   <Tag size={12} /> {uiT("Purchase Price")}
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.purchasePrice || 0}</p>
               </div>
               <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-                  <Tag size={12} /> Selling Price
+                   <Tag size={12} /> {uiT("Selling Price")}
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.sellingPrice || 0}</p>
               </div>
@@ -187,7 +189,7 @@ export default function ItemScan() {
 
             {item.description && (
               <div className="mt-4 p-3 bg-gray-50 dark:bg-slate-700 rounded-xl">
-                <p className="text-xs text-gray-500 mb-1">Description</p>
+                 <p className="text-xs text-gray-500 mb-1">{uiT("Description")}</p>
                 <p className="text-sm text-gray-900 dark:text-white">{item.description}</p>
               </div>
             )}

@@ -461,41 +461,41 @@ export default function Settings() {
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 text-slate-400">
                         <Upload size={22} />
-                        <span className="text-[10px] font-medium">Upload Logo</span>
+                        <span className="text-[10px] font-medium">{uiT("Upload Logo", "लोगो अपलोड करें")}</span>
                       </div>
                     )}
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                      label="Shop Name"
+                      label={uiT("Shop Name", "दुकान का नाम")}
                       icon={<Store size={15} />}
                       value={shopName}
                       onChange={(e) => setShopName(e.target.value)}
-                      placeholder="Your shop name"
+                      placeholder={uiT("Your shop name", "आपकी दुकान का नाम")}
                     />
                     <Input
-                      label="Phone"
+                      label={uiT("Phone", "फ़ोन")}
                       icon={<Phone size={15} />}
                       value={shopPhone}
                       onChange={(e) => setShopPhone(e.target.value)}
-                      placeholder="Contact number"
+                      placeholder={uiT("Contact number", "संपर्क नंबर")}
                     />
                   </div>
                 </div>
 
                 <Textarea
-                  label="Address"
+                  label={uiT("Address", "पता")}
                   icon={<MapPin size={15} />}
                   rows={2}
                   value={shopAddress}
                   onChange={(e) => setShopAddress(e.target.value)}
-                  placeholder="Shop address"
+                  placeholder={uiT("Shop address", "दुकान का पता")}
                   className="pl-10"
                 />
 
                 <Input
-                  label="Email"
+                  label={uiT("Email", "ईमेल")}
                   icon={<Mail size={15} />}
                   type="email"
                   value={shopEmail}
@@ -514,12 +514,12 @@ export default function Settings() {
                     {saving ? (
                       <span className="flex items-center gap-2">
                         <Loader2 size={15} className="animate-spin" />
-                        Saving...
+                        {uiT("Saving...", "सहेज रहे हैं...")}
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
                         <Save size={15} />
-                        Save Changes
+                        {uiT("Save Changes", "परिवर्तन सहेजें")}
                       </span>
                     )}
                   </motion.button>
@@ -537,12 +537,12 @@ export default function Settings() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-4">
                     <Input
-                      label="Admin WhatsApp Number"
+                      label={uiT("Admin WhatsApp Number", "एडमिन WhatsApp नंबर")}
                       icon={<Smartphone size={15} />}
                       value={adminWhatsApp}
                       onChange={(e) => setAdminWhatsApp(e.target.value)}
                       placeholder="e.g. 919XXXXXXXXX"
-                      helperText="Include country code without +"
+                      helperText={uiT("Include country code without +", "देश कोड बिना + के लिखें")}
                     />
                     <div className={`rounded-2xl border p-5 transition-all duration-500 ${
                       waStatus === "connected"
@@ -562,13 +562,13 @@ export default function Settings() {
                             waStatus === "initializing" ? "bg-amber-500 animate-pulse" :
                             "bg-slate-400"
                           }`} />
-                          <span className="text-sm font-medium text-slate-900 dark:text-white">
-                            {waStatus === "connected" ? "Connected" :
-                             waStatus === "qr" ? "Scan QR Code" :
-                             waStatus === "disconnected" ? "Disconnected" :
-                             waStatus === "initializing" ? "Initializing..." :
-                             waStatus === "error" ? "Connection Error" :
-                             "Checking..."}
+                           <span className="text-sm font-medium text-slate-900 dark:text-white">
+                             {waStatus === "connected" ? uiT("Connected", "कनेक्टेड") :
+                              waStatus === "qr" ? uiT("Scan QR Code", "QR कोड स्कैन करें") :
+                              waStatus === "disconnected" ? uiT("Disconnected", "डिस्कनेक्टेड") :
+                              waStatus === "initializing" ? uiT("Initializing...", "प्रारंभ हो रहा है...") :
+                              waStatus === "error" ? uiT("Connection Error", "कनेक्शन त्रुटि") :
+                              uiT("Checking...", "जांच रहे हैं...")}
                           </span>
                         </div>
                         {(waStatus === "connected" || waStatus === "qr") && (
@@ -587,7 +587,7 @@ export default function Settings() {
                             ) : (
                               <WifiOff size={12} />
                             )}
-                            {waDisconnecting ? "Disconnecting..." : "Disconnect"}
+                            {waDisconnecting ? uiT("Disconnecting...", "डिस्कनेक्ट हो रहा है...") : uiT("Disconnect", "डिस्कनेक्ट")}
                           </button>
                         )}
                       </div>
@@ -601,31 +601,31 @@ export default function Settings() {
                       {waStatus === "connected" && (
                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                           <CheckCircle2 size={16} />
-                          <span className="text-xs font-medium">WhatsApp is connected and ready</span>
+                          <span className="text-xs font-medium">{uiT("WhatsApp is connected and ready", "WhatsApp कनेक्टेड और तैयार है")}</span>
                         </div>
                       )}
                       {waStatus === "disconnected" && (
-                        <p className="text-xs text-slate-500">Disconnected. QR will appear shortly.</p>
+                        <p className="text-xs text-slate-500">{uiT("Disconnected. QR will appear shortly.", "डिस्कनेक्टेड। QR जल्द दिखाई देगा।")}</p>
                       )}
                       {waStatus === "initializing" && (
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Loader2 size={14} className="animate-spin" />
-                          Connecting to WhatsApp...
+                          {uiT("Connecting to WhatsApp...", "WhatsApp से कनेक्ट हो रहा है...")}
                         </div>
                       )}
                       {waStatus === "error" && (
-                        <p className="text-xs text-red-500">Connection error. Please restart the server.</p>
+                        <p className="text-xs text-red-500">{uiT("Connection error. Please restart the server.", "कनेक्शन त्रुटि। कृपया सर्वर पुनरारंभ करें।")}</p>
                       )}
                       {waStatus === "checking" && (
-                        <p className="text-xs text-slate-400">Checking connection status...</p>
+                        <p className="text-xs text-slate-400">{uiT("Checking connection status...", "कनेक्शन स्थिति जांच रहे हैं...")}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="hidden sm:flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 rounded-2xl border border-green-200 dark:border-green-500/20">
                     <MessageCircle size={40} className="text-emerald-500 dark:text-emerald-400 mb-3" />
-                    <p className="text-sm font-medium text-slate-900 dark:text-white text-center">WhatsApp Messaging</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1">Send automated order updates and notifications to customers</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white text-center">{uiT("WhatsApp Messaging", "WhatsApp संदेश")}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1">{uiT("Send automated order updates and notifications to customers", "ग्राहकों को स्वचालित ऑर्डर अपडेट और सूचनाएं भेजें")}</p>
                   </div>
                 </div>
 
@@ -638,7 +638,7 @@ export default function Settings() {
                   >
                     <span className="flex items-center gap-2">
                       <Save size={15} />
-                      Save WhatsApp Settings
+                      {uiT("Save WhatsApp Settings", "WhatsApp सेटिंग्स सहेजें")}
                     </span>
                   </motion.button>
                 </div>
@@ -654,7 +654,7 @@ export default function Settings() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {allBranches.length} {allBranches.length === 1 ? "branch" : "branches"} configured
+                    {allBranches.length} {allBranches.length === 1 ? uiT("branch", "शाखा") : uiT("branches", "शाखाएँ")} {uiT("configured", "कॉन्फ़िगर किए गए")}
                   </p>
                   <motion.button
                     onClick={() => {
@@ -667,15 +667,15 @@ export default function Settings() {
                     className="btn-primary btn-sm"
                   >
                     <UserPlus size={14} />
-                    Add Branch
+                    {uiT("Add Branch", "शाखा जोड़ें")}
                   </motion.button>
                 </div>
 
                 {allBranches.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 px-4 bg-slate-50 dark:bg-slate-700/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                     <Building2 size={36} className="text-slate-300 dark:text-slate-600 mb-3" />
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No branches yet</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Add your first branch to get started</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{uiT("No branches yet", "अभी तक कोई शाखा नहीं")}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{uiT("Add your first branch to get started", "शुरू करने के लिए अपनी पहली शाखा जोड़ें")}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
@@ -700,7 +700,7 @@ export default function Settings() {
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                                 b.isActive ? "badge-green" : "badge-gray"
                               }`}>
-                                {b.isActive ? "Active" : "Inactive"}
+                                {b.isActive ? uiT("Active", "सक्रिय") : uiT("Inactive", "निष्क्रिय")}
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
@@ -757,16 +757,16 @@ export default function Settings() {
                       <Crown size={18} className="text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Administrator</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Full system access</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{uiT("Administrator", "प्रशासक")}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Full system access", "पूर्ण सिस्टम पहुँच")}</p>
                     </div>
                   </div>
-                  <span className="badge-green">Admin</span>
+                  <span className="badge-green">{uiT("Admin", "एडमिन")}</span>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">Team Members</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{uiT("Team Members", "टीम सदस्य")}</p>
                     <motion.button
                       onClick={() => setShowAddStaff(true)}
                       whileHover={{ scale: 1.02 }}
@@ -774,14 +774,14 @@ export default function Settings() {
                       className="btn-primary btn-sm"
                     >
                       <UserPlus size={14} />
-                      Add Staff
+                      {uiT("Add Staff", "स्टाफ जोड़ें")}
                     </motion.button>
                   </div>
                   {branchStaff.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                       <User size={28} className="text-slate-300 dark:text-slate-600 mb-2" />
-                      <p className="text-sm text-slate-500 dark:text-slate-400">No staff for this branch</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Add team members to manage this location</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("No staff for this branch", "इस शाखा के लिए कोई स्टाफ नहीं")}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{uiT("Add team members to manage this location", "इस स्थान के प्रबंधन के लिए टीम सदस्य जोड़ें")}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -862,12 +862,12 @@ export default function Settings() {
                 <div className="space-y-3">
                   <div className="relative">
                     <Input
-                      label="New Password"
+                      label={uiT("New Password", "नया पासवर्ड")}
                       icon={<Key size={15} />}
                       type={showPassword ? "text" : "password"}
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="Enter new password"
+                      placeholder={uiT("Enter new password", "नया पासवर्ड दर्ज करें")}
                     />
                     {editPassword && (
                       <button
@@ -890,9 +890,9 @@ export default function Settings() {
                       {savingProfile ? (
                         <span className="flex items-center gap-2">
                           <Loader2 size={14} className="animate-spin" />
-                          Saving...
+                          {uiT("Saving...", "सहेज रहे हैं...")}
                         </span>
-                      ) : "Update Password"}
+                      ) : uiT("Update Password", "पासवर्ड अपडेट करें")}
                     </motion.button>
                     <AnimatePresence mode="wait">
                       {saveProfileMsg && (
@@ -992,7 +992,7 @@ export default function Settings() {
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-semibold text-red-600 dark:text-red-400">{uiT("Sign Out", "लॉग आउट")}</p>
-                      <p className="text-xs text-red-500/70 dark:text-red-400/70">End your current session</p>
+                      <p className="text-xs text-red-500/70 dark:text-red-400/70">{uiT("End your current session", "अपना सत्र समाप्त करें")}</p>
                     </div>
                   </div>
                   <ArrowRight size={16} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
@@ -1028,8 +1028,8 @@ export default function Settings() {
               </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Staff Account</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Create a new team member account</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{uiT("Add Staff Account", "स्टाफ खाता जोड़ें")}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{uiT("Create a new team member account", "नया टीम सदस्य खाता बनाएं")}</p>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
@@ -1043,50 +1043,50 @@ export default function Settings() {
               <div className="overflow-y-auto px-6 py-4">
                 <form onSubmit={handleAddStaff} className="space-y-4">
                   <Input
-                    label="Full Name"
+                    label={uiT("Full Name", "पूरा नाम")}
                     icon={<User size={15} />}
                     value={staffForm.name}
                     onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                    placeholder="Staff full name"
+                    placeholder={uiT("Staff full name", "स्टाफ का पूरा नाम")}
                   />
                   <Input
-                    label="Username *"
+                    label={uiT("Username *", "उपयोगकर्ता नाम *")}
                     icon={<AtSign size={15} />}
                     value={staffForm.username}
                     onChange={(e) => setStaffForm({ ...staffForm, username: e.target.value })}
-                    placeholder="Login username"
+                    placeholder={uiT("Login username", "लॉगिन उपयोगकर्ता नाम")}
                     required
                   />
                   <Input
-                    label="Password *"
+                    label={uiT("Password *", "पासवर्ड *")}
                     icon={<Key size={15} />}
                     type="password"
                     value={staffForm.password}
                     onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
-                    placeholder="Secure password"
+                    placeholder={uiT("Secure password", "सुरक्षित पासवर्ड")}
                     required
                   />
                   <Input
-                    label="Mobile"
+                    label={uiT("Mobile", "मोबाइल")}
                     icon={<Smartphone size={15} />}
                     value={staffForm.mobile}
                     onChange={(e) => setStaffForm({ ...staffForm, mobile: e.target.value })}
-                    placeholder="Phone number"
+                    placeholder={uiT("Phone number", "फ़ोन नंबर")}
                   />
                   <Select
-                    label="Branch *"
+                    label={uiT("Branch *", "शाखा *")}
                     icon={<Building2 size={15} />}
                     value={staffBranch}
                     onChange={(e) => setStaffBranch(e.target.value)}
                     required
                   >
-                    <option value="">Select a branch</option>
+                    <option value="">{uiT("Select a branch", "शाखा चुनें")}</option>
                     {allBranches.filter((b) => b.isActive).map((b) => (
                       <option key={b._id} value={b._id}>{b.name}</option>
                     ))}
                   </Select>
                   <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                    <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">Cancel</button>
+                    <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                     <motion.button
                       type="submit"
                       disabled={staffSaving}
@@ -1097,9 +1097,9 @@ export default function Settings() {
                       {staffSaving ? (
                         <span className="flex items-center gap-2">
                           <Loader2 size={15} className="animate-spin" />
-                          Creating...
+                          {uiT("Creating...", "बना रहे हैं...")}
                         </span>
-                      ) : "Create Staff"}
+                      ) : uiT("Create Staff", "स्टाफ बनाएं")}
                     </motion.button>
                   </div>
                 </form>
@@ -1135,10 +1135,10 @@ export default function Settings() {
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    {editingBranch ? "Edit Branch" : "Add New Branch"}
+                    {editingBranch ? uiT("Edit Branch", "शाखा संपादित करें") : uiT("Add New Branch", "नई शाखा जोड़ें")}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {editingBranch ? "Update branch information" : "Create a new business location"}
+                    {editingBranch ? uiT("Update branch information", "शाखा जानकारी अपडेट करें") : uiT("Create a new business location", "नया व्यापार स्थान बनाएं")}
                   </p>
                 </div>
                 <motion.button
@@ -1153,7 +1153,7 @@ export default function Settings() {
               <div className="overflow-y-auto px-6 py-4">
                 <form onSubmit={editingBranch ? handleUpdateBranch : handleAddBranch} className="space-y-4">
                   <Input
-                    label="Branch Name *"
+                    label={uiT("Branch Name *", "शाखा का नाम *")}
                     icon={<Building2 size={15} />}
                     value={branchForm.name}
                     onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
@@ -1162,45 +1162,45 @@ export default function Settings() {
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                      label="Branch Code *"
+                      label={uiT("Branch Code *", "शाखा कोड *")}
                       icon={<AtSign size={15} />}
                       value={branchForm.code}
                       onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })}
                       placeholder="e.g. GVP"
                       required
                       disabled={!!editingBranch}
-                      helperText="Short identification code"
+                      helperText={uiT("Short identification code", "छोटा पहचान कोड")}
                     />
                     <Input
-                      label="Database Name *"
+                      label={uiT("Database Name *", "डेटाबेस नाम *")}
                       icon={<Globe size={15} />}
                       value={branchForm.dbName}
                       onChange={(e) => setBranchForm({ ...branchForm, dbName: e.target.value })}
                       placeholder="e.g. kmj_govindpuri"
                       required
                       disabled={!!editingBranch}
-                      helperText="MongoDB database name"
+                      helperText={uiT("MongoDB database name", "MongoDB डेटाबेस नाम")}
                     />
                   </div>
                   <Textarea
-                    label="Address"
+                    label={uiT("Address", "पता")}
                     icon={<MapPin size={15} />}
                     rows={2}
                     value={branchForm.address}
                     onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
-                    placeholder="Branch address"
+                    placeholder={uiT("Branch address", "शाखा का पता")}
                     className="pl-10"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                      label="Phone"
+                      label={uiT("Phone", "फ़ोन")}
                       icon={<Phone size={15} />}
                       value={branchForm.phone}
                       onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
-                      placeholder="Contact number"
+                      placeholder={uiT("Contact number", "संपर्क नंबर")}
                     />
                     <Input
-                      label="Email"
+                      label={uiT("Email", "ईमेल")}
                       icon={<Mail size={15} />}
                       type="email"
                       value={branchForm.email}
@@ -1210,17 +1210,17 @@ export default function Settings() {
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Owner Details</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{uiT("Owner Details", "मालिक विवरण")}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
-                        label="Owner Name"
+                        label={uiT("Owner Name", "मालिक का नाम")}
                         icon={<User size={15} />}
                         value={branchForm.ownerName}
                         onChange={(e) => setBranchForm({ ...branchForm, ownerName: e.target.value })}
                         placeholder="e.g. Prakash Rathore"
                       />
                       <Input
-                        label="Owner Phone"
+                        label={uiT("Owner Phone", "मालिक का फ़ोन")}
                         icon={<Phone size={15} />}
                         value={branchForm.ownerPhone}
                         onChange={(e) => setBranchForm({ ...branchForm, ownerPhone: e.target.value })}
@@ -1229,7 +1229,7 @@ export default function Settings() {
                     </div>
                     <div className="mt-4">
                       <Input
-                        label="Owner Email"
+                        label={uiT("Owner Email", "मालिक का ईमेल")}
                         icon={<Mail size={15} />}
                         type="email"
                         value={branchForm.ownerEmail}
@@ -1240,7 +1240,7 @@ export default function Settings() {
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                    <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">Cancel</button>
+                    <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                     <motion.button
                       type="submit"
                       disabled={branchSaving}
@@ -1251,9 +1251,9 @@ export default function Settings() {
                       {branchSaving ? (
                         <span className="flex items-center gap-2">
                           <Loader2 size={15} className="animate-spin" />
-                          Saving...
+                          {uiT("Saving...", "सहेज रहे हैं...")}
                         </span>
-                      ) : (editingBranch ? "Update Branch" : "Create Branch")}
+                      ) : (editingBranch ? uiT("Update Branch", "शाखा अपडेट करें") : uiT("Create Branch", "शाखा बनाएं"))}
                     </motion.button>
                   </div>
                 </form>
@@ -1290,10 +1290,10 @@ export default function Settings() {
                 <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                   <LogOut size={24} className="text-red-600 dark:text-red-400" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Sign Out</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to end your session?</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{uiT("Sign Out", "साइन आउट")}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{uiT("Are you sure you want to end your session?", "क्या आप अपना सत्र समाप्त करना चाहते हैं?")}</p>
                 <div className="flex gap-3 justify-center">
-                  <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">Cancel</button>
+                  <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                   <motion.button
                     onClick={handleLogout}
                     whileHover={{ scale: 1.02 }}
@@ -1301,7 +1301,7 @@ export default function Settings() {
                     className="btn-danger"
                   >
                     <LogOut size={15} />
-                    Sign Out
+                    {uiT("Sign Out", "साइन आउट")}
                   </motion.button>
                 </div>
               </div>

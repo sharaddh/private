@@ -33,6 +33,8 @@ function getDateRange(presetDays: number): { start: string; end: string } {
 
 export default function Reports() {
   const { uiT } = useTranslate();
+  const tabLabels: Record<string, string> = { Customers: "ग्राहक", Sales: "बिक्री", Pending: "बाकी", Inventory: "इन्वेंट्री" };
+  const presetLabels: Record<string, string> = { Today: "आज", "This Week": "इस सप्ताह", "This Month": "इस महीने", "This Quarter": "इस तिमाही", "This Year": "इस वर्ष", All: "सभी" };
   const [activeTab, setActiveTab] = useState("sales");
   const [loading, setLoading] = useState(true);
   const [customerData, setCustomerData] = useState<any[]>([]);
@@ -137,14 +139,14 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="page-title">{uiT("Reports", "रिपोर्ट")}</h1>
-          <p className="page-subtitle">Business insights and analytics.</p>
+          <p className="page-subtitle">{uiT("Business insights and analytics.", "व्यापार जानकारी और विश्लेषण।")}</p>
         </div>
         <div className="flex gap-2">
           {activeTab === "customers" && customerData?.length > 0 && (
-            <button onClick={exportCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> Export CSV</button>
+            <button onClick={exportCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> {uiT("Export CSV", "CSV निर्यात")}</button>
           )}
           {activeTab === "pending" && pendingData?.length > 0 && (
-            <button onClick={exportPendingCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> Export CSV</button>
+            <button onClick={exportPendingCSV} className="btn-secondary btn-sm flex items-center gap-1.5"><Download size={14} /> {uiT("Export CSV", "CSV निर्यात")}</button>
           )}
         </div>
       </div>
@@ -160,7 +162,7 @@ export default function Reports() {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors shrink-0 ${
                   isActive ? "border-primary-600 text-primary-600 dark:text-primary-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}>
-                <Icon size={16} /> {t.label}
+                <Icon size={16} /> {uiT(t.label, tabLabels[t.label] || t.label)}
               </button>
             );
           })}
@@ -178,7 +180,7 @@ export default function Reports() {
                   ? "bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300"
                   : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
               }`}
-            >{p.label}</button>
+            >{uiT(p.label, presetLabels[p.label] || p.label)}</button>
           ))}
           <span className="text-slate-300 dark:text-slate-600 text-xs px-1">|</span>
           <input type="date" value={customStart}
@@ -201,34 +203,34 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
               <p className="text-3xl font-bold text-slate-900 dark:text-white">{(customerData?.length || 0).toLocaleString()}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Total Customers</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Total Customers", "कुल ग्राहक")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {(customerData?.filter((c: any) => c.totalVisits === 1).length || 0).toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">New Customers</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("New Customers", "नए ग्राहक")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {(customerData?.filter((c: any) => (c.totalVisits || 0) > 1).length || 0).toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Returning Customers</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Returning Customers", "वापसी ग्राहक")}</p>
             </div>
           </div>
 
           {topCustomers.length > 0 && (
             <div className="card">
-              <h3 className="section-title mb-4">Top Customers by Spend</h3>
+              <h3 className="section-title mb-4">{uiT("Top Customers by Spend", "खर्च के अनुसार शीर्ष ग्राहक")}</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700/50">
                       <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">#</th>
-                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Name</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Visits</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total Spent</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Name", "नाम")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Visits", "विज़िट")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Total Spent", "कुल खर्च")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Pending", "बाकी")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,19 +254,19 @@ export default function Reports() {
           )}
 
           <div className="card">
-            <h3 className="section-title mb-4">All Customers ({customerData?.length || 0})</h3>
+            <h3 className="section-title mb-4">{uiT("All Customers", "सभी ग्राहक")} ({customerData?.length || 0})</h3>
             {(!customerData || customerData.length === 0) ? (
-              <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-8">No customers yet.</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-8">{uiT("No customers yet.", "अभी तक कोई ग्राहक नहीं।")}</p>
             ) : (
               <div className="overflow-x-auto max-h-96 overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-white dark:bg-slate-800">
                     <tr className="border-b border-slate-200 dark:border-slate-700/50">
-                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Name</th>
-                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Mobile</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Visits</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total Spent</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Name", "नाम")}</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Mobile", "मोबाइल")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Visits", "विज़िट")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Total Spent", "कुल खर्च")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Pending", "बाकी")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -299,37 +301,37 @@ export default function Reports() {
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Collection</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Total Collection", "कुल संग्रह")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">₹{((salesData?.totalRevenue || 0) - (salesData?.totalCollection || 0)).toLocaleString()}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Outstanding</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Outstanding", "बकाया")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {salesData?.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(1)}%` : "—"}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Collection Ratio</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Collection Ratio", "संग्रह अनुपात")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Bills</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Total Bills", "कुल बिल")}</p>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{salesData?.billCount || 0}</p>
             </div>
             <div className="card">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Payments</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Total Payments", "कुल भुगतान")}</p>
               <p className="text-xl font-bold text-slate-900 dark:text-white">{salesData?.paymentCount || 0}</p>
             </div>
             <div className="card">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Avg Order Value</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Avg Order Value", "औसत ऑर्डर मूल्य")}</p>
               <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
                 ₹{salesData?.billCount > 0 ? (salesData.totalRevenue / salesData.billCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
               </p>
             </div>
             <div className="card">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Total Discount</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Total Discount", "कुल छूट")}</p>
               <p className="text-xl font-bold text-red-500">₹{(salesData?.totalDiscount || 0).toLocaleString()}</p>
             </div>
           </div>
@@ -349,13 +351,13 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
               <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{pendingData.length}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Pending Bills</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Pending Bills", "बाकी बिल")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-red-600 dark:text-red-400">
                 ₹{pendingData.reduce((s: number, b: any) => s + (b.pendingAmount || 0), 0).toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Total Pending Amount</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Total Pending Amount", "कुल बाकी राशि")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
@@ -364,7 +366,7 @@ export default function Reports() {
                   return days > 30 ? s + (b.pendingAmount || 0) : s;
                 }, 0).toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Over 30 Days (Amount)</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Over 30 Days (Amount)", "30 दिन से अधिक (राशि)")}</p>
             </div>
           </div>
 

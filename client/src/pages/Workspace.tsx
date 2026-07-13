@@ -31,19 +31,19 @@ interface CustomerData {
   createdAt?: string;
 }
 
-const VISIT_TYPES = [
-  { value: "new", label: "New Glasses", icon: Eye },
-  { value: "frame_change", label: "Frame Change", icon: RefreshCw },
-  { value: "new_lens", label: "New Lens", icon: Eye },
-  { value: "contact_lens", label: "Contact Lens", icon: Eye },
-  { value: "service", label: "Service", icon: Activity },
-  { value: "other", label: "Other", icon: Eye },
-];
-
 export default function Workspace() {
   const navigate = useNavigate();
   const toast = useToast();
   const { t, uiT } = useTranslate();
+
+  const VISIT_TYPES = [
+    { value: "new", label: uiT("New Glasses", "नए चश्मे"), icon: Eye },
+    { value: "frame_change", label: uiT("Frame Change", "फ्रेम बदलें"), icon: RefreshCw },
+    { value: "new_lens", label: uiT("New Lens", "नया लेंस"), icon: Eye },
+    { value: "contact_lens", label: uiT("Contact Lens", "कॉन्टैक्ट लेंस"), icon: Eye },
+    { value: "service", label: uiT("Service", "सेवा"), icon: Activity },
+    { value: "other", label: uiT("Other", "अन्य"), icon: Eye },
+  ];
   const steps = [
     { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
     { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
@@ -731,7 +731,7 @@ export default function Workspace() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Address</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="Address" value={customerForm.address || ""}
+                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder={uiT("Address", "पता")} value={customerForm.address || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
               </div>
             </div>

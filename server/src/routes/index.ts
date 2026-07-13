@@ -36,7 +36,7 @@ router.use("/dashboard", branchScope, dashboard);
 router.use("/reports", branchScope, reports);
 router.use("/settings", branchScope, settings);
 router.use("/workspace", branchScope, workspace);
-router.use("/whatsapp", whatsapp);
+router.use("/whatsapp", branchScope, whatsapp);
 router.use("/cache", cacheAdmin);
 router.use("/recalculate", recalculate);
 

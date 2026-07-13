@@ -6,6 +6,7 @@ import makeWASocket, {
   initAuthCreds,
   BufferJSON,
   Browsers,
+  fetchLatestBaileysVersion,
 } from "@whiskeysockets/baileys";
 import * as QR from "qrcode";
 import { Buffer } from "buffer";
@@ -30,13 +31,13 @@ type QueueItem = QueuedMessage | QueuedMedia;
 
 import { normalizePhone, toWhatsAppJID as toJID } from "../utils/phone";
 
-async function useMongoDBAuthState(): Promise<{
+async function useMongoDBAuthState(collectionName: string): Promise<{
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
 }> {
   const db = mongoose.connection.db;
   if (!db) throw new Error("MongoDB not connected");
-  const collection = db.collection("baileys_auth");
+  const collection = db.collection(collectionName);
 
   const saved = await collection.findOne({ _id: "auth_state" as any });
   let creds: AuthenticationCreds;
@@ -81,17 +82,15 @@ async function useMongoDBAuthState(): Promise<{
         { upsert: true }
       );
     } catch (e) {
-      console.error("WhatsApp: failed to save auth state to MongoDB:", e);
+      console.error(`WhatsApp [${collectionName}]: failed to save auth state to MongoDB:`, e);
     }
   };
 
   return { state: { creds, keys }, saveCreds };
 }
 
-// Hardcoded WA Web version that's currently accepted.
-// fetchLatestBaileysVersion() is unreliable on Render (GitHub fetch may fail,
-// falling back to stale default). Keep this updated if version rejection occurs.
-const WA_VERSION: [number, number, number] = [2, 3000, 1035194821];
+// Fallback WA Web version. Updated dynamically via fetchLatestBaileysVersion().
+const FALLBACK_WA_VERSION: [number, number, number] = [2, 3000, 1035194821];
 
 const QR_TIMEOUT_MS = 120000;
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -113,6 +112,11 @@ class WhatsAppService {
   private drainInProgress = false;
   private saveCredsFn: (() => Promise<void>) | null = null;
   private _broadcastAborted = false;
+  private authCollection: string;
+
+  constructor(branchKey: string) {
+    this.authCollection = branchKey ? `baileys_auth_${branchKey}` : "baileys_auth";
+  }
 
   get ready() { return this._ready; }
   get qr() { return this._qr; }
@@ -141,41 +145,48 @@ class WhatsAppService {
   private async doInit(): Promise<void> {
     try {
       await this.tryInit();
-      console.log("WhatsApp: connected successfully");
+      console.log(`WhatsApp [${this.authCollection}]: connected successfully`);
     } catch (err: any) {
       const msg = err?.message || "Failed to connect to WhatsApp";
       if (msg === "RESTART_REQUIRED") {
-        // Pairing succeeded; creds saved to MongoDB. Re-init with the
-        // new session. Don't destroy — that would cancel the reconnect.
-        console.log("WhatsApp: pairing complete, restarting with saved session");
+        console.log(`WhatsApp [${this.authCollection}]: pairing complete, restarting with saved session`);
         this.initializing = false;
         this.initPromise = null;
         await this.init();
         return;
       }
-      console.error("WhatsApp init failed:", msg);
+      console.error(`WhatsApp [${this.authCollection}] init failed:`, msg);
       await this.destroy();
       this._error = msg;
     }
   }
 
   private async tryInit(): Promise<void> {
-    const { state, saveCreds } = await useMongoDBAuthState();
+    const { state, saveCreds } = await useMongoDBAuthState(this.authCollection);
     this.saveCredsFn = saveCreds;
 
     const isLoggedIn = !!state.creds.me?.id;
+
+    // Fetch latest Baileys version with fallback
+    let waVersion = FALLBACK_WA_VERSION;
+    try {
+      const { version } = await fetchLatestBaileysVersion();
+      waVersion = version;
+    } catch {
+      console.log(`WhatsApp [${this.authCollection}]: using fallback WA version`, FALLBACK_WA_VERSION);
+    }
 
     return new Promise<void>((resolve, reject) => {
       let qrTimer: ReturnType<typeof setTimeout> | null = null;
       let resolved = false;
 
       if (isLoggedIn) {
-        console.log("WhatsApp: found existing session for", state.creds.me?.id);
+        console.log(`WhatsApp [${this.authCollection}]: found existing session for`, state.creds.me?.id);
       }
 
       const sock = makeWASocket({
         auth: state,
-        version: WA_VERSION,
+        version: waVersion,
         printQRInTerminal: false,
         browser: Browsers.macOS("Chrome"),
         syncFullHistory: false,
@@ -203,11 +214,11 @@ class WhatsAppService {
           } catch {
             this._qrBase64 = null;
           }
-          console.log("WhatsApp: QR code generated");
+          console.log(`WhatsApp [${this.authCollection}]: QR code generated`);
         }
 
         if (isNewLogin) {
-          console.log("WhatsApp: new login detected, saving creds");
+          console.log(`WhatsApp [${this.authCollection}]: new login detected, saving creds`);
           if (this.saveCredsFn) await this.saveCredsFn();
         }
 
@@ -220,7 +231,7 @@ class WhatsAppService {
           if (qrTimer) clearTimeout(qrTimer);
           if (!resolved) {
             resolved = true;
-            console.log("WhatsApp: connected!");
+            console.log(`WhatsApp [${this.authCollection}]: connected!`);
             this.drainQueue();
             resolve();
           }
@@ -235,7 +246,7 @@ class WhatsAppService {
           const errMsg = lastDisconnect?.error?.message || lastDisconnect?.error?.toString() || "no error";
           const errStack = lastDisconnect?.error?.stack || "";
 
-          console.log("WhatsApp: connection closed", {
+          console.log(`WhatsApp [${this.authCollection}]: connection closed`, {
             reason,
             statusCode,
             wasReady,
@@ -244,9 +255,6 @@ class WhatsAppService {
             errStack: errStack.split("\n")[0],
           });
 
-          // After a successful pairing, Baileys closes the socket
-          // (restartRequired). The new creds are saved to MongoDB.
-          // Clean up and let doInit() re-init with the saved session.
           if (statusCode === DisconnectReason.restartRequired) {
             this.cancelReconnect();
             if (qrTimer) clearTimeout(qrTimer);
@@ -273,22 +281,20 @@ class WhatsAppService {
             statusCode === DisconnectReason.badSession;
 
           if (needsReAuth) {
-            console.log("WhatsApp: " + (DisconnectReason as any)[statusCode] + ", clearing session for re-auth");
+            console.log(`WhatsApp [${this.authCollection}]: ${reason}, clearing session for re-auth`);
             try {
               const db = mongoose.connection.db;
-              if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+              if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
             } catch (e) { /* auth_state cleanup is best-effort */ }
           } else {
             this.scheduleReconnect();
           }
 
-          // If connection closed before auth completed, clear partial session
-          // so the next attempt starts completely fresh
           if (!resolved) {
-            console.log("WhatsApp: connection closed before auth completed, clearing partial session");
+            console.log(`WhatsApp [${this.authCollection}]: connection closed before auth completed, clearing partial session`);
             try {
               const db = mongoose.connection.db;
-              if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+              if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
             } catch (e) { /* partial session cleanup is best-effort */ }
           }
 
@@ -307,11 +313,10 @@ class WhatsAppService {
         if (this.saveCredsFn) await this.saveCredsFn();
       });
 
-      // Long timeout to let user scan QR
       qrTimer = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          console.log("WhatsApp: QR timeout — no connection within " + (QR_TIMEOUT_MS / 1000) + "s");
+          console.log(`WhatsApp [${this.authCollection}]: QR timeout — no connection within ${QR_TIMEOUT_MS / 1000}s`);
           sock.ev.removeAllListeners("connection.update");
           sock.ev.removeAllListeners("creds.update");
           sock.end(new Error("QR timeout"));
@@ -331,7 +336,7 @@ class WhatsAppService {
       return;
     }
 
-    console.log(`WhatsApp: draining ${items.length} queued messages...`);
+    console.log(`WhatsApp [${this.authCollection}]: draining ${items.length} queued messages...`);
 
     let sent = 0;
     let failed = 0;
@@ -352,7 +357,7 @@ class WhatsAppService {
       await new Promise((r) => setTimeout(r, 500));
     }
 
-    console.log(`WhatsApp queue drain: ${sent} sent, ${failed} failed`);
+    console.log(`WhatsApp [${this.authCollection}] queue drain: ${sent} sent, ${failed} failed`);
     this.drainInProgress = false;
   }
 
@@ -363,7 +368,7 @@ class WhatsAppService {
       await this.sock.sendMessage(jid, { text: message });
       return true;
     } catch (err) {
-      console.error("WhatsApp send error:", err);
+      console.error(`WhatsApp [${this.authCollection}] send error:`, err);
       return false;
     }
   }
@@ -380,7 +385,7 @@ class WhatsAppService {
       await this.sock.sendMessage(jid, msg);
       return true;
     } catch (err: any) {
-      console.error("WhatsApp sendMedia error:", err?.message || err);
+      console.error(`WhatsApp [${this.authCollection}] sendMedia error:`, err?.message || err);
       return false;
     }
   }
@@ -388,7 +393,7 @@ class WhatsAppService {
   async sendMessage(phone: string, message: string): Promise<boolean> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
-      console.log(`WhatsApp: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
+      console.log(`WhatsApp [${this.authCollection}]: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
       return false;
     }
     return this.sendMessageNow(phone, message);
@@ -397,7 +402,7 @@ class WhatsAppService {
   async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
-      console.log(`WhatsApp: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
+      console.log(`WhatsApp [${this.authCollection}]: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
       return false;
     }
     if (throwOnError) {
@@ -473,7 +478,7 @@ class WhatsAppService {
     this._qr = null;
     this._qrBase64 = null;
     this._error = null;
-    console.log("WhatsApp: pairing code generated:", code);
+    console.log(`WhatsApp [${this.authCollection}]: pairing code generated:`, code);
     return code;
   }
 
@@ -488,16 +493,16 @@ class WhatsAppService {
   private scheduleReconnect() {
     this.cancelReconnect();
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error("WhatsApp: max reconnect attempts reached, giving up");
+      console.error(`WhatsApp [${this.authCollection}]: max reconnect attempts reached, giving up`);
       this._error = "Connection lost. Click 'Retry Connection' to try again.";
       return;
     }
     this.reconnectAttempts++;
     const delay = RECONNECT_BASE_DELAY * this.reconnectAttempts;
-    console.log(`WhatsApp: scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+    console.log(`WhatsApp [${this.authCollection}]: scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      this.init().catch((err) => console.error("WhatsApp reconnect failed:", err));
+      this.init().catch((err) => console.error(`WhatsApp [${this.authCollection}] reconnect failed:`, err));
     }, delay);
   }
 
@@ -531,7 +536,7 @@ class WhatsAppService {
   async disconnect() {
     try {
       const db = mongoose.connection.db;
-      if (db) await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+      if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
     } catch (e) { /* auth_state cleanup is best-effort */ }
     await this.destroy();
   }
@@ -542,4 +547,87 @@ class WhatsAppService {
   }
 }
 
-export const whatsapp = new WhatsAppService();
+// ─── WhatsApp Manager: manages per-branch WhatsApp instances ───
+
+class WhatsAppManager {
+  private instances = new Map<string, WhatsAppService>();
+  private defaultInstance: WhatsAppService;
+
+  constructor() {
+    this.defaultInstance = new WhatsAppService("");
+  }
+
+  /**
+   * Get or create a WhatsApp instance for a branch.
+   * If branchKey is empty, returns the default (legacy) instance.
+   */
+  getInstance(branchKey?: string | null): WhatsAppService {
+    const key = branchKey || "";
+    if (!key) return this.defaultInstance;
+
+    let instance = this.instances.get(key);
+    if (!instance) {
+      instance = new WhatsAppService(key);
+      this.instances.set(key, instance);
+    }
+    return instance;
+  }
+
+  /**
+   * Initialize all active branch WhatsApp instances.
+   */
+  async initAll(branchKeys: string[]): Promise<void> {
+    const inits: Promise<void>[] = [];
+    for (const key of branchKeys) {
+      const instance = this.getInstance(key);
+      inits.push(instance.init().then(() => {}).catch(() => {}));
+    }
+    await Promise.allSettled(inits);
+  }
+
+  /**
+   * Clear stale auth across all known collections (default + all branches).
+   */
+  async clearAllStaleAuth(): Promise<void> {
+    const db = mongoose.connection.db;
+    if (!db) return;
+
+    try {
+      // Clear default auth
+      await db.collection("baileys_auth").deleteOne({ _id: "auth_state" as any });
+    } catch {}
+
+    // Clear all branch auths
+    for (const [key, instance] of this.instances) {
+      try {
+        await db.collection(`baileys_auth_${key}`).deleteOne({ _id: "auth_state" as any });
+      } catch {}
+    }
+
+    // Also clear any orphaned baileys_auth_* collections
+    try {
+      const collections = await db.listCollections({ name: { $regex: "^baileys_auth_" } }).toArray();
+      for (const coll of collections) {
+        try {
+          await db.collection(coll.name).deleteOne({ _id: "auth_state" as any });
+        } catch {}
+      }
+    } catch {}
+  }
+
+  /**
+   * Destroy all instances.
+   */
+  async destroyAll(): Promise<void> {
+    await this.defaultInstance.destroy().catch(() => {});
+    for (const [, instance] of this.instances) {
+      await instance.destroy().catch(() => {});
+    }
+    this.instances.clear();
+  }
+}
+
+export const whatsappManager = new WhatsAppManager();
+
+// Backward-compatible export: returns the default (legacy) instance
+export const whatsapp = whatsappManager.getInstance();

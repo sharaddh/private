@@ -58,7 +58,7 @@ export default function Payments() {
             <IndianRupee size={20} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{uiT("Total", "कुल")} Collected</p>
+            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{uiT("Total", "कुल")} {uiT("Collected", "एकत्रित")}</p>
             <p className="text-xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString("en-IN")}</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function Payments() {
               }`}>{v || "Cash"}</span>
             )},
             { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
-            { key: "notes", label: "Notes", render: (v) => <span className="text-gray-500">{v || "—"}</span> },
+            { key: "notes", label: uiT("Notes", "नोट्स"), render: (v) => <span className="text-gray-500">{v || "—"}</span> },
           ]}
           data={list}
           searchPlaceholder={uiT("Search", "खोजें") + " payments..."}

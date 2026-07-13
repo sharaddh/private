@@ -347,7 +347,7 @@ export default function Bills() {
 
       <Table
         columns={[
-          { key: "billNumber", label: "Bill #" },
+          { key: "billNumber", label: uiT("Bill #", "बिल #") },
           { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: unknown, row: Record<string, unknown>) => {
             const c = resolveCustomer(row);
             return c ? c.name : typeof v === "string" ? (v as string).slice(-6) : "—";
