@@ -1,26 +1,10 @@
 import { motion } from "framer-motion";
-import { 
-  Percent, CreditCard, Truck, MapPin, CalendarDays, 
+import {
+  Percent, CreditCard, Truck, MapPin, CalendarDays,
   Banknote, Smartphone, CreditCard as CardIcon, Building2, Shield, CalendarClock
 } from "lucide-react";
+import { useTranslate } from "../../context/TranslateContext";
 
-const PAYMENT_METHODS = [
-  { value: "Cash", icon: Banknote },
-  { value: "UPI", icon: Smartphone },
-  { value: "Card", icon: CardIcon },
-  { value: "Bank", icon: Building2 },
-  { value: "Insurance", icon: Shield },
-];
-
-const DATE_SHORTCUTS = [
-  { label: "Today", days: 0 },
-  { label: "Tmrw", days: 1 },
-  { label: "2 Days", days: 2 },
-  { label: "3 Days", days: 3 },
-  { label: "1 Week", days: 7 },
-];
-
-// Helper to get formatted YYYY-MM-DD date based on day offset
 const getDateFromOffset = (daysOffset: number) => {
   const date = new Date();
   date.setDate(date.getDate() + daysOffset);
@@ -53,9 +37,26 @@ export default function PaymentPanel({
   advancePaid, setAdvancePaid, paymentMode, setPaymentMode, finalTotal,
   deliveryAddress, setDeliveryAddress, deliveryDate, setDeliveryDate,
 }: Props) {
-  
+  const { uiT } = useTranslate();
+
   const pendingBalance = Math.max(0, finalTotal - advancePaid);
   const isFullyPaid = advancePaid >= finalTotal;
+
+  const PAYMENT_METHODS = [
+    { value: uiT("Cash", "नकद"), icon: Banknote },
+    { value: "UPI", icon: Smartphone },
+    { value: uiT("Card", "कार्ड"), icon: CardIcon },
+    { value: uiT("Bank", "बैंक"), icon: Building2 },
+    { value: uiT("Insurance", "बीमा"), icon: Shield },
+  ];
+
+  const DATE_SHORTCUTS = [
+    { label: uiT("Today", "आज"), days: 0 },
+    { label: uiT("Tmrw", "कल"), days: 1 },
+    { label: uiT("2 Days", "2 दिन"), days: 2 },
+    { label: uiT("3 Days", "3 दिन"), days: 3 },
+    { label: uiT("1 Week", "1 सप्ताह"), days: 7 },
+  ];
 
   return (
     <motion.div
@@ -66,10 +67,10 @@ export default function PaymentPanel({
     >
       {/* Left Column: Forms */}
       <div className="lg:col-span-2 space-y-6">
-        
+
         {/* Discount & Payment Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+
           {/* Discount Panel */}
           <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm h-full">
             <div className="flex items-center gap-3 mb-5">
@@ -77,8 +78,8 @@ export default function PaymentPanel({
                 <Percent size={18} className="text-rose-600 dark:text-rose-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">Discount</h2>
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Apply concession</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">{uiT("Discount", "छूट")}</h2>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{uiT("Apply concession", "छूट लागू करें")}</p>
               </div>
             </div>
 
@@ -86,20 +87,20 @@ export default function PaymentPanel({
               <button
                 onClick={() => setDiscountType("percent")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${discountType === "percent" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}
-              >Percentage (%)</button>
+              >{uiT("Percentage (%)", "प्रतिशत (%)")}</button>
               <button
                 onClick={() => setDiscountType("amount")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${discountType === "amount" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}
-              >Flat Amount (₹)</button>
+              >{uiT("Flat Amount (₹)", "निश्चित राशि (₹)")}</button>
             </div>
 
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">
                 {discountType === "percent" ? "%" : "₹"}
               </span>
-              <input 
+              <input
                 type="number"
-                placeholder={discountType === "percent" ? "Enter %" : "Enter amount"}
+                placeholder={discountType === "percent" ? uiT("Enter %", "% दर्ज करें") : uiT("Enter amount", "राशि दर्ज करें")}
                 value={discountType === "percent" ? discountPercent || "" : discountAmount || ""}
                 onChange={(e) => {
                   const val = Number(e.target.value);
@@ -119,8 +120,8 @@ export default function PaymentPanel({
                 <CreditCard size={18} className="text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">Payment</h2>
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Mode & advance collected</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">{uiT("Payment", "भुगतान")}</h2>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{uiT("Mode & advance collected", "मोड और अग्रिम एकत्र")}</p>
               </div>
             </div>
 
@@ -147,15 +148,15 @@ export default function PaymentPanel({
 
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">₹</span>
-              <input 
-                type="number" 
-                placeholder="Advance Collected" 
+              <input
+                type="number"
+                placeholder={uiT("Advance Collected", "अग्रिम एकत्र")}
                 value={advancePaid || ""}
                 onChange={(e) => setAdvancePaid(Number(e.target.value))}
                 onWheel={(e) => (e.target as HTMLElement).blur()}
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all" 
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               />
-              <button 
+              <button
                 onClick={() => setAdvancePaid(finalTotal)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-[10px] font-bold rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-300 transition-colors"
               >
@@ -172,8 +173,8 @@ export default function PaymentPanel({
               <Truck size={18} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Delivery Setup</h2>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Schedule when the order will be ready</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{uiT("Delivery Setup", "डिलीवरी सेटअप")}</h2>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{uiT("Schedule when the order will be ready", "शेड्यूल करें कि ऑर्डर कब तैयार होगा")}</p>
             </div>
           </div>
 
@@ -182,11 +183,11 @@ export default function PaymentPanel({
             <div className="space-y-3">
               <div className="relative">
                 <CalendarDays size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer" 
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -214,11 +215,11 @@ export default function PaymentPanel({
             {/* Delivery Address */}
             <div className="relative">
               <MapPin size={16} className="absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
-              <textarea 
-                placeholder="Delivery / Shipping Address (Optional)" 
+              <textarea
+                placeholder={uiT("Delivery / Shipping Address (Optional)", "डिलीवरी / शिपिंग पता (वैकल्पिक)")}
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                className="w-full h-full min-h-[90px] pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all resize-none" 
+                className="w-full h-full min-h-[90px] pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all resize-none"
               />
             </div>
           </div>
@@ -230,31 +231,31 @@ export default function PaymentPanel({
         <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 shadow-xl sticky top-6 text-white border border-slate-800">
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
             <Banknote className="text-primary-400" />
-            Summary
+            {uiT("Summary", "सारांश")}
           </h3>
 
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400 font-medium">Subtotal</span>
+              <span className="text-slate-400 font-medium">{uiT("Subtotal", "उप-योग")}</span>
               <span className="font-bold">₹{totalAmount.toLocaleString()}</span>
             </div>
-            
+
             {discountVal > 0 && (
               <div className="flex justify-between items-center text-sm">
-                <span className="text-rose-400 font-medium">Discount</span>
+                <span className="text-rose-400 font-medium">{uiT("Discount", "छूट")}</span>
                 <span className="font-bold text-rose-400">-₹{discountVal.toLocaleString()}</span>
               </div>
             )}
-            
+
             <div className="flex justify-between items-center text-sm">
-              <span className="text-emerald-400 font-medium">Advance Paid ({paymentMode})</span>
+              <span className="text-emerald-400 font-medium">{uiT("Advance Paid", "अग्रिम भुगतान")} ({paymentMode})</span>
               <span className="font-bold text-emerald-400">-₹{advancePaid.toLocaleString()}</span>
             </div>
           </div>
 
           <div className="border-t border-slate-700/80 pt-5 mb-5 border-dashed">
             <div className="flex justify-between items-end">
-              <span className="text-sm font-medium text-slate-400 mb-1">Final Total</span>
+              <span className="text-sm font-medium text-slate-400 mb-1">{uiT("Final Total", "अंतिम कुल")}</span>
               <motion.span
                 key={finalTotal}
                 initial={{ scale: 1.1 }}
@@ -270,7 +271,7 @@ export default function PaymentPanel({
             isFullyPaid ? "bg-emerald-500/20 border border-emerald-500/30" : "bg-amber-500/20 border border-amber-500/30"
           }`}>
             <span className={`text-sm font-bold ${isFullyPaid ? "text-emerald-400" : "text-amber-400"}`}>
-              {isFullyPaid ? "Fully Paid" : "Balance Due"}
+              {isFullyPaid ? uiT("Fully Paid", "पूर्ण भुगतान") : uiT("Balance Due", "शेष देय")}
             </span>
             <span className={`text-xl font-black tabular-nums tracking-tight ${isFullyPaid ? "text-emerald-400" : "text-amber-400"}`}>
               ₹{pendingBalance.toLocaleString()}
