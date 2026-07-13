@@ -192,7 +192,7 @@ export default function CustomerDetail() {
     <div className="page-container">
       <button onClick={() => navigate("/customers")}
         className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all duration-300 mb-4 hover:-translate-x-0.5">
-        <ArrowLeft size={16} /> Back to Customers
+        <ArrowLeft size={16} /> {uiT("Back to Customers", "ग्राहकों पर वापस जाएं")}
       </button>
 
       <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 dark:from-primary-700 dark:via-primary-800 dark:to-primary-950 rounded-3xl shadow-xl mb-6">
@@ -219,11 +219,11 @@ export default function CustomerDetail() {
                       <select className="input-field bg-white/90" value={editForm.gender || ""}
                         onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}>
                         <option value="">{uiT("Gender", "लिंग")}</option>
-                        <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+                        <option value="Male">{uiT("Male", "पुरुष")}</option><option value="Female">{uiT("Female", "महिला")}</option><option value="Other">{uiT("Other", "अन्य")}</option>
                       </select>
-                      <input className="input-field bg-white/90" placeholder="City" value={editForm.city || ""}
+                      <input className="input-field bg-white/90" placeholder={uiT("City", "शहर")} value={editForm.city || ""}
                         onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder="Alt Mobile" value={editForm.alternateMobile || ""}
+                      <input className="input-field bg-white/90" placeholder={uiT("Alt Mobile", "वैकल्पिक मोबाइल")} value={editForm.alternateMobile || ""}
                         onChange={(e) => setEditForm({ ...editForm, alternateMobile: e.target.value })} />
                       <div className="col-span-2">
                         <textarea className="input-field bg-white/90" placeholder={uiT("Address", "पता")} rows={2} value={editForm.address || ""}
@@ -262,13 +262,13 @@ export default function CustomerDetail() {
                         </span>
                       )}
                       <span className="flex items-center gap-1.5 text-sm text-white/80">
-                        <Calendar size={14} className="text-white/60" /> Joined {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                        <Calendar size={14} className="text-white/60" /> {uiT("Joined", "शामिल हुए")} {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                       </span>
                       {customer.age && <span className="text-sm text-white/80"><User size={14} className="inline mr-1 text-white/60" />Age: {customer.age}</span>}
                       {customer.gender && <span className="text-sm text-white/80">{customer.gender}</span>}
                     </div>
                     {customer.address && <p className="text-sm text-white/70 mt-2 flex items-center gap-1.5"><MapPin size={13} className="text-white/60" />{customer.address}</p>}
-                    {customer.alternateMobile && <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5"><Phone size={13} className="text-white/60" />Alt: {customer.alternateMobile}</p>}
+                    {customer.alternateMobile && <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5"><Phone size={13} className="text-white/60" />{uiT("Alt", "वैकल्पिक")}: {customer.alternateMobile}</p>}
                     {customer.tags?.length > 0 && (
                       <div className="flex gap-2 mt-4">
                         {customer.tags.map((tag: string, i: number) => (
@@ -282,7 +282,7 @@ export default function CustomerDetail() {
             </div>
             {!editing && (
               <button onClick={() => setEditing(true)} className="bg-white/20 hover:bg-white/30 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 backdrop-blur-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2 text-sm">
-                <Edit3 size={15} /> Edit Profile
+                <Edit3 size={15} /> {uiT("Edit Profile", "प्रोफ़ाइल संपादित करें")}
               </button>
             )}
           </div>
@@ -323,8 +323,8 @@ export default function CustomerDetail() {
             <Plus size={22} />
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-white tracking-tight">New Visit</p>
-            <p className="text-xs text-white/70">with prescription</p>
+            <p className="text-lg font-bold text-white tracking-tight">{uiT("New Visit", "नई विज़िट")}</p>
+            <p className="text-xs text-white/70">{uiT("with prescription", "प्रिस्क्रिप्शन के साथ")}</p>
           </div>
         </div>
       </div>
@@ -353,7 +353,7 @@ export default function CustomerDetail() {
         {tab === "overview" && (
           <div className="space-y-5">
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <Sparkles size={18} className="text-primary-500" /> Customer Summary
+              <Sparkles size={18} className="text-primary-500" /> {uiT("Customer Summary", "ग्राहक सारांश")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
@@ -361,7 +361,7 @@ export default function CustomerDetail() {
                   <div className="w-8 h-8 bg-primary-50 dark:bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400">
                     <Calendar size={16} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Last 5 Visits</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Last 5 Visits", "अंतिम 5 विज़िट")}</p>
                 </div>
                 {visits.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
@@ -376,7 +376,7 @@ export default function CustomerDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
                     <Calendar size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">No visits yet</p>
+                    <p className="text-sm text-slate-400">{uiT("No visits yet", "अभी तक कोई विज़िट नहीं")}</p>
                   </div>
                 )}
               </div>
@@ -385,16 +385,16 @@ export default function CustomerDetail() {
                   <div className="w-8 h-8 bg-purple-50 dark:bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400">
                     <Eye size={16} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Latest Prescription</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Latest Prescription", "नवीनतम प्रिस्क्रिप्शन")}</p>
                 </div>
                 {prescriptions.length > 0 ? (
                   <div className="space-y-2">
                     <div className="bg-blue-50/50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10">
-                      <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1">Right Eye</p>
+                      <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1">{uiT("Right Eye", "दाहिनी आंख")}</p>
                       <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].rightEye?.dv?.sph, prescriptions[0].rightEye?.dv?.cyl, prescriptions[0].rightEye?.dv?.axis)}</p>
                     </div>
                     <div className="bg-amber-50/50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10">
-                      <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">Left Eye</p>
+                      <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">{uiT("Left Eye", "बाईं आंख")}</p>
                       <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].leftEye?.dv?.sph, prescriptions[0].leftEye?.dv?.cyl, prescriptions[0].leftEye?.dv?.axis)}</p>
                     </div>
                     {prescriptions[0].pd && <p className="text-xs text-slate-500">PD: {prescriptions[0].pd}</p>}
@@ -402,7 +402,7 @@ export default function CustomerDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
                     <Eye size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">No prescriptions</p>
+                    <p className="text-sm text-slate-400">{uiT("No prescriptions", "कोई प्रिस्क्रिप्शन नहीं")}</p>
                   </div>
                 )}
               </div>
@@ -411,7 +411,7 @@ export default function CustomerDetail() {
                   <div className="w-8 h-8 bg-amber-50 dark:bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400">
                     <ShoppingCart size={16} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Recent Orders</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Recent Orders", "हालिया ऑर्डर")}</p>
                 </div>
                 {orders.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
@@ -429,7 +429,7 @@ export default function CustomerDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
                     <ShoppingCart size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">No orders</p>
+                    <p className="text-sm text-slate-400">{uiT("No orders", "कोई ऑर्डर नहीं")}</p>
                   </div>
                 )}
               </div>
@@ -438,7 +438,7 @@ export default function CustomerDetail() {
                   <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <Receipt size={16} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Recent Bills</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Recent Bills", "हालिया बिल")}</p>
                 </div>
                 {bills.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
@@ -454,7 +454,7 @@ export default function CustomerDetail() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
                     <Receipt size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">No bills</p>
+                    <p className="text-sm text-slate-400">{uiT("No bills", "कोई बिल नहीं")}</p>
                   </div>
                 )}
               </div>
@@ -466,10 +466,10 @@ export default function CustomerDetail() {
           <div className="card p-5">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <ClipboardList size={18} className="text-primary-500" /> All Visits ({visits.length})
+                <ClipboardList size={18} className="text-primary-500" /> {uiT("All Visits", "सभी विज़िट")} ({visits.length})
               </h3>
               <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                <Plus size={15} /> Add Visit
+                <Plus size={15} /> {uiT("Add Visit", "विज़िट जोड़ें")}
               </button>
             </div>
             {visits.length === 0 ? (
@@ -477,9 +477,9 @@ export default function CustomerDetail() {
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
                   <Calendar size={28} className="text-slate-300 dark:text-slate-500" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">No visits recorded yet</p>
+                <p className="text-sm font-medium text-slate-500">{uiT("No visits recorded yet", "अभी तक कोई विज़िट दर्ज नहीं")}</p>
                 <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 text-sm">
-                  <Plus size={14} /> Create First Visit
+                  <Plus size={14} /> {uiT("Create First Visit", "पहली विज़िट बनाएं")}
                 </button>
               </div>
             ) : (
@@ -513,7 +513,7 @@ export default function CustomerDetail() {
                     <div className="flex items-center gap-3">
                       <button onClick={(e) => { e.stopPropagation(); openVisitDetail(v); }}
                         className="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:border-primary-200 dark:hover:border-primary-500/30 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm flex items-center gap-1">
-                        <Eye size={12} /> View
+                        <Eye size={12} /> {uiT("View", "देखें")}
                       </button>
                       <span className="text-[11px] text-slate-400">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                       <ChevronRight size={15} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
@@ -529,10 +529,10 @@ export default function CustomerDetail() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <Eye size={18} className="text-purple-500" /> Prescriptions ({prescriptions.length})
+                <Eye size={18} className="text-purple-500" /> {uiT("Prescriptions", "प्रिस्क्रिप्शन")} ({prescriptions.length})
               </h3>
               <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                <Plus size={15} /> Add Prescription
+                <Plus size={15} /> {uiT("Add Prescription", "प्रिस्क्रिप्शन जोड़ें")}
               </button>
             </div>
             {prescriptions.length === 0 ? (
@@ -540,9 +540,9 @@ export default function CustomerDetail() {
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
                   <Eye size={28} className="text-slate-300 dark:text-slate-500" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">No prescriptions yet</p>
+                <p className="text-sm font-medium text-slate-500">{uiT("No prescriptions yet", "अभी तक कोई प्रिस्क्रिप्शन नहीं")}</p>
                 <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 text-sm">
-                  <Plus size={14} /> Create First Prescription
+                  <Plus size={14} /> {uiT("Create First Prescription", "पहला प्रिस्क्रिप्शन बनाएं")}
                 </button>
               </div>
             ) : (
@@ -560,30 +560,30 @@ export default function CustomerDetail() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-50/30 dark:from-blue-500/5 dark:to-blue-500/[0.02] rounded-2xl p-4 border border-blue-100/80 dark:border-blue-500/10">
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" /> Right Eye
+                        <span className="w-2 h-2 rounded-full bg-blue-500" /> {uiT("Right Eye", "दाहिनी आंख")}
                       </p>
                       {p.rightEye?.dv && <EyeRow label="DV" data={p.rightEye.dv} />}
                       {p.rightEye?.nv && <EyeRow label="NV" data={p.rightEye.nv} />}
                       {p.rightEye?.pc && <EyeRow label="PC" data={p.rightEye.pc} />}
                       {!p.rightEye?.dv && !p.rightEye?.nv && !p.rightEye?.pc && (
-                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">No prescription data</p>
+                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
                       )}
                     </div>
                     <div className="bg-gradient-to-br from-amber-50 to-amber-50/30 dark:from-amber-500/5 dark:to-amber-500/[0.02] rounded-2xl p-4 border border-amber-100/80 dark:border-amber-500/10">
                       <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" /> Left Eye
+                        <span className="w-2 h-2 rounded-full bg-amber-500" /> {uiT("Left Eye", "बाईं आंख")}
                       </p>
                       {p.leftEye?.dv && <EyeRow label="DV" data={p.leftEye.dv} />}
                       {p.leftEye?.nv && <EyeRow label="NV" data={p.leftEye.nv} />}
                       {p.leftEye?.pc && <EyeRow label="PC" data={p.leftEye.pc} />}
                       {!p.leftEye?.dv && !p.leftEye?.nv && !p.leftEye?.pc && (
-                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">No prescription data</p>
+                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/30">
                     {p.pd && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">PD:</span> {p.pd}</p>}
-                    {p.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">Notes:</span> {p.notes}</p>}
+                    {p.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">{uiT("Notes:", "नोट्स:")}</span> {p.notes}</p>}
                   </div>
                 </div>
               ))
@@ -594,14 +594,14 @@ export default function CustomerDetail() {
         {tab === "bills" && (
           <div className="card p-5">
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mb-5">
-              <Receipt size={18} className="text-emerald-500" /> Bills ({bills.length})
+              <Receipt size={18} className="text-emerald-500" /> {uiT("Bills", "बिल")} ({bills.length})
             </h3>
             {bills.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
                   <Receipt size={28} className="text-slate-300 dark:text-slate-500" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">No bills yet</p>
+                <p className="text-sm font-medium text-slate-500">{uiT("No bills yet", "अभी तक कोई बिल नहीं")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -622,7 +622,7 @@ export default function CustomerDetail() {
                         {(b.pendingAmount || 0) > 0 ? (
                           <span className="text-[11px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full">₹{b.pendingAmount} due</span>
                         ) : (
-                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">Paid</span>
+                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">{uiT("Paid", "भुगतान")}</span>
                         )}
                         <button onClick={() => sendWhatsApp(customer.mobile, b)}
                           className="text-[11px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 px-2 py-1 rounded-lg transition-colors flex items-center gap-1">
@@ -640,14 +640,14 @@ export default function CustomerDetail() {
         {tab === "orders" && (
           <div className="card p-5">
             <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mb-5">
-              <ShoppingCart size={18} className="text-amber-500" /> Orders ({orders.length})
+              <ShoppingCart size={18} className="text-amber-500" /> {uiT("Orders", "ऑर्डर")} ({orders.length})
             </h3>
             {orders.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
                   <ShoppingCart size={28} className="text-slate-300 dark:text-slate-500" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">No orders yet</p>
+                <p className="text-sm font-medium text-slate-500">{uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -662,8 +662,8 @@ export default function CustomerDetail() {
                           {[o.frameBrand, o.frame, o.lensBrand, o.lens].filter(Boolean).join(" / ") || "Order"}
                         </p>
                         <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
-                          <span>Qty: {o.quantity || 1}</span>
-                          {o.deliveryDate && <span>Delivery: {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
+                          <span>{uiT("Qty", "मात्रा")}: {o.quantity || 1}</span>
+                          {o.deliveryDate && <span>{uiT("Delivery", "डिलीवरी")}: {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                         </div>
                       </div>
                     </div>
@@ -689,7 +689,7 @@ export default function CustomerDetail() {
                 <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
                   <Calendar size={18} />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Visit Details</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{uiT("Visit Details", "विज़िट विवरण")}</h2>
               </div>
               <div className="flex items-center gap-2">
                 {!editingVisit && (
@@ -708,18 +708,18 @@ export default function CustomerDetail() {
                 {editingVisit ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">Visit Date</label>
+                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Visit Date", "विज़िट तिथि")}</label>
                       <input type="date" className="input-field" value={editVisitForm.visitDate || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, visitDate: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">Doctor Name</label>
-                      <input className="input-field" placeholder="Doctor name" value={editVisitForm.doctorName || ""}
+                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Doctor Name", "डॉक्टर का नाम")}</label>
+                      <input className="input-field" placeholder={uiT("Doctor name", "डॉक्टर का नाम")} value={editVisitForm.doctorName || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, doctorName: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">Remarks</label>
-                      <textarea className="input-field" rows={2} placeholder="Remarks" value={editVisitForm.remarks || ""}
+                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Remarks", "टिप्पणी")}</label>
+                      <textarea className="input-field" rows={2} placeholder={uiT("Remarks", "टिप्पणी")} value={editVisitForm.remarks || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, remarks: e.target.value })} />
                     </div>
                     <div className="flex gap-2 pt-1">
@@ -764,7 +764,7 @@ export default function CustomerDetail() {
                     <div className="w-8 h-8 bg-purple-50 dark:bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400">
                       <Eye size={16} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Prescription</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Prescription", "प्रिस्क्रिप्शन")}</h3>
                     <span className="text-[10px] text-slate-400 ml-auto">
                       {new Date(linkedPrescription.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
@@ -772,30 +772,30 @@ export default function CustomerDetail() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-50/30 dark:from-blue-500/5 dark:to-blue-500/[0.02] rounded-2xl p-4 border border-blue-100/80 dark:border-blue-500/10">
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" /> Right Eye
+                        <span className="w-2 h-2 rounded-full bg-blue-500" /> {uiT("Right Eye", "दाहिनी आंख")}
                       </p>
                       {linkedPrescription.rightEye?.dv && <EyeRow label="DV" data={linkedPrescription.rightEye.dv} />}
                       {linkedPrescription.rightEye?.nv && <EyeRow label="NV" data={linkedPrescription.rightEye.nv} />}
                       {linkedPrescription.rightEye?.pc && <EyeRow label="PC" data={linkedPrescription.rightEye.pc} />}
                       {!linkedPrescription.rightEye?.dv && !linkedPrescription.rightEye?.nv && !linkedPrescription.rightEye?.pc && (
-                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">No data</p>
+                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">{uiT("No data", "कोई डेटा नहीं")}</p>
                       )}
                     </div>
                     <div className="bg-gradient-to-br from-amber-50 to-amber-50/30 dark:from-amber-500/5 dark:to-amber-500/[0.02] rounded-2xl p-4 border border-amber-100/80 dark:border-amber-500/10">
                       <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" /> Left Eye
+                        <span className="w-2 h-2 rounded-full bg-amber-500" /> {uiT("Left Eye", "बाईं आंख")}
                       </p>
                       {linkedPrescription.leftEye?.dv && <EyeRow label="DV" data={linkedPrescription.leftEye.dv} />}
                       {linkedPrescription.leftEye?.nv && <EyeRow label="NV" data={linkedPrescription.leftEye.nv} />}
                       {linkedPrescription.leftEye?.pc && <EyeRow label="PC" data={linkedPrescription.leftEye.pc} />}
                       {!linkedPrescription.leftEye?.dv && !linkedPrescription.leftEye?.nv && !linkedPrescription.leftEye?.pc && (
-                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">No data</p>
+                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">{uiT("No data", "कोई डेटा नहीं")}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex gap-4 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30">
                     {linkedPrescription.pd && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">PD:</span> {linkedPrescription.pd}</p>}
-                    {linkedPrescription.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">Notes:</span> {linkedPrescription.notes}</p>}
+                    {linkedPrescription.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">{uiT("Notes:", "नोट्स:")}</span> {linkedPrescription.notes}</p>}
                   </div>
                 </div>
               )}
@@ -806,7 +806,7 @@ export default function CustomerDetail() {
                     <div className="w-8 h-8 bg-amber-50 dark:bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400">
                       <ShoppingCart size={16} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Order</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Order", "ऑर्डर")}</h3>
                     <span className={`badge ml-auto ${
                       linkedOrder.status === "Delivered" ? "badge-green" :
                       linkedOrder.status === "Ready" ? "badge-blue" :
@@ -816,7 +816,7 @@ export default function CustomerDetail() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
                     {linkedOrder.frame && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Frame</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Frame", "फ्रेम")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
                           {[linkedOrder.frameBrand, linkedOrder.frameModel, linkedOrder.frameColor, linkedOrder.frameSize].filter(Boolean).join(" / ") || linkedOrder.frame}
                           {linkedOrder.framePrice ? ` (₹${linkedOrder.framePrice})` : ""}
@@ -825,7 +825,7 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.lens && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Lens</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Lens", "लेंस")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
                           {[linkedOrder.lensBrand, linkedOrder.lensType, linkedOrder.lensIndex].filter(Boolean).join(" / ") || linkedOrder.lens}
                           {linkedOrder.lensPrice ? ` (₹${linkedOrder.lensPrice})` : ""}
@@ -834,7 +834,7 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.coating && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Coating</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Coating", "कोटिंग")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
                           {linkedOrder.coating}{linkedOrder.coatingPrice ? ` (₹${linkedOrder.coatingPrice})` : ""}
                         </p>
@@ -842,15 +842,15 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.accessories?.length > 0 && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Accessories</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Accessories", "सहायक उपकरण")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.accessories.join(", ")}</p>
                       </>
                     )}
-                    <p className="text-xs text-slate-500 font-medium">Quantity</p>
+                    <p className="text-xs text-slate-500 font-medium">{uiT("Quantity", "मात्रा")}</p>
                     <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.quantity || 1}</p>
                     {linkedOrder.deliveryDate && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Delivery Date</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
                           {new Date(linkedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </p>
@@ -858,13 +858,13 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.labAssigned && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">Lab</p>
+                        <p className="text-xs text-slate-500 font-medium">{uiT("Lab", "लैब")}</p>
                         <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.labAssigned}{linkedOrder.labExpectedDate ? ` (by ${new Date(linkedOrder.labExpectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})` : ""}</p>
                       </>
                     )}
                   </div>
                   {linkedOrder.labRemarks && (
-                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/30">Lab Remarks: {linkedOrder.labRemarks}</p>
+                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/30">{uiT("Lab Remarks", "लैब टिप्पणी")}: {linkedOrder.labRemarks}</p>
                   )}
                 </div>
               )}
@@ -875,7 +875,7 @@ export default function CustomerDetail() {
                     <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                       <Receipt size={16} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Bill</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Bill", "बिल")}</h3>
                     <span className="text-[10px] text-slate-400 ml-auto font-mono">{linkedBill.billNumber}</span>
                   </div>
                   {linkedBill.items?.length > 0 && (
@@ -883,16 +883,16 @@ export default function CustomerDetail() {
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
-                            <th className="text-left py-2.5 px-3 font-semibold text-slate-500">Description</th>
-                            <th className="text-center py-2.5 px-3 font-semibold text-slate-500">Qty</th>
-                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">Price</th>
-                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">Total</th>
+                            <th className="text-left py-2.5 px-3 font-semibold text-slate-500">{uiT("Description", "विवरण")}</th>
+                            <th className="text-center py-2.5 px-3 font-semibold text-slate-500">{uiT("Qty", "मात्रा")}</th>
+                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">{uiT("Price", "मूल्य")}</th>
+                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">{uiT("Total", "कुल")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/30">
                           {linkedBill.items.map((it: any, i: number) => (
                             <tr key={it._id || it.description || i}>
-                              <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200">{it.description || "Item"}</td>
+                              <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200">{it.description || uiT("Item", "आइटम")}</td>
                               <td className="py-2.5 px-3 text-center text-slate-500">{it.quantity || 1}</td>
                               <td className="py-2.5 px-3 text-right text-slate-500">₹{(it.unitPrice || 0).toFixed(2)}</td>
                               <td className="py-2.5 px-3 text-right font-semibold text-slate-900 dark:text-white">₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td>
@@ -904,28 +904,28 @@ export default function CustomerDetail() {
                   )}
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between text-slate-500">
-                      <span>Subtotal</span>
+                      <span>{uiT("Subtotal", "उप-कुल")}</span>
                       <span>₹{(linkedBill.subtotal || 0).toFixed(2)}</span>
                     </div>
                     {linkedBill.discount ? (
                       <div className="flex justify-between text-red-500">
-                        <span>Discount</span>
+                        <span>{uiT("Discount", "छूट")}</span>
                         <span>-₹{linkedBill.discount.toFixed(2)}</span>
                       </div>
                     ) : null}
                     {linkedBill.tax ? (
                       <div className="flex justify-between text-emerald-600">
-                        <span>GST</span>
+                        <span>{uiT("GST", "जीएसटी")}</span>
                         <span>+₹{linkedBill.tax.toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700/50">
-                      <span>Total</span>
+                      <span>{uiT("Total", "कुल")}</span>
                       <span>₹{(linkedBill.totalAmount || 0).toFixed(2)}</span>
                     </div>
                     {linkedBill.advancePaid !== undefined && (
                       <div className="flex justify-between text-emerald-600 items-center pt-1">
-                        <span>Paid</span>
+                        <span>{uiT("Paid", "भुगतान")}</span>
                         {editingBillAdvance ? (
                           <div className="flex items-center gap-1.5">
                             <input type="number" min="0" step="0.01"
@@ -955,7 +955,7 @@ export default function CustomerDetail() {
                     )}
                     {(linkedBill.pendingAmount || 0) > 0 ? (
                       <div className="flex justify-between text-amber-600 font-bold pt-1">
-                        <span>Balance Due</span>
+                        <span>{uiT("Balance Due", "बकाया राशि")}</span>
                         <span>₹{linkedBill.pendingAmount.toFixed(2)}</span>
                       </div>
                     ) : null}
@@ -974,7 +974,7 @@ export default function CustomerDetail() {
                   <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <Activity size={24} className="text-slate-300 dark:text-slate-500" />
                   </div>
-                  <p className="text-sm text-slate-400">No linked prescription, order, or bill for this visit.</p>
+                  <p className="text-sm text-slate-400">{uiT("No linked prescription, order, or bill for this visit.", "इस विज़िट के लिए कोई प्रिस्क्रिप्शन, ऑर्डर या बिल नहीं जुड़ा है।")}</p>
                 </div>
               )}
             </div>
