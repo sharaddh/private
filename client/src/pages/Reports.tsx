@@ -372,24 +372,24 @@ export default function Reports() {
 
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="section-title">Pending Payments</h3>
+              <h3 className="section-title">{uiT("Pending Payments", "बाकी भुगतान")}</h3>
               <span className="text-xs text-slate-500 dark:text-slate-400">{pendingData.length} bills</span>
             </div>
             {pendingData.length === 0 ? (
               <div className="text-center py-8">
                 <Clock size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                <p className="text-sm text-slate-400 dark:text-slate-500">No pending payments.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500">{uiT("No pending payments.", "कोई बाकी भुगतान नहीं।")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto max-h-96 overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-white dark:bg-slate-800">
                     <tr className="border-b border-slate-200 dark:border-slate-700/50">
-                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Bill</th>
-                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Customer</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Total</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Pending</th>
-                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Days</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Bill", "बिल")}</th>
+                      <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Customer", "ग्राहक")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Total", "कुल")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Pending", "बाकी")}</th>
+                      <th className="text-right py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">{uiT("Days", "दिन")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -424,33 +424,33 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
               <p className="text-3xl font-bold text-slate-900 dark:text-white">{(invData?.totalItems || 0).toLocaleString()}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Total Items</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Total Items", "कुल आइटम")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-red-600 dark:text-red-400">{(invData?.lowStock?.length || 0).toLocaleString()}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Low Stock (≤5)</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Low Stock (≤5)", "कम स्टॉक (<=5)")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">₹{(invData?.totalValue || 0).toLocaleString()}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Stock Value</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Stock Value", "स्टॉक मूल्य")}</p>
             </div>
             <div className="card text-center">
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{(invData?.byCategory?.length || 0).toLocaleString()}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Categories</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Categories", "श्रेणियाँ")}</p>
             </div>
           </div>
 
           {invData?.byCategory?.length > 0 && (
             <div className="card">
-              <h3 className="section-title mb-4">Stock by Category</h3>
+              <h3 className="section-title mb-4">{uiT("Stock by Category", "श्रेणी अनुसार स्टॉक")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {invData.byCategory.map((cat: any) => (
                   <div key={cat._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
                     <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">{cat._id || "Uncategorized"}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{cat.count} items</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">{cat._id || uiT("Uncategorized", "बिना श्रेणी")}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{cat.count} {uiT("items", "आइटम")}</p>
                     </div>
-                    <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">{cat.totalQty} units</span>
+                    <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">{cat.totalQty} {uiT("units", "इकाई")}</span>
                   </div>
                 ))}
               </div>
@@ -461,7 +461,7 @@ export default function Reports() {
             <div className="card border border-red-200 dark:border-red-800">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle size={18} className="text-red-500" />
-                <h3 className="section-title text-red-700 dark:text-red-400">Low Stock Alert</h3>
+                <h3 className="section-title text-red-700 dark:text-red-400">{uiT("Low Stock Alert", "कम स्टॉक अलर्ट")}</h3>
               </div>
               <div className="space-y-2">
                 {invData.lowStock.map((item: any) => (
@@ -470,7 +470,7 @@ export default function Reports() {
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{item.category || "Frame"}</p>
                     </div>
-                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{item.quantity || 0} left</span>
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{item.quantity || 0} {uiT("left", "शेष")}</span>
                   </div>
                 ))}
               </div>
