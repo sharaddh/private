@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, CheckCircle2, Loader2 } from "lucide-react";
+import { useTranslate } from "../../context/TranslateContext";
 
 interface BranchInfo {
   _id: string;
@@ -28,11 +29,12 @@ export default function SettingsHeader({
   saved,
   saving,
 }: SettingsHeaderProps) {
+  const { uiT } = useTranslate();
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{uiT("Settings", "सेटिंग्स")}</h1>
           <AnimatePresence mode="wait">
             {saving ? (
               <motion.div
@@ -43,7 +45,7 @@ export default function SettingsHeader({
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full"
               >
                 <Loader2 size={12} className="text-blue-500 animate-spin" />
-                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">Saving</span>
+                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">{uiT("Saving", "सहेज रहे हैं")}</span>
               </motion.div>
             ) : saved ? (
               <motion.div
@@ -54,13 +56,13 @@ export default function SettingsHeader({
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full"
               >
                 <CheckCircle2 size={12} className="text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Saved</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{uiT("Saved", "सहेजा गया")}</span>
               </motion.div>
             ) : null}
           </AnimatePresence>
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Configure your application preferences
+          {uiT("Configure your application preferences", "अपनी ऐप प्राथमिकताएं कॉन्फ़िगर करें")}
         </p>
       </div>
 
