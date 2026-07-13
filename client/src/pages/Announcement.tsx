@@ -17,6 +17,12 @@ const ANTIBAN_PRESETS = [
   { label: "Fast", delay: { min: 1000, max: 3000 }, batchSize: 30, pause: 5000 },
 ];
 
+const ANTIBAN_LABEL_HI: Record<string, string> = {
+  "Slow (Safe)": "धीमा (सुरक्षित)",
+  "Normal": "सामान्य",
+  "Fast": "तेज़",
+};
+
 interface SendResult {
   phone: string;
   status: "sent" | "failed";
@@ -331,7 +337,7 @@ export default function Announcement() {
                       : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                   }`}
                 >
-                  <div className="font-semibold mb-0.5">{p.label}</div>
+                  <div className="font-semibold mb-0.5">{uiT(p.label, ANTIBAN_LABEL_HI[p.label] || p.label)}</div>
                   <div className="opacity-70">{p.delay.min / 1000}s-{p.delay.max / 1000}s</div>
                 </button>
               ))}

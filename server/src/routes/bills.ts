@@ -7,7 +7,7 @@ import { authenticate } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { audit } from "../middleware/audit";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
-import { whatsapp } from "../services/whatsapp";
+import { whatsappManager } from "../services/whatsapp";
 import { generateBillPdf } from "../utils/pdf";
 import { AppError } from "../middleware/errorHandler";
 
@@ -65,8 +65,10 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
   // Send WhatsApp ΓÇö fire and forget (non-blocking)
   const customer = await Customer.findById(p.customerId).lean();
   if (customer?.mobile) {
+    const branchId = (req as any).branchId;
     (async () => {
       try {
+        const wa = whatsappManager.getInstance(branchId);
         const settings = await Settings.findOne().lean();
         const pdfBuffer = generateBillPdf(
           {
@@ -85,7 +87,7 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
         );
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
-          await whatsapp.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
         }
       } catch {
         // WhatsApp notification is optional

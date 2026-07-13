@@ -39,14 +39,14 @@ const maskPhone = (p: string): string => {
   return p.slice(0, 2) + "****" + p.slice(-2);
 };
 
-function formatTimeAgo(dateStr: string): string {
+function formatTimeAgo(dateStr: string, t?: (en: string, hi: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t ? t("Just now", "अभी") : "Just now";
+  if (mins < 60) return t ? `${mins}${t("m ago", " मिनट पहले")}` : `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t ? `${hrs}${t("h ago", " घंटे पहले")}` : `${hrs}h ago`;
+  return t ? `${Math.floor(hrs / 24)}${t("d ago", " दिन पहले")}` : `${Math.floor(hrs / 24)}d ago`;
 }
 
 const paymentModeIcon: Record<string, typeof CreditCard> = {
@@ -349,7 +349,7 @@ export default function Dashboard() {
         <button onClick={() => setShowScanner(true)}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
           <ScanLine className="w-3.5 h-3.5" />
-          Scan
+          {uiT("Scan", "स्कैन")}
         </button>
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/20 dark:ring-slate-700 flex-shrink-0">S</div>
       </div>
@@ -370,21 +370,21 @@ export default function Dashboard() {
             <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह की तुलना में")}</p>
           </div>
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Collection</p>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Collection", "संग्रह")}</p>
             <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
-            <p className="text-white/50 text-xs mt-1.5">{d.newCustomersToday ?? 0} new customers today</p>
+            <p className="text-white/50 text-xs mt-1.5">{d.newCustomersToday ?? 0} {uiT("new customers today", "नए ग्राहक आज")}</p>
           </div>
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Today's Orders</p>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Today's Orders", "आज के ऑर्डर")}</p>
             <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">{d.todayOrders}</p>
-            <p className="text-white/50 text-xs mt-1.5">{d.readyDeliveries ?? 0} ready for pickup</p>
+            <p className="text-white/50 text-xs mt-1.5">{d.readyDeliveries ?? 0} {uiT("ready for pickup", "पिकअप के लिए तैयार")}</p>
           </div>
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">Performance</p>
+            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Performance", "प्रदर्शन")}</p>
             <p className="text-sm font-semibold text-white mt-3 leading-relaxed">
-              Business is performing{Number(d.todaySales) > 0 ? " well today" : " steady today"}.
+              {Number(d.todaySales) > 0 ? uiT("Business is performing well today", "व्यापार आज अच्छा प्रदर्शन कर रहा है") : uiT("Business is performing steady today", "व्यापार आज स्थिर है")}
             </p>
-            <p className="text-white/50 text-xs mt-1">₹{(d.weekSales || 0).toLocaleString()} this week</p>
+            <p className="text-white/50 text-xs mt-1">₹{(d.weekSales || 0).toLocaleString()} {uiT("this week", "इस सप्ताह")}</p>
           </div>
         </div>
       </div>
@@ -417,7 +417,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
         <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
         <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
-        <MetricCard label="Today's Orders" value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} this week` : undefined} />
+        <MetricCard label={uiT("Today's Orders", "आज के ऑर्डर")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "इस सप्ताह")}` : undefined} />
         <MetricCard label={uiT("Pending Bills", "लंबित बिल")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
         <MetricCard label={uiT("Ready for Pickup", "पिकअप के लिए तैयार")} value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle={uiT("awaiting collection", "संग्रह की प्रतीक्षा में")} />
         <MetricCard label={uiT("New Customers", "नए ग्राहक")} value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle={uiT("joined today", "आज जुड़े")} />
@@ -448,9 +448,9 @@ export default function Dashboard() {
   const renderNeedsAttention = () => {
     interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
     const items: AlertItem[] = [];
-    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bills", "लंबित बिल"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: "Collect", onClick: () => navigate("/bills") });
+    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bills", "लंबित बिल"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: uiT("Collect", "वसूलें"), onClick: () => navigate("/bills") });
     if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
-    if (draftOrders.length > 0) items.push({ icon: FileText, label: "Draft Orders", value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
+    if (draftOrders.length > 0) items.push({ icon: FileText, label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
     if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
     if (items.length === 0) return null;
     return (
@@ -499,22 +499,22 @@ export default function Dashboard() {
                 <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
                   onChange={() => toggleAllOrders(allIds)}
                   className="w-4 h-4 rounded accent-primary-600" />
-                Select all ({draftOrders.length})
+                {uiT("Select all", "सभी चुनें")} ({draftOrders.length})
               </label>
               {selectedOrders.size > 0 && (
-                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-3 py-1 rounded-lg">{selectedOrders.size} selected</span>
+                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-3 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
               )}
               <div className="flex-1" />
               <div className="flex items-center gap-2">
                 <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
                   <ShoppingBag className="w-4 h-4" />
-                  {sendingDemand === "buy" ? "Sending..." : "Buy List"}
+                  {sendingDemand === "buy" ? uiT("Sending...", "भेज रहे हैं...") : uiT("Buy List", "खरीद सूची")}
                 </button>
                 <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
                   <Send className="w-4 h-4" />
-                  {sendingDemand === "order" ? "Sending..." : "Lab Order"}
+                  {sendingDemand === "order" ? uiT("Sending...", "भेज रहे हैं...") : uiT("Lab Order", "लैब ऑर्डर")}
                 </button>
               </div>
             </div>
@@ -543,7 +543,7 @@ export default function Dashboard() {
 
                 const stockTotal = totalStock(ss);
                 const stockColor = stockTotal > 5 ? "emerald" : stockTotal > 0 ? "amber" : "red";
-                const stockLabel = stockTotal > 5 ? "In Stock" : stockTotal > 0 ? "Limited" : "Out of Stock";
+                const stockLabel = stockTotal > 5 ? uiT("In Stock", "स्टॉक में") : stockTotal > 0 ? uiT("Limited", "सीमित") : uiT("Out of Stock", "स्टॉक में नहीं");
 
                 function StockBadge({ color, label }: { color: string; label: string }) {
                   const colors: Record<string, string> = {
@@ -577,14 +577,14 @@ export default function Dashboard() {
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-400 dark:text-slate-500">
                               <Clock className="w-3.5 h-3.5" />
-                              <span>{o.createdAt ? formatTimeAgo(o.createdAt as string) : ""}</span>
+                              <span>{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <StatusBadge status={(o.status as string) || "Draft"} />
                             <button onClick={() => navigate(`/workspace?order=${id}`)}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-sm">
-                              Open <ArrowUpRight className="w-3.5 h-3.5" />
+                              {uiT("Open", "खोलें")} <ArrowUpRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -593,18 +593,18 @@ export default function Dashboard() {
 
                     {/* Lens details */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 px-1">
-                      {!!(o.frameBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Frame:</span> {o.frameBrand as string}</span>}
-                      {!!(o.lensBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Lens:</span> {o.lensBrand as string}</span>}
-                      {!!(o.lensType) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Type:</span> {o.lensType as string}</span>}
-                      {!!(o.lensIndex) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">Index:</span> {o.lensIndex as string}</span>}
+                      {!!(o.frameBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Frame:", "फ्रेम:")}</span> {o.frameBrand as string}</span>}
+                      {!!(o.lensBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Lens:", "लेंस:")}</span> {o.lensBrand as string}</span>}
+                      {!!(o.lensType) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Type:", "प्रकार:")}</span> {o.lensType as string}</span>}
+                      {!!(o.lensIndex) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Index:", "इंडेक्स:")}</span> {o.lensIndex as string}</span>}
                       {!!(lensLabel) && !o.frameBrand && !o.lensBrand && <span className="text-sm text-slate-500 dark:text-slate-400">{lensLabel}</span>}
                     </div>
 
                     {/* Eye panels */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
-                        { eye: "right" as const, label: "RIGHT EYE", rxStr: rRx, status: rStatus, panelBg: "bg-cyan-50/50 dark:bg-cyan-500/5 border-cyan-100 dark:border-cyan-500/10", labelColor: "text-cyan-700 dark:text-cyan-300" },
-                        { eye: "left" as const, label: "LEFT EYE", rxStr: lRx, status: lStatus, panelBg: "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10", labelColor: "text-amber-700 dark:text-amber-300" },
+                        { eye: "right" as const, label: uiT("RIGHT EYE", "दायाँ आँख"), rxStr: rRx, status: rStatus, panelBg: "bg-cyan-50/50 dark:bg-cyan-500/5 border-cyan-100 dark:border-cyan-500/10", labelColor: "text-cyan-700 dark:text-cyan-300" },
+                        { eye: "left" as const, label: uiT("LEFT EYE", "बायाँ आँख"), rxStr: lRx, status: lStatus, panelBg: "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10", labelColor: "text-amber-700 dark:text-amber-300" },
                       ].map((e) => (
                         <div key={e.eye} className={`${e.panelBg} border rounded-xl p-4`}>
                           <div className="flex items-center justify-between mb-3">
@@ -615,14 +615,14 @@ export default function Dashboard() {
                             {e.rxStr ? (
                               <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200 break-all">{e.rxStr}</span>
                             ) : (
-                              <span className="text-sm text-slate-400 dark:text-slate-600">No prescription</span>
+                              <span className="text-sm text-slate-400 dark:text-slate-600">{uiT("No prescription", "कोई प्रिस्क्रिप्शन नहीं")}</span>
                             )}
                           </div>
                           <SegmentedControl
                             options={[
-                              { label: "Stock", value: "stock" },
-                              { label: "Buy", value: "buy" },
-                              { label: "Order", value: "order" },
+                              { label: uiT("Stock", "स्टॉक"), value: "stock" },
+                              { label: uiT("Buy", "खरीदें"), value: "buy" },
+                              { label: uiT("Order", "ऑर्डर"), value: "order" },
                             ]}
                             value={e.status}
                             onChange={(s) => classifyEye(id, e.eye, s)}
@@ -667,7 +667,7 @@ export default function Dashboard() {
                   {!!(cMobile) && <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {o.createdAt ? formatTimeAgo(o.createdAt as string) : ""}
+                  {o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}
                   {!!(o.frameBrand) ? ` · ${o.frameBrand as string}` : ""}
                   {!!(o.lensBrand) ? ` · ${o.lensBrand as string}` : ""}
                 </p>
@@ -704,7 +704,7 @@ export default function Dashboard() {
                 <p className="text-base font-bold text-red-600 dark:text-red-400 whitespace-nowrap">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id as string}`)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
-                  Collect
+                  {uiT("Collect", "वसूलें")}
                 </button>
               </div>
             </div>
@@ -771,9 +771,9 @@ export default function Dashboard() {
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>{c.mobile ? maskPhone(c.mobile as string) : "—"}</span>
                 <span className="text-slate-300 dark:text-slate-600">·</span>
-                <span>{c.createdAt ? formatTimeAgo(c.createdAt as string) : ""}</span>
+                <span>{c.createdAt ? formatTimeAgo(c.createdAt as string, uiT) : ""}</span>
                 <span className="text-slate-300 dark:text-slate-600">·</span>
-                <span>{(c.totalVisits as number) ?? 0} visits</span>
+                <span>{(c.totalVisits as number) ?? 0} {uiT("visits", "विज़िट")}</span>
               </p>
             </div>
             <div className="text-right flex-shrink-0">
@@ -794,12 +794,12 @@ export default function Dashboard() {
           <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
             <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">To-Do</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("To-Do", "कार्य सूची")}</h3>
         </div>
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">{activeTodos.length} pending</span>
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
       <div className="flex items-center gap-2 mb-4">
-        <input type="text" placeholder="Add a task..." value={newTask}
+        <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTodo()}
           className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
@@ -839,7 +839,7 @@ export default function Dashboard() {
           <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
             <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Today's Payments</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2.5">
           {d.paymentModeSplit.map((p) => {
@@ -866,30 +866,30 @@ export default function Dashboard() {
 
   const renderSummary = () => {
     const rows: { label: string; value: string | number; color?: string }[] = [
-      { label: "Total Customers", value: d.counts.customers, color: "#60a5fa" },
-      { label: "Total Orders", value: d.counts.orders, color: "#a78bfa" },
-      { label: "Total Bills", value: d.counts.bills, color: "#34d399" },
-      { label: "Total Payments", value: d.counts.payments, color: "#fbbf24" },
-      { label: "Total Inventory", value: d.counts.inventory, color: "#f472b6" },
-      { label: "Total Deliveries", value: d.counts.deliveries, color: "#2dd4bf" },
-      { label: "Total Visits", value: d.counts.visits, color: "#fb923c" },
-      { label: "Today Sales", value: `₹${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Week Sales", value: `₹${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Month Sales", value: `₹${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: "Today Collection", value: `₹${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
-      { label: "Pending Payments", value: `₹${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
-      { label: "Today Orders", value: d.todayOrders, color: "#a78bfa" },
-      { label: "Week Orders", value: d.weekOrders, color: "#a78bfa" },
-      { label: "Month Orders", value: d.monthOrders, color: "#a78bfa" },
-      { label: "Today Bills", value: d.todayBills, color: "#34d399" },
-      { label: "Week Bills", value: d.weekBills, color: "#34d399" },
-      { label: "Month Bills", value: d.monthBills, color: "#34d399" },
-      { label: "Ready for Pickup", value: d.readyDeliveries ?? 0, color: "#2dd4bf" },
-      { label: "New Customers Today", value: d.newCustomersToday ?? 0, color: "#60a5fa" },
-      { label: "Low Stock Items", value: d.lowStock ?? 0, color: "#f87171" },
-      { label: "Draft Orders", value: draftOrders.length, color: "#fb923c" },
-      { label: "Pending Bills", value: d.pendingBills.length, color: "#f87171" },
-      { label: "Today Deliveries", value: d.todayDeliveries.length, color: "#2dd4bf" },
+      { label: uiT("Total Customers", "कुल ग्राहक"), value: d.counts.customers, color: "#60a5fa" },
+      { label: uiT("Total Orders", "कुल ऑर्डर"), value: d.counts.orders, color: "#a78bfa" },
+      { label: uiT("Total Bills", "कुल बिल"), value: d.counts.bills, color: "#34d399" },
+      { label: uiT("Total Payments", "कुल भुगतान"), value: d.counts.payments, color: "#fbbf24" },
+      { label: uiT("Total Inventory", "कुल इन्वेंट्री"), value: d.counts.inventory, color: "#f472b6" },
+      { label: uiT("Total Deliveries", "कुल डिलीवरी"), value: d.counts.deliveries, color: "#2dd4bf" },
+      { label: uiT("Total Visits", "कुल विज़िट"), value: d.counts.visits, color: "#fb923c" },
+      { label: uiT("Today Sales", "आज की बिक्री"), value: `₹${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Week Sales", "सप्ताह की बिक्री"), value: `₹${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Month Sales", "महीने की बिक्री"), value: `₹${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Today Collection", "आज का संग्रह"), value: `₹${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
+      { label: uiT("Pending Payments", "बाकी भुगतान"), value: `₹${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
+      { label: uiT("Today Orders", "आज के ऑर्डर"), value: d.todayOrders, color: "#a78bfa" },
+      { label: uiT("Week Orders", "सप्ताह के ऑर्डर"), value: d.weekOrders, color: "#a78bfa" },
+      { label: uiT("Month Orders", "महीने के ऑर्डर"), value: d.monthOrders, color: "#a78bfa" },
+      { label: uiT("Today Bills", "आज के बिल"), value: d.todayBills, color: "#34d399" },
+      { label: uiT("Week Bills", "सप्ताह के बिल"), value: d.weekBills, color: "#34d399" },
+      { label: uiT("Month Bills", "महीने के बिल"), value: d.monthBills, color: "#34d399" },
+      { label: uiT("Ready for Pickup", "पिकअप के लिए तैयार"), value: d.readyDeliveries ?? 0, color: "#2dd4bf" },
+      { label: uiT("New Customers Today", "आज नए ग्राहक"), value: d.newCustomersToday ?? 0, color: "#60a5fa" },
+      { label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "#f87171" },
+      { label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "#fb923c" },
+      { label: uiT("Pending Bills", "बाकी बिल"), value: d.pendingBills.length, color: "#f87171" },
+      { label: uiT("Today Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "#2dd4bf" },
     ];
 
     return (
@@ -898,7 +898,7 @@ export default function Dashboard() {
           <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-90" />
           <div className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Summary — All Metrics</span>
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{uiT("Summary", "सारांश")}</span>
           </div>
           <span className="text-xs text-slate-400 dark:text-slate-500">({rows.length} metrics)</span>
         </summary>

@@ -22,29 +22,29 @@ import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
 import BottomNav from "../components/NewvistePage/BottomNav";
 
-const VISIT_TYPES = [
-  { value: "new", label: "New Glasses", icon: Eye },
-  { value: "frame_change", label: "Frame Change", icon: RefreshCw },
-  { value: "new_lens", label: "New Lens", icon: Maximize2 },
-  { value: "contact_lens", label: "Contact Lens", icon: Circle },
-  { value: "service", label: "Service", icon: Wrench },
-  { value: "other", label: "Other", icon: Grid3X3 },
-];
-
-const steps = [
-  { key: "service", label: "Service", icon: Activity, desc: "Visit type" },
-  { key: "prescription", label: "Examination", icon: Eye, desc: "Vision test" },
-  { key: "order", label: "Order", icon: ShoppingCart, desc: "Frame & lens" },
-  { key: "billing", label: "Billing", icon: CreditCard, desc: "Items & pricing" },
-  { key: "payment", label: "Payment", icon: Percent, desc: "Collect & confirm" },
-  { key: "confirmation", label: "Confirm", icon: CheckCircle, desc: "Review & save" },
-];
-
 export default function CustomerNewVisit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { t } = useTranslate();
+  const { t, uiT } = useTranslate();
+
+  const VISIT_TYPES = [
+    { value: "new", label: uiT("New Glasses", "नए चश्मे"), icon: Eye },
+    { value: "frame_change", label: uiT("Frame Change", "फ्रेम बदलें"), icon: RefreshCw },
+    { value: "new_lens", label: uiT("New Lens", "नया लेंस"), icon: Maximize2 },
+    { value: "contact_lens", label: uiT("Contact Lens", "कॉन्टैक्ट लेंस"), icon: Circle },
+    { value: "service", label: uiT("Service", "सेवा"), icon: Wrench },
+    { value: "other", label: uiT("Other", "अन्य"), icon: Grid3X3 },
+  ];
+
+  const steps = [
+    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
+    { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
+    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
+    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य") },
+    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
+    { key: "confirmation", label: uiT("Confirm", "पुष्टि"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
+  ];
 
   const [customer, setCustomer] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);

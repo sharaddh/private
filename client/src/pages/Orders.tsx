@@ -180,9 +180,9 @@ export default function Orders() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { key: "all", label: "Total", value: stats.total, color: "text-gray-900 dark:text-white" },
-          { key: "Ordered", label: "Ordered", value: stats.ordered, color: "text-purple-600 dark:text-purple-400" },
-          { key: "In Lab", label: "In Lab", value: stats.inLab, color: "text-amber-600 dark:text-amber-400" },
+          { key: "all", label: uiT("Total", "कुल"), value: stats.total, color: "text-gray-900 dark:text-white" },
+          { key: "Ordered", label: uiT("Ordered", "ऑर्डर किया"), value: stats.ordered, color: "text-purple-600 dark:text-purple-400" },
+          { key: "In Lab", label: uiT("In Lab", "लैब में"), value: stats.inLab, color: "text-amber-600 dark:text-amber-400" },
           { key: "Ready", label: uiT("Ready", "तैयार"), value: stats.ready, color: "text-blue-600 dark:text-blue-400" },
         ].map((s) => (
           <button key={s.key} type="button" onClick={() => setFilter(s.key)}
@@ -198,10 +198,10 @@ export default function Orders() {
       {/* Filter pills */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { key: "all", label: "All Orders" },
-          { key: "Draft", label: "Draft" },
-          { key: "Ordered", label: "Ordered" },
-          { key: "In Lab", label: "In Lab" },
+          { key: "all", label: uiT("All Orders", "सभी ऑर्डर") },
+          { key: "Draft", label: uiT("Draft", "ड्राफ्ट") },
+          { key: "Ordered", label: uiT("Ordered", "ऑर्डर किया") },
+          { key: "In Lab", label: uiT("In Lab", "लैब में") },
           { key: "Ready", label: uiT("Ready", "तैयार") },
           { key: "Delivered", label: uiT("Delivered", "डिलीवर हो गया") },
         ].map((f) => (
@@ -224,7 +224,7 @@ export default function Orders() {
               ? "bg-primary-600 text-white"
               : "text-gray-600 dark:text-gray-400 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700"
           }`}>
-          All Orders
+          {uiT("All Orders", "सभी ऑर्डर")}
         </button>
       </div>
 

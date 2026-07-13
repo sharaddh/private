@@ -5,6 +5,7 @@ import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Ey
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import { cleanEyeSet } from "../utils/rx";
+import { useTranslate } from "../context/TranslateContext";
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
 const VISIT_TYPES = [
   { value: "new", label: "New Glasses" },
@@ -17,6 +18,7 @@ const VISIT_TYPES = [
 
 export default function NewVisit() {
   const toast = useToast();
+  const { uiT } = useTranslate();
   const [phoneSearch, setPhoneSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -69,11 +71,11 @@ export default function NewVisit() {
 
   // Steps
   const steps = [
-    { key: "customer", label: "Customer", icon: User },
-    { key: "examination", label: "Examination", icon: Activity },
-    { key: "order", label: "Order", icon: ShoppingCart },
-    { key: "billing", label: "Billing", icon: CreditCard },
-    { key: "payment", label: "Payment", icon: CheckCircle },
+    { key: "customer", label: uiT("Customer", "ग्राहक"), icon: User },
+    { key: "examination", label: uiT("Examination", "जांच"), icon: Activity },
+    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart },
+    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard },
+    { key: "payment", label: uiT("Payment", "भुगतान"), icon: CheckCircle },
   ];
   const [step, setStep] = useState("customer");
 
@@ -282,9 +284,9 @@ export default function NewVisit() {
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Visit Completed!</h2>
-          <p className="text-sm text-gray-500 mb-6">The visit and order have been saved successfully.</p>
-          <button onClick={resetForm} className="btn-primary px-6 py-2.5">New Visit</button>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{uiT("Visit Completed!", "विज़िट पूर्ण!")}</h2>
+          <p className="text-sm text-gray-500 mb-6">{uiT("The visit and order have been saved successfully.", "विज़िट और ऑर्डर सफलतापूर्वक सहेजे गए।")}</p>
+          <button onClick={resetForm} className="btn-primary px-6 py-2.5">{uiT("New Visit", "नई विज़िट")}</button>
         </div>
       ) : (
         <>
@@ -312,16 +314,16 @@ export default function NewVisit() {
             <div className="card space-y-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
                 <User size={18} className="text-primary-500" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Customer</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Customer", "ग्राहक")}</h2>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Search by Mobile</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Search by Mobile", "मोबाइल से खोजें")}</label>
                 <div className="flex gap-2">
-                  <input ref={phoneRef} type="text" inputMode="numeric" placeholder="Enter phone number"
+                  <input ref={phoneRef} type="text" inputMode="numeric" placeholder={uiT("Enter phone number", "फ़ोन नंबर दर्ज करें")}
                     className="input-field flex-1" value={phoneSearch}
                     onChange={(e) => setPhoneSearch(e.target.value)} />
                   <button onClick={() => searchCustomer(phoneSearch)} disabled={phoneSearch.length < 3}
-                    className="btn-primary px-4 flex items-center gap-2 disabled:opacity-50"><Search size={16} /> Search</button>
+                    className="btn-primary px-4 flex items-center gap-2 disabled:opacity-50"><Search size={16} /> {uiT("Search", "खोजें")}</button>
                 </div>
               </div>
 
@@ -331,7 +333,7 @@ export default function NewVisit() {
                     <button key={c._id} type="button" onClick={() => selectCustomer(c)}
                       className="w-full text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-dark-700 transition-all">
                       <div className="font-medium text-gray-900 dark:text-white">{c.name}</div>
-                      <div className="text-xs text-gray-500">{c.mobile}{c.lastVisit ? ` · Last visit: ${c.lastVisit}` : ""}</div>
+                      <div className="text-xs text-gray-500">{c.mobile}{c.lastVisit ? ` · ${uiT("Last visit:", "अंतिम विज़िट:")}${c.lastVisit}` : ""}</div>
                     </button>
                   ))}
                 </div>
@@ -339,51 +341,51 @@ export default function NewVisit() {
 
               {searched && searchResults.length === 0 && (
                 <div className="text-center py-6 border-2 border-dashed border-gray-200 dark:border-slate-600 rounded-xl">
-                  <p className="text-sm text-gray-500 mb-3">No existing customer found with this number.</p>
+                  <p className="text-sm text-gray-500 mb-3">{uiT("No existing customer found with this number.", "इस नंबर से कोई ग्राहक नहीं मिला।")}</p>
                   <button onClick={() => { setIsNewCustomer(true); setCustomerForm({ ...customerForm, mobile: phoneSearch }); }}
-                    className="btn-primary px-4 py-2">Add New Customer</button>
+                    className="btn-primary px-4 py-2">{uiT("Add New Customer", "नया ग्राहक जोड़ें")}</button>
                 </div>
               )}
 
               {(selectedCustomer || isNewCustomer) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
-                    <input className="input-field" placeholder="Customer name" value={customerForm.name}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Full Name *", "पूरा नाम *")}</label>
+                    <input className="input-field" placeholder={uiT("Customer name", "ग्राहक का नाम")} value={customerForm.name}
                       onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile *</label>
-                    <input className="input-field" placeholder="Phone" value={customerForm.mobile}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Mobile *", "मोबाइल *")}</label>
+                    <input className="input-field" placeholder={uiT("Phone", "फ़ोन")} value={customerForm.mobile}
                       onChange={(e) => setCustomerForm({ ...customerForm, mobile: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                    <input className="input-field" placeholder="Email" value={customerForm.email}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Email", "ईमेल")}</label>
+                    <input className="input-field" placeholder={uiT("Email", "ईमेल")} value={customerForm.email}
                       onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-                    <input className="input-field" placeholder="Address" value={customerForm.address}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Address", "पता")}</label>
+                    <input className="input-field" placeholder={uiT("Address", "पता")} value={customerForm.address}
                       onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City</label>
-                    <input className="input-field" placeholder="City" value={customerForm.city}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("City", "शहर")}</label>
+                    <input className="input-field" placeholder={uiT("City", "शहर")} value={customerForm.city}
                       onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
-                      <input type="number" className="input-field" placeholder="Age" value={customerForm.age ?? ""}
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Age", "आयु")}</label>
+                      <input type="number" className="input-field" placeholder={uiT("Age", "आयु")} value={customerForm.age ?? ""}
                         onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Gender", "लिंग")}</label>
                       <select className="input-field" value={customerForm.gender}
                         onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
-                        <option value="">Select</option>
-                        {GENDER_OPTIONS.map((g) => (<option key={g} value={g}>{g}</option>))}
+                        <option value="">{uiT("Select", "चुनें")}</option>
+                        {GENDER_OPTIONS.map((g) => (<option key={g} value={g}>{uiT(g, g === "Male" ? "पुरुष" : g === "Female" ? "महिला" : "अन्य")}</option>))}
                       </select>
                     </div>
                   </div>
@@ -393,7 +395,7 @@ export default function NewVisit() {
               <div className="flex justify-end pt-2">
                 <button onClick={() => setStep("examination")} disabled={!canProceed()}
                   className="btn-primary px-6 py-2.5 flex items-center gap-2 disabled:opacity-50">
-                  Next <ChevronRight size={16} />
+                  {uiT("Next", "अगला")} <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -404,35 +406,35 @@ export default function NewVisit() {
             <div className="card space-y-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
                 <Activity size={18} className="text-primary-500" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Examination</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Examination", "जांच")}</h2>
               </div>
 
               <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visit Type</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{uiT("Visit Type", "विज़िट प्रकार")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {VISIT_TYPES.map((t) => (
                     <button key={t.value} type="button" onClick={() => setVisitType(t.value)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                         visitType === t.value ? "bg-primary-600 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400"
-                      }`}>{t.label}</button>
+                      }`}>{uiT(t.label, t.value === "new" ? "नए चश्मे" : t.value === "frame_change" ? "फ्रेम बदलें" : t.value === "new_lens" ? "नया लेंस" : t.value === "contact_lens" ? "कॉन्टैक्ट लेंस" : t.value === "service" ? "सेवा" : "अन्य")}</button>
                   ))}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Visit Date</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Visit Date", "विज़िट तिथि")}</label>
                   <input type="date" className="input-field" value={visitDate}
                     onChange={(e) => setVisitDate(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Doctor</label>
-                  <input className="input-field" placeholder="Doctor name" value={visitDoctor}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Doctor", "डॉक्टर")}</label>
+                  <input className="input-field" placeholder={uiT("Doctor name", "डॉक्टर का नाम")} value={visitDoctor}
                     onChange={(e) => setVisitDoctor(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Remarks</label>
-                  <input className="input-field" placeholder="Any remarks" value={visitRemarks}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Remarks", "टिप्पणी")}</label>
+                  <input className="input-field" placeholder={uiT("Any remarks", "कोई टिप्पणी")} value={visitRemarks}
                     onChange={(e) => setVisitRemarks(e.target.value)} />
                 </div>
               </div>
@@ -441,20 +443,20 @@ export default function NewVisit() {
                 <input type="checkbox" id="usePresc" checked={usePrescription}
                   onChange={(e) => setUsePrescription(e.target.checked)}
                   className="rounded border-gray-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500" />
-                <label htmlFor="usePresc" className="text-sm font-medium text-gray-700 dark:text-gray-300">Add Prescription</label>
+                <label htmlFor="usePresc" className="text-sm font-medium text-gray-700 dark:text-gray-300">{uiT("Add Prescription", "प्रिस्क्रिप्शन जोड़ें")}</label>
               </div>
 
               {usePrescription && (
                 <div className="space-y-4">
                   {(["rightEye", "leftEye"] as const).map((side) => {
-                    const label = side === "rightEye" ? "Right Eye (R/E)" : "Left Eye (L/E)";
+                    const label = side === "rightEye" ? uiT("Right Eye (R/E)", "दायाँ आँख (R/E)") : uiT("Left Eye (L/E)", "बायाँ आँख (L/E)");
                     const data = prescription[side];
                     return (
                       <div key={side}>
                         <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">{label}</h4>
                         <div className="grid grid-cols-3 gap-3">
                           {(["dv", "nv", "pc"] as const).map((type) => {
-                            const typeLabel = type === "dv" ? "Distance Vision" : type === "nv" ? "Near Vision" : "Prism";
+                            const typeLabel = type === "dv" ? uiT("Distance Vision", "दूर दृष्टि") : type === "nv" ? uiT("Near Vision", "निकट दृष्टि") : uiT("Prism", "प्रिज़्म");
                             const fields = type === "pc" ? ["h", "v", "add"] : ["sph", "cyl", "axis", "prism", "add"];
                             return (
                               <div key={type} className="border border-gray-200 dark:border-slate-600 rounded-xl p-3">
@@ -483,13 +485,13 @@ export default function NewVisit() {
                   })}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PD (Pupillary Distance)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("PD (Pupillary Distance)", "PD (पुपिलरी डिस्टेंस)")}</label>
                       <input className="input-field" placeholder="e.g. 62" value={prescription.pd}
                         onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-                      <input className="input-field" placeholder="Prescription notes" value={prescription.notes}
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{uiT("Notes", "नोट्स")}</label>
+                      <input className="input-field" placeholder={uiT("Prescription notes", "प्रिस्क्रिप्शन नोट्स")} value={prescription.notes}
                         onChange={(e) => setPrescription({ ...prescription, notes: e.target.value })} />
                     </div>
                   </div>
@@ -497,8 +499,8 @@ export default function NewVisit() {
               )}
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep("customer")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
-                <button onClick={() => setStep("order")} className="btn-primary flex items-center gap-2 px-6">Next <ChevronRight size={16} /></button>
+                <button onClick={() => setStep("customer")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> {uiT("Back", "वापस")}</button>
+                <button onClick={() => setStep("order")} className="btn-primary flex items-center gap-2 px-6">{uiT("Next", "अगला")} <ChevronRight size={16} /></button>
               </div>
             </div>
           )}
@@ -508,7 +510,7 @@ export default function NewVisit() {
             <div className="card space-y-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
                 <ShoppingCart size={18} className="text-primary-500" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Order Details</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Order Details", "ऑर्डर विवरण")}</h2>
               </div>
 
               {visitType !== "service" && visitType !== "other" && (
@@ -517,8 +519,8 @@ export default function NewVisit() {
                   {/* Frames */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><Eye size={14} /> Frames</h3>
-                      <button onClick={addFrame} className="text-xs text-primary-600 hover:text-primary-700 font-medium">+ Add Frame</button>
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><Eye size={14} /> {uiT("Frames", "फ्रेम")}</h3>
+                      <button onClick={addFrame} className="text-xs text-primary-600 hover:text-primary-700 font-medium">{uiT("+ Add Frame", "+ फ्रेम जोड़ें")}</button>
                     </div>
                     {orderFrames.map((f, i) => (
                       <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
@@ -545,7 +547,7 @@ export default function NewVisit() {
                     <div className="flex gap-2 mt-1">
                       <button type="button" onClick={() => setScanTarget("frame")} className="text-xs text-gray-500 hover:text-primary-600 flex items-center gap-1"
                         onMouseDown={() => setScanModal(true)}>
-                        <Camera size={12} /> Scan QR
+                        <Camera size={12} /> {uiT("Scan QR", "QR स्कैन करें")}
                       </button>
                     </div>
                   </div>
@@ -553,19 +555,19 @@ export default function NewVisit() {
                   {/* Lenses */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><Eye size={14} /> Lenses</h3>
-                      <button onClick={addLens} className="text-xs text-primary-600 hover:text-primary-700 font-medium">+ Add Lens</button>
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><Eye size={14} /> {uiT("Lenses", "लेंस")}</h3>
+                      <button onClick={addLens} className="text-xs text-primary-600 hover:text-primary-700 font-medium">{uiT("+ Add Lens", "+ लेंस जोड़ें")}</button>
                     </div>
                     {orderLenses.map((l, i) => (
                       <div key={i} className="flex flex-wrap items-center gap-2 mb-2 p-2 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                         <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-20" placeholder="SKU" value={l.sku} onChange={(e) => updateLens(i, "sku", e.target.value)} />
                         <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-28" placeholder="Brand" value={l.brand} onChange={(e) => updateLens(i, "brand", e.target.value)} />
                         <div className="flex gap-1 flex-wrap">
-                          {["Single Vision", "Bifocal", "Progressive", "Blue Cut", "Photochromic", "Anti-Glare"].map((f) => (
-                            <button key={f} type="button" onClick={() => toggleFeature(i, f)}
+                          {[{ en: "Single Vision", hi: "सिंगल विज़न" }, { en: "Bifocal", hi: "बाईफोकल" }, { en: "Progressive", hi: "प्रोग्रेसिव" }, { en: "Blue Cut", hi: "ब्लू कट" }, { en: "Photochromic", hi: "फोटोक्रोमिक" }, { en: "Anti-Glare", hi: "एंटी-ग्लेयर" }].map((f) => (
+                            <button key={f.en} type="button" onClick={() => toggleFeature(i, f.en)}
                               className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
-                                l.features.includes(f) ? "bg-primary-100 dark:bg-primary-900/30 border-primary-300 text-primary-700 dark:text-primary-300" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-500"
-                              }`}>{f}</button>
+                                l.features.includes(f.en) ? "bg-primary-100 dark:bg-primary-900/30 border-primary-300 text-primary-700 dark:text-primary-300" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-500"
+                              }`}>{uiT(f.en, f.hi)}</button>
                           ))}
                         </div>
                         <input className="text-xs py-1.5 px-2 rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 w-16" placeholder="Index" value={l.index} onChange={(e) => updateLens(i, "index", e.target.value)} />
@@ -579,8 +581,8 @@ export default function NewVisit() {
                   {/* Accessories */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Accessories</h3>
-                      <button onClick={addAccessory} className="text-xs text-primary-600 hover:text-primary-700 font-medium">+ Add Accessory</button>
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{uiT("Accessories", "सहायक उपकरण")}</h3>
+                      <button onClick={addAccessory} className="text-xs text-primary-600 hover:text-primary-700 font-medium">{uiT("+ Add Accessory", "+ सहायक जोड़ें")}</button>
                     </div>
                     {orderAccessories.map((a, i) => (
                       <div key={i} className="flex items-center gap-2 mb-1.5">
@@ -594,19 +596,19 @@ export default function NewVisit() {
                   {/* Delivery Date */}
                   <div className="flex items-center gap-3 pt-2">
                     <Calendar size={16} className="text-gray-400" />
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Delivery</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{uiT("Delivery", "डिलीवरी")}</h3>
                   </div>
                   <div className="max-w-xs">
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Delivery Date</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{uiT("Expected Delivery Date", "अपेक्षित डिलीवरी तिथि")}</label>
                     <input type="date" className="input-field text-base" value={orderDeliveryDate}
                       onChange={(e) => setOrderDeliveryDate(e.target.value)} />
                     <div className="flex gap-1.5 mt-1.5">
                       {[
-                        { label: "Today", days: 0 },
-                        { label: "Tomorrow", days: 1 },
-                        { label: "3 Days", days: 3 },
-                        { label: "5 Days", days: 5 },
-                        { label: "7 Days", days: 7 },
+                        { label: uiT("Today", "आज"), days: 0 },
+                        { label: uiT("Tomorrow", "कल"), days: 1 },
+                        { label: uiT("3 Days", "3 दिन"), days: 3 },
+                        { label: uiT("5 Days", "5 दिन"), days: 5 },
+                        { label: uiT("7 Days", "7 दिन"), days: 7 },
                       ].map((s) => {
                         const d = new Date();
                         d.setDate(d.getDate() + s.days);
@@ -626,8 +628,8 @@ export default function NewVisit() {
               )}
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep("examination")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
-                <button onClick={() => setStep("billing")} className="btn-primary flex items-center gap-2 px-6">Next <ChevronRight size={16} /></button>
+                <button onClick={() => setStep("examination")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> {uiT("Back", "वापस")}</button>
+                <button onClick={() => setStep("billing")} className="btn-primary flex items-center gap-2 px-6">{uiT("Next", "अगला")} <ChevronRight size={16} /></button>
               </div>
             </div>
           )}
@@ -637,7 +639,7 @@ export default function NewVisit() {
             <div className="card space-y-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
                 <CreditCard size={18} className="text-primary-500" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Billing</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Billing", "बिलिंग")}</h2>
               </div>
 
               <div>
@@ -651,19 +653,19 @@ export default function NewVisit() {
                   </div>
                 ))}
                 <button onClick={addBillItem} className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 mt-2">
-                  <Plus size={16} /> Add Item
+                  <Plus size={16} /> {uiT("Add Item", "आइटम जोड़ें")}
                 </button>
               </div>
 
               <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-dark-700">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total</span>
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{uiT("Total", "कुल")}</span>
                 <span className="text-xl font-bold text-gray-900 dark:text-white">\u20B9{totalAmount.toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep("order")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
+                <button onClick={() => setStep("order")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> {uiT("Back", "वापस")}</button>
                 <button onClick={() => setStep("payment")} disabled={!canProceed()}
-                  className="btn-primary flex items-center gap-2 px-6 disabled:opacity-50">Next <ChevronRight size={16} /></button>
+                  className="btn-primary flex items-center gap-2 px-6 disabled:opacity-50">{uiT("Next", "अगला")} <ChevronRight size={16} /></button>
               </div>
             </div>
           )}
@@ -673,59 +675,59 @@ export default function NewVisit() {
             <div className="card space-y-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-dark-700">
                 <CheckCircle size={18} className="text-primary-500" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Payment</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Payment", "भुगतान")}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Amount Paid</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Amount Paid", "भुगतान राशि")}</label>
                   <input type="number" className="input-field text-lg font-bold" placeholder="0"
                     value={advancePaid || ""} onChange={(e) => setAdvancePaid(Number(e.target.value))} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Payment Mode</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Payment Mode", "भुगतान मोड")}</label>
                   <select className="input-field" value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}>
-                    {["Cash", "Card", "UPI", "Bank Transfer", "Insurance"].map((m) => (<option key={m}>{m}</option>))}
+                    {[{ en: "Cash", hi: "नकद" }, { en: "Card", hi: "कार्ड" }, { en: "UPI", hi: "UPI" }, { en: "Bank Transfer", hi: "बैंक ट्रांसफर" }, { en: "Insurance", hi: "बीमा" }].map((m) => (<option key={m.en} value={m.en}>{uiT(m.en, m.hi)}</option>))}
                   </select>
                 </div>
               </div>
 
               <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Total Bill</span>
+                  <span className="text-gray-500">{uiT("Total Bill", "कुल बिल")}</span>
                   <span className="font-semibold">\u20B9{totalAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Paid</span>
+                  <span className="text-gray-500">{uiT("Paid", "भुगतान")}</span>
                   <span className="font-semibold text-green-600">\u20B9{advancePaid.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-slate-600">
-                  <span className="font-medium">Pending</span>
+                  <span className="font-medium">{uiT("Pending", "बाकी")}</span>
                   <span className="font-bold text-amber-600">\u20B9{Math.max(0, totalAmount - advancePaid).toLocaleString()}</span>
                 </div>
               </div>
 
               {/* Delivery */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Delivery (optional)</h3>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{uiT("Delivery (optional)", "डिलीवरी (वैकल्पिक)")}</h3>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
-                  <input className="input-field" placeholder="Delivery address" value={deliveryAddress}
+                  <label className="block text-xs font-medium text-gray-500 mb-1">{uiT("Address", "पता")}</label>
+                  <input className="input-field" placeholder={uiT("Delivery address", "डिलीवरी पता")} value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Expected Date</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">{uiT("Expected Date", "अपेक्षित तिथि")}</label>
                   <input type="date" className="input-field" value={deliveryDate}
                     onChange={(e) => setDeliveryDate(e.target.value)} />
                 </div>
               </div>
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep("billing")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> Back</button>
+                <button onClick={() => setStep("billing")} className="btn-secondary flex items-center gap-2"><ChevronLeft size={16} /> {uiT("Back", "वापस")}</button>
                 <button onClick={saveTransaction} disabled={saving || (advancePaid <= 0 && advancePaid < totalAmount)}
                   className="btn-success flex items-center gap-2 px-8 py-3 text-base disabled:opacity-50">
-                  {saving ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
-                  : <><Save size={18} /> Save & Generate Order</>}
+                  {saving ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> {uiT("Saving...", "सहेज रहे हैं...")}</>
+                  : <><Save size={18} /> {uiT("Save & Generate Order", "सहेजें और ऑर्डर बनाएं")}</>}
                 </button>
               </div>
             </div>
@@ -734,11 +736,11 @@ export default function NewVisit() {
       )}
 
       {/* Scan QR Modal */}
-      <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame" size="sm">
+      <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan Frame", "फ्रेम स्कैन करें")} size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Point your scanner at the QR code or type the SKU below.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{uiT("Point your scanner at the QR code or type the SKU below.", "अपना स्कैनर QR कोड पर रखें या नीचे SKU टाइप करें।")}</p>
           <div className="flex gap-2">
-            <input className="input-field flex-1" placeholder="SKU or code" autoFocus
+            <input className="input-field flex-1" placeholder={uiT("SKU or code", "SKU या कोड")} autoFocus
               onChange={async (e) => {
                 const q = e.target.value.trim();
                 if (q.length > 2) {

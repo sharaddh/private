@@ -6,7 +6,7 @@ import { Payment } from "../models/payment";
 import { Customer } from "../models/customer";
 import { Settings } from "../models/settings";
 import { Prescription } from "../models/prescription";
-import { whatsapp } from "../services/whatsapp";
+import { whatsappManager } from "../services/whatsapp";
 import PDFKit from "pdfkit";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
@@ -167,6 +167,7 @@ router.patch("/:id/review", authenticate, asyncHandler(async (req, res) => {
 // PATCH /:id/status — validated status transition with partial advancement support
 router.patch("/:id/status", authenticate, async (req, res) => {
   try {
+    const wa = whatsappManager.getInstance((req as any).branchId);
     const { status, collectPayment, paymentMode, advanceQuantity } = statusUpdateSchema.parse(req.body);
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
@@ -222,7 +223,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
-        const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
+        const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
         if (!sent) console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
@@ -234,7 +235,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         const settings = await Settings.findOne().sort({ createdAt: -1 });
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
-        const sent = await whatsapp.sendMessage(normalizePhone(customer.mobile), msg);
+        const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
         if (!sent) console.log(`WhatsApp: order delivered message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
@@ -400,6 +401,7 @@ router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
 // POST /demand-send — generate demand PDF and send via WhatsApp
 router.post("/demand-send", authenticate, async (req, res) => {
   try {
+    const wa = whatsappManager.getInstance((req as any).branchId);
     const { type, orderIds } = req.body;
     if (!["buy", "order"].includes(type)) {
       return res.status(400).json({ success: false, message: 'Type must be "buy" or "order"' });
@@ -529,7 +531,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
     }
     phone = phone.replace(/^0+/, "");
     const normalized = phone.length === 10 ? `91${phone}` : phone;
-    const waStatus = await whatsapp.getStatus();
+    const waStatus = await wa.getStatus();
 
     const sizeKB = (pdfBuffer.length / 1024).toFixed(1);
     console.log(`Demand PDF: ${filename}, ${sizeKB}KB, WA status: ${waStatus.status}`);
@@ -539,7 +541,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
     let sendError: string | null = null;
 
     try {
-      sent = await whatsapp.sendMedia(normalized, base64, filename, "application/pdf", caption, true);
+      sent = await wa.sendMedia(normalized, base64, filename, "application/pdf", caption, true);
     } catch (e: any) {
       sendError = e.message;
       console.error(`Demand PDF sendMedia threw: ${e.message}`);
@@ -553,7 +555,7 @@ router.post("/demand-send", authenticate, async (req, res) => {
           `${e.eye}  ${e.customerName} - ${e.lensLabel} | ${e.coating} | ${e.rxStr}`
         ).join("\n");
         const textMsg = `${title}\n\n${items}\n\nTotal: ${entries.length} items`;
-        await whatsapp.sendMessage(normalized, textMsg);
+        await wa.sendMessage(normalized, textMsg);
       } catch (e2: any) {
         console.error(`Demand text fallback also failed: ${e2.message}`);
       }

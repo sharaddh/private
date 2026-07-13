@@ -80,7 +80,7 @@ async function fix() {
         console.log(`  Dropped kmj.${collName} (${count} docs)`);
       }
     }
-    console.log("  kmj database cleaned - only branches, users, baileys_auth remain");
+    console.log("  kmj database cleaned - only branches, users, and baileys_auth* remain");
   }
 
   console.log("\n✓ Migration complete!");

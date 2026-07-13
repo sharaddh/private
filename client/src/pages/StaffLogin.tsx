@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useTranslate } from "../context/TranslateContext";
 import { LogIn, Eye, EyeOff, Shield } from "lucide-react";
 
 export default function StaffLogin() {
@@ -12,6 +13,7 @@ export default function StaffLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, setCurrentBranch } = useAuth();
+  const { uiT } = useTranslate();
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) navigate("/", { replace: true });
@@ -42,7 +44,7 @@ export default function StaffLogin() {
             <Shield className="text-white" size={22} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KMJ Optical</h1>
-          <p className="text-sm text-gray-500 mt-1">Staff Login</p>
+          <p className="text-sm text-gray-500 mt-1">{uiT("Staff Login")}</p>
         </div>
 
         <div className="card">
@@ -51,14 +53,14 @@ export default function StaffLogin() {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
-              <input type="text" placeholder="Enter username" value={username}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Username")}</label>
+              <input type="text" placeholder={uiT("Enter username")} value={username}
                 onChange={(e) => setUsername(e.target.value)} required className="input-field" autoFocus />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Password")}</label>
               <div className="relative">
-                <input type={showPassword ? "text" : "password"} placeholder="Enter password" value={password}
+                <input type={showPassword ? "text" : "password"} placeholder={uiT("Enter password")} value={password}
                   onChange={(e) => setPassword(e.target.value)} required className="input-field pr-10" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -69,12 +71,12 @@ export default function StaffLogin() {
             <button type="submit" disabled={isLoading}
               className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg">
               {isLoading ? (
-                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Signing in...</>
-              ) : <><LogIn size={18} /> Sign in</>}
+                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> {uiT("Signing in...")}</>
+              ) : <><LogIn size={18} /> {uiT("Sign in")}</>}
             </button>
           </form>
           <p className="text-center text-sm text-gray-500 mt-5">
-            Admin? <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">Login here</Link>
+            {uiT("Admin?")} <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">{uiT("Login here")}</Link>
           </p>
         </div>
       </div>
