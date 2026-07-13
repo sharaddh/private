@@ -88,13 +88,13 @@ export default function Customers() {
       const payload = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
       const res = editing ? await api.put(`/api/customers/${editing._id}`, payload) : await api.post("/api/customers", payload);
       if (res.success) { invalidateCache("/api/customers?limit=1000"); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
-      else setError(res.message || "Operation failed");
-    } catch { setError("An error occurred"); }
+      else setError(res.message || uiT("Operation failed", "ऑपरेशन विफल"));
+    } catch { setError(uiT("An error occurred", "एक त्रुटि हुई")); }
     finally { setIsLoading(false); }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this customer?")) return;
+    if (!confirm(uiT("Are you sure you want to delete this customer?", "क्या आप वाकई इस ग्राहक को हटाना चाहते हैं?"))) return;
     const res = await api.del(`/api/customers/${id}`);
     if (res.success) setList((prev) => prev.filter((c) => c._id !== id));
   }
@@ -106,7 +106,7 @@ export default function Customers() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-title">{uiT("Customers", "ग्राहक")}</h1>
-          <p className="page-subtitle">Search, view, and manage customer profiles.</p>
+          <p className="page-subtitle">{uiT("Search, view, and manage customer profiles.", "ग्राहक प्रोफ़ाइल खोजें, देखें और प्रबंधित करें।")}</p>
         </div>
         <div className="flex items-center gap-2">
           {!isStaff && (
@@ -116,15 +116,15 @@ export default function Customers() {
               if (res.success) {
                 refetch(true);
                 const d = res.data as any;
-                toast.success(`Fixed ${d?.updated || 0} customer records`);
+                toast.success(`${uiT("Fixed", "ठीक किया")} ${d?.updated || 0} ${uiT("customer records", "ग्राहक रिकॉर्ड")}`);
               } else {
-                toast.error("Recalculation failed: " + (res.message || "Unknown error"));
+                toast.error(`${uiT("Recalculation failed", "पुनर्गणना विफल")}: ` + (res.message || uiT("Unknown error", "अज्ञात त्रुटि")));
               }
               setRecalculating(false);
             }} disabled={recalculating}
               className="btn-secondary flex items-center gap-1.5 text-sm">
               <Activity size={16} />
-              {recalculating ? "Fixing..." : "Fix Data"}
+              {recalculating ? uiT("Fixing...", "सुधार हो रहा है...") : uiT("Fix Data", "डेटा ठीक करें")}
             </button>
           )}
           <button onClick={openCreate} className="btn-primary flex items-center gap-2 shadow-sm hover:shadow-lg">
@@ -147,7 +147,7 @@ export default function Customers() {
             {filteredList.length > 0 ? (
               <>
                 <div className="px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700/50">
-                  {filteredList.length} matching customer(s)
+                  {filteredList.length} {uiT("matching customer(s)", "मिलान हो रहा है ग्राहक")}
                 </div>
                 {filteredList.map((c) => (
                   <div key={c._id}
@@ -189,7 +189,7 @@ export default function Customers() {
               </>
             ) : (
               <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                No customers matching "{searchQuery}"
+                {uiT("No customers matching", "कोई ग्राहक मेल नहीं खा रहा")} "{searchQuery}"
               </div>
             )}
             <div
@@ -211,10 +211,10 @@ export default function Customers() {
             <Users size={32} className="text-slate-300 dark:text-slate-500" />
           </div>
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {searchQuery ? uiT("No customers found", "कोई ग्राहक नहीं मिला") : "No customers yet"}
+            {searchQuery ? uiT("No customers found", "कोई ग्राहक नहीं मिला") : uiT("No customers yet", "�भी तक कोई ग्राहक नहीं")}
           </h3>
           <p className="text-sm text-slate-500 mb-5">
-            {searchQuery ? `No results matching "${searchQuery}"` : "Start by adding your first customer."}
+            {searchQuery ? `${uiT("No results matching", "कोई परिणाम मेल नहीं खा रहा")} "${searchQuery}"` : uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")}
           </p>
           <button onClick={openCreate} className="btn-primary inline-flex items-center gap-2">
             <UserPlus size={18} /> {uiT("Add Customer", "ग्राहक जोड़ें")}
@@ -222,7 +222,7 @@ export default function Customers() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">{filteredList.length} customer(s)</p>
+          <p className="text-sm text-slate-500">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
           {filteredList.map((c) => (
             <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
               className="group relative card cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 overflow-hidden"
@@ -291,10 +291,10 @@ export default function Customers() {
                     </div>
                     {(c.pendingAmount || 0) > 0 ? (
                       <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-lg">
-                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">₹{(c.pendingAmount || 0).toLocaleString()} due</span>
+                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">₹{(c.pendingAmount || 0).toLocaleString()} {uiT("due", "बकाया")}</span>
                       </div>
                     ) : (c.totalVisits || 0) > 0 ? (
-                      <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">Cleared</span>
+                      <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">{uiT("Cleared", "चुकता")}</span>
                     ) : null}
                   </div>
 
@@ -330,7 +330,7 @@ export default function Customers() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="card p-4">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                    <UserPlus size={16} className="text-primary-500" /> Personal Info
+                    <UserPlus size={16} className="text-primary-500" /> {uiT("Personal Info", "व्यक्तिगत जानकारी")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
@@ -344,7 +344,7 @@ export default function Customers() {
                     <div>
                       <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Gender", "लिंग")}</label>
                       <select className="input-field text-sm" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                        <option value="">Select</option>
+                        <option value="">{uiT("Select", "चुनें")}</option>
                         <option value="Male">{uiT("Male", "पुरुष")}</option>
                         <option value="Female">{uiT("Female", "महिला")}</option>
                         <option value="Other">{uiT("Other", "अन्य")}</option>
@@ -355,7 +355,7 @@ export default function Customers() {
 
                 <div className="card p-4">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                    <Phone size={16} className="text-primary-500" /> Contact
+                    <Phone size={16} className="text-primary-500" /> {uiT("Contact", "संपर्क")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
@@ -363,7 +363,7 @@ export default function Customers() {
                       <input className="input-field text-sm" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Alt Mobile</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</label>
                       <input className="input-field text-sm" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
                     </div>
                     <div>
@@ -391,14 +391,14 @@ export default function Customers() {
 
                 <div className="card p-4">
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                    <Tag size={16} className="text-primary-500" /> Tags
+                    <Tag size={16} className="text-primary-500" /> {uiT("Tags", "टैग")}
                   </h3>
                   <input className="input-field text-sm" placeholder="tag1, tag2" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
                   <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
-                  <button type="submit" disabled={isLoading} className="btn-primary shadow-sm">{isLoading ? "Saving..." : editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</button>
+                  <button type="submit" disabled={isLoading} className="btn-primary shadow-sm">{isLoading ? uiT("Saving...", "सहेजा जा रहा है...") : editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</button>
                 </div>
               </form>
             </div>
@@ -423,23 +423,23 @@ export default function Customers() {
               <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-xl p-3 border border-emerald-100 dark:border-emerald-500/10 text-center">
                 <Activity size={16} className="text-emerald-600 mx-auto mb-1" />
                 <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{detailCustomer.totalVisits || 0}</p>
-                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">Visits</p>
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">{uiT("Visits", "विज़िट")}</p>
               </div>
               <div className="bg-blue-50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10 text-center">
                 <IndianRupee size={16} className="text-blue-600 mx-auto mb-1" />
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-300">₹{(detailCustomer.totalSpent || 0).toLocaleString()}</p>
-                <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70 font-medium">Spent</p>
+                <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70 font-medium">{uiT("Spent", "खर्च")}</p>
               </div>
               <div className="bg-amber-50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10 text-center">
                 <IndianRupee size={16} className="text-amber-600 mx-auto mb-1" />
                 <p className="text-lg font-bold text-amber-700 dark:text-amber-300">₹{(detailCustomer.pendingAmount || 0).toLocaleString()}</p>
-                <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 font-medium">Pending</p>
+                <p className="text-[10px] text-amber-600/70 dark:text-amber-400/70 font-medium">{uiT("Pending", "बाकी")}</p>
               </div>
             </div>
 
             <div className="card p-4">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                <UserPlus size={16} className="text-primary-500" /> Personal Info
+                <UserPlus size={16} className="text-primary-500" /> {uiT("Personal Info", "व्यक्तिगत जानकारी")}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -451,7 +451,7 @@ export default function Customers() {
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.gender || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Member Since</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Member Since", "सदस्य तब से")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.createdAt ? new Date(detailCustomer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}</p>
                 </div>
               </div>
@@ -459,7 +459,7 @@ export default function Customers() {
 
             <div className="card p-4">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                <Phone size={16} className="text-primary-500" /> Contact
+                <Phone size={16} className="text-primary-500" /> {uiT("Contact", "संपर्क")}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -467,7 +467,7 @@ export default function Customers() {
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.mobile || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Alt Mobile</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</p>
                   <p className="text-slate-700 dark:text-slate-300">{detailCustomer.alternateMobile || "—"}</p>
                 </div>
                 <div className="col-span-2">
@@ -487,7 +487,7 @@ export default function Customers() {
             {detailCustomer.tags && detailCustomer.tags.length > 0 && (
               <div className="card p-4">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-                  <Tag size={16} className="text-primary-500" /> Tags
+                  <Tag size={16} className="text-primary-500" /> {uiT("Tags", "टैग")}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {detailCustomer.tags.map((t, i) => (
@@ -498,14 +498,14 @@ export default function Customers() {
             )}
 
             <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
-              <button onClick={() => setShowDetail(false)} className="btn-secondary">Close</button>
+              <button onClick={() => setShowDetail(false)} className="btn-secondary">{uiT("Close", "बंद करें")}</button>
               <button onClick={() => { setShowDetail(false); openEdit(detailCustomer); }}
                 className="btn-primary flex items-center gap-2 shadow-sm">
                 <Edit2 size={16} /> {uiT("Edit", "संपादित करें")}
               </button>
               <button onClick={() => { setShowDetail(false); navigate(`/customers/${detailCustomer._id}`); }}
                 className="btn-primary flex items-center gap-2 shadow-sm bg-gradient-to-r from-primary-500 to-primary-600">
-                <Eye size={16} /> View Full Profile
+                <Eye size={16} /> {uiT("View Full Profile", "पूरी प्रोफ़ाइल देखें")}
               </button>
             </div>
           </div>
