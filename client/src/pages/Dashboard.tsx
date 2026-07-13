@@ -8,6 +8,7 @@ import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts
 import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
+import { useAuth } from "../context/AuthContext";
 import { formatFullRx } from "../utils/rx";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
@@ -225,6 +226,7 @@ export default function Dashboard() {
   const toast = useToast();
   const { dark, toggle } = useTheme();
   const { uiT } = useTranslate();
+  const { user } = useAuth();
 
   useEffect(() => { if (data) setHasDataOnce(true); }, [data]);
 
@@ -329,7 +331,7 @@ export default function Dashboard() {
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {greeting}, <span className="text-primary-600 dark:text-primary-400">Sharad</span>
+            {greeting}, <span className="text-primary-600 dark:text-primary-400">{(user?.name as string) || (user?.username as string) || ""}</span>
           </h1>
           <div className="flex items-center gap-2 mt-1.5 text-sm text-slate-500 dark:text-slate-400">
             <Calendar className="w-3.5 h-3.5" />
