@@ -6,6 +6,7 @@ import {
   History,
   Loader2,
 } from "lucide-react";
+import { useTranslate } from "../../context/TranslateContext";
 
 interface Customer {
   name?: string;
@@ -21,15 +22,6 @@ interface Props {
   saving: boolean;
 }
 
-const VISIT_TYPE_LABELS: Record<string, string> = {
-  new: "New Glasses",
-  frame_change: "Frame Change",
-  new_lens: "New Lens",
-  contact_lens: "Contact Lens",
-  service: "Service",
-  other: "Other",
-};
-
 export default function PageHeader({
   customer,
   id,
@@ -38,6 +30,17 @@ export default function PageHeader({
   loading,
   saving,
 }: Props) {
+  const { uiT } = useTranslate();
+
+  const VISIT_TYPE_LABELS: Record<string, string> = {
+    new: uiT("New Glasses", "नई चश्मा"),
+    frame_change: uiT("Frame Change", "फ्रेम बदलें"),
+    new_lens: uiT("New Lens", "नया लेंस"),
+    contact_lens: uiT("Contact Lens", "कॉन्टैक्ट लेंस"),
+    service: uiT("Service", "सेवा"),
+    other: uiT("Other", "अन्य"),
+  };
+
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -69,7 +72,7 @@ export default function PageHeader({
 
             <h1 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
 
-              {customer.name || "Loading..."}
+              {customer.name || uiT("Loading...", "लोड हो रहा है...")}
 
             </h1>
 
@@ -111,7 +114,7 @@ export default function PageHeader({
                 className="animate-spin"
               />
 
-              Saving...
+              {uiT("Saving...", "सेव हो रहा है...")}
 
             </div>
           )}
