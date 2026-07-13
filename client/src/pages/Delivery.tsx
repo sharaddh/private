@@ -62,21 +62,21 @@ export default function Delivery() {
             <Wallet size={24} className="text-blue-500" />
           </div>
           <p className="text-3xl font-bold text-primary-600">₹{totalRevenue.toLocaleString()}</p>
-          <p className="text-sm font-medium text-gray-500 mt-1">Total Revenue</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">{uiT("Total Revenue", "कुल राजस्व")}</p>
         </div>
         <div className="card text-center py-6">
           <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center mx-auto mb-3">
             <Truck size={24} className="text-amber-500" />
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{list.reduce((s, o) => s + (o.billInfo?.pendingAmount > 0 ? 1 : 0), 0)}</p>
-          <p className="text-sm font-medium text-gray-500 mt-1">Pending Payments</p>
+          <p className="text-sm font-medium text-gray-500 mt-1">{uiT("Pending Payments", "बाकी भुगतान")}</p>
         </div>
       </div>
 
       {list.length === 0 ? (
         <div className="card text-center py-16 border-dashed border-gray-300 dark:border-slate-500 bg-surface-50/50 dark:bg-slate-700/50">
           <Truck size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-gray-500">No delivered orders in this period</p>
+          <p className="text-gray-500">{uiT("No delivered orders in this period", "इस अवधि में कोई डिलीवर किया गया ऑर्डर नहीं")}</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -122,7 +122,7 @@ export default function Delivery() {
                 </div>
                 <button onClick={() => navigate(`/customers/${customerId(o)}?visitId=${o.visitId || ""}`)}
                   className="btn-primary gap-2 px-5 py-2.5 flex-shrink-0 text-sm">
-                  <Eye size={16} /> View
+                  <Eye size={16} /> {uiT("View", "देखें")}
                 </button>
               </div>
             </div>
