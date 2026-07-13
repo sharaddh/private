@@ -96,7 +96,7 @@ export default function Reports() {
 
   function exportCSV() {
     if (!customerData?.length) return;
-    const headers = ["Name", "Mobile", "Visits", "Total Spent", "Pending Amount"];
+    const headers = [uiT("Name", "नाम"), uiT("Mobile", "मोबाइल"), uiT("Visits", "विज़िट"), uiT("Total Spent", "कुल खर्च"), uiT("Pending Amount", "बाकी राशि")];
     const rows = customerData.map((c: any) => [
       `"${(c.name || "").replace(/"/g, '""')}"`,
       c.mobile || "",
@@ -116,7 +116,7 @@ export default function Reports() {
 
   function exportPendingCSV() {
     if (!pendingData?.length) return;
-    const headers = ["Bill", "Customer", "Total", "Pending", "Days"];
+    const headers = [uiT("Bill", "बिल"), uiT("Customer", "ग्राहक"), uiT("Total", "कुल"), uiT("Pending", "बाकी"), uiT("Days", "दिन")];
     const rows = pendingData.map((b: any) => {
       const name = typeof b.customerId === "object" && b.customerId?.name ? b.customerId.name : "—";
       const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -480,7 +480,7 @@ export default function Reports() {
           {(!invData?.lowStock || invData.lowStock.length === 0) && (
             <div className="card text-center py-8">
               <Package size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-              <p className="text-sm text-slate-400 dark:text-slate-500">No inventory data available.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{uiT("No inventory data available.", "कोई इन्वेंट्री डेटा उपलब्ध नहीं।")}</p>
             </div>
           )}
         </div>
