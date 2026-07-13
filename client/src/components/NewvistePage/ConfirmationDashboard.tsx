@@ -3,11 +3,7 @@ import {
   CheckCircle, Eye, Tag, Grid3X3, FileText, CreditCard,
   Truck, Activity, MapPin, CalendarDays, User, HeartPulse, Sparkles
 } from "lucide-react";
-
-const VISIT_TYPE_LABELS: Record<string, string> = {
-  new: "New Glasses", frame_change: "Frame Change", new_lens: "New Lens",
-  contact_lens: "Contact Lens", service: "Service", other: "Other",
-};
+import { useTranslate } from "../../context/TranslateContext";
 
 // Safe color mapping to prevent Tailwind purging dynamically created class names
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
@@ -22,7 +18,7 @@ const COLOR_MAP: Record<string, { bg: string; text: string }> = {
 
 function SummaryCard({ icon, title, children, color = "primary" }: { icon: React.ReactNode; title: string; children: React.ReactNode; color?: string }) {
   const theme = COLOR_MAP[color] || COLOR_MAP.primary;
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -42,7 +38,6 @@ function SummaryCard({ icon, title, children, color = "primary" }: { icon: React
   );
 }
 
-// Helper to format dates nicely
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "";
   try {
@@ -64,27 +59,37 @@ interface Props {
 }
 
 export default function ConfirmationDashboard({
-  visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, 
+  visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription,
   orderFrames, orderLenses, orderAccessories, billItems, totalAmount, discountVal,
   finalTotal, advancePaid, deliveryAddress, deliveryDate,
 }: Props) {
-  
+  const { uiT } = useTranslate();
+
   const balance = Math.max(0, finalTotal - advancePaid);
   const isFullyPaid = advancePaid >= finalTotal;
 
+  const VISIT_TYPE_LABELS: Record<string, string> = {
+    new: uiT("New Glasses", "नई चश्मा"),
+    frame_change: uiT("Frame Change", "फ्रेम बदलें"),
+    new_lens: uiT("New Lens", "नया लेंस"),
+    contact_lens: uiT("Contact Lens", "कॉन्टैक्ट लेंस"),
+    service: uiT("Service", "सेवा"),
+    other: uiT("Other", "अन्य"),
+  };
+
   const summaryCards = [
     {
-      title: "Service Details",
+      title: uiT("Service Details", "सेवा विवरण"),
       color: "blue",
       icon: <Activity size={18} />,
       content: (
         <div className="space-y-2">
           <div className="flex justify-between items-start">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Type</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Type", "प्रकार")}</span>
             <span className="text-sm font-bold text-slate-900 dark:text-white">{VISIT_TYPE_LABELS[visitType] || visitType}</span>
           </div>
           <div className="flex justify-between items-start">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Date</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Date", "तारीख")}</span>
             <span className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-1">
               <CalendarDays size={13} className="text-slate-400" />
               {formatDate(visitDate)}
@@ -92,7 +97,7 @@ export default function ConfirmationDashboard({
           </div>
           {visitDoctor && (
             <div className="flex justify-between items-start">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Doctor</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Doctor", "डॉक्टर")}</span>
               <span className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-1">
                 <User size={13} className="text-slate-400" />
                 {visitDoctor}
@@ -101,7 +106,7 @@ export default function ConfirmationDashboard({
           )}
           {visitRemarks && (
             <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700/50">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Remarks</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Remarks", "टिप्पणी")}</span>
               <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{visitRemarks}"</p>
             </div>
           )}
@@ -109,20 +114,20 @@ export default function ConfirmationDashboard({
       ),
     },
     ...(usePrescription ? [{
-      title: "Prescription",
+      title: uiT("Prescription", "प्रिस्क्रिप्शन"),
       color: "violet",
       icon: <Eye size={18} />,
       content: (
         <div className="space-y-3">
           {prescription.pd && (
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Pupillary Dist (PD)</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Pupillary Dist (PD)", "प्यूपिलरी डिस्ट (PD)")}</span>
               <span className="text-sm font-bold text-slate-900 dark:text-white">{prescription.pd}</span>
             </div>
           )}
           {prescription.problems && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Reported Problems</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">{uiT("Reported Problems", "बताई गई समस्याएँ")}</span>
               <p className="text-sm font-medium text-rose-600 dark:text-rose-400 flex items-start gap-1.5">
                 <HeartPulse size={14} className="mt-0.5 flex-shrink-0" />
                 {prescription.problems}
@@ -131,18 +136,18 @@ export default function ConfirmationDashboard({
           )}
           {prescription.notes && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Notes</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">{uiT("Notes", "नोट्स")}</span>
               <p className="text-sm text-slate-700 dark:text-slate-300">{prescription.notes}</p>
             </div>
           )}
           {!prescription.pd && !prescription.problems && !prescription.notes && (
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">No additional details recorded.</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">{uiT("No additional details recorded.", "कोई अतिरिक्त विवरण दर्ज नहीं किया गया।")}</p>
           )}
         </div>
       ),
     }] : []),
     ...(orderFrames.length > 0 || orderLenses.length > 0 || orderAccessories.length > 0 ? [{
-      title: "Order Items",
+      title: uiT("Order Items", "ऑर्डर आइटम"),
       color: "amber",
       icon: <Tag size={18} />,
       content: (
@@ -150,9 +155,9 @@ export default function ConfirmationDashboard({
           {orderFrames.map((f, i) => (
             <div key={`f-${i}`} className="flex justify-between items-start gap-2">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Frame</span>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{f.brand || "Unknown Brand"} {f.model}</p>
-                {f.color && <p className="text-xs text-slate-500 dark:text-slate-400">Color: {f.color}</p>}
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Frame", "फ्रेम")}</span>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{f.brand || uiT("Unknown Brand", "अज्ञात ब्रांड")} {f.model}</p>
+                {f.color && <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Color", "रंग")}: {f.color}</p>}
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">₹{f.price}</span>
             </div>
@@ -160,9 +165,9 @@ export default function ConfirmationDashboard({
           {orderLenses.map((l, i) => (
             <div key={`l-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Lens</span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Lens", "लेंस")}</span>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">
-                  {l.brand || "Standard"} {l.features.join(" + ")}
+                  {l.brand || uiT("Standard", "मानक")} {l.features.join(" + ")}
                 </p>
                 {l.coating && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
@@ -176,7 +181,7 @@ export default function ConfirmationDashboard({
           {orderAccessories.map((a, i) => (
             <div key={`a-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Accessory</span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Accessory", "एक्सेसरी")}</span>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{a.name}</p>
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">₹{a.price}</span>
@@ -186,7 +191,7 @@ export default function ConfirmationDashboard({
       ),
     }] : []),
     {
-      title: "Billing & Payment",
+      title: uiT("Billing & Payment", "बिलिंग और भुगतान"),
       color: "emerald",
       icon: <CreditCard size={18} />,
       content: (
@@ -200,32 +205,32 @@ export default function ConfirmationDashboard({
               <span className="font-medium text-slate-900 dark:text-white tabular-nums shrink-0">₹{(item.price * item.qty).toFixed(0)}</span>
             </div>
           ))}
-          
+
           <div className="border-t-2 border-dashed border-slate-200 dark:border-slate-700 mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500 dark:text-slate-400">Subtotal</span>
+              <span className="text-slate-500 dark:text-slate-400">{uiT("Subtotal", "उप-योग")}</span>
               <span className="font-semibold text-slate-900 dark:text-white tabular-nums">₹{totalAmount.toLocaleString()}</span>
             </div>
             {discountVal > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-rose-500">Discount</span>
+                <span className="text-rose-500">{uiT("Discount", "छूट")}</span>
                 <span className="font-bold text-rose-500 tabular-nums">-₹{discountVal.toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between text-base pt-1">
-              <span className="font-bold text-slate-900 dark:text-white">Grand Total</span>
+              <span className="font-bold text-slate-900 dark:text-white">{uiT("Grand Total", "कुल योग")}</span>
               <span className="font-black text-slate-900 dark:text-white tabular-nums">₹{finalTotal.toLocaleString()}</span>
             </div>
           </div>
 
           <div className="border-t border-slate-200 dark:border-slate-700/50 mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm">
-              <span className="text-emerald-600 dark:text-emerald-500">Advance Paid</span>
+              <span className="text-emerald-600 dark:text-emerald-500">{uiT("Advance Paid", "अग्रिम भुगतान")}</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-500 tabular-nums">₹{advancePaid.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className={`font-bold ${isFullyPaid ? "text-emerald-500" : "text-amber-500"}`}>
-                {isFullyPaid ? "Fully Paid" : "Balance Due"}
+                {isFullyPaid ? uiT("Fully Paid", "पूर्ण भुगतान") : uiT("Balance Due", "शेष देय")}
               </span>
               <span className={`font-black tabular-nums ${isFullyPaid ? "text-emerald-500" : "text-amber-500"}`}>
                 ₹{balance.toLocaleString()}
@@ -236,14 +241,14 @@ export default function ConfirmationDashboard({
       ),
     },
     ...(deliveryAddress || deliveryDate ? [{
-      title: "Delivery Status",
+      title: uiT("Delivery Status", "डिलीवरी स्थिति"),
       color: "primary",
       icon: <Truck size={18} />,
       content: (
         <div className="space-y-4">
           {deliveryDate && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Expected Delivery</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Expected Delivery", "अपेक्षित डिलीवरी")}</span>
               <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <CalendarDays size={15} className="text-primary-500" />
                 {formatDate(deliveryDate)}
@@ -252,7 +257,7 @@ export default function ConfirmationDashboard({
           )}
           {deliveryAddress && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Shipping Address</span>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Shipping Address", "शिपिंग पता")}</span>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-start gap-2">
                 <MapPin size={15} className="text-primary-500 mt-0.5 shrink-0" />
                 {deliveryAddress}
@@ -276,8 +281,8 @@ export default function ConfirmationDashboard({
           <CheckCircle size={20} className="text-white" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-emerald-700 dark:text-emerald-400">Ready to Save</h2>
-          <p className="text-xs font-medium text-emerald-600/80 dark:text-emerald-400/80">Please verify the details below before confirming the visit.</p>
+          <h2 className="text-base font-bold text-emerald-700 dark:text-emerald-400">{uiT("Ready to Save", "सेव करने के लिए तैयार")}</h2>
+          <p className="text-xs font-medium text-emerald-600/80 dark:text-emerald-400/80">{uiT("Please verify the details below before confirming the visit.", "कृपया यात्रा की पुष्टि करने से पहले नीचे दिए गए विवरण की जाँच करें।")}</p>
         </div>
       </div>
 
