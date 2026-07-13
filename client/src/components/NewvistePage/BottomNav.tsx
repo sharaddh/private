@@ -5,6 +5,7 @@ import {
   Save,
   MessageCircle,
 } from "lucide-react";
+import { useTranslate } from "../../context/TranslateContext";
 
 interface Props {
   currentIdx: number;
@@ -24,6 +25,7 @@ export default function BottomNav({
   saving,
   countdown,
 }: Props) {
+  const { uiT } = useTranslate();
   const isFirstStep = currentIdx === 0;
   const isLastStep = currentIdx === stepKeys.length - 1;
 
@@ -51,7 +53,7 @@ export default function BottomNav({
           "
         >
           <ChevronLeft size={18} />
-          Back
+          {uiT("Back", "पीछे")}
         </motion.button>
 
         {/* Next / Save */}
@@ -77,7 +79,7 @@ export default function BottomNav({
             {saving ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Saving...
+                {uiT("Saving...", "सेव हो रहा है...")}
               </>
             ) : countdown > 0 ? (
               <>
@@ -87,7 +89,7 @@ export default function BottomNav({
             ) : (
               <>
                 <Save size={18} />
-                Save Visit
+                {uiT("Save Visit", "यात्रा सेव करें")}
               </>
             )}
           </motion.button>
@@ -108,7 +110,7 @@ export default function BottomNav({
               transition-all
             "
           >
-            Next
+            {uiT("Next", "अगला")}
             <ChevronRight size={18} />
           </motion.button>
         )}
