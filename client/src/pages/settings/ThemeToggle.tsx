@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
+import { useTranslate } from "../../context/TranslateContext";
 
 interface ThemeToggleProps {
   dark: boolean;
@@ -7,6 +8,7 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ dark, onToggle }: ThemeToggleProps) {
+  const { uiT } = useTranslate();
   return (
     <div className="flex bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1 w-full">
       <button
@@ -26,7 +28,7 @@ export default function ThemeToggle({ dark, onToggle }: ThemeToggleProps) {
           />
         )}
         <Sun size={15} className="relative z-10" />
-        <span className="relative z-10">Light</span>
+        <span className="relative z-10">{uiT("Light", "लाइट")}</span>
       </button>
       <button
         type="button"
@@ -45,7 +47,7 @@ export default function ThemeToggle({ dark, onToggle }: ThemeToggleProps) {
           />
         )}
         <Moon size={15} className="relative z-10" />
-        <span className="relative z-10">Dark</span>
+        <span className="relative z-10">{uiT("Dark", "डार्क")}</span>
       </button>
     </div>
   );
