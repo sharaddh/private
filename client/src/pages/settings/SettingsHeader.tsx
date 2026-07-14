@@ -34,7 +34,7 @@ export default function SettingsHeader({
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{uiT("Settings", "सेटिंग्स")}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-th-text">{uiT("Settings", "सेटिंग्स")}</h1>
           <AnimatePresence mode="wait">
             {saving ? (
               <motion.div
@@ -42,10 +42,10 @@ export default function SettingsHeader({
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full"
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
               >
-                <Loader2 size={12} className="text-blue-500 animate-spin" />
-                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">{uiT("Saving", "सहेज रहे हैं")}</span>
+                <Loader2 size={12} className="text-[#1ed760] animate-spin" />
+                <span className="text-[11px] font-medium text-[#1ed760]">{uiT("Saving", "सहेज रहे हैं")}</span>
               </motion.div>
             ) : saved ? (
               <motion.div
@@ -53,30 +53,30 @@ export default function SettingsHeader({
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full"
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
               >
-                <CheckCircle2 size={12} className="text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{uiT("Saved", "सहेजा गया")}</span>
+                <CheckCircle2 size={12} className="text-[#1ed760]" />
+                <span className="text-[11px] font-medium text-[#1ed760]">{uiT("Saved", "सहेजा गया")}</span>
               </motion.div>
             ) : null}
           </AnimatePresence>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-th-secondary mt-1">
           {uiT("Configure your application preferences", "अपनी ऐप प्राथमिकताएं कॉन्फ़िगर करें")}
         </p>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
         {!isStaff && branches.length > 0 && (
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-th-elevated rounded-lg p-1">
             {branches.map((b) => (
               <button
                 key={b._id}
                 onClick={() => onSwitchBranch(b._id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                   currentBranch?._id === b._id
-                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "bg-[#1ed760] text-black"
+                    : "text-th-secondary hover:text-th-text hover:bg-th-hover"
                 }`}
               >
                 <Building2 size={14} />
@@ -85,7 +85,7 @@ export default function SettingsHeader({
             ))}
           </div>
         )}
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm shrink-0">
+        <div className="w-9 h-9 rounded-full bg-[#1ed760] flex items-center justify-center text-black text-sm font-bold shrink-0">
           {((user?.name as string) || (user?.username as string) || "U").charAt(0).toUpperCase()}
         </div>
       </div>
