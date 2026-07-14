@@ -59,7 +59,7 @@ const updateSchema = z.object({
 const statusUpdateSchema = z.object({
   status: z.string(),
   collectPayment: z.number().optional(),
-  paymentMode: z.enum(["Cash", "UPI", "Card", "Bank Transfer"]).optional(),
+  paymentMode: z.enum(["Cash", "UPI", "Card", "Bank Transfer", "नकद", "कार्ड", "बैंक", "बीमा", "Insurance"]).optional(),
   advanceQuantity: z.number().optional(),
 });
 
