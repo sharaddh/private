@@ -175,35 +175,35 @@ export default function InventoryPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="card text-center">
-          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
-          <p className="text-sm text-muted-500">{uiT("Frames", "फ्रेम")}</p>
+          <p className="text-2xl font-bold text-th-text">{list.filter((i) => i.category === "Frame" || !i.category).length}</p>
+          <p className="text-sm text-th-secondary">{uiT("Frames", "फ्रेम")}</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Lens").length}</p>
-          <p className="text-sm text-muted-500">{uiT("Lenses", "लेंस")}</p>
+          <p className="text-2xl font-bold text-th-text">{list.filter((i) => i.category === "Lens").length}</p>
+          <p className="text-sm text-th-secondary">{uiT("Lenses", "लेंस")}</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.filter((i) => i.category === "Accessories").length}</p>
-          <p className="text-sm text-muted-500">{uiT("Accessories", "सहायक उपकरण")}</p>
+          <p className="text-2xl font-bold text-th-text">{list.filter((i) => i.category === "Accessories").length}</p>
+          <p className="text-sm text-th-secondary">{uiT("Accessories", "सहायक उपकरण")}</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-red-600">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
-          <p className="text-sm text-muted-500">{uiT("Low Stock", "कम स्टॉक")}</p>
+          <p className="text-2xl font-bold text-[#e74c3c]">{list.filter((i) => (i.quantity || 0) <= 5).length}</p>
+          <p className="text-sm text-th-secondary">{uiT("Low Stock", "कम स्टॉक")}</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-muted-900 dark:text-white">{list.length}</p>
-          <p className="text-sm text-muted-500">{uiT("Total Items", "कुल आइटम")}</p>
+          <p className="text-2xl font-bold text-th-text">{list.length}</p>
+          <p className="text-sm text-th-secondary">{uiT("Total Items", "कुल आइटम")}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-muted-400">{filteredCount} {uiT("of", "में से")} {totalCount}</span>
+        <span className="text-xs text-th-muted">{filteredCount} {uiT("of", "में से")} {totalCount}</span>
         {categories.map((c) => (
           <button key={c} onClick={() => setCategoryFilter(c)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg uppercase tracking-wider border transition-all ${
               categoryFilter === c
-                ? "bg-primary-600 text-white shadow-soft"
-                : "bg-white dark:bg-slate-800 text-muted-600 dark:text-muted-400 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-300 dark:border-slate-600"
+                ? "bg-[#1ed760] text-black border-[#1ed760]"
+                : "bg-th-elevated text-th-secondary border-th-border hover:bg-th-hover"
             }`}>
             {uiT(c, c === "All" ? "सभी" : c === "Frame" ? "फ्रेम" : c === "Lens" ? "लेंस" : "सहायक उपकरण")}
           </button>
@@ -211,7 +211,7 @@ export default function InventoryPage() {
       </div>
 
       {filteredList.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-400">
+        <div className="flex flex-col items-center justify-center py-16 text-th-muted">
           <Package size={48} className="mb-3 opacity-30" />
           <p className="text-sm">{uiT("No items found", "कोई आइटम नहीं मिला")}</p>
         </div>
@@ -231,12 +231,12 @@ export default function InventoryPage() {
           { key: "color", label: uiT("Color", "रंग") },
           { key: "gender", label: uiT("Gender", "लिंग"), render: (v) => v ? <span className="text-xs">{v}</span> : null },
           { key: "location", label: uiT("Location", "स्थान"), render: (v) => (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v === "warehouse" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300"}`}>
+            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-lg ${v === "warehouse" ? "bg-purple-500/10 text-purple-400" : "bg-blue-500/10 text-blue-400"}`}>
               {v === "warehouse" ? uiT("Warehouse", "गोदाम") : uiT("Shop", "दुकान")}
             </span>
           )},
           { key: "quantity", label: uiT("Stock", "स्टॉक"), render: (v) => (
-            <span className={`font-medium ${v > 10 ? "text-emerald-600 dark:text-emerald-400" : v > 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
+            <span className={`font-medium ${v > 10 ? "text-[#1ed760]" : v > 0 ? "text-amber-400" : "text-[#e74c3c]"}`}>
               {v || 0}
             </span>
           )},
@@ -246,11 +246,11 @@ export default function InventoryPage() {
         searchPlaceholder={uiT("Search", "खोजें") + "..."}
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-surface-100/60 dark:hover:bg-slate-700/60 rounded-lg text-muted-400" title={uiT("Print Label", "लेबल प्रिंट करें")}>
+            <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("Print Label", "लेबल प्रिंट करें")}>
               <Printer size={15} />
             </button>
-            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-primary-50/60 dark:hover:bg-primary-900/20 rounded-lg text-primary-600"><Edit2 size={15} /></button>
-            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-red-50/60 dark:hover:bg-red-900/20 rounded-lg text-red-600"><Trash2 size={15} /></button>
+            <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760]"><Edit2 size={15} /></button>
+            <button onClick={() => handleDelete(row._id)} className="p-1.5 hover:bg-[#e74c3c]/10 rounded-lg text-[#e74c3c]"><Trash2 size={15} /></button>
           </div>
         )}
       />
@@ -259,11 +259,11 @@ export default function InventoryPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("SKU", "SKU")} *</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("SKU", "SKU")} *</label>
               <input className="input-field" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })} required placeholder="e.g. FRM-001" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Category", "श्रेणी")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Category", "श्रेणी")}</label>
               <select className="input-field" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 <option value="Frame">{uiT("Frame / Spectacles / Sunglasses", "फ्रेम / चश्मा / सनग्लास")}</option>
                 <option value="Lens">{uiT("Lens", "लेंस")}</option>
@@ -271,7 +271,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Type", "प्रकार")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Type", "प्रकार")}</label>
               <select className="input-field" value={form.inventoryType} onChange={(e) => setForm({ ...form, inventoryType: e.target.value })}>
                 {(form.category === "Frame" ? [
                   { value: "spectacles", label: uiT("Spectacles", "चश्मा") },
@@ -290,23 +290,23 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Brand", "ब्रांड")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Brand", "ब्रांड")}</label>
               <input className="input-field" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Model", "मॉडल")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Model", "मॉडल")}</label>
               <input className="input-field" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Color", "रंग")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Color", "रंग")}</label>
               <input className="input-field" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Size", "आकार")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Size", "आकार")}</label>
               <input className="input-field" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Gender", "लिंग")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Gender", "लिंग")}</label>
               <select className="input-field" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
                 <option value="">{uiT("All / Unisex", "सभी / यूनिसेक्स")}</option>
                 <option value="Male">{uiT("Male", "पुरुष")}</option>
@@ -315,35 +315,34 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Supplier", "आपूर्तिकर्ता")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Supplier", "आपूर्तिकर्ता")}</label>
               <input className="input-field" value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder={uiT("Supplier name", "आपूर्तिकर्ता का नाम")} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Location", "स्थान")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Location", "स्थान")}</label>
               <select className="input-field" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value as "shop" | "warehouse" })}>
                 <option value="shop">{uiT("Shop", "दुकान")}</option>
                 <option value="warehouse">{uiT("Warehouse", "गोदाम")}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Quantity", "मात्रा")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Quantity", "मात्रा")}</label>
               <input type="number" className="input-field" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Purchase Price (₹)", "खरीद मूल्य (₹)")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Purchase Price (₹)", "खरीद मूल्य (₹)")}</label>
               <input type="number" step="0.01" className="input-field" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Selling Price (₹)", "बिक्री मूल्य (₹)")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Selling Price (₹)", "बिक्री मूल्य (₹)")}</label>
               <input type="number" step="0.01" className="input-field" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: Number(e.target.value) })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Description", "विवरण")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Description", "विवरण")}</label>
               <textarea className="input-field" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={uiT("Additional notes...", "अतिरिक्त नोट्स...")} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
+          <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
             <button type="submit" disabled={isLoading} className="btn-primary">{isLoading ? uiT("Saving...", "सहेज रहे हैं...") : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}</button>
           </div>
         </form>
@@ -351,7 +350,7 @@ export default function InventoryPage() {
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan QR Code", "QR कोड स्कैन करें")} size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-muted-500">{uiT("Point your scanner at the QR code or type the SKU below.", "अपना स्कैनर QR कोड पर रखें या नीचे SKU टाइप करें।")}</p>
+          <p className="text-sm text-th-secondary">{uiT("Point your scanner at the QR code or type the SKU below.", "अपना स्कैनर QR कोड पर रखें या नीचे SKU टाइप करें।")}</p>
           <div className="flex gap-2">
             <input className="input-field flex-1 text-lg tracking-wider font-mono" placeholder={uiT("Scan or type SKU...", "स्कैन करें या SKU टाइप करें...")} value={scanInput}
               onChange={(e) => setScanInput(e.target.value.toUpperCase())}
@@ -364,14 +363,14 @@ export default function InventoryPage() {
             </button>
             {scannedItem && <button onClick={() => { setScanInput(""); setScannedItem(null); setScanError(""); }} className="btn-secondary flex items-center gap-1">{uiT("Clear", "साफ़ करें")}</button>}
           </div>
-          <p className="text-xs text-muted-400 text-center">{uiT("Scanner devices auto-submit on scan. You can also type the SKU and press Enter.", "स्कैनर डिवाइस स्कैन पर स्वतः सबमिट करते हैं। आप SKU टाइप करके Enter भी दबा सकते हैं।")}</p>
-          {scanError && <p className="text-sm text-red-500 flex items-center gap-1"><span>⚠</span> {scanError}</p>}
+          <p className="text-xs text-th-muted text-center">{uiT("Scanner devices auto-submit on scan. You can also type the SKU and press Enter.", "स्कैनर डिवाइस स्कैन पर स्वतः सबमिट करते हैं। आप SKU टाइप करके Enter भी दबा सकते हैं।")}</p>
+          {scanError && <p className="text-sm text-[#e74c3c] flex items-center gap-1"><span>⚠</span> {scanError}</p>}
           {scannedItem && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 space-y-2 border border-gray-200 dark:border-slate-600">
+            <div className="bg-th-surface rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-muted-900 dark:text-white">{scannedItem.brand} {scannedItem.model}</h4>
+                <h4 className="font-semibold text-th-text">{scannedItem.brand} {scannedItem.model}</h4>
                 <div className="flex gap-1">
-                  <button onClick={() => window.open(`/inventory/scan/${scannedItem.sku}`, "_blank")} className="btn-ghost btn-sm flex items-center gap-1 text-primary-600">
+                  <button onClick={() => window.open(`/inventory/scan/${scannedItem.sku}`, "_blank")} className="btn-ghost btn-sm flex items-center gap-1 text-[#1ed760]">
                     <Search size={14} /> {uiT("View", "देखें")}
                   </button>
                   <button onClick={() => handlePrintLabel(scannedItem)} className="btn-ghost btn-sm flex items-center gap-1">
@@ -380,14 +379,14 @@ export default function InventoryPage() {
                 </div>
               </div>
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-                <span className="text-muted-500">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
-                <span className="text-muted-500">{uiT("Category", "श्रेणी")}:</span><span className="capitalize">{scannedItem.category}</span>
-                {scannedItem.inventoryType && <><span className="text-muted-500">{uiT("Type", "प्रकार")}:</span><span className="capitalize">{scannedItem.inventoryType}</span></>}
-                {scannedItem.color && <><span className="text-muted-500">{uiT("Color", "रंग")}:</span><span>{scannedItem.color}</span></>}
-                {scannedItem.gender && <><span className="text-muted-500">{uiT("Gender", "लिंग")}:</span><span>{scannedItem.gender}</span></>}
-                {scannedItem.supplier && <><span className="text-muted-500">{uiT("Supplier", "आपूर्तिकर्ता")}:</span><span>{scannedItem.supplier}</span></>}
-                <span className="text-muted-500">{uiT("Stock", "स्टॉक")}:</span><span className="font-medium">{scannedItem.quantity || 0}</span>
-                <span className="text-muted-500">{uiT("Price", "मूल्य")}:</span><span className="font-medium">₹{scannedItem.sellingPrice || 0}</span>
+                <span className="text-th-muted">SKU:</span><span className="font-mono font-medium">{scannedItem.sku}</span>
+                <span className="text-th-muted">{uiT("Category", "श्रेणी")}:</span><span className="capitalize">{scannedItem.category}</span>
+                {scannedItem.inventoryType && <><span className="text-th-muted">{uiT("Type", "प्रकार")}:</span><span className="capitalize">{scannedItem.inventoryType}</span></>}
+                {scannedItem.color && <><span className="text-th-muted">{uiT("Color", "रंग")}:</span><span>{scannedItem.color}</span></>}
+                {scannedItem.gender && <><span className="text-th-muted">{uiT("Gender", "लिंग")}:</span><span>{scannedItem.gender}</span></>}
+                {scannedItem.supplier && <><span className="text-th-muted">{uiT("Supplier", "आपूर्तिकर्ता")}:</span><span>{scannedItem.supplier}</span></>}
+                <span className="text-th-muted">{uiT("Stock", "स्टॉक")}:</span><span className="font-medium">{scannedItem.quantity || 0}</span>
+                <span className="text-th-muted">{uiT("Price", "मूल्य")}:</span><span className="font-medium">₹{scannedItem.sellingPrice || 0}</span>
               </div>
             </div>
           )}
@@ -397,7 +396,7 @@ export default function InventoryPage() {
       <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
         <form onSubmit={handleAdjustStock} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Select Item", "आइटम चुनें")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Select Item", "आइटम चुनें")}</label>
             <select className="input-field" value={adjust.id} onChange={(e) => setAdjust({ ...adjust, id: e.target.value })}>
               <option value="">{uiT("Choose item", "आइटम चुनें")}</option>
               {list.map((it) => (
@@ -406,11 +405,10 @@ export default function InventoryPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-muted-700 dark:text-muted-300 mb-1.5">{uiT("Quantity Change (+/-)", "मात्रा परिवर्तन (+/-)")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Quantity Change (+/-)", "मात्रा परिवर्तन (+/-)")}</label>
             <input type="number" className="input-field" value={adjust.qty} onChange={(e) => setAdjust({ ...adjust, qty: Number(e.target.value) })} placeholder="+5 or -3" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200/50 dark:border-slate-600/30">
-            <button type="button" onClick={() => setShowAdjust(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
+          <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
             <button type="submit" disabled={isLoading} className="btn-success">{isLoading ? uiT("Saving...", "सहेज रहे हैं...") : uiT("Apply Adjustment", "समायोजन लागू करें")}</button>
           </div>
         </form>

@@ -213,21 +213,21 @@ export default function Announcement() {
       </div>
 
       {/* WhatsApp Connection Status */}
-      <div className={`card ${waConnected ? "border-emerald-200 dark:border-emerald-800" : ""}`}>
+      <div className={`card ${waConnected ? "border-[#1ed760]/20" : ""}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              waConnected ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
-              waConnected === false ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400" :
-              "bg-slate-50 dark:bg-slate-700 text-slate-400"
+            <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${
+              waConnected ? "bg-[#1ed760]/10 text-[#1ed760]" :
+              waConnected === false ? "bg-[#e74c3c]/10 text-[#e74c3c]" :
+              "bg-th-elevated text-th-muted"
             }`}>
               <Smartphone size={20} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-th-text">
                 WhatsApp {waConnected ? "Connected" : waConnected === false ? "Not Connected" : "Checking..."}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-th-secondary">
                 {waConnected ? "Ready to send messages" :
                  waConnected === false ? "Connect WhatsApp in Settings to send messages" :
                  "Checking connection..."}
@@ -244,17 +244,17 @@ export default function Announcement() {
         {/* Left: Compose */}
         <div className="lg:col-span-1 card space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+            <div className="w-10 h-10 bg-[#1ed760]/10 rounded-sm flex items-center justify-center text-[#1ed760]">
               <MessageCircle size={20} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">{uiT("Compose Message", "संदेश लिखें")}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("WhatsApp broadcast", "WhatsApp प्रसारण")}</p>
+              <h3 className="font-semibold text-th-text">{uiT("Compose Message", "संदेश लिखें")}</h3>
+              <p className="text-xs text-th-secondary">{uiT("WhatsApp broadcast", "WhatsApp प्रसारण")}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{uiT("Message", "संदेश")}</label>
+            <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Message", "संदेश")}</label>
             <textarea
               className="input-field resize-none"
               rows={8}
@@ -263,12 +263,12 @@ export default function Announcement() {
               onChange={(e) => setMessage(e.target.value)}
               maxLength={5000}
             />
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{message.length} characters</p>
+            <p className="text-xs text-th-secondary mt-1">{message.length} characters</p>
           </div>
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{uiT("Attachment (optional)", "संलग्नक (वैकल्पिक)")}</label>
+            <label className="block text-sm font-medium text-th-secondary mb-2">{uiT("Attachment (optional)", "संलग्नक (वैकल्पिक)")}</label>
             <input
               ref={fileInputRef}
               type="file"
@@ -290,21 +290,21 @@ export default function Announcement() {
               }}
             />
             {mediaFile ? (
-              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3 p-3 bg-th-elevated rounded-sm border border-th-border">
                 {mediaPreview ? (
                   <img src={mediaPreview} alt="Preview" className="w-10 h-10 rounded-lg object-cover" />
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                  <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center text-[#1ed760]">
                     <FileText size={18} />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{mediaFile.filename}</p>
-                  <p className="text-xs text-slate-400">{mediaFile.mimetype}</p>
+                  <p className="text-sm font-medium text-th-text truncate">{mediaFile.filename}</p>
+                  <p className="text-xs text-th-muted">{mediaFile.mimetype}</p>
                 </div>
                 <button
                   onClick={() => { setMediaFile(null); setMediaPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-400 transition-colors"
+                  className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -313,7 +313,7 @@ export default function Announcement() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-sm text-slate-500 dark:text-slate-400 hover:border-primary-400 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-th-border rounded-sm text-sm text-th-secondary hover:border-[#1ed760] hover:text-[#1ed760] transition-all"
               >
                 <Paperclip size={16} /> {uiT("Attach File (Image, PDF, Document...)", "फ़ाइल संलग्न करें (चित्र, PDF, दस्तावेज़...)")}
               </button>
@@ -322,7 +322,7 @@ export default function Announcement() {
 
           {/* Anti-ban Preset */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+            <label className="block text-sm font-medium text-th-secondary mb-2 flex items-center gap-1.5">
               <Shield size={14} /> {uiT("Anti-Ban Speed", "एंटी-बैन स्पीड")}
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -331,10 +331,10 @@ export default function Announcement() {
                   key={p.label}
                   type="button"
                   onClick={() => setAntibanPreset(p)}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                  className={`px-3 py-2 rounded-sm text-xs font-medium border transition-all ${
                     antibanPreset.label === p.label
-                      ? "bg-primary-50 dark:bg-primary-500/10 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300"
-                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                      ? "bg-[#1ed760]/10 border-[#1ed760]/30 text-[#1ed760]"
+                      : "bg-th-card border-th-border text-th-secondary hover:border-[#555]"
                   }`}
                 >
                   <div className="font-semibold mb-0.5">{uiT(p.label, ANTIBAN_LABEL_HI[p.label] || p.label)}</div>
@@ -342,28 +342,28 @@ export default function Announcement() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
+            <p className="text-xs text-th-secondary mt-1.5 flex items-center gap-1">
               <Clock size={11} /> {antibanPreset.batchSize} msgs/batch · {antibanPreset.pause / 1000}s pause · Random greetings
             </p>
           </div>
 
           {/* Stats */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl">
-              <Users size={18} className="text-slate-400" />
+            <div className="flex items-center gap-3 p-3 bg-th-elevated rounded-sm">
+              <Users size={18} className="text-th-muted" />
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{customers.length} {uiT("Total Customers", "कुल ग्राहक")}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-medium text-th-text">{customers.length} {uiT("Total Customers", "कुल ग्राहक")}</p>
+                <p className="text-xs text-th-secondary">
                   {selectedCount > 0 ? `${selectedCount} ${uiT("selected", "चयनित")} (${selectedPhones.length} ${uiT("with number", "नंबर के साथ")})` : uiT("No customers selected", "कोई ग्राहक चयनित नहीं")}
                 </p>
               </div>
             </div>
             {remainingCount > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-500/10 rounded-xl">
-                <Hourglass size={18} className="text-primary-500" />
+              <div className="flex items-center gap-3 p-3 bg-[#1ed760]/10 rounded-sm">
+                <Hourglass size={18} className="text-[#1ed760]" />
                 <div>
-                  <p className="text-sm font-medium text-primary-700 dark:text-primary-300">{uiT("Previously Sent", "पहले भेजे गए")}</p>
-                  <p className="text-xs text-primary-500/70">{allPhones.length - remainingCount} {uiT("sent", "भेजा गया")} · {remainingCount} {uiT("remaining", "शेष")}</p>
+                  <p className="text-sm font-medium text-[#1ed760]">{uiT("Previously Sent", "पहले भेजे गए")}</p>
+                  <p className="text-xs text-[#1ed760]/70">{allPhones.length - remainingCount} {uiT("sent", "भेजा गया")} · {remainingCount} {uiT("remaining", "शेष")}</p>
                 </div>
               </div>
             )}
@@ -371,42 +371,42 @@ export default function Announcement() {
 
           {/* Progress */}
           {progress && (
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
+            <div className="p-3 rounded-sm bg-th-elevated">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                <p className="text-sm font-medium text-th-text">
                   {sending ? "Sending..." : done ? "Complete" : ""}
                 </p>
               </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5 mb-2">
+              <div className="w-full bg-th-card rounded-full h-1.5 mb-2">
                 <div
-                  className="bg-primary-500 h-1.5 rounded-full transition-all duration-300"
+                  className="bg-[#1ed760] h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${Math.round((progress.sent + progress.failed) / progress.total * 100)}%` }}
                 />
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="text-[#1ed760] flex items-center gap-1">
                   <CheckCircle size={14} /> {progress.sent} sent
                 </span>
                 {progress.failed > 0 && (
-                  <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <span className="text-[#e74c3c] flex items-center gap-1">
                     <XCircle size={14} /> {progress.failed} failed
                   </span>
                 )}
-                <span className="text-slate-400">/ {progress.total}</span>
+                <span className="text-th-muted">/ {progress.total}</span>
               </div>
             </div>
           )}
 
           {/* Results Table */}
           {showResults && results.length > 0 && (
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 max-h-48 overflow-y-auto">
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Per-Customer Status</p>
+            <div className="p-3 rounded-sm bg-th-elevated max-h-48 overflow-y-auto">
+              <p className="text-xs font-semibold text-th-secondary uppercase mb-2">Per-Customer Status</p>
               <div className="space-y-1">
                 {results.map((r, i) => (
                   <div key={r.phone || r.name || i} className="flex items-center justify-between text-xs py-1">
-                    <span className="text-slate-700 dark:text-slate-300 truncate mr-2">{r.name}</span>
+                    <span className="text-th-secondary truncate mr-2">{r.name}</span>
                     <span className={`flex items-center gap-1 shrink-0 ${
-                      r.status === "sent" ? "text-emerald-600" : "text-red-600"
+                      r.status === "sent" ? "text-[#1ed760]" : "text-[#e74c3c]"
                     }`}>
                       {r.status === "sent" ? <CheckCircle size={11} /> : <XCircle size={11} />}
                       {r.status}
@@ -430,7 +430,7 @@ export default function Announcement() {
           </button>
 
           {!waConnected && selectedCount > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+            <p className="text-xs text-amber-400 text-center">
               Connect WhatsApp in Settings to send messages
             </p>
           )}
@@ -439,31 +439,31 @@ export default function Announcement() {
         {/* Right: Customer List */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white">{uiT("Customers", "ग्राहक")}</h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <h3 className="font-semibold text-th-text">{uiT("Customers", "ग्राहक")}</h3>
+            <span className="text-xs text-th-secondary">
               {filtered.length} of {customers.length}
             </span>
           </div>
 
           {/* Search */}
           <div className="relative mb-3">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
             <input
               type="text"
               placeholder={uiT("Search by name, mobile, or ID...", "नाम, मोबाइल या ID से खोजें...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-9 pr-4 py-2 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* Filter: Phone only */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Filter size={14} className="text-slate-400" />
+            <Filter size={14} className="text-th-muted" />
             <select
               value={filterHasPhone}
               onChange={(e) => setFilterHasPhone(e.target.value as any)}
-              className="text-xs bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none"
+              className="text-xs bg-th-elevated border border-th-border rounded-lg px-2.5 py-1.5 text-th-secondary focus:outline-none"
             >
               <option value="all">{uiT("All", "सभी")}</option>
               <option value="yes">{uiT("Has Phone", "फ़ोन है")}</option>
@@ -474,7 +474,7 @@ export default function Announcement() {
           {filtered.length > 0 && (
             <button
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2"
+              className="flex items-center gap-2 text-sm text-th-secondary hover:text-[#1ed760] mb-2"
             >
               {selectAll ? <CheckSquare size={16} /> : <Square size={16} />}
               {selectAll ? uiT("Deselect All", "सभी हटाएं") : uiT("Select All", "सभी चुनें")}
@@ -483,7 +483,7 @@ export default function Announcement() {
 
           <div className="space-y-1 max-h-[500px] overflow-y-auto">
             {filtered.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+              <div className="text-center py-8 text-th-secondary">
                 <Users size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm">{uiT("No customers found", "कोई ग्राहक नहीं मिला")}</p>
               </div>
@@ -495,31 +495,31 @@ export default function Announcement() {
                 return (
                   <div
                     key={c._id}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                      isSelected ? "bg-primary-50 dark:bg-primary-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors ${
+                      isSelected ? "bg-[#1ed760]/10" : "hover:bg-th-elevated"
                     }`}
                   >
-                    <button onClick={() => toggleSelect(c._id)} className="flex-shrink-0 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400">
-                      {isSelected ? <CheckSquare size={18} className="text-primary-600 dark:text-primary-400" /> : <Square size={18} />}
+                    <button onClick={() => toggleSelect(c._id)} className="flex-shrink-0 text-th-muted hover:text-[#1ed760]">
+                      {isSelected ? <CheckSquare size={18} className="text-[#1ed760]" /> : <Square size={18} />}
                     </button>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 ${
                       alreadySent
-                        ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                        : "bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400"
+                        ? "bg-[#1ed760]/20 text-[#1ed760]"
+                        : "bg-[#1ed760]/20 text-[#1ed760]"
                     }`}>
                       {c.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-th-text truncate flex items-center gap-1.5">
                         {c.name || "—"}
-                        {alreadySent && <CheckCircle size={11} className="text-emerald-500 shrink-0" />}
+                        {alreadySent && <CheckCircle size={11} className="text-[#1ed760] shrink-0" />}
                       </p>
-                      <p className={`text-xs ${hasPhone ? "text-slate-400 dark:text-slate-500" : "text-red-400"}`}>
+                      <p className={`text-xs ${hasPhone ? "text-th-secondary" : "text-red-400"}`}>
                         {c.mobile || "No number"}
                       </p>
                     </div>
                     {hasPhone && (
-                      <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Has WhatsApp number" />
+                      <div className="w-2 h-2 rounded-full bg-[#1ed760] flex-shrink-0" title="Has WhatsApp number" />
                     )}
                   </div>
                 );
@@ -546,36 +546,36 @@ export default function Announcement() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 sm:max-w-sm sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-th-surface rounded-t-lg border border-th-border sm:max-w-sm sm:mx-auto sm:bottom-4 sm:rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="w-10 h-1 rounded-full bg-[#333] rounded-lg" />
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{uiT("Confirm Broadcast", "प्रसारण की पुष्टि करें")}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <h3 className="text-lg font-bold text-th-text mb-1">{uiT("Confirm Broadcast", "प्रसारण की पुष्टि करें")}</h3>
+                <p className="text-sm text-th-secondary mb-4">
                   Send to <strong>{selectedPhones.length}</strong> customer{selectedPhones.length !== 1 ? "s" : ""}
                 </p>
 
                 {selectedCustomers.length > 0 && (
                   <div className="mb-4 max-h-28 overflow-y-auto space-y-1">
                     {selectedCustomers.slice(0, 5).map((c) => (
-                      <div key={c._id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                        <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center text-primary-600 font-semibold text-[9px]">
+                      <div key={c._id} className="flex items-center gap-2 text-xs text-th-secondary">
+                        <div className="w-5 h-5 rounded-full bg-[#1ed760]/20 flex items-center justify-center text-[#1ed760] font-semibold text-[9px]">
                           {c.name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                         {c.name} — {c.mobile || "No number"}
                       </div>
                     ))}
                     {selectedCustomers.length > 5 && (
-                      <p className="text-xs text-slate-400">...and {selectedCustomers.length - 5} more</p>
+                      <p className="text-xs text-th-muted">...and {selectedCustomers.length - 5} more</p>
                     )}
                   </div>
                 )}
 
                 {mediaFile && (
-                  <div className="bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-700/50 rounded-xl px-4 py-3 text-xs text-primary-700 dark:text-primary-300 mb-4">
+                  <div className="bg-[#1ed760]/10 border border-[#1ed760]/20 rounded-sm px-4 py-3 text-xs text-[#1ed760] mb-4">
                     <p className="font-medium mb-1 flex items-center gap-1.5">
                       <Paperclip size={13} /> Attachment:
                     </p>
@@ -583,14 +583,14 @@ export default function Announcement() {
                   </div>
                 )}
 
-                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-700/50 rounded-xl px-4 py-3 text-xs text-amber-700 dark:text-amber-300 mb-4">
+                <div className="bg-amber-500/10 border border-amber-700/50 rounded-sm px-4 py-3 text-xs text-amber-300 mb-4">
                   <p className="font-medium mb-1 flex items-center gap-1.5">
                     <AlertTriangle size={13} /> {uiT("Message preview:", "संदेश पूर्वावलोकन:")}
                   </p>
                   <p className="opacity-80 italic">"{message.slice(0, 100)}{message.length > 100 ? "..." : ""}"</p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl px-4 py-3 text-xs text-slate-600 dark:text-slate-400 mb-4">
+                <div className="bg-th-elevated rounded-sm px-4 py-3 text-xs text-th-secondary mb-4">
                   <div className="flex items-center gap-1.5 font-medium mb-1">
                     <Shield size={13} /> {uiT("Anti-Ban Protection", "एंटी-बैन सुरक्षा")}
                   </div>

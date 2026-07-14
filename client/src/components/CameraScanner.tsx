@@ -177,41 +177,41 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="card overflow-hidden max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+      <div className="overflow-hidden max-w-sm w-full bg-th-surface rounded-[8px]" onClick={(e) => e.stopPropagation()} style={{ boxShadow: "var(--shadow-elevated)" }}>
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
-            {useCamera ? <Camera size={18} className="text-primary-600" /> : <Search size={18} className="text-primary-600" />}
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Scan QR Code</h3>
+            {useCamera ? <Camera size={18} className="text-[#1ed760]" /> : <Search size={18} className="text-[#1ed760]" />}
+            <h3 className="text-[16px] font-bold text-th-text">Scan QR Code</h3>
           </div>
-          <button onClick={onClose} title="Close (Esc)" aria-label="Close scanner" className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-400">
+          <button onClick={onClose} title="Close (Esc)" aria-label="Close scanner" className="p-1.5 hover:bg-th-elevated rounded-[9999px] text-th-secondary">
             <X size={18} />
           </button>
         </div>
         <div className="px-5 pb-2">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[14px] text-th-secondary">
             {useCamera ? "Point the QR code toward the camera." : "Enter the SKU manually below."}
           </p>
         </div>
 
         {useCamera && (
-          <div className="w-full aspect-[4/3] bg-gray-900 relative overflow-hidden">
+          <div className="w-full aspect-[4/3] bg-[#000000] relative overflow-hidden">
             <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3/4 aspect-square border-2 border-white/50 rounded-xl animate-pulse shadow-[0_0_30px_rgba(255,255,255,0.15)]" />
+              <div className="w-3/4 aspect-square border-2 border-[#1ed760]/50 rounded-[8px] animate-pulse" />
             </div>
             {scanSuccess && (
-              <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#1ed760]/20 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-white text-lg font-bold">✓ Scanned!</div>
-                  <div className="text-white/70 text-xs mt-1">Redirecting...</div>
+                  <div className="text-th-text text-lg font-bold">✓ Scanned!</div>
+                  <div className="text-th-text/70 text-xs mt-1">Redirecting...</div>
                 </div>
               </div>
             )}
             {starting && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90">
-                <div className="text-center text-white/60 space-y-3">
-                  <div className="animate-spin w-8 h-8 border-3 border-white/30 border-t-white rounded-full mx-auto" />
+              <div className="absolute inset-0 flex items-center justify-center bg-[#000000]/90">
+                <div className="text-center text-th-text/60 space-y-3">
+                  <div className="animate-spin w-8 h-8 border-3 border-th-text/30 border-t-th-text rounded-full mx-auto" />
                   <p className="text-sm">Starting camera...</p>
                 </div>
               </div>
@@ -222,14 +222,15 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         {!useCamera && (
           <div className="px-5 py-6 space-y-3">
             {error && (
-              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 rounded-xl border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-2 text-[14px] text-[#f59e0b] bg-[#f59e0b]/10 px-4 py-3 rounded-[8px]">
                 <AlertTriangle size={16} className="flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
             <div className="flex gap-2">
               <input
-                className="input-field flex-1 text-lg tracking-wider font-mono"
+                className="flex-1 text-[16px] tracking-wider font-mono px-4 py-2.5 rounded-lg bg-th-elevated text-th-text placeholder-th-muted focus:outline-none focus:border-[#1ed760] transition-all duration-200"
+                style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
                 placeholder="Type or scan SKU..."
                 value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)}
@@ -238,11 +239,11 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 spellCheck={false}
                 autoComplete="off"
               />
-              <button type="button" onClick={handleManualSubmit} className="btn-primary flex items-center gap-1.5 px-4">
+              <button type="button" onClick={handleManualSubmit} className="flex items-center gap-1.5 px-4 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold rounded-lg uppercase tracking-wider text-[14px] transition-all duration-200">
                 <Search size={16} /> Lookup
               </button>
             </div>
-            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-[14px] text-[#1ed760] hover:underline">
               <RefreshCw size={14} /> Try camera again
             </button>
           </div>
@@ -250,7 +251,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
         {useCamera && !starting && (
           <>
-            <div className="flex items-center justify-center gap-2 px-5 py-3 text-xs text-gray-400 border-t border-gray-200 dark:border-dark-600">
+            <div className="flex items-center justify-center gap-2 px-5 py-3 text-[12px] text-th-secondary border-t border-th-border">
               <CameraOff size={13} />
               {scanTimer > 8 && <span className="text-amber-500 font-medium">Still scanning... try bringing the QR closer.</span>}
               {scanTimer <= 8 && <span>Press Esc or click outside to cancel</span>}

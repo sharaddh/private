@@ -38,11 +38,11 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div ref={ref} className={`bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
-          <button onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div ref={ref} className={`bg-th-surface rounded-[8px] w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col`} style={{ boxShadow: "var(--shadow-elevated)" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-th-hover">
+          <h3 className="text-[16px] font-semibold text-th-text">{title}</h3>
+          <button onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-th-elevated rounded-[9999px] text-th-secondary hover:text-th-text transition-colors">
             <X size={18} />
           </button>
         </div>

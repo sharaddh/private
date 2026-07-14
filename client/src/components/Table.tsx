@@ -69,27 +69,28 @@ export default function Table({
     <div className="space-y-4">
       {searchable && (
         <div className="relative">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
           <input
             type="text"
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="input-field pl-10"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-[#1ed760] transition-all duration-200 bg-th-elevated text-th-text placeholder-th-muted text-[14px]"
+            style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
           />
         </div>
       )}
 
-      <div className="overflow-x-auto bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50">
+      <div className="overflow-x-auto bg-th-surface rounded-[8px]">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
+            <tr className="border-b border-th-hover bg-th-base">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
-                  className={`px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider ${
-                    col.sortable !== false ? "cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 select-none" : ""
+                  className={`px-4 py-3.5 text-left text-[11px] font-semibold text-th-secondary uppercase tracking-wider ${
+                    col.sortable !== false ? "cursor-pointer hover:text-th-text select-none" : ""
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -101,22 +102,22 @@ export default function Table({
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-th-secondary uppercase tracking-wider">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <tbody className="divide-y divide-th-border">
             {paged.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-4 py-16 text-center text-slate-400"
+                    className="px-4 py-16 text-center text-th-secondary"
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <Search size={28} className="text-slate-300 dark:text-slate-600" />
-                    <span className="text-sm">No data available</span>
+                    <Search size={28} className="text-[#535353]" />
+                    <span className="text-[15px]">No data available</span>
                   </div>
                 </td>
               </tr>
@@ -125,12 +126,12 @@ export default function Table({
                 <tr
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                  className={`hover:bg-th-card transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 text-[16px] text-th-text whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
                     </td>
                   ))}
@@ -148,14 +149,14 @@ export default function Table({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500">
+          <p className="text-[14px] text-th-secondary">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-[9999px] hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-th-text"
             >
               <ChevronLeft size={16} />
             </button>
@@ -166,10 +167,10 @@ export default function Table({
                 <button
                   key={pg}
                   onClick={() => setPage(pg)}
-                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-8 h-8 rounded-[9999px] text-[14px] font-medium transition-colors ${
                     pg === page
-                      ? "bg-primary-600 text-white shadow-sm"
-                      : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
+                      ? "bg-[#1ed760] text-black"
+                      : "hover:bg-th-elevated text-th-secondary"
                   }`}
                 >
                   {pg + 1}
@@ -179,7 +180,7 @@ export default function Table({
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-[9999px] hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-th-text"
             >
               <ChevronRight size={16} />
             </button>

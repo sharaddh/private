@@ -28,6 +28,7 @@ const transactionSchema = z.object({
   }).optional(),
   visit: z.object({
     visitDate: z.string().optional(),
+    visitType: z.string().optional(),
     doctorName: z.string().optional(),
     shop: z.string().optional(),
     remarks: z.string().optional(),
@@ -85,6 +86,7 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
     const visit = new Visit({
       customerId: customer._id,
       visitDate: body.visit.visitDate ? new Date(body.visit.visitDate) : new Date(),
+      visitType: body.visit.visitType || "new",
       doctorName: body.visit.doctorName,
       shop: body.visit.shop,
       remarks: body.visit.remarks,

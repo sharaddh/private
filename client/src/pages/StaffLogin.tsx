@@ -37,46 +37,49 @@ export default function StaffLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-th-base flex items-center justify-center p-4" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-amber-500/20">
-            <Shield className="text-white" size={22} />
+          <div className="w-14 h-14 bg-[#1ed760] rounded-sm flex items-center justify-center mx-auto mb-4">
+            <Shield className="text-black" size={22} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KMJ Optical</h1>
-          <p className="text-sm text-gray-500 mt-1">{uiT("Staff Login")}</p>
+          <h1 className="text-2xl font-bold text-th-text tracking-tight">KMJ Optical</h1>
+          <p className="text-sm text-th-secondary mt-1 font-normal">{uiT("Staff Login")}</p>
         </div>
 
-        <div className="card">
+        <div className="bg-th-surface rounded-lg p-6 shadow-2xl">
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
+            <div className="bg-[#3d1515] border border-[#b91c1c] text-[#f87171] px-4 py-3 rounded-lg text-sm mb-4">{error}</div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Username")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Username")}</label>
               <input type="text" placeholder={uiT("Enter username")} value={username}
-                onChange={(e) => setUsername(e.target.value)} required className="input-field" autoFocus />
+                onChange={(e) => setUsername(e.target.value)} required
+                className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all"
+                autoFocus />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{uiT("Password")}</label>
+              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Password")}</label>
               <div className="relative">
                 <input type={showPassword ? "text" : "password"} placeholder={uiT("Enter password")} value={password}
-                  onChange={(e) => setPassword(e.target.value)} required className="input-field pr-10" />
+                  onChange={(e) => setPassword(e.target.value)} required
+                  className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all pr-10" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-secondary hover:text-th-text transition-colors">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             <button type="submit" disabled={isLoading}
-              className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg">
+              className="w-full py-3 bg-[#1ed760] text-black rounded-[9999px] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 mt-2 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
               {isLoading ? (
-                <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> {uiT("Signing in...")}</>
+                <><div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" /> {uiT("Signing in...")}</>
               ) : <><LogIn size={18} /> {uiT("Sign in")}</>}
             </button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-5">
-            {uiT("Admin?")} <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">{uiT("Login here")}</Link>
+          <p className="text-center text-sm text-th-secondary mt-5">
+            {uiT("Admin?")} <Link to="/login" className="text-[#1ed760] hover:underline font-medium">{uiT("Login here")}</Link>
           </p>
         </div>
       </div>

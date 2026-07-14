@@ -76,13 +76,13 @@ export default function ItemScan() {
   if (error) {
     return (
       <div className="space-y-6">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-th-secondary hover:text-th-text">
            <ArrowLeft size={16} /> {uiT("Back")}
         </button>
-        <div className="card text-center py-12">
-          <Package size={48} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 text-lg">{error}</p>
-          <p className="text-sm text-gray-400 mt-1">{uiT("Code:")} {code}</p>
+        <div className="card bg-th-surface rounded-lg text-center py-12 shadow-lg">
+          <Package size={48} className="mx-auto text-th-muted mb-3" />
+          <p className="text-th-secondary text-lg">{error}</p>
+          <p className="text-sm text-th-muted mt-1">{uiT("Code:")} {code}</p>
         </div>
       </div>
     );
@@ -96,101 +96,101 @@ export default function ItemScan() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+      <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-th-secondary hover:text-th-text">
         <ArrowLeft size={16} /> {uiT("Back")}
       </button>
 
-      <div className="card">
+      <div className="card bg-th-surface rounded-lg p-6 shadow-lg">
         <div className="flex items-start gap-5">
-          <div className="w-24 h-24 bg-white dark:bg-slate-700 rounded-2xl border-2 border-gray-200 dark:border-slate-600 flex items-center justify-center flex-shrink-0 p-2">
+          <div className="w-24 h-24 bg-th-elevated rounded-lg flex items-center justify-center flex-shrink-0 p-2">
             <canvas ref={canvasRef} className="w-full h-full" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{item.brand || uiT("Item")} {item.model || ""}</h1>
-                <p className="text-sm text-gray-500 font-mono mt-0.5">{item.sku}</p>
+                <h1 className="text-2xl font-bold text-th-text">{item.brand || uiT("Item")} {item.model || ""}</h1>
+                <p className="text-sm text-th-secondary font-mono mt-0.5">{item.sku}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={handlePrint} className="btn-secondary btn-sm flex items-center gap-1.5">
+                <button onClick={handlePrint} className="bg-transparent border border-[#727272] text-th-text hover:border-th-text text-xs font-bold uppercase tracking-wider rounded-lg px-4 py-1.5 flex items-center gap-1.5 transition-all">
                   <Printer size={15} /> {uiT("Print Label")}
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-5">
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="bg-th-elevated rounded-sm p-3">
+                <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                    <Tag size={12} /> {uiT("Category")}
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{category}</p>
+                <p className="body font-semibold text-th-text capitalize">{category}</p>
               </div>
               {item.inventoryType && (
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                <div className="bg-th-elevated rounded-sm p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                      <Layers size={12} /> {uiT("Type")}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{item.inventoryType}</p>
+                  <p className="body font-semibold text-th-text capitalize">{item.inventoryType}</p>
                 </div>
               )}
               {gender && (
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                <div className="bg-th-elevated rounded-sm p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                      <User size={12} /> {uiT("Gender")}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{gender}</p>
+                  <p className="body font-semibold text-th-text">{gender}</p>
                 </div>
               )}
               {item.color && (
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                <div className="bg-th-elevated rounded-sm p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                      <Eye size={12} /> {uiT("Color")}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.color}</p>
+                  <p className="body font-semibold text-th-text">{item.color}</p>
                 </div>
               )}
               {item.size && (
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                <div className="bg-th-elevated rounded-sm p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                      <Layers size={12} /> {uiT("Size")}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.size}</p>
+                  <p className="body font-semibold text-th-text">{item.size}</p>
                 </div>
               )}
               {item.supplier && (
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                <div className="bg-th-elevated rounded-sm p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                      <Building size={12} /> {uiT("Supplier")}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.supplier}</p>
+                  <p className="body font-semibold text-th-text">{item.supplier}</p>
                 </div>
               )}
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="bg-th-elevated rounded-sm p-3">
+                <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                    <Package size={12} /> {uiT("Stock")}
                 </div>
-                <p className={`text-sm font-semibold ${(item.quantity || 0) > 5 ? "text-emerald-600" : (item.quantity || 0) > 0 ? "text-amber-600" : "text-red-600"}`}>
+                <p className={`body font-semibold ${(item.quantity || 0) > 5 ? "text-[#1ed760]" : (item.quantity || 0) > 0 ? "text-amber-400" : "text-[#e74c3c]"}`}>
                   {item.quantity || 0}
                 </p>
               </div>
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="bg-th-elevated rounded-sm p-3">
+                <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                    <Tag size={12} /> {uiT("Purchase Price")}
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.purchasePrice || 0}</p>
+                <p className="body font-semibold text-th-text">₹{item.purchasePrice || 0}</p>
               </div>
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-3">
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+              <div className="bg-th-elevated rounded-sm p-3">
+                <div className="flex items-center gap-1.5 text-xs text-th-secondary mb-1">
                    <Tag size={12} /> {uiT("Selling Price")}
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">₹{item.sellingPrice || 0}</p>
+                <p className="body font-semibold text-th-text">₹{item.sellingPrice || 0}</p>
               </div>
             </div>
 
             {item.description && (
-              <div className="mt-4 p-3 bg-gray-50 dark:bg-slate-700 rounded-xl">
-                 <p className="text-xs text-gray-500 mb-1">{uiT("Description")}</p>
-                <p className="text-sm text-gray-900 dark:text-white">{item.description}</p>
+              <div className="mt-4 p-3 bg-th-elevated rounded-sm">
+                 <p className="text-xs text-th-secondary mb-1">{uiT("Description")}</p>
+                <p className="body text-th-text">{item.description}</p>
               </div>
             )}
           </div>

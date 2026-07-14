@@ -53,31 +53,31 @@ export default function Payments() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="card p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-            <IndianRupee size={20} className="text-emerald-600 dark:text-emerald-400" />
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+          <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center flex-shrink-0">
+            <IndianRupee size={20} className="text-[#1ed760]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{uiT("Total", "कुल")} {uiT("Collected", "एकत्रित")}</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString("en-IN")}</p>
+            <p className="text-xs font-medium text-th-secondary uppercase tracking-wide">{uiT("Total", "कुल")} {uiT("Collected", "एकत्रित")}</p>
+            <p className="text-xl font-bold text-th-text">₹{totalAmount.toLocaleString("en-IN")}</p>
           </div>
         </div>
-        <div className="card p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-            <Receipt size={20} className="text-blue-600 dark:text-blue-400" />
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+          <div className="w-10 h-10 rounded-sm bg-[#509bf5]/10 flex items-center justify-center flex-shrink-0">
+            <Receipt size={20} className="text-[#509bf5]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Transactions</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{list.length}</p>
+            <p className="text-xs font-medium text-th-secondary uppercase tracking-wide">Transactions</p>
+            <p className="text-xl font-bold text-th-text">{list.length}</p>
           </div>
         </div>
-        <div className="card p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-            <TrendingUp size={20} className="text-purple-600 dark:text-purple-400" />
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+          <div className="w-10 h-10 rounded-sm bg-[#af2896]/10 flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={20} className="text-[#af2896]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Mode Breakdown</p>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+            <p className="text-xs font-medium text-th-secondary uppercase tracking-wide">Mode Breakdown</p>
+            <p className="text-sm font-semibold text-th-text truncate">
               {Object.entries(modeBreakdown).map(([mode, amt]) => (
                 <span key={mode} className="mr-3">{mode}: ₹{amt.toLocaleString("en-IN")}</span>
               ))}
@@ -91,11 +91,11 @@ export default function Payments() {
           columns={[
             { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: any, row: any) => (
               <div className="min-w-0">
-                <p className="font-medium text-gray-900 dark:text-white truncate">{customerName(row)}</p>
-                {customerMobile(row) && <p className="text-[11px] text-gray-400 truncate">{customerMobile(row)}</p>}
+                <p className="font-medium text-th-text truncate">{customerName(row)}</p>
+                {customerMobile(row) && <p className="text-[11px] text-th-secondary truncate">{customerMobile(row)}</p>}
               </div>
             )},
-            { key: "amount", label: uiT("Amount", "राशि"), render: (v) => <span className="font-semibold text-emerald-600">₹{(v || 0).toLocaleString("en-IN")}</span> },
+            { key: "amount", label: uiT("Amount", "राशि"), render: (v) => <span className="font-semibold text-[#1ed760]">₹{(v || 0).toLocaleString("en-IN")}</span> },
             { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v) => (
               <span className={`badge ${
                 v === "Cash" ? "badge-green" :
@@ -104,7 +104,7 @@ export default function Payments() {
               }`}>{v || "Cash"}</span>
             )},
             { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
-            { key: "notes", label: uiT("Notes", "नोट्स"), render: (v) => <span className="text-gray-500">{v || "—"}</span> },
+            { key: "notes", label: uiT("Notes", "नोट्स"), render: (v) => <span className="text-th-secondary">{v || "—"}</span> },
           ]}
           data={list}
           searchPlaceholder={uiT("Search", "खोजें") + " payments..."}

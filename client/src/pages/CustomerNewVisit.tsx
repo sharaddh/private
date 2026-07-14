@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "../api";
@@ -29,21 +29,12 @@ export default function CustomerNewVisit() {
   const { t, uiT } = useTranslate();
 
   const VISIT_TYPES = [
-    { value: "new", label: uiT("New Glasses", "नए चश्मे"), icon: Eye },
-    { value: "frame_change", label: uiT("Frame Change", "फ्रेम बदलें"), icon: RefreshCw },
-    { value: "new_lens", label: uiT("New Lens", "नया लेंस"), icon: Maximize2 },
-    { value: "contact_lens", label: uiT("Contact Lens", "कॉन्टैक्ट लेंस"), icon: Circle },
-    { value: "service", label: uiT("Service", "सेवा"), icon: Wrench },
-    { value: "other", label: uiT("Other", "अन्य"), icon: Grid3X3 },
-  ];
-
-  const steps = [
-    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
-    { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
-    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
-    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य") },
-    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
-    { key: "confirmation", label: uiT("Confirm", "पुष्टि"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
+    { value: "new", label: uiT("New Glasses", "?? ?????"), icon: Eye },
+    { value: "frame_change", label: uiT("Frame Change", "????? ?????"), icon: RefreshCw },
+    { value: "new_lens", label: uiT("New Lens", "??? ????"), icon: Maximize2 },
+    { value: "contact_lens", label: uiT("Contact Lens", "????????? ????"), icon: Circle },
+    { value: "service", label: uiT("Service", "????"), icon: Wrench },
+    { value: "other", label: uiT("Other", "????"), icon: Grid3X3 },
   ];
 
   const [customer, setCustomer] = useState<any>(null);
@@ -89,9 +80,28 @@ export default function CustomerNewVisit() {
   const savingRef = useRef(false);
   const greetingSent = useRef(false);
 
+  const isServiceType = visitType === "service" || visitType === "other";
+  const steps = [
+    { key: "service", label: uiT("Service", "????"), icon: Activity, desc: uiT("Visit type", "?????? ??????") },
+    ...(!isServiceType ? [
+      { key: "prescription", label: uiT("Examination", "????"), icon: Eye, desc: uiT("Vision test", "?????? ???????") },
+      { key: "order", label: uiT("Order", "?????"), icon: ShoppingCart, desc: uiT("Frame & lens", "????? ?? ????") },
+    ] : []),
+    { key: "billing", label: uiT("Billing", "??????"), icon: CreditCard, desc: uiT("Items & pricing", "???? ?? ?????") },
+    { key: "payment", label: uiT("Payment", "??????"), icon: Percent, desc: uiT("Collect & confirm", "?????? ?? ??????") },
+    { key: "confirmation", label: uiT("Confirm", "??????"), icon: CheckCircle, desc: uiT("Review & save", "??????? ?? ??????") },
+  ];
+
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
+
+  // Redirect away from removed steps when visitType changes
+  useEffect(() => {
+    if (isServiceType && (step === "prescription" || step === "order")) {
+      setStep("billing");
+    }
+  }, [visitType]);
 
   useEffect(() => {
     if (!id) return;
@@ -176,7 +186,7 @@ export default function CustomerNewVisit() {
     sessionStorage.setItem(`visitDraft_${id}`, JSON.stringify(data));
   }, [id, loading, step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate]);
 
-  // 🌟 REAL-TIME AUTOMATIC SYNC 🌟
+  // ?? REAL-TIME AUTOMATIC SYNC ??
   // This watches your cart and updates the bill silently in the background
   useEffect(() => {
     if (loading) return; 
@@ -277,11 +287,14 @@ export default function CustomerNewVisit() {
     try {
       const payload: any = { customerId: id };
 
-      if (usePrescription || visitDoctor || visitRemarks || visitDate) {
-        payload.visit = {};
-        if (visitDate) payload.visit.visitDate = visitDate;
-        if (visitDoctor) payload.visit.doctorName = visitDoctor;
-        if (visitRemarks) payload.visit.remarks = visitRemarks;
+      // Always create a visit record
+      payload.visit = { visitType: visitType || "new" };
+      if (visitDate) payload.visit.visitDate = visitDate;
+      if (visitDoctor) payload.visit.doctorName = visitDoctor;
+      if (visitRemarks) payload.visit.remarks = visitRemarks;
+
+      // Only save prescription if user opted in
+      if (usePrescription) {
         payload.prescription = {
           rightEye: cleanEyeSet(prescription.rightEye),
           leftEye: cleanEyeSet(prescription.leftEye),
@@ -379,8 +392,8 @@ export default function CustomerNewVisit() {
       const num = customerMobile.replace(/\D/g, "");
       const fullNum = num.length === 10 ? `91${num}` : num;
       const msg = t(
-        `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
-        `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
+        `*${shopName}* ??\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! ??`,
+        `*${shopName}* ??\n\n?????? *${customerName}*,\n\n???? ????? ?? ??? ???????! ???? ????? ??????????? ?? ??? ???\n\n???????! ??`
       );
       await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
     } catch { /* silent */ }
@@ -401,7 +414,7 @@ export default function CustomerNewVisit() {
   }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
-  if (!customer) return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center"><p className="text-sm text-slate-500 dark:text-slate-400">Customer not found</p></div>;
+  if (!customer) return <div className="min-h-screen bg-th-base flex items-center justify-center"><p className="text-sm text-th-secondary">Customer not found</p></div>;
 
   const stepKeys = steps.map(s => s.key);
   const currentIdx = stepKeys.indexOf(step);
@@ -412,7 +425,7 @@ export default function CustomerNewVisit() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-slate-50 dark:bg-slate-900"
+      className="min-h-screen bg-th-base"
     >
       <PageHeader
         customer={customer}
@@ -554,8 +567,8 @@ export default function CustomerNewVisit() {
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
         <div className="space-y-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Enter SKU or barcode to auto-fill frame details.</p>
-          <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="SKU or barcode" autoFocus
+          <p className="text-xs text-th-secondary">Enter SKU or barcode to auto-fill frame details.</p>
+          <input className="w-full px-4 py-2.5 bg-th-base/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="SKU or barcode" autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
@@ -570,7 +583,7 @@ export default function CustomerNewVisit() {
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2.5 text-xs font-semibold text-primary-600 dark:text-primary-400 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
+            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border border-dashed border-th-border rounded-sm bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5">
             <ScanLine size={14} /> Use Camera
           </button>
         </div>

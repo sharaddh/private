@@ -5,8 +5,10 @@
  *   ADD +2.00   PD 62   VA 6/6
  */
 
-function fmtVal(v: number): string {
-  return v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+function fmtVal(v: number | string): string {
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  if (isNaN(n)) return String(v);
+  return n > 0 ? `+${n.toFixed(2)}` : n.toFixed(2);
 }
 
 export function formatEyeRx(sph?: number, cyl?: number, axis?: number): string {
@@ -68,4 +70,19 @@ export function formatRxBrief(sph?: number, cyl?: number, axis?: number): string
   const c = cyl != null ? fmtVal(cyl) : "—";
   const a = axis != null ? `×${axis}` : "";
   return `${s} / ${c}${a ? ` ${a}` : ""}`;
+}
+
+/** Compact single-line: +1.00 | +2.00 × 50 */
+export function compactRx(dv?: Record<string, unknown>, nv?: Record<string, unknown>): string | null {
+  if (!dv && !nv) return null;
+  const d = dv || nv;
+  if (!d) return null;
+  const sph = d.sph != null ? Number(d.sph) : null;
+  const cyl = d.cyl != null ? Number(d.cyl) : null;
+  const axis = d.axis != null ? Number(d.axis) : null;
+  if (sph == null && cyl == null) return null;
+  const s = sph != null ? fmtVal(sph) : "—";
+  if (cyl != null && axis != null) return `${s} | ${fmtVal(cyl)} × ${axis}`;
+  if (cyl != null) return `${s} | ${fmtVal(cyl)}`;
+  return s;
 }

@@ -44,14 +44,6 @@ export default function Workspace() {
     { value: "service", label: uiT("Service", "सेवा"), icon: Activity },
     { value: "other", label: uiT("Other", "अन्य"), icon: Eye },
   ];
-  const steps = [
-    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
-    { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
-    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
-    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य निर्धारण") },
-    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
-    { key: "confirmation", label: uiT("Confirm", "पुष्टि करें"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
-  ];
   const phoneRef = useRef<HTMLInputElement>(null);
 
   const [settings, setSettings] = useState<any>(null);
@@ -107,9 +99,28 @@ export default function Workspace() {
   const savingRef = useRef(false);
   const greetingSent = useRef(false);
 
+  const isServiceType = visitType === "service" || visitType === "other";
+  const steps = [
+    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
+    ...(!isServiceType ? [
+      { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
+      { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
+    ] : []),
+    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य निर्धारण") },
+    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
+    { key: "confirmation", label: uiT("Confirm", "पुष्टि करें"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
+  ];
+
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
+
+  // Redirect away from removed steps when visitType changes
+  useEffect(() => {
+    if (isServiceType && (step === "prescription" || step === "order")) {
+      setStep("billing");
+    }
+  }, [visitType]);
 
   useEffect(() => {
     phoneRef.current?.focus();
@@ -335,11 +346,14 @@ export default function Workspace() {
 
       const payload: any = { customerId: custId };
 
-      if (usePrescription || visitDoctor || visitRemarks || visitDate) {
-        payload.visit = {};
-        if (visitDate) payload.visit.visitDate = visitDate;
-        if (visitDoctor) payload.visit.doctorName = visitDoctor;
-        if (visitRemarks) payload.visit.remarks = visitRemarks;
+      // Always create a visit record
+      payload.visit = { visitType: visitType || "new" };
+      if (visitDate) payload.visit.visitDate = visitDate;
+      if (visitDoctor) payload.visit.doctorName = visitDoctor;
+      if (visitRemarks) payload.visit.remarks = visitRemarks;
+
+      // Only save prescription if user opted in
+      if (usePrescription) {
         payload.prescription = {
           rightEye: cleanEyeSet(prescription.rightEye),
           leftEye: cleanEyeSet(prescription.leftEye),
@@ -469,58 +483,58 @@ export default function Workspace() {
   // ===== CUSTOMER SELECTION PHASE =====
   if (!selectedCustomer && !isNewCustomer) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen bg-th-elevated">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
           <div className="card">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{uiT("New Visit", "नई विज़िट")}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Enter phone number to search existing customers or add a new one.</p>
+            <h2 className="text-2xl font-bold text-th-text mb-1">{uiT("New Visit", "नई विज़िट")}</h2>
+            <p className="text-sm text-th-secondary mb-6">Enter phone number to search existing customers or add a new one.</p>
 
             <div className="flex gap-3 mb-6">
               <div className="relative flex-1">
-                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted" />
                 <input ref={phoneRef} type="tel" inputMode="numeric" placeholder="Enter phone number..."
                   value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
                   onKeyDown={handlePhoneKeyDown}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+                  className="w-full pl-10 pr-4 py-3 bg-th-elevated border border-th-border rounded-sm text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
               </div>
-              <button onClick={searchCustomer} className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm">
+              <button onClick={searchCustomer} className="px-6 py-3 bg-[#1ed760] hover:bg-[#1db954] text-th-text font-semibold rounded-sm transition-all flex items-center gap-2">
                 <Search size={18} />
               </button>
             </div>
 
             {searched && searchResults.length > 0 && (
               <div className="space-y-3 mb-4">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{searchResults.length} customer(s) found</p>
+                <p className="text-sm font-medium text-th-secondary">{searchResults.length} customer(s) found</p>
                 {searchResults.map((c: any) => (
                   <div key={c._id}
-                    className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/30 dark:hover:bg-primary-900/30 transition-all cursor-pointer"
+                    className="flex items-center justify-between p-4 rounded-sm border border-th-border hover:border-[#1ed760] hover:bg-[#1ed760]/5 transition-all cursor-pointer"
                     onClick={() => selectCustomer(c)}>
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                      <div className="w-12 h-12 bg-[#1ed760] rounded-sm flex items-center justify-center text-th-text font-bold text-lg">
                         {c.name?.charAt(0)?.toUpperCase() || "?"}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">{c.name}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{c.mobile}</p>
-                        {c.lastVisit && <p className="text-xs text-slate-400 dark:text-slate-500">Last visit: {c.lastVisit}</p>}
+                        <p className="font-semibold text-th-text">{c.name}</p>
+                        <p className="text-sm text-th-secondary">{c.mobile}</p>
+                        {c.lastVisit && <p className="text-xs text-th-muted">Last visit: {c.lastVisit}</p>}
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{c.totalVisits || 0} visits</p>
-                      {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">₹{c.pendingAmount} due</p>}
-                      <span className="text-primary-600 dark:text-primary-400 text-sm font-medium mt-1 inline-block">Select →</span>
+                      <p className="text-xs text-th-secondary">{c.totalVisits || 0} visits</p>
+                      {(c.pendingAmount || 0) > 0 && <p className="text-xs text-amber-400 font-medium">₹{c.pendingAmount} due</p>}
+                      <span className="text-[#1ed760] text-sm font-medium mt-1 inline-block">Select →</span>
                     </div>
                   </div>
                 ))}
                 <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
-                  className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+                  className="flex items-center gap-2 text-[#1ed760] hover:text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-sm hover:bg-[#1ed760]/10 transition-all">
                   <UserPlus size={16} /> Add new customer with this number
                 </button>
               </div>
             )}
 
             {searched && searchResults.length === 0 && !isNewCustomer && (
-              <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+              <div className="text-center py-8 text-th-muted">
                 <Users size={40} className="mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No customers found. Press Enter or click Search again to add a new customer.</p>
               </div>
@@ -542,12 +556,12 @@ export default function Workspace() {
             <div className="card">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                  <div className="w-16 h-16 bg-[#1ed760] rounded-lg flex items-center justify-center text-th-text font-bold text-2xl">
                     {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{selectedCustomer.name}</h3>
-                    <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <h3 className="text-xl font-bold text-th-text">{selectedCustomer.name}</h3>
+                    <div className="flex items-center gap-3 text-sm text-th-secondary mt-0.5">
                       <span>{selectedCustomer.gender || "—"}</span>
                       {selectedCustomer.age && <span>• {selectedCustomer.age} yrs</span>}
                       <span>•</span>
@@ -555,7 +569,7 @@ export default function Workspace() {
                       {customerSummary.customer?.customerId && (
                         <>
                           <span>•</span>
-                          <span className="text-primary-600 dark:text-primary-400 font-medium">ID: {customerSummary.customer.customerId}</span>
+                          <span className="text-[#1ed760] font-medium">ID: {customerSummary.customer.customerId}</span>
                         </>
                       )}
                     </div>
@@ -563,53 +577,53 @@ export default function Workspace() {
                 </div>
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                   selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0
-                    ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700"
-                    : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700"
+                    ? "bg-[#f5a623]/10 text-amber-400 border border-amber-500/20"
+                    : "bg-[#1ed760]/10 text-[#1ed760] border border-[#1ed760]/20"
                 }`}>
                   {selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0 ? `₹${selectedCustomer.pendingAmount} Due` : "Cleared"}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedCustomer.totalVisits || 0}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Visits</p>
+                <div className="bg-th-elevated rounded-sm p-3 text-center">
+                  <p className="text-lg font-bold text-th-text">{selectedCustomer.totalVisits || 0}</p>
+                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Visits</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-primary-600 dark:text-primary-400">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Revenue</p>
+                <div className="bg-th-elevated rounded-sm p-3 text-center">
+                  <p className="text-lg font-bold text-[#1ed760]">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Revenue</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Pending</p>
+                <div className="bg-th-elevated rounded-sm p-3 text-center">
+                  <p className="text-lg font-bold text-amber-400">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
+                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Pending</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                <div className="bg-th-elevated rounded-sm p-3 text-center">
+                  <p className="text-sm font-bold text-th-secondary">
                     {selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                   </p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Since</p>
+                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Since</p>
                 </div>
               </div>
 
               {customerSummary.lastOrder && (
-                <div className="bg-gradient-to-r from-slate-50 dark:from-slate-800/50 to-primary-50 dark:to-primary-900/20 rounded-xl p-3 mb-4">
+                <div className="bg-th-elevated rounded-sm p-3 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-0.5">Last Purchase</p>
-                      <p className="font-medium text-slate-900 dark:text-white">
+                      <p className="text-xs text-th-secondary uppercase tracking-wide mb-0.5">Last Purchase</p>
+                      <p className="font-medium text-th-text">
                         {customerSummary.lastOrder.frame && `Frame: ${customerSummary.lastOrder.frame}`}
                         {customerSummary.lastOrder.frame && customerSummary.lastOrder.lens && " | "}
                         {customerSummary.lastOrder.lens && `Lens: ${customerSummary.lastOrder.lens}`}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      customerSummary.lastOrder.status === "Delivered" ? "bg-emerald-50 text-emerald-700" :
+                      customerSummary.lastOrder.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
                       customerSummary.lastOrder.status === "Ready" ? "bg-blue-50 text-blue-700" :
-                      "bg-amber-50 text-amber-700"
+                      "bg-amber-400/10 text-amber-400"
                     }`}>{customerSummary.lastOrder.status || "Draft"}</span>
                   </div>
                   {customerSummary.lastPrescription?.rightEye?.dv?.sph != null && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-th-muted mt-1">
                       Last Rx: {formatRxBrief(customerSummary.lastPrescription.rightEye.dv.sph, customerSummary.lastPrescription.rightEye.dv.cyl, customerSummary.lastPrescription.rightEye.dv.axis)}
                     </p>
                   )}
@@ -631,11 +645,12 @@ export default function Workspace() {
                 {selectedCustomer.mobile && (
                   <button onClick={async () => {
                     const num = selectedCustomer.mobile.replace(/\D/g, "");
+                    const fullNum = num.length === 10 ? `91${num}` : num;
                     const msg = t(
                       `Hi ${selectedCustomer.name}, this is ${settings?.shopName || "KMJ Optical"}.`,
                       `नमस्ते ${selectedCustomer.name}, यह ${settings?.shopName || "KMJ Optical"} है।`
                     );
-                    await api.post("/api/whatsapp/send", { phone: `91${num}`, message: msg });
+                    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
                   }}
                     className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
                     <MessageCircle size={15} /> {uiT("WhatsApp", "WhatsApp")}
@@ -647,24 +662,24 @@ export default function Workspace() {
 
           {selectedCustomer && customerSummary?.recentOrders && customerSummary.recentOrders.length > 0 && (
             <div className="card">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-th-secondary mb-3 flex items-center gap-2">
                 <Clock size={14} /> Recent Activity
               </h3>
               <div className="space-y-2">
                 {(customerSummary.recentOrders || []).slice(0, 5).map((o: any) => (
-                  <div key={o._id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                  <div key={o._id} className="flex items-center justify-between py-2 border-b border-th-card last:border-0">
                     <div>
-                      <p className="text-sm text-slate-800 dark:text-slate-200">
+                      <p className="text-sm text-th-secondary">
                         {o.frame || ""}{o.frame && o.lens ? " + " : ""}{o.lens || ""}{o.coating ? " + " + o.coating : ""}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                      <p className="text-xs text-th-muted">
                         {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      o.status === "Delivered" ? "bg-emerald-50 text-emerald-700" :
+                      o.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
                       o.status === "Ready" ? "bg-blue-50 text-blue-700" :
-                      o.status === "In Lab" ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600"
+                      o.status === "In Lab" ? "bg-amber-400/10 text-amber-400" : "bg-th-card text-th-secondary"
                     }`}>{o.status || "Draft"}</span>
                   </div>
                 ))}
@@ -687,56 +702,56 @@ export default function Workspace() {
   // ===== NEW CUSTOMER FORM =====
   if (isNewCustomer) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen bg-th-elevated">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
           <div className="card">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{uiT("New Customer", "नया ग्राहक")}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Fill in the details to create a new customer.</p>
+            <h2 className="text-xl font-bold text-th-text mb-1">{uiT("New Customer", "नया ग्राहक")}</h2>
+            <p className="text-sm text-th-secondary mb-5">Fill in the details to create a new customer.</p>
 
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-5">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Phone: {customerForm.mobile}</p>
+            <div className="bg-[#f5a623]/10 text-amber-400 rounded-sm p-4 mb-5">
+              <p className="text-sm font-medium text-amber-400">Phone: {customerForm.mobile}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Name *</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="Full name" value={customerForm.name}
+                <label className="block text-xs font-medium text-th-secondary mb-1">Name *</label>
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Full name" value={customerForm.name}
                   onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Phone</label>
-                <input className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 dark:text-slate-400" value={customerForm.mobile} disabled />
+                <label className="block text-xs font-medium text-th-secondary mb-1">Phone</label>
+                <input className="w-full px-4 py-2.5 bg-th-surface border border-th-border rounded-sm text-sm text-th-secondary" value={customerForm.mobile} disabled />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="email@example.com" value={customerForm.email || ""}
+                <label className="block text-xs font-medium text-th-secondary mb-1">Email</label>
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="email@example.com" value={customerForm.email || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Age</label>
-                <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="Age" value={customerForm.age ?? ""}
+                <label className="block text-xs font-medium text-th-secondary mb-1">Age</label>
+                <input type="number" className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Age" value={customerForm.age ?? ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Gender</label>
-                <select className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" value={customerForm.gender || ""}
+                <label className="block text-xs font-medium text-th-secondary mb-1">Gender</label>
+                <select className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" value={customerForm.gender || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
                   <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">City</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="City" value={customerForm.city || ""}
+                <label className="block text-xs font-medium text-th-secondary mb-1">City</label>
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="City" value={customerForm.city || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Address</label>
-                <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder={uiT("Address", "पता")} value={customerForm.address || ""}
+                <label className="block text-xs font-medium text-th-secondary mb-1">Address</label>
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder={uiT("Address", "पता")} value={customerForm.address || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
               </div>
             </div>
 
-            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between mt-6 pt-4 border-t border-th-border">
               <button onClick={() => { setIsNewCustomer(false); setSearched(false); }}
                 className="btn-secondary flex items-center gap-2">
                 <X size={16} /> Cancel
@@ -776,7 +791,7 @@ export default function Workspace() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-slate-50 dark:bg-slate-900"
+      className="min-h-screen bg-th-elevated"
     >
       <PageHeader
         customer={selectedCustomer || { name: "", mobile: "" }}
@@ -916,8 +931,8 @@ export default function Workspace() {
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
         <div className="space-y-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Enter SKU or barcode to auto-fill frame details.</p>
-          <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder="SKU or barcode" autoFocus
+          <p className="text-xs text-th-secondary">Enter SKU or barcode to auto-fill frame details.</p>
+          <input className="w-full px-4 py-2.5 bg-th-elevated/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="SKU or barcode" autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
@@ -931,7 +946,7 @@ export default function Workspace() {
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2.5 text-xs font-semibold text-primary-600 dark:text-primary-400 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
+            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border-2 border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5">
             <ScanLine size={14} /> Use Camera
           </button>
         </div>

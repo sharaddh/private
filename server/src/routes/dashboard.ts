@@ -80,7 +80,7 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
       return pct.toFixed(1);
     };
 
-    const [todaySales, todayCollection, weekSales, monthSales, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders, todayOrdersCount, weekOrdersCount, monthOrdersCount, todayBillsCount, weekBillsCount, monthBillsCount, dailySalesData, paymentModeData, orderStatusData, sameDayLastWeekSales] =
+    const [todaySales, todayCollection, weekSales, monthSales, readyDeliveries, newCustomersToday, lowStock, pendingPayments, recentCustomers, recentOrders, todayDeliveries, pendingBills, incompleteOrders, todayOrdersCount, weekOrdersCount, monthOrdersCount, todayBillsCount, weekBillsCount, monthBillsCount, dailySalesData, paymentModeData, orderStatusData, sameDayLastWeekSales, todayDeliveredOrders] =
       await Promise.all([
         Bill.aggregate([
           { $match: { createdAt: { $gte: today, $lt: tomorrow } } },
@@ -195,6 +195,13 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
           { $match: { createdAt: { $gte: sameDayLastWeek, $lt: sameDayLastWeekEnd } } },
           { $group: { _id: null, total: { $sum: "$totalAmount" } } },
         ]),
+        Order.find({
+          status: "Delivered",
+          actualDeliveryDate: { $gte: today, $lt: tomorrow },
+        })
+          .populate("customerId", "name mobile")
+          .sort({ actualDeliveryDate: -1 })
+          .limit(10),
       ]);
 
     res.json({
@@ -224,6 +231,7 @@ router.get("/stats", authenticate, cacheRoute(30), asyncHandler(async (req, res)
         paymentModeSplit: paymentModeData.map(d => ({ mode: d._id || "Unknown", total: d.total, count: d.count })),
         orderStatusCounts: orderStatusData.map(d => ({ status: d._id, count: d.count })),
         salesTrend: calcTrend(todaySales[0]?.total || 0, sameDayLastWeekSales[0]?.total || 0),
+        todayDeliveredOrders,
       },
     });
 }));

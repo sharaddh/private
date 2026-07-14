@@ -349,9 +349,11 @@ class WhatsAppService {
 
       let ok: boolean;
       if (item.type === "text") {
-        ok = await this.sendMessageNow(item.phone, item.message);
+        const res = await this.sendMessageNow(item.phone, item.message);
+        ok = res.ok;
       } else {
-        ok = await this.sendMediaNow(item.phone, item.base64, item.filename, item.mimetype, item.caption);
+        const res = await this.sendMediaNow(item.phone, item.base64, item.filename, item.mimetype, item.caption);
+        ok = res.ok;
       }
       if (ok) sent++; else failed++;
       await new Promise((r) => setTimeout(r, 500));
@@ -361,20 +363,21 @@ class WhatsAppService {
     this.drainInProgress = false;
   }
 
-  private async sendMessageNow(phone: string, message: string): Promise<boolean> {
-    if (!this.sock) return false;
+  private async sendMessageNow(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
+    if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
     try {
       const jid = toJID(phone);
       await this.sock.sendMessage(jid, { text: message });
-      return true;
-    } catch (err) {
-      console.error(`WhatsApp [${this.authCollection}] send error:`, err);
-      return false;
+      return { ok: true };
+    } catch (err: any) {
+      const errMsg = err?.message || err?.toString() || "Unknown send error";
+      console.error(`WhatsApp [${this.authCollection}] send error:`, errMsg);
+      return { ok: false, error: errMsg };
     }
   }
 
-  private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string): Promise<boolean> {
-    if (!this.sock) return false;
+  private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string): Promise<{ ok: boolean; error?: string }> {
+    if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
     try {
       const jid = toJID(phone);
       const buffer = Buffer.from(base64, "base64");
@@ -383,27 +386,28 @@ class WhatsAppService {
         ? { image: buffer, caption: caption || "" }
         : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
       await this.sock.sendMessage(jid, msg);
-      return true;
+      return { ok: true };
     } catch (err: any) {
-      console.error(`WhatsApp [${this.authCollection}] sendMedia error:`, err?.message || err);
-      return false;
+      const errMsg = err?.message || err?.toString() || "Unknown media send error";
+      console.error(`WhatsApp [${this.authCollection}] sendMedia error:`, errMsg);
+      return { ok: false, error: errMsg };
     }
   }
 
-  async sendMessage(phone: string, message: string): Promise<boolean> {
+  async sendMessage(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
       console.log(`WhatsApp [${this.authCollection}]: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
-      return false;
+      return { ok: false, error: "Not connected — message queued" };
     }
     return this.sendMessageNow(phone, message);
   }
 
-  async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, throwOnError?: boolean): Promise<boolean> {
+  async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, throwOnError?: boolean): Promise<{ ok: boolean; error?: string }> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
       console.log(`WhatsApp [${this.authCollection}]: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
-      return false;
+      return { ok: false, error: "Not connected — media queued" };
     }
     if (throwOnError) {
       const jid = toJID(phone);
@@ -413,7 +417,7 @@ class WhatsAppService {
         ? { image: buffer, caption: caption || "" }
         : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
       await this.sock.sendMessage(jid, msg);
-      return true;
+      return { ok: true };
     }
     return this.sendMediaNow(phone, base64, filename, mimetype, caption);
   }
@@ -440,14 +444,17 @@ class WhatsAppService {
 
       if (media) {
         const caption = media.mimetype.startsWith("image/") && hasText ? message : undefined;
-        ok = await this.sendMedia(numbers[i], media.base64, media.filename, media.mimetype, caption);
+        const res = await this.sendMedia(numbers[i], media.base64, media.filename, media.mimetype, caption);
+        ok = res.ok;
         if (ok && !media.mimetype.startsWith("image/") && hasText) {
           await new Promise((r) => setTimeout(r, 500));
-          ok = await this.sendMessage(numbers[i], message);
+          const res2 = await this.sendMessage(numbers[i], message);
+          ok = res2.ok;
         }
       }
       if (hasText && !media) {
-        ok = await this.sendMessage(numbers[i], message);
+        const res = await this.sendMessage(numbers[i], message);
+        ok = res.ok;
       }
 
       if (ok) { sent++; results.push({ phone: numbers[i], status: "sent" }); }

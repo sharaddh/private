@@ -77,10 +77,10 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
           const isActive = isActivePreset(p);
           return (
             <button key={p.label} onClick={() => applyPreset(p)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-150 ${
+              className={`text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 uppercase tracking-wider ${
                 isActive
-                  ? "bg-primary-600 text-white"
-                  : "text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
+                  ? "bg-[#1ed760] text-black"
+                  : "text-th-secondary bg-th-elevated hover:bg-th-hover"
               }`}>
               {p.label}
             </button>
@@ -88,20 +88,22 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
         })}
       </div>
       <div className="flex items-center gap-1">
-        <button onClick={() => shift(-1)} aria-label="Previous period" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 shadow-sm">
+        <button onClick={() => shift(-1)} aria-label="Previous period" className="w-7 h-7 rounded-[9999px] flex items-center justify-center text-th-secondary hover:text-th-text hover:bg-th-elevated transition-all duration-200 bg-th-elevated">
           <ChevronLeft size={14} />
         </button>
         <input type="date" value={startDate} onChange={(e) => { onChange(e.target.value, endDate); }}
-          className="text-xs font-medium py-1.5 pl-2 pr-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 w-28 hover:border-slate-400 dark:hover:border-slate-500 cursor-pointer shadow-sm" />
-        <span className="text-xs font-medium text-slate-400">—</span>
+          className="text-[13px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
+          style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }} />
+        <span className="text-[13px] font-medium text-th-secondary">—</span>
         <input type="date" value={endDate} onChange={(e) => { onChange(startDate, e.target.value); }}
-          className="text-xs font-medium py-1.5 pl-2 pr-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 w-28 hover:border-slate-400 dark:hover:border-slate-500 cursor-pointer shadow-sm" />
-        <button onClick={() => shift(1)} aria-label="Next period" className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 shadow-sm">
+          className="text-[13px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
+          style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }} />
+        <button onClick={() => shift(1)} aria-label="Next period" className="w-7 h-7 rounded-[9999px] flex items-center justify-center text-th-secondary hover:text-th-text hover:bg-th-elevated transition-all duration-200 bg-th-elevated">
           <ChevronRight size={14} />
         </button>
       </div>
       {count !== undefined && (
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-auto px-3 py-1.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm">
+        <span className="text-[13px] font-medium text-th-secondary ml-auto px-3 py-1.5 bg-th-elevated rounded-lg">
           {count} {label}{count !== 1 ? "s" : ""}
         </span>
       )}

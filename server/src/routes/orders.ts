@@ -64,20 +64,22 @@ const statusUpdateSchema = z.object({
 });
 
 router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
-  const { customerId, startDate, endDate } = req.query;
+  const { customerId, startDate, endDate, status, dateField } = req.query;
   const filter: any = {};
   if (customerId) filter.customerId = customerId;
+  if (status) filter.status = status;
   if (startDate || endDate) {
-    filter.createdAt = {};
+    const field = (dateField as string) || "createdAt";
+    filter[field] = {};
     if (startDate) {
       const s = new Date(startDate as string);
       s.setHours(0, 0, 0, 0);
-      filter.createdAt.$gte = s;
+      filter[field].$gte = s;
     }
     if (endDate) {
       const e = new Date(endDate as string);
       e.setHours(23, 59, 59, 999);
-      filter.createdAt.$lte = e;
+      filter[field].$lte = e;
     }
   }
   const list = await Order.find(filter)
@@ -188,6 +190,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
     if (newForwarded >= qty) {
       order.status = status as any;
       order.forwardedCount = 0;
+      if (status === "Delivered") order.actualDeliveryDate = new Date();
     } else {
       order.forwardedCount = newForwarded;
     }
@@ -224,7 +227,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
         const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent) console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+        if (!sent.ok) console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
 
@@ -236,7 +239,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
         const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent) console.log(`WhatsApp: order delivered message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+        if (!sent.ok) console.log(`WhatsApp: order delivered message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
       }
     }
 
@@ -541,7 +544,9 @@ router.post("/demand-send", authenticate, async (req, res) => {
     let sendError: string | null = null;
 
     try {
-      sent = await wa.sendMedia(normalized, base64, filename, "application/pdf", caption, true);
+      const result = await wa.sendMedia(normalized, base64, filename, "application/pdf", caption, true);
+      sent = result.ok;
+      if (!result.ok && result.error) sendError = result.error;
     } catch (e: any) {
       sendError = e.message;
       console.error(`Demand PDF sendMedia threw: ${e.message}`);

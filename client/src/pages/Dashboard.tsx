@@ -9,7 +9,7 @@ import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
 import { useAuth } from "../context/AuthContext";
-import { formatFullRx } from "../utils/rx";
+import { formatFullRx, compactRx } from "../utils/rx";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
   TrendingUp, IndianRupee, ScanLine, Boxes, PackageCheck,
@@ -31,6 +31,7 @@ interface DashboardData {
   paymentModeSplit: { mode: string; total: number; count: number }[];
   orderStatusCounts: { status: string; count: number }[];
   salesTrend: string;
+  todayDeliveredOrders: Record<string, unknown>[];
 }
 
 const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
@@ -63,7 +64,7 @@ const paymentModeColors: Record<string, string> = {
 function UserAvatar({ name, className = "" }: { name: string; className?: string }) {
   const initial = (name || "?").charAt(0).toUpperCase();
   return (
-    <div className={`rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold ring-2 ring-white/20 dark:ring-slate-700 flex-shrink-0 ${className}`}>
+    <div className={`rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold flex-shrink-0 ${className}`}>
       {initial}
     </div>
   );
@@ -71,22 +72,22 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-full">
+    <div className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 transition-all duration-200 h-full active:scale-95 shadow-md">
       <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
-        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
+        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
           <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
         </div>
         {trend && (
-          <span className="flex items-center gap-0.5 text-[10px] md:text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+          <span className="flex items-center gap-0.5 text-[10px] md:text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
             <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3" />
             {trend}
           </span>
         )}
       </div>
-      <div className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-0.5 md:mb-1 break-words" style={{ color }}>{value}</div>
+      <div className="text-lg sm:text-xl md:text-2xl font-bold text-th-text tracking-tight mb-0.5 md:mb-1 break-words" style={{ color }}>{value}</div>
       <div className="mt-auto">
-        <div className="text-[11px] md:text-sm font-medium text-slate-500 dark:text-slate-400 break-words">{label}</div>
-        {subtitle && <div className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 mt-0.5 break-words">{subtitle}</div>}
+        <div className="text-[13px] font-medium text-th-secondary break-words">{label}</div>
+        {subtitle && <div className="text-[12px] text-th-muted mt-0.5 break-words">{subtitle}</div>}
       </div>
     </div>
   );
@@ -94,12 +95,12 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <button onClick={onClick} className="h-20 flex flex-col items-center justify-center gap-1 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-xl p-2 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 w-full group">
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300" style={{ backgroundColor: `${color || "#6366f1"}15` }}>
-        <Icon className="w-4 h-4" style={{ color: color || "#6366f1" }} />
+    <button onClick={onClick} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
+        <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
       </div>
-      <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-full leading-tight">{label}</span>
-      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
+      <span className="text-[11px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
     </button>
   );
 }
@@ -108,11 +109,11 @@ function SectionHeader({ title, count, action, actionLabel }: { title: string; c
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
-        {count !== undefined && <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg">{count}</span>}
+        <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{title}</h3>
+        {count !== undefined && <span className="text-[12px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{count}</span>}
       </div>
       {action && (
-        <button onClick={action} className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 transition-all hover:shadow-md hover:-translate-y-0.5">
+        <button onClick={action} className="flex items-center gap-1.5 text-[12px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
           {actionLabel || "View all"}
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -123,14 +124,14 @@ function SectionHeader({ title, count, action, actionLabel }: { title: string; c
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    Delivered: "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20",
-    Ready: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
-    Ordered: "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/20",
-    Draft: "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600/50",
-    "In Transit": "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20",
+    Delivered: "bg-[#1ed760]/15 text-[#1ed760]",
+    Ready: "bg-[#1db954]/15 text-[#1db954]",
+    Ordered: "bg-[#6366f1]/15 text-[#a78bfa]",
+    Draft: "bg-th-elevated text-th-secondary",
+    "In Transit": "bg-[#f59e0b]/15 text-[#fbbf24]",
   };
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg border whitespace-nowrap ${styles[status] || "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600/50"}`}>
+    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap uppercase tracking-wider ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
       {status}
     </span>
   );
@@ -139,13 +140,13 @@ function StatusBadge({ status }: { status: string }) {
 function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; title: string; description: string; actionLabel?: string; onAction?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 text-center px-6">
-      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+      <div className="w-14 h-14 rounded-xl bg-th-elevated flex items-center justify-center mb-4">
+        <Icon className="w-7 h-7 text-th-muted" />
       </div>
-      <p className="text-base font-semibold text-slate-900 dark:text-white">{title}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-5 max-w-xs">{description}</p>
+      <p className="text-[16px] font-semibold text-th-text">{title}</p>
+      <p className="text-[14px] text-th-secondary mt-1 mb-5 max-w-xs">{description}</p>
       {actionLabel && onAction && (
-        <button onClick={onAction} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-all hover:shadow-md hover:-translate-y-0.5">
+        <button onClick={onAction} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
           <Plus className="w-4 h-4" />
           {actionLabel}
         </button>
@@ -154,18 +155,17 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: {
   );
 }
 
-function SegmentedControl({ options, value, onChange }: { options: { label: string; value: string }[]; value: string; onChange: (v: string) => void }) {
+function SegmentedControl({ options, value, onChange, compact }: { options: { label: string; value: string; color?: string }[]; value: string; onChange: (v: string) => void; compact?: boolean }) {
   return (
-    <div className="flex rounded-lg bg-slate-100 dark:bg-slate-700/50 p-0.5 gap-0.5">
+    <div className={`flex rounded-lg bg-th-elevated gap-0.5 border border-th-border ${compact ? "p-0.5" : "p-1"}`}>
       {options.map((opt) => {
         const isActive = value === opt.value;
-        const activeColor = opt.value === "stock" ? "emerald" : opt.value === "order" ? "blue" : "amber";
         return (
-          <button key={opt.value} onClick={() => onChange(isActive ? "pending" : opt.value)}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all leading-tight ${
+          <button key={opt.value} onClick={(e) => { e.stopPropagation(); onChange(isActive ? "pending" : opt.value); }}
+            className={`${compact ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-[11px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
               isActive
-                ? `bg-white dark:bg-slate-600 shadow-sm text-${activeColor}-700 dark:text-${activeColor}-300 ring-1 ring-${activeColor}-400/30`
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/30"
+                ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
+                : "text-th-secondary hover:text-th-text hover:bg-th-card/50"
             }`}>
             {opt.label}
           </button>
@@ -177,33 +177,33 @@ function SegmentedControl({ options, value, onChange }: { options: { label: stri
 
 function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onClick }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; action?: () => void; actionLabel?: string; color: string; onClick?: () => void }) {
   const bgMap: Record<string, string> = {
-    red: "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/15",
-    orange: "bg-orange-50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/15",
-    yellow: "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/15",
-    blue: "bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/15",
+    red: "bg-[#e74c3c]/10",
+    orange: "bg-[#f39c12]/10",
+    yellow: "bg-[#f1c40f]/10",
+    blue: "bg-[#3498db]/10",
   };
   const textMap: Record<string, string> = {
-    red: "text-red-700 dark:text-red-300",
-    orange: "text-orange-700 dark:text-orange-300",
-    yellow: "text-amber-700 dark:text-amber-300",
-    blue: "text-blue-700 dark:text-blue-300",
+    red: "text-[#e74c3c]",
+    orange: "text-[#f39c12]",
+    yellow: "text-[#f1c40f]",
+    blue: "text-[#3498db]",
   };
   const iconMap: Record<string, string> = {
-    red: "text-red-500",
-    orange: "text-orange-500",
-    yellow: "text-amber-500",
-    blue: "text-blue-500",
+    red: "text-[#e74c3c]",
+    orange: "text-[#f39c12]",
+    yellow: "text-[#f1c40f]",
+    blue: "text-[#3498db]",
   };
   return (
-    <div className={`relative ${bgMap[color] || bgMap.blue} border rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
+    <div className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
       <div className="flex items-center gap-3">
         <Icon className={`w-5 h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-xs font-medium ${textMap[color] || textMap.blue}`}>{label}</p>
+          <p className={`text-[13px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
           <p className={`text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
         </div>
         {action && (
-          <button onClick={(e) => { e.stopPropagation(); action(); }} className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:-translate-y-0.5 hover:shadow-md ${bgMap[color] || bgMap.blue} ${textMap[color] || textMap.blue} hover:opacity-80 flex-shrink-0`}>
+          <button onClick={(e) => { e.stopPropagation(); action(); }} className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
             {actionLabel || "View"}
           </button>
         )}
@@ -330,13 +330,13 @@ export default function Dashboard() {
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {greeting}, <span className="text-primary-600 dark:text-primary-400">{(user?.name as string) || (user?.username as string) || ""}</span>
+          <h1 className="text-[24px] font-bold text-th-text tracking-tight">
+            {greeting}, <span className="text-[#1ed760]">{(user?.name as string) || (user?.username as string) || ""}</span>
           </h1>
-          <div className="flex items-center gap-2 mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 mt-1.5 text-[14px] text-th-secondary">
             <Calendar className="w-3.5 h-3.5" />
             <span>{dateStr}</span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-th-muted">·</span>
             <Clock className="w-3.5 h-3.5" />
             <span>{timeStr}</span>
           </div>
@@ -344,16 +344,16 @@ export default function Dashboard() {
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => navigate("/workspace")}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-md">
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1ed760] text-black rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
           <Plus className="w-3.5 h-3.5" />
           {uiT("New Sale", "नई बिक्री")}
         </button>
         <button onClick={() => setShowScanner(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-th-elevated text-th-text rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
           <ScanLine className="w-3.5 h-3.5" />
           {uiT("Scan", "स्कैन")}
         </button>
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white/20 dark:ring-slate-700 flex-shrink-0">S</div>
+        <div className="w-8 h-8 rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold text-xs flex-shrink-0">S</div>
       </div>
     </div>
   );
@@ -361,33 +361,32 @@ export default function Dashboard() {
   // Hero Section
 
   const renderHero = () => (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-500 to-indigo-600 dark:from-primary-700 dark:via-primary-600 dark:to-indigo-700 rounded-3xl p-6 md:p-8 shadow-xl shadow-primary-500/20 dark:shadow-primary-900/30">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-indigo-300/10 rounded-full blur-2xl" />
-      <div className="relative">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+    <div className="bg-th-surface rounded-xl p-5 md:p-6 shadow-lg border border-th-border">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-6 flex-wrap">
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Today's Sales", "आज की बिक्री")}</p>
-            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
-            <p className="text-white/50 text-xs mt-1.5 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह की तुलना में")}</p>
+            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
+            <p className="text-[22px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
           </div>
+          <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Collection", "संग्रह")}</p>
-            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
-            <p className="text-white/50 text-xs mt-1.5">{d.newCustomersToday ?? 0} {uiT("new customers today", "नए ग्राहक आज")}</p>
+            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
+            <p className="text-[22px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
           </div>
+          <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Today's Orders", "आज के ऑर्डर")}</p>
-            <p className="text-3xl md:text-4xl font-bold text-white mt-1.5 tracking-tight">{d.todayOrders}</p>
-            <p className="text-white/50 text-xs mt-1.5">{d.readyDeliveries ?? 0} {uiT("ready for pickup", "पिकअप के लिए तैयार")}</p>
+            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
+            <p className="text-[22px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
           </div>
+          <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-white/60 text-xs font-medium tracking-wide uppercase">{uiT("Performance", "प्रदर्शन")}</p>
-            <p className="text-sm font-semibold text-white mt-3 leading-relaxed">
-              {Number(d.todaySales) > 0 ? uiT("Business is performing well today", "व्यापार आज अच्छा प्रदर्शन कर रहा है") : uiT("Business is performing steady today", "व्यापार आज स्थिर है")}
-            </p>
-            <p className="text-white/50 text-xs mt-1">₹{(d.weekSales || 0).toLocaleString()} {uiT("this week", "इस सप्ताह")}</p>
+            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
+            <p className="text-[22px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2 text-[12px] text-th-muted">
+          <TrendingUp className="w-3.5 h-3.5 text-[#1ed760]" />
+          {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह")}
         </div>
       </div>
     </div>
@@ -473,170 +472,147 @@ export default function Dashboard() {
     const allIds = draftOrders.map((o) => o._id as string);
 
     return (
-      <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-700/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
-              <Eye className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+        <div className="px-5 py-4 border-b border-th-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
+              <span className="text-[12px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Lens Demand</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{draftOrders.length} draft{draftOrders.length !== 1 ? "s" : ""} pending classification</p>
+            <div className="flex items-center gap-2">
+              {selectedOrders.size > 0 && (
+                <span className="text-[12px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
+              )}
+              <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                <ShoppingBag className="w-3.5 h-3.5" />
+                {sendingDemand === "buy" ? "..." : uiT("Buy", "खरीदें")}
+              </button>
+              <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                <Send className="w-3.5 h-3.5" />
+                {sendingDemand === "order" ? "..." : uiT("Order", "ऑर्डर")}
+              </button>
             </div>
           </div>
-          {selectedOrders.size > 0 && (
-            <button onClick={clearSelection} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
-              <X className="w-3.5 h-3.5" /> Clear selection
-            </button>
-          )}
+          <label className="flex items-center gap-2 cursor-pointer text-[12px] font-medium text-th-secondary hover:text-th-text transition-colors">
+            <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
+              onChange={() => toggleAllOrders(allIds)}
+              className="w-3.5 h-3.5 rounded accent-[#1ed760]" />
+            {uiT("Select all", "सभी चुनें")} ({draftOrders.length})
+          </label>
         </div>
 
         {draftOrders.length === 0 ? (
           <EmptyState icon={PackageCheck} title={uiT("All clear!", "सब साफ!")} description={uiT("No draft orders pending lens classification.", "लेंस वर्गीकरण के लिए कोई ड्राफ्ट ऑर्डर लंबित नहीं।")} actionLabel={uiT("Create New Order", "नया ऑर्डर बनाएं")} onAction={() => navigate("/workspace")} />
         ) : (
-          <>
-            {/* Toolbar */}
-            <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30 flex-wrap">
-              <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors">
-                <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
-                  onChange={() => toggleAllOrders(allIds)}
-                  className="w-4 h-4 rounded accent-primary-600" />
-                {uiT("Select all", "सभी चुनें")} ({draftOrders.length})
-              </label>
-              {selectedOrders.size > 0 && (
-                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-3 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
-              )}
-              <div className="flex-1" />
-              <div className="flex items-center gap-2">
-                <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-100 dark:hover:bg-amber-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
-                  <ShoppingBag className="w-4 h-4" />
-                  {sendingDemand === "buy" ? uiT("Sending...", "भेज रहे हैं...") : uiT("Buy List", "खरीद सूची")}
-                </button>
-                <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
-                  <Send className="w-4 h-4" />
-                  {sendingDemand === "order" ? uiT("Sending...", "भेज रहे हैं...") : uiT("Lab Order", "लैब ऑर्डर")}
-                </button>
-              </div>
-            </div>
+          <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-thin">
+            {draftOrders.map((o) => {
+              const id = o._id as string;
+              const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
+              const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+              const isSelected = selectedOrders.has(id);
+              const rx = o.prescription as Record<string, unknown> | undefined;
+              const rightEye = rx?.rightEye as Record<string, unknown> | undefined;
+              const leftEye = rx?.leftEye as Record<string, unknown> | undefined;
+              const rDV = rightEye?.dv as Record<string, unknown> | undefined;
+              const lDV = leftEye?.dv as Record<string, unknown> | undefined;
+              const rNV = rightEye?.nv as Record<string, unknown> | undefined;
+              const lNV = leftEye?.nv as Record<string, unknown> | undefined;
+              const rStatus = (o.rightLensStatus as string) || "pending";
+              const lStatus = (o.leftLensStatus as string) || "pending";
+              const rRx = compactRx(rDV, rNV);
+              const lRx = compactRx(lDV, lNV);
+              const stockTotal = totalStock(o.stockStatus?.lensBrand ?? null);
+              const inStock = stockTotal > 0;
 
-            {/* Cards */}
-            <div className="max-h-[800px] overflow-y-auto scrollbar-thin p-5 space-y-4">
-              {draftOrders.map((o) => {
-                const id = o._id as string;
-                const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
-                const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
-                const ss = o.stockStatus?.lensBrand;
-                const isSelected = selectedOrders.has(id);
-                const rx = o.prescription as Record<string, unknown> | undefined;
-                const rightEye = rx?.rightEye as Record<string, unknown> | undefined;
-                const leftEye = rx?.leftEye as Record<string, unknown> | undefined;
-                const rDV = rightEye?.dv as Record<string, unknown> | undefined;
-                const lDV = leftEye?.dv as Record<string, unknown> | undefined;
-                const rNV = rightEye?.nv as Record<string, unknown> | undefined;
-                const lNV = leftEye?.nv as Record<string, unknown> | undefined;
-                const rStatus = (o.rightLensStatus as string) || "pending";
-                const lStatus = (o.leftLensStatus as string) || "pending";
+              const goToCustomer = (e?: React.MouseEvent) => {
+                e?.stopPropagation();
+                const cId = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>)._id : null;
+                if (cId) navigate(`/customers/${cId}?visitId=${(o.visitId as string) || ""}`);
+              };
 
-                const rRx = formatFullRx(rDV, rNV, rx?.pd as string | number | undefined);
-                const lRx = formatFullRx(lDV, lNV, rx?.pd as string | number | undefined);
-                const lensLabel = [o.lensBrand, o.lensType, o.lensIndex].filter(Boolean).join(" ");
+              return (
+                <div key={id}
+                  className={`px-5 py-4 transition-all duration-150 cursor-pointer group ${isSelected ? "bg-[#1ed760]/5 border-l-2 border-l-[#1ed760]" : "hover:bg-th-card border-l-2 border-l-transparent"}`}
+                  onClick={goToCustomer}>
 
-                const stockTotal = totalStock(ss);
-                const stockColor = stockTotal > 5 ? "emerald" : stockTotal > 0 ? "amber" : "red";
-                const stockLabel = stockTotal > 5 ? uiT("In Stock", "स्टॉक में") : stockTotal > 0 ? uiT("Limited", "सीमित") : uiT("Out of Stock", "स्टॉक में नहीं");
-
-                function StockBadge({ color, label }: { color: string; label: string }) {
-                  const colors: Record<string, string> = {
-                    emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/15",
-                    amber: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/15",
-                    red: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/15",
-                  };
-                  return <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border whitespace-nowrap ${colors[color] || colors.red}`}>{label}</span>;
-                }
-
-                return (
-                  <div
-                    key={id}
-                    className={`bg-white dark:bg-slate-900/50 border rounded-2xl p-5 shadow-sm transition-all duration-300 ${
-                      isSelected
-                        ? "border-primary-300 dark:border-primary-500/40 shadow-md ring-1 ring-primary-200 dark:ring-primary-500/20"
-                        : "border-slate-200 dark:border-slate-700/50 hover:shadow-xl hover:-translate-y-0.5"
-                    }`}
-                  >
-                    {/* Top row */}
-                    <div className="flex items-start gap-3 mb-4">
-                      <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
-                        className="w-4 h-4 mt-1 rounded accent-primary-600 cursor-pointer flex-shrink-0" />
-                      <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-base font-bold text-slate-900 dark:text-white truncate">{cName || "—"}</span>
-                              {!!(cMobile) && <span className="text-sm text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-400 dark:text-slate-500">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <StatusBadge status={(o.status as string) || "Draft"} />
-                            <button onClick={() => navigate(`/workspace?order=${id}`)}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 shadow-sm">
-                              {uiT("Open", "खोलें")} <ArrowUpRight className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
+                  {/* Line 1: Avatar + Name + Meta */}
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 rounded accent-[#1ed760] cursor-pointer flex-shrink-0" />
+                    <div className="relative flex-shrink-0">
+                      <UserAvatar name={cName} className="w-10 h-10 text-xs" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[14px] font-bold text-th-text truncate">{cName || "—"}</p>
+                        {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
+                        <span className="text-[12px] text-th-muted hidden sm:inline">·</span>
+                        <span className="text-[12px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        {!!(o.frameBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{(o.frameBrand as string).trim()}</span>}
+                        {!!(o.lensBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand as string}</span>}
+                        {!!(o.lensType) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType as string}</span>}
+                        {!!(o.lensIndex) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex as string}</span>}
                       </div>
                     </div>
+                    <button onClick={goToCustomer}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
+                      {uiT("Open", "खोलें")} <ArrowUpRight className="w-3 h-3" />
+                    </button>
+                  </div>
 
-                    {/* Lens details */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 px-1">
-                      {!!(o.frameBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Frame:", "फ्रेम:")}</span> {o.frameBrand as string}</span>}
-                      {!!(o.lensBrand) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Lens:", "लेंस:")}</span> {o.lensBrand as string}</span>}
-                      {!!(o.lensType) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Type:", "प्रकार:")}</span> {o.lensType as string}</span>}
-                      {!!(o.lensIndex) && <span className="text-sm text-slate-600 dark:text-slate-400"><span className="font-medium text-slate-500 dark:text-slate-500">{uiT("Index:", "इंडेक्स:")}</span> {o.lensIndex as string}</span>}
-                      {!!(lensLabel) && !o.frameBrand && !o.lensBrand && <span className="text-sm text-slate-500 dark:text-slate-400">{lensLabel}</span>}
+                  {/* Line 2 & 3: Eye classifiers */}
+                  <div className="ml-[52px] mt-3 space-y-2">
+                    {/* R Eye */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[11px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
+                      <span className="text-[13px] font-mono font-semibold text-th-text min-w-[120px]">{rRx || "—"}</span>
+                      {inStock ? (
+                        <span className="text-[10px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                      )}
+                      <SegmentedControl compact
+                        options={[
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black" },
+                          { label: uiT("Buy", "खरीदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
+                        ]}
+                        value={rStatus}
+                        onChange={(s) => classifyEye(id, "right", s)}
+                      />
                     </div>
-
-                    {/* Eye panels */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        { eye: "right" as const, label: uiT("RIGHT EYE", "दायाँ आँख"), rxStr: rRx, status: rStatus, panelBg: "bg-cyan-50/50 dark:bg-cyan-500/5 border-cyan-100 dark:border-cyan-500/10", labelColor: "text-cyan-700 dark:text-cyan-300" },
-                        { eye: "left" as const, label: uiT("LEFT EYE", "बायाँ आँख"), rxStr: lRx, status: lStatus, panelBg: "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10", labelColor: "text-amber-700 dark:text-amber-300" },
-                      ].map((e) => (
-                        <div key={e.eye} className={`${e.panelBg} border rounded-xl p-4`}>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className={`text-xs font-extrabold tracking-wider ${e.labelColor}`}>{e.label}</span>
-                            <StockBadge color={stockColor} label={stockLabel} />
-                          </div>
-                          <div className="mb-3">
-                            {e.rxStr ? (
-                              <span className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200 break-all">{e.rxStr}</span>
-                            ) : (
-                              <span className="text-sm text-slate-400 dark:text-slate-600">{uiT("No prescription", "कोई प्रिस्क्रिप्शन नहीं")}</span>
-                            )}
-                          </div>
-                          <SegmentedControl
-                            options={[
-                              { label: uiT("Stock", "स्टॉक"), value: "stock" },
-                              { label: uiT("Buy", "खरीदें"), value: "buy" },
-                              { label: uiT("Order", "ऑर्डर"), value: "order" },
-                            ]}
-                            value={e.status}
-                            onChange={(s) => classifyEye(id, e.eye, s)}
-                          />
-                        </div>
-                      ))}
+                    {/* L Eye */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[11px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
+                      <span className="text-[13px] font-mono font-semibold text-th-text min-w-[120px]">{lRx || "—"}</span>
+                      {inStock ? (
+                        <span className="text-[10px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                      )}
+                      <SegmentedControl compact
+                        options={[
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black" },
+                          { label: uiT("Buy", "खरीदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
+                        ]}
+                        value={lStatus}
+                        onChange={(s) => classifyEye(id, "left", s)}
+                      />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     );
@@ -645,34 +621,31 @@ export default function Dashboard() {
   // Recent Orders
 
   const renderRecentOrders = () => (
-    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+      <div className="px-5 py-4 border-b border-th-border">
         <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
           const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
           return (
-            <div key={o._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id as string}`)}>
+            <div key={o._id as string || idx} className="flex items-center gap-3 px-5 py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id as string}`)}>
               <div className="relative flex-shrink-0">
                 <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
-                  <div className={`w-2 h-2 rounded-full ${o.status === "Delivered" ? "bg-emerald-500" : o.status === "Draft" ? "bg-slate-400" : o.status === "Ordered" ? "bg-purple-500" : o.status === "Ready" ? "bg-blue-500" : "bg-amber-500"}`} />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                  <div className={`w-2 h-2 rounded-full ${o.status === "Delivered" ? "bg-[#1ed760]" : o.status === "Draft" ? "bg-th-muted" : o.status === "Ordered" ? "bg-[#a78bfa]" : o.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
-                  {!!(cMobile) && <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">{maskPhone(cMobile)}</span>}
+                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <span className="text-[12px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
+                  {!!(o.frameBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand as string}</span>}
+                  {!!(o.lensBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand as string}</span>}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}
-                  {!!(o.frameBrand) ? ` · ${o.frameBrand as string}` : ""}
-                  {!!(o.lensBrand) ? ` · ${o.lensBrand as string}` : ""}
-                </p>
               </div>
               <StatusBadge status={(o.status as string) || "—"} />
             </div>
@@ -685,27 +658,27 @@ export default function Dashboard() {
   // Pending Bills
 
   const renderPendingBills = () => (
-    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+      <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Pending Bills", "लंबित बिल")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
           const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
           return (
-            <div key={b._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+            <div key={b._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <UserAvatar name={cName} className="w-10 h-10 text-sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="text-right flex items-center gap-3 flex-shrink-0">
-                <p className="text-base font-bold text-red-600 dark:text-red-400 whitespace-nowrap">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
+                <p className="text-[16px] font-bold text-[#e74c3c] whitespace-nowrap">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id as string}`)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider">
                   {uiT("Collect", "वसूलें")}
                 </button>
               </div>
@@ -719,32 +692,32 @@ export default function Dashboard() {
   // Today's Deliveries
 
   const renderDeliveries = () => (
-    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+      <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Today's Deliveries", "आज की डिलीवरी")} count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.todayDeliveries.length === 0 ? (
           <EmptyState icon={Truck} title={uiT("No deliveries today", "आज कोई डिलीवरी नहीं")} description={uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।")} />
         ) : d.todayDeliveries.map((dl, idx) => {
           const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "—";
           const cMobile = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).mobile as string : "";
           return (
-            <div key={dl._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+            <div key={dl._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <div className="relative flex-shrink-0">
                 <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
-                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-emerald-500" : dl.status === "Ready" ? "bg-blue-500" : dl.status === "In Transit" ? "bg-purple-500" : "bg-amber-500"}`} />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : dl.status === "In Transit" ? "bg-[#a78bfa]" : "bg-[#f59e0b]"}`} />
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <StatusBadge status={(dl.status as string) || "—"} />
                 <button onClick={() => navigate(`/delivery?order=${dl._id as string}`)}
-                  className="p-2.5 rounded-xl text-sm font-semibold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
+                  className="p-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
                   <PackageCheck className="w-4 h-4" />
                 </button>
               </div>
@@ -755,31 +728,77 @@ export default function Dashboard() {
     </div>
   );
 
+  // Today's Delivered
+
+  const renderTodayDelivered = () => {
+    const delivered = d.todayDeliveredOrders || [];
+    if (delivered.length === 0) return null;
+    return (
+      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-[#1ed760]/20">
+        <div className="px-5 py-4 border-b border-[#1ed760]/15 bg-gradient-to-r from-[#1ed760]/5 to-transparent">
+          <SectionHeader title={uiT("Today's Delivered", "आज डिलीवर हुए")} count={delivered.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
+        </div>
+        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
+          {delivered.map((o, idx) => {
+            const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
+            const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+            return (
+              <div key={(o._id as string) || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>)._id : ""}?visitId=${o.visitId || ""}`)}>
+                <div className="relative flex-shrink-0">
+                  <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-[#1ed760]" />
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
+                    {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
+                  </div>
+                  <p className="text-[12px] text-th-secondary mt-0.5">
+                    {!!(o.frameBrand) ? `${o.frameBrand as string}` : ""}
+                    {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
+                    {!!(o.lensBrand) ? `${o.lensBrand as string}` : ""}
+                    {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : "") : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[16px] font-bold text-th-text">₹{((o.billInfo as Record<string, unknown>)?.totalAmount as number || 0).toLocaleString()}</span>
+                  <StatusBadge status="Delivered" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   // Recent Customers
 
   const renderRecentCustomers = () => (
-    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+      <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Recent Customers", "हाल के ग्राहक")} count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-slate-100 dark:divide-slate-700/30 max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
         {d.recentCustomers.length === 0 ? (
           <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
         ) : d.recentCustomers.map((c, idx) => (
-          <div key={c._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id as string}`)}>
+          <div key={c._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id as string}`)}>
             <UserAvatar name={(c.name as string) || "?"} className="w-10 h-10 text-sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{v(c.name as string)}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+              <p className="text-[14px] font-semibold text-th-text truncate">{v(c.name as string)}</p>
+              <p className="text-[12px] text-th-secondary mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>{c.mobile ? maskPhone(c.mobile as string) : "—"}</span>
-                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="text-th-muted">·</span>
                 <span>{c.createdAt ? formatTimeAgo(c.createdAt as string, uiT) : ""}</span>
-                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="text-th-muted">·</span>
                 <span>{(c.totalVisits as number) ?? 0} {uiT("visits", "विज़िट")}</span>
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-base font-bold text-slate-900 dark:text-white">₹{((c.totalSpent as number) || 0).toLocaleString()}</p>
+              <p className="text-[16px] font-bold text-th-text">₹{((c.totalSpent as number) || 0).toLocaleString()}</p>
             </div>
           </div>
         ))}
@@ -790,23 +809,23 @@ export default function Dashboard() {
   // Todo
 
   const renderTodo = () => (
-    <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5">
+    <div className="bg-th-surface rounded-xl p-5 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
-            <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+          <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
+            <CheckSquare className="w-4 h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("To-Do", "कार्य सूची")}</h3>
+          <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
         </div>
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
+        <span className="text-[12px] font-bold text-th-secondary bg-th-elevated px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
       <div className="flex items-center gap-2 mb-4">
         <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTodo()}
-          className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
+          className="flex-1 px-4 py-2.5 bg-th-elevated border border-th-card rounded-lg text-[14px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
         <button onClick={addTodo} disabled={!newTask.trim()}
-          className="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 disabled:opacity-40 text-primary-600 dark:text-primary-300 border border-primary-200 dark:border-primary-500/20 transition-all hover:shadow-md hover:-translate-y-0.5">
+          className="p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
           <Plus className="w-4 h-4" />
         </button>
       </div>
@@ -815,13 +834,13 @@ export default function Dashboard() {
           <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
-            <div key={t._id as string} className={`flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.03] group transition-all ${t.done ? "opacity-40" : ""}`}>
+            <div key={t._id as string} className={`flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
               <button onClick={() => toggleTodo(t._id as string, !!(t.done))}
-                className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-emerald-500 border-emerald-500" : "border-slate-300 dark:border-slate-600 hover:border-primary-400"}`}>
-                {!!(t.done) && <Check className="w-3 h-3 text-white" />}
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
+                {!!(t.done) && <Check className="w-3 h-3 text-th-text" />}
               </button>
-              <span className={`flex-1 text-sm truncate ${t.done ? "line-through text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-300"}`}>{t.task as string}</span>
-              <button onClick={() => deleteTodo(t._id as string)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all">
+              <span className={`flex-1 text-[14px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task as string}</span>
+              <button onClick={() => deleteTodo(t._id as string)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -836,26 +855,26 @@ export default function Dashboard() {
   const renderPayments = () => {
     if (!d.paymentModeSplit?.length) return null;
     return (
-      <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm p-5">
+      <div className="bg-th-surface rounded-xl p-5 shadow-lg">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
-            <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
+            <Wallet className="w-4 h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Today's Payments", "आज का भुगतान")}</h3>
+          <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2.5">
           {d.paymentModeSplit.map((p) => {
             const Icon = paymentModeIcon[p.mode] || IndianRupee;
             return (
-              <div key={p.mode} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-100 dark:border-slate-700/30 hover:shadow-sm transition-all">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#6366f1"}15` }}>
-                  <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#6366f1" }} />
+              <div key={p.mode} className="flex items-center gap-3 bg-th-elevated rounded-lg px-4 py-3 transition-all hover:bg-th-card">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#1ed760"}15` }}>
+                  <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#1ed760" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{p.mode}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
+                  <p className="text-[14px] font-semibold text-th-text">{p.mode}</p>
+                  <p className="text-[12px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
                 </div>
-                <p className="text-base font-bold text-slate-900 dark:text-white flex-shrink-0">₹{p.total.toLocaleString()}</p>
+                <p className="text-[16px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
               </div>
             );
           })}
@@ -895,21 +914,21 @@ export default function Dashboard() {
     ];
 
     return (
-      <details className="group bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
-        <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer list-none hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 group-open:rotate-90" />
+      <details className="group bg-th-surface rounded-xl overflow-hidden shadow-lg">
+        <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer list-none hover:bg-th-card transition-colors">
+          <ChevronRight className="w-4 h-4 text-th-muted transition-transform duration-300 group-open:rotate-90" />
           <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{uiT("Summary", "सारांश")}</span>
+            <LayoutDashboard className="w-4 h-4 text-th-secondary" />
+            <span className="text-[14px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
           </div>
-          <span className="text-xs text-slate-400 dark:text-slate-500">({rows.length} metrics)</span>
+          <span className="text-[12px] text-th-muted">({rows.length} metrics)</span>
         </summary>
         <div className="px-6 pb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-0.5 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-0.5 pt-3 border-t border-th-card">
             {rows.map((r) => (
-              <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/20 last:border-0">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{r.label}</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
+              <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-th-elevated last:border-0">
+                <span className="text-[14px] text-th-secondary">{r.label}</span>
+                <span className="text-[14px] font-bold text-th-text" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
               </div>
             ))}
           </div>
@@ -921,7 +940,7 @@ export default function Dashboard() {
   // Main Render
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 min-h-screen">
+    <div className="bg-th-base min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6 px-4 md:px-6 py-6 md:py-8">
         {renderHeader()}
         {renderHero()}
@@ -929,14 +948,21 @@ export default function Dashboard() {
         {renderKPIs()}
         {renderCharts()}
         {renderNeedsAttention()}
-        {renderLensDemand()}
 
-        {/* Bottom grid: Recent Orders, Pending Bills, Today's Deliveries */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Lens Demand + Recent Orders side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {renderLensDemand()}
           {renderRecentOrders()}
+        </div>
+
+        {/* Bottom grid: Pending Bills, Today's Deliveries */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {renderPendingBills()}
           {renderDeliveries()}
         </div>
+
+        {/* Today's Delivered */}
+        {renderTodayDelivered()}
 
         {/* Bottom grid: Recent Customers, Todo, Payments */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -950,9 +976,9 @@ export default function Dashboard() {
 
       {/* Scanner Modal */}
       {showScanner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowScanner(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowScanner(false)}>
           <div className="relative w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowScanner(false)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 shadow-lg z-10 transition-all hover:-translate-y-0.5" aria-label="Close scanner">
+            <button onClick={() => setShowScanner(false)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-th-card flex items-center justify-center text-th-secondary hover:text-th-text z-10 transition-all active:scale-95" aria-label="Close scanner">
               <X className="w-4 h-4" />
             </button>
             <CameraScanner
@@ -968,4 +994,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

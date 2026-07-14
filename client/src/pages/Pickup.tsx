@@ -199,26 +199,26 @@ export default function Pickup() {
   return (
     <div className="max-w-4xl mx-auto space-y-5 pb-20">
       {/* Header */}
-      <div className="card">
+      <div className="card bg-th-surface rounded-lg p-5 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+            <div className="w-10 h-10 bg-[#1ed760] rounded-full flex items-center justify-center text-black">
               <Package size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{uiT("Pickup", "पिकअप")}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{uiT("Collect ready orders and manage deliveries.", "तैयार ऑर्डर एकत्र करें और डिलीवरी प्रबंधित करें।")}</p>
+              <h1 className="text-xl font-bold text-th-text">{uiT("Pickup", "पिकअप")}</h1>
+              <p className="text-sm text-th-secondary">{uiT("Collect ready orders and manage deliveries.", "तैयार ऑर्डर एकत्र करें और डिलीवरी प्रबंधित करें।")}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {waStatus === "connected" ? (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-xs font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#1ed760] animate-pulse" />
                 {uiT("WhatsApp Connected", "WhatsApp जुड़ा हुआ")}
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-700 text-gray-500 rounded-full text-xs font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-th-elevated text-th-secondary rounded-lg text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-th-secondary" />
                 WhatsApp {waStatus === "checking" ? "..." : uiT("Disconnected", "डिस्कनेक्ट")}
               </span>
             )}
@@ -230,8 +230,8 @@ export default function Pickup() {
       {readyOrders.length > 0 && !selectedCustomer && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Clock size={16} className="text-emerald-500" />
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <Clock size={16} className="text-[#1ed760]" />
+            <p className="text-sm font-semibold text-th-text">
               {readyOrders.length} {uiT("order(s) ready for pickup", "ऑर्डर पिकअप के लिए तैयार")}
             </p>
           </div>
@@ -242,51 +242,51 @@ export default function Pickup() {
               const totalPrice = (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
               return (
                 <div key={o._id} onClick={() => pickReadyOrder(o)}
-                  className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 hover:shadow-md transition-all duration-300">
+                  className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card active:scale-95 transition-all shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+                    <div className="w-9 h-9 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{cName || "—"}</p>
-                      {cMobile && <p className="text-xs text-gray-400">{cMobile}</p>}
+                      <p className="text-sm font-semibold text-th-text truncate">{cName || "—"}</p>
+                      {cMobile && <p className="text-xs text-th-secondary">{cMobile}</p>}
                     </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">{uiT("Ready", "तैयार")}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#1ed760]/10 text-[#1ed760] uppercase tracking-wider">{uiT("Ready", "तैयार")}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {o.frameBrand ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
-                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
                       </span>
                     ) : o.frame ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 rounded-md text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-full">
-                        <Glasses size={11} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {o.frame}
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                        <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frame}
                       </span>
                     ) : null}
                     {o.lensBrand && (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/30 px-2 py-0.5 rounded-md text-sky-700 dark:text-sky-300 font-medium truncate max-w-full">
-                        <Eye size={11} className="text-sky-500 dark:text-sky-400 flex-shrink-0" /> {o.lensBrand}{o.lens ? ` · ${o.lens}` : ""}
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                        <Eye size={11} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lens ? ` · ${o.lens}` : ""}
                       </span>
                     )}
                     {(o.accessories || []).map((a: string, i: number) => {
                       const lower = a.toLowerCase();
-                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={11} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
-                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                        : <Package size={11} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />;
+                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={11} className="text-[#1ed760] flex-shrink-0" />
+                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-th-secondary flex-shrink-0" />
+                        : <Package size={11} className="text-th-secondary flex-shrink-0" />;
                       return (
-                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-2 py-0.5 rounded-md text-gray-600 dark:text-gray-300 font-medium truncate max-w-full">
+                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
                           {accIcon} {a}
                         </span>
                       );
                     })}
                   </div>
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-th-border">
                     {o.deliveryDate ? (
-                      <span className="text-xs text-gray-400 flex items-center gap-1"><Clock size={10} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      <span className="text-xs text-th-secondary flex items-center gap-1"><Clock size={10} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                     ) : <span />}
                     <div className="flex items-center gap-2">
-                      {o.billInfo?.totalAmount > 0 && <span className="text-sm font-bold text-gray-900 dark:text-white">₹{o.billInfo.totalAmount.toLocaleString()}</span>}
-                      <ChevronRight size={16} className="text-gray-300" />
+                      {o.billInfo?.totalAmount > 0 && <span className="text-sm font-bold text-th-text">₹{o.billInfo.totalAmount.toLocaleString()}</span>}
+                      <ChevronRight size={16} className="text-th-muted" />
                     </div>
                   </div>
                 </div>
@@ -297,10 +297,10 @@ export default function Pickup() {
       )}
 
       {/* Search bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5">
+      <div className="bg-th-surface rounded-lg shadow-lg p-5">
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted" />
             <input type="tel" placeholder={uiT("Search by mobile number...", "मोबाइल नंबर से खोजें...")}
               value={phone} onChange={(e) => setPhone(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") searchCustomer(); }}
@@ -315,21 +315,21 @@ export default function Pickup() {
       {/* Customer list */}
       {customers.length > 0 && !selectedCustomer && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{customers.length} {uiT("customer(s) found", "ग्राहक मिले")}</p>
+          <p className="text-xs font-medium text-th-secondary uppercase tracking-wider">{customers.length} {uiT("customer(s) found", "ग्राहक मिले")}</p>
           {customers.map((c: any) => (
             <div key={c._id} onClick={() => selectCustomer(c)}
-              className="card cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-750 transition-all">
+              className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card transition-all shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+                  <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
                     {c.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{c.name}</p>
-                    <p className="text-sm text-gray-500">{c.mobile}</p>
+                    <p className="font-semibold text-th-text">{c.name}</p>
+                    <p className="text-sm text-th-secondary">{c.mobile}</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-gray-300" />
+                <ChevronRight size={18} className="text-th-muted" />
               </div>
             </div>
           ))}
@@ -338,52 +338,52 @@ export default function Pickup() {
 
       {/* Selected customer flow */}
       {selectedCustomer && (
-        <div className="card">
+        <div className="bg-th-surface rounded-lg shadow-lg">
           {/* Customer header */}
-          <div className="p-4 border-b border-gray-200 dark:border-slate-600">
+          <div className="p-4 border-b border-th-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
+                <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
                   {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.name}</p>
-                  <p className="text-sm text-gray-500">{selectedCustomer.mobile}</p>
+                  <p className="font-semibold text-th-text">{selectedCustomer.name}</p>
+                  <p className="text-sm text-th-secondary">{selectedCustomer.mobile}</p>
                 </div>
               </div>
               <button onClick={() => { setSelectedCustomer(null); setCustomers([]); setOrders([]); setSelectedOrder(null); setBill(null); }}
-                className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">{uiT("Change", "बदलें")}</button>
+                className="text-sm text-th-secondary hover:text-th-text">{uiT("Change", "बदलें")}</button>
             </div>
           </div>
 
           {/* Order list */}
           {orders.length > 0 && !selectedOrder && (
             <div className="p-5 space-y-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-th-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Package size={14} /> {uiT("Orders Ready", "ऑर्डर तैयार")} ({orders.length})
               </p>
               {orders.map((o: any) => (
                 <div key={o._id} onClick={() => selectOrder(o)}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/30 dark:hover:bg-primary-900/10 cursor-pointer transition-all">
+                  className="flex items-center justify-between p-4 rounded-lg bg-th-elevated hover:bg-th-card cursor-pointer transition-all">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                    <p className="font-medium text-th-text truncate">
                       {[o.frame, o.lens, o.coating].filter(Boolean).join(" + ") || uiT("Order items", "ऑर्डर आइटम")}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-th-secondary mt-0.5">
                       {o.deliveryDate && `Expected: ${new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 ml-3">
                     {bills.some((b) => b.visitId === (o.visitId || o._id)) ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full">
+                      <span className="flex items-center gap-1 text-xs font-medium text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">
                         <Check size={10} /> {uiT("Billed", "बिल बनाया")}
                       </span>
                     ) : (
-                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">
+                      <span className="text-xs font-medium text-th-secondary bg-th-elevated px-2.5 py-1 rounded-lg border border-th-border">
                         {uiT("No Bill", "कोई बिल नहीं")}
                       </span>
                     )}
-                    <ChevronRight size={16} className="text-gray-300" />
+                    <ChevronRight size={16} className="text-th-muted" />
                   </div>
                 </div>
               ))}
@@ -395,32 +395,32 @@ export default function Pickup() {
             <div className="p-5 space-y-5">
               {/* Order header */}
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                  <Package size={15} className="text-primary-500" /> {uiT("Order Details", "ऑर्डर विवरण")}
+                <h3 className="text-sm font-semibold text-th-text flex items-center gap-1.5">
+                  <Package size={15} className="text-[#1ed760]" /> {uiT("Order Details", "ऑर्डर विवरण")}
                 </h3>
                 <button onClick={() => { setSelectedOrder(null); setBill(null); }}
-                  className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700">{uiT("Change", "बदलें")}</button>
+                  className="text-xs text-[#1ed760] hover:text-[#1ed760]/80">{uiT("Change", "बदलें")}</button>
               </div>
 
               {/* Order items */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {selectedOrder.frame && (
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl px-4 py-3 border border-indigo-100 dark:border-indigo-800/20">
-                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-0.5 flex items-center gap-1"><Glasses size={11} /> {uiT("Frame", "फ्रेम")}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedOrder.frameBrand ? `${selectedOrder.frameBrand} ${selectedOrder.frameModel || ""}`.trim() : selectedOrder.frame}</p>
-                    {selectedOrder.framePrice > 0 && <p className="text-xs text-gray-500 mt-0.5">₹{selectedOrder.framePrice}</p>}
+                  <div className="bg-th-elevated rounded-lg px-4 py-3">
+                    <p className="text-[10px] text-[#1ed760] uppercase tracking-wider mb-0.5 flex items-center gap-1"><Glasses size={11} /> {uiT("Frame", "फ्रेम")}</p>
+                    <p className="text-sm font-medium text-th-text">{selectedOrder.frameBrand ? `${selectedOrder.frameBrand} ${selectedOrder.frameModel || ""}`.trim() : selectedOrder.frame}</p>
+                    {selectedOrder.framePrice > 0 && <p className="text-xs text-th-secondary mt-0.5">₹{selectedOrder.framePrice}</p>}
                   </div>
                 )}
                 {selectedOrder.lensBrand && (
-                  <div className="bg-sky-50/50 dark:bg-sky-900/10 rounded-xl px-4 py-3 border border-sky-100 dark:border-sky-800/20">
-                    <p className="text-[10px] text-sky-500 dark:text-sky-400 uppercase tracking-wider mb-0.5 flex items-center gap-1"><Eye size={11} /> {uiT("Lens", "लेंस")}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedOrder.lensBrand}{selectedOrder.lens ? ` · ${selectedOrder.lens}` : ""}</p>
-                    {selectedOrder.lensPrice > 0 && <p className="text-xs text-gray-500 mt-0.5">₹{selectedOrder.lensPrice}</p>}
+                  <div className="bg-th-elevated rounded-lg px-4 py-3">
+                    <p className="text-[10px] text-th-secondary uppercase tracking-wider mb-0.5 flex items-center gap-1"><Eye size={11} /> {uiT("Lens", "लेंस")}</p>
+                    <p className="text-sm font-medium text-th-text">{selectedOrder.lensBrand}{selectedOrder.lens ? ` · ${selectedOrder.lens}` : ""}</p>
+                    {selectedOrder.lensPrice > 0 && <p className="text-xs text-th-secondary mt-0.5">₹{selectedOrder.lensPrice}</p>}
                   </div>
                 )}
                 {selectedOrder.deliveryDate && (
-                  <div className="bg-gray-50 dark:bg-slate-700 rounded-xl px-4 py-3 border border-gray-100 dark:border-slate-700">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
+                  <div className="bg-th-elevated rounded-lg px-4 py-3">
+                    <p className="text-[10px] text-th-secondary uppercase tracking-wider mb-0.5">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
                     <p className="text-sm font-medium">{new Date(selectedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                   </div>
                 )}
@@ -428,62 +428,62 @@ export default function Pickup() {
 
               {/* Bill section */}
               {bill ? (
-                <div className="bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/20 dark:to-dark-800 rounded-xl border border-emerald-200 dark:border-emerald-800 p-4 space-y-2">
+                <div className="bg-th-elevated rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                      <Receipt size={15} className="text-emerald-500" /> {uiT("Bill Summary", "बिल सारांश")}
+                    <h3 className="text-sm font-semibold text-th-text flex items-center gap-1.5">
+                      <Receipt size={15} className="text-[#1ed760]" /> {uiT("Bill Summary", "बिल सारांश")}
                     </h3>
-                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 rounded-full">{bill.billNumber}</span>
+                    <span className="text-xs font-medium text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-0.5 rounded-lg">{bill.billNumber}</span>
                   </div>
                   <div className="space-y-1 text-sm">
                     {(bill.items || []).map((it: any, i: number) => (
-                      <div key={i} className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <div key={i} className="flex justify-between text-th-secondary">
                         <span className="text-xs">{it.description} ×{it.quantity || 1}</span>
                         <span>₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(0)}</span>
                       </div>
                     ))}
                   </div>
-                  <hr className="border-emerald-200 dark:border-emerald-800" />
+                  <hr className="border-th-border" />
                   {bill.subtotal > 0 && (
-                    <div className="flex justify-between text-sm text-gray-500">
+                    <div className="flex justify-between text-sm text-th-secondary">
                       <span>{uiT("Subtotal", "उप-कुल")}</span><span>₹{bill.subtotal?.toFixed(0)}</span>
                     </div>
                   )}
                   {bill.discount > 0 && (
-                    <div className="flex justify-between text-sm text-red-500">
+                    <div className="flex justify-between text-sm text-[#e74c3c]">
                       <span>{uiT("Discount", "छूट")}</span><span>-₹{bill.discount?.toFixed(0)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
+                  <div className="flex justify-between text-sm font-bold text-th-text">
                     <span>{uiT("Total", "कुल")}</span><span>₹{bill.totalAmount?.toFixed(0) || "0"}</span>
                   </div>
                   {bill.advancePaid > 0 && (
-                    <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                    <div className="flex justify-between text-sm text-[#1ed760] font-medium">
                       <span>{uiT("Advance Paid", "अग्रिम भुगतान")}</span><span>₹{bill.advancePaid?.toFixed(0)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-base font-bold text-amber-600">
+                  <div className="flex justify-between text-base font-bold text-[#e74c3c]">
                     <span>{uiT("Pending", "बाकी")}</span><span>₹{bill.pendingAmount?.toFixed(0) || "0"}</span>
                   </div>
 
                   {bill.pendingAmount > 0 && (
                     <>
-                      <hr className="border-emerald-200 dark:border-emerald-800" />
+                      <hr className="border-th-border" />
                       <div className="pt-1">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{uiT("Collect Payment", "भुगतान एकत्र करें")}</h3>
+                        <h3 className="text-sm font-semibold text-th-text mb-2">{uiT("Collect Payment", "भुगतान एकत्र करें")}</h3>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">{uiT("Amount", "राशि")}</label>
+                            <label className="block text-xs font-medium text-th-secondary mb-1">{uiT("Amount", "राशि")}</label>
                             <input type="number" step="0.01" className="input-field text-lg font-bold" value={collectAmount}
                               onChange={(e) => setCollectAmount(Number(e.target.value))} max={bill.pendingAmount} />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">{uiT("Mode", "मोड")}</label>
+                            <label className="block text-xs font-medium text-th-secondary mb-1">{uiT("Mode", "मोड")}</label>
                             <div className="grid grid-cols-3 gap-1">
                               {[uiT("Cash", "नकद"), "UPI", "Card"].map((m) => (
                                 <button key={m} onClick={() => setCollectMode(m)}
-                                  className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                                    collectMode === m ? "bg-primary-600 text-white border-primary-600" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-slate-700"
+                                  className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
+                                    collectMode === m ? "bg-[#1ed760] text-black border-[#1ed760]" : "bg-th-elevated text-th-secondary border-th-border"
                                   }`}>{m}</button>
                               ))}
                             </div>
@@ -494,14 +494,14 @@ export default function Pickup() {
                   )}
                 </div>
               ) : showCreateBill ? (
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 p-4 space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                    <FileText size={15} className="text-amber-500" /> {uiT("Create Bill", "बिल बनाएं")}
+                <div className="bg-th-elevated rounded-lg p-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-th-text flex items-center gap-1.5">
+                    <FileText size={15} className="text-th-secondary" /> {uiT("Create Bill", "बिल बनाएं")}
                   </h3>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">{uiT("Items auto-filled from order. Adjust as needed.", "आइटम ऑर्डर से स्वतः भरे गए। आवश्यकतानुसार समायोजित करें।")}</p>
+                  <p className="text-xs text-th-secondary">{uiT("Items auto-filled from order. Adjust as needed.", "आइटम ऑर्डर से स्वतः भरे गए। आवश्यकतानुसार समायोजित करें।")}</p>
                   <div className="space-y-2">
                     {billItems.map((item, idx) => (
-                      <div key={item.description || idx} className="flex gap-2 items-start bg-white dark:bg-slate-800 p-3 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                      <div key={item.description || idx} className="flex gap-2 items-start bg-th-elevated p-3 rounded-lg">
                         <div className="flex-1">
                           <input className="input-field text-sm" placeholder={uiT("Item description", "आइटम विवरण")} value={item.description}
                             onChange={(e) => updateBillItem(idx, "description", e.target.value)} />
@@ -514,25 +514,25 @@ export default function Pickup() {
                           <input type="number" min="0" step="0.01" className="input-field text-sm text-right" placeholder={uiT("Price", "मूल्य")} value={item.price}
                             onChange={(e) => updateBillItem(idx, "price", Number(e.target.value))} />
                         </div>
-                        <div className="w-16 text-right pt-2.5 text-sm font-medium text-gray-700 dark:text-gray-300">₹{(item.qty * item.price).toFixed(0)}</div>
+                        <div className="w-16 text-right pt-2.5 text-sm font-medium text-th-secondary">₹{(item.qty * item.price).toFixed(0)}</div>
                         <button onClick={() => removeBillItem(idx)}
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-400"><X size={16} /></button>
+                          className="p-2 hover:bg-[#e74c3c]/10 rounded-lg text-[#e74c3c]"><X size={16} /></button>
                       </div>
                     ))}
                     <button onClick={addBillItem}
-                      className="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
+                      className="flex items-center gap-1.5 text-sm text-[#1ed760] hover:text-[#1ed760]/80 font-medium">
                       <Plus size={14} /> {uiT("Add Item", "आइटम जोड़ें")}
                     </button>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-32">
-                      <label className="block text-xs font-medium text-gray-500 mb-1">{uiT("Discount", "छूट")} (₹)</label>
+                      <label className="block text-xs font-medium text-th-secondary mb-1">{uiT("Discount", "छूट")} (₹)</label>
                       <input type="number" min="0" className="input-field text-sm" value={billDiscount}
                         onChange={(e) => setBillDiscount(Number(e.target.value))} />
                     </div>
                     <div className="flex-1 text-right">
-                      <p className="text-xs text-gray-500">{uiT("Subtotal", "उप-कुल")}: <span className="font-medium text-gray-700 dark:text-gray-300">₹{billSubtotal.toFixed(0)}</span></p>
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">{uiT("Total", "कुल")}: ₹{billTotal.toFixed(0)}</p>
+                      <p className="text-xs text-th-secondary">{uiT("Subtotal", "उप-कुल")}: <span className="font-medium text-th-text">₹{billSubtotal.toFixed(0)}</span></p>
+                      <p className="text-lg font-bold text-th-text">{uiT("Total", "कुल")}: ₹{billTotal.toFixed(0)}</p>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-1">
@@ -543,11 +543,11 @@ export default function Pickup() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 space-y-3 bg-gray-50 dark:bg-slate-700 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
-                  <FileText size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
+                <div className="text-center py-6 space-y-3 bg-th-elevated rounded-lg">
+                  <FileText size={32} className="mx-auto text-th-muted" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">{uiT("No bill found for this order", "इस ऑर्डर के लिए कोई बिल नहीं मिला")}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{uiT("Create a bill from the order items to proceed.", "आगे बढ़ने के लिए ऑर्डर आइटम से बिल बनाएं।")}</p>
+                    <p className="text-sm font-medium text-th-secondary">{uiT("No bill found for this order", "इस ऑर्डर के लिए कोई बिल नहीं मिला")}</p>
+                    <p className="text-xs text-th-muted mt-0.5">{uiT("Create a bill from the order items to proceed.", "आगे बढ़ने के लिए ऑर्डर आइटम से बिल बनाएं।")}</p>
                   </div>
                   <button onClick={() => setShowCreateBill(true)} className="btn-primary btn-sm flex items-center gap-1 mx-auto">
                     <Plus size={14} /> {uiT("Create Bill", "बिल बनाएं")}
@@ -557,23 +557,23 @@ export default function Pickup() {
 
               {/* Messages */}
               {message && (
-                <div className={`rounded-xl p-3 text-sm ${
-                  message.includes("✓") ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
-                  "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                <div className={`rounded-lg p-3 text-sm ${
+                  message.includes("✓") ? "bg-[#1ed760]/10 text-[#1ed760]" :
+                  "bg-[#e74c3c]/10 text-[#e74c3c]"
                 }`}>
                   {message}
                 </div>
               )}
 
               {/* Action buttons */}
-              <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200 dark:border-slate-700">
+              <div className="flex flex-wrap gap-3 pt-3 border-t border-th-border">
                 <button onClick={() => setShowConfirmDeliver(true)} disabled={delivering || !bill}
-                  className="btn-success flex items-center gap-2 px-8 py-3.5 text-base disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="bg-[#1ed760] hover:bg-[#1db954] text-black font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-2 px-8 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all shadow-[0_8px_24px_rgb(30,215,96,0.3)]">
                   {delivering ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                   {bill?.pendingAmount > 0 ? `${uiT("Deliver & Collect", "डिलीवर करें और एकत्र करें")} ₹${collectAmount}` : uiT("Mark Delivered", "डिलीवर चिन्हित करें")}
                 </button>
                 <button onClick={() => navigate(`/customers/${selectedCustomer._id}`)}
-                  className="btn-secondary flex items-center gap-2 px-6 py-3.5 text-base">
+                  className="bg-th-elevated hover:bg-th-hover text-th-text font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-2 px-6 py-3.5 transition-all">
                   <User size={20} /> {uiT("View Profile", "प्रोफ़ाइल देखें")}
                 </button>
               </div>
@@ -581,25 +581,25 @@ export default function Pickup() {
 
               {/* Confirm Delivery modal */}
               {showConfirmDeliver && (
-                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowConfirmDeliver(false)}>
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-lg border border-gray-200 dark:border-slate-600 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Package size={24} className="text-emerald-600 dark:text-emerald-400" />
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowConfirmDeliver(false)}>
+                  <div className="bg-th-surface rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-12 h-12 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Package size={24} className="text-[#1ed760]" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-2">{uiT("Confirm Delivery", "डिलीवरी की पुष्टि करें")}</h3>
-                    <p className="text-sm text-gray-500 text-center mb-5">
+                    <h3 className="text-lg font-bold text-th-text text-center mb-2">{uiT("Confirm Delivery", "डिलीवरी की पुष्टि करें")}</h3>
+                    <p className="text-sm text-th-secondary text-center mb-5">
                       {collectAmount > 0
                         ? `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?`
                         : uiT("Mark this order as Delivered?", "इस ऑर्डर को डिलीवर चिन्हित करें?")}
                     </p>
                     <div className="space-y-2">
                       <button onClick={handleDeliver} disabled={delivering}
-                        className="w-full btn-success flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-50">
+                        className="w-full bg-[#1ed760] hover:bg-[#1db954] text-black font-bold uppercase tracking-wider text-xs rounded-lg flex items-center justify-center gap-2 py-3.5 disabled:opacity-50 active:scale-95 transition-all shadow-[0_8px_24px_rgb(30,215,96,0.3)]">
                         {delivering ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                         {delivering ? uiT("Delivering...", "डिलीवर हो रहा है...") : uiT("Confirm Delivery", "डिलीवरी की पुष्टि करें")}
                       </button>
                       <button onClick={() => setShowConfirmDeliver(false)} disabled={delivering}
-                        className="w-full btn-secondary py-3.5 text-base">{uiT("Cancel", "रद्द करें")}</button>
+                        className="w-full bg-th-elevated hover:bg-th-hover text-th-text font-bold uppercase tracking-wider text-xs rounded-lg py-3.5 transition-all">{uiT("Cancel", "रद्द करें")}</button>
                     </div>
                   </div>
                 </div>

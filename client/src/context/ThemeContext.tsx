@@ -8,7 +8,9 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function loadTheme(): boolean {
-  return localStorage.getItem("theme") === "dark";
+  const stored = localStorage.getItem("theme");
+  if (stored === "light") return false;
+  return true;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

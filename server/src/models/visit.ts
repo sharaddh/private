@@ -5,6 +5,7 @@ const VisitSchemaObj = new Schema(
   {
     customerId: { type: Types.ObjectId, ref: "Customer", required: true, index: true },
     visitDate: { type: Date, default: Date.now, index: true },
+    visitType: { type: String, enum: ["new", "frame_change", "new_lens", "contact_lens", "service", "other"], default: "new" },
     doctorName: { type: String },
     shop: { type: String },
     shopId: { type: Types.ObjectId },

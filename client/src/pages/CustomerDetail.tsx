@@ -189,90 +189,89 @@ export default function CustomerDetail() {
   ] as const;
 
   return (
-    <div className="page-container">
+    <div className="min-h-screen bg-th-base text-th-text p-6 max-w-7xl mx-auto">
       <button onClick={() => navigate("/customers")}
-        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all duration-300 mb-4 hover:-translate-x-0.5">
+        className="inline-flex items-center gap-2 text-sm text-th-secondary hover:text-th-text transition-colors mb-4">
         <ArrowLeft size={16} /> {uiT("Back to Customers", "ग्राहकों पर वापस जाएं")}
       </button>
 
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 dark:from-primary-700 dark:via-primary-800 dark:to-primary-950 rounded-3xl shadow-xl mb-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
+      <div className="relative overflow-hidden bg-th-surface rounded-xl mb-6 shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1ed760]/10 to-transparent pointer-events-none" />
         <div className="relative p-6 lg:p-8">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-5">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white font-bold text-3xl flex-shrink-0 shadow-lg ring-2 ring-white/30">
+              <div className="w-16 h-16 bg-[#1ed760] rounded-full flex items-center justify-center text-black font-bold text-3xl flex-shrink-0">
                 {customer.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div className="flex-1">
                 {editing ? (
                   <div className="space-y-3 max-w-lg">
-                    <input className="input-field text-lg font-bold bg-white/90" value={editForm.name || ""}
+                    <input className="w-full bg-th-elevated text-th-text px-3 py-2.5 rounded-md text-lg font-bold outline-none focus:ring-1 focus:ring-[#1ed760]" value={editForm.name || ""}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
                     <div className="grid grid-cols-2 gap-3">
-                      <input className="input-field bg-white/90" placeholder={uiT("Mobile", "मोबाइल")} value={editForm.mobile || ""}
+                      <input className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("Mobile", "मोबाइल")} value={editForm.mobile || ""}
                         onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder={uiT("Email", "ईमेल")} value={editForm.email || ""}
+                      <input className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("Email", "ईमेल")} value={editForm.email || ""}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder={uiT("Age", "आयु")} type="number" value={editForm.age || ""}
+                      <input className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("Age", "आयु")} type="number" value={editForm.age || ""}
                         onChange={(e) => setEditForm({ ...editForm, age: e.target.value })} />
-                      <select className="input-field bg-white/90" value={editForm.gender || ""}
+                      <select className="w-full bg-th-elevated text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" value={editForm.gender || ""}
                         onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}>
                         <option value="">{uiT("Gender", "लिंग")}</option>
                         <option value="Male">{uiT("Male", "पुरुष")}</option><option value="Female">{uiT("Female", "महिला")}</option><option value="Other">{uiT("Other", "अन्य")}</option>
                       </select>
-                      <input className="input-field bg-white/90" placeholder={uiT("City", "शहर")} value={editForm.city || ""}
+                      <input className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("City", "शहर")} value={editForm.city || ""}
                         onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
-                      <input className="input-field bg-white/90" placeholder={uiT("Alt Mobile", "वैकल्पिक मोबाइल")} value={editForm.alternateMobile || ""}
+                      <input className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("Alt Mobile", "वैकल्पिक मोबाइल")} value={editForm.alternateMobile || ""}
                         onChange={(e) => setEditForm({ ...editForm, alternateMobile: e.target.value })} />
                       <div className="col-span-2">
-                        <textarea className="input-field bg-white/90" placeholder={uiT("Address", "पता")} rows={2} value={editForm.address || ""}
+                        <textarea className="w-full bg-th-elevated text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760]" placeholder={uiT("Address", "पता")} rows={2} value={editForm.address || ""}
                           onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleEditSave} disabled={saving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-1.5 text-sm">
-                        <Save size={15} /> {saving ? "Saving..." : uiT("Save", "सहेजें")}
+                      <button onClick={handleEditSave} disabled={saving} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-all duration-150 disabled:opacity-50">
+                        <Save size={14} /> {saving ? "Saving..." : uiT("Save", "सहेजें")}
                       </button>
-                      <button onClick={() => setEditing(false)} className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-xl transition-all duration-300 backdrop-blur-sm flex items-center gap-1.5 text-sm">
-                        <X size={15} /> {uiT("Cancel", "रद्द करें")}
+                      <button onClick={() => setEditing(false)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-all duration-150">
+                        <X size={14} /> {uiT("Cancel", "रद्द करें")}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">{customer.name}</h1>
-                    <p className="text-white/70 text-sm flex items-center gap-1.5 mt-1">
+                    <h1 className="text-2xl lg:text-3xl font-bold text-th-text tracking-tight">{customer.name}</h1>
+                    <p className="text-th-secondary text-sm flex items-center gap-1.5 mt-1">
                       <IdCard size={13} /> {customer.customerId || "—"}
                     </p>
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4">
                       {customer.mobile && (
-                        <span className="flex items-center gap-1.5 text-sm text-white/80">
-                          <Phone size={14} className="text-white/60" /> {customer.mobile}
+                        <span className="flex items-center gap-1.5 text-sm text-th-secondary">
+                          <Phone size={14} className="text-th-secondary" /> {customer.mobile}
                         </span>
                       )}
                       {customer.email && (
-                        <span className="flex items-center gap-1.5 text-sm text-white/80">
-                          <Mail size={14} className="text-white/60" /> {customer.email}
+                        <span className="flex items-center gap-1.5 text-sm text-th-secondary">
+                          <Mail size={14} className="text-th-secondary" /> {customer.email}
                         </span>
                       )}
                       {customer.city && (
-                        <span className="flex items-center gap-1.5 text-sm text-white/80">
-                          <MapPinned size={14} className="text-white/60" /> {customer.city}
+                        <span className="flex items-center gap-1.5 text-sm text-th-secondary">
+                          <MapPinned size={14} className="text-th-secondary" /> {customer.city}
                         </span>
                       )}
-                      <span className="flex items-center gap-1.5 text-sm text-white/80">
-                        <Calendar size={14} className="text-white/60" /> {uiT("Joined", "शामिल हुए")} {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      <span className="flex items-center gap-1.5 text-sm text-th-secondary">
+                        <Calendar size={14} className="text-th-secondary" /> {uiT("Joined", "शामिल हुए")} {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                       </span>
-                      {customer.age && <span className="text-sm text-white/80"><User size={14} className="inline mr-1 text-white/60" />Age: {customer.age}</span>}
-                      {customer.gender && <span className="text-sm text-white/80">{customer.gender}</span>}
+                      {customer.age && <span className="text-sm text-th-secondary"><User size={14} className="inline mr-1 text-th-secondary" />Age: {customer.age}</span>}
+                      {customer.gender && <span className="text-sm text-th-secondary">{customer.gender}</span>}
                     </div>
-                    {customer.address && <p className="text-sm text-white/70 mt-2 flex items-center gap-1.5"><MapPin size={13} className="text-white/60" />{customer.address}</p>}
-                    {customer.alternateMobile && <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5"><Phone size={13} className="text-white/60" />{uiT("Alt", "वैकल्पिक")}: {customer.alternateMobile}</p>}
+                    {customer.address && <p className="text-sm text-th-secondary mt-2 flex items-center gap-1.5"><MapPin size={13} className="text-th-secondary" />{customer.address}</p>}
+                    {customer.alternateMobile && <p className="text-sm text-th-secondary mt-1 flex items-center gap-1.5"><Phone size={13} className="text-th-secondary" />{uiT("Alt", "वैकल्पिक")}: {customer.alternateMobile}</p>}
                     {customer.tags?.length > 0 && (
                       <div className="flex gap-2 mt-4">
                         {customer.tags.map((tag: string, i: number) => (
-                          <span key={tag} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full ring-1 ring-white/30">{tag}</span>
+                          <span key={tag} className="px-3 py-1 bg-[#1ed760]/10 text-[#1ed760] text-xs font-medium rounded-lg">{tag}</span>
                         ))}
                       </div>
                     )}
@@ -281,8 +280,8 @@ export default function CustomerDetail() {
               </div>
             </div>
             {!editing && (
-              <button onClick={() => setEditing(true)} className="bg-white/20 hover:bg-white/30 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 backdrop-blur-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2 text-sm">
-                <Edit3 size={15} /> {uiT("Edit Profile", "प्रोफ़ाइल संपादित करें")}
+              <button onClick={() => setEditing(true)} className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-th-elevated text-th-text hover:bg-th-hover active:scale-95 transition-all duration-150">
+                <Edit3 size={14} /> {uiT("Edit Profile", "प्रोफ़ाइल संपादित करें")}
               </button>
             )}
           </div>
@@ -290,58 +289,58 @@ export default function CustomerDetail() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
-        <div className="card flex items-center gap-4 p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
-          <div className="w-12 h-12 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 flex-shrink-0">
-            <ClipboardList size={22} />
+        <div className="bg-th-surface rounded-lg flex items-center gap-4 p-5 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 shadow-lg">
+          <div className="w-12 h-12 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] flex-shrink-0">
+            <ClipboardList size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{customer.totalVisits || 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Total Visits", "कुल विज़िट")}</p>
+            <p className="text-2xl font-bold text-th-text tracking-tight">{customer.totalVisits || 0}</p>
+            <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider truncate">{uiT("Total Visits", "कुल विज़िट")}</p>
           </div>
         </div>
-        <div className="card flex items-center gap-4 p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
-            <TrendingUp size={22} />
+        <div className="bg-th-surface rounded-lg flex items-center gap-4 p-5 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 shadow-lg">
+          <div className="w-12 h-12 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] flex-shrink-0">
+            <TrendingUp size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">₹{(customer.totalSpent || 0).toLocaleString()}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Total Spent", "कुल खर्च")}</p>
+            <p className="text-2xl font-bold text-[#1ed760] tracking-tight">₹{(customer.totalSpent || 0).toLocaleString()}</p>
+            <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider truncate">{uiT("Total Spent", "कुल खर्च")}</p>
           </div>
         </div>
-        <div className="card flex items-center gap-4 p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
-          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
-            <Wallet size={22} />
+        <div className="bg-th-surface rounded-lg flex items-center gap-4 p-5 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 shadow-lg">
+          <div className="w-12 h-12 bg-[#e8a427]/10 rounded-full flex items-center justify-center text-[#e8a427] flex-shrink-0">
+            <Wallet size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">₹{(customer.pendingAmount || 0).toLocaleString()}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{uiT("Pending Amount", "बाकी राशि")}</p>
+            <p className="text-2xl font-bold text-[#e8a427] tracking-tight">₹{(customer.pendingAmount || 0).toLocaleString()}</p>
+            <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider truncate">{uiT("Pending Amount", "बाकी राशि")}</p>
           </div>
         </div>
         <div onClick={() => navigate(`/customers/${id}/create-visit`)}
-          className="card flex items-center gap-4 p-5 cursor-pointer bg-gradient-to-br from-primary-600 to-primary-500 border-0 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 group">
-          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white flex-shrink-0">
-            <Plus size={22} />
+          className="bg-[#1ed760] rounded-lg flex items-center gap-4 p-5 cursor-pointer active:scale-[0.99] transition-transform duration-150 group shadow-lg">
+          <div className="w-12 h-12 bg-black/20 rounded-full flex items-center justify-center text-black flex-shrink-0">
+            <Plus size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-white tracking-tight">{uiT("New Visit", "नई विज़िट")}</p>
-            <p className="text-xs text-white/70">{uiT("with prescription", "प्रिस्क्रिप्शन के साथ")}</p>
+            <p className="text-lg font-bold text-black tracking-tight">{uiT("New Visit", "नई विज़िट")}</p>
+            <p className="text-xs text-black/60">{uiT("with prescription", "प्रिस्क्रिप्शन के साथ")}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 p-1 mb-6">
+      <div className="bg-th-surface rounded-lg p-1 mb-6">
         <div className="flex gap-1 overflow-x-auto">
           {tabs.map((t) => {
             const Icon = t.icon;
             const isActive = tab === t.key;
             return (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 whitespace-nowrap flex-1 justify-center ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all duration-150 whitespace-nowrap flex-1 justify-center ${
                   isActive
-                    ? "bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    ? "bg-white text-black"
+                    : "text-th-secondary hover:text-th-text hover:bg-th-elevated"
                 }`}>
-                <Icon size={16} />
+                <Icon size={14} />
                 {t.label}
               </button>
             );
@@ -352,109 +351,109 @@ export default function CustomerDetail() {
       <div>
         {tab === "overview" && (
           <div className="space-y-5">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <Sparkles size={18} className="text-primary-500" /> {uiT("Customer Summary", "ग्राहक सारांश")}
+            <h3 className="text-base font-bold text-th-text tracking-tight flex items-center gap-2">
+              <Sparkles size={16} className="text-[#1ed760]" /> {uiT("Customer Summary", "ग्राहक सारांश")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+              <div className="bg-th-surface rounded-lg p-5 hover:bg-th-hover transition-colors">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 bg-primary-50 dark:bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400">
-                    <Calendar size={16} />
+                  <div className="w-8 h-8 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760]">
+                    <Calendar size={14} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Last 5 Visits", "अंतिम 5 विज़िट")}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Last 5 Visits", "अंतिम 5 विज़िट")}</p>
                 </div>
                 {visits.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
                     {visits.slice(0, 5).map((v: any) => (
-                      <div key={v._id} className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 -mx-2 px-2 py-1.5 rounded-lg transition-colors">
-                        <div className="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0" />
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{new Date(v.visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                        {v.doctorName && <span className="text-slate-500">— {v.doctorName}</span>}
+                      <div key={v._id} className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-th-elevated -mx-2 px-2 py-1.5 rounded-lg transition-colors">
+                        <div className="w-2 h-2 rounded-full bg-[#1ed760] flex-shrink-0" />
+                        <span className="font-medium text-th-text">{new Date(v.visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        {v.doctorName && <span className="text-th-secondary">— {v.doctorName}</span>}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
-                    <Calendar size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">{uiT("No visits yet", "अभी तक कोई विज़िट नहीं")}</p>
+                    <Calendar size={24} className="text-[#535353]" />
+                    <p className="text-sm text-th-secondary">{uiT("No visits yet", "अभी तक कोई विज़िट नहीं")}</p>
                   </div>
                 )}
               </div>
-              <div className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+              <div className="bg-th-surface rounded-lg p-5 hover:bg-th-hover transition-colors">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 bg-purple-50 dark:bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400">
-                    <Eye size={16} />
+                  <div className="w-8 h-8 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400">
+                    <Eye size={14} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Latest Prescription", "नवीनतम प्रिस्क्रिप्शन")}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Latest Prescription", "नवीनतम प्रिस्क्रिप्शन")}</p>
                 </div>
                 {prescriptions.length > 0 ? (
                   <div className="space-y-2">
-                    <div className="bg-blue-50/50 dark:bg-blue-500/5 rounded-xl p-3 border border-blue-100 dark:border-blue-500/10">
-                      <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1">{uiT("Right Eye", "दाहिनी आंख")}</p>
-                      <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].rightEye?.dv?.sph, prescriptions[0].rightEye?.dv?.cyl, prescriptions[0].rightEye?.dv?.axis)}</p>
+                    <div className="bg-th-elevated rounded-lg p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6ea8fe] mb-1.5 flex items-center gap-1">{uiT("Right Eye", "दाहिनी आंख")}</p>
+                      <p className="text-sm font-mono font-semibold text-th-text">{formatEyeRx(prescriptions[0].rightEye?.dv?.sph, prescriptions[0].rightEye?.dv?.cyl, prescriptions[0].rightEye?.dv?.axis)}</p>
                     </div>
-                    <div className="bg-amber-50/50 dark:bg-amber-500/5 rounded-xl p-3 border border-amber-100 dark:border-amber-500/10">
-                      <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">{uiT("Left Eye", "बाईं आंख")}</p>
-                      <p className="text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">{formatEyeRx(prescriptions[0].leftEye?.dv?.sph, prescriptions[0].leftEye?.dv?.cyl, prescriptions[0].leftEye?.dv?.axis)}</p>
+                    <div className="bg-th-elevated rounded-lg p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#e8a427] mb-1.5 flex items-center gap-1">{uiT("Left Eye", "बाईं आंख")}</p>
+                      <p className="text-sm font-mono font-semibold text-th-text">{formatEyeRx(prescriptions[0].leftEye?.dv?.sph, prescriptions[0].leftEye?.dv?.cyl, prescriptions[0].leftEye?.dv?.axis)}</p>
                     </div>
-                    {prescriptions[0].pd && <p className="text-xs text-slate-500">PD: {prescriptions[0].pd}</p>}
+                    {prescriptions[0].pd && <p className="text-xs text-th-secondary">PD: {prescriptions[0].pd}</p>}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
-                    <Eye size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">{uiT("No prescriptions", "कोई प्रिस्क्रिप्शन नहीं")}</p>
+                    <Eye size={24} className="text-[#535353]" />
+                    <p className="text-sm text-th-secondary">{uiT("No prescriptions", "कोई प्रिस्क्रिप्शन नहीं")}</p>
                   </div>
                 )}
               </div>
-              <div className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+              <div className="bg-th-surface rounded-lg p-5 hover:bg-th-hover transition-colors">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 bg-amber-50 dark:bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400">
-                    <ShoppingCart size={16} />
+                  <div className="w-8 h-8 bg-[#e8a427]/10 rounded-full flex items-center justify-center text-[#e8a427]">
+                    <ShoppingCart size={14} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Recent Orders", "हालिया ऑर्डर")}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Recent Orders", "हालिया ऑर्डर")}</p>
                 </div>
                 {orders.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
                     {orders.slice(0, 5).map((o: any) => (
-                      <div key={o._id} className="flex items-center justify-between gap-3 -mx-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <span className="text-sm text-slate-800 dark:text-slate-200 truncate">{o.frame || o.lens || "Order"}</span>
-                        <span className={`badge shrink-0 ${
-                          o.status === "Delivered" ? "badge-green" :
-                          o.status === "Ready" ? "badge-blue" :
-                          o.status === "Cancelled" ? "badge-red" : "badge-yellow"
+                      <div key={o._id} className="flex items-center justify-between gap-3 -mx-2 px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors">
+                        <span className="text-sm text-th-text truncate">{o.frame || o.lens || "Order"}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg shrink-0 ${
+                          o.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
+                          o.status === "Ready" ? "bg-[#6ea8fe]/10 text-[#6ea8fe]" :
+                          o.status === "Cancelled" ? "bg-red-500/10 text-red-400" : "bg-[#e8a427]/10 text-[#e8a427]"
                         }`}>{o.status}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
-                    <ShoppingCart size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">{uiT("No orders", "कोई ऑर्डर नहीं")}</p>
+                    <ShoppingCart size={24} className="text-[#535353]" />
+                    <p className="text-sm text-th-secondary">{uiT("No orders", "कोई ऑर्डर नहीं")}</p>
                   </div>
                 )}
               </div>
-              <div className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+              <div className="bg-th-surface rounded-lg p-5 hover:bg-th-hover transition-colors">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                    <Receipt size={16} />
+                  <div className="w-8 h-8 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760]">
+                    <Receipt size={14} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{uiT("Recent Bills", "हालिया बिल")}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Recent Bills", "हालिया बिल")}</p>
                 </div>
                 {bills.slice(0, 5).length > 0 ? (
                   <div className="space-y-2.5">
                     {bills.slice(0, 5).map((b: any) => (
-                      <div key={b._id} className="flex items-center justify-between gap-3 -mx-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <span className="text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <FileText size={13} className="text-slate-400" /> {b.billNumber}
+                      <div key={b._id} className="flex items-center justify-between gap-3 -mx-2 px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors">
+                        <span className="text-sm text-th-text flex items-center gap-1.5">
+                          <FileText size={13} className="text-th-secondary" /> {b.billNumber}
                         </span>
-                        <span className="text-sm font-semibold text-emerald-600">₹{(b.totalAmount || 0).toLocaleString()}</span>
+                        <span className="text-sm font-bold text-[#1ed760]">₹{(b.totalAmount || 0).toLocaleString()}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-4">
-                    <Receipt size={24} className="text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400">{uiT("No bills", "कोई बिल नहीं")}</p>
+                    <Receipt size={24} className="text-[#535353]" />
+                    <p className="text-sm text-th-secondary">{uiT("No bills", "कोई बिल नहीं")}</p>
                   </div>
                 )}
               </div>
@@ -463,60 +462,63 @@ export default function CustomerDetail() {
         )}
 
         {tab === "visits" && (
-          <div className="card p-5">
+          <div className="bg-th-surface rounded-lg p-5">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <ClipboardList size={18} className="text-primary-500" /> {uiT("All Visits", "सभी विज़िट")} ({visits.length})
+              <h3 className="text-base font-bold text-th-text tracking-tight flex items-center gap-2">
+                <ClipboardList size={16} className="text-[#1ed760]" /> {uiT("All Visits", "सभी विज़िट")} ({visits.length})
               </h3>
-              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                <Plus size={15} /> {uiT("Add Visit", "विज़िट जोड़ें")}
+              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
+                <Plus size={14} /> {uiT("Add Visit", "विज़िट जोड़ें")}
               </button>
             </div>
             {visits.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-                  <Calendar size={28} className="text-slate-300 dark:text-slate-500" />
+                <div className="w-14 h-14 bg-th-elevated rounded-full flex items-center justify-center">
+                  <Calendar size={24} className="text-[#535353]" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">{uiT("No visits recorded yet", "अभी तक कोई विज़िट दर्ज नहीं")}</p>
-                <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 text-sm">
+                <p className="text-sm font-medium text-th-secondary">{uiT("No visits recorded yet", "अभी तक कोई विज़िट दर्ज नहीं")}</p>
+                <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
                   <Plus size={14} /> {uiT("Create First Visit", "पहली विज़िट बनाएं")}
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {visits.map((v: any, idx: number) => (
                   <div key={v._id} id={`visit-${v._id}`}
                     onClick={() => openVisitDetail(v)}
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-primary-50/50 dark:hover:bg-primary-500/5 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group border border-slate-100 dark:border-slate-700/30 hover:border-primary-200 dark:hover:border-primary-500/20 hover:shadow-sm">
+                    className="flex items-center justify-between p-4 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer group">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <div className="w-10 h-10 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-300 shadow-sm">
-                          <Calendar size={17} />
+                        <div className="w-10 h-10 bg-th-hover rounded-full flex items-center justify-center text-th-secondary">
+                          <Calendar size={16} />
                         </div>
                         {idx < visits.length - 1 && (
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-px h-3 bg-slate-200 dark:bg-slate-600" />
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-px h-3 bg-th-border" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          <p className="text-sm font-semibold text-th-text">
                             {new Date(v.visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                           </p>
                           {v.visitType && (
-                            <span className="px-2 py-0.5 bg-slate-200/70 dark:bg-slate-600/50 text-slate-600 dark:text-slate-300 text-[10px] font-medium rounded-full">{v.visitType}</span>
+                            <span className="px-2 py-0.5 bg-th-hover text-th-secondary text-[10px] font-bold uppercase tracking-wider rounded-lg">{v.visitType}</span>
+                          )}
+                          {!prescriptions.some((p: any) => p.visitId === v._id) && (
+                            <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase tracking-wider rounded-lg">{uiT("Plain", "प्लेन")}</span>
                           )}
                         </div>
-                        {v.doctorName && <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1"><Stethoscope size={11} /> Dr. {v.doctorName}</p>}
-                        {v.remarks && <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{v.remarks}</p>}
+                        {v.doctorName && <p className="text-xs text-th-secondary mt-0.5 flex items-center gap-1"><Stethoscope size={11} /> Dr. {v.doctorName}</p>}
+                        {v.remarks && <p className="text-xs text-th-secondary mt-0.5 line-clamp-1">{v.remarks}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={(e) => { e.stopPropagation(); openVisitDetail(v); }}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:border-primary-200 dark:hover:border-primary-500/30 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 opacity-0 group-hover:opacity-100 shadow-sm flex items-center gap-1">
+                        className="px-3 py-1.5 bg-th-hover rounded-lg text-xs font-medium text-th-secondary hover:bg-[#1ed760]/10 hover:text-[#1ed760] transition-all duration-150 opacity-0 group-hover:opacity-100 flex items-center gap-1">
                         <Eye size={12} /> {uiT("View", "देखें")}
                       </button>
-                      <span className="text-[11px] text-slate-400">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-                      <ChevronRight size={15} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                      <span className="text-[11px] text-th-secondary">{new Date(v.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      <ChevronRight size={15} className="text-[#535353] group-hover:text-th-secondary transition-colors" />
                     </div>
                   </div>
                 ))}
@@ -528,62 +530,62 @@ export default function CustomerDetail() {
         {tab === "prescriptions" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <Eye size={18} className="text-purple-500" /> {uiT("Prescriptions", "प्रिस्क्रिप्शन")} ({prescriptions.length})
+              <h3 className="text-base font-bold text-th-text tracking-tight flex items-center gap-2">
+                <Eye size={16} className="text-purple-400" /> {uiT("Prescriptions", "प्रिस्क्रिप्शन")} ({prescriptions.length})
               </h3>
-              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                <Plus size={15} /> {uiT("Add Prescription", "प्रिस्क्रिप्शन जोड़ें")}
+              <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
+                <Plus size={14} /> {uiT("Add Prescription", "प्रिस्क्रिप्शन जोड़ें")}
               </button>
             </div>
             {prescriptions.length === 0 ? (
-              <div className="card flex flex-col items-center gap-3 py-12">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-                  <Eye size={28} className="text-slate-300 dark:text-slate-500" />
+              <div className="bg-th-surface rounded-lg flex flex-col items-center gap-3 py-12">
+                <div className="w-14 h-14 bg-th-elevated rounded-full flex items-center justify-center">
+                  <Eye size={24} className="text-[#535353]" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">{uiT("No prescriptions yet", "अभी तक कोई प्रिस्क्रिप्शन नहीं")}</p>
-                <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="btn-primary flex items-center gap-1.5 text-sm">
+                <p className="text-sm font-medium text-th-secondary">{uiT("No prescriptions yet", "अभी तक कोई प्रिस्क्रिप्शन नहीं")}</p>
+                <button onClick={() => navigate(`/customers/${id}/create-visit`)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
                   <Plus size={14} /> {uiT("Create First Prescription", "पहला प्रिस्क्रिप्शन बनाएं")}
                 </button>
               </div>
             ) : (
               prescriptions.map((p: any) => (
-                <div key={p._id} className="card p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+                <div key={p._id} className="bg-th-surface rounded-lg p-5 hover:bg-th-hover transition-colors">
                   <div className="flex items-center gap-2 mb-5">
-                    <div className="w-8 h-8 bg-purple-50 dark:bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400">
-                      <Eye size={16} />
+                    <div className="w-8 h-8 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400">
+                      <Eye size={14} />
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <p className="text-sm font-semibold text-th-text">
                       {new Date(p.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
-                    <span className="text-[10px] text-slate-400 ml-auto font-mono">{p._id.slice(-6)}</span>
+                    <span className="text-[10px] text-th-secondary ml-auto font-mono">{p._id.slice(-6)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-50/30 dark:from-blue-500/5 dark:to-blue-500/[0.02] rounded-2xl p-4 border border-blue-100/80 dark:border-blue-500/10">
-                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" /> {uiT("Right Eye", "दाहिनी आंख")}
+                    <div className="bg-th-elevated rounded-lg p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6ea8fe] mb-3 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#6ea8fe]" /> {uiT("Right Eye", "दाहिनी आंख")}
                       </p>
                       {p.rightEye?.dv && <EyeRow label="DV" data={p.rightEye.dv} />}
                       {p.rightEye?.nv && <EyeRow label="NV" data={p.rightEye.nv} />}
                       {p.rightEye?.pc && <EyeRow label="PC" data={p.rightEye.pc} />}
                       {!p.rightEye?.dv && !p.rightEye?.nv && !p.rightEye?.pc && (
-                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
+                        <p className="text-xs text-th-secondary italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
                       )}
                     </div>
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-50/30 dark:from-amber-500/5 dark:to-amber-500/[0.02] rounded-2xl p-4 border border-amber-100/80 dark:border-amber-500/10">
-                      <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" /> {uiT("Left Eye", "बाईं आंख")}
+                    <div className="bg-th-elevated rounded-lg p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#e8a427] mb-3 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#e8a427]" /> {uiT("Left Eye", "बाईं आंख")}
                       </p>
                       {p.leftEye?.dv && <EyeRow label="DV" data={p.leftEye.dv} />}
                       {p.leftEye?.nv && <EyeRow label="NV" data={p.leftEye.nv} />}
                       {p.leftEye?.pc && <EyeRow label="PC" data={p.leftEye.pc} />}
                       {!p.leftEye?.dv && !p.leftEye?.nv && !p.leftEye?.pc && (
-                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
+                        <p className="text-xs text-th-secondary italic">{uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/30">
-                    {p.pd && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">PD:</span> {p.pd}</p>}
-                    {p.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">{uiT("Notes:", "नोट्स:")}</span> {p.notes}</p>}
+                  <div className="flex gap-4 mt-4 pt-4 border-t border-th-border">
+                    {p.pd && <p className="text-xs text-th-secondary"><span className="font-medium text-th-secondary">PD:</span> {p.pd}</p>}
+                    {p.notes && <p className="text-xs text-th-secondary"><span className="font-medium text-th-secondary">{uiT("Notes:", "नोट्स:")}</span> {p.notes}</p>}
                   </div>
                 </div>
               ))
@@ -592,40 +594,40 @@ export default function CustomerDetail() {
         )}
 
         {tab === "bills" && (
-          <div className="card p-5">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mb-5">
-              <Receipt size={18} className="text-emerald-500" /> {uiT("Bills", "बिल")} ({bills.length})
+          <div className="bg-th-surface rounded-lg p-5">
+            <h3 className="text-base font-bold text-th-text tracking-tight flex items-center gap-2 mb-5">
+              <Receipt size={16} className="text-[#1ed760]" /> {uiT("Bills", "बिल")} ({bills.length})
             </h3>
             {bills.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-                  <Receipt size={28} className="text-slate-300 dark:text-slate-500" />
+                <div className="w-14 h-14 bg-th-elevated rounded-full flex items-center justify-center">
+                  <Receipt size={24} className="text-[#535353]" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">{uiT("No bills yet", "अभी तक कोई बिल नहीं")}</p>
+                <p className="text-sm font-medium text-th-secondary">{uiT("No bills yet", "अभी तक कोई बिल नहीं")}</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {bills.map((b: any) => (
-                  <div key={b._id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 hover:border-emerald-200 dark:hover:border-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-sm">
+                  <div key={b._id} className="flex items-center justify-between p-4 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-transform">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-300 shadow-sm">
-                        <FileText size={16} />
+                      <div className="w-9 h-9 bg-th-hover rounded-full flex items-center justify-center text-th-secondary">
+                        <FileText size={15} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.billNumber || "—"}</p>
-                        <p className="text-xs text-slate-500">{new Date(b.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                        <p className="text-sm font-semibold text-th-text">{b.billNumber || "—"}</p>
+                        <p className="text-xs text-th-secondary">{new Date(b.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                       </div>
                     </div>
                     <div className="text-right space-y-1">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">₹{(b.totalAmount || 0).toLocaleString()}</p>
+                      <p className="text-sm font-bold text-th-text">₹{(b.totalAmount || 0).toLocaleString()}</p>
                       <div className="flex items-center gap-2 justify-end">
                         {(b.pendingAmount || 0) > 0 ? (
-                          <span className="text-[11px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full">₹{b.pendingAmount} due</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#e8a427] bg-[#e8a427]/10 px-2 py-0.5 rounded-lg">₹{b.pendingAmount} due</span>
                         ) : (
-                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">{uiT("Paid", "भुगतान")}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#1ed760] bg-[#1ed760]/10 px-2 py-0.5 rounded-lg">{uiT("Paid", "भुगतान")}</span>
                         )}
                         <button onClick={() => sendWhatsApp(customer.mobile, b)}
-                          className="text-[11px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 px-2 py-1 rounded-lg transition-colors flex items-center gap-1">
+                          className="text-[10px] font-bold uppercase tracking-wider text-[#1ed760] hover:bg-[#1ed760]/10 px-2 py-1 rounded-lg transition-colors flex items-center gap-1">
                           <MessageCircle size={11} /> Send
                         </button>
                       </div>
@@ -638,39 +640,39 @@ export default function CustomerDetail() {
         )}
 
         {tab === "orders" && (
-          <div className="card p-5">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mb-5">
-              <ShoppingCart size={18} className="text-amber-500" /> {uiT("Orders", "ऑर्डर")} ({orders.length})
+          <div className="bg-th-surface rounded-lg p-5">
+            <h3 className="text-base font-bold text-th-text tracking-tight flex items-center gap-2 mb-5">
+              <ShoppingCart size={16} className="text-[#e8a427]" /> {uiT("Orders", "ऑर्डर")} ({orders.length})
             </h3>
             {orders.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-                  <ShoppingCart size={28} className="text-slate-300 dark:text-slate-500" />
+                <div className="w-14 h-14 bg-th-elevated rounded-full flex items-center justify-center">
+                  <ShoppingCart size={24} className="text-[#535353]" />
                 </div>
-                <p className="text-sm font-medium text-slate-500">{uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")}</p>
+                <p className="text-sm font-medium text-th-secondary">{uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")}</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {orders.map((o: any) => (
-                  <div key={o._id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/30 hover:border-amber-200 dark:hover:border-amber-500/20 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-sm">
+                  <div key={o._id} className="flex items-center justify-between p-4 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-transform">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-300 shadow-sm shrink-0">
-                        <ShoppingCart size={16} />
+                      <div className="w-9 h-9 bg-th-hover rounded-full flex items-center justify-center text-th-secondary shrink-0">
+                        <ShoppingCart size={15} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        <p className="text-sm font-semibold text-th-text truncate">
                           {[o.frameBrand, o.frame, o.lensBrand, o.lens].filter(Boolean).join(" / ") || "Order"}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                        <div className="flex items-center gap-3 text-xs text-th-secondary mt-0.5">
                           <span>{uiT("Qty", "मात्रा")}: {o.quantity || 1}</span>
                           {o.deliveryDate && <span>{uiT("Delivery", "डिलीवरी")}: {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
                         </div>
                       </div>
                     </div>
-                    <span className={`badge shrink-0 ${
-                      o.status === "Delivered" ? "badge-green" :
-                      o.status === "Cancelled" ? "badge-red" :
-                      o.status === "Ready" ? "badge-blue" : "badge-yellow"
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg shrink-0 ${
+                      o.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
+                      o.status === "Cancelled" ? "bg-red-500/10 text-red-400" :
+                      o.status === "Ready" ? "bg-[#6ea8fe]/10 text-[#6ea8fe]" : "bg-[#e8a427]/10 text-[#e8a427]"
                     }`}>{o.status || "Draft"}</span>
                   </div>
                 ))}
@@ -682,76 +684,76 @@ export default function CustomerDetail() {
 
       {selectedVisit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedVisit(null)}>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between p-5">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-2xl bg-th-surface rounded-xl max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 bg-th-surface border-b border-th-border flex items-center justify-between p-5">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
-                  <Calendar size={18} />
+                <div className="w-9 h-9 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760]">
+                  <Calendar size={16} />
                 </div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{uiT("Visit Details", "विज़िट विवरण")}</h2>
+                <h2 className="text-lg font-bold text-th-text">{uiT("Visit Details", "विज़िट विवरण")}</h2>
               </div>
               <div className="flex items-center gap-2">
                 {!editingVisit && (
-                  <button onClick={() => { setEditingVisit(true); }} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                    <Edit3 size={14} /> {uiT("Edit", "संपादित करें")}
+                  <button onClick={() => { setEditingVisit(true); }} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-colors">
+                    <Edit3 size={13} /> {uiT("Edit", "संपादित करें")}
                   </button>
                 )}
-                <button onClick={() => setSelectedVisit(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
-                  <X size={18} className="text-slate-500" />
+                <button onClick={() => setSelectedVisit(null)} className="p-2 hover:bg-th-elevated rounded-lg transition-colors">
+                  <X size={18} className="text-th-secondary" />
                 </button>
               </div>
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="card p-5">
+              <div className="bg-th-elevated rounded-lg p-5">
                 {editingVisit ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Visit Date", "विज़िट तिथि")}</label>
-                      <input type="date" className="input-field" value={editVisitForm.visitDate || ""}
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1.5 block">{uiT("Visit Date", "विज़िट तिथि")}</label>
+                      <input type="date" className="w-full bg-th-hover text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={editVisitForm.visitDate || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, visitDate: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Doctor Name", "डॉक्टर का नाम")}</label>
-                      <input className="input-field" placeholder={uiT("Doctor name", "डॉक्टर का नाम")} value={editVisitForm.doctorName || ""}
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1.5 block">{uiT("Doctor Name", "डॉक्टर का नाम")}</label>
+                      <input className="w-full bg-th-hover text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" placeholder={uiT("Doctor name", "डॉक्टर का नाम")} value={editVisitForm.doctorName || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, doctorName: e.target.value })} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-500 mb-1.5 block">{uiT("Remarks", "टिप्पणी")}</label>
-                      <textarea className="input-field" rows={2} placeholder={uiT("Remarks", "टिप्पणी")} value={editVisitForm.remarks || ""}
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1.5 block">{uiT("Remarks", "टिप्पणी")}</label>
+                      <textarea className="w-full bg-th-hover text-th-text placeholder-th-secondary px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" rows={2} placeholder={uiT("Remarks", "टिप्पणी")} value={editVisitForm.remarks || ""}
                         onChange={(e) => setEditVisitForm({ ...editVisitForm, remarks: e.target.value })} />
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <button onClick={handleVisitSave} disabled={savingVisit} className="btn-primary flex items-center gap-1.5 shadow-sm">
-                        <Save size={14} /> {savingVisit ? "Saving..." : uiT("Save", "सहेजें")}
+                      <button onClick={handleVisitSave} disabled={savingVisit} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform disabled:opacity-50">
+                        <Save size={13} /> {savingVisit ? "Saving..." : uiT("Save", "सहेजें")}
                       </button>
-                      <button onClick={() => setEditingVisit(false)} className="btn-secondary flex items-center gap-1.5">
-                        <X size={14} /> {uiT("Cancel", "रद्द करें")}
+                      <button onClick={() => setEditingVisit(false)} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors">
+                        <X size={13} /> {uiT("Cancel", "रद्द करें")}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 flex-shrink-0">
-                      <Calendar size={22} />
+                    <div className="w-12 h-12 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] flex-shrink-0">
+                      <Calendar size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-bold text-slate-900 dark:text-white">
+                      <p className="text-base font-bold text-th-text">
                         {new Date(selectedVisit.visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
                       </p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                         {selectedVisit.doctorName && (
-                          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <User size={12} className="text-slate-400" /> Dr. {selectedVisit.doctorName}
+                          <span className="flex items-center gap-1.5 text-xs text-th-secondary">
+                            <User size={12} className="text-th-secondary" /> Dr. {selectedVisit.doctorName}
                           </span>
                         )}
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                          <Clock size={12} className="text-slate-400" /> Created {new Date(selectedVisit.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        <span className="flex items-center gap-1.5 text-xs text-th-secondary">
+                          <Clock size={12} className="text-th-secondary" /> Created {new Date(selectedVisit.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </span>
                       </div>
                       {selectedVisit.remarks && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">{selectedVisit.remarks}</p>
+                        <p className="text-sm text-th-secondary mt-3 bg-th-hover rounded-lg p-3">{selectedVisit.remarks}</p>
                       )}
                     </div>
                   </div>
@@ -759,65 +761,65 @@ export default function CustomerDetail() {
               </div>
 
               {linkedPrescription && (
-                <div className="card p-5">
+                <div className="bg-th-elevated rounded-lg p-5">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 bg-purple-50 dark:bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400">
-                      <Eye size={16} />
+                    <div className="w-8 h-8 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400">
+                      <Eye size={14} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Prescription", "प्रिस्क्रिप्शन")}</h3>
-                    <span className="text-[10px] text-slate-400 ml-auto">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Prescription", "प्रिस्क्रिप्शन")}</h3>
+                    <span className="text-[10px] text-th-secondary ml-auto">
                       {new Date(linkedPrescription.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-50/30 dark:from-blue-500/5 dark:to-blue-500/[0.02] rounded-2xl p-4 border border-blue-100/80 dark:border-blue-500/10">
-                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" /> {uiT("Right Eye", "दाहिनी आंख")}
+                    <div className="bg-th-hover rounded-lg p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6ea8fe] mb-3 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#6ea8fe]" /> {uiT("Right Eye", "दाहिनी आंख")}
                       </p>
                       {linkedPrescription.rightEye?.dv && <EyeRow label="DV" data={linkedPrescription.rightEye.dv} />}
                       {linkedPrescription.rightEye?.nv && <EyeRow label="NV" data={linkedPrescription.rightEye.nv} />}
                       {linkedPrescription.rightEye?.pc && <EyeRow label="PC" data={linkedPrescription.rightEye.pc} />}
                       {!linkedPrescription.rightEye?.dv && !linkedPrescription.rightEye?.nv && !linkedPrescription.rightEye?.pc && (
-                        <p className="text-xs text-blue-300 dark:text-blue-500 italic">{uiT("No data", "कोई डेटा नहीं")}</p>
+                        <p className="text-xs text-th-secondary italic">{uiT("No data", "कोई डेटा नहीं")}</p>
                       )}
                     </div>
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-50/30 dark:from-amber-500/5 dark:to-amber-500/[0.02] rounded-2xl p-4 border border-amber-100/80 dark:border-amber-500/10">
-                      <p className="text-xs font-bold text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" /> {uiT("Left Eye", "बाईं आंख")}
+                    <div className="bg-th-hover rounded-lg p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#e8a427] mb-3 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#e8a427]" /> {uiT("Left Eye", "बाईं आंख")}
                       </p>
                       {linkedPrescription.leftEye?.dv && <EyeRow label="DV" data={linkedPrescription.leftEye.dv} />}
                       {linkedPrescription.leftEye?.nv && <EyeRow label="NV" data={linkedPrescription.leftEye.nv} />}
                       {linkedPrescription.leftEye?.pc && <EyeRow label="PC" data={linkedPrescription.leftEye.pc} />}
                       {!linkedPrescription.leftEye?.dv && !linkedPrescription.leftEye?.nv && !linkedPrescription.leftEye?.pc && (
-                        <p className="text-xs text-amber-300 dark:text-amber-500 italic">{uiT("No data", "कोई डेटा नहीं")}</p>
+                        <p className="text-xs text-th-secondary italic">{uiT("No data", "कोई डेटा नहीं")}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-4 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30">
-                    {linkedPrescription.pd && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">PD:</span> {linkedPrescription.pd}</p>}
-                    {linkedPrescription.notes && <p className="text-xs text-slate-500"><span className="font-medium text-slate-700 dark:text-slate-300">{uiT("Notes:", "नोट्स:")}</span> {linkedPrescription.notes}</p>}
+                  <div className="flex gap-4 mt-4 pt-3 border-t border-th-border">
+                    {linkedPrescription.pd && <p className="text-xs text-th-secondary"><span className="font-medium text-th-secondary">PD:</span> {linkedPrescription.pd}</p>}
+                    {linkedPrescription.notes && <p className="text-xs text-th-secondary"><span className="font-medium text-th-secondary">{uiT("Notes:", "नोट्स:")}</span> {linkedPrescription.notes}</p>}
                   </div>
                 </div>
               )}
 
               {linkedOrder && (
-                <div className="card p-5">
+                <div className="bg-th-elevated rounded-lg p-5">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 bg-amber-50 dark:bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400">
-                      <ShoppingCart size={16} />
+                    <div className="w-8 h-8 bg-[#e8a427]/10 rounded-full flex items-center justify-center text-[#e8a427]">
+                      <ShoppingCart size={14} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Order", "ऑर्डर")}</h3>
-                    <span className={`badge ml-auto ${
-                      linkedOrder.status === "Delivered" ? "badge-green" :
-                      linkedOrder.status === "Ready" ? "badge-blue" :
-                      linkedOrder.status === "Cancelled" ? "badge-red" : "badge-yellow"
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Order", "ऑर्डर")}</h3>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ml-auto ${
+                      linkedOrder.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
+                      linkedOrder.status === "Ready" ? "bg-[#6ea8fe]/10 text-[#6ea8fe]" :
+                      linkedOrder.status === "Cancelled" ? "bg-red-500/10 text-red-400" : "bg-[#e8a427]/10 text-[#e8a427]"
                     }`}>{linkedOrder.status || "Draft"}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
                     {linkedOrder.frame && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Frame", "फ्रेम")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Frame", "फ्रेम")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">
                           {[linkedOrder.frameBrand, linkedOrder.frameModel, linkedOrder.frameColor, linkedOrder.frameSize].filter(Boolean).join(" / ") || linkedOrder.frame}
                           {linkedOrder.framePrice ? ` (₹${linkedOrder.framePrice})` : ""}
                         </p>
@@ -825,8 +827,8 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.lens && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Lens", "लेंस")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Lens", "लेंस")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">
                           {[linkedOrder.lensBrand, linkedOrder.lensType, linkedOrder.lensIndex].filter(Boolean).join(" / ") || linkedOrder.lens}
                           {linkedOrder.lensPrice ? ` (₹${linkedOrder.lensPrice})` : ""}
                         </p>
@@ -834,68 +836,68 @@ export default function CustomerDetail() {
                     )}
                     {linkedOrder.coating && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Coating", "कोटिंग")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Coating", "कोटिंग")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">
                           {linkedOrder.coating}{linkedOrder.coatingPrice ? ` (₹${linkedOrder.coatingPrice})` : ""}
                         </p>
                       </>
                     )}
                     {linkedOrder.accessories?.length > 0 && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Accessories", "सहायक उपकरण")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.accessories.join(", ")}</p>
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Accessories", "सहायक उपकरण")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">{linkedOrder.accessories.join(", ")}</p>
                       </>
                     )}
-                    <p className="text-xs text-slate-500 font-medium">{uiT("Quantity", "मात्रा")}</p>
-                    <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.quantity || 1}</p>
+                    <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Quantity", "मात्रा")}</p>
+                    <p className="text-xs font-semibold text-th-text text-right">{linkedOrder.quantity || 1}</p>
                     {linkedOrder.deliveryDate && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">
                           {new Date(linkedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </p>
                       </>
                     )}
                     {linkedOrder.labAssigned && (
                       <>
-                        <p className="text-xs text-slate-500 font-medium">{uiT("Lab", "लैब")}</p>
-                        <p className="text-xs font-semibold text-slate-900 dark:text-white text-right">{linkedOrder.labAssigned}{linkedOrder.labExpectedDate ? ` (by ${new Date(linkedOrder.labExpectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})` : ""}</p>
+                        <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Lab", "लैब")}</p>
+                        <p className="text-xs font-semibold text-th-text text-right">{linkedOrder.labAssigned}{linkedOrder.labExpectedDate ? ` (by ${new Date(linkedOrder.labExpectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})` : ""}</p>
                       </>
                     )}
                   </div>
                   {linkedOrder.labRemarks && (
-                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/30">{uiT("Lab Remarks", "लैब टिप्पणी")}: {linkedOrder.labRemarks}</p>
+                    <p className="text-xs text-th-secondary mt-3 pt-3 border-t border-th-border">{uiT("Lab Remarks", "लैब टिप्पणी")}: {linkedOrder.labRemarks}</p>
                   )}
                 </div>
               )}
 
               {linkedBill && (
-                <div className="card p-5">
+                <div className="bg-th-elevated rounded-lg p-5">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                      <Receipt size={16} />
+                    <div className="w-8 h-8 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760]">
+                      <Receipt size={14} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Bill", "बिल")}</h3>
-                    <span className="text-[10px] text-slate-400 ml-auto font-mono">{linkedBill.billNumber}</span>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text">{uiT("Bill", "बिल")}</h3>
+                    <span className="text-[10px] text-th-secondary ml-auto font-mono">{linkedBill.billNumber}</span>
                   </div>
                   {linkedBill.items?.length > 0 && (
-                    <div className="overflow-x-auto mb-4 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                    <div className="overflow-x-auto mb-4 rounded-lg">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
-                            <th className="text-left py-2.5 px-3 font-semibold text-slate-500">{uiT("Description", "विवरण")}</th>
-                            <th className="text-center py-2.5 px-3 font-semibold text-slate-500">{uiT("Qty", "मात्रा")}</th>
-                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">{uiT("Price", "मूल्य")}</th>
-                            <th className="text-right py-2.5 px-3 font-semibold text-slate-500">{uiT("Total", "कुल")}</th>
+                          <tr className="border-b border-th-border">
+                            <th className="text-left py-2.5 px-3 font-bold uppercase tracking-wider text-th-secondary text-[10px]">{uiT("Description", "विवरण")}</th>
+                            <th className="text-center py-2.5 px-3 font-bold uppercase tracking-wider text-th-secondary text-[10px]">{uiT("Qty", "मात्रा")}</th>
+                            <th className="text-right py-2.5 px-3 font-bold uppercase tracking-wider text-th-secondary text-[10px]">{uiT("Price", "मूल्य")}</th>
+                            <th className="text-right py-2.5 px-3 font-bold uppercase tracking-wider text-th-secondary text-[10px]">{uiT("Total", "कुल")}</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/30">
+                        <tbody className="divide-y divide-th-border">
                           {linkedBill.items.map((it: any, i: number) => (
                             <tr key={it._id || it.description || i}>
-                              <td className="py-2.5 px-3 text-slate-800 dark:text-slate-200">{it.description || uiT("Item", "आइटम")}</td>
-                              <td className="py-2.5 px-3 text-center text-slate-500">{it.quantity || 1}</td>
-                              <td className="py-2.5 px-3 text-right text-slate-500">₹{(it.unitPrice || 0).toFixed(2)}</td>
-                              <td className="py-2.5 px-3 text-right font-semibold text-slate-900 dark:text-white">₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td>
+                              <td className="py-2.5 px-3 text-th-text">{it.description || uiT("Item", "आइटम")}</td>
+                              <td className="py-2.5 px-3 text-center text-th-secondary">{it.quantity || 1}</td>
+                              <td className="py-2.5 px-3 text-right text-th-secondary">₹{(it.unitPrice || 0).toFixed(2)}</td>
+                              <td className="py-2.5 px-3 text-right font-semibold text-th-text">₹{((it.quantity || 1) * (it.unitPrice || 0)).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -903,50 +905,50 @@ export default function CustomerDetail() {
                     </div>
                   )}
                   <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between text-slate-500">
+                    <div className="flex justify-between text-th-secondary">
                       <span>{uiT("Subtotal", "उप-कुल")}</span>
                       <span>₹{(linkedBill.subtotal || 0).toFixed(2)}</span>
                     </div>
                     {linkedBill.discount ? (
-                      <div className="flex justify-between text-red-500">
+                      <div className="flex justify-between text-red-400">
                         <span>{uiT("Discount", "छूट")}</span>
                         <span>-₹{linkedBill.discount.toFixed(2)}</span>
                       </div>
                     ) : null}
                     {linkedBill.tax ? (
-                      <div className="flex justify-between text-emerald-600">
+                      <div className="flex justify-between text-[#1ed760]">
                         <span>{uiT("GST", "जीएसटी")}</span>
                         <span>+₹{linkedBill.tax.toFixed(2)}</span>
                       </div>
                     ) : null}
-                    <div className="flex justify-between font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700/50">
+                    <div className="flex justify-between font-bold text-th-text pt-2 border-t border-th-border">
                       <span>{uiT("Total", "कुल")}</span>
                       <span>₹{(linkedBill.totalAmount || 0).toFixed(2)}</span>
                     </div>
                     {linkedBill.advancePaid !== undefined && (
-                      <div className="flex justify-between text-emerald-600 items-center pt-1">
+                      <div className="flex justify-between text-[#1ed760] items-center pt-1">
                         <span>{uiT("Paid", "भुगतान")}</span>
                         {editingBillAdvance ? (
                           <div className="flex items-center gap-1.5">
                             <input type="number" min="0" step="0.01"
-                              className="input-field w-24 text-xs py-1 text-right"
+                              className="w-24 bg-th-hover text-th-text px-2 py-1 rounded-md text-xs text-right outline-none focus:ring-1 focus:ring-[#1ed760]"
                               value={editBillAdvanceAmount}
                               onFocus={(e) => e.target.select()}
                               onChange={(e) => setEditBillAdvanceAmount(Number(e.target.value))} />
                             <button onClick={handleBillAdvanceSave} disabled={savingBillAdvance}
-                              className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-emerald-600 transition-colors">
-                              {savingBillAdvance ? <div className="animate-spin w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" /> : <Save size={13} />}
+                              className="p-1.5 hover:bg-[#1ed760]/10 rounded-full text-[#1ed760] transition-colors">
+                              {savingBillAdvance ? <div className="animate-spin w-3 h-3 border-2 border-[#1ed760] border-t-transparent rounded-full" /> : <Save size={12} />}
                             </button>
                             <button onClick={() => setEditingBillAdvance(false)}
-                              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-red-400 transition-colors">
-                              <X size={13} />
+                              className="p-1.5 hover:bg-red-500/10 rounded-full text-red-400 transition-colors">
+                              <X size={12} />
                             </button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold">₹{linkedBill.advancePaid.toFixed(2)}</span>
                             <button onClick={() => { setEditBillAdvanceAmount(linkedBill.advancePaid || 0); setEditingBillAdvance(true); }}
-                              className="px-2 py-1 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-lg text-[10px] font-medium hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors flex items-center gap-1">
+                              className="px-2 py-1 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[10px] font-medium hover:bg-[#1ed760]/20 transition-colors flex items-center gap-1">
                               <Edit3 size={10} /> {uiT("Edit", "संपादित करें")}
                             </button>
                           </div>
@@ -954,27 +956,27 @@ export default function CustomerDetail() {
                       </div>
                     )}
                     {(linkedBill.pendingAmount || 0) > 0 ? (
-                      <div className="flex justify-between text-amber-600 font-bold pt-1">
+                      <div className="flex justify-between text-[#e8a427] font-bold pt-1">
                         <span>{uiT("Balance Due", "बकाया राशि")}</span>
                         <span>₹{linkedBill.pendingAmount.toFixed(2)}</span>
                       </div>
                     ) : null}
                   </div>
-                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/30">
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-th-border">
                     <button onClick={() => sendWhatsApp(customer?.mobile, linkedBill)}
-                      className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-medium hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5">
-                      <MessageCircle size={13} /> {uiT("Send Bill", "बिल भेजें")}
+                      className="px-3 py-1.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-xs font-medium hover:bg-[#1ed760]/20 transition-colors flex items-center gap-1.5">
+                      <MessageCircle size={12} /> {uiT("Send Bill", "बिल भेजें")}
                     </button>
                   </div>
                 </div>
               )}
 
               {!linkedPrescription && !linkedOrder && !linkedBill && (
-                <div className="card p-8 text-center">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Activity size={24} className="text-slate-300 dark:text-slate-500" />
+                <div className="bg-th-surface rounded-lg p-8 text-center">
+                  <div className="w-12 h-12 bg-th-elevated rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Activity size={22} className="text-[#535353]" />
                   </div>
-                  <p className="text-sm text-slate-400">{uiT("No linked prescription, order, or bill for this visit.", "इस विज़िट के लिए कोई प्रिस्क्रिप्शन, ऑर्डर या बिल नहीं जुड़ा है।")}</p>
+                  <p className="text-sm text-th-secondary">{uiT("No linked prescription, order, or bill for this visit.", "इस विज़िट के लिए कोई प्रिस्क्रिप्शन, ऑर्डर या बिल नहीं जुड़ा है।")}</p>
                 </div>
               )}
             </div>
@@ -991,14 +993,14 @@ function EyeRow({ label, data }: { label: string; data: any }) {
   const cyl = data.cyl != null ? (data.cyl > 0 ? `+${Number(data.cyl).toFixed(2)}` : Number(data.cyl).toFixed(2)) : "—";
   const axis = data.axis != null ? `× ${data.axis}` : "—";
   return (
-    <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 last:mb-0">
-      <span className="font-bold text-slate-700 dark:text-slate-300 bg-slate-200/50 dark:bg-slate-600/30 px-1.5 py-0.5 rounded text-[10px] mr-1.5">{label}</span>
-      <span className="text-slate-500">SPH</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{sph}</span>
-      <span className="text-slate-400 mx-1">|</span>
-      <span className="text-slate-500">CYL</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{cyl}</span>
-      <span className="text-slate-400 mx-1">|</span>
-      <span className="text-slate-500">AXIS</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{axis}</span>
-      {data.va && <><span className="text-slate-400 mx-1">|</span><span className="text-slate-500">VA</span> <span className="font-semibold text-slate-800 dark:text-slate-200">{data.va}</span></>}
+    <div className="text-xs text-th-secondary mb-2 last:mb-0">
+      <span className="font-bold text-th-text bg-th-border px-1.5 py-0.5 rounded text-[10px] mr-1.5">{label}</span>
+      <span className="text-th-secondary">SPH</span> <span className="font-semibold text-th-text">{sph}</span>
+      <span className="text-[#535353] mx-1">|</span>
+      <span className="text-th-secondary">CYL</span> <span className="font-semibold text-th-text">{cyl}</span>
+      <span className="text-[#535353] mx-1">|</span>
+      <span className="text-th-secondary">AXIS</span> <span className="font-semibold text-th-text">{axis}</span>
+      {data.va && <><span className="text-[#535353] mx-1">|</span><span className="text-th-secondary">VA</span> <span className="font-semibold text-th-text">{data.va}</span></>}
     </div>
   );
 }

@@ -16,13 +16,13 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
   const chartTrend = !prev7 && recent7 > 0 ? "N/A" : prev7 > 0 ? ((recent7 - prev7) / prev7 * 100).toFixed(1) : "0";
   const trendUp = chartTrend === "N/A" ? true : Number(chartTrend) >= 0;
   return (
-    <div className={`bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md border rounded-2xl p-5 transition-shadow duration-300`}>
+    <div className="bg-th-surface rounded-[8px] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Sales Trend</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Last 30 days</p>
+          <h3 className="text-[14px] font-bold text-th-text">Sales Trend</h3>
+          <p className="text-[13px] text-th-secondary mt-0.5">Last 30 days</p>
         </div>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${trendUp ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-800" : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-800"}`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
+        <span className={`text-[12px] font-medium px-2 py-0.5 rounded-lg ${trendUp ? "text-[#1ed760] bg-[#1ed760]/10" : "text-[#e91429] bg-[#e91429]/10"}`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
       </div>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
@@ -40,10 +40,10 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
               formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Sales"]}
               contentStyle={{
                 fontSize: 13, borderRadius: 8,
-                border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
-                background: dark ? "rgba(15,23,42,0.95)" : "#fff",
-                color: dark ? "#fff" : "#111",
-                boxShadow: dark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.08)",
+                border: "none",
+                background: "var(--bg-hover)",
+                color: "var(--text-base)",
+                boxShadow: "var(--shadow-elevated)",
               }}
             />
             <Area type="monotone" dataKey="total" stroke="#818cf8" strokeWidth={2} fill="url(#salesGradient)" />
@@ -59,11 +59,11 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
   const total = data.reduce((s, d) => s + d.count, 0);
   void dark;
   return (
-    <div className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md border rounded-2xl p-5 transition-shadow duration-300 h-full">
+    <div className="bg-th-surface rounded-[8px] p-5 h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Order Status</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{total} total</p>
+          <h3 className="text-[14px] font-bold text-th-text">Order Status</h3>
+          <p className="text-[13px] text-th-secondary mt-0.5">{total} total</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -75,9 +75,10 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
               </Pie>
               <Tooltip formatter={(value) => [Number(value), "Orders"]} contentStyle={{
                 fontSize: 13, borderRadius: 8,
-                border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
-                background: dark ? "rgba(15,23,42,0.95)" : "#fff",
-                color: dark ? "#fff" : "#111",
+                border: "none",
+                background: "var(--bg-hover)",
+                color: "var(--text-base)",
+                boxShadow: "var(--shadow-elevated)",
               }} />
             </PieChart>
           </ResponsiveContainer>
@@ -86,8 +87,8 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
           {data.map((d, i) => (
             <div key={d.status} className="flex items-center gap-2 text-xs">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-              <span className="font-medium text-slate-700 dark:text-slate-300">{d.status}</span>
-              <span className="text-slate-400 dark:text-slate-500 ml-auto">{d.count}</span>
+              <span className="font-medium text-th-secondary">{d.status}</span>
+              <span className="text-th-muted ml-auto">{d.count}</span>
             </div>
           ))}
         </div>

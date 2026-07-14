@@ -28,13 +28,13 @@ router.post("/send", authenticate, asyncHandler(async (req: BranchRequest, res) 
   const { phone, message } = req.body;
   if (!phone || !message) throw new AppError(400, "Phone and message required");
   const wa = whatsappManager.getInstance(req.branchId);
-  const ok = await wa.sendMessage(phone, message);
+  const result = await wa.sendMessage(phone, message);
   const status = await wa.getStatus();
   res.json({
     success: true,
-    sent: ok,
-    queued: !ok && status.status !== "connected",
-    message: ok ? "Sent" : status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects",
+    sent: result.ok,
+    queued: !result.ok && status.status !== "connected",
+    message: result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects"),
   });
 }));
 
@@ -43,13 +43,13 @@ router.post("/send-media", authenticate, asyncHandler(async (req: BranchRequest,
   if (!phone || !base64 || !filename) throw new AppError(400, "Phone, base64 and filename required");
   const mime = mimetype || (filename.endsWith(".pdf") ? "application/pdf" : filename.endsWith(".png") ? "image/png" : filename.endsWith(".jpg") || filename.endsWith(".jpeg") ? "image/jpeg" : "application/octet-stream");
   const wa = whatsappManager.getInstance(req.branchId);
-  const ok = await wa.sendMedia(phone, base64, filename, mime, caption);
+  const result = await wa.sendMedia(phone, base64, filename, mime, caption);
   const status = await wa.getStatus();
   res.json({
     success: true,
-    sent: ok,
-    queued: !ok && status.status !== "connected",
-    message: ok ? "Sent" : status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects",
+    sent: result.ok,
+    queued: !result.ok && status.status !== "connected",
+    message: result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects"),
   });
 }));
 

@@ -431,7 +431,7 @@ export default function Settings() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="flex items-center gap-2.5 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-700 dark:text-red-300 text-sm"
+                      className="flex items-center gap-2.5 px-4 py-3 bg-[#e74c3c]/10 border border-[#e74c3c]/20 rounded-sm text-[#e74c3c] text-sm"
                     >
                       <AlertCircle size={16} className="shrink-0" />
                       {error}
@@ -445,21 +445,21 @@ export default function Settings() {
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    className={`relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden ${
+                    className={`relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 border-2 border-dashed rounded-sm flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden ${
                       dragOver
-                        ? "border-primary-400 bg-primary-50 dark:bg-primary-500/10"
-                        : "border-slate-300 dark:border-slate-600 hover:border-primary-400 dark:hover:border-primary-500 bg-slate-50 dark:bg-slate-700/30"
+                        ? "border-[#1ed760] bg-th-elevated bg-[#1ed760]/10"
+                        : "border-surface-300 hover:border-[#1ed760] bg-th-elevated"
                     }`}
                   >
                     {logoPreview ? (
                       <>
                         <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Upload size={20} className="text-white" />
+                          <Upload size={20} className="text-th-text" />
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center gap-1.5 text-slate-400">
+                      <div className="flex flex-col items-center gap-1.5 text-th-muted">
                         <Upload size={22} />
                         <span className="text-[10px] font-medium">{uiT("Upload Logo", "लोगो अपलोड करें")}</span>
                       </div>
@@ -503,7 +503,7 @@ export default function Settings() {
                   placeholder="shop@example.com"
                 />
 
-                <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                <div className="flex items-center justify-end pt-2 border-t border-th-border">
                   <motion.button
                     type="submit"
                     disabled={saving}
@@ -544,25 +544,25 @@ export default function Settings() {
                       placeholder="e.g. 919XXXXXXXXX"
                       helperText={uiT("Include country code without +", "देश कोड बिना + के लिखें")}
                     />
-                    <div className={`rounded-2xl border p-5 transition-all duration-500 ${
+                    <div className={`rounded-sm border p-5 transition-all duration-500 ${
                       waStatus === "connected"
-                        ? "bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20"
+                        ? "bg-[#1ed760]/5 border-[#1ed760]/20"
                         : waStatus === "error"
-                        ? "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20"
+                        ? "bg-[#e74c3c]/5 border-[#e74c3c]/20"
                         : waStatus === "qr"
-                        ? "bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/20"
-                        : "bg-slate-50 dark:bg-slate-700/30 border-slate-200 dark:border-slate-700/50"
+                        ? "bg-th-elevated bg-[#1ed760]/5 border-blue-200 border-blue-500/20"
+                        : "bg-th-elevated border-th-border"
                     }`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-2.5 h-2.5 rounded-full ${
-                            waStatus === "connected" ? "bg-emerald-500 animate-pulse" :
-                            waStatus === "qr" ? "bg-blue-500 animate-pulse" :
-                            waStatus === "error" ? "bg-red-500" :
+                            waStatus === "connected" ? "bg-[#1ed760] animate-pulse" :
+                            waStatus === "qr" ? "bg-[#1ed760] animate-pulse" :
+                            waStatus === "error" ? "bg-[#e74c3c]" :
                             waStatus === "initializing" ? "bg-amber-500 animate-pulse" :
-                            "bg-slate-400"
+                            "bg-th-muted"
                           }`} />
-                           <span className="text-sm font-medium text-slate-900 dark:text-white">
+                           <span className="text-sm font-medium text-th-text">
                              {waStatus === "connected" ? uiT("Connected", "कनेक्टेड") :
                               waStatus === "qr" ? uiT("Scan QR Code", "QR कोड स्कैन करें") :
                               waStatus === "disconnected" ? uiT("Disconnected", "डिस्कनेक्टेड") :
@@ -580,7 +580,7 @@ export default function Settings() {
                               setWaStatus("disconnected");
                             }}
                             disabled={waDisconnecting}
-                            className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            className="flex items-center gap-1.5 text-xs font-medium text-[#e74c3c] hover:text-[#e74c3c] px-2.5 py-1.5 rounded-lg bg-[#e74c3c]/10 transition-colors"
                           >
                             {waDisconnecting ? (
                               <Loader2 size={12} className="animate-spin" />
@@ -593,22 +593,22 @@ export default function Settings() {
                       </div>
                       {waStatus === "qr" && waQr && (
                         <div className="flex justify-center py-4">
-                          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                          <div className="bg-th-surface rounded-lg p-4 border border-th-border">
                             <img src={waQr} alt="WhatsApp QR" className="w-48 h-48" />
                           </div>
                         </div>
                       )}
                       {waStatus === "connected" && (
-                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-2 text-[#1ed760]">
                           <CheckCircle2 size={16} />
                           <span className="text-xs font-medium">{uiT("WhatsApp is connected and ready", "WhatsApp कनेक्टेड और तैयार है")}</span>
                         </div>
                       )}
                       {waStatus === "disconnected" && (
-                        <p className="text-xs text-slate-500">{uiT("Disconnected. QR will appear shortly.", "डिस्कनेक्टेड। QR जल्द दिखाई देगा।")}</p>
+                        <p className="text-xs text-th-secondary">{uiT("Disconnected. QR will appear shortly.", "डिस्कनेक्टेड। QR जल्द दिखाई देगा।")}</p>
                       )}
                       {waStatus === "initializing" && (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 text-xs text-th-secondary">
                           <Loader2 size={14} className="animate-spin" />
                           {uiT("Connecting to WhatsApp...", "WhatsApp से कनेक्ट हो रहा है...")}
                         </div>
@@ -617,19 +617,19 @@ export default function Settings() {
                         <p className="text-xs text-red-500">{uiT("Connection error. Please restart the server.", "कनेक्शन त्रुटि। कृपया सर्वर पुनरारंभ करें।")}</p>
                       )}
                       {waStatus === "checking" && (
-                        <p className="text-xs text-slate-400">{uiT("Checking connection status...", "कनेक्शन स्थिति जांच रहे हैं...")}</p>
+                        <p className="text-xs text-th-muted">{uiT("Checking connection status...", "कनेक्शन स्थिति जांच रहे हैं...")}</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="hidden sm:flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 rounded-2xl border border-green-200 dark:border-green-500/20">
-                    <MessageCircle size={40} className="text-emerald-500 dark:text-emerald-400 mb-3" />
-                    <p className="text-sm font-medium text-slate-900 dark:text-white text-center">{uiT("WhatsApp Messaging", "WhatsApp संदेश")}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1">{uiT("Send automated order updates and notifications to customers", "ग्राहकों को स्वचालित ऑर्डर अपडेट और सूचनाएं भेजें")}</p>
+                  <div className="hidden sm:flex flex-col items-center justify-center p-6 bg-th-elevated rounded-sm border border-green-500/20">
+                    <MessageCircle size={40} className="text-th-secondary mb-3" />
+                    <p className="text-sm font-medium text-th-text text-center">{uiT("WhatsApp Messaging", "WhatsApp संदेश")}</p>
+                    <p className="text-xs text-th-secondary text-center mt-1">{uiT("Send automated order updates and notifications to customers", "ग्राहकों को स्वचालित ऑर्डर अपडेट और सूचनाएं भेजें")}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                <div className="flex items-center justify-end pt-2 border-t border-th-border">
                   <motion.button
                     onClick={handleSave}
                     whileHover={{ scale: 1.01 }}
@@ -653,7 +653,7 @@ export default function Settings() {
             <SectionCard icon={<Globe size={16} />} title={uiT("Branch Management", "शाखा प्रबंधन")} subtitle={uiT("Manage all your business locations", "अपने सभी व्यापार स्थान प्रबंधित करें")}>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-th-secondary">
                     {allBranches.length} {allBranches.length === 1 ? uiT("branch", "शाखा") : uiT("branches", "शाखाएँ")} {uiT("configured", "कॉन्फ़िगर किए गए")}
                   </p>
                   <motion.button
@@ -672,10 +672,10 @@ export default function Settings() {
                 </div>
 
                 {allBranches.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 px-4 bg-slate-50 dark:bg-slate-700/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                    <Building2 size={36} className="text-slate-300 dark:text-slate-600 mb-3" />
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{uiT("No branches yet", "अभी तक कोई शाखा नहीं")}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{uiT("Add your first branch to get started", "शुरू करने के लिए अपनी पहली शाखा जोड़ें")}</p>
+                  <div className="flex flex-col items-center justify-center py-10 px-4 bg-th-elevated rounded-sm border border-dashed border-th-border">
+                    <Building2 size={36} className="text-th-muted mb-3" />
+                    <p className="text-sm font-medium text-th-secondary">{uiT("No branches yet", "अभी तक कोई शाखा नहीं")}</p>
+                    <p className="text-xs text-th-secondary mt-1">{uiT("Add your first branch to get started", "शुरू करने के लिए अपनी पहली शाखा जोड़ें")}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
@@ -684,32 +684,32 @@ export default function Settings() {
                         key={b._id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all duration-200"
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-th-surface rounded-sm border border-th-border transition-all duration-200"
                       >
                         <div className="flex items-start gap-3 min-w-0">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          <div className={`w-10 h-10 rounded-sm flex items-center justify-center shrink-0 ${
                             b.isActive
-                              ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "bg-slate-100 dark:bg-slate-700/50 text-slate-400"
+                              ? "bg-[#1ed760]/10 text-[#1ed760]"
+                              : "bg-th-elevated text-th-muted"
                           }`}>
                             <Building2 size={18} />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.name}</p>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                              <p className="text-sm font-semibold text-th-text">{b.name}</p>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                                 b.isActive ? "badge-green" : "badge-gray"
                               }`}>
                                 {b.isActive ? uiT("Active", "सक्रिय") : uiT("Inactive", "निष्क्रिय")}
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                              <span className="text-xs text-slate-500 dark:text-slate-400">{b.code}</span>
+                              <span className="text-xs text-th-secondary">{b.code}</span>
                               {b.phone && (
-                                <span className="text-xs text-slate-400 dark:text-slate-500">· {b.phone}</span>
+                                <span className="text-xs text-th-secondary">· {b.phone}</span>
                               )}
                               {b.address && (
-                                <span className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-[200px]">· {b.address}</span>
+                                <span className="text-xs text-th-secondary truncate max-w-[200px]">· {b.address}</span>
                               )}
                             </div>
                           </div>
@@ -717,21 +717,21 @@ export default function Settings() {
                         <div className="flex items-center gap-1.5 shrink-0 sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleSwitchBranch(b._id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all"
+                            className="p-2 rounded-sm text-th-muted hover:text-[#1ed760] hover:bg-th-elevated hover:bg-[#1ed760]/10 transition-all"
                             title="Switch to this branch"
                           >
                             <ArrowRight size={14} />
                           </button>
                           <button
                             onClick={() => handleEditBranch(b)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                            className="p-2 rounded-sm text-th-muted hover:text-blue-500 hover:bg-th-elevated hover:bg-[#1ed760]/10 transition-all"
                             title="Edit branch"
                           >
                             <Save size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteBranch(b._id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                            className="p-2 rounded-sm text-th-muted hover:text-[#e74c3c] hover:bg-th-elevated hover:bg-[#e74c3c]/10 transition-all"
                             title="Deactivate branch"
                           >
                             <Trash2 size={14} />
@@ -751,14 +751,14 @@ export default function Settings() {
           <div ref={(el) => { sectionRefs.current["staff"] = el; }}>
             <SectionCard icon={<Shield size={16} />} title={uiT("Staff & Security", "स्टाफ और सुरक्षा")} subtitle={uiT("Manage team members and access control", "टीम के सदस्यों और पहुँच नियंत्रण का प्रबंधन करें")}>
               <div className="space-y-5">
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                <div className="flex items-center justify-between p-4 bg-th-elevated rounded-sm border border-th-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
-                      <Crown size={18} className="text-amber-600 dark:text-amber-400" />
+                    <div className="w-10 h-10 rounded-sm bg-amber-500/10 flex items-center justify-center">
+                      <Crown size={18} className="text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{uiT("Administrator", "प्रशासक")}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Full system access", "पूर्ण सिस्टम पहुँच")}</p>
+                      <p className="text-sm font-semibold text-th-text">{uiT("Administrator", "प्रशासक")}</p>
+                      <p className="text-xs text-th-secondary">{uiT("Full system access", "पूर्ण सिस्टम पहुँच")}</p>
                     </div>
                   </div>
                   <span className="badge-green">{uiT("Admin", "एडमिन")}</span>
@@ -766,7 +766,7 @@ export default function Settings() {
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{uiT("Team Members", "टीम सदस्य")}</p>
+                    <p className="text-sm font-medium text-th-text">{uiT("Team Members", "टीम सदस्य")}</p>
                     <motion.button
                       onClick={() => setShowAddStaff(true)}
                       whileHover={{ scale: 1.02 }}
@@ -778,10 +778,10 @@ export default function Settings() {
                     </motion.button>
                   </div>
                   {branchStaff.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                      <User size={28} className="text-slate-300 dark:text-slate-600 mb-2" />
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{uiT("No staff for this branch", "इस शाखा के लिए कोई स्टाफ नहीं")}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{uiT("Add team members to manage this location", "इस स्थान के प्रबंधन के लिए टीम सदस्य जोड़ें")}</p>
+                    <div className="flex flex-col items-center justify-center py-8 bg-th-elevated rounded-sm border border-dashed border-th-border">
+                      <User size={28} className="text-th-muted mb-2" />
+                      <p className="text-sm text-th-secondary">{uiT("No staff for this branch", "इस शाखा के लिए कोई स्टाफ नहीं")}</p>
+                      <p className="text-xs text-th-secondary mt-0.5">{uiT("Add team members to manage this location", "इस स्थान के प्रबंधन के लिए टीम सदस्य जोड़ें")}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -790,27 +790,27 @@ export default function Settings() {
                           key={u.id}
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
+                          className="flex items-center justify-between gap-3 p-3 bg-th-surface/30 rounded-sm border border-th-border transition-all"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-[#1ed760] flex items-center justify-center text-th-text text-xs font-bold shrink-0">
                               {(u.name || u.username || "S").charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                              <p className="text-sm font-medium text-th-text truncate">
                                 {u.name || u.username}
                               </p>
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs text-slate-500 dark:text-slate-400">@{u.username}</span>
+                                <span className="text-xs text-th-secondary">@{u.username}</span>
                                 {u.mobile && (
-                                  <span className="text-xs text-slate-400 dark:text-slate-500">· {u.mobile}</span>
+                                  <span className="text-xs text-th-secondary">· {u.mobile}</span>
                                 )}
                               </div>
                             </div>
                           </div>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                            className="p-2 rounded-sm text-th-muted hover:text-[#e74c3c] hover:bg-th-elevated hover:bg-[#e74c3c]/10 transition-all"
                             title="Delete user"
                           >
                             <Trash2 size={14} />
@@ -829,35 +829,35 @@ export default function Settings() {
         <div ref={(el) => { sectionRefs.current["account"] = el; }}>
           <SectionCard icon={<User size={16} />} title={uiT("Login Credentials", "लॉगिन जानकारी")} subtitle={uiT("Your sign-in identity — used across all branches", "आपकी साइन-इन पहचान — सभी शाखाओं में उपयोग होती है")}>
             <div className="space-y-5">
-              <div className="flex flex-col sm:flex-row gap-4 p-5 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 rounded-2xl border border-violet-200 dark:border-violet-500/20">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-sm shrink-0">
+              <div className="flex flex-col sm:flex-row gap-4 p-5 bg-th-elevated bg-violet-900/10 rounded-sm border border-violet-500/20">
+                <div className="w-14 h-14 rounded-sm bg-[#1ed760] flex items-center justify-center text-th-text text-xl font-bold shrink-0">
                   {(user?.username as string || "U").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-slate-900 dark:text-white">
+                    <span className="text-base font-semibold text-th-text">
                       @{user?.username as string}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/20">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium bg-th-elevated bg-violet-900/20 text-violet-300 ring-1 ring-violet-500/20">
                       <Building2 size={10} />
                       {currentBranch?.name || "—"}
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                    <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                       isStaff ? "badge-blue" : "badge-purple"
                     }`}>
                       {(user?.role as string) || "—"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-th-secondary">
                     Owner name, phone &amp; email are managed per branch in <strong>Shop Profile</strong> above
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-slate-700/20 rounded-xl border border-slate-200 dark:border-slate-700/50">
+              <div className="p-4 bg-th-elevated rounded-sm border border-th-border">
                 <div className="flex items-center gap-2 mb-3">
-                  <Key size={14} className="text-slate-500" />
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{uiT("Change Password", "पासवर्ड बदलें")}</p>
+                  <Key size={14} className="text-th-secondary" />
+                  <p className="text-sm font-medium text-th-text">{uiT("Change Password", "पासवर्ड बदलें")}</p>
                 </div>
                 <div className="space-y-3">
                   <div className="relative">
@@ -873,7 +873,7 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-[38px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        className="absolute right-3.5 top-[38px] text-th-muted hover:text-th-muted transition-colors"
                       >
                         {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
@@ -902,7 +902,7 @@ export default function Settings() {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0 }}
                           className={`text-xs ${
-                            saveProfileMsg.includes("Error") ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"
+                            saveProfileMsg.includes("Error") ? "text-red-500" : "text-[#1ed760]"
                           }`}
                         >
                           {saveProfileMsg.includes("Error") ? (
@@ -924,78 +924,78 @@ export default function Settings() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiT("Appearance", "थीम")}</p>
+                <p className="text-sm font-medium text-th-text mb-3">{uiT("Appearance", "थीम")}</p>
                 <ThemeToggle dark={dark} onToggle={toggleTheme} />
               </div>
 
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiLang === "hi" ? "ऐप भाषा" : "App Language"}</p>
+                <p className="text-sm font-medium text-th-text mb-3">{uiLang === "hi" ? "ऐप भाषा" : "App Language"}</p>
                 <button
                   onClick={toggleUiLang}
-                  className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/20 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-colors"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-th-elevated hover:bg-th-hover rounded-sm border border-th-border transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-500/10 flex items-center justify-center">
-                      <Globe size={16} className="text-violet-600 dark:text-violet-400" />
+                    <div className="w-9 h-9 rounded-sm bg-th-elevated bg-[#1ed760]/10 flex items-center justify-center">
+                      <Globe size={16} className="text-th-secondary" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <p className="text-sm font-semibold text-th-text">
                         {uiLang === "hi" ? "हिन्दी" : "English"}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-th-secondary">
                         {uiLang === "hi" ? "पूरा ऐप हिन्दी में दिखेगा" : "Entire app UI will be in English"}
                       </p>
                     </div>
                   </div>
-                  <div className={`w-10 h-6 rounded-full transition-colors relative ${uiLang === "hi" ? "bg-violet-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                    <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform" style={{ transform: uiLang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
+                  <div className={`w-10 h-6 rounded-full transition-colors relative ${uiLang === "hi" ? "bg-[#1ed760]" : "bg-th-border"}`}>
+                    <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform" style={{ transform: uiLang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
                   </div>
                 </button>
               </div>
 
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{lang === "hi" ? "संदेश भाषा" : "Message Language"}</p>
+                <p className="text-sm font-medium text-th-text mb-3">{lang === "hi" ? "संदेश भाषा" : "Message Language"}</p>
                 <button
                   onClick={toggleLang}
-                  className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/20 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-700/50 transition-colors"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-th-elevated hover:bg-th-hover rounded-sm border border-th-border transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-                      <Languages size={16} className="text-blue-600 dark:text-blue-400" />
+                    <div className="w-9 h-9 rounded-sm bg-th-elevated bg-[#1ed760]/10 flex items-center justify-center">
+                      <Languages size={16} className="text-[#1ed760]" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <p className="text-sm font-semibold text-th-text">
                         {lang === "hi" ? "हिन्दी" : "English"}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-th-secondary">
                         {lang === "hi" ? "WhatsApp संदेश हिन्दी में जाएंगे" : "WhatsApp messages will be in English"}
                       </p>
                     </div>
                   </div>
-                  <div className={`w-10 h-6 rounded-full transition-colors relative ${lang === "hi" ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${lang === "hi" ? "translate-x-4.5 left-0.5" : "left-0.5"}`} style={{ transform: lang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
+                  <div className={`w-10 h-6 rounded-full transition-colors relative ${lang === "hi" ? "bg-[#1ed760]" : "bg-th-border"}`}>
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${lang === "hi" ? "translate-x-4.5 left-0.5" : "left-0.5"}`} style={{ transform: lang === "hi" ? "translateX(18px)" : "translateX(2px)" }} />
                   </div>
                 </button>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-3">{uiT("Danger Zone", "खतरनाक क्षेत्र")}</p>
+              <div className="pt-2 border-t border-th-border">
+                <p className="text-sm font-medium text-th-text mb-3">{uiT("Danger Zone", "खतरनाक क्षेत्र")}</p>
                 <motion.button
                   onClick={() => setShowLogoutConfirm(true)}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex items-center justify-between w-full px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl border border-red-200 dark:border-red-500/20 transition-colors group"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-th-elevated hover:bg-[#e74c3c]/10 rounded-sm border border-[#e74c3c]/20 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
-                      <LogOut size={16} className="text-red-600 dark:text-red-400" />
+                    <div className="w-9 h-9 rounded-sm bg-[#e74c3c]/20 flex items-center justify-center">
+                      <LogOut size={16} className="text-[#e74c3c]" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">{uiT("Sign Out", "लॉग आउट")}</p>
-                      <p className="text-xs text-red-500/70 dark:text-red-400/70">{uiT("End your current session", "अपना सत्र समाप्त करें")}</p>
+                      <p className="text-sm font-semibold text-[#e74c3c]">{uiT("Sign Out", "लॉग आउट")}</p>
+                      <p className="text-xs text-th-muted">{uiT("End your current session", "अपना सत्र समाप्त करें")}</p>
                     </div>
                   </div>
-                  <ArrowRight size={16} className="text-red-400 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={16} className="text-[#e74c3c] group-hover:translate-x-0.5 transition-transform" />
                 </motion.button>
               </div>
             </div>
@@ -1020,22 +1020,22 @@ export default function Settings() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-th-surface rounded-t-lg border border-th-border max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="w-10 h-1 rounded-full bg-th-border" />
               </div>
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-th-border shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{uiT("Add Staff Account", "स्टाफ खाता जोड़ें")}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{uiT("Create a new team member account", "नया टीम सदस्य खाता बनाएं")}</p>
+                  <h3 className="text-lg font-bold text-th-text">{uiT("Add Staff Account", "स्टाफ खाता जोड़ें")}</h3>
+                  <p className="text-xs text-th-secondary mt-0.5">{uiT("Create a new team member account", "नया टीम सदस्य खाता बनाएं")}</p>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowAddStaff(false)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-2 hover:bg-th-hover rounded-sm text-th-muted hover:text-th-muted transition-colors"
                 >
                   <X size={18} />
                 </motion.button>
@@ -1085,7 +1085,7 @@ export default function Settings() {
                       <option key={b._id} value={b._id}>{b.name}</option>
                     ))}
                   </Select>
-                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
                     <button type="button" onClick={() => setShowAddStaff(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                     <motion.button
                       type="submit"
@@ -1126,18 +1126,18 @@ export default function Settings() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-th-surface rounded-t-lg border border-th-border max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:bottom-4 sm:rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="w-10 h-1 rounded-full bg-th-border" />
               </div>
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-th-border shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-th-text">
                     {editingBranch ? uiT("Edit Branch", "शाखा संपादित करें") : uiT("Add New Branch", "नई शाखा जोड़ें")}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-th-secondary mt-0.5">
                     {editingBranch ? uiT("Update branch information", "शाखा जानकारी अपडेट करें") : uiT("Create a new business location", "नया व्यापार स्थान बनाएं")}
                   </p>
                 </div>
@@ -1145,7 +1145,7 @@ export default function Settings() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => { setShowAddBranch(false); setEditingBranch(null); }}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-2 hover:bg-th-hover rounded-sm text-th-muted hover:text-th-muted transition-colors"
                 >
                   <X size={18} />
                 </motion.button>
@@ -1209,8 +1209,8 @@ export default function Settings() {
                     />
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-700/30">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{uiT("Owner Details", "मालिक विवरण")}</p>
+                  <div className="pt-2 border-t border-th-border">
+                    <p className="text-xs font-semibold text-th-secondary uppercase tracking-wider mb-3">{uiT("Owner Details", "मालिक विवरण")}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input
                         label={uiT("Owner Name", "मालिक का नाम")}
@@ -1239,7 +1239,7 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
                     <button type="button" onClick={() => { setShowAddBranch(false); setEditingBranch(null); }} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                     <motion.button
                       type="submit"
@@ -1280,18 +1280,18 @@ export default function Settings() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 sm:max-w-sm sm:mx-auto sm:bottom-4 sm:rounded-2xl"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-th-surface rounded-t-lg border border-th-border sm:max-w-sm sm:mx-auto sm:bottom-4 sm:rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <div className="w-10 h-1 rounded-full bg-th-border" />
               </div>
               <div className="p-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                  <LogOut size={24} className="text-red-600 dark:text-red-400" />
+                <div className="w-12 h-12 rounded-sm bg-[#e74c3c]/20 flex items-center justify-center mx-auto mb-4">
+                  <LogOut size={24} className="text-[#e74c3c]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{uiT("Sign Out", "साइन आउट")}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{uiT("Are you sure you want to end your session?", "क्या आप अपना सत्र समाप्त करना चाहते हैं?")}</p>
+                <h3 className="text-lg font-bold text-th-text mb-2">{uiT("Sign Out", "साइन आउट")}</h3>
+                <p className="text-sm text-th-secondary mb-6">{uiT("Are you sure you want to end your session?", "क्या आप अपना सत्र समाप्त करना चाहते हैं?")}</p>
                 <div className="flex gap-3 justify-center">
                   <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">{uiT("Cancel", "रद्द करें")}</button>
                   <motion.button

@@ -355,24 +355,24 @@ export default function Bills() {
           { key: "subtotal", label: uiT("Subtotal", "उप-कुल"), render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
           { key: "totalAmount", label: uiT("Total", "कुल"), render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
           { key: "pendingAmount", label: uiT("Pending", "बाकी"), render: (v) => (
-            <span className={(v as number) > 0 ? "text-amber-500 font-medium" : "text-emerald-600"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : uiT("Paid", "भुगतान")}</span>
+            <span className={(v as number) > 0 ? "text-[#e8115b] font-medium" : "text-[#1ed760]"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : uiT("Paid", "भुगतान")}</span>
           )},
         ]}
         data={list}
         searchPlaceholder={uiT("Search bills...", "बिल खोजें...")}
         actions={(row) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400" title={uiT("WhatsApp", "WhatsApp")} aria-label="Send WhatsApp">
+            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760] active:scale-95 transition-transform duration-100" title={uiT("WhatsApp", "WhatsApp")} aria-label="Send WhatsApp">
               <MessageCircle size={15} />
             </button>
-            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title={uiT("Download PDF", "PDF डाउनलोड करें")} aria-label="Download PDF">
+            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100" title={uiT("Download PDF", "PDF डाउनलोड करें")} aria-label="Download PDF">
               <PdfIcon size={15} />
             </button>
-            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg text-gray-600 dark:text-gray-400" title={uiT("Thermal Receipt (80mm)", "थर्मल रसीद (80mm)")} aria-label="Thermal print">
+            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-th-elevated rounded-lg text-th-secondary active:scale-95 transition-transform duration-100" title={uiT("Thermal Receipt (80mm)", "थर्मल रसीद (80mm)")} aria-label="Thermal print">
               <Printer size={15} />
             </button>
             {!isStaff && (
-              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title={uiT("Delete", "हटाएं")} aria-label="Delete bill">
+              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100" title={uiT("Delete", "हटाएं")} aria-label="Delete bill">
                 <Trash2 size={15} />
               </button>
             )}

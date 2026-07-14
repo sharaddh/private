@@ -17,9 +17,9 @@ const icons = {
 };
 
 const styles = {
-  success: "bg-emerald-600 text-white",
-  error: "bg-red-600 text-white",
-  info: "bg-blue-600 text-white",
+  success: "bg-[#1ed760] text-black font-semibold",
+  error: "bg-[#e91429] text-th-text",
+  info: "bg-th-elevated text-th-text",
 };
 
 export default function Toast({ message, type, onClose, duration = 4000 }: ToastProps) {
@@ -31,7 +31,7 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
   const Icon = icons[type];
 
   return (
-    <div className={`fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-lg animate-slide-up ${styles[type]}`}>
+    <div className={`fixed bottom-5 right-5 z-[100] flex items-center gap-3 px-4 py-3 rounded-[8px] text-[14px] font-medium animate-slide-up ${styles[type]}`} style={{ boxShadow: "var(--shadow-elevated)" }}>
       <Icon size={18} />
       <span>{message}</span>
       <button onClick={onClose} aria-label="Dismiss notification" className="ml-2 hover:opacity-70">

@@ -401,7 +401,7 @@ export default function CustomerNewVisit() {
   }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
-  if (!customer) return <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center"><p className="text-sm text-slate-500 dark:text-slate-400">{uiT("Customer not found", "ग्राहक नहीं मिला")}</p></div>;
+  if (!customer) return <div className="min-h-screen bg-th-base flex items-center justify-center"><p className="text-sm text-th-secondary">{uiT("Customer not found", "ग्राहक नहीं मिला")}</p></div>;
 
   const stepKeys = steps.map(s => s.key);
   const currentIdx = stepKeys.indexOf(step);
@@ -412,7 +412,7 @@ export default function CustomerNewVisit() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-slate-50 dark:bg-slate-900"
+      className="min-h-screen bg-th-base"
     >
       <PageHeader
         customer={customer}
@@ -554,8 +554,8 @@ export default function CustomerNewVisit() {
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan Frame QR", "फ्रेम QR स्कैन करें")} size="sm">
         <div className="space-y-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Enter SKU or barcode to auto-fill frame details.", "फ्रेम विवरण स्वतः भरने के लिए SKU या बारकोड दर्ज करें।")}</p>
-          <input className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder={uiT("SKU or barcode", "SKU या बारकोड")} autoFocus
+          <p className="text-xs text-th-secondary">{uiT("Enter SKU or barcode to auto-fill frame details.", "फ्रेम विवरण स्वतः भरने के लिए SKU या बारकोड दर्ज करें।")}</p>
+          <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder={uiT("SKU or barcode", "SKU या बारकोड")} autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
@@ -570,7 +570,7 @@ export default function CustomerNewVisit() {
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2.5 text-xs font-semibold text-primary-600 dark:text-primary-400 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all flex items-center justify-center gap-1.5">
+            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5">
             <ScanLine size={14} /> {uiT("Use Camera", "कैमरा उपयोग करें")}
           </button>
         </div>

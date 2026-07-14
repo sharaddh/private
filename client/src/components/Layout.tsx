@@ -110,8 +110,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (value.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
     searchTimer.current = setTimeout(async () => {
-      const res = await get<Array<Record<string, unknown>>>("/api/customers?q=" + encodeURIComponent(value));
-      if (res.success) { setSearchResults(res.data || []); setSearchOpen(true); }
+      const res = await get<Array<Record<string, unknown>>>("/api/customers?search=" + encodeURIComponent(value));
+      if (res.success) { const list = (res.data as any)?.data || res.data || []; setSearchResults(Array.isArray(list) ? list : []); setSearchOpen(true); }
     }, 300);
   }, []);
 
@@ -165,126 +165,137 @@ export default function Layout({ children }: { children: ReactNode }) {
   const mobileNav = allMobileNav.filter(m => !isStaff || m.staff);
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-th-base">
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-20 lg:hidden" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-white dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-700/50 flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full shadow-sm ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-700/50">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} flex flex-col transition-all duration-200 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
+        {/* Logo */}
+        <div className="h-11 flex items-center justify-between px-4 border-b border-th-hover">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-              <span className="text-white font-bold text-sm">K</span>
+            <div className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1ed760' }}>
+              <span className="font-bold text-xs" style={{ color: '#121212' }}>K</span>
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">KMJ Optical</h1>
-                <p className="text-[9px] text-slate-500 font-medium">ERP System</p>
+                <h1 className="text-sm font-semibold text-th-text leading-tight truncate">KMJ Optical</h1>
+                <p className="text-xs text-th-secondary">ERP System</p>
               </div>
             )}
           </div>
           <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
-            className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
+            className={`p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
             <ChevronLeft size={14} />
           </button>
           <button onClick={() => setSidebarOpen(true)} aria-label="Expand sidebar"
-            className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-all ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
+            className={`p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
             <Menu size={14} />
           </button>
-          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 lg:hidden transition-all">
+          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary lg:hidden">
             <X size={14} />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5 scrollbar-thin">
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-px scrollbar-thin">
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group hover:-translate-y-0.5 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-colors duration-150 ${
                   active
-                    ? "bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 font-semibold shadow-sm"
-                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                    ? "text-th-text font-semibold"
+                    : "hover:text-th-text hover:bg-th-hover text-th-secondary"
                 }`}>
-                <Icon size={18} className={active ? "text-primary-600 dark:text-primary-400" : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300"} />
+                <Icon size={16} className={active ? "text-th-text" : "text-th-secondary"} />
                 {sidebarOpen && <span className="text-sm">{trLabel(item.label)}</span>}
-                {active && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400" />}
+                {active && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#1ed760' }} />}
               </Link>
             );
           })}
         </nav>
       </aside>
 
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 lg:hidden transition-all duration-300">
-              <Menu size={20} />
+        {/* Header */}
+        <header className="h-11 flex items-center justify-between px-4 lg:px-5 sticky top-0 z-10 bg-th-surface/90 backdrop-blur-xl border-b border-th-border shadow-sm">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-text lg:hidden">
+              <Menu size={16} />
             </button>
-            <button onClick={() => setSidebarOpen(true)} aria-label="Open sidebar" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hidden lg:flex transition-all duration-300">
-              <Menu size={18} />
+            <button onClick={() => setSidebarOpen(true)} aria-label="Open sidebar" className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-text hidden lg:flex">
+              <Menu size={16} />
             </button>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white hidden sm:block">
+            <h2 className="text-sm hidden sm:block font-medium text-th-text">
               {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
             </h2>
           </div>
 
+          {/* Search — pill-shaped */}
           <div ref={searchRef} className="relative flex-1 max-w-xs lg:max-w-sm mx-2 lg:mx-4">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
             <input type="text" placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 shadow-sm" />
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm text-th-text placeholder-th-secondary focus:outline-none focus:ring-1 focus:ring-white/20 transition-all bg-th-hover"
+              style={{ border: '1px solid rgb(124,124,124)' }} />
             {searchOpen && searchQuery.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50 animate-scale-in">
+              <div className="absolute top-full left-0 right-0 mt-1.5 max-h-80 overflow-y-auto z-50 animate-scale-in rounded-lg bg-th-surface" style={{ boxShadow: 'var(--shadow-elevated)' }}>
                 {searchResults.length > 0 ? (
                   searchResults.map((c) => (
                     <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left border-b border-slate-100 dark:border-slate-700/30 last:border-0 transition-colors">
-                      <div className="w-8 h-8 bg-primary-50 dark:bg-primary-500/10 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-semibold text-xs flex-shrink-0">
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-th-hover border-b border-th-hover last:border-b-0">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
                         {String(c.name ?? "?").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{String(c.name ?? "")}</p>
-                        <p className="text-xs text-slate-500 truncate">
-                          {c.mobile && <><Phone size={10} className="inline mr-0.5" />{String(c.mobile)} • </>}
+                        <p className="text-sm font-semibold text-th-text truncate">{String(c.name ?? "")}</p>
+                        <p className="text-xs truncate text-th-secondary">
+                          {c.mobile && <><Phone size={9} className="inline mr-0.5" />{String(c.mobile)} · </>}
                           {String(c.customerId ?? "")}
                         </p>
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="px-4 py-6 text-center text-sm text-slate-400">No customer found</div>
+                  <div className="px-4 py-6 text-center text-sm text-th-secondary">No customer found</div>
                 )}
-                <div className="px-4 pb-3 pt-2 border-t border-slate-100 dark:border-slate-700/30">
+                <div className="px-4 pb-3 pt-2 border-t border-th-hover">
                   <button onClick={goAddCustomer}
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-0.5">
-                    <UserPlus size={15} /> Add New Customer
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-bold rounded-lg transition-all active:scale-95 uppercase tracking-wider"
+                    style={{ backgroundColor: '#1ed760', color: '#121212' }}>
+                    <UserPlus size={14} /> Add New Customer
                   </button>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Branch indicator */}
           {currentBranch && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-xs font-medium text-primary-700 dark:text-primary-300">
-              <Building2 size={14} />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-th-hover text-th-secondary">
+              <Building2 size={12} />
               <span className="hidden sm:inline">{currentBranch.name}</span>
             </div>
           )}
-          <div className="lg:hidden w-8" />
+          <div className="lg:hidden w-6" />
         </header>
 
-        <main className="flex-1 overflow-auto pb-[68px] lg:pb-6 scrollbar-thin">
-          <div className="max-w-7xl mx-auto p-4 lg:p-6 animate-fade-in">{children}</div>
+        {/* Page content */}
+        <main className="flex-1 overflow-auto pb-[64px] lg:pb-4 scrollbar-thin">
+          <div className="max-w-7xl mx-auto p-4 lg:p-5 animate-fade-in">{children}</div>
         </main>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.4)]">
-        <div className="bg-white dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-700/50">
-          <div className="flex items-center justify-around h-[64px] px-2 pb-1">
+      {/* Mobile bottom nav — frosted glass */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+        <div className="bg-th-base/85 backdrop-blur-xl border-t border-th-hover">
+          <div className="flex items-center justify-around h-16 px-2 pb-1">
             {mobileNav.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -294,10 +305,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                   to={item.path}
                   className="nav-link flex-1 max-w-[72px] py-1"
                 >
-                  <div className={`nav-link-icon ${active ? "text-primary-600 dark:text-primary-400" : "text-slate-400 dark:text-slate-500"}`}>
-                    <Icon size={active ? 22 : 20} className={`transition-all duration-300 ${active ? "scale-110" : ""}`} />
+                  <div className={`nav-link-icon ${active ? "text-[#1ed760]" : "text-th-secondary"}`}>
+                    <Icon size={active ? 22 : 20} className={`transition-all duration-200 ${active ? "scale-105" : ""}`} />
                   </div>
-                  <span className={`nav-link-label ${active ? "text-primary-600 dark:text-primary-400 font-semibold" : "text-slate-400 dark:text-slate-500"}`}>
+                  <span className={`nav-link-label ${active ? "text-[#1ed760] font-semibold" : "text-th-secondary font-normal"}`}>
                     {trLabel(item.label)}
                   </span>
                 </Link>
@@ -307,54 +318,60 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
+      {/* Add Customer drawer */}
       {showAddDrawer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddDrawer(false)}>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="fixed inset-0 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-200 dark:border-slate-700/50">
+            className="relative w-full max-w-lg mx-auto rounded-lg max-h-[90vh] overflow-y-auto animate-scale-in bg-th-surface" style={{ boxShadow: 'var(--shadow-elevated)' }}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 pt-5 pb-3 bg-th-surface border-b border-th-hover">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400">
-                  <UserPlus size={18} />
+                <div className="w-8 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
+                  <UserPlus size={16} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">New Customer</h3>
+                <h3 className="text-base font-semibold text-th-text">New Customer</h3>
               </div>
-              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors">
-                <X size={18} />
+              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-secondary">
+                <X size={16} />
               </button>
             </div>
             <div className="p-6 space-y-4">
               {drawerError && (
-                <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">{drawerError}</div>
+                <div className="px-4 py-3 rounded-sm text-sm" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>{drawerError}</div>
               )}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Full Name *</label>
-                <input className="input-field" value={drawerForm.name}
+                <label className="block text-sm mb-1.5 text-th-secondary">Full Name *</label>
+                <input className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                  style={{ border: '1px solid rgb(124,124,124)' }} value={drawerForm.name}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Enter customer name" autoFocus />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Mobile *</label>
-                <input className="input-field" value={drawerForm.mobile}
+                <label className="block text-sm mb-1.5 text-th-secondary">Mobile *</label>
+                <input className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                  style={{ border: '1px solid rgb(124,124,124)' }} value={drawerForm.mobile}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, "") }))}
                   placeholder="Phone number" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
-                  <input className="input-field" type="email" value={drawerForm.email}
+                  <label className="block text-sm mb-1.5 text-th-secondary">Email</label>
+                  <input className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                    style={{ border: '1px solid rgb(124,124,124)' }} type="email" value={drawerForm.email}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="Email" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Age</label>
-                  <input className="input-field" type="number" value={drawerForm.age}
+                  <label className="block text-sm mb-1.5 text-th-secondary">Age</label>
+                  <input className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                    style={{ border: '1px solid rgb(124,124,124)' }} type="number" value={drawerForm.age}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, age: e.target.value }))}
                     placeholder="Age" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
-                  <select className="input-field" value={drawerForm.gender}
+                  <label className="block text-sm mb-1.5 text-th-secondary">Gender</label>
+                  <select className="w-full px-3 py-2 rounded-lg text-sm text-th-text focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                    style={{ border: '1px solid rgb(124,124,124)' }} value={drawerForm.gender}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, gender: e.target.value }))}>
                     <option value="">Select</option>
                     <option value="Male">Male</option>
@@ -363,26 +380,29 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">City</label>
-                  <input className="input-field" value={drawerForm.city}
+                  <label className="block text-sm mb-1.5 text-th-secondary">City</label>
+                  <input className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                    style={{ border: '1px solid rgb(124,124,124)' }} value={drawerForm.city}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
                     placeholder="City" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Address</label>
-                <textarea className="input-field" rows={2} value={drawerForm.address}
+                <label className="block text-sm mb-1.5 text-th-secondary">Address</label>
+                <textarea className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover" rows={2}
+                  style={{ border: '1px solid rgb(124,124,124)', resize: 'vertical' }} value={drawerForm.address}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Address (optional)" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowAddDrawer(false)} className="btn-secondary flex-1">Cancel</button>
+                <button onClick={() => setShowAddDrawer(false)} className="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors hover:bg-th-hover text-th-secondary border border-th-muted">Cancel</button>
                 <button onClick={handleCreateCustomer} disabled={drawerSaving}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-all active:scale-95"
+                  style={{ backgroundColor: '#1ed760', color: '#121212' }}>
                   {drawerSaving ? (
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="animate-spin w-4 h-4 border-2 border-[#121212] border-t-transparent rounded-full" />
                   ) : (
-                    <UserPlus size={16} />
+                    <UserPlus size={15} />
                   )}
                   {drawerSaving ? "Creating..." : "Create Customer"}
                 </button>
@@ -394,5 +414,3 @@ export default function Layout({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
-

@@ -22,6 +22,7 @@ const OrderSchemaObj = new Schema(
   quantity: { type: Number, default: 1 },
   forwardedCount: { type: Number, default: 0 },
   deliveryDate: { type: Date },
+  actualDeliveryDate: { type: Date },
   status: { type: String, enum: ["Draft","Ordered","In Lab","Ready","Delivered","Cancelled"], default: "Draft" },
     labAssigned: { type: String },
     labExpectedDate: { type: Date },
