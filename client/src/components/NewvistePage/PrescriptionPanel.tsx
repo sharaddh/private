@@ -17,7 +17,7 @@ function EyeRow({
     <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 sm:items-center">
       {/* Row Label */}
       <div className="w-full sm:w-[100px] shrink-0">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-th-secondary">
           {label}
         </span>
       </div>
@@ -26,14 +26,14 @@ function EyeRow({
       <div className="grid grid-cols-4 gap-2 w-full flex-1">
         {FIELDS.map((f) => (
           <div key={f} className="flex flex-col gap-1">
-            <span className="sm:hidden text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase text-center mt-1">
+            <span className="sm:hidden text-[9px] font-semibold text-th-secondary uppercase text-center mt-1">
               {f}
             </span>
             <input
               placeholder="-"
               value={data?.[f] || ""}
               onChange={(e) => onChange({ ...data, [f]: e.target.value })}
-              className="w-full text-center py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all shadow-sm"
+              className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
         ))}
@@ -48,7 +48,7 @@ function EyeTableHeader() {
       <div className="w-[100px] shrink-0"></div>
       <div className="grid grid-cols-4 gap-2 w-full flex-1">
         {FIELDS.map((f) => (
-          <div key={f} className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <div key={f} className="text-center text-[10px] font-bold text-th-secondary uppercase tracking-wider">
             {f}
           </div>
         ))}
@@ -95,14 +95,14 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* Right Eye (OD) Panel */}
-        <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm">
+        <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-              <Eye size={18} className="text-blue-600 dark:text-blue-400" />
+            <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
+              <Eye size={18} className="text-[#1ed760]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Right Eye (O.D.)", "दायाँ आँख (O.D.)")}</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Oculus Dexter</p>
+              <h3 className="text-sm font-bold text-th-text">{uiT("Right Eye (O.D.)", "दायाँ आँख (O.D.)")}</h3>
+              <p className="text-[11px] text-th-secondary">Oculus Dexter</p>
             </div>
           </div>
 
@@ -121,14 +121,14 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
         </div>
 
         {/* Left Eye (OS) Panel */}
-        <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm">
+        <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-              <Eye size={18} className="text-indigo-600 dark:text-indigo-400" />
+            <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
+              <Eye size={18} className="text-[#1ed760]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{uiT("Left Eye (O.S.)", "बायाँ आँख (O.S.)")}</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Oculus Sinister</p>
+              <h3 className="text-sm font-bold text-th-text">{uiT("Left Eye (O.S.)", "बायाँ आँख (O.S.)")}</h3>
+              <p className="text-[11px] text-th-secondary">Oculus Sinister</p>
             </div>
           </div>
 
@@ -149,33 +149,33 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
       </div>
 
       {/* Additional Details Panel */}
-      <div className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm">
+      <div className="bg-th-surface rounded-lg shadow-lg p-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="relative">
-            <Ruler size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Ruler size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
             <input
               placeholder={uiT("Pupillary Distance (mm)", "प्यूपिलरी दूरी (mm)")}
               value={prescription.pd}
               onChange={(e) => setPrescription((p) => ({ ...p, pd: e.target.value }))}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div className="relative">
-            <AlertTriangle size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <AlertTriangle size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
             <input
               placeholder={uiT("Problems (e.g. headaches)", "समस्याएँ (जैसे सिरदर्द)")}
               value={prescription.problems}
               onChange={(e) => setPrescription((p) => ({ ...p, problems: e.target.value }))}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div className="relative">
-            <FileText size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <FileText size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
             <input
               placeholder={uiT("Additional notes", "अतिरिक्त नोट्स")}
               value={prescription.notes}
               onChange={(e) => setPrescription((p) => ({ ...p, notes: e.target.value }))}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
         </div>
