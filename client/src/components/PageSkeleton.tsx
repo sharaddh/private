@@ -4,7 +4,7 @@ export default function PageSkeleton({ page }: { page: string }) {
   switch (page) {
     case "dashboard":
       return (
-        <div className="bg-white dark:bg-slate-900 min-h-screen space-y-5 px-4 py-6">
+        <div className="bg-th-base min-h-screen space-y-5 px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Skeleton className="h-6 w-56" />
@@ -15,12 +15,12 @@ export default function PageSkeleton({ page }: { page: string }) {
           <SkeletonStats count={8} />
           <SkeletonStats count={8} />
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-3"><Skeleton className="h-56 w-full rounded-2xl" /></div>
-            <div className="lg:col-span-2"><Skeleton className="h-56 w-full rounded-2xl" /></div>
+            <div className="lg:col-span-3"><Skeleton className="h-56 w-full rounded-[18px]" /></div>
+            <div className="lg:col-span-2"><Skeleton className="h-56 w-full rounded-[18px]" /></div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
+              <div key={i} className="bg-th-surface rounded-[8px] p-4">
                 <Skeleton className="h-4 w-28 mb-3" />
                 <SkeletonList items={4} />
               </div>
@@ -28,15 +28,15 @@ export default function PageSkeleton({ page }: { page: string }) {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
+              <div key={i} className="bg-th-surface rounded-[8px] p-4">
                 <Skeleton className="h-4 w-28 mb-3" />
                 <SkeletonList items={4} />
               </div>
             ))}
           </div>
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-4 shadow-sm">
+          <div className="bg-th-surface rounded-[8px] p-4">
             <Skeleton className="h-4 w-32 mb-3" />
-            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-[8px]" />
           </div>
         </div>
       );
@@ -56,7 +56,7 @@ export default function PageSkeleton({ page }: { page: string }) {
               <Skeleton key={i} className="h-9 w-24 rounded-lg" />
             ))}
           </div>
-          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-sm" />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonCard key={i} />
@@ -70,9 +70,9 @@ export default function PageSkeleton({ page }: { page: string }) {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-10 w-36 rounded-xl" />
+            <Skeleton className="h-10 w-36 rounded-sm" />
           </div>
-          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-sm" />
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="card p-4">
@@ -122,7 +122,7 @@ export default function PageSkeleton({ page }: { page: string }) {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-10 w-36 rounded-xl" />
+            <Skeleton className="h-10 w-36 rounded-sm" />
           </div>
           <SkeletonStats count={3} />
           <div className="flex gap-2 flex-wrap">
@@ -139,9 +139,9 @@ export default function PageSkeleton({ page }: { page: string }) {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-36" />
-            <Skeleton className="h-10 w-32 rounded-xl" />
+            <Skeleton className="h-10 w-32 rounded-sm" />
           </div>
-          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-sm" />
           <SkeletonTable rows={8} cols={6} />
         </div>
       );
@@ -235,7 +235,7 @@ export default function PageSkeleton({ page }: { page: string }) {
                 </div>
               ))}
             </div>
-            <Skeleton className="h-12 w-32 mt-6 rounded-xl" />
+            <Skeleton className="h-12 w-32 mt-6 rounded-sm" />
           </div>
         </div>
       );
@@ -253,7 +253,7 @@ export default function PageSkeleton({ page }: { page: string }) {
                   <Skeleton className="h-10 w-full rounded-lg" />
                 </div>
               ))}
-              <Skeleton className="h-11 w-full rounded-xl mt-2" />
+              <Skeleton className="h-11 w-full rounded-sm mt-2" />
             </div>
           </div>
         </div>
