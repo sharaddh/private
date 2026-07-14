@@ -20,7 +20,7 @@ export default function VisitStepper({
 }: Props) {
   return (
     <div className="mb-6">
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm px-5 py-4">
+        <div className="rounded-lg bg-th-surface shadow-lg px-5 py-4">
 
         <div className="flex items-start overflow-x-auto">
 
@@ -41,7 +41,7 @@ export default function VisitStepper({
                 {index !== steps.length - 1 && (
                   <div className="absolute top-5 left-1/2 w-full">
 
-                    <div className="ml-5 mr-5 h-[2px] rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div className="ml-5 mr-5 h-[2px] rounded-full bg-th-elevated overflow-hidden">
 
                       <motion.div
                         initial={{ width: 0 }}
@@ -51,7 +51,7 @@ export default function VisitStepper({
                         transition={{
                           duration: .45,
                         }}
-                        className="h-full bg-emerald-500"
+                        className="h-full bg-[#1ed760]"
                       />
 
                     </div>
@@ -63,17 +63,11 @@ export default function VisitStepper({
 
                 <motion.button
                   layout
-                  whileHover={
+                  whileTap={
                     completed || active
-                      ? {
-                          y: -2,
-                          scale: 1.05,
-                        }
+                      ? { scale: 0.95 }
                       : {}
                   }
-                  whileTap={{
-                    scale: .96,
-                  }}
                   disabled={!completed && !active}
                   onClick={() => {
                     if (completed || active)
@@ -104,14 +98,13 @@ export default function VisitStepper({
 
                     ${
                       completed
-                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+                        ? "bg-[#1ed760] text-black"
                         : active
-                        ? "bg-primary-600 text-white shadow-lg shadow-primary-500/25 ring-4 ring-primary-500/10"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+                        ? "bg-[#1ed760] text-black ring-4 ring-[#1ed760]/20"
+                        : "bg-th-elevated text-th-secondary"
                     }
                   `}
                   >
-
                     <AnimatePresence mode="wait">
 
                       {completed ? (
@@ -167,10 +160,10 @@ export default function VisitStepper({
 
                     ${
                       completed
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-[#1ed760]"
                         : active
-                        ? "text-primary-600 dark:text-primary-400"
-                        : "text-slate-500 dark:text-slate-400"
+                        ? "text-[#1ed760]"
+                        : "text-th-secondary"
                     }
                   `}
                   >
