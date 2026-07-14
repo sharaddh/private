@@ -7,13 +7,13 @@ import { useTranslate } from "../../context/TranslateContext";
 
 // Safe color mapping to prevent Tailwind purging dynamically created class names
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
-  primary: { bg: "bg-primary-50 dark:bg-primary-500/10", text: "text-primary-600 dark:text-primary-400" },
-  blue: { bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-600 dark:text-blue-400" },
-  emerald: { bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400" },
-  violet: { bg: "bg-violet-50 dark:bg-violet-500/10", text: "text-violet-600 dark:text-violet-400" },
-  amber: { bg: "bg-amber-50 dark:bg-amber-500/10", text: "text-amber-600 dark:text-amber-400" },
-  rose: { bg: "bg-rose-50 dark:bg-rose-500/10", text: "text-rose-600 dark:text-rose-400" },
-  slate: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
+  primary: { bg: "bg-[#1ed760]/10", text: "text-[#1ed760]" },
+  blue: { bg: "bg-[#1ed760]/10", text: "text-[#1ed760]" },
+  emerald: { bg: "bg-[#1ed760]/10", text: "text-[#1ed760]" },
+  violet: { bg: "bg-[#1ed760]/10", text: "text-[#1ed760]" },
+  amber: { bg: "bg-[#1ed760]/10", text: "text-[#1ed760]" },
+  rose: { bg: "bg-[#e53935]/10", text: "text-[#e53935]" },
+  slate: { bg: "bg-th-elevated", text: "text-th-secondary" },
 };
 
 function SummaryCard({ icon, title, children, color = "primary" }: { icon: React.ReactNode; title: string; children: React.ReactNode; color?: string }) {
@@ -23,13 +23,13 @@ function SummaryCard({ icon, title, children, color = "primary" }: { icon: React
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-5 shadow-sm flex flex-col h-full"
+      className="bg-th-surface rounded-lg shadow-lg p-5 flex flex-col h-full"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${theme.bg} ${theme.text}`}>
+        <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${theme.bg} ${theme.text}`}>
           {icon}
         </div>
-        <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide">{title}</h4>
+        <h4 className="text-sm font-bold text-th-text tracking-wide">{title}</h4>
       </div>
       <div className="flex-1">
         {children}
@@ -85,29 +85,29 @@ export default function ConfirmationDashboard({
       content: (
         <div className="space-y-2">
           <div className="flex justify-between items-start">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Type", "प्रकार")}</span>
-            <span className="text-sm font-bold text-slate-900 dark:text-white">{VISIT_TYPE_LABELS[visitType] || visitType}</span>
+            <span className="text-xs text-th-secondary">{uiT("Type", "प्रकार")}</span>
+            <span className="text-sm font-bold text-th-text">{VISIT_TYPE_LABELS[visitType] || visitType}</span>
           </div>
           <div className="flex justify-between items-start">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Date", "तारीख")}</span>
-            <span className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-1">
-              <CalendarDays size={13} className="text-slate-400" />
+            <span className="text-xs text-th-secondary">{uiT("Date", "तारीख")}</span>
+            <span className="text-sm font-medium text-th-text flex items-center gap-1">
+              <CalendarDays size={13} className="text-th-secondary" />
               {formatDate(visitDate)}
             </span>
           </div>
           {visitDoctor && (
             <div className="flex justify-between items-start">
-              <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Doctor", "डॉक्टर")}</span>
-              <span className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-1">
-                <User size={13} className="text-slate-400" />
+              <span className="text-xs text-th-secondary">{uiT("Doctor", "डॉक्टर")}</span>
+              <span className="text-sm font-medium text-th-text flex items-center gap-1">
+                <User size={13} className="text-th-secondary" />
                 {visitDoctor}
               </span>
             </div>
           )}
           {visitRemarks && (
-            <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700/50">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Remarks", "टिप्पणी")}</span>
-              <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{visitRemarks}"</p>
+            <div className="pt-2 mt-2 border-t border-[#1f1f1f]">
+              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Remarks", "टिप्पणी")}</span>
+              <p className="text-sm text-th-text italic">"{visitRemarks}"</p>
             </div>
           )}
         </div>
@@ -121,14 +121,14 @@ export default function ConfirmationDashboard({
         <div className="space-y-3">
           {prescription.pd && (
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-500 dark:text-slate-400">{uiT("Pupillary Dist (PD)", "प्यूपिलरी डिस्ट (PD)")}</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">{prescription.pd}</span>
+              <span className="text-xs text-th-secondary">{uiT("Pupillary Dist (PD)", "प्यूपिलरी डिस्ट (PD)")}</span>
+              <span className="text-sm font-bold text-th-text">{prescription.pd}</span>
             </div>
           )}
           {prescription.problems && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">{uiT("Reported Problems", "बताई गई समस्याएँ")}</span>
-              <p className="text-sm font-medium text-rose-600 dark:text-rose-400 flex items-start gap-1.5">
+              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Reported Problems", "बताई गई समस्याएँ")}</span>
+              <p className="text-sm font-medium text-[#e53935] flex items-start gap-1.5">
                 <HeartPulse size={14} className="mt-0.5 flex-shrink-0" />
                 {prescription.problems}
               </p>
@@ -136,12 +136,12 @@ export default function ConfirmationDashboard({
           )}
           {prescription.notes && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">{uiT("Notes", "नोट्स")}</span>
-              <p className="text-sm text-slate-700 dark:text-slate-300">{prescription.notes}</p>
+              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Notes", "नोट्स")}</span>
+              <p className="text-sm text-th-text">{prescription.notes}</p>
             </div>
           )}
           {!prescription.pd && !prescription.problems && !prescription.notes && (
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-4">{uiT("No additional details recorded.", "कोई अतिरिक्त विवरण दर्ज नहीं किया गया।")}</p>
+            <p className="text-sm text-th-secondary italic text-center py-4">{uiT("No additional details recorded.", "कोई अतिरिक्त विवरण दर्ज नहीं किया गया।")}</p>
           )}
         </div>
       ),
@@ -153,38 +153,38 @@ export default function ConfirmationDashboard({
       content: (
         <div className="space-y-3">
           {orderFrames.map((f, i) => (
-            <div key={`f-${i}`} className="flex justify-between items-start gap-2">
+              <div key={`f-${i}`} className="flex justify-between items-start gap-2">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Frame", "फ्रेम")}</span>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{f.brand || uiT("Unknown Brand", "अज्ञात ब्रांड")} {f.model}</p>
-                {f.color && <p className="text-xs text-slate-500 dark:text-slate-400">{uiT("Color", "रंग")}: {f.color}</p>}
+                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Frame", "फ्रेम")}</span>
+                <p className="text-sm font-medium text-th-text">{f.brand || uiT("Unknown Brand", "अज्ञात ब्रांड")} {f.model}</p>
+                {f.color && <p className="text-xs text-th-secondary">{uiT("Color", "रंग")}: {f.color}</p>}
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">₹{f.price}</span>
+              <span className="text-sm font-bold text-th-text tabular-nums">₹{f.price}</span>
             </div>
           ))}
           {orderLenses.map((l, i) => (
-            <div key={`l-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+            <div key={`l-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Lens", "लेंस")}</span>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Lens", "लेंस")}</span>
+                <p className="text-sm font-medium text-th-text">
                   {l.brand || uiT("Standard", "मानक")} {l.features.join(" + ")}
                 </p>
                 {l.coating && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                  <p className="text-xs text-th-secondary flex items-center gap-1 mt-0.5">
                     <Sparkles size={12} /> {l.coating}
                   </p>
                 )}
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">₹{l.price}</span>
+              <span className="text-sm font-bold text-th-text tabular-nums">₹{l.price}</span>
             </div>
           ))}
           {orderAccessories.map((a, i) => (
-            <div key={`a-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+            <div key={`a-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]">
               <div>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">{uiT("Accessory", "एक्सेसरी")}</span>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{a.name}</p>
+                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Accessory", "एक्सेसरी")}</span>
+                <p className="text-sm font-medium text-th-text">{a.name}</p>
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">₹{a.price}</span>
+              <span className="text-sm font-bold text-th-text tabular-nums">₹{a.price}</span>
             </div>
           ))}
         </div>
@@ -198,41 +198,41 @@ export default function ConfirmationDashboard({
         <div className="space-y-2">
           {billItems.filter(i => i.description && i.price > 0).map((item, i) => (
             <div key={i} className="flex justify-between items-center text-sm">
-              <span className="text-slate-600 dark:text-slate-400 truncate pr-4">
-                {item.qty > 1 && <span className="text-slate-400 mr-1">{item.qty}x</span>}
+              <span className="text-th-secondary truncate pr-4">
+                {item.qty > 1 && <span className="text-th-secondary mr-1">{item.qty}x</span>}
                 {item.description}
               </span>
-              <span className="font-medium text-slate-900 dark:text-white tabular-nums shrink-0">₹{(item.price * item.qty).toFixed(0)}</span>
+              <span className="font-medium text-th-text tabular-nums shrink-0">₹{(item.price * item.qty).toFixed(0)}</span>
             </div>
           ))}
 
-          <div className="border-t-2 border-dashed border-slate-200 dark:border-slate-700 mt-3 pt-3 space-y-1.5">
+          <div className="border-t-2 border-dashed border-[#1f1f1f] mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500 dark:text-slate-400">{uiT("Subtotal", "उप-योग")}</span>
-              <span className="font-semibold text-slate-900 dark:text-white tabular-nums">₹{totalAmount.toLocaleString()}</span>
+              <span className="text-th-secondary">{uiT("Subtotal", "उप-योग")}</span>
+              <span className="font-semibold text-th-text tabular-nums">₹{totalAmount.toLocaleString()}</span>
             </div>
             {discountVal > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-rose-500">{uiT("Discount", "छूट")}</span>
-                <span className="font-bold text-rose-500 tabular-nums">-₹{discountVal.toLocaleString()}</span>
+                <span className="text-[#e53935]">{uiT("Discount", "छूट")}</span>
+                <span className="font-bold text-[#e53935] tabular-nums">-₹{discountVal.toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between text-base pt-1">
-              <span className="font-bold text-slate-900 dark:text-white">{uiT("Grand Total", "कुल योग")}</span>
-              <span className="font-black text-slate-900 dark:text-white tabular-nums">₹{finalTotal.toLocaleString()}</span>
+              <span className="font-bold text-th-text">{uiT("Grand Total", "कुल योग")}</span>
+              <span className="font-black text-th-text tabular-nums">₹{finalTotal.toLocaleString()}</span>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700/50 mt-3 pt-3 space-y-1.5">
+          <div className="border-t border-[#1f1f1f] mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between text-sm">
-              <span className="text-emerald-600 dark:text-emerald-500">{uiT("Advance Paid", "अग्रिम भुगतान")}</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-500 tabular-nums">₹{advancePaid.toLocaleString()}</span>
+              <span className="text-[#1ed760]">{uiT("Advance Paid", "अग्रिम भुगतान")}</span>
+              <span className="font-bold text-[#1ed760] tabular-nums">₹{advancePaid.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className={`font-bold ${isFullyPaid ? "text-emerald-500" : "text-amber-500"}`}>
+              <span className={`font-bold ${isFullyPaid ? "text-[#1ed760]" : "text-[#ff9500]"}`}>
                 {isFullyPaid ? uiT("Fully Paid", "पूर्ण भुगतान") : uiT("Balance Due", "शेष देय")}
               </span>
-              <span className={`font-black tabular-nums ${isFullyPaid ? "text-emerald-500" : "text-amber-500"}`}>
+              <span className={`font-black tabular-nums ${isFullyPaid ? "text-[#1ed760]" : "text-[#ff9500]"}`}>
                 ₹{balance.toLocaleString()}
               </span>
             </div>
@@ -248,18 +248,18 @@ export default function ConfirmationDashboard({
         <div className="space-y-4">
           {deliveryDate && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Expected Delivery", "अपेक्षित डिलीवरी")}</span>
-              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <CalendarDays size={15} className="text-primary-500" />
+              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Expected Delivery", "अपेक्षित डिलीवरी")}</span>
+              <p className="text-sm font-bold text-th-text flex items-center gap-2">
+                <CalendarDays size={15} className="text-[#1ed760]" />
                 {formatDate(deliveryDate)}
               </p>
             </div>
           )}
           {deliveryAddress && (
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">{uiT("Shipping Address", "शिपिंग पता")}</span>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-start gap-2">
-                <MapPin size={15} className="text-primary-500 mt-0.5 shrink-0" />
+              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Shipping Address", "शिपिंग पता")}</span>
+              <p className="text-sm font-medium text-th-text flex items-start gap-2">
+                <MapPin size={15} className="text-[#1ed760] mt-0.5 shrink-0" />
                 {deliveryAddress}
               </p>
             </div>
@@ -276,13 +276,13 @@ export default function ConfirmationDashboard({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4">
-        <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 shadow-sm">
-          <CheckCircle size={20} className="text-white" />
+      <div className="flex items-center gap-3 bg-[#1ed760]/10 shadow-[0_0_0_1px_#1ed760] rounded-lg p-4">
+        <div className="w-10 h-10 rounded-full bg-[#1ed760] flex items-center justify-center shrink-0">
+          <CheckCircle size={20} className="text-black" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-emerald-700 dark:text-emerald-400">{uiT("Ready to Save", "सेव करने के लिए तैयार")}</h2>
-          <p className="text-xs font-medium text-emerald-600/80 dark:text-emerald-400/80">{uiT("Please verify the details below before confirming the visit.", "कृपया यात्रा की पुष्टि करने से पहले नीचे दिए गए विवरण की जाँच करें।")}</p>
+          <h2 className="text-base font-bold text-[#1ed760]">{uiT("Ready to Save", "सेव करने के लिए तैयार")}</h2>
+          <p className="text-xs font-medium text-[#1ed760]/80">{uiT("Please verify the details below before confirming the visit.", "कृपया यात्रा की पुष्टि करने से पहले नीचे दिए गए विवरण की जाँच करें।")}</p>
         </div>
       </div>
 
