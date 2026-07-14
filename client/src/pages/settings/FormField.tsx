@@ -12,10 +12,10 @@ interface FormFieldProps {
 export function FormField({ label, icon, error, helperText, children }: FormFieldProps) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-th-secondary">{label}</label>
       <div className="relative">
         {icon && (
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted pointer-events-none">
             {icon}
           </div>
         )}
@@ -25,13 +25,13 @@ export function FormField({ label, icon, error, helperText, children }: FormFiel
         <motion.p
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-red-500 dark:text-red-400"
+          className="text-xs text-red-400"
         >
           {error}
         </motion.p>
       )}
       {helperText && !error && (
-        <p className="text-xs text-slate-400 dark:text-slate-500">{helperText}</p>
+        <p className="text-xs text-th-muted">{helperText}</p>
       )}
     </div>
   );
@@ -50,7 +50,7 @@ export function Input({ icon, label, error, helperText, className = "", ...props
     <input
       id={inputId}
       {...props}
-      className={`w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm ${icon ? "pl-10" : ""} ${className}`}
+      className={`w-full px-4 py-2.5 border border-th-border rounded-md focus:outline-none focus:border-[#1ed760] transition-all duration-300 bg-th-elevated text-th-text placeholder-th-muted ${icon ? "pl-10" : ""} ${className}`}
     />
   );
   if (label)
@@ -59,7 +59,7 @@ export function Input({ icon, label, error, helperText, className = "", ...props
         {input}
       </FormField>
     );
-  return icon ? <div className="relative">{icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{icon}</div>}{input}</div> : input;
+  return icon ? <div className="relative">{icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted pointer-events-none">{icon}</div>}{input}</div> : input;
 }
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -75,7 +75,7 @@ export function Textarea({ icon, label, error, helperText, className = "", ...pr
     <textarea
       id={inputId}
       {...props}
-      className={`w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm resize-none ${icon ? "pl-10" : ""} ${className}`}
+      className={`w-full px-4 py-2.5 border border-th-border rounded-md focus:outline-none focus:border-[#1ed760] transition-all duration-300 bg-th-elevated text-th-text placeholder-th-muted resize-none ${icon ? "pl-10" : ""} ${className}`}
     />
   );
   if (label)
@@ -100,7 +100,7 @@ export function Select({ label, error, icon, helperText, className = "", childre
     <select
       id={inputId}
       {...props}
-      className={`w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm ${icon ? "pl-10" : ""} ${className}`}
+      className={`w-full px-4 py-2.5 border border-th-border rounded-md focus:outline-none focus:border-[#1ed760] transition-all duration-300 bg-th-elevated text-th-text ${icon ? "pl-10" : ""} ${className}`}
     >
       {children}
     </select>
