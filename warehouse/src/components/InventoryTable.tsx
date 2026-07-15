@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Edit3, Trash2, ArrowDownFromLine } from "lucide-react";
 import type { InventoryItem } from "../types/inventory";
+import Badge from "./Badge";
 
 interface Props {
   items: InventoryItem[];
@@ -27,12 +28,12 @@ const InventoryRow = memo(function InventoryRow({ item, onEdit, onWithdraw, onDe
         {!item.brand && !item.model && <span className="text-th-muted">—</span>}
       </td>
       <td className="px-4 py-3">
-        <span className="badge-blue">{item.category}</span>
+        <Badge variant="blue">{item.category}</Badge>
       </td>
       <td className="px-4 py-3">
-        <span className={item.location === "warehouse" ? "badge-purple" : "badge-green"}>
+        <Badge variant={item.location === "warehouse" ? "purple" : "green"}>
           {item.location}
-        </span>
+        </Badge>
       </td>
       <td className={`px-4 py-3 text-body-bold text-right ${(item.quantity || 0) <= 5 ? "text-negative" : "text-th-text"}`}>
         {item.quantity}
