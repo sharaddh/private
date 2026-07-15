@@ -6,6 +6,7 @@ import { Users as UsersIcon, Trash2, UserPlus } from "lucide-react";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import { formatDate } from "../utils/helpers";
 
 interface WarehouseUser {
   id: string;
@@ -83,7 +84,7 @@ export default function Users() {
                     <td className="px-4 py-3 text-body-bold text-th-text">{u.username}</td>
                     <td className="px-4 py-3 text-body text-th-secondary">{u.name || "—"}</td>
                     <td className="px-4 py-3 text-body text-th-secondary">{u.mobile || "—"}</td>
-                    <td className="px-4 py-3 text-small text-th-muted">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-small text-th-muted">{formatDate(u.createdAt)}</td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => setDeleteTarget(u.id)} disabled={deleting === u.id}
                         className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted hover:text-negative transition-colors disabled:opacity-40"
