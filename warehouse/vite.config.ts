@@ -29,6 +29,7 @@ export default defineConfig({
   base: process.env.NODE_ENV === "production" ? "/warehouse/" : "/",
   server: {
     port: 5174,
+    host: true,
     proxy,
   },
   build: {
