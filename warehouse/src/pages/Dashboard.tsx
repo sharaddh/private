@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { Package, AlertTriangle, TrendingUp, ArrowRight, ShoppingCart, Boxes } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, ShoppingCart, Boxes } from "lucide-react";
 import { SkeletonStats } from "../components/Skeleton";
-import Spinner from "../components/Spinner";
+import StatCard from "../components/StatCard";
+import SectionHeader from "../components/SectionHeader";
+import QuickAction from "../components/QuickAction";
+import ItemRow from "../components/ItemRow";
+import { formatCurrency } from "../utils/helpers";
 
 interface Stats {
   totalItems: number;
@@ -49,95 +53,68 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card-hover">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-primary-500/20 rounded-lg flex items-center justify-center">
-              <Package size={20} className="text-primary-500" />
-            </div>
-            <span className="badge-green">Total</span>
-          </div>
-          <p className="stat-value text-th-text">{stats?.totalItems || 0}</p>
-          <p className="text-caption text-th-secondary">Total Lens SKUs</p>
-        </div>
-
-        <div className="glass-card-hover">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-negative/20 rounded-lg flex items-center justify-center">
-              <AlertTriangle size={20} className="text-negative" />
-            </div>
-            {(stats?.lowStock || 0) > 0 && <span className="badge-red">Alert</span>}
-          </div>
-          <p className="stat-value text-th-text">{stats?.lowStock || 0}</p>
-          <p className="text-caption text-th-secondary">Low Stock Items</p>
-        </div>
-
-        <div className="glass-card-hover">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-              <TrendingUp size={20} className="text-emerald-500" />
-            </div>
-            <span className="badge-green">Value</span>
-          </div>
-          <p className="stat-value text-th-text">₹{((stats?.totalValue || 0)).toLocaleString()}</p>
-          <p className="text-caption text-th-secondary">Stock Value</p>
-        </div>
-
-        <div className="glass-card-hover">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-              <Boxes size={20} className="text-purple-400" />
-            </div>
-            <span className="badge-purple">Warehouse</span>
-          </div>
-          <p className="stat-value text-th-text">{stats?.warehouseItems || 0}</p>
-          <p className="text-caption text-th-secondary">Warehouse Items</p>
-        </div>
+        <StatCard
+          icon={Package}
+          iconColor="text-primary-500"
+          iconBg="bg-primary-500/20"
+          value={stats?.totalItems || 0}
+          label="Total Lens SKUs"
+          badge={{ text: "Total", variant: "green" }}
+        />
+        <StatCard
+          icon={AlertTriangle}
+          iconColor="text-negative"
+          iconBg="bg-negative/20"
+          value={stats?.lowStock || 0}
+          label="Low Stock Items"
+          badge={(stats?.lowStock || 0) > 0 ? { text: "Alert", variant: "red" } : undefined}
+        />
+        <StatCard
+          icon={TrendingUp}
+          iconColor="text-emerald-500"
+          iconBg="bg-emerald-500/20"
+          value={formatCurrency(stats?.totalValue || 0)}
+          label="Stock Value"
+          badge={{ text: "Value", variant: "green" }}
+        />
+        <StatCard
+          icon={Boxes}
+          iconColor="text-purple-400"
+          iconBg="bg-purple-500/20"
+          value={stats?.warehouseItems || 0}
+          label="Warehouse Items"
+          badge={{ text: "Warehouse", variant: "purple" }}
+        />
       </div>
 
       <div className="glass-card">
-        <div className="card-header">
-          <h3 className="text-body-bold text-th-text">Quick Actions</h3>
-        </div>
+        <SectionHeader title="Quick Actions" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button onClick={() => navigate("/inventory/new")}
-            className="flex items-center justify-between p-4 bg-primary-500/10 rounded-md hover:bg-primary-500/20 transition-all group">
-            <div className="flex items-center gap-3">
-              <ShoppingCart size={18} className="text-primary-500" />
-              <span className="text-body-bold text-primary-500">Add New Lens</span>
-            </div>
-            <ArrowRight size={18} className="text-primary-500 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-          <button onClick={() => navigate("/inventory")}
-            className="flex items-center justify-between p-4 bg-announcement/10 rounded-md hover:bg-announcement/20 transition-all group">
-            <div className="flex items-center gap-3">
-              <Package size={18} className="text-announcement" />
-              <span className="text-body-bold text-announcement">View All Lenses</span>
-            </div>
-            <ArrowRight size={18} className="text-announcement group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          <QuickAction
+            icon={ShoppingCart}
+            label="Add New Lens"
+            color="primary-500"
+            onClick={() => navigate("/inventory/new")}
+          />
+          <QuickAction
+            icon={Package}
+            label="View All Lenses"
+            color="announcement"
+            onClick={() => navigate("/inventory")}
+          />
         </div>
       </div>
 
       {stats?.recentItems && stats.recentItems.length > 0 && (
         <div className="glass-card">
-          <div className="card-header">
-            <h3 className="text-body-bold text-th-text">Recent Items</h3>
-          </div>
+          <SectionHeader title="Recent Items" />
           <div className="divide-y divide-th-border">
             {stats.recentItems.map((item: any) => (
-              <div key={item._id} onClick={() => navigate(`/inventory/edit/${item._id}`)}
-                className="flex items-center justify-between p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md -mx-1">
-                <div>
-                  <p className="text-body text-th-text">{item.brand} {item.model}</p>
-                  <p className="text-small text-th-muted">{item.sku} — {item.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-body-bold text-th-text">Qty: {item.quantity}</p>
-                  <p className={`text-small ${(item.quantity || 0) <= 5 ? "text-negative" : "text-th-muted"}`}>
-                    {item.location}
-                  </p>
-                </div>
-              </div>
+              <ItemRow
+                key={item._id}
+                item={item}
+                onClick={() => navigate(`/inventory/edit/${item._id}`)}
+              />
             ))}
           </div>
         </div>
