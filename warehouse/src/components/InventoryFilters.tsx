@@ -1,4 +1,6 @@
-import { Search } from "lucide-react";
+import SearchInput from "./SearchInput";
+import FilterSelect from "./FilterSelect";
+import { LOCATIONS } from "../constants";
 
 interface Props {
   search: string;
@@ -13,16 +15,20 @@ export default function InventoryFilters({ search, onSearchChange, locationFilte
   return (
     <>
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-muted" />
-          <input type="text" placeholder="Search by SKU, brand, model..." value={search}
-            onChange={(e) => onSearchChange(e.target.value)} className="input-field pl-9" />
-        </div>
-        <select value={locationFilter} onChange={(e) => onLocationChange(e.target.value)} className="input-field w-auto">
-          <option value="all">All Locations</option>
-          <option value="warehouse">Warehouse</option>
-          <option value="shop">Shop</option>
-        </select>
+        <SearchInput
+          value={search}
+          onChange={onSearchChange}
+          placeholder="Search by SKU, brand, model..."
+          className="flex-1 min-w-[200px]"
+        />
+        <FilterSelect
+          value={locationFilter}
+          onChange={onLocationChange}
+          options={[
+            { value: "all", label: "All Locations" },
+            ...LOCATIONS.map((l) => ({ value: l, label: l.charAt(0).toUpperCase() + l.slice(1) })),
+          ]}
+        />
       </div>
       {filteredCount !== totalCount && (
         <p className="text-small text-th-muted">
