@@ -129,8 +129,50 @@ class WhatsAppService {
   get pairingCode() { return this._pairingCode; }
   get queueLength() { return this.messageQueue.length; }
 
+  private isSessionError(errMsg: string): boolean {
+    const lower = errMsg.toLowerCase();
+    return (
+      lower.includes("not authorized") ||
+      lower.includes("session expired") ||
+      lower.includes("unauthorized") ||
+      lower.includes("stream terminated") ||
+      lower.includes("stream errored") ||
+      lower.includes("connection closed") ||
+      lower.includes("connection terminated") ||
+      lower.includes("bad session") ||
+      lower.includes("logged out") ||
+      lower.includes("restart required") ||
+      lower.includes("missing creds") ||
+      lower.includes("no such user") ||
+      lower.includes("decode failed") ||
+      lower.includes("item-not-found") ||
+      lower.includes("connection closed")
+    );
+  }
+
+  private async handleSendFailure(errMsg: string): Promise<void> {
+    if (this.isSessionError(errMsg) && this._ready) {
+      console.log(`WhatsApp [${this.authCollection}]: stale session detected, reconnecting: ${errMsg}`);
+      this._ready = false;
+      this.cancelReconnect();
+      this.stopHealthCheck();
+      try {
+        const db = mongoose.connection.db;
+        if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
+      } catch {}
+      this.sock = null;
+      this.initializing = false;
+      this.initPromise = null;
+      this._error = "Session invalidated, reconnecting...";
+      setTimeout(() => {
+        this.init().catch((err) =>
+          console.error(`WhatsApp [${this.authCollection}] reconnect after session error failed:`, err)
+        );
+      }, 2000);
+    }
+  }
+
   async init() {
-    this.reconnectAttempts = 0;
     if (this.initializing) return this.initPromise;
     if (this.sock && this._ready) return;
     if (this.sock && !this._ready) {
@@ -382,6 +424,7 @@ class WhatsAppService {
 
   private async sendMessageNow(phone: string, message: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
+    let lastError = "";
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const jid = toJID(phone);
@@ -389,20 +432,22 @@ class WhatsAppService {
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown send error";
+        lastError = errMsg;
         if (attempt < retries) {
           console.log(`WhatsApp [${this.authCollection}] send retry ${attempt + 1}/${retries}:`, errMsg);
           await new Promise((r) => setTimeout(r, 2000));
           continue;
         }
         console.error(`WhatsApp [${this.authCollection}] send failed after ${retries + 1} attempts:`, errMsg);
-        return { ok: false, error: errMsg };
       }
     }
-    return { ok: false, error: "Exhausted retries" };
+    await this.handleSendFailure(lastError);
+    return { ok: false, error: lastError };
   }
 
   private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
+    let lastError = "";
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const jid = toJID(phone);
@@ -415,23 +460,23 @@ class WhatsAppService {
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown media send error";
+        lastError = errMsg;
         if (attempt < retries) {
           console.log(`WhatsApp [${this.authCollection}] sendMedia retry ${attempt + 1}/${retries} to ***${phone.slice(-4)}:`, errMsg);
           await new Promise((r) => setTimeout(r, 2000));
           continue;
         }
         console.error(`WhatsApp [${this.authCollection}] sendMedia failed after ${retries + 1} attempts to ***${phone.slice(-4)}:`, errMsg);
-        return { ok: false, error: errMsg };
       }
     }
-    return { ok: false, error: "Exhausted retries" };
+    await this.handleSendFailure(lastError);
+    return { ok: false, error: lastError };
   }
 
   async sendMessage(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
       console.log(`WhatsApp [${this.authCollection}]: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
-      if (this._ready) setTimeout(() => this.drainQueue(), 0);
       return { ok: false, error: "Not connected — message queued" };
     }
     return this.sendMessageNow(phone, message);
@@ -441,18 +486,24 @@ class WhatsAppService {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
       console.log(`WhatsApp [${this.authCollection}]: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
-      if (this._ready) setTimeout(() => this.drainQueue(), 0);
       return { ok: false, error: "Not connected — media queued" };
     }
     if (throwOnError) {
-      const jid = toJID(phone);
-      const buffer = Buffer.from(base64, "base64");
-      const isImage = mimetype.startsWith("image/");
-      const msg = isImage
-        ? { image: buffer, caption: caption || "" }
-        : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
-      await this.sock.sendMessage(jid, msg);
-      return { ok: true };
+      try {
+        const jid = toJID(phone);
+        const buffer = Buffer.from(base64, "base64");
+        const isImage = mimetype.startsWith("image/");
+        const msg = isImage
+          ? { image: buffer, caption: caption || "" }
+          : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
+        await this.sock.sendMessage(jid, msg);
+        return { ok: true };
+      } catch (err: any) {
+        const errMsg = err?.message || err?.toString() || "Unknown media send error";
+        console.error(`WhatsApp [${this.authCollection}] sendMedia (throwOnError) failed:`, errMsg);
+        await this.handleSendFailure(errMsg);
+        return { ok: false, error: errMsg };
+      }
     }
     return this.sendMediaNow(phone, base64, filename, mimetype, caption);
   }

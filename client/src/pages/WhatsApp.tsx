@@ -31,6 +31,9 @@ export default function WhatsApp() {
             } else if (res.data?.status === "error") {
               setQr(null);
               setStatus("error");
+            } else if (res.data?.status === "disconnected") {
+              setQr(null);
+              setStatus("disconnected");
             } else {
               setQr(null);
               setStatus("initializing");
@@ -165,6 +168,14 @@ export default function WhatsApp() {
               <p className="text-xs text-th-muted">
                 Session has been reset. A new QR code will appear shortly.
               </p>
+              <button
+                onClick={handleReinit}
+                disabled={reinitializing}
+                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
+              >
+                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
+                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
+              </button>
             </div>
           )}
 
