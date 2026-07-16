@@ -9,7 +9,71 @@ import {
   ChevronRight, Clock, Activity, MapPinned,
   IdCard, Wallet, TrendingUp, Stethoscope, Sparkles
 } from "lucide-react";
-import { formatEyeRx } from "../utils/rx";
+import { formatEyeRx, hasEyeData } from "../utils/rx";
+
+function getVisitId(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "object") {
+    const obj = value as Record<string, any>;
+    if (obj._id) return getVisitId(obj._id);
+    if (obj.toString && obj.toString !== Object.prototype.toString) return obj.toString();
+  }
+  return null;
+}
+
+function hasPrescriptionData(prescription: any): boolean {
+  if (!prescription || typeof prescription !== "object") return false;
+
+  const stack = [prescription];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+
+    if (typeof current === "number") {
+      return !Number.isNaN(current);
+    }
+
+    if (typeof current === "string") {
+      const trimmed = current.trim();
+      if (trimmed && !Number.isNaN(Number(trimmed))) return true;
+      continue;
+    }
+
+    if (Array.isArray(current)) {
+      stack.push(...current);
+      continue;
+    }
+
+    if (current && typeof current === "object") {
+      stack.push(...Object.values(current));
+    }
+  }
+
+  return false;
+}
+
+function findLinkedPrescription(prescriptions: any[], visit: any) {
+  const visitId = getVisitId(visit?._id);
+
+  const exactMatch = prescriptions.find((p: any) => getVisitId(p.visitId) === visitId);
+  if (exactMatch) return exactMatch;
+
+  const dataPrescriptions = prescriptions.filter((p: any) => hasPrescriptionData(p));
+  if (dataPrescriptions.length === 0) return null;
+
+  const visitDate = visit?.visitDate ? new Date(visit.visitDate).toISOString().split("T")[0] : null;
+  const dateMatch = visitDate
+    ? dataPrescriptions.find((p: any) => {
+        const createdDate = p.createdAt ? new Date(p.createdAt).toISOString().split("T")[0] : null;
+        return createdDate === visitDate;
+      })
+    : null;
+
+  if (dateMatch) return dateMatch;
+
+  return dataPrescriptions[0];
+}
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -504,9 +568,22 @@ export default function CustomerDetail() {
                           {v.visitType && (
                             <span className="px-2 py-0.5 bg-th-hover text-th-secondary text-[10px] font-bold uppercase tracking-wider rounded-lg">{v.visitType}</span>
                           )}
-                          {!prescriptions.some((p: any) => p.visitId === v._id) && (
-                            <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase tracking-wider rounded-lg">{uiT("Plain", "प्लेन")}</span>
-                          )}
+                          {(() => {
+                            const linkedPrescription = findLinkedPrescription(prescriptions, v);
+                            const rightHas = linkedPrescription && hasEyeData(linkedPrescription.rightEye);
+                            const leftHas = linkedPrescription && hasEyeData(linkedPrescription.leftEye);
+                            if (rightHas && leftHas) return null;
+                            return (
+                              <>
+                                {!rightHas && (
+                                  <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase tracking-wider rounded-lg">{uiT("R: Plain", "R: प्लेन")}</span>
+                                )}
+                                {!leftHas && (
+                                  <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase tracking-wider rounded-lg">{uiT("L: Plain", "L: प्लेन")}</span>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                         {v.doctorName && <p className="text-xs text-th-secondary mt-0.5 flex items-center gap-1"><Stethoscope size={11} /> Dr. {v.doctorName}</p>}
                         {v.remarks && <p className="text-xs text-th-secondary mt-0.5 line-clamp-1">{v.remarks}</p>}
