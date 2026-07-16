@@ -96,6 +96,12 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isAuthPage = ["/login", "/staff-login", "/register"].includes(location.pathname);
 
   useEffect(() => {
+    if (isAuthPage) { document.title = "KMJ Optical — Login"; return; }
+    const match = desktopMenu.find((m) => m.path === location.pathname);
+    document.title = match ? `KMJ Optical — ${match.label}` : "KMJ Optical";
+  }, [location.pathname, isAuthPage]);
+
+  useEffect(() => {
     if (!isAuthPage && !getToken()) navigate("/login", { replace: true });
   }, [isAuthPage, navigate]);
 
