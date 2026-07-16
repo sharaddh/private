@@ -589,8 +589,7 @@ class WhatsAppManager {
       const instance = this.getInstance(key);
       inits.push(instance.init().catch((err: any) => {
         console.error(`WhatsApp [${key}] init failed (initAll):`, err?.message || err);
-        return;
-      }));
+      }) as Promise<void>);
     }
     await Promise.allSettled(inits);
   }
