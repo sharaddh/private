@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
   Menu, X, Search, Phone, PlusCircle,
-  Megaphone, UserPlus, Hand, ChevronLeft, Building2,
+  Megaphone, UserPlus, Hand, ChevronLeft, Building2, Loader2,
 } from "lucide-react";
 
 interface DrawerForm {
@@ -80,6 +80,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<Record<string, unknown>>>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [drawerForm, setDrawerForm] = useState<DrawerForm>(initialDrawer);
   const [drawerSaving, setDrawerSaving] = useState(false);
@@ -106,17 +108,45 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSearch = useCallback((value: string) => {
+    const trimmed = value.trim();
     setSearchQuery(value);
+    setHighlightedIndex(-1);
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    if (value.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
+
+    if (!trimmed) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
     searchTimer.current = setTimeout(async () => {
-      const res = await get<Array<Record<string, unknown>>>("/api/customers?search=" + encodeURIComponent(value));
-      if (res.success) { const list = (res.data as any)?.data || res.data || []; setSearchResults(Array.isArray(list) ? list : []); setSearchOpen(true); }
-    }, 300);
+      const res = await get<Array<Record<string, unknown>>>('/api/customers?search=' + encodeURIComponent(trimmed));
+      if (res.success) {
+        const list = (res.data as any)?.data || res.data || [];
+        const results = Array.isArray(list) ? list : [];
+        setSearchResults(results);
+        setSearchOpen(results.length > 0 || trimmed.length > 0);
+      } else {
+        setSearchResults([]);
+        setSearchOpen(true);
+      }
+      setSearchLoading(false);
+    }, 250);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchOpen(false);
+    setSearchLoading(false);
+    setHighlightedIndex(-1);
   }, []);
 
   const goToCustomer = useCallback((id: string) => {
-    setSearchOpen(false); setSearchQuery(""); setSearchResults([]);
+    setSearchOpen(false); setSearchQuery(""); setSearchResults([]); setHighlightedIndex(-1);
     navigate(`/customers/${id}`);
   }, [navigate]);
 
@@ -126,6 +156,28 @@ export default function Layout({ children }: { children: ReactNode }) {
     setDrawerError("");
     setShowAddDrawer(true);
   }, [searchQuery]);
+
+  const handleSearchKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!searchOpen && searchResults.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % Math.max(searchResults.length, 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlightedIndex((prev) => (prev <= 0 ? Math.max(searchResults.length - 1, 0) : prev - 1));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (highlightedIndex >= 0 && searchResults[highlightedIndex]) {
+        goToCustomer(String((searchResults[highlightedIndex] as any)._id));
+      } else if (searchQuery.trim()) {
+        goAddCustomer();
+      }
+    } else if (event.key === "Escape") {
+      setSearchOpen(false);
+      setHighlightedIndex(-1);
+    }
+  }, [goAddCustomer, goToCustomer, highlightedIndex, searchOpen, searchQuery, searchResults]);
 
   const handleCreateCustomer = useCallback(async () => {
     if (!drawerForm.name.trim()) { setDrawerError("Name is required"); return; }
@@ -199,7 +251,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-px scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-px scrollbar-none">
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -237,39 +289,68 @@ export default function Layout({ children }: { children: ReactNode }) {
 
           {/* Search — pill-shaped */}
           <div ref={searchRef} className="relative flex-1 max-w-xs lg:max-w-sm mx-2 lg:mx-4">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-            <input type="text" placeholder="Search customers..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm text-th-text placeholder-th-secondary focus:outline-none focus:ring-1 focus:ring-white/20 transition-all bg-th-hover"
-              style={{ border: '1px solid rgb(124,124,124)' }} />
-            {searchOpen && searchQuery.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 max-h-80 overflow-y-auto z-50 animate-scale-in rounded-lg bg-th-surface" style={{ boxShadow: 'var(--shadow-elevated)' }}>
-                {searchResults.length > 0 ? (
-                  searchResults.map((c) => (
-                    <button key={c._id as string} type="button" onClick={() => goToCustomer(c._id as string)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-th-hover border-b border-th-hover last:border-b-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
-                        {String(c.name ?? "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-th-text truncate">{String(c.name ?? "")}</p>
-                        <p className="text-xs truncate text-th-secondary">
-                          {c.mobile && <><Phone size={9} className="inline mr-0.5" />{String(c.mobile)} · </>}
-                          {String(c.customerId ?? "")}
-                        </p>
-                      </div>
-                    </button>
-                  ))
+            <div className={`flex items-center rounded-xl border bg-gradient-to-r from-th-hover/90 to-th-hover/70 transition-all duration-200 ease-out ${searchOpen ? "border-[#1ed760]/35 ring-2 ring-[#1ed760]/20 shadow-[0_10px_30px_rgba(30,215,96,0.18)]" : "border-white/10 hover:border-[#1ed760]/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.2)]"}`}>
+              <div className={`ml-3 mr-2 flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
+                {searchLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <div className="px-4 py-6 text-center text-sm text-th-secondary">No customer found</div>
+                  <Search size={13} className={`transition-all duration-200 ${searchOpen ? "scale-110" : "scale-100"}`} />
                 )}
-                <div className="px-4 pb-3 pt-2 border-t border-th-hover">
+              </div>
+              <input type="text" placeholder={uiT("Search customers...", "ग्राहक खोजें...")}
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                onFocus={() => { if (searchQuery.trim()) setSearchOpen(true); }}
+                className="w-full bg-transparent py-2 pr-2 text-sm text-th-text placeholder-th-secondary outline-none transition-all duration-200"
+                aria-label="Search customers" />
+              {searchQuery.trim() ? (
+                <button type="button" onClick={clearSearch} className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
+                  <X size={14} />
+                </button>
+              ) : null}
+            </div>
+
+            {searchOpen && searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/10 bg-th-surface/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all duration-200 ease-out scrollbar-none">
+                {searchLoading ? (
+                  <div className="flex items-center justify-center gap-2 px-4 py-5 text-sm text-th-secondary">
+                    <Loader2 size={16} className="animate-spin" /> {uiT("Searching...", "खोज रहे हैं...")}
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((c, index) => {
+                    const isHighlighted = index === highlightedIndex;
+                    return (
+                      <button key={String(c._id ?? `${c.name}-${index}`)} type="button" onClick={() => goToCustomer(String(c._id ?? ""))}
+                        className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90 translate-x-0" : "hover:bg-th-hover hover:translate-x-[2px]"}`}>
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0 transition-transform duration-150 group-hover:scale-105" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
+                          {String(c.name ?? "?").charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-th-text truncate">{String(c.name ?? "")}</p>
+                          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-th-secondary">
+                            {c.mobile ? <><Phone size={9} className="shrink-0" />{String(c.mobile)}</> : null}
+                            {c.mobile && c.customerId ? <span className="mx-1">·</span> : null}
+                            {c.customerId ? <span>{String(c.customerId)}</span> : null}
+                          </p>
+                        </div>
+                        <div className="rounded-full bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
+                          {uiT("Open", "खुला")}
+                        </div>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm text-th-secondary">
+                    <p>{uiT("No customer found", "कोई ग्राहक नहीं मिला")}</p>
+                    <p className="mt-1 text-xs">{uiT("Try a name, phone number, or customer ID", "नाम, फोन नंबर या ग्राहक आईडी से कोशिश करें")}</p>
+                  </div>
+                )}
+                <div className="border-t border-th-hover/70 px-4 pb-3 pt-2">
                   <button onClick={goAddCustomer}
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-bold rounded-lg transition-all active:scale-95 uppercase tracking-wider"
-                    style={{ backgroundColor: '#1ed760', color: '#121212' }}>
-                    <UserPlus size={14} /> Add New Customer
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 active:scale-95 hover:brightness-105 hover:-translate-y-0.5"
+                    style={{ backgroundColor: '#1ed760' }}>
+                    <UserPlus size={14} /> {uiT("Add New Customer", "नया ग्राहक जोड़ें")}
                   </button>
                 </div>
               </div>
@@ -287,7 +368,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto pb-[64px] lg:pb-4 scrollbar-thin">
+        <main className="flex-1 overflow-auto pb-[64px] lg:pb-4 scrollbar-none">
           <div className="max-w-7xl mx-auto p-4 lg:p-5 animate-fade-in">{children}</div>
         </main>
       </div>
@@ -323,7 +404,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddDrawer(false)}>
           <div className="fixed inset-0 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} />
           <div onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-auto rounded-lg max-h-[90vh] overflow-y-auto animate-scale-in bg-th-surface" style={{ boxShadow: 'var(--shadow-elevated)' }}>
+            className="relative w-full max-w-lg mx-auto rounded-2xl max-h-[90vh] overflow-y-auto animate-scale-in bg-th-surface/95 backdrop-blur-xl" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.28)' }}>
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 pt-5 pb-3 bg-th-surface border-b border-th-hover">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
