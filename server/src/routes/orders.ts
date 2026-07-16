@@ -227,7 +227,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
         const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent.ok) console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+        if (!sent.ok) console.error(`WhatsApp: order ${order._id} ready message failed:`, sent.error);
       }
     }
 
@@ -239,7 +239,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
         const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent.ok) console.log(`WhatsApp: order delivered message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+        if (!sent.ok) console.error(`WhatsApp: order ${order._id} delivered message failed:`, sent.error);
       }
     }
 
