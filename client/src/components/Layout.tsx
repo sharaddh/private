@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, memo, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { get, post } from "../api";
 import { invalidateCache } from "../hooks/useCache";
@@ -51,6 +51,32 @@ const allMobileNav = [
 function getToken(): string | null {
   return localStorage.getItem("accessToken");
 }
+
+const SearchResultItem = memo(function SearchResultItem({ customer, isHighlighted, onClick }: {
+  customer: Record<string, unknown>;
+  isHighlighted: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90" : "hover:bg-th-hover"}`}>
+      <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0 transition-transform duration-150 group-hover:scale-105" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
+        {String(customer.name ?? "?").charAt(0).toUpperCase()}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-th-text truncate">{String(customer.name ?? "")}</p>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-th-secondary">
+          {customer.mobile ? <><Phone size={9} className="shrink-0" />{String(customer.mobile)}</> : null}
+          {customer.mobile && customer.customerId ? <span className="mx-1">·</span> : null}
+          {customer.customerId ? <span>{String(customer.customerId)}</span> : null}
+        </p>
+      </div>
+      <div className="rounded-lg bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
+        Open
+      </div>
+    </button>
+  );
+});
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { isStaff, currentBranch } = useAuth();
@@ -344,28 +370,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                     ))}
                   </div>
                 ) : searchResults.length > 0 ? (
-                  searchResults.map((c, index) => {
-                    const isHighlighted = index === highlightedIndex;
-                    return (
-                      <button key={String(c._id ?? `${c.name}-${index}`)} type="button" onClick={() => goToCustomer(String(c._id ?? ""))}
-                        className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90" : "hover:bg-th-hover"}`}>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0 transition-transform duration-150 group-hover:scale-105" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
-                          {String(c.name ?? "?").charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-th-text truncate">{String(c.name ?? "")}</p>
-                          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-th-secondary">
-                            {c.mobile ? <><Phone size={9} className="shrink-0" />{String(c.mobile)}</> : null}
-                            {c.mobile && c.customerId ? <span className="mx-1">·</span> : null}
-                            {c.customerId ? <span>{String(c.customerId)}</span> : null}
-                          </p>
-                        </div>
-                        <div className="rounded-lg bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
-                          {uiT("Open", "खुला")}
-                        </div>
-                      </button>
-                    );
-                  })
+                  searchResults.map((c, index) => (
+                    <SearchResultItem
+                      key={String(c._id ?? `${(c as any).name}-${index}`)}
+                      customer={c}
+                      isHighlighted={index === highlightedIndex}
+                      onClick={() => goToCustomer(String(c._id ?? ""))}
+                    />
+                  ))
                 ) : (
                   <div className="px-4 py-6 text-center text-sm text-th-secondary">
                     <p>{uiT("No customer found", "कोई ग्राहक नहीं मिला")}</p>
