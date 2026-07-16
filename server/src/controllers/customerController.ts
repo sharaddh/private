@@ -9,15 +9,24 @@ import { Delivery } from "../models/delivery";
 import { success, created, notFound } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function getAll(req: Request, res: Response) {
   const { phone, search, page = "1", limit = "1000" } = req.query;
   const filter: any = {};
   if (phone) filter.mobile = { $regex: phone as string, $options: "i" };
   if (search) {
-    const s = search as string;
+    const s = String(search).trim();
+    const searchRegex = { $regex: escapeRegex(s), $options: "i" };
     filter.$or = [
-      { name: { $regex: s, $options: "i" } },
-      { mobile: { $regex: s, $options: "i" } },
+      { name: searchRegex },
+      { mobile: searchRegex },
+      { customerId: searchRegex },
+      { email: searchRegex },
+      { alternateMobile: searchRegex },
+      { city: searchRegex },
     ];
   }
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
