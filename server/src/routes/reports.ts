@@ -22,8 +22,10 @@ router.get("/revenue", authenticate, cacheRoute(60), asyncHandler(async (req, re
       (paymentFilter.paymentDate as Record<string, unknown>).$gte = new Date(start as string);
     }
     if (end) {
-      (billFilter.createdAt as Record<string, unknown>).$lte = new Date(end as string);
-      (paymentFilter.paymentDate as Record<string, unknown>).$lte = new Date(end as string);
+      const endDate = new Date(end as string);
+      endDate.setUTCHours(23, 59, 59, 999);
+      (billFilter.createdAt as Record<string, unknown>).$lte = endDate;
+      (paymentFilter.paymentDate as Record<string, unknown>).$lte = endDate;
     }
   }
   const [billAgg, paymentAgg] = await Promise.all([
@@ -70,7 +72,11 @@ router.get("/customers", authenticate, cacheRoute(120), asyncHandler(async (req,
   if (start || end) {
     custFilter.createdAt = {};
     if (start) (custFilter.createdAt as Record<string, unknown>).$gte = new Date(start as string);
-    if (end) (custFilter.createdAt as Record<string, unknown>).$lte = new Date(end as string);
+    if (end) {
+      const endDate = new Date(end as string);
+      endDate.setUTCHours(23, 59, 59, 999);
+      (custFilter.createdAt as Record<string, unknown>).$lte = endDate;
+    }
   }
   if (city) custFilter.city = city;
   if (tag) custFilter.tags = tag;
