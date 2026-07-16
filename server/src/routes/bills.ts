@@ -87,10 +87,11 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
         );
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
-          await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          const sent = await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          if (!sent.ok) console.error(`WhatsApp: bill ${bill.billNumber} send failed:`, sent.error);
         }
-      } catch {
-        // WhatsApp notification is optional
+      } catch (err: any) {
+        console.error(`WhatsApp: bill ${bill.billNumber} fire-and-forget error:`, err?.message || err);
       }
     })();
   }
