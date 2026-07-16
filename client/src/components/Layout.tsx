@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import Lenis from "lenis";
 import { get, post } from "../api";
 import { invalidateCache } from "../hooks/useCache";
 import { useToast } from "../context/ToastContext";
@@ -210,6 +211,27 @@ export default function Layout({ children }: { children: ReactNode }) {
     }
   }, [drawerForm, navigate, toast]);
 
+  useEffect(() => {
+    const el = document.querySelector("main");
+    if (!el) return;
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      touchMultiplier: 2,
+      wrapper: el,
+      content: el,
+    });
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    const id = requestAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(id);
+      lenis.destroy();
+    };
+  }, [isAuthPage]);
+
   if (isAuthPage) return <>{children}</>;
 
   const isActive = (path: string) => location.pathname === path;
@@ -288,13 +310,13 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Search — pill-shaped */}
-          <div ref={searchRef} className="relative flex-1 max-w-xs lg:max-w-sm mx-2 lg:mx-4">
+          <div ref={searchRef} className="relative flex-1 max-w-sm lg:max-w-md mx-2 lg:mx-4">
             <div className={`flex items-center rounded-xl border bg-gradient-to-r from-th-hover/90 to-th-hover/70 transition-all duration-200 ease-out ${searchOpen ? "border-[#1ed760]/35 ring-2 ring-[#1ed760]/20 shadow-[0_10px_30px_rgba(30,215,96,0.18)]" : "border-white/10 hover:border-[#1ed760]/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.2)]"}`}>
-              <div className={`ml-3 mr-2 flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
+              <div className={`ml-3 mr-2 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
                 {searchLoading ? (
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={15} className="animate-spin" />
                 ) : (
-                  <Search size={13} className={`transition-all duration-200 ${searchOpen ? "scale-110" : "scale-100"}`} />
+                  <Search size={14} className={`transition-all duration-200 ${searchOpen ? "scale-110" : "scale-100"}`} />
                 )}
               </div>
               <input type="text" placeholder={uiT("Search customers...", "ग्राहक खोजें...")}
@@ -302,17 +324,17 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 onFocus={() => { if (searchQuery.trim()) setSearchOpen(true); }}
-                className="w-full bg-transparent py-2 pr-2 text-sm text-th-text placeholder-th-secondary outline-none transition-all duration-200"
+                className="w-full bg-transparent py-2.5 pr-2 text-sm text-th-text placeholder-th-secondary outline-none transition-all duration-200"
                 aria-label="Search customers" />
               {searchQuery.trim() ? (
-                <button type="button" onClick={clearSearch} className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
-                  <X size={14} />
+                <button type="button" onClick={clearSearch} className="mr-2 flex h-8 w-8 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
+                  <X size={15} />
                 </button>
               ) : null}
             </div>
 
             {searchOpen && searchQuery.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/10 bg-th-surface/95 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all duration-200 ease-out scrollbar-none">
+              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/10 bg-th-surface/75 backdrop-blur-2xl shadow-[0_18px_45px_rgba(0,0,0,0.3)] transition-all duration-200 ease-out scrollbar-none">
                 {searchLoading ? (
                   <div className="flex items-center justify-center gap-2 px-4 py-5 text-sm text-th-secondary">
                     <Loader2 size={16} className="animate-spin" /> {uiT("Searching...", "खोज रहे हैं...")}

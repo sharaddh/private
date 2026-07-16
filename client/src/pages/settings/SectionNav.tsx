@@ -16,7 +16,7 @@ interface SectionNavProps {
 export default function SectionNav({ sections, activeSection, onSectionClick }: SectionNavProps) {
   return (
     <nav className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-th-surface/95 backdrop-blur-xl border-b border-th-border shadow-sm mb-6 -mt-2">
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin max-w-4xl mx-auto">
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none max-w-4xl mx-auto">
         {sections.map((s) => (
           <button
             key={s.id}

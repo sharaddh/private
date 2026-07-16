@@ -506,7 +506,7 @@ export default function Dashboard() {
         {draftOrders.length === 0 ? (
           <EmptyState icon={PackageCheck} title={uiT("All clear!", "सब साफ!")} description={uiT("No draft orders pending lens classification.", "लेंस वर्गीकरण के लिए कोई ड्राफ्ट ऑर्डर लंबित नहीं।")} actionLabel={uiT("Create New Order", "नया ऑर्डर बनाएं")} onAction={() => navigate("/workspace")} />
         ) : (
-          <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-thin">
+          <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-none">
             {draftOrders.map((o) => {
               const id = o._id as string;
               const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
@@ -625,7 +625,7 @@ export default function Dashboard() {
       <div className="px-5 py-4 border-b border-th-border">
         <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-none">
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
@@ -662,7 +662,7 @@ export default function Dashboard() {
       <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Pending Bills", "लंबित बिल")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
@@ -696,7 +696,7 @@ export default function Dashboard() {
       <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Today's Deliveries", "आज की डिलीवरी")} count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.todayDeliveries.length === 0 ? (
           <EmptyState icon={Truck} title={uiT("No deliveries today", "आज कोई डिलीवरी नहीं")} description={uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।")} />
         ) : d.todayDeliveries.map((dl, idx) => {
@@ -738,7 +738,7 @@ export default function Dashboard() {
         <div className="px-5 py-4 border-b border-[#1ed760]/15 bg-gradient-to-r from-[#1ed760]/5 to-transparent">
           <SectionHeader title={uiT("Today's Delivered", "आज डिलीवर हुए")} count={delivered.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
         </div>
-        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
+        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
           {delivered.map((o, idx) => {
             const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
             const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
@@ -781,7 +781,7 @@ export default function Dashboard() {
       <div className="px-5 py-4 border-b border-th-card">
         <SectionHeader title={uiT("Recent Customers", "हाल के ग्राहक")} count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.recentCustomers.length === 0 ? (
           <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
         ) : d.recentCustomers.map((c, idx) => (
@@ -829,7 +829,7 @@ export default function Dashboard() {
           <Plus className="w-4 h-4" />
         </button>
       </div>
-      <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-thin pr-1">
+      <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-none pr-1">
         {todos.length === 0 ? (
           <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
