@@ -25,6 +25,7 @@ const ItemScan = lazy(() => import("./pages/ItemScan"));
 const Login = lazy(() => import("./pages/Login"));
 const StaffLogin = lazy(() => import("./pages/StaffLogin"));
 const Register = lazy(() => import("./pages/Register"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
   return <Suspense fallback={<PageSkeleton page={page} />}>{children}</Suspense>;
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/login" element={<SuspendedPage page="login"><Login /></SuspendedPage>} />
           <Route path="/staff-login" element={<SuspendedPage page="login"><StaffLogin /></SuspendedPage>} />
           <Route path="/register" element={<SuspendedPage page="register"><Register /></SuspendedPage>} />
+          <Route path="*" element={<SuspendedPage page="dashboard"><NotFound /></SuspendedPage>} />
         </Routes>
       </ErrorBoundary>
     </Layout>
