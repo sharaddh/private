@@ -44,8 +44,18 @@ router.get("/:id", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: v });
 }));
 
+const updateSchema = z.object({
+  visitDate: z.string().optional(),
+  doctorName: z.string().optional(),
+  shopId: z.string().optional(),
+  remarks: z.string().optional(),
+}).strict();
+
 router.put("/:id", authenticate, asyncHandler(async (req, res) => {
-  const v = await Visit.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true, runValidators: true }).lean();
+  const p = updateSchema.parse(req.body);
+  const updateData: Record<string, unknown> = { ...p };
+  if (p.visitDate) updateData.visitDate = new Date(p.visitDate);
+  const v = await Visit.findByIdAndUpdate(req.params.id, { $set: updateData }, { new: true, runValidators: true }).lean();
   if (!v) throw new AppError(404, "Not found");
   await invalidateCache("/api/visits");
   res.json({ success: true, data: v });
