@@ -28,7 +28,13 @@ const Register = lazy(() => import("./pages/Register"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
-  return <Suspense fallback={<PageSkeleton page={page} />}>{children}</Suspense>;
+  return (
+    <Suspense fallback={<PageSkeleton page={page} />}>
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
+    </Suspense>
+  );
 }
 
 export default function App() {
