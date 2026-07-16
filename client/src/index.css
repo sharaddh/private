@@ -331,6 +331,14 @@ body {
     background-color: var(--border-strong);
   }
 
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   /* ===== Mobile nav ===== */
 
   .nav-link {
