@@ -12,12 +12,26 @@ function fmtVal(v: number | string): string {
 }
 
 export function formatEyeRx(sph?: number, cyl?: number, axis?: number): string {
-  if (sph == null && cyl == null) return "—";
+  if (sph == null && cyl == null) return "Plain";
   const parts: string[] = [];
   if (sph != null) parts.push(`SPH ${fmtVal(sph)}`);
   if (cyl != null) parts.push(`CYL ${fmtVal(cyl)}`);
   if (axis != null) parts.push(`× ${axis}`);
   return parts.join("  ");
+}
+
+/** Check if a single eye has any prescription data */
+export function hasEyeData(eye: any): boolean {
+  if (!eye || typeof eye !== "object") return false;
+  for (const sub of ["dv", "nv", "pc"] as const) {
+    const section = eye[sub];
+    if (section && typeof section === "object") {
+      for (const val of Object.values(section)) {
+        if (val != null && val !== "") return true;
+      }
+    }
+  }
+  return false;
 }
 
 export function formatFullRx(
@@ -57,7 +71,7 @@ export function cleanEyeSet(e: any): Record<string, Record<string, any>> | undef
   const out: Record<string, Record<string, any>> = {};
   for (const k of ["dv", "nv", "pc"] as const) {
     if (e[k] && typeof e[k] === "object") {
-      const vals = Object.entries(e[k]).filter(([_, v]) => v);
+      const vals = Object.entries(e[k]).filter(([_, v]) => v != null && v !== "");
       if (vals.length) out[k] = Object.fromEntries(vals);
     }
   }
@@ -65,7 +79,7 @@ export function cleanEyeSet(e: any): Record<string, Record<string, any>> | undef
 }
 
 export function formatRxBrief(sph?: number, cyl?: number, axis?: number): string {
-  if (sph == null && cyl == null) return "—";
+  if (sph == null && cyl == null) return "Plain";
   const s = sph != null ? fmtVal(sph) : "—";
   const c = cyl != null ? fmtVal(cyl) : "—";
   const a = axis != null ? `×${axis}` : "";
