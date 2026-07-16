@@ -170,6 +170,8 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
   await Promise.all([
     invalidateCache("/api/customers"),
     invalidateCache("/api/visits"),
+    invalidateCache("/api/prescriptions"),
+    invalidateCache("/api/orders"),
     invalidateCache("/api/bills"),
     invalidateCache("/api/dashboard"),
   ]);
