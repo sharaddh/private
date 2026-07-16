@@ -587,7 +587,9 @@ class WhatsAppManager {
     const inits: Promise<void>[] = [];
     for (const key of branchKeys) {
       const instance = this.getInstance(key);
-      inits.push(instance.init().then(() => {}).catch(() => {}));
+      inits.push(instance.init().catch((err) => {
+        console.error(`WhatsApp [${key}] init failed (initAll):`, err?.message || err);
+      }));
     }
     await Promise.allSettled(inits);
   }
