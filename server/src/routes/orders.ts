@@ -87,16 +87,25 @@ router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(500);
 
-  // Attach pending bill amount per order
-  const enriched = await Promise.all(
-    list.map(async (o) => {
-      const custId = (o.customerId as any)?._id || o.customerId;
-      const bill = custId
-        ? await Bill.findOne({ customerId: custId }).sort({ createdAt: -1 }).select("pendingAmount totalAmount advancePaid billNumber")
-        : null;
-      return { ...o.toObject(), billInfo: bill || null };
-    })
-  );
+  // Batch-fetch latest bill per customer (avoids N+1)
+  const customerIds = [...new Set(list.map((o) => {
+    const cId = (o.customerId as any)?._id || o.customerId;
+    return cId ? String(cId) : null;
+  }).filter(Boolean))];
+
+  const latestBills = await Bill.aggregate([
+    { $match: { customerId: { $in: customerIds.map((id) => new (require("mongoose").Types.ObjectId)(id)) } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: "$customerId", bill: { $first: "$$ROOT" } } },
+  ]);
+
+  const billMap = new Map(latestBills.map((b: any) => [String(b._id), b.bill]));
+
+  const enriched = list.map((o) => {
+    const custId = (o.customerId as any)?._id || o.customerId;
+    const billInfo = custId ? billMap.get(String(custId)) || null : null;
+    return { ...o.toObject(), billInfo };
+  });
 
   res.json({ success: true, data: enriched });
 }));
