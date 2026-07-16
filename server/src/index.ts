@@ -25,10 +25,10 @@ process.on("uncaughtException", async (err) => {
       const branches = await Branch.find({ isActive: true }).lean();
       const branchKeys = branches.map((b) => (b as any)._id.toString());
       if (branchKeys.length > 0) {
-        await whatsappManager.initAll(branchKeys).catch(() => {});
+        await whatsappManager.initAll(branchKeys).catch((err) => console.error("WhatsApp initAll after restart failed:", err?.message || err));
       } else {
         const def = whatsappManager.getInstance();
-        await def.init().catch(() => {});
+        await def.init().catch((err) => console.error("WhatsApp default init after restart failed:", err?.message || err));
       }
     }, 2000);
     return;
