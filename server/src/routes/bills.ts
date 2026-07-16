@@ -113,8 +113,16 @@ router.get("/:id", authenticate, asyncHandler(async (req, res) => {
   res.json({ success: true, data: b });
 }));
 
+const updateSchema = z.object({
+  items: z.array(z.object({ description: z.string(), quantity: z.number().optional(), unitPrice: z.number().optional() })).optional(),
+  discount: z.number().optional(),
+  tax: z.number().optional(),
+  advancePaid: z.number().optional(),
+  status: z.string().optional(),
+}).strict();
+
 router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
-  const p = req.body;
+  const p = updateSchema.parse(req.body);
   const bill = await Bill.findById(req.params.id);
   if (!bill) throw new AppError(404, "Not found");
 
