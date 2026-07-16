@@ -83,10 +83,19 @@ function clearTokens(): void {
   } catch {}
 }
 
-async function request<T = unknown>(path: string, init: RequestOptions = {}): Promise<ApiResponse<T>> {
+async function request<T = unknown>(path: string, init: RequestOptions = {}, retries = 2): Promise<ApiResponse<T>> {
   const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register");
 
-  let res = await fetch(`${API_URL}${path}`, init);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, init);
+  } catch (err) {
+    if (retries > 0 && !init.signal?.aborted) {
+      await new Promise((r) => setTimeout(r, 1000));
+      return request<T>(path, init, retries - 1);
+    }
+    return { success: false, message: "Network error. Please check your connection." };
+  }
 
   if (res.status === 401 && !isLoginPath) {
     const refreshed = await tryRefresh();
