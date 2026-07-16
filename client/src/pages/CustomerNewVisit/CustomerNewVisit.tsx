@@ -277,14 +277,17 @@ export default function CustomerNewVisit() {
     try {
       const payload: any = { customerId: id };
 
-      if (usePrescription || visitDoctor || visitRemarks || visitDate) {
+      const rxRight = cleanEyeSet(prescription.rightEye);
+      const rxLeft = cleanEyeSet(prescription.leftEye);
+      const hasRxData = rxRight || rxLeft || prescription.pd;
+      if (usePrescription || hasRxData) {
         payload.visit = {};
         if (visitDate) payload.visit.visitDate = visitDate;
         if (visitDoctor) payload.visit.doctorName = visitDoctor;
         if (visitRemarks) payload.visit.remarks = visitRemarks;
         payload.prescription = {
-          rightEye: cleanEyeSet(prescription.rightEye),
-          leftEye: cleanEyeSet(prescription.leftEye),
+          rightEye: rxRight,
+          leftEye: rxLeft,
           pd: prescription.pd || undefined,
           notes: prescription.notes || undefined,
           problems: prescription.problems || undefined,
