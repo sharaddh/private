@@ -341,23 +341,26 @@ body {
 
   /* ===== Glass / Frosted surfaces ===== */
 
-  .glass-header {
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    background-color: color-mix(in srgb, var(--bg-surface) 78%, transparent);
-  }
-
-  .glass-panel {
-    backdrop-filter: blur(40px) saturate(1.6);
-    -webkit-backdrop-filter: blur(40px) saturate(1.6);
-    background-color: color-mix(in srgb, var(--bg-base) 62%, transparent);
-  }
-
+  .glass-header,
+  .glass-panel,
   .glass-nav {
-    backdrop-filter: blur(20px) saturate(1.4);
+    position: relative;
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    background-color: color-mix(in srgb, var(--bg-base) 82%, transparent);
+    backdrop-filter: blur(20px) saturate(1.4);
   }
+  .glass-header::before,
+  .glass-panel::before,
+  .glass-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .glass-header::before { background: var(--bg-surface); opacity: 0.82; }
+  .glass-panel::before { background: var(--bg-base); opacity: 0.62; }
+  .glass-panel { -webkit-backdrop-filter: blur(40px) saturate(1.6); backdrop-filter: blur(40px) saturate(1.6); }
+  .glass-nav::before { background: var(--bg-base); opacity: 0.85; }
 
   /* ===== Mobile nav ===== */
 
