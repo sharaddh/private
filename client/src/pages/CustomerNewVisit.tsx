@@ -294,10 +294,13 @@ export default function CustomerNewVisit() {
       if (visitRemarks) payload.visit.remarks = visitRemarks;
 
       // Only save prescription if user opted in
-      if (usePrescription) {
+      const rxRight = cleanEyeSet(prescription.rightEye);
+      const rxLeft = cleanEyeSet(prescription.leftEye);
+      const hasRxData = rxRight || rxLeft || prescription.pd;
+      if (usePrescription || hasRxData) {
         payload.prescription = {
-          rightEye: cleanEyeSet(prescription.rightEye),
-          leftEye: cleanEyeSet(prescription.leftEye),
+          rightEye: rxRight,
+          leftEye: rxLeft,
           pd: prescription.pd || undefined,
           notes: prescription.notes || undefined,
           problems: prescription.problems || undefined,
