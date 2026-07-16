@@ -306,7 +306,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Search — pill-shaped */}
-          <div ref={searchRef} className="relative flex-1 max-w-lg xl:max-w-xl mx-2 lg:mx-4">
+          <div ref={searchRef} className="relative flex-1 max-w-lg xl:max-w-xl mx-2 lg:mx-4 max-sm:mx-0 max-sm:max-w-none">
             <div className={`flex items-center rounded-xl border bg-gradient-to-r from-th-hover/90 to-th-hover/70 transition-all duration-200 ease-out ${searchOpen ? "border-[#1ed760]/35 ring-2 ring-[#1ed760]/20 shadow-[0_10px_30px_rgba(30,215,96,0.18)]" : "border-white/10 hover:border-[#1ed760]/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.2)]"}`}>
               <div className={`ml-3.5 mr-2.5 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
                 {searchLoading ? (
