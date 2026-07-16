@@ -317,7 +317,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 className="w-full bg-transparent py-3 pr-2 text-[15px] text-th-text placeholder-th-secondary outline-none transition-all duration-200"
                 aria-label="Search customers" />
               {searchQuery.trim() ? (
-                <button type="button" onClick={clearSearch} className="mr-2.5 flex h-9 w-9 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
+                <button type="button" onClick={clearSearch} aria-label="Clear search" className="mr-2.5 flex h-9 w-9 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
                   <X size={16} />
                 </button>
               ) : null}
@@ -424,7 +424,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </div>
                 <h3 className="text-base font-semibold text-th-text">New Customer</h3>
               </div>
-              <button onClick={() => setShowAddDrawer(false)} className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-secondary">
+              <button onClick={() => setShowAddDrawer(false)} aria-label="Close" className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-secondary">
                 <X size={16} />
               </button>
             </div>
