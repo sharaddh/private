@@ -274,7 +274,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-11 flex items-center justify-between px-4 lg:px-5 sticky top-0 z-10 bg-th-surface/90 backdrop-blur-xl border-b border-th-border shadow-sm">
+        <header className="h-14 flex items-center justify-between px-4 lg:px-5 sticky top-0 z-10 bg-th-surface/80 backdrop-blur-xl border-b border-th-border shadow-sm">
           <div className="flex items-center gap-2">
             <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-text lg:hidden">
               <Menu size={16} />
@@ -288,9 +288,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Search — pill-shaped */}
-          <div ref={searchRef} className="relative flex-1 max-w-md lg:max-w-lg mx-2 lg:mx-4">
+          <div ref={searchRef} className="relative flex-1 max-w-lg xl:max-w-xl mx-2 lg:mx-4">
             <div className={`flex items-center rounded-xl border bg-gradient-to-r from-th-hover/90 to-th-hover/70 transition-all duration-200 ease-out ${searchOpen ? "border-[#1ed760]/35 ring-2 ring-[#1ed760]/20 shadow-[0_10px_30px_rgba(30,215,96,0.18)]" : "border-white/10 hover:border-[#1ed760]/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.2)]"}`}>
-              <div className={`ml-3 mr-2.5 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
+              <div className={`ml-3.5 mr-2.5 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 ${searchLoading ? "bg-[#1ed760]/15 text-[#1ed760]" : searchOpen ? "bg-[#1ed760]/10 text-[#1ed760]" : "bg-white/5 text-th-secondary"}`}>
                 {searchLoading ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
@@ -302,7 +302,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 onFocus={() => { if (searchQuery.trim()) setSearchOpen(true); }}
-                className="w-full bg-transparent py-2.5 pr-2 text-[15px] text-th-text placeholder-th-secondary outline-none transition-all duration-200"
+                className="w-full bg-transparent py-3 pr-2 text-[15px] text-th-text placeholder-th-secondary outline-none transition-all duration-200"
                 aria-label="Search customers" />
               {searchQuery.trim() ? (
                 <button type="button" onClick={clearSearch} className="mr-2.5 flex h-9 w-9 items-center justify-center rounded-full text-th-secondary transition-all duration-200 hover:bg-white/10 hover:text-th-text">
@@ -312,7 +312,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
 
             {searchOpen && searchQuery.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/10 bg-th-base/90 backdrop-blur-2xl shadow-[0_18px_50px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out scrollbar-none">
+              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/15 bg-th-base/60 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] transition-all duration-200 ease-out scrollbar-none">
                 {searchLoading ? (
                   <div className="flex items-center justify-center gap-2 px-4 py-5 text-sm text-th-secondary">
                     <Loader2 size={16} className="animate-spin" /> {uiT("Searching...", "खोज रहे हैं...")}
@@ -322,7 +322,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     const isHighlighted = index === highlightedIndex;
                     return (
                       <button key={String(c._id ?? `${c.name}-${index}`)} type="button" onClick={() => goToCustomer(String(c._id ?? ""))}
-                        className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90 translate-x-0" : "hover:bg-th-hover hover:translate-x-[2px]"}`}>
+                        className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90" : "hover:bg-th-hover"}`}>
                         <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0 transition-transform duration-150 group-hover:scale-105" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
                           {String(c.name ?? "?").charAt(0).toUpperCase()}
                         </div>
@@ -334,7 +334,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                             {c.customerId ? <span>{String(c.customerId)}</span> : null}
                           </p>
                         </div>
-                        <div className="rounded-full bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
+                        <div className="rounded-lg bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
                           {uiT("Open", "खुला")}
                         </div>
                       </button>
