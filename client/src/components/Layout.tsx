@@ -107,6 +107,18 @@ export default function Layout({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        const input = searchRef.current?.querySelector("input");
+        if (input) { input.focus(); input.select(); }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleSearch = useCallback((value: string) => {
     const trimmed = value.trim();
     setSearchQuery(value);
