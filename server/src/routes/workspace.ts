@@ -11,6 +11,9 @@ import { authenticate } from "../middleware/auth";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { invalidateCache } from "../middleware/cache";
+import { whatsappManager } from "../services/whatsapp";
+import { generateBillPdf } from "../utils/pdf";
+import { Settings } from "../models/settings";
 
 const router = Router();
 
@@ -132,6 +135,37 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
     });
     await bill.save();
     result.bill = bill;
+
+    // WhatsApp fire-and-forget bill PDF
+    const branchId = (req as any).branchId as string;
+    if (branchId && customer.mobile) {
+      (async () => {
+        try {
+          const wa = whatsappManager.getInstance(branchId);
+          const settings = await Settings.findOne().sort({ updatedAt: -1 }).lean();
+          const pdfBuffer = generateBillPdf(
+            {
+              billNumber: bill.billNumber, createdAt: bill.createdAt, items: bill.items,
+              subtotal: bill.subtotal, discount: bill.discount, tax: (bill as any).tax,
+              advancePaid: bill.advancePaid, pendingAmount: bill.pendingAmount,
+              totalAmount: bill.totalAmount, status: bill.status,
+            },
+            {
+              name: customer.name, mobile: customer.mobile, address: customer.address, customerId: customer.customerId,
+            },
+            {
+              shopName: settings?.shopName || "KMJ Optical", shopAddress: settings?.shopAddress || "",
+              shopPhone: settings?.shopPhone || "", shopEmail: settings?.shopEmail || "", logo: settings?.logo || "",
+            }
+          );
+          const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${(bill.totalAmount || 0).toFixed(2)}.`;
+          const sent = await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          if (!sent.ok) console.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed:`, sent.error);
+        } catch (err: any) {
+          console.error(`WhatsApp [workspace]: bill ${bill.billNumber} fire-and-forget error:`, err?.message || err);
+        }
+      })();
+    }
 
     const billTotalAmount = body.bill.totalAmount || 0;
     const billPendingAmount = Math.max(0, billTotalAmount - (body.payment?.amount || 0));

@@ -7,11 +7,13 @@ const FIELDS = ["sph", "cyl", "axis", "va"];
 function EyeRow({
   label,
   data,
-  onChange
+  onChange,
+  onEdit
 }: {
   label: string;
   data: any;
   onChange: (v: any) => void;
+  onEdit?: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 sm:items-center">
@@ -32,7 +34,7 @@ function EyeRow({
             <input
               placeholder="-"
               value={data?.[f] || ""}
-              onChange={(e) => onChange({ ...data, [f]: e.target.value })}
+              onChange={(e) => { onEdit?.(); onChange({ ...data, [f]: e.target.value }); }}
               className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
@@ -68,10 +70,16 @@ interface Prescription {
 interface Props {
   prescription: Prescription;
   setPrescription: (p: Prescription | ((prev: Prescription) => Prescription)) => void;
+  usePrescription?: boolean;
+  setUsePrescription?: (v: boolean | ((prev: boolean) => boolean)) => void;
 }
 
-export default function PrescriptionPanel({ prescription, setPrescription }: Props) {
+export default function PrescriptionPanel({ prescription, setPrescription, usePrescription, setUsePrescription }: Props) {
   const { uiT } = useTranslate();
+
+  function autoEnable() {
+    if (!usePrescription && setUsePrescription) setUsePrescription(true);
+  }
 
   function setRight(k: string, v: any) {
     setPrescription((p) => ({ ...p, rightEye: { ...p.rightEye, [k]: v } }));
@@ -115,6 +123,7 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
                 label={label}
                 data={prescription.rightEye[key]}
                 onChange={(v) => setRight(key, v)}
+                onEdit={autoEnable}
               />
             ))}
           </div>
@@ -141,6 +150,7 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
                 label={label}
                 data={prescription.leftEye[key]}
                 onChange={(v) => setLeft(key, v)}
+                onEdit={autoEnable}
               />
             ))}
           </div>
@@ -156,7 +166,7 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
             <input
               placeholder={uiT("Pupillary Distance (mm)", "प्यूपिलरी दूरी (mm)")}
               value={prescription.pd}
-              onChange={(e) => setPrescription((p) => ({ ...p, pd: e.target.value }))}
+              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, pd: e.target.value })); }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
@@ -165,7 +175,7 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
             <input
               placeholder={uiT("Problems (e.g. headaches)", "समस्याएँ (जैसे सिरदर्द)")}
               value={prescription.problems}
-              onChange={(e) => setPrescription((p) => ({ ...p, problems: e.target.value }))}
+              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, problems: e.target.value })); }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
@@ -174,7 +184,7 @@ export default function PrescriptionPanel({ prescription, setPrescription }: Pro
             <input
               placeholder={uiT("Additional notes", "अतिरिक्त नोट्स")}
               value={prescription.notes}
-              onChange={(e) => setPrescription((p) => ({ ...p, notes: e.target.value }))}
+              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, notes: e.target.value })); }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>

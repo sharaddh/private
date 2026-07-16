@@ -330,37 +330,40 @@ class WhatsAppService {
     if (this.drainInProgress) return;
     this.drainInProgress = true;
 
-    const items = this.messageQueue.splice(0);
-    if (items.length === 0) {
+    try {
+      const items = this.messageQueue.splice(0);
+      if (items.length === 0) {
+        this.drainInProgress = false;
+        return;
+      }
+
+      console.log(`WhatsApp [${this.authCollection}]: draining ${items.length} queued messages...`);
+
+      let sent = 0;
+      let failed = 0;
+
+      for (const item of items) {
+        if (!this._ready) {
+          this.messageQueue.unshift(...items.slice(items.indexOf(item)));
+          break;
+        }
+
+        let ok: boolean;
+        if (item.type === "text") {
+          const res = await this.sendMessageNow(item.phone, item.message);
+          ok = res.ok;
+        } else {
+          const res = await this.sendMediaNow(item.phone, item.base64, item.filename, item.mimetype, item.caption);
+          ok = res.ok;
+        }
+        if (ok) sent++; else failed++;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      console.log(`WhatsApp [${this.authCollection}] queue drain: ${sent} sent, ${failed} failed`);
+    } finally {
       this.drainInProgress = false;
-      return;
     }
-
-    console.log(`WhatsApp [${this.authCollection}]: draining ${items.length} queued messages...`);
-
-    let sent = 0;
-    let failed = 0;
-
-    for (const item of items) {
-      if (!this._ready) {
-        this.messageQueue.unshift(...items.slice(items.indexOf(item)));
-        break;
-      }
-
-      let ok: boolean;
-      if (item.type === "text") {
-        const res = await this.sendMessageNow(item.phone, item.message);
-        ok = res.ok;
-      } else {
-        const res = await this.sendMediaNow(item.phone, item.base64, item.filename, item.mimetype, item.caption);
-        ok = res.ok;
-      }
-      if (ok) sent++; else failed++;
-      await new Promise((r) => setTimeout(r, 500));
-    }
-
-    console.log(`WhatsApp [${this.authCollection}] queue drain: ${sent} sent, ${failed} failed`);
-    this.drainInProgress = false;
   }
 
   private async sendMessageNow(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {

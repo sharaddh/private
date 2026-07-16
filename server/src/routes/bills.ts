@@ -10,6 +10,7 @@ import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { whatsappManager } from "../services/whatsapp";
 import { generateBillPdf } from "../utils/pdf";
 import { AppError } from "../middleware/errorHandler";
+import { normalizePhone } from "../utils/phone";
 
 const router = Router();
 
@@ -69,7 +70,7 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
     (async () => {
       try {
         const wa = whatsappManager.getInstance(branchId);
-        const settings = await Settings.findOne().lean();
+        const settings = await Settings.findOne().sort({ updatedAt: -1 }).lean();
         const pdfBuffer = generateBillPdf(
           {
             billNumber: bill.billNumber, createdAt: bill.createdAt, items: bill.items,
@@ -87,7 +88,8 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
         );
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
-          const sent = await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          const phone = normalizePhone(customer.mobile);
+          const sent = await wa.sendMedia(phone, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
           if (!sent.ok) console.error(`WhatsApp: bill ${bill.billNumber} send failed:`, sent.error);
         }
       } catch (err: any) {

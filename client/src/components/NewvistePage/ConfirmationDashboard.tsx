@@ -4,6 +4,7 @@ import {
   Truck, Activity, MapPin, CalendarDays, User, HeartPulse, Sparkles
 } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
+import { hasEyeData } from "../../utils/rx";
 
 // Safe color mapping to prevent Tailwind purging dynamically created class names
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
@@ -49,7 +50,7 @@ const formatDate = (dateStr: string) => {
 
 interface Props {
   visitType: string; visitDate: string; visitDoctor: string; visitRemarks: string;
-  usePrescription: boolean; prescription: { pd: string; problems: string; notes: string };
+  usePrescription: boolean; prescription: { pd: string; problems: string; notes: string; rightEye: Record<string, any>; leftEye: Record<string, any> };
   orderFrames: Array<{ brand: string; model: string; color: string; price: number }>;
   orderLenses: Array<{ brand: string; features: string[]; coating: string; price: number }>;
   orderAccessories: Array<{ name: string; price: number }>;
@@ -119,6 +120,39 @@ export default function ConfirmationDashboard({
       icon: <Eye size={18} />,
       content: (
         <div className="space-y-3">
+          {(() => {
+            const hasRight = prescription.rightEye && hasEyeData(prescription.rightEye);
+            const hasLeft = prescription.leftEye && hasEyeData(prescription.leftEye);
+            if (!hasRight && !hasLeft) return null;
+            const rows = ["dv", "nv", "pc"] as const;
+            const labels: Record<string, string> = { dv: "Dist", nv: "Near", pc: "Prog" };
+            return (
+              <div className="border border-[#1f1f1f] rounded-md overflow-hidden">
+                <div className="grid grid-cols-3 text-[10px] font-bold text-th-secondary uppercase bg-th-elevated px-3 py-1.5">
+                  <span>{uiT("Type", "प्रकार")}</span>
+                  <span className="text-center">{uiT("Right", "दायाँ")}</span>
+                  <span className="text-center">{uiT("Left", "बायाँ")}</span>
+                </div>
+                {rows.map((r) => {
+                  const rd = prescription.rightEye?.[r];
+                  const ld = prescription.leftEye?.[r];
+                  if (!rd && !ld) return null;
+                  const format = (d: any) => {
+                    if (!d) return "—";
+                    const parts = [d.sph, d.cyl, d.axis, d.va].filter(Boolean);
+                    return parts.length ? parts.join(" ") : "—";
+                  };
+                  return (
+                    <div key={r} className="grid grid-cols-3 text-xs border-t border-[#1f1f1f] px-3 py-1.5">
+                      <span className="text-th-secondary font-medium">{labels[r]}</span>
+                      <span className="text-center text-th-text font-medium">{format(rd)}</span>
+                      <span className="text-center text-th-text font-medium">{format(ld)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           {prescription.pd && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-th-secondary">{uiT("Pupillary Dist (PD)", "प्यूपिलरी डिस्ट (PD)")}</span>
