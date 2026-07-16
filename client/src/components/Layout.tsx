@@ -274,8 +274,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-14 flex items-center justify-between px-4 lg:px-5 sticky top-0 z-10 border-b border-th-border shadow-sm"
-          style={{ backdropFilter: 'blur(20px) saturate(1.3)', WebkitBackdropFilter: 'blur(20px) saturate(1.3)', backgroundColor: 'rgba(18,18,18,0.82)' }}>
+        <header className="h-14 flex items-center justify-between px-4 lg:px-5 sticky top-0 z-10 border-b border-th-border shadow-sm glass-header">
           <div className="flex items-center gap-2">
             <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-text lg:hidden">
               <Menu size={16} />
@@ -313,8 +312,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
 
             {searchOpen && searchQuery.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] transition-all duration-200 ease-out scrollbar-none"
-                style={{ backdropFilter: 'blur(40px) saturate(1.5)', WebkitBackdropFilter: 'blur(40px) saturate(1.5)', backgroundColor: 'rgba(18,18,18,0.65)' }}>
+              <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] transition-all duration-200 ease-out scrollbar-none glass-panel">
                 {searchLoading ? (
                   <div className="flex items-center justify-center gap-2 px-4 py-5 text-sm text-th-secondary">
                     <Loader2 size={16} className="animate-spin" /> {uiT("Searching...", "खोज रहे हैं...")}
@@ -377,8 +375,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom nav — frosted glass */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-        <div className="border-t border-th-hover"
-          style={{ backdropFilter: 'blur(20px) saturate(1.3)', WebkitBackdropFilter: 'blur(20px) saturate(1.3)', backgroundColor: 'rgba(18,18,18,0.85)' }}>
+        <div className="border-t border-th-hover glass-nav">
           <div className="flex items-center justify-around h-16 px-2 pb-1">
             {mobileNav.map((item) => {
               const Icon = item.icon;

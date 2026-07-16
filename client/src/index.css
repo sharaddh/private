@@ -339,6 +339,26 @@ body {
     display: none;
   }
 
+  /* ===== Glass / Frosted surfaces ===== */
+
+  .glass-header {
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    background-color: color-mix(in srgb, var(--bg-surface) 78%, transparent);
+  }
+
+  .glass-panel {
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    background-color: color-mix(in srgb, var(--bg-base) 62%, transparent);
+  }
+
+  .glass-nav {
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    background-color: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  }
+
   /* ===== Mobile nav ===== */
 
   .nav-link {
