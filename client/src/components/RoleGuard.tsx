@@ -11,7 +11,7 @@ function isStaffAllowed(path: string): boolean {
 
 export default function RoleGuard({ children, path }: { children: React.ReactNode; path: string }) {
   const { isStaff, isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <>{children}</>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (isStaff && !isStaffAllowed(path)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
