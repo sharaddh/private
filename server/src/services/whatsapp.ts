@@ -95,6 +95,8 @@ const FALLBACK_WA_VERSION: [number, number, number] = [2, 3000, 1035194821];
 const QR_TIMEOUT_MS = 120000;
 const MAX_RECONNECT_ATTEMPTS = 15;
 const RECONNECT_BASE_DELAY = 5000;
+const HEALTH_CHECK_INTERVAL_MS = 60000;
+const MAX_RECONNECT_DELAY = 300000;
 
 class WhatsAppService {
   private sock: ReturnType<typeof makeWASocket> | null = null;
@@ -113,6 +115,8 @@ class WhatsAppService {
   private saveCredsFn: (() => Promise<void>) | null = null;
   private _broadcastAborted = false;
   private authCollection: string;
+  private healthCheckTimer: ReturnType<typeof setInterval> | null = null;
+  private _lastActivityAt = 0;
 
   constructor(branchKey: string) {
     this.authCollection = branchKey ? `baileys_auth_${branchKey}` : "baileys_auth";
@@ -235,8 +239,10 @@ class WhatsAppService {
           this._error = null;
           this._pairingCode = null;
           this.reconnectAttempts = 0;
+          this._lastActivityAt = Date.now();
           if (qrTimer) clearTimeout(qrTimer);
           console.log(`WhatsApp [${this.authCollection}]: connected!`);
+          this.startHealthCheck();
           this.drainQueue();
           if (!resolved) {
             resolved = true;
@@ -374,35 +380,51 @@ class WhatsAppService {
     }
   }
 
-  private async sendMessageNow(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
+  private async sendMessageNow(phone: string, message: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
-    try {
-      const jid = toJID(phone);
-      await this.sock.sendMessage(jid, { text: message });
-      return { ok: true };
-    } catch (err: any) {
-      const errMsg = err?.message || err?.toString() || "Unknown send error";
-      console.error(`WhatsApp [${this.authCollection}] send error:`, errMsg);
-      return { ok: false, error: errMsg };
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const jid = toJID(phone);
+        await this.sock.sendMessage(jid, { text: message });
+        return { ok: true };
+      } catch (err: any) {
+        const errMsg = err?.message || err?.toString() || "Unknown send error";
+        if (attempt < retries) {
+          console.log(`WhatsApp [${this.authCollection}] send retry ${attempt + 1}/${retries}:`, errMsg);
+          await new Promise((r) => setTimeout(r, 2000));
+          continue;
+        }
+        console.error(`WhatsApp [${this.authCollection}] send failed after ${retries + 1} attempts:`, errMsg);
+        return { ok: false, error: errMsg };
+      }
     }
+    return { ok: false, error: "Exhausted retries" };
   }
 
-  private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string): Promise<{ ok: boolean; error?: string }> {
+  private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
-    try {
-      const jid = toJID(phone);
-      const buffer = Buffer.from(base64, "base64");
-      const isImage = mimetype.startsWith("image/");
-      const msg = isImage
-        ? { image: buffer, caption: caption || "" }
-        : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
-      await this.sock.sendMessage(jid, msg);
-      return { ok: true };
-    } catch (err: any) {
-      const errMsg = err?.message || err?.toString() || "Unknown media send error";
-      console.error(`WhatsApp [${this.authCollection}] sendMedia error:`, errMsg);
-      return { ok: false, error: errMsg };
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const jid = toJID(phone);
+        const buffer = Buffer.from(base64, "base64");
+        const isImage = mimetype.startsWith("image/");
+        const msg = isImage
+          ? { image: buffer, caption: caption || "" }
+          : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
+        await this.sock.sendMessage(jid, msg);
+        return { ok: true };
+      } catch (err: any) {
+        const errMsg = err?.message || err?.toString() || "Unknown media send error";
+        if (attempt < retries) {
+          console.log(`WhatsApp [${this.authCollection}] sendMedia retry ${attempt + 1}/${retries} to ***${phone.slice(-4)}:`, errMsg);
+          await new Promise((r) => setTimeout(r, 2000));
+          continue;
+        }
+        console.error(`WhatsApp [${this.authCollection}] sendMedia failed after ${retries + 1} attempts to ***${phone.slice(-4)}:`, errMsg);
+        return { ok: false, error: errMsg };
+      }
     }
+    return { ok: false, error: "Exhausted retries" };
   }
 
   async sendMessage(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
@@ -503,25 +525,29 @@ class WhatsAppService {
   }
 
   async getStatus() {
-    if (this._error) return { status: "error", error: this._error };
+    if (this._error) return { status: "error", error: this._error, queueLength: this.messageQueue.length };
     if (this._ready) return { status: "connected", queueLength: this.messageQueue.length };
     if (this._pairingCode) return { status: "pairing", pairingCode: this._pairingCode };
     if (this._qr) return { status: "qr", qr: this._qrBase64, queueLength: this.messageQueue.length };
-    return { status: "initializing", queueLength: this.messageQueue.length };
+    if (this.initializing) return { status: "initializing", queueLength: this.messageQueue.length };
+    return { status: "disconnected", queueLength: this.messageQueue.length };
   }
 
   private scheduleReconnect() {
     this.cancelReconnect();
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.error(`WhatsApp [${this.authCollection}]: max reconnect attempts reached, giving up`);
-      this._error = "Connection lost. Click 'Retry Connection' to try again.";
+      console.log(`WhatsApp [${this.authCollection}]: max reconnect attempts reached, will retry via health check`);
+      this._error = "Connection lost. Retrying automatically...";
       return;
     }
     this.reconnectAttempts++;
-    const delay = RECONNECT_BASE_DELAY * this.reconnectAttempts;
+    const delay = Math.min(RECONNECT_BASE_DELAY * this.reconnectAttempts, MAX_RECONNECT_DELAY);
     console.log(`WhatsApp [${this.authCollection}]: scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
+      this.initializing = false;
+      this.initPromise = null;
+      this.sock = null;
       this.init().catch((err) => console.error(`WhatsApp [${this.authCollection}] reconnect failed:`, err));
     }, delay);
   }
@@ -533,8 +559,31 @@ class WhatsAppService {
     }
   }
 
+  private startHealthCheck() {
+    this.stopHealthCheck();
+    this.healthCheckTimer = setInterval(() => {
+      if (!this._ready || !this.sock) {
+        console.log(`WhatsApp [${this.authCollection}]: health check — not ready, triggering reconnect`);
+        this.initializing = false;
+        this.initPromise = null;
+        this.sock = null;
+        this.init().catch(() => {});
+      } else {
+        this._lastActivityAt = Date.now();
+      }
+    }, HEALTH_CHECK_INTERVAL_MS);
+  }
+
+  private stopHealthCheck() {
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+      this.healthCheckTimer = null;
+    }
+  }
+
   async destroy() {
     this.cancelReconnect();
+    this.stopHealthCheck();
     if (this.sock) {
       try {
         this.sock.ev.removeAllListeners("connection.update");
@@ -572,6 +621,7 @@ class WhatsAppService {
 class WhatsAppManager {
   private instances = new Map<string, WhatsAppService>();
   private defaultInstance: WhatsAppService;
+  private defaultInitialized = false;
 
   constructor() {
     this.defaultInstance = new WhatsAppService("");
@@ -583,12 +633,19 @@ class WhatsAppManager {
    */
   getInstance(branchKey?: string | null): WhatsAppService {
     const key = branchKey || "";
-    if (!key) return this.defaultInstance;
+    if (!key) {
+      if (!this.defaultInitialized) {
+        this.defaultInitialized = true;
+        this.defaultInstance.init().catch(() => {});
+      }
+      return this.defaultInstance;
+    }
 
     let instance = this.instances.get(key);
     if (!instance) {
       instance = new WhatsAppService(key);
       this.instances.set(key, instance);
+      instance.init().catch(() => {});
     }
     return instance;
   }
@@ -641,6 +698,7 @@ class WhatsAppManager {
    * Destroy all instances.
    */
   async destroyAll(): Promise<void> {
+    this.defaultInitialized = false;
     await this.defaultInstance.destroy().catch(() => {});
     for (const [, instance] of this.instances) {
       await instance.destroy().catch(() => {});

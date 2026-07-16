@@ -14,6 +14,7 @@ import { invalidateCache } from "../middleware/cache";
 import { whatsappManager } from "../services/whatsapp";
 import { generateBillPdf } from "../utils/pdf";
 import { Settings } from "../models/settings";
+import { normalizePhone } from "../utils/phone";
 
 const router = Router();
 
@@ -159,8 +160,11 @@ router.post("/transaction", authenticate, asyncHandler(async (req, res) => {
             }
           );
           const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${(bill.totalAmount || 0).toFixed(2)}.`;
-          const sent = await wa.sendMedia(customer.mobile, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
+          const phone = normalizePhone(customer.mobile);
+          console.log(`WhatsApp [workspace]: sending to ***${phone.slice(-4)} (raw: "${customer.mobile}") for bill ${bill.billNumber}`);
+          const sent = await wa.sendMedia(phone, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
           if (!sent.ok) console.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed:`, sent.error);
+          else console.log(`WhatsApp [workspace]: ${bill.billNumber} sent successfully to ***${phone.slice(-4)}`);
         } catch (err: any) {
           console.error(`WhatsApp [workspace]: bill ${bill.billNumber} fire-and-forget error:`, err?.message || err);
         }

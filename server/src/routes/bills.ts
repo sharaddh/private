@@ -89,8 +89,10 @@ router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
         const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: Γé╣${total.toFixed(2)}.`;
         if (customer.mobile) {
           const phone = normalizePhone(customer.mobile);
+          console.log(`WhatsApp [bill]: sending to ***${phone.slice(-4)} (raw: "${customer.mobile}") for bill ${bill.billNumber}`);
           const sent = await wa.sendMedia(phone, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
           if (!sent.ok) console.error(`WhatsApp: bill ${bill.billNumber} send failed:`, sent.error);
+          else console.log(`WhatsApp [bill]: ${bill.billNumber} sent successfully to ***${phone.slice(-4)}`);
         }
       } catch (err: any) {
         console.error(`WhatsApp: bill ${bill.billNumber} fire-and-forget error:`, err?.message || err);
