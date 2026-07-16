@@ -93,7 +93,7 @@ async function useMongoDBAuthState(collectionName: string): Promise<{
 const FALLBACK_WA_VERSION: [number, number, number] = [2, 3000, 1035194821];
 
 const QR_TIMEOUT_MS = 120000;
-const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_RECONNECT_ATTEMPTS = 15;
 const RECONNECT_BASE_DELAY = 5000;
 
 class WhatsAppService {
@@ -127,8 +127,12 @@ class WhatsAppService {
 
   async init() {
     this.reconnectAttempts = 0;
-    if (this.sock) return;
     if (this.initializing) return this.initPromise;
+    if (this.sock && this._ready) return;
+    if (this.sock && !this._ready) {
+      try { this.sock.end(new Error("Reinit: stale socket")); } catch {}
+      this.sock = null;
+    }
     this.initializing = true;
     const gen = ++this.initGen;
 
@@ -156,8 +160,10 @@ class WhatsAppService {
         return;
       }
       console.error(`WhatsApp [${this.authCollection}] init failed:`, msg);
-      await this.destroy();
       this._error = msg;
+      if (!this._ready) {
+        this.scheduleReconnect();
+      }
     }
   }
 
@@ -228,11 +234,12 @@ class WhatsAppService {
           this._qrBase64 = null;
           this._error = null;
           this._pairingCode = null;
+          this.reconnectAttempts = 0;
           if (qrTimer) clearTimeout(qrTimer);
+          console.log(`WhatsApp [${this.authCollection}]: connected!`);
+          this.drainQueue();
           if (!resolved) {
             resolved = true;
-            console.log(`WhatsApp [${this.authCollection}]: connected!`);
-            this.drainQueue();
             resolve();
           }
         }
@@ -291,11 +298,8 @@ class WhatsAppService {
           }
 
           if (!resolved) {
-            console.log(`WhatsApp [${this.authCollection}]: connection closed before auth completed, clearing partial session`);
-            try {
-              const db = mongoose.connection.db;
-              if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
-            } catch (e) { /* partial session cleanup is best-effort */ }
+            console.log(`WhatsApp [${this.authCollection}]: connection closed before auth completed, scheduling reconnect`);
+            this.scheduleReconnect();
           }
 
           if (qrTimer) clearTimeout(qrTimer);
@@ -331,9 +335,8 @@ class WhatsAppService {
     this.drainInProgress = true;
 
     try {
-      const items = this.messageQueue.splice(0);
+      let items = this.messageQueue.splice(0);
       if (items.length === 0) {
-        this.drainInProgress = false;
         return;
       }
 
@@ -342,12 +345,13 @@ class WhatsAppService {
       let sent = 0;
       let failed = 0;
 
-      for (const item of items) {
-        if (!this._ready) {
-          this.messageQueue.unshift(...items.slice(items.indexOf(item)));
+      while (items.length > 0) {
+        if (!this._ready || !this.sock) {
+          this.messageQueue.unshift(...items);
           break;
         }
 
+        const item = items.shift()!;
         let ok: boolean;
         if (item.type === "text") {
           const res = await this.sendMessageNow(item.phone, item.message);
@@ -361,6 +365,10 @@ class WhatsAppService {
       }
 
       console.log(`WhatsApp [${this.authCollection}] queue drain: ${sent} sent, ${failed} failed`);
+
+      if (this.messageQueue.length > 0 && this._ready) {
+        setTimeout(() => this.drainQueue(), 100);
+      }
     } finally {
       this.drainInProgress = false;
     }
@@ -401,6 +409,7 @@ class WhatsAppService {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "text", phone, message });
       console.log(`WhatsApp [${this.authCollection}]: queued text message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
+      if (this._ready) setTimeout(() => this.drainQueue(), 0);
       return { ok: false, error: "Not connected — message queued" };
     }
     return this.sendMessageNow(phone, message);
@@ -410,6 +419,7 @@ class WhatsAppService {
     if (!this._ready || !this.sock) {
       this.messageQueue.push({ type: "media", phone, base64, filename, mimetype, caption });
       console.log(`WhatsApp [${this.authCollection}]: queued media message to ***${phone.slice(-2)} (queue: ${this.messageQueue.length})`);
+      if (this._ready) setTimeout(() => this.drainQueue(), 0);
       return { ok: false, error: "Not connected — media queued" };
     }
     if (throwOnError) {

@@ -202,7 +202,7 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-white">{(customerData?.length || 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-th-text">{(customerData?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Total Customers", "कुल ग्राहक")}</p>
             </div>
             <div className="card text-center">
@@ -237,7 +237,7 @@ export default function Reports() {
                     {topCustomers.slice(0, 10).map((c: any, i: number) => (
                       <tr key={c._id} className="border-b border-th-card hover:bg-th-elevated">
                         <td className="py-2 px-3 text-th-muted text-xs">{i + 1}</td>
-                        <td className="py-2 px-3 font-medium text-white">{c.name}</td>
+                        <td className="py-2 px-3 font-medium text-th-text">{c.name}</td>
                         <td className="py-2 px-3 text-right text-th-secondary">{c.totalVisits || 0}</td>
                         <td className="py-2 px-3 text-right text-[#1ed760] font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right">
@@ -272,7 +272,7 @@ export default function Reports() {
                   <tbody>
                     {customerData?.map((c: any) => (
                       <tr key={c._id} className="border-b border-th-card hover:bg-th-elevated">
-                        <td className="py-2 px-3 font-medium text-white">{c.name}</td>
+                        <td className="py-2 px-3 font-medium text-th-text">{c.name}</td>
                         <td className="py-2 px-3 text-th-secondary">{c.mobile || "—"}</td>
                         <td className="py-2 px-3 text-right text-th-secondary">{(c.totalVisits || 0).toLocaleString()}</td>
                         <td className="py-2 px-3 text-right text-[#1ed760] font-medium">₹{(c.totalSpent || 0).toLocaleString()}</td>
@@ -296,7 +296,7 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-white">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-th-text">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
               <p className="text-xs text-th-secondary">{uiT("Total", "कुल")} {uiT("Revenue", "राजस्व")}</p>
             </div>
             <div className="card text-center">
@@ -318,11 +318,11 @@ export default function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card">
               <p className="text-xs text-th-secondary">{uiT("Total Bills", "कुल बिल")}</p>
-              <p className="text-xl font-bold text-white">{salesData?.billCount || 0}</p>
+              <p className="text-xl font-bold text-th-text">{salesData?.billCount || 0}</p>
             </div>
             <div className="card">
               <p className="text-xs text-th-secondary">{uiT("Total Payments", "कुल भुगतान")}</p>
-              <p className="text-xl font-bold text-white">{salesData?.paymentCount || 0}</p>
+              <p className="text-xl font-bold text-th-text">{salesData?.paymentCount || 0}</p>
             </div>
             <div className="card">
               <p className="text-xs text-th-secondary">{uiT("Avg Order Value", "औसत ऑर्डर मूल्य")}</p>
@@ -398,7 +398,7 @@ export default function Reports() {
                       const custName = typeof b.customerId === "object" && b.customerId?.name ? b.customerId.name : "—";
                       return (
                         <tr key={b._id} className="border-b border-th-card hover:bg-th-elevated">
-                          <td className="py-2 px-3 font-medium text-white">{b.billNumber || "—"}</td>
+                          <td className="py-2 px-3 font-medium text-th-text">{b.billNumber || "—"}</td>
                           <td className="py-2 px-3 text-th-secondary">{custName}</td>
                           <td className="py-2 px-3 text-right text-th-secondary">₹{(b.totalAmount || 0).toLocaleString()}</td>
                           <td className="py-2 px-3 text-right text-amber-400 font-medium">₹{(b.pendingAmount || 0).toLocaleString()}</td>
@@ -423,7 +423,7 @@ export default function Reports() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-white">{(invData?.totalItems || 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-th-text">{(invData?.totalItems || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Total Items", "कुल आइटम")}</p>
             </div>
             <div className="card text-center">
@@ -447,7 +447,7 @@ export default function Reports() {
                 {invData.byCategory.map((cat: any) => (
                   <div key={cat._id} className="flex items-center justify-between p-3 rounded-lg bg-th-elevated">
                     <div>
-                      <p className="text-sm font-medium text-white capitalize">{cat._id || uiT("Uncategorized", "बिना श्रेणी")}</p>
+                      <p className="text-sm font-medium text-th-text capitalize">{cat._id || uiT("Uncategorized", "बिना श्रेणी")}</p>
                       <p className="text-xs text-th-secondary">{cat.count} {uiT("items", "आइटम")}</p>
                     </div>
                     <span className="text-sm font-semibold text-[#1ed760]">{cat.totalQty} {uiT("units", "इकाई")}</span>
@@ -467,7 +467,7 @@ export default function Reports() {
                 {invData.lowStock.map((item: any) => (
                   <div key={item._id} className="flex items-center justify-between p-3 rounded-lg bg-[#e74c3c]/5">
                     <div>
-                      <p className="text-sm font-medium text-white">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
+                      <p className="text-sm font-medium text-th-text">{item.sku} {item.brand ? `- ${item.brand}` : ""}</p>
                       <p className="text-xs text-th-secondary">{item.category || "Frame"}</p>
                     </div>
                     <span className="text-sm font-bold text-[#e74c3c]">{item.quantity || 0} {uiT("left", "शेष")}</span>
