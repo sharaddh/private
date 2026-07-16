@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth";
+import { authenticate, requireRole } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { isConnected, cacheKeys, cacheFlushAll } from "../services/cache";
 
@@ -11,7 +11,7 @@ router.get("/status", authenticate, asyncHandler(async (_req, res) => {
   res.json({ success: true, data: { connected, keyCount } });
 }));
 
-router.post("/flush", authenticate, asyncHandler(async (_req, res) => {
+router.post("/flush", authenticate, requireRole("owner"), asyncHandler(async (_req, res) => {
   const count = await cacheFlushAll();
   res.json({ success: true, message: `Flushed ${count} cache keys` });
 }));
