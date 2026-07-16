@@ -22,6 +22,7 @@ const CustomerSchemaObj = new Schema(
 
 CustomerSchemaObj.index({ totalSpent: -1 });
 CustomerSchemaObj.index({ createdAt: -1 });
+CustomerSchemaObj.index({ name: "text", mobile: "text" });
 
 export const CustomerSchema = CustomerSchemaObj;
 const _Customer = model("Customer", CustomerSchemaObj);

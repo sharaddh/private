@@ -14,6 +14,8 @@ const VisitSchemaObj = new Schema(
   { timestamps: true }
 );
 
+VisitSchemaObj.index({ customerId: 1, visitDate: -1 });
+
 export const VisitSchema = VisitSchemaObj;
 const _Visit = model("Visit", VisitSchemaObj);
 export const Visit = withBranch(_Visit, "Visit");
