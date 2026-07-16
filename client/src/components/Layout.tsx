@@ -332,8 +332,16 @@ export default function Layout({ children }: { children: ReactNode }) {
             {searchOpen && searchQuery.trim() && (
               <div className="absolute top-full left-0 right-0 mt-2 max-h-80 overflow-y-auto z-50 rounded-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] transition-all duration-200 ease-out scrollbar-none glass-panel">
                 {searchLoading ? (
-                  <div className="flex items-center justify-center gap-2 px-4 py-5 text-sm text-th-secondary">
-                    <Loader2 size={16} className="animate-spin" /> {uiT("Searching...", "खोज रहे हैं...")}
+                  <div className="px-4 py-3 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-3 animate-pulse">
+                        <div className="h-9 w-9 rounded-full bg-th-hover" />
+                        <div className="flex-1 space-y-1.5">
+                          <div className="h-3.5 w-32 rounded bg-th-hover" />
+                          <div className="h-2.5 w-20 rounded bg-th-hover/60" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((c, index) => {
