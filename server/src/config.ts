@@ -26,9 +26,17 @@ function normalizePort(val: string): number {
   return 4000;
 }
 
-if (!JWT_SECRET && NODE_ENV === "production") {
-  console.error("JWT_SECRET must be set in production");
-  process.exit(1);
+const requiredInProd: Array<{ name: string; value: string }> = [
+  { name: "JWT_SECRET", value: JWT_SECRET },
+  { name: "MONGO_URI", value: MONGO_URI },
+];
+
+if (NODE_ENV === "production") {
+  const missing = requiredInProd.filter((r) => !r.value);
+  if (missing.length > 0) {
+    console.error(`Missing required environment variables: ${missing.map((r) => r.name).join(", ")}`);
+    process.exit(1);
+  }
 }
 
 if (!JWT_SECRET && NODE_ENV !== "production") {
