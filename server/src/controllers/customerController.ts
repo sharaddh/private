@@ -14,7 +14,7 @@ function escapeRegex(value: string): string {
 }
 
 export async function getAll(req: Request, res: Response) {
-  const { phone, search, page = "1", limit = "1000" } = req.query;
+  const { phone, search, page = "1", limit = "1000", cursor } = req.query;
   const filter: any = {};
   if (phone) filter.mobile = { $regex: phone as string, $options: "i" };
   if (search) {
@@ -29,12 +29,18 @@ export async function getAll(req: Request, res: Response) {
       { city: searchRegex },
     ];
   }
-  const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+  if (cursor) {
+    filter._id = { $lt: cursor };
+  }
+  const pageSize = parseInt(limit as string);
+  const skip = cursor ? 0 : (parseInt(page as string) - 1) * pageSize;
   const [data, total] = await Promise.all([
-    Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit as string)).lean(),
+    Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageSize).lean(),
     Customer.countDocuments(filter),
   ]);
-  return success(res, { data, total, page: parseInt(page as string), pages: Math.ceil(total / parseInt(limit as string)) });
+  const hasMore = data.length === pageSize;
+  const nextCursor = hasMore && data.length > 0 ? data[data.length - 1]._id : null;
+  return success(res, { data, total, page: parseInt(page as string), pages: Math.ceil(total / pageSize), hasMore, nextCursor });
 }
 
 export async function getById(req: Request, res: Response) {
