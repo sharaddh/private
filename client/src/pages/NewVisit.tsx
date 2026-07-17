@@ -34,7 +34,7 @@ export default function NewVisit() {
     name: "", mobile: "", email: "", address: "", city: "", age: undefined as number | undefined, gender: ""
   });
   const [visitType, setVisitType] = useState("new");
-  const [visitDate, setVisitDate] = useState("");
+  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
   const [visitDoctor, setVisitDoctor] = useState("");
   const [visitRemarks, setVisitRemarks] = useState("");
 
@@ -86,7 +86,7 @@ export default function NewVisit() {
       const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
       if (res.success) {
         setSuggestions(res.data || []);
-        setSuggestionsForIdx(res.data.length > 0 ? idx : null);
+        setSuggestionsForIdx(res.data!.length > 0 ? idx : null);
       }
     }, 300);
     setSearchTimer(t);
@@ -128,13 +128,14 @@ export default function NewVisit() {
   async function searchCustomer(num: string) {
     setSelectedCustomer(null); setIsNewCustomer(false); setSearched(true);
     const res = await api.get<any[]>(`/api/customers?phone=${encodeURIComponent(num)}`);
-    if (res.success && res.data.length > 0) {
-      const fullList = await Promise.all(res.data.map(async (c: any) => {
+    const custList = ((res.data as any)?.data || (Array.isArray(res.data) ? res.data : []) as any[]);
+    if (res.success && custList.length > 0) {
+      const fullList = await Promise.all(custList.map(async (c: any) => {
         const fullRes = await api.get<any>(`/api/customers/${c._id}`);
         const full = fullRes.success ? fullRes.data : c;
         const vRes = await api.get<any[]>(`/api/visits?customerId=${c._id}`);
-        const lastV = vRes.success && vRes.data.length > 0
-          ? new Date(vRes.data[0].visitDate).toLocaleDateString() : undefined;
+        const lastV = vRes.success && vRes.data!.length > 0
+          ? new Date(vRes.data![0].visitDate).toLocaleDateString() : undefined;
         return { ...full, lastVisit: lastV };
       }));
       setSearchResults(fullList);
@@ -152,14 +153,14 @@ export default function NewVisit() {
         api.get<any[]>(`/api/prescriptions?customerId=${c._id}`),
         api.get<any[]>(`/api/orders?customerId=${c._id}`),
       ]);
-      if (visitsRes.success && visitsRes.data.length > 0) {
-        const last = visitsRes.data[0];
+      if (visitsRes.success && visitsRes.data!.length > 0) {
+        const last = visitsRes.data![0];
         setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : "");
         setVisitDoctor(last.doctorName || "");
         setVisitRemarks(last.remarks || "");
       }
-      if (prescRes.success && prescRes.data.length > 0) {
-        const prev = prescRes.data[0];
+      if (prescRes.success && prescRes.data!.length > 0) {
+        const prev = prescRes.data![0];
         setPrescription({
           rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
           leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
@@ -167,8 +168,8 @@ export default function NewVisit() {
         });
         setUsePrescription(true);
       }
-      if (ordersRes.success && ordersRes.data.length > 0) {
-        const last = ordersRes.data[0];
+      if (ordersRes.success && ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[]).length > 0) {
+        const last = ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[])[0];
         setOrderFrames(last.frame ? [{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }] : []);
         setOrderLenses(last.lens ? [{ sku: last.lens || "", brand: last.lensBrand || "", features: last.lensType ? last.lensType.split(", ") : [], index: last.lensIndex || "", price: last.lensPrice || 0, coating: last.coating || "" }] : []);
         setOrderDeliveryDate(last.deliveryDate ? last.deliveryDate.split("T")[0] : "");
@@ -207,7 +208,8 @@ export default function NewVisit() {
       else {
         if (customerForm.mobile) {
           const ex = await api.get<any[]>(`/api/customers?phone=${encodeURIComponent(customerForm.mobile)}`);
-          if (ex.success && ex.data.length > 0) payload.customerId = ex.data[0]._id;
+          const exList = ((ex.data as any)?.data || (Array.isArray(ex.data) ? ex.data : []) as any[]);
+          if (ex.success && exList.length > 0) payload.customerId = exList[0]._id;
         }
       }
 
@@ -745,8 +747,8 @@ export default function NewVisit() {
                 const q = e.target.value.trim();
                 if (q.length > 2) {
                   const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
-                  if (res.success && res.data.length > 0) {
-                    const item = res.data[0];
+                  if (res.success && res.data!.length > 0) {
+                    const item = res.data![0];
                     if (scanTarget === "frame") {
                       addFrame();
                       const idx = orderFrames.length;
@@ -763,10 +765,10 @@ export default function NewVisit() {
                 }
               }} />
           </div>
-          <CameraScanner onScan={async (code) => {
+          <CameraScanner onClose={() => setScanModal(false)} onScan={async (code) => {
             const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
-            if (res.success && res.data.length > 0) {
-              const item = res.data[0];
+            if (res.success && res.data!.length > 0) {
+              const item = res.data![0];
               if (scanTarget === "frame") {
                 addFrame();
                 const idx = orderFrames.length;
