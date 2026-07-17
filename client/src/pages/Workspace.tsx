@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "../api";
+import { settingsService, visitService, customerService, inventoryService, whatsappService } from "../services";
 import { useToast } from "../context/ToastContext";
 import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
@@ -23,12 +24,44 @@ import { formatRxBrief, cleanEyeSet } from "../utils/rx";
 import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
 import BottomNav from "../components/NewvistePage/BottomNav";
+import type {
+  Customer, Order, Visit, ShopSettings, Prescription, InventoryItem,
+} from "../types";
 
 interface CustomerData {
   _id?: string; name: string; mobile: string; email?: string;
   address?: string; city?: string; age?: number; gender?: string;
   totalVisits?: number; totalSpent?: number; pendingAmount?: number; lastVisit?: string;
   createdAt?: string;
+}
+
+interface FrameItem {
+  sku: string; brand: string; model: string; color: string; price: number;
+}
+
+interface LensItem {
+  sku: string; brand: string; features: string[]; index: string; price: number; coating: string;
+}
+
+interface AccessoryItem {
+  name: string; price: number;
+}
+
+interface BillItemLocal {
+  description: string; price: number; qty: number;
+}
+
+interface PrescriptionData {
+  rightEye: { dv: Partial<import("../types").EyeData>; nv: Partial<import("../types").EyeData>; pc?: Record<string, unknown> };
+  leftEye: { dv: Partial<import("../types").EyeData>; nv: Partial<import("../types").EyeData>; pc?: Record<string, unknown> };
+  pd: string; notes: string; problems: string;
+}
+
+interface CustomerSummary {
+  customer?: { customerId: string };
+  lastOrder?: Order & { frame?: string; lens?: string; accessories?: string[] };
+  lastPrescription?: Prescription;
+  recentOrders?: Order[];
 }
 
 export default function Workspace() {
@@ -46,58 +79,58 @@ export default function Workspace() {
   ];
   const phoneRef = useRef<HTMLInputElement>(null);
 
-  const [settings, setSettings] = useState<any>(null);
-  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
+  const [loadingSettings, setLoadingSettings] = useState<boolean>(true);
 
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
-  const [customerSummary, setCustomerSummary] = useState<any>(null);
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
-  const [phoneSearch, setPhoneSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searched, setSearched] = useState(false);
+  const [customerSummary, setCustomerSummary] = useState<CustomerSummary | null>(null);
+  const [isNewCustomer, setIsNewCustomer] = useState<boolean>(false);
+  const [phoneSearch, setPhoneSearch] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<CustomerData[]>([]);
+  const [searched, setSearched] = useState<boolean>(false);
   const [customerForm, setCustomerForm] = useState<CustomerData>({
     name: "", mobile: "", email: "", address: "", city: "", age: undefined, gender: "",
   });
 
-  const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState("service");
+  const [saving, setSaving] = useState<boolean>(false);
+  const [step, setStep] = useState<string>("service");
 
-  const [visitType, setVisitType] = useState("new");
-  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
-  const [visitDoctor, setVisitDoctor] = useState("");
-  const [visitRemarks, setVisitRemarks] = useState("");
+  const [visitType, setVisitType] = useState<string>("new");
+  const [visitDate, setVisitDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [visitDoctor, setVisitDoctor] = useState<string>("");
+  const [visitRemarks, setVisitRemarks] = useState<string>("");
 
-  const [usePrescription, setUsePrescription] = useState(false);
-  const [prescription, setPrescription] = useState({
+  const [usePrescription, setUsePrescription] = useState<boolean>(false);
+  const [prescription, setPrescription] = useState<PrescriptionData>({
     rightEye: { dv: {}, nv: {}, pc: {} },
     leftEye: { dv: {}, nv: {}, pc: {} },
     pd: "", notes: "", problems: "",
   });
 
-  const [orderFrames, setOrderFrames] = useState<Array<{ sku: string; brand: string; model: string; color: string; price: number }>>([]);
-  const [orderLenses, setOrderLenses] = useState<Array<{ sku: string; brand: string; features: string[]; index: string; price: number; coating: string }>>([]);
-  const [orderAccessories, setOrderAccessories] = useState<Array<{ name: string; price: number }>>([]);
+  const [orderFrames, setOrderFrames] = useState<FrameItem[]>([]);
+  const [orderLenses, setOrderLenses] = useState<LensItem[]>([]);
+  const [orderAccessories, setOrderAccessories] = useState<AccessoryItem[]>([]);
 
-  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number }>>([]);
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [paymentMode, setPaymentMode] = useState("Cash");
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [billItems, setBillItems] = useState<BillItemLocal[]>([]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [advancePaid, setAdvancePaid] = useState<number>(0);
+  const [paymentMode, setPaymentMode] = useState<string>("Cash");
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState<string>("");
+  const [deliveryDate, setDeliveryDate] = useState<string>("");
 
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<InventoryItem[]>([]);
   const [suggestionsFor, setSuggestionsFor] = useState<{ type: "frame"; idx: number } | null>(null);
-  const [searchTimer, setSearchTimer] = useState<any>(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [scanModal, setScanModal] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const countdownRef = useRef<any>(null);
-  const savingRef = useRef(false);
-  const greetingSent = useRef(false);
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [scanModal, setScanModal] = useState<boolean>(false);
+  const [cameraActive, setCameraActive] = useState<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(0);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const savingRef = useRef<boolean>(false);
+  const greetingSent = useRef<boolean>(false);
 
   const isServiceType = visitType === "service" || visitType === "other";
   const steps = [
@@ -115,7 +148,6 @@ export default function Workspace() {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
 
-  // Redirect away from removed steps when visitType changes
   useEffect(() => {
     if (isServiceType && (step === "prescription" || step === "order")) {
       setStep("billing");
@@ -124,20 +156,18 @@ export default function Workspace() {
 
   useEffect(() => {
     phoneRef.current?.focus();
-    api.get("/api/settings").then((d) => { if (d.success) setSettings(d.data); setLoadingSettings(false); });
+    settingsService.get().then((d) => { if (d.success) setSettings(d.data ?? null); setLoadingSettings(false); });
   }, []);
 
-  // Calculate Total Bill dynamically
   useEffect(() => {
     const total = billItems.reduce((s, i) => s + i.price * i.qty, 0);
     setTotalAmount(total);
   }, [billItems]);
 
-  // Auto-sync order to bill
   useEffect(() => {
     if (!selectedCustomer) return;
 
-    const autoItems: Array<{ description: string; price: number; qty: number }> = [];
+    const autoItems: BillItemLocal[] = [];
 
     orderFrames.forEach((f) => {
       if (f.brand || f.model || f.price > 0 || f.sku) {
@@ -213,7 +243,7 @@ export default function Workspace() {
     setBillItems((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  function calcDiscount() {
+  function calcDiscount(): number {
     if (discountType === "percent") return (totalAmount * discountPercent) / 100;
     return discountAmount;
   }
@@ -224,15 +254,16 @@ export default function Workspace() {
     setSelectedCustomer(null);
     setIsNewCustomer(false);
     setSearched(true);
-    const res = await api.get(`/api/customers?phone=${encodeURIComponent(num)}`);
-    if (res.success && res.data.length > 0) {
-      const fullList = await Promise.all(res.data.map(async (c: any) => {
-        const fullRes = await api.get(`/api/customers/${c._id}`);
-        const full = fullRes.success ? fullRes.data : c;
-        const vRes = await api.get(`/api/visits?customerId=${c._id}`);
-        const lastV = vRes.success && vRes.data.length > 0
+    const res = await api.get<Customer[]>("/api/customers?phone=" + encodeURIComponent(num));
+    const custList = ((res.data as any)?.data || (Array.isArray(res.data) ? res.data : []) as any[]);
+    if (res.success && custList.length > 0) {
+      const fullList = await Promise.all(custList.map(async (c: any) => {
+        const fullRes = await api.get<Customer>("/api/customers/" + c._id);
+        const full = fullRes.success ? fullRes.data! : c;
+        const vRes = await visitService.getByCustomer(c._id);
+        const lastV = vRes.success && vRes.data && vRes.data.length > 0
           ? new Date(vRes.data[0].visitDate).toLocaleDateString() : undefined;
-        return { ...full, lastVisit: lastV };
+        return { ...full, lastVisit: lastV } as CustomerData;
       }));
       setSearchResults(fullList);
     } else {
@@ -242,7 +273,7 @@ export default function Workspace() {
     }
   }
 
-  function selectCustomer(c: any) {
+  function selectCustomer(c: CustomerData) {
     const cust: CustomerData = {
       _id: c._id, name: c.name, mobile: c.mobile || "", email: c.email || "",
       address: c.address || "", city: c.city || "", age: c.age, gender: c.gender || "",
@@ -257,56 +288,57 @@ export default function Workspace() {
     setDeliveryAddress(c.address || deliveryAddress);
     setIsNewCustomer(false);
 
-    api.get(`/api/customers/summary/${c._id}`).then((r) => {
-      if (r.success) setCustomerSummary(r.data);
+    api.get<CustomerSummary>("/api/customers/summary/" + c._id).then((r) => {
+      if (r.success) setCustomerSummary(r.data ?? null);
     });
 
-    loadPreviousData(c._id);
+    loadPreviousData(c._id!);
   }
 
   async function loadPreviousData(customerId: string) {
     const [visitsRes, prescRes, ordersRes] = await Promise.all([
-      api.get(`/api/visits?customerId=${customerId}`),
-      api.get(`/api/prescriptions?customerId=${customerId}`),
-      api.get(`/api/orders?customerId=${customerId}`),
+      visitService.getByCustomer(customerId),
+      api.get<Prescription[]>("/api/prescriptions?customerId=" + customerId),
+      api.get<Order[]>("/api/orders?customerId=" + customerId),
     ]);
-    if (visitsRes.success && visitsRes.data.length > 0) {
+    if (visitsRes.success && visitsRes.data && visitsRes.data.length > 0) {
       const last = visitsRes.data[0];
       setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : new Date().toISOString().split("T")[0]);
       setVisitDoctor(last.doctorName || "");
-      setVisitRemarks(last.remarks || "");
+      setVisitRemarks(last.notes || "");
     }
-    if (prescRes.success && prescRes.data.length > 0) {
+    if (prescRes.success && prescRes.data && prescRes.data.length > 0) {
       const prev = prescRes.data[0];
       setPrescription({
         rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
         leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
-        pd: prev.pd || "", notes: prev.notes || "", problems: prev.problems || "",
+        pd: prev.pd || "", notes: prev.notes || "", problems: (prev as any).problems || "",
       });
       setUsePrescription(true);
     }
-    if (ordersRes.success && ordersRes.data.length > 0) {
-      const last = ordersRes.data[0];
-      if (last.frame) {
-        setOrderFrames([{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }]);
+    const ordersList = ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[]);
+    if (ordersRes.success && ordersList.length > 0) {
+      const last = ordersList[0];
+      if ((last as any).frame) {
+        setOrderFrames([{ sku: (last as any).frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: (last as any).framePrice || 0 }]);
       }
-      if (last.lens) {
-        setOrderLenses([{ sku: last.lens || "", brand: last.lensBrand || "", features: last.lensType ? last.lensType.split(", ") : [], index: last.lensIndex || "", price: last.lensPrice || 0, coating: last.coating || "" }]);
+      if ((last as any).lens) {
+        setOrderLenses([{ sku: (last as any).lens || "", brand: last.lensBrand || "", features: last.lensType ? last.lensType.split(", ") : [], index: last.lensIndex || "", price: (last as any).lensPrice || 0, coating: last.coating || "" }]);
       }
-      if (last.accessories?.length > 0) {
-        setOrderAccessories(last.accessories.map((n: string) => ({ name: n, price: 0 })));
+      if ((last as any).accessories?.length > 0) {
+        setOrderAccessories((last as any).accessories.map((n: string) => ({ name: n, price: 0 })));
       }
     }
   }
 
-  function repeatLastOrder(summary: any) {
-    const o = summary?.lastOrder;
+  function repeatLastOrder(summary: CustomerSummary) {
+    const o = summary?.lastOrder as any;
     if (!o) return;
     setOrderFrames([{ sku: o.frame || "", brand: o.frameBrand || "", model: o.frameModel || "", color: o.frameColor || "", price: o.framePrice || 0 }]);
     setOrderLenses([{ sku: o.lens || "", brand: o.lensBrand || "", features: o.lensType ? o.lensType.split(", ") : [], index: o.lensIndex || "", price: o.lensPrice || 0, coating: o.coating || "" }]);
     if (o.accessories) setOrderAccessories(o.accessories.map((a: any) => typeof a === "string" ? { name: a, price: 0 } : a));
 
-    const items: Array<{ description: string; qty: number; price: number }> = [];
+    const items: BillItemLocal[] = [];
     if (o.frame) items.push({ description: `Frame: ${o.frameBrand || ""} ${o.frameModel || ""}`.trim(), qty: 1, price: o.framePrice || 0 });
     if (o.lens) items.push({ description: `Lens: ${o.lensBrand || ""} ${o.lensType || ""}`.trim(), qty: 1, price: o.lensPrice || 0 });
     if (o.coating) items.push({ description: `Coating: ${o.coating}`, qty: 1, price: o.coatingPrice || 0 });
@@ -317,7 +349,7 @@ export default function Workspace() {
       setPrescription({
         rightEye: p.rightEye || { dv: {}, nv: {}, pc: {} },
         leftEye: p.leftEye || { dv: {}, nv: {}, pc: {} },
-        pd: p.pd || "", notes: p.notes || "", problems: p.problems || "",
+        pd: p.pd || "", notes: p.notes || "", problems: (p as any).problems || "",
       });
       setUsePrescription(true);
     }
@@ -328,7 +360,7 @@ export default function Workspace() {
     if (searchTimer) clearTimeout(searchTimer);
     if (q.length < 2) { setSuggestions([]); setSuggestionsFor(null); return; }
     const t = setTimeout(async () => {
-      const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
+      const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(q));
       if (res.success) {
         setSuggestions(res.data || []);
         setSuggestionsFor(res.data && res.data.length > 0 ? { type, idx } : null);
@@ -344,15 +376,13 @@ export default function Workspace() {
       const custId = selectedCustomer?._id;
       if (!custId) { toast.error("No customer selected"); setSaving(false); return; }
 
-      const payload: any = { customerId: custId };
+      const payload: Record<string, any> = { customerId: custId };
 
-      // Always create a visit record
       payload.visit = { visitType: visitType || "new" };
       if (visitDate) payload.visit.visitDate = visitDate;
       if (visitDoctor) payload.visit.doctorName = visitDoctor;
       if (visitRemarks) payload.visit.remarks = visitRemarks;
 
-      // Only save prescription if user opted in
       if (usePrescription) {
         payload.prescription = {
           rightEye: cleanEyeSet(prescription.rightEye),
@@ -406,19 +436,19 @@ export default function Workspace() {
 
       if (deliveryAddress) payload.delivery = { address: deliveryAddress, expectedDeliveryDate: deliveryDate || undefined };
 
-      const res = await api.post("/api/workspace/transaction", payload);
+      const res = await api.post<{ visit?: { _id: string }; bill?: any }>("/api/workspace/transaction", payload);
       if (res.success) {
         toast.success("Visit created successfully!");
 
         const customerMobile = selectedCustomer?.mobile || "";
-        const resData = res.data as any;
+        const resData = res.data;
         if (customerMobile && resData?.bill) {
           greetingSent.current = false;
           setCountdown(3);
           countdownRef.current = setInterval(() => {
             setCountdown((prev) => {
               if (prev <= 1) {
-                clearInterval(countdownRef.current);
+                clearInterval(countdownRef.current!);
                 countdownRef.current = null;
                 savingRef.current = false;
                 sendGreeting(resData, selectedCustomer);
@@ -441,7 +471,7 @@ export default function Workspace() {
     }
   }
 
-  async function sendGreeting(data: any, cust: CustomerData | null) {
+  async function sendGreeting(data: { visit?: { _id: string } }, cust: CustomerData | null) {
     if (greetingSent.current) return;
     greetingSent.current = true;
     try {
@@ -454,7 +484,7 @@ export default function Workspace() {
         `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
         `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
       );
-      await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+      await whatsappService.sendMessage({ to: fullNum, message: msg });
     } catch { /* silent */ }
     navigate(`/customers/${cust?._id || ""}?visitId=${data?.visit?._id || ""}`);
   }
@@ -491,24 +521,27 @@ export default function Workspace() {
 
             <div className="flex gap-3 mb-6">
               <div className="relative flex-1">
-                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted" />
+                <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted" aria-hidden="true" />
                 <input ref={phoneRef} type="tel" inputMode="numeric" placeholder="Enter phone number..."
+                  aria-label={uiT("Phone number search", "फ़ोन नंबर खोज")}
                   value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)}
                   onKeyDown={handlePhoneKeyDown}
                   className="w-full pl-10 pr-4 py-3 bg-th-elevated border border-th-border rounded-sm text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
               </div>
-              <button onClick={searchCustomer} className="px-6 py-3 bg-[#1ed760] hover:bg-[#1db954] text-th-text font-semibold rounded-sm transition-all flex items-center gap-2">
-                <Search size={18} />
+              <button onClick={searchCustomer} aria-label={uiT("Search customer", "ग्राहक खोजें")} className="px-6 py-3 bg-[#1ed760] hover:bg-[#1db954] text-th-text font-semibold rounded-sm transition-all flex items-center gap-2">
+                <Search size={18} aria-hidden="true" />
               </button>
             </div>
 
             {searched && searchResults.length > 0 && (
               <div className="space-y-3 mb-4">
                 <p className="text-sm font-medium text-th-secondary">{searchResults.length} customer(s) found</p>
-                {searchResults.map((c: any) => (
+                {searchResults.map((c: CustomerData) => (
                   <div key={c._id}
                     className="flex items-center justify-between p-4 rounded-sm border border-th-border hover:border-[#1ed760] hover:bg-[#1ed760]/5 transition-all cursor-pointer"
-                    onClick={() => selectCustomer(c)}>
+                    onClick={() => selectCustomer(c)}
+                    role="button"
+                    aria-label={uiT("Select customer", "ग्राहक चुनें") + " " + c.name}>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-[#1ed760] rounded-sm flex items-center justify-center text-th-text font-bold text-lg">
                         {c.name?.charAt(0)?.toUpperCase() || "?"}
@@ -527,15 +560,16 @@ export default function Workspace() {
                   </div>
                 ))}
                 <button onClick={() => { setIsNewCustomer(true); setSelectedCustomer(null); setCustomerForm((prev) => ({ ...prev, name: "", email: "", address: "", city: "", age: undefined, gender: "" })); }}
+                  aria-label={uiT("Add new customer with this number", "इस नंबर से नया ग्राहक जोड़ें")}
                   className="flex items-center gap-2 text-[#1ed760] hover:text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-sm hover:bg-[#1ed760]/10 transition-all">
-                  <UserPlus size={16} /> Add new customer with this number
+                  <UserPlus size={16} aria-hidden="true" /> Add new customer with this number
                 </button>
               </div>
             )}
 
             {searched && searchResults.length === 0 && !isNewCustomer && (
               <div className="text-center py-8 text-th-muted">
-                <Users size={40} className="mx-auto mb-3 opacity-50" />
+                <Users size={40} className="mx-auto mb-3 opacity-50" aria-hidden="true" />
                 <p className="text-sm">No customers found. Press Enter or click Search again to add a new customer.</p>
               </div>
             )}
@@ -544,154 +578,20 @@ export default function Workspace() {
               <div className="flex justify-end pt-2">
                 <button onClick={() => { if (isNewCustomer && customerForm.name) setStep("service"); else searchCustomer(); }}
                   disabled={isNewCustomer && !customerForm.name}
+                  aria-label={uiT("Start new visit", "नई विज़िट शुरू करें")}
                   className="btn-primary flex items-center gap-2">
-                  Start New Visit <ArrowRight size={16} />
+                  Start New Visit <ArrowRight size={16} aria-hidden="true" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Customer Summary Card */}
-          {selectedCustomer && customerSummary && (
-            <div className="card">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-[#1ed760] rounded-lg flex items-center justify-center text-th-text font-bold text-2xl">
-                    {selectedCustomer.name?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-th-text">{selectedCustomer.name}</h3>
-                    <div className="flex items-center gap-3 text-sm text-th-secondary mt-0.5">
-                      <span>{selectedCustomer.gender || "—"}</span>
-                      {selectedCustomer.age && <span>• {selectedCustomer.age} yrs</span>}
-                      <span>•</span>
-                      <span><Phone size={12} className="inline" /> {selectedCustomer.mobile}</span>
-                      {customerSummary.customer?.customerId && (
-                        <>
-                          <span>•</span>
-                          <span className="text-[#1ed760] font-medium">ID: {customerSummary.customer.customerId}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                  selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0
-                    ? "bg-[#f5a623]/10 text-amber-400 border border-amber-500/20"
-                    : "bg-[#1ed760]/10 text-[#1ed760] border border-[#1ed760]/20"
-                }`}>
-                  {selectedCustomer.pendingAmount && selectedCustomer.pendingAmount > 0 ? `₹${selectedCustomer.pendingAmount} Due` : "Cleared"}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                <div className="bg-th-elevated rounded-sm p-3 text-center">
-                  <p className="text-lg font-bold text-th-text">{selectedCustomer.totalVisits || 0}</p>
-                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Visits</p>
-                </div>
-                <div className="bg-th-elevated rounded-sm p-3 text-center">
-                  <p className="text-lg font-bold text-[#1ed760]">₹{(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
-                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Revenue</p>
-                </div>
-                <div className="bg-th-elevated rounded-sm p-3 text-center">
-                  <p className="text-lg font-bold text-amber-400">₹{(selectedCustomer.pendingAmount || 0).toLocaleString()}</p>
-                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Pending</p>
-                </div>
-                <div className="bg-th-elevated rounded-sm p-3 text-center">
-                  <p className="text-sm font-bold text-th-secondary">
-                    {selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
-                  </p>
-                  <p className="text-[10px] text-th-secondary uppercase tracking-wide">Since</p>
-                </div>
-              </div>
-
-              {customerSummary.lastOrder && (
-                <div className="bg-th-elevated rounded-sm p-3 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-th-secondary uppercase tracking-wide mb-0.5">Last Purchase</p>
-                      <p className="font-medium text-th-text">
-                        {customerSummary.lastOrder.frame && `Frame: ${customerSummary.lastOrder.frame}`}
-                        {customerSummary.lastOrder.frame && customerSummary.lastOrder.lens && " | "}
-                        {customerSummary.lastOrder.lens && `Lens: ${customerSummary.lastOrder.lens}`}
-                      </p>
-                    </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      customerSummary.lastOrder.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
-                      customerSummary.lastOrder.status === "Ready" ? "bg-blue-50 text-blue-700" :
-                      "bg-amber-400/10 text-amber-400"
-                    }`}>{customerSummary.lastOrder.status || "Draft"}</span>
-                  </div>
-                  {customerSummary.lastPrescription?.rightEye?.dv?.sph != null && (
-                    <p className="text-xs text-th-muted mt-1">
-                      Last Rx: {formatRxBrief(customerSummary.lastPrescription.rightEye.dv.sph, customerSummary.lastPrescription.rightEye.dv.cyl, customerSummary.lastPrescription.rightEye.dv.axis)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => setStep("service")} className="btn-primary flex items-center gap-1.5 text-sm px-4 py-2">
-                  <Activity size={15} /> {uiT("New Visit", "नई विज़िट")}
-                </button>
-                <button onClick={() => selectedCustomer._id && navigate(`/customers/${selectedCustomer._id}`)} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                  <History size={15} /> Full History
-                </button>
-                {customerSummary?.lastOrder && (
-                  <button onClick={() => repeatLastOrder(customerSummary)} className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                    <Repeat size={15} /> Repeat Last Order
-                  </button>
-                )}
-                {selectedCustomer.mobile && (
-                  <button onClick={async () => {
-                    const num = selectedCustomer.mobile.replace(/\D/g, "");
-                    const fullNum = num.length === 10 ? `91${num}` : num;
-                    const msg = t(
-                      `Hi ${selectedCustomer.name}, this is ${settings?.shopName || "KMJ Optical"}.`,
-                      `नमस्ते ${selectedCustomer.name}, यह ${settings?.shopName || "KMJ Optical"} है।`
-                    );
-                    await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
-                  }}
-                    className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                    <MessageCircle size={15} /> {uiT("WhatsApp", "WhatsApp")}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {selectedCustomer && customerSummary?.recentOrders && customerSummary.recentOrders.length > 0 && (
-            <div className="card">
-              <h3 className="text-sm font-semibold text-th-secondary mb-3 flex items-center gap-2">
-                <Clock size={14} /> Recent Activity
-              </h3>
-              <div className="space-y-2">
-                {(customerSummary.recentOrders || []).slice(0, 5).map((o: any) => (
-                  <div key={o._id} className="flex items-center justify-between py-2 border-b border-th-card last:border-0">
-                    <div>
-                      <p className="text-sm text-th-secondary">
-                        {o.frame || ""}{o.frame && o.lens ? " + " : ""}{o.lens || ""}{o.coating ? " + " + o.coating : ""}
-                      </p>
-                      <p className="text-xs text-th-muted">
-                        {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}
-                      </p>
-                    </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      o.status === "Delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" :
-                      o.status === "Ready" ? "bg-blue-50 text-blue-700" :
-                      o.status === "In Lab" ? "bg-amber-400/10 text-amber-400" : "bg-th-card text-th-secondary"
-                    }`}>{o.status || "Draft"}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex justify-end">
             <button onClick={() => { if (selectedCustomer) setStep("service"); else searchCustomer(); }}
               disabled={!selectedCustomer}
+              aria-label={uiT("Start new visit", "नई विज़िट शुरू करें")}
               className="btn-primary flex items-center gap-2 px-6 py-3">
-              Start New Visit <ArrowRight size={18} />
+              Start New Visit <ArrowRight size={18} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -715,52 +615,53 @@ export default function Workspace() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">Name *</label>
-                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Full name" value={customerForm.name}
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Full name" aria-label={uiT("Full name", "पूरा नाम")} value={customerForm.name}
                   onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">Phone</label>
-                <input className="w-full px-4 py-2.5 bg-th-surface border border-th-border rounded-sm text-sm text-th-secondary" value={customerForm.mobile} disabled />
+                <input className="w-full px-4 py-2.5 bg-th-surface border border-th-border rounded-sm text-sm text-th-secondary" aria-label={uiT("Phone number", "फ़ोन नंबर")} value={customerForm.mobile} disabled />
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">Email</label>
-                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="email@example.com" value={customerForm.email || ""}
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="email@example.com" aria-label={uiT("Email address", "ईमेल पता")} value={customerForm.email || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">Age</label>
-                <input type="number" className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Age" value={customerForm.age ?? ""}
+                <input type="number" className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="Age" aria-label={uiT("Age", "आयु")} value={customerForm.age ?? ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, age: e.target.value ? Number(e.target.value) : undefined })} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">Gender</label>
-                <select className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" value={customerForm.gender || ""}
+                <select className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" aria-label={uiT("Gender", "लिंग")} value={customerForm.gender || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}>
                   <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">City</label>
-                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="City" value={customerForm.city || ""}
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="City" aria-label={uiT("City", "शहर")} value={customerForm.city || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-medium text-th-secondary mb-1">Address</label>
-                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder={uiT("Address", "पता")} value={customerForm.address || ""}
+                <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder={uiT("Address", "पता")} aria-label={uiT("Address", "पता")} value={customerForm.address || ""}
                   onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })} />
               </div>
             </div>
 
             <div className="flex justify-between mt-6 pt-4 border-t border-th-border">
               <button onClick={() => { setIsNewCustomer(false); setSearched(false); }}
+                aria-label={uiT("Cancel new customer", "नया ग्राहक रद्द करें")}
                 className="btn-secondary flex items-center gap-2">
-                <X size={16} /> Cancel
+                <X size={16} aria-hidden="true" /> Cancel
               </button>
               <button onClick={async () => {
                 if (!customerForm.name) { toast.error("Name is required"); return; }
-                const res = await api.post("/api/customers", customerForm);
+                const res = await api.post<{ _id?: string; id?: string }>("/api/customers", customerForm);
                 if (res.success) {
-                  const newCust = { ...customerForm, _id: res.data._id || res.data.id };
+                  const newCust = { ...customerForm, _id: res.data?._id || res.data?.id };
                   setSelectedCustomer(newCust);
                   setIsNewCustomer(false);
                   setDeliveryAddress(newCust.address || "");
@@ -770,8 +671,9 @@ export default function Workspace() {
                 }
               }}
                 disabled={!customerForm.name}
+                aria-label={uiT("Save customer and continue", "ग्राहक सहेजें और जारी रखें")}
                 className="btn-primary flex items-center gap-2">
-                Save & Continue <ArrowRight size={16} />
+                Save & Continue <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -829,8 +731,8 @@ export default function Workspace() {
               key="prescription"
               usePrescription={usePrescription}
               setUsePrescription={setUsePrescription}
-              prescription={prescription}
-              setPrescription={setPrescription}
+              prescription={prescription as any}
+              setPrescription={setPrescription as any}
             />
           )}
 
@@ -932,32 +834,33 @@ export default function Workspace() {
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
         <div className="space-y-3">
           <p className="text-xs text-th-secondary">Enter SKU or barcode to auto-fill frame details.</p>
-          <input className="w-full px-4 py-2.5 bg-th-elevated/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="SKU or barcode" autoFocus
+          <input className="w-full px-4 py-2.5 bg-th-elevated/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" placeholder="SKU or barcode" aria-label={uiT("SKU or barcode", "SKU या बारकोड")} autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
-                const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
+                const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(q));
                 if (res.success && res.data && res.data.length > 0) {
                   const item = res.data[0];
-                  const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+                  const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
                   setOrderFrames((prev) => [...prev, newFrame]);
                   setScanModal(false);
                 }
               }
             }} />
           <button onClick={() => { setScanModal(false); setCameraActive(true); }}
+            aria-label={uiT("Use camera to scan barcode", "बारकोड स्कैन करने के लिए कैमरा उपयोग करें")}
             className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border-2 border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5">
-            <ScanLine size={14} /> Use Camera
+            <ScanLine size={14} aria-hidden="true" /> Use Camera
           </button>
         </div>
       </Modal>
 
       {cameraActive && (
-        <CameraScanner onScan={async (code) => {
-          const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
+        <CameraScanner onScan={async (code: string) => {
+          const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(code));
           if (res.success && res.data && res.data.length > 0) {
             const item = res.data[0];
-            const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+            const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
             setOrderFrames((prev) => [...prev, newFrame]);
           }
           setCameraActive(false);

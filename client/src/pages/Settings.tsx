@@ -13,6 +13,7 @@ import {
   Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
   WifiOff, ArrowRight, Eye, EyeOff, Crown, Languages,
 } from "lucide-react";
+import type { User as AppUser, BranchInfo, ShopSettings } from "../types";
 import SettingsHeader from "./settings/SettingsHeader";
 import SectionNav from "./settings/SectionNav";
 import type { Section } from "./settings/SectionNav";
@@ -68,7 +69,7 @@ export default function Settings() {
   const [waStatus, setWaStatus] = useState<string>("checking");
   const [waQr, setWaQr] = useState<string | null>(null);
   const [waDisconnecting, setWaDisconnecting] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<(AppUser & { id?: string })[]>([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
   const [staffBranch, setStaffBranch] = useState("");
@@ -112,7 +113,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (user?.role !== "staff") {
-      api.get("/api/auth/users").then((d) => { if (d.success) setUsers(d.data || []); });
+      api.get<(AppUser & { id?: string })[]>("/api/auth/users").then((d) => { if (d.success) setUsers(d.data || []); });
     }
   }, [user]);
 
@@ -139,7 +140,7 @@ export default function Settings() {
     setLogoPreview("");
     setError("");
     try {
-      const d = await api.get("/api/settings");
+      const d = await api.get<ShopSettings & { adminWhatsApp?: string }>("/api/settings");
       if (d.success && d.data) {
         setShopName(d.data.shopName || "KMJ Optical");
         setShopAddress(d.data.shopAddress || "");
@@ -160,7 +161,7 @@ export default function Settings() {
 
   async function loadBranches() {
     try {
-      const d = await api.get("/api/branches");
+      const d = await api.get<Branch[]>("/api/branches");
       if (d.success) setAllBranches(d.data || []);
     } catch {}
   }
@@ -170,7 +171,7 @@ export default function Settings() {
     async function poll() {
       while (!cancelled) {
         try {
-          const res = await api.get("/api/whatsapp/qr");
+          const res = await api.get<{ qr?: string; status?: string }>("/api/whatsapp/qr");
           if (cancelled) return;
           if (res.success) {
             if (res.data?.qr) {
@@ -275,7 +276,7 @@ export default function Settings() {
     if (res.success) {
       setEditingAccount(false);
       setSaveProfileMsg("Profile updated");
-      if (res.data) setUser(res.data);
+      if (res.data) setUser(res.data as AppUser);
     } else {
       setSaveProfileMsg("Error: " + (res.message || "Failed to update"));
     }
@@ -305,7 +306,7 @@ export default function Settings() {
       setShowAddStaff(false);
       setStaffForm({ username: "", password: "", name: "", mobile: "" });
       setStaffBranch("");
-      const list = await api.get("/api/auth/users");
+      const list = await api.get<(AppUser & { id?: string })[]>("/api/auth/users");
       if (list.success) setUsers(list.data || []);
     } else {
       toast.error(res.message || "Failed to create staff");

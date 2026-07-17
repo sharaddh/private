@@ -1,19 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
-
-interface BranchInfo {
-  _id: string;
-  name: string;
-  code: string;
-  dbName: string;
-  isActive: boolean;
-}
+import type { User } from "../../types";
 
 interface SettingsHeaderProps {
-  user: Record<string, unknown> | null;
-  currentBranch: BranchInfo | null;
-  branches: BranchInfo[];
+  user: User | null;
+  currentBranch: { _id: string; name: string; code: string; dbName: string; isActive: boolean } | null;
+  branches: { _id: string; name: string; code: string; dbName: string; isActive: boolean }[];
   isStaff: boolean;
   onSwitchBranch: (id: string) => void;
   saved: boolean;
