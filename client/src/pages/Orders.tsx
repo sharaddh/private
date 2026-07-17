@@ -1,21 +1,30 @@
 import React, { useEffect, useState, useCallback } from "react";
-import api from "../api";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
+import { orderService } from "../services";
+import type { Order, OrderStatus, Customer } from "../types";
 
-const STATUS_STEPS = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"];
+const STATUS_STEPS: readonly OrderStatus[] = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"] as const;
 
-const VALID_NEXT: Record<string, string> = {
+const VALID_NEXT: Record<OrderStatus, OrderStatus | undefined> = {
   Draft: "Ordered",
   Ordered: "In Lab",
   "In Lab": "Ready",
+  Ready: undefined,
+  Delivered: undefined,
+  Cancelled: undefined,
 };
 
-function DotProgress({ status, forwardedCount, quantity }: { status: string; forwardedCount?: number; quantity?: number }) {
+interface OrderCard extends Order {
+  frame?: string;
+  accessories?: string[];
+}
+
+function DotProgress({ status, forwardedCount, quantity }: { status: OrderStatus; forwardedCount?: number; quantity?: number }) {
   const currentIdx = STATUS_STEPS.indexOf(status);
   const qty = quantity || 1;
   const fwd = forwardedCount || 0;
@@ -48,18 +57,19 @@ function DotProgress({ status, forwardedCount, quantity }: { status: string; for
   );
 }
 
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-}
-
-const STATUS_THEME: Record<string, { dot: string; badge: string }> = {
+const STATUS_THEME: Record<OrderStatus, { dot: string; badge: string }> = {
   Draft:    { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
   Ordered:  { dot: "bg-[#af2896]", badge: "bg-[#af2896]/20 text-[#e854c7]" },
   "In Lab": { dot: "bg-[#e8115b]", badge: "bg-[#e8115b]/20 text-[#ff6b8a]" },
   Ready:    { dot: "bg-[#509bf5]", badge: "bg-[#509bf5]/20 text-[#82b6ff]" },
   Delivered: { dot: "bg-[#1ed760]", badge: "bg-[#1ed760]/20 text-[#1ed760]" },
+  Cancelled: { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
 };
+
+function todayStr(): string {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 
 export default function Orders() {
   const toast = useToast();
@@ -67,40 +77,38 @@ export default function Orders() {
   const { uiT } = useTranslate();
   const [filter, setFilter] = useState<string>("all");
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
-  const [advanceModal, setAdvanceModal] = useState<{ order: any; nextStatus: string } | null>(null);
-  const [advanceQty, setAdvanceQty] = useState(1);
-  const [startDate, setStartDate] = useState(todayStr());
-  const [endDate, setEndDate] = useState(todayStr());
-  const [showAll, setShowAll] = useState(false);
-  const [list, setList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [advanceModal, setAdvanceModal] = useState<{ order: OrderCard; nextStatus: OrderStatus } | null>(null);
+  const [advanceQty, setAdvanceQty] = useState<number>(1);
+  const [startDate, setStartDate] = useState<string>(todayStr());
+  const [endDate, setEndDate] = useState<string>(todayStr());
+  const [showAll, setShowAll] = useState<boolean>(false);
+  const [list, setList] = useState<OrderCard[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchOrders = useCallback(async () => {
-    const params = new URLSearchParams();
+    const params: Record<string, string> = {};
     if (!showAll) {
-      params.set("startDate", startDate);
-      params.set("endDate", endDate);
+      params.startDate = startDate;
+      params.endDate = endDate;
     }
-    const res = await api.get<any[]>("/api/orders?" + params.toString());
-    if (res.success && res.data) setList(res.data);
+    const res = await orderService.listFiltered(params);
+    if (res.success && res.data) setList(res.data.data as OrderCard[]);
   }, [startDate, endDate, showAll]);
 
   useEffect(() => { fetchOrders().finally(() => setLoading(false)); }, [fetchOrders]);
 
-  // Poll every 30s for real-time updates
   useEffect(() => {
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // Refetch on window focus
   useEffect(() => {
     const onFocus = () => fetchOrders();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchOrders]);
 
-  async function doAdvance(order: any, nextStatus: string, advQty: number) {
+  async function doAdvance(order: OrderCard, nextStatus: OrderStatus, advQty: number): Promise<void> {
     const qty = order.quantity || 1;
     const remaining = qty - (order.forwardedCount || 0);
     if (advQty <= 0) return;
@@ -111,7 +119,7 @@ export default function Orders() {
       status: advQty < remaining ? o.status : nextStatus,
     } : o));
     try {
-      const res = await api.patch<{ partial?: boolean }>(`/api/orders/${order._id}/status`, { status: nextStatus, advanceQuantity: advQty });
+      const res = await orderService.advanceStatus(order._id, nextStatus, advQty);
       if (!res.success) {
         toast.error(res.message || "Failed to update status");
       } else if (res.data?.partial) {
@@ -127,7 +135,7 @@ export default function Orders() {
     finally { setStatusLoading(null); fetchOrders(); }
   }
 
-  function openAdvanceModal(order: any) {
+  function openAdvanceModal(order: OrderCard): void {
     const next = VALID_NEXT[order.status];
     if (!next) return;
     const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
@@ -136,7 +144,7 @@ export default function Orders() {
     setAdvanceModal({ order, nextStatus: next });
   }
 
-  async function confirmAdvance() {
+  async function confirmAdvance(): Promise<void> {
     if (!advanceModal) return;
     const { order, nextStatus } = advanceModal;
     const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
@@ -145,13 +153,13 @@ export default function Orders() {
     await doAdvance(order, nextStatus, advQty);
   }
 
-  function customerName(o: any): string {
+  function customerName(o: OrderCard): string {
     if (typeof o.customerId === "object" && o.customerId?.name) return o.customerId.name;
     if (typeof o.customerId === "string") return o.customerId.slice(-6);
     return "\u2014";
   }
 
-  function customerMobile(o: any): string {
+  function customerMobile(o: OrderCard): string {
     if (typeof o.customerId === "object" && o.customerId?.mobile) return o.customerId.mobile;
     return "";
   }
@@ -186,6 +194,7 @@ export default function Orders() {
           { key: "Ready", label: uiT("Ready", "तैयार"), value: stats.ready, color: "text-[#82b6ff]" },
         ].map((s) => (
           <button key={s.key} type="button" onClick={() => setFilter(s.key)}
+            aria-label={`Filter by ${s.label}: ${s.value}`}
             className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer transition-all duration-150 hover:bg-th-hover ${
               filter === s.key ? "ring-2 ring-[#1ed760]/50" : ""
             }`}>
@@ -206,6 +215,7 @@ export default function Orders() {
           { key: "Delivered", label: uiT("Delivered", "डिलीवर हो गया") },
         ].map((f) => (
                 <button key={f.key} type="button" onClick={() => setFilter(f.key)}
+                  aria-label={`Show ${f.label} orders`}
                   className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
                     filter === f.key
                       ? "bg-[#1ed760] text-black"
@@ -217,8 +227,9 @@ export default function Orders() {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); setShowAll(false); }} count={filteredList.length} label="order" />
+        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s: string, e: string) => { setStartDate(s); setEndDate(e); setShowAll(false); }} count={filteredList.length} label="order" />
         <button onClick={() => setShowAll(!showAll)}
+          aria-label={showAll ? "Show filtered orders" : "Show all orders"}
           className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
             showAll
               ? "bg-[#1ed760] text-black"
@@ -236,7 +247,7 @@ export default function Orders() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredList.map((o: any) => {
+          {filteredList.map((o) => {
             const theme = STATUS_THEME[o.status] || STATUS_THEME.Draft;
             const pending = o.billInfo?.pendingAmount || 0;
             return (
@@ -271,7 +282,7 @@ export default function Orders() {
                     ) : null}
                     {o.lensBrand && (
                       <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
-                        <Eye size={11} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lens ? ` \u00B7 ${o.lens}` : ""}
+                        <Eye size={11} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lensType ? ` \u00B7 ${o.lensType}` : ""}
                       </span>
                     )}
                     {(o.accessories || []).map((a: string, i: number) => {
@@ -295,9 +306,9 @@ export default function Orders() {
                     ) : (
                       <span />
                     )}
-                    {o.billInfo?.totalAmount > 0 && (
+                    {(o.billInfo?.totalAmount ?? 0) > 0 && (
                       <span className="font-bold text-th-text tracking-tight">
-                        \u20B9{o.billInfo.totalAmount.toLocaleString()}
+                        \u20B9{(o.billInfo?.totalAmount ?? 0).toLocaleString()}
                         {pending > 0 && <span className="text-[10px] text-[#e8115b] font-medium ml-1">({pending})</span>}
                       </span>
                     )}
@@ -324,11 +335,13 @@ export default function Orders() {
                       const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
                       window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
                     }}
+                      aria-label={`View order for ${customerName(o)}`}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-black bg-[#1ed760] hover:bg-[#1fdf64] active:scale-95 transition-all duration-150">
                       <Eye size={16} /> View
                     </button>
                     {!isStaff && VALID_NEXT[o.status] ? (
                       <button type="button" disabled={statusLoading === o._id} onClick={() => openAdvanceModal(o)}
+                        aria-label={`Advance order to ${VALID_NEXT[o.status]}`}
                         className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-[#1ed760] bg-[#1ed760]/10 hover:bg-[#1ed760]/20 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                         {statusLoading === o._id ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
                         {VALID_NEXT[o.status]}
@@ -338,6 +351,7 @@ export default function Orders() {
                         const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
                         window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
                       }}
+                        aria-label={`Open customer page for ${customerName(o)}`}
                         className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-th-secondary bg-th-elevated hover:bg-th-hover active:scale-95 transition-all duration-150">
                         <ArrowUpRight size={16} />
                       </button>
@@ -359,18 +373,20 @@ export default function Orders() {
             </div>
             <h3 className="text-base font-bold text-th-text text-center mb-1">Mark as &quot;{advanceModal.nextStatus}&quot;</h3>
             <p className="text-xs text-th-secondary text-center mb-4">
-              {advanceModal.order.quantity > 1
+              {advanceModal.order.quantity && advanceModal.order.quantity > 1
                 ? `How many of ${advanceModal.order.quantity} pair(s) to advance?`
                 : `Advance this order to &quot;${advanceModal.nextStatus}&quot;?`}
             </p>
-            {advanceModal.order.quantity > 1 && (
+            {advanceModal.order.quantity && advanceModal.order.quantity > 1 && (
               <div className="flex items-center justify-center gap-3 mb-4">
                 <button onClick={() => setAdvanceQty(Math.max(1, advanceQty - 1))}
+                  aria-label="Decrease quantity"
                   className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors">
                   <Minus size={16} className="text-th-secondary" />
                 </button>
                 <span className="text-xl font-bold text-th-text w-10 text-center">{advanceQty}</span>
                 <button onClick={() => setAdvanceQty(Math.min((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0), advanceQty + 1))}
+                  aria-label="Increase quantity"
                   className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors">
                   <Plus size={16} className="text-th-secondary" />
                 </button>
@@ -383,13 +399,15 @@ export default function Orders() {
             )}
             <div className="space-y-1.5">
               <button onClick={confirmAdvance} disabled={statusLoading === advanceModal.order._id}
+                aria-label={`Confirm advance ${advanceQty} pair(s) to ${advanceModal.nextStatus}`}
                 className="w-full bg-[#1ed760] text-black rounded-lg flex items-center justify-center gap-2 py-2.5 text-sm font-semibold hover:bg-[#1fdf64] disabled:opacity-50 transition-all duration-150">
                 {statusLoading === advanceModal.order._id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                {advanceQty < ((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0))
+                {advanceModal.order.quantity && advanceQty < ((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0))
                   ? `Advance ${advanceQty} of ${advanceModal.order.quantity} pair(s)`
                   : `Mark All as ${advanceModal.nextStatus}`}
               </button>
               <button onClick={() => setAdvanceModal(null)} disabled={statusLoading === advanceModal.order._id}
+                aria-label="Cancel advance"
                 className="w-full bg-th-elevated text-th-secondary rounded-lg py-2.5 text-sm font-semibold hover:bg-th-hover transition-all duration-150 disabled:opacity-50">{uiT("Cancel", "रद्द करें")}</button>
             </div>
           </div>
