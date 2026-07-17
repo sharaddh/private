@@ -1,3 +1,5 @@
+import type { ApiResponse } from "./types";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 const TOKEN_KEYS = {
@@ -6,13 +8,6 @@ const TOKEN_KEYS = {
 } as const;
 
 const BRANCH_KEY = "currentBranchId";
-
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  [key: string]: any;
-}
 
 interface RequestOptions extends RequestInit {
   signal?: AbortSignal;
@@ -48,7 +43,13 @@ function buildHeaders(isJson = true): Record<string, string> {
 }
 
 async function tryRefresh(): Promise<boolean> {
-  const refresh = (() => { try { return localStorage.getItem(TOKEN_KEYS.REFRESH); } catch { return null; } })();
+  const refresh = (() => {
+    try {
+      return localStorage.getItem(TOKEN_KEYS.REFRESH);
+    } catch {
+      return null;
+    }
+  })();
   if (!refresh) return false;
 
   if (refreshPromise) return refreshPromise;
@@ -62,7 +63,11 @@ async function tryRefresh(): Promise<boolean> {
       });
       const data = await res.json();
       if (data.success && data.data?.access) {
-        try { localStorage.setItem(TOKEN_KEYS.ACCESS, data.data.access); } catch {}
+        try {
+          localStorage.setItem(TOKEN_KEYS.ACCESS, data.data.access);
+        } catch {
+          /* storage full or unavailable */
+        }
         return true;
       }
       return false;
@@ -80,10 +85,16 @@ function clearTokens(): void {
   try {
     localStorage.removeItem(TOKEN_KEYS.ACCESS);
     localStorage.removeItem(TOKEN_KEYS.REFRESH);
-  } catch {}
+  } catch {
+    /* storage unavailable */
+  }
 }
 
-async function request<T = unknown>(path: string, init: RequestOptions = {}, retries = 2): Promise<ApiResponse<T>> {
+async function request<T = unknown>(
+  path: string,
+  init: RequestOptions = {},
+  retries = 2
+): Promise<ApiResponse<T>> {
   const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register");
 
   let res: Response;
@@ -102,13 +113,15 @@ async function request<T = unknown>(path: string, init: RequestOptions = {}, ret
     if (refreshed) {
       const newToken = getToken();
       const newHeaders: Record<string, string> = {
-        ...(init.headers as Record<string, string> || {}),
+        ...((init.headers as Record<string, string>) || {}),
         Authorization: `Bearer ${newToken}`,
       };
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
     } else {
       clearTokens();
-      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      const returnUrl = encodeURIComponent(
+        window.location.pathname + window.location.search
+      );
       window.location.href = `/login?redirect=${returnUrl}`;
       return { success: false, message: "Session expired. Please login again." };
     }
@@ -123,12 +136,20 @@ async function request<T = unknown>(path: string, init: RequestOptions = {}, ret
   }
 
   if (!res.ok) {
-    return { success: false, message: payload.message || res.statusText, data: payload.data };
+    return {
+      success: false,
+      message: payload.message || res.statusText,
+      data: payload.data,
+    };
   }
   return payload;
 }
 
-export function createCancelableGet<T = any>(path: string): { promise: Promise<ApiResponse<T>>; abort: () => void } {
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+export function createCancelableGet<T = unknown>(
+  path: string
+): { promise: Promise<ApiResponse<T>>; abort: () => void } {
   const controller = new AbortController();
   const promise = request<T>(path, {
     headers: buildHeaders(false),
@@ -141,7 +162,10 @@ export async function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
   return request<T>(path, { headers: buildHeaders(false) });
 }
 
-export async function post<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+export async function post<T = unknown>(
+  path: string,
+  body: unknown
+): Promise<ApiResponse<T>> {
   return request<T>(path, {
     method: "POST",
     headers: buildHeaders(true),
@@ -149,7 +173,10 @@ export async function post<T = unknown>(path: string, body: unknown): Promise<Ap
   });
 }
 
-export async function put<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+export async function put<T = unknown>(
+  path: string,
+  body: unknown
+): Promise<ApiResponse<T>> {
   return request<T>(path, {
     method: "PUT",
     headers: buildHeaders(true),
@@ -164,7 +191,10 @@ export async function del<T = unknown>(path: string): Promise<ApiResponse<T>> {
   });
 }
 
-export async function patch<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
+export async function patch<T = unknown>(
+  path: string,
+  body: unknown
+): Promise<ApiResponse<T>> {
   return request<T>(path, {
     method: "PATCH",
     headers: buildHeaders(true),
@@ -173,11 +203,19 @@ export async function patch<T = unknown>(path: string, body: unknown): Promise<A
 }
 
 export function setToken(token: string): void {
-  try { localStorage.setItem(TOKEN_KEYS.ACCESS, token); } catch {}
+  try {
+    localStorage.setItem(TOKEN_KEYS.ACCESS, token);
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 export function setRefreshToken(token: string): void {
-  try { localStorage.setItem(TOKEN_KEYS.REFRESH, token); } catch {}
+  try {
+    localStorage.setItem(TOKEN_KEYS.REFRESH, token);
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 export function clearToken(): void {
