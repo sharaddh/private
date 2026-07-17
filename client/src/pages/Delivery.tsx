@@ -15,7 +15,7 @@ type Tab = "ready" | "delivered";
 export default function Delivery() {
   const { uiT } = useTranslate();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>("ready");
   const [startDate, setStartDate] = useState(todayStr());
   const [endDate, setEndDate] = useState(todayStr());
@@ -24,7 +24,13 @@ export default function Delivery() {
   const dateParams = new URLSearchParams({ startDate, endDate });
   const cacheKey = `/api/orders?${dateParams.toString()}`;
   const { data: orders, loading, refetch } = useCachedData<any[]>(cacheKey,
-    () => api.get("/api/orders?" + dateParams.toString()),
+    async () => {
+      const res = await api.get("/api/orders?" + dateParams.toString());
+      if (res.success && res.data && typeof res.data === "object" && "data" in res.data) {
+        return { success: true, data: (res.data as any).data };
+      }
+      return { success: res.success, data: Array.isArray(res.data) ? res.data : [] };
+    },
     [startDate, endDate]
   );
 
@@ -194,9 +200,9 @@ export default function Delivery() {
                               {daysUntil(o.deliveryDate)}
                             </span>
                           )}
-                          <button onClick={() => markDelivered(o._id)} disabled={actionLoading === o._id}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider disabled:opacity-50">
-                            {actionLoading === o._id ? "..." : <><CheckCircle size={13} /> {uiT("Deliver", "डिलीवर")}</>}
+                          <button onClick={() => navigate(`/pickup?orderId=${o._id}`)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider">
+                            <CheckCircle size={13} /> {uiT("Deliver", "डिलीवर")}
                           </button>
                         </>
                       )}
@@ -204,6 +210,12 @@ export default function Delivery() {
                         <span className="text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 py-1 rounded-lg">
                           {new Date(o.actualDeliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                         </span>
+                      )}
+                      {tab === "delivered" && (o.billInfo?.pendingAmount || 0) > 0 && (
+                        <button onClick={() => navigate(`/pickup?orderId=${o._id}&collect=true`)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all active:scale-95 uppercase tracking-wider">
+                          {uiT("Collect", "एकत्र")} ₹{o.billInfo.pendingAmount.toLocaleString()}
+                        </button>
                       )}
                       <button onClick={() => navigate(`/customers/${custId(o)}?visitId=${o.visitId || ""}`)}
                         className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold bg-th-elevated text-th-secondary hover:text-[#1ed760] hover:bg-[#1ed760]/10 transition-all active:scale-95">
