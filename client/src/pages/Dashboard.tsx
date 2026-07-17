@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { useApiGet } from "../hooks/useApi";
+import { useApi, useDashboard } from "../hooks";
 import PageSkeleton from "../components/PageSkeleton";
 import CameraScanner from "../components/CameraScanner";
 import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
@@ -10,6 +10,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
 import { useAuth } from "../context/AuthContext";
 import { formatFullRx, compactRx } from "../utils/rx";
+import type { DashboardData, Customer, Order, Bill, Todo } from "../types";
 import {
   Users, Package, Wallet, Receipt, Truck, ShoppingBag, ClipboardList,
   TrendingUp, IndianRupee, ScanLine, Boxes, PackageCheck,
@@ -18,21 +19,6 @@ import {
   X, ChevronRight, ShoppingCart, CheckSquare, Send, Eye, MessageSquare,
   Calendar, LayoutDashboard,
 } from "lucide-react";
-
-interface DashboardData {
-  counts: { customers: number; orders: number; bills: number; payments: number; inventory: number; deliveries: number; visits: number };
-  todaySales: number; todayCollection: number; weekSales: number; monthSales: number;
-  readyDeliveries: number; newCustomersToday: number;
-  lowStock: number; pendingPayments: number; recentCustomers: Record<string, unknown>[]; recentOrders: Record<string, unknown>[]; todayDeliveries: Record<string, unknown>[]; pendingBills: Record<string, unknown>[];
-  incompleteOrders: (Record<string, unknown> & { stockStatus?: { lensBrand?: { shop: number; warehouse: number } | null; frameBrand?: { shop: number; warehouse: number } | null } | null })[];
-  todayOrders: number; weekOrders: number; monthOrders: number;
-  todayBills: number; weekBills: number; monthBills: number;
-  dailySales: { date: string; total: number }[];
-  paymentModeSplit: { mode: string; total: number; count: number }[];
-  orderStatusCounts: { status: string; count: number }[];
-  salesTrend: string;
-  todayDeliveredOrders: Record<string, unknown>[];
-}
 
 const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
 
@@ -95,7 +81,7 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <button onClick={onClick} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg">
+    <button onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg">
       <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
         <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
       </div>
@@ -113,7 +99,7 @@ function SectionHeader({ title, count, action, actionLabel }: { title: string; c
         {count !== undefined && <span className="text-[12px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{count}</span>}
       </div>
       {action && (
-        <button onClick={action} className="flex items-center gap-1.5 text-[12px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
+        <button onClick={action} aria-label={actionLabel || "View all"} className="flex items-center gap-1.5 text-[12px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
           {actionLabel || "View all"}
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -146,7 +132,7 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: {
       <p className="text-[16px] font-semibold text-th-text">{title}</p>
       <p className="text-[14px] text-th-secondary mt-1 mb-5 max-w-xs">{description}</p>
       {actionLabel && onAction && (
-        <button onClick={onAction} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
+        <button onClick={onAction} aria-label={actionLabel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
           <Plus className="w-4 h-4" />
           {actionLabel}
         </button>
@@ -162,6 +148,7 @@ function SegmentedControl({ options, value, onChange, compact }: { options: { la
         const isActive = value === opt.value;
         return (
           <button key={opt.value} onClick={(e) => { e.stopPropagation(); onChange(isActive ? "pending" : opt.value); }}
+            aria-label={opt.label}
             className={`${compact ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-[11px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
               isActive
                 ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
@@ -203,7 +190,7 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
           <p className={`text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
         </div>
         {action && (
-          <button onClick={(e) => { e.stopPropagation(); action(); }} className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
+          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
             {actionLabel || "View"}
           </button>
         )}
@@ -215,8 +202,13 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
 // Main Dashboard
 
 export default function Dashboard() {
-  const { data, loading, refetch } = useApiGet<DashboardData>("/api/dashboard/stats");
-  const [todos, setTodos] = useState<Record<string, unknown>[]>([]);
+  const { dashboard, loading, error, refetch } = useDashboard();
+  const { data: todosData, refetch: refetchTodos } = useApi<Todo[]>(
+    () => api.get<Todo[]>("/api/workspace/todos"),
+    [],
+    { cacheKey: "/api/workspace/todos" }
+  );
+  const todos = todosData || [];
   const [newTask, setNewTask] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [hasDataOnce, setHasDataOnce] = useState(false);
@@ -226,33 +218,25 @@ export default function Dashboard() {
   const toast = useToast();
   const { dark, toggle } = useTheme();
   const { uiT } = useTranslate();
-  const { user } = useAuth();
+  const { user, currentBranch } = useAuth();
 
-  useEffect(() => { if (data) setHasDataOnce(true); }, [data]);
-
-  useEffect(() => {
-    api.get<Record<string, unknown>[]>("/api/todos").then((d) => { if (d.success) setTodos(d.data || []); });
-  }, []);
-
-  const fetchTodos = useCallback(() => {
-    api.get<Record<string, unknown>[]>("/api/todos").then((d) => { if (d.success) setTodos(d.data || []); });
-  }, []);
+  useEffect(() => { if (dashboard) setHasDataOnce(true); }, [dashboard]);
 
   const addTodo = useCallback(async () => {
     if (!newTask.trim()) return;
-    const res = await api.post("/api/todos", { task: newTask.trim() });
-    if (res.success) { setNewTask(""); fetchTodos(); }
-  }, [newTask, fetchTodos]);
+    const res = await api.post("/api/workspace/todos", { task: newTask.trim() });
+    if (res.success) { setNewTask(""); refetchTodos(); }
+  }, [newTask, refetchTodos]);
 
   const toggleTodo = useCallback(async (id: string, done: boolean) => {
-    await api.patch(`/api/todos/${id}`, { done: !done });
-    fetchTodos();
-  }, [fetchTodos]);
+    await api.patch(`/api/workspace/todos/${id}`, { done: !done });
+    refetchTodos();
+  }, [refetchTodos]);
 
   const deleteTodo = useCallback(async (id: string) => {
-    await api.del(`/api/todos/${id}`);
-    fetchTodos();
-  }, [fetchTodos]);
+    await api.del(`/api/workspace/todos/${id}`);
+    refetchTodos();
+  }, [refetchTodos]);
 
   const classifyEye = useCallback(async (id: string, eye: "right" | "left", status: string) => {
     const res = await api.patch(`/api/orders/${id}/classify-eye`, { eye, status });
@@ -283,7 +267,7 @@ export default function Dashboard() {
     const res = await api.post("/api/orders/demand-send", { type, orderIds: selected });
     setSendingDemand(null);
     if (res.success) {
-      const d = (res.data as Record<string, unknown>) || res;
+      const d = (res.data ?? res) as { sent?: boolean; waConnected?: boolean; queued?: boolean; sendError?: string };
       if (d.sent) {
         toast.success(type === "buy" ? "Purchase list sent to WhatsApp!" : "Lab order list sent to WhatsApp!");
       } else if (d.waConnected === false) {
@@ -291,7 +275,7 @@ export default function Dashboard() {
       } else if (d.queued) {
         toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued — will send when connected`);
       } else {
-        toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError as string}` : ""}`);
+        toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError}` : ""}`);
       }
     } else {
       toast.error(res.message || "Failed to send");
@@ -308,7 +292,7 @@ export default function Dashboard() {
   }, [showScanner]);
 
   if (loading && !hasDataOnce) return <PageSkeleton page="dashboard" />;
-  if (!data) return null;
+  if (!dashboard) return null;
 
   const now = new Date();
   const hour = now.getHours();
@@ -316,11 +300,11 @@ export default function Dashboard() {
   const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
 
-  const d = data;
+  const d = dashboard;
   const activeTodos = todos.filter((t) => !t.done);
   const doneTodos = todos.filter((t) => t.done);
 
-  const draftOrders = d.incompleteOrders.filter((o) => (o.status as string) === "Draft");
+  const draftOrders = d.incompleteOrders.filter((o) => o.status === "Draft");
 
   const totalStock = (ss: { shop?: number; warehouse?: number } | null | undefined) => (ss?.shop ?? 0) + (ss?.warehouse ?? 0);
 
@@ -331,7 +315,7 @@ export default function Dashboard() {
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-[24px] font-bold text-th-text tracking-tight">
-            {greeting}, <span className="text-[#1ed760]">{(user?.name as string) || (user?.username as string) || ""}</span>
+            {greeting}, <span className="text-[#1ed760]">{currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
           </h1>
           <div className="flex items-center gap-2 mt-1.5 text-[14px] text-th-secondary">
             <Calendar className="w-3.5 h-3.5" />
@@ -343,12 +327,12 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={() => navigate("/workspace")}
+        <button onClick={() => navigate("/workspace")} aria-label={uiT("New Sale", "नई बिक्री")}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1ed760] text-black rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
           <Plus className="w-3.5 h-3.5" />
           {uiT("New Sale", "नई बिक्री")}
         </button>
-        <button onClick={() => setShowScanner(true)}
+        <button onClick={() => setShowScanner(true)} aria-label={uiT("Scan", "स्कैन")}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-th-elevated text-th-text rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
           <ScanLine className="w-3.5 h-3.5" />
           {uiT("Scan", "स्कैन")}
@@ -469,7 +453,7 @@ export default function Dashboard() {
   // Lens Demand
 
   const renderLensDemand = () => {
-    const allIds = draftOrders.map((o) => o._id as string);
+    const allIds = draftOrders.map((o) => o._id);
 
     return (
       <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
@@ -483,12 +467,12 @@ export default function Dashboard() {
               {selectedOrders.size > 0 && (
                 <span className="text-[12px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
               )}
-              <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+              <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Buy lenses", "लेंस खरीदें")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <ShoppingBag className="w-3.5 h-3.5" />
                 {sendingDemand === "buy" ? "..." : uiT("Buy", "खरीदें")}
               </button>
-              <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0}
+              <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Order lenses", "लेंस ऑर्डर करें")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <Send className="w-3.5 h-3.5" />
                 {sendingDemand === "order" ? "..." : uiT("Order", "ऑर्डर")}
@@ -498,6 +482,7 @@ export default function Dashboard() {
           <label className="flex items-center gap-2 cursor-pointer text-[12px] font-medium text-th-secondary hover:text-th-text transition-colors">
             <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
               onChange={() => toggleAllOrders(allIds)}
+              aria-label={uiT("Select all", "सभी चुनें")}
               className="w-3.5 h-3.5 rounded accent-[#1ed760]" />
             {uiT("Select all", "सभी चुनें")} ({draftOrders.length})
           </label>
@@ -508,28 +493,29 @@ export default function Dashboard() {
         ) : (
           <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-none">
             {draftOrders.map((o) => {
-              const id = o._id as string;
-              const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "";
-              const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+              const id = o._id;
+              const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
+              const cName = custObj?.name ?? "";
+              const cMobile = custObj?.mobile ?? "";
               const isSelected = selectedOrders.has(id);
-              const rx = o.prescription as Record<string, unknown> | undefined;
-              const rightEye = rx?.rightEye as Record<string, unknown> | undefined;
-              const leftEye = rx?.leftEye as Record<string, unknown> | undefined;
-              const rDV = rightEye?.dv as Record<string, unknown> | undefined;
-              const lDV = leftEye?.dv as Record<string, unknown> | undefined;
-              const rNV = rightEye?.nv as Record<string, unknown> | undefined;
-              const lNV = leftEye?.nv as Record<string, unknown> | undefined;
-              const rStatus = (o.rightLensStatus as string) || "pending";
-              const lStatus = (o.leftLensStatus as string) || "pending";
-              const rRx = compactRx(rDV, rNV);
-              const lRx = compactRx(lDV, lNV);
+              const rx = o.prescription;
+              const rightEye = rx?.rightEye;
+              const leftEye = rx?.leftEye;
+              const rDV = rightEye?.dv;
+              const lDV = leftEye?.dv;
+              const rNV = rightEye?.nv;
+              const lNV = leftEye?.nv;
+              const rStatus = o.rightLensStatus || "pending";
+              const lStatus = o.leftLensStatus || "pending";
+              const rRx = compactRx(rDV as Record<string, unknown> | undefined, rNV as Record<string, unknown> | undefined);
+              const lRx = compactRx(lDV as Record<string, unknown> | undefined, lNV as Record<string, unknown> | undefined);
               const stockTotal = totalStock(o.stockStatus?.lensBrand ?? null);
               const inStock = stockTotal > 0;
 
               const goToCustomer = (e?: React.MouseEvent) => {
                 e?.stopPropagation();
-                const cId = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>)._id : null;
-                if (cId) navigate(`/customers/${cId}?visitId=${(o.visitId as string) || ""}`);
+                const cId = custObj?._id ?? null;
+                if (cId) navigate(`/customers/${cId}?visitId=${o.visitId || ""}`);
               };
 
               return (
@@ -541,6 +527,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3">
                     <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
                       onClick={(e) => e.stopPropagation()}
+                      aria-label={cName || uiT("Select order", "ऑर्डर चुनें")}
                       className="w-4 h-4 rounded accent-[#1ed760] cursor-pointer flex-shrink-0" />
                     <div className="relative flex-shrink-0">
                       <UserAvatar name={cName} className="w-10 h-10 text-xs" />
@@ -553,16 +540,16 @@ export default function Dashboard() {
                         <p className="text-[14px] font-bold text-th-text truncate">{cName || "—"}</p>
                         {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
                         <span className="text-[12px] text-th-muted hidden sm:inline">·</span>
-                        <span className="text-[12px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
+                        <span className="text-[12px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        {!!(o.frameBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{(o.frameBrand as string).trim()}</span>}
-                        {!!(o.lensBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand as string}</span>}
-                        {!!(o.lensType) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType as string}</span>}
-                        {!!(o.lensIndex) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex as string}</span>}
+                        {!!(o.frameBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.frameBrand?.trim()}</span>}
+                        {!!(o.lensBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand}</span>}
+                        {!!(o.lensType) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType}</span>}
+                        {!!(o.lensIndex) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
                       </div>
                     </div>
-                    <button onClick={goToCustomer}
+                    <button onClick={goToCustomer} aria-label={uiT("Open", "खोलें")}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
                       {uiT("Open", "खोलें")} <ArrowUpRight className="w-3 h-3" />
                     </button>
@@ -629,10 +616,11 @@ export default function Dashboard() {
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
-          const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
-          const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+          const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
+          const cName = custObj?.name ?? "—";
+          const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={o._id as string || idx} className="flex items-center gap-3 px-5 py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id as string}`)}>
+            <div key={o._id || idx} className="flex items-center gap-3 px-5 py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id}`)}>
               <div className="relative flex-shrink-0">
                 <UserAvatar name={cName} className="w-10 h-10 text-sm" />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
@@ -642,12 +630,12 @@ export default function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-[12px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : ""}</span>
-                  {!!(o.frameBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand as string}</span>}
-                  {!!(o.lensBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand as string}</span>}
+                  <span className="text-[12px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
+                  {!!(o.frameBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand}</span>}
+                  {!!(o.lensBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand}</span>}
                 </div>
               </div>
-              <StatusBadge status={(o.status as string) || "—"} />
+              <StatusBadge status={o.status || "—"} />
             </div>
           );
         })}
@@ -666,18 +654,19 @@ export default function Dashboard() {
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.slice(0, 6).map((b, idx) => {
-          const cName = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).name as string : "—";
-          const cMobile = typeof b.customerId === "object" && b.customerId ? (b.customerId as Record<string, unknown>).mobile as string : "";
+          const custObj = typeof b.customerId === "object" && b.customerId ? b.customerId : null;
+          const cName = custObj?.name ?? "—";
+          const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={b._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
+            <div key={b._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <UserAvatar name={cName} className="w-10 h-10 text-sm" />
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
                 {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="text-right flex items-center gap-3 flex-shrink-0">
-                <p className="text-[16px] font-bold text-[#e74c3c] whitespace-nowrap">₹{((b.pendingAmount as number) || 0).toLocaleString()}</p>
-                <button onClick={() => navigate(`/bills?id=${b._id as string}`)}
+                <p className="text-[16px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+                <button onClick={() => navigate(`/bills?id=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider">
                   {uiT("Collect", "वसूलें")}
                 </button>
@@ -700,14 +689,15 @@ export default function Dashboard() {
         {d.todayDeliveries.length === 0 ? (
           <EmptyState icon={Truck} title={uiT("No deliveries today", "आज कोई डिलीवरी नहीं")} description={uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।")} />
         ) : d.todayDeliveries.map((dl, idx) => {
-          const cName = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).name as string : "—";
-          const cMobile = typeof dl.customerId === "object" && dl.customerId ? (dl.customerId as Record<string, unknown>).mobile as string : "";
+          const custObj = typeof dl.customerId === "object" && dl.customerId ? dl.customerId : null;
+          const cName = custObj?.name ?? "—";
+          const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={dl._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
+            <div key={dl._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <div className="relative flex-shrink-0">
                 <UserAvatar name={cName} className="w-10 h-10 text-sm" />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : dl.status === "In Transit" ? "bg-[#a78bfa]" : "bg-[#f59e0b]"}`} />
+                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
                 </span>
               </div>
               <div className="flex-1 min-w-0">
@@ -715,8 +705,8 @@ export default function Dashboard() {
                 {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <StatusBadge status={(dl.status as string) || "—"} />
-                <button onClick={() => navigate(`/delivery?order=${dl._id as string}`)}
+                <StatusBadge status={dl.status || "—"} />
+                <button onClick={() => navigate(`/delivery?order=${dl._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
                   className="p-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
                   <PackageCheck className="w-4 h-4" />
                 </button>
@@ -740,10 +730,11 @@ export default function Dashboard() {
         </div>
         <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
           {delivered.map((o, idx) => {
-            const cName = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).name as string : "—";
-            const cMobile = typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>).mobile as string : "";
+            const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
+            const cName = custObj?.name ?? "—";
+            const cMobile = custObj?.mobile ?? "";
             return (
-              <div key={(o._id as string) || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${typeof o.customerId === "object" && o.customerId ? (o.customerId as Record<string, unknown>)._id : ""}?visitId=${o.visitId || ""}`)}>
+              <div key={o._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${custObj?._id ?? ""}?visitId=${o.visitId || ""}`)}>
                 <div className="relative flex-shrink-0">
                   <UserAvatar name={cName} className="w-10 h-10 text-sm" />
                   <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
@@ -756,14 +747,14 @@ export default function Dashboard() {
                     {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
                   </div>
                   <p className="text-[12px] text-th-secondary mt-0.5">
-                    {!!(o.frameBrand) ? `${o.frameBrand as string}` : ""}
+                    {!!(o.frameBrand) ? `${o.frameBrand}` : ""}
                     {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
-                    {!!(o.lensBrand) ? `${o.lensBrand as string}` : ""}
-                    {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt as string, uiT) : "") : ""}
+                    {!!(o.lensBrand) ? `${o.lensBrand}` : ""}
+                    {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[16px] font-bold text-th-text">₹{((o.billInfo as Record<string, unknown>)?.totalAmount as number || 0).toLocaleString()}</span>
+                  <span className="text-[16px] font-bold text-th-text">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
                   <StatusBadge status="Delivered" />
                 </div>
               </div>
@@ -785,20 +776,20 @@ export default function Dashboard() {
         {d.recentCustomers.length === 0 ? (
           <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
         ) : d.recentCustomers.map((c, idx) => (
-          <div key={c._id as string || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id as string}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id as string}`)}>
-            <UserAvatar name={(c.name as string) || "?"} className="w-10 h-10 text-sm" />
+          <div key={c._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
+            <UserAvatar name={c.name || "?"} className="w-10 h-10 text-sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-th-text truncate">{v(c.name as string)}</p>
+              <p className="text-[14px] font-semibold text-th-text truncate">{v(c.name)}</p>
               <p className="text-[12px] text-th-secondary mt-0.5 flex items-center gap-2 flex-wrap">
-                <span>{c.mobile ? maskPhone(c.mobile as string) : "—"}</span>
+                <span>{c.mobile ? maskPhone(c.mobile) : "—"}</span>
                 <span className="text-th-muted">·</span>
-                <span>{c.createdAt ? formatTimeAgo(c.createdAt as string, uiT) : ""}</span>
+                <span>{c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""}</span>
                 <span className="text-th-muted">·</span>
-                <span>{(c.totalVisits as number) ?? 0} {uiT("visits", "विज़िट")}</span>
+                <span>{c.totalVisits ?? 0} {uiT("visits", "विज़िट")}</span>
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-[16px] font-bold text-th-text">₹{((c.totalSpent as number) || 0).toLocaleString()}</p>
+              <p className="text-[16px] font-bold text-th-text">₹{(c.totalSpent || 0).toLocaleString()}</p>
             </div>
           </div>
         ))}
@@ -823,8 +814,9 @@ export default function Dashboard() {
         <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTodo()}
+          aria-label={uiT("Add a task", "कार्य जोड़ें")}
           className="flex-1 px-4 py-2.5 bg-th-elevated border border-th-card rounded-lg text-[14px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
-        <button onClick={addTodo} disabled={!newTask.trim()}
+        <button onClick={addTodo} disabled={!newTask.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
           className="p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
           <Plus className="w-4 h-4" />
         </button>
@@ -834,13 +826,13 @@ export default function Dashboard() {
           <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
-            <div key={t._id as string} className={`flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
-              <button onClick={() => toggleTodo(t._id as string, !!(t.done))}
+            <div key={t._id} className={`flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
+              <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "अपूर्ण चिह्नित करें") : uiT("Mark complete", "पूर्ण चिह्नित करें")}
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
-                {!!(t.done) && <Check className="w-3 h-3 text-th-text" />}
+                {t.done && <Check className="w-3 h-3 text-th-text" />}
               </button>
-              <span className={`flex-1 text-[14px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task as string}</span>
-              <button onClick={() => deleteTodo(t._id as string)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
+              <span className={`flex-1 text-[14px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
+              <button onClick={() => deleteTodo(t._id)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -940,7 +932,7 @@ export default function Dashboard() {
   // Main Render
 
   return (
-    <div className="bg-th-base min-h-screen">
+    <div className="bg-th-base min-h-screen" role="main">
       <div className="max-w-7xl mx-auto space-y-6 px-4 md:px-6 py-6 md:py-8">
         {renderHeader()}
         {renderHero()}
