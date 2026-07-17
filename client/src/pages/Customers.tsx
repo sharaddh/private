@@ -7,38 +7,38 @@ import PageSkeleton from "../components/PageSkeleton";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useTranslate } from "../context/TranslateContext";
-import { Edit2, Trash2, UserPlus, Search, Phone, ArrowRight, Users, Plus, X, MapPin, Tag, Activity, IndianRupee, Eye, Calendar, MapPinned } from "lucide-react";
+import { customerService } from "../services";
+import { Edit2, Trash2, UserPlus, Search, Phone, Users, Plus, X, MapPin, Tag, Activity, IndianRupee, Eye, Calendar, MapPinned } from "lucide-react";
+import type { Customer, CustomerFormData } from "../types";
 
-interface Customer {
-  _id: string; customerId: string; name: string; email?: string;
-  mobile?: string; alternateMobile?: string; address?: string; city?: string;
-  age?: number; gender?: string; tags?: string[];
-  totalVisits?: number; totalSpent?: number; pendingAmount?: number; createdAt: string;
-}
-
-export default function Customers() {
+export default function Customers(): React.JSX.Element {
   const toast = useToast();
   const [list, setList] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showForm, setShowForm] = useState<boolean>(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
+  const [showDetail, setShowDetail] = useState<boolean>(false);
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [form, setForm] = useState<CustomerFormData>({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const navigate = useNavigate();
   const { isStaff, user } = useAuth();
   const { uiT } = useTranslate();
-  const [recalculating, setRecalculating] = useState(false);
+  const [recalculating, setRecalculating] = useState<boolean>(false);
 
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const res = await api.get("/api/customers?limit=1000");
-      const raw = res.data as any;
-      const customers = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+      const res = await customerService.list<Customer>({ limit: 1000 });
+      const raw = res.data as unknown;
+      let customers: Customer[] = [];
+      if (Array.isArray(raw)) {
+        customers = raw;
+      } else if (raw && typeof raw === "object" && Array.isArray((raw as Record<string, unknown>).data)) {
+        customers = (raw as { data: Customer[] }).data;
+      }
       setList(customers);
     } catch {
       setList([]);
@@ -49,28 +49,28 @@ export default function Customers() {
 
   useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
-  const refetch = useCallback((invalidate?: boolean) => {
+  const refetch = useCallback((invalidate?: boolean): void => {
     if (invalidate) invalidateCache("/api/customers?limit=1000");
     fetchCustomers();
   }, [fetchCustomers]);
 
-  const filteredList = useMemo(() => {
+  const filteredList = useMemo((): Customer[] => {
     const q = searchQuery.trim();
     if (!q) return list;
     const lower = q.toLowerCase();
-    return list.filter((c) =>
+    return list.filter((c: Customer) =>
       c.name?.toLowerCase().includes(lower) || c.mobile?.includes(q) ||
       c.customerId?.toLowerCase().includes(lower) || c.email?.toLowerCase().includes(lower)
     );
   }, [searchQuery, list]);
 
-  function openCreate() {
+  function openCreate(): void {
     setEditing(null);
     setForm({ name: "", email: "", mobile: "", alternateMobile: "", address: "", city: "", age: "", gender: "", tags: "" });
     setShowForm(true); setError("");
   }
 
-  function openEdit(c: Customer) {
+  function openEdit(c: Customer): void {
     setEditing(c);
     setForm({
       name: c.name || "", email: c.email || "", mobile: c.mobile || "",
@@ -81,22 +81,22 @@ export default function Customers() {
     setShowForm(true); setError("");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setIsLoading(true); setError("");
     try {
-      const payload = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
-      const res = editing ? await api.put(`/api/customers/${editing._id}`, payload) : await api.post("/api/customers", payload);
+      const payload: Record<string, unknown> = { ...form, age: form.age ? Number(form.age) : undefined, tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean), email: form.email || undefined, mobile: form.mobile || undefined };
+      const res = editing ? await customerService.update<Customer>(editing._id, payload) : await customerService.create<Customer>(payload);
       if (res.success) { invalidateCache("/api/customers?limit=1000"); setShowForm(false); if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`); }
       else setError(res.message || uiT("Operation failed", "ऑपरेशन विफल"));
     } catch { setError(uiT("An error occurred", "एक त्रुटि हुई")); }
     finally { setIsLoading(false); }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string): Promise<void> {
     if (!confirm(uiT("Are you sure you want to delete this customer?", "क्या आप वाकई इस ग्राहक को हटाना चाहते हैं?"))) return;
-    const res = await api.del(`/api/customers/${id}`);
-    if (res.success) setList((prev) => prev.filter((c) => c._id !== id));
+    const res = await customerService.remove<Customer>(id);
+    if (res.success) setList((prev: Customer[]) => prev.filter((c: Customer) => c._id !== id));
   }
 
   if (loading) return <PageSkeleton page="customers" />;
@@ -110,13 +110,13 @@ export default function Customers() {
         </div>
         <div className="flex items-center gap-2">
           {!isStaff && (
-            <button onClick={async () => {
+            <button onClick={async (): Promise<void> => {
               setRecalculating(true);
               const res = await api.post("/api/recalculate/customer-totals", {});
               if (res.success) {
                 refetch(true);
-                const d = res.data as any;
-                toast.success(`${uiT("Fixed", "ठीक किया")} ${d?.updated || 0} ${uiT("customer records", "ग्राहक रिकॉर्ड")}`);
+                const d = res.data as Record<string, unknown> | undefined;
+                toast.success(`${uiT("Fixed", "ठीक किया")} ${(d as { updated?: number })?.updated || 0} ${uiT("customer records", "ग्राहक रिकॉर्ड")}`);
               } else {
                 toast.error(`${uiT("Recalculation failed", "पुनर्गणना विफल")}: ` + (res.message || uiT("Unknown error", "अज्ञात त्रुटि")));
               }
@@ -134,73 +134,19 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="relative mt-6">
+      <div className="relative mt-6" role="search">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none" />
         <input type="text" placeholder={uiT("Search by name, mobile, email, or ID...", "नाम, मोबाइल, ईमेल या आईडी से खोजें...")}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-th-elevated text-th-text placeholder-[#a7a7a7] pl-11 pr-4 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1ed760] transition-shadow"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          aria-label={uiT("Search customers", "ग्राहक खोजें")}
+          className="w-full bg-th-elevated text-th-text placeholder-[#a7a7a7] pl-11 pr-10 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1ed760] transition-shadow"
         />
         {searchQuery.trim() && (
-          <div className="absolute z-40 top-full mt-1 w-full bg-th-hover rounded-lg max-h-80 overflow-y-auto shadow-xl">
-            {filteredList.length > 0 ? (
-              <>
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-th-secondary border-b border-th-border">
-                  {filteredList.length} {uiT("matching customer(s)", "मिलान हो रहा है ग्राहक")}
-                </div>
-                {filteredList.map((c) => (
-                  <div key={c._id}
-                    onClick={() => navigate(`/customers/${c._id}`)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-th-elevated cursor-pointer transition-colors border-b border-th-border last:border-b-0"
-                  >
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                      (c.pendingAmount || 0) > 0
-                        ? "bg-[#e8a427] text-black"
-                        : "bg-[#1ed760] text-black"
-                    }`}>
-                      {c.name?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-th-text truncate">{c.name}</span>
-                        {c.customerId && (
-                          <span className="text-[10px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg">
-                            #{c.customerId.replace("CUST-", "").slice(-6)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {c.mobile && (
-                          <span className="flex items-center gap-1 text-xs text-th-secondary">
-                            <Phone size={10} /> {c.mobile.replace(/^0+/, "")}
-                          </span>
-                        )}
-                        {c.city && (
-                          <span className="flex items-center gap-1 text-xs text-th-secondary">
-                            <MapPinned size={10} /> {c.city}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <ArrowRight size={14} className="text-[#535353] flex-shrink-0" />
-                  </div>
-                ))}
-              </>
-            ) : (
-              <div className="px-4 py-3 text-sm text-th-secondary">
-                {uiT("No customers matching", "कोई ग्राहक मेल नहीं खा रहा")} "{searchQuery}"
-              </div>
-            )}
-            <div
-              onClick={() => { setSearchQuery(""); openCreate(); }}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-th-elevated cursor-pointer transition-colors rounded-b-lg"
-            >
-              <div className="w-9 h-9 rounded-full bg-[#1ed760] text-black flex items-center justify-center flex-shrink-0">
-                <Plus size={16} />
-              </div>
-              <span className="font-semibold text-sm text-[#1ed760]">{uiT("Add Customer", "ग्राहक जोड़ें")}</span>
-            </div>
-          </div>
+          <button onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-th-card text-th-secondary hover:text-th-text transition-colors">
+            <X size={14} />
+          </button>
         )}
       </div>
 
@@ -220,109 +166,108 @@ export default function Customers() {
           </button>
         </div>
       ) : (
-        <div className="space-y-2 mt-6">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
-          {filteredList.map((c) => (
-            <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-              className="group relative bg-th-surface rounded-lg cursor-pointer hover:bg-th-hover active:scale-[0.99] transition-all duration-150 overflow-hidden"
-            >
-              <div className="relative flex items-center gap-4 p-4">
-                <div className={`relative w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 overflow-hidden ${
-                  (c.pendingAmount || 0) > 0
-                    ? "bg-[#e8a427] text-black"
-                    : "bg-[#1ed760] text-black"
-                }`}>
-                  {c.name?.charAt(0)?.toUpperCase() || "?"}
-                  {(c.pendingAmount || 0) > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-th-surface" />
-                  )}
-                </div>
+        <div className="mt-6">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-3">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {filteredList.map((c: Customer) => (
+              <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
+                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] transition-all duration-150 overflow-hidden border border-th-border hover:border-[#1ed760]/30"
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="relative flex-shrink-0">
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${
+                        (c.pendingAmount || 0) > 0
+                          ? "bg-[#e8a427] text-black"
+                          : "bg-[#1ed760] text-black"
+                      }`}>
+                        {c.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      {(c.pendingAmount || 0) > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-th-surface" />
+                      )}
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-th-text truncate">{c.name}</h3>
-                    {c.customerId && (
-                      <span className="text-[10px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg shrink-0">
-                        #{c.customerId.replace("CUST-", "").slice(-6)}
-                      </span>
-                    )}
-                    {c.age && (
-                      <span className="text-[11px] text-th-secondary shrink-0">{c.age}y{c.gender ? `, ${c.gender}` : ""}</span>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold text-sm text-th-text truncate">{c.name}</h3>
+                        {c.age && (
+                          <span className="text-[10px] text-th-secondary shrink-0">{c.age}y{c.gender ? `, ${c.gender}` : ""}</span>
+                        )}
+                      </div>
+                      {c.customerId && (
+                        <span className="text-[10px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg inline-block mt-0.5">
+                          #{c.customerId.replace("CUST-", "").slice(-6)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e: React.MouseEvent) => { e.stopPropagation(); openEdit(c); }}
+                        className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors" title={uiT("Edit", "संपादित करें")}>
+                        <Edit2 size={12} />
+                      </button>
+                      {!isStaff && (
+                        <button onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(c._id); }}
+                          className="p-1 hover:bg-red-500/10 rounded text-th-secondary hover:text-red-400 transition-colors" title={uiT("Delete", "हटाएं")}>
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-2.5 text-xs text-th-secondary">
                     {c.mobile && (
-                      <span className="flex items-center gap-1 text-xs text-th-secondary">
-                        <Phone size={11} className="text-th-secondary" />
-                        {c.mobile.replace(/^0+/, "")}
+                      <span className="flex items-center gap-1">
+                        <Phone size={10} /> {c.mobile.replace(/^0+/, "")}
                       </span>
                     )}
                     {c.city && (
-                      <span className="flex items-center gap-1 text-xs text-th-secondary">
-                        <MapPinned size={11} className="text-th-secondary" /> {c.city}
+                      <span className="flex items-center gap-1">
+                        <MapPinned size={10} /> {c.city}
                       </span>
                     )}
                   </div>
 
                   {c.tags && c.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {c.tags.slice(0, 3).map((t, i) => (
-                        <span key={t} className="px-2 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[10px] font-medium">{t}</span>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {c.tags.slice(0, 2).map((t: string) => (
+                        <span key={t} className="px-1.5 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded text-[9px] font-medium">{t}</span>
                       ))}
-                      {c.tags.length > 3 && (
-                        <span className="text-[10px] text-th-secondary px-1">+{c.tags.length - 3}</span>
+                      {c.tags.length > 2 && (
+                        <span className="text-[9px] text-th-secondary px-0.5">+{c.tags.length - 2}</span>
                       )}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="flex flex-col items-end gap-1.5">
-                    <div className="flex items-center gap-1.5 bg-th-elevated px-2.5 py-1 rounded-lg">
-                      <Calendar size={11} className="text-th-secondary" />
-                      <span className="text-xs font-bold text-th-secondary">{c.totalVisits || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">
-                      <span className="text-xs font-bold text-[#1ed760]">₹{(c.totalSpent || 0).toLocaleString()}</span>
-                    </div>
-                    {(c.pendingAmount || 0) > 0 ? (
-                      <div className="flex items-center gap-1 bg-[#e8a427]/10 px-2 py-0.5 rounded-lg">
-                        <span className="text-[10px] font-semibold text-[#e8a427]">₹{(c.pendingAmount || 0).toLocaleString()} {uiT("due", "बकाया")}</span>
-                      </div>
-                    ) : (c.totalVisits || 0) > 0 ? (
-                      <span className="text-[10px] text-[#1ed760] font-medium">{uiT("Cleared", "चुकता")}</span>
-                    ) : null}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-th-elevated/50 border-t border-th-border">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-th-secondary">
+                      <Calendar size={10} /> {c.totalVisits || 0}
+                    </span>
+                    <span className="text-[11px] font-bold text-[#1ed760]">₹{(c.totalSpent || 0).toLocaleString()}</span>
                   </div>
-
-                  <div className="flex flex-col gap-0.5 -mr-1">
-                    <button onClick={(e) => { e.stopPropagation(); openEdit(c); }}
-                      className="p-1.5 hover:bg-th-elevated rounded-full text-th-secondary hover:text-[#1ed760] transition-colors" title={uiT("Edit", "संपादित करें")}>
-                      <Edit2 size={13} />
-                    </button>
-                    {!isStaff && (
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c._id); }}
-                        className="p-1.5 hover:bg-red-500/10 rounded-full text-th-secondary hover:text-red-400 transition-colors" title={uiT("Delete", "हटाएं")}>
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                    <ArrowRight size={14} className="text-[#535353] group-hover:text-[#1ed760] transition-colors" />
-                  </div>
+                  {(c.pendingAmount || 0) > 0 ? (
+                    <span className="text-[10px] font-semibold text-[#e8a427]">₹{(c.pendingAmount || 0).toLocaleString()} {uiT("due", "बकाया")}</span>
+                  ) : (c.totalVisits || 0) > 0 ? (
+                    <span className="text-[10px] text-[#1ed760] font-medium">{uiT("Clear", "चुकता")}</span>
+                  ) : null}
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowForm(false)}>
-          <div className="bg-th-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-th-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-th-border">
               <h3 className="text-base font-bold text-th-text">{editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</h3>
               <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-th-elevated rounded-full text-th-secondary hover:text-th-text transition-colors"><X size={18} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto scrollbar-none p-6">
               {error && <div className="bg-red-500/10 border border-red-500/20 text-red-300 px-3 py-2.5 rounded-lg text-sm mb-3">{error}</div>}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="bg-th-elevated rounded-lg p-4">
@@ -332,15 +277,15 @@ export default function Customers() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Name", "नाम")} *</label>
-                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })} required aria-label={uiT("Customer name", "ग्राहक का नाम")} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Age", "आयु")}</label>
-                      <input type="number" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+                      <input type="number" inputMode="numeric" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" value={form.age} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, age: e.target.value })} aria-label={uiT("Customer age", "ग्राहक की आयु")} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Gender", "लिंग")}</label>
-                      <select className="w-full bg-th-hover text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+                      <select className="w-full bg-th-hover text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.gender} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, gender: e.target.value })} aria-label={uiT("Customer gender", "ग्राहक का लिंग")}>
                         <option value="">{uiT("Select", "चुनें")}</option>
                         <option value="Male">{uiT("Male", "पुरुष")}</option>
                         <option value="Female">{uiT("Female", "महिला")}</option>
@@ -357,15 +302,15 @@ export default function Customers() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Mobile", "मोबाइल")} *</label>
-                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
+                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.mobile} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, mobile: e.target.value })} aria-label={uiT("Mobile number", "मोबाइल नंबर")} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</label>
-                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.alternateMobile} onChange={(e) => setForm({ ...form, alternateMobile: e.target.value })} />
+                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.alternateMobile} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, alternateMobile: e.target.value })} aria-label={uiT("Alternate mobile number", "वैकल्पिक मोबाइल नंबर")} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Email", "ईमेल")}</label>
-                      <input type="email" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                      <input type="email" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} aria-label={uiT("Email address", "ईमेल पता")} />
                     </div>
                   </div>
                 </div>
@@ -377,11 +322,11 @@ export default function Customers() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Address", "पता")}</label>
-                      <textarea className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                      <textarea className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" rows={2} value={form.address} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, address: e.target.value })} aria-label={uiT("Address", "पता")} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("City", "शहर")}</label>
-                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, city: e.target.value })} aria-label={uiT("City", "शहर")} />
                     </div>
                   </div>
                 </div>
@@ -390,7 +335,7 @@ export default function Customers() {
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <Tag size={14} className="text-[#1ed760]" /> {uiT("Tags", "टैग")}
                   </h3>
-                  <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" placeholder="tag1, tag2" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                  <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" placeholder="tag1, tag2" value={form.tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, tags: e.target.value })} aria-label={uiT("Tags", "टैग")} />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
@@ -487,7 +432,7 @@ export default function Customers() {
                   <Tag size={14} className="text-[#1ed760]" /> {uiT("Tags", "टैग")}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
-                  {detailCustomer.tags.map((t, i) => (
+                  {detailCustomer.tags.map((t: string, i: number) => (
                     <span key={t} className="px-2 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[11px] font-medium">{t}</span>
                   ))}
                 </div>
