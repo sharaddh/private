@@ -1,22 +1,26 @@
 import { Response } from "express";
 
-export function success(res: Response, data: unknown, message?: string, status = 200) {
-  return res.status(status).json({ success: true, data, message });
+export function sendSuccess<T>(res: Response, data: T, message?: string, status = 200): void {
+  const body: Record<string, unknown> = { success: true, data };
+  if (message) body.message = message;
+  res.status(status).json(body);
 }
 
-export function created(res: Response, data: unknown, message = "Created successfully") {
-  return success(res, data, message, 201);
+export function sendCreated<T>(res: Response, data: T, message = "Created successfully"): void {
+  sendSuccess(res, data, message, 201);
 }
 
-export function fail(res: Response, message: string, status = 400, extra?: Record<string, unknown>) {
-  return res.status(status).json({ success: false, message, ...extra });
+export function sendError(res: Response, message: string, status = 400, extra?: Record<string, unknown>): void {
+  const body: Record<string, unknown> = { success: false, message };
+  if (extra) Object.assign(body, extra);
+  res.status(status).json(body);
 }
 
-export function notFound(res: Response, message = "Resource not found") {
-  return fail(res, message, 404);
+export function sendNotFound(res: Response, message = "Resource not found"): void {
+  sendError(res, message, 404);
 }
 
-export function serverError(res: Response, error: unknown) {
+export function sendServerError(res: Response, error: unknown): void {
   console.error(error);
-  return res.status(500).json({ success: false, message: "Internal Server Error" });
+  sendError(res, "Internal Server Error", 500);
 }
