@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import api from "../api";
+import { paymentService } from "../services";
 import { useCachedData } from "../hooks/useCachedData";
 import Table from "../components/Table";
 import PageSkeleton from "../components/PageSkeleton";
@@ -7,32 +7,34 @@ import DateRangePicker from "../components/DateRangePicker";
 import { IndianRupee, Receipt, TrendingUp } from "lucide-react";
 import { todayStr } from "../utils/date";
 import { useTranslate } from "../context/TranslateContext";
+import type { Payment, PaymentMode, PaginatedResponse } from "../types";
 
 export default function Payments() {
   const { uiT } = useTranslate();
-  const [startDate, setStartDate] = useState(todayStr());
-  const [endDate, setEndDate] = useState(todayStr());
+  const [startDate, setStartDate] = useState<string>(todayStr());
+  const [endDate, setEndDate] = useState<string>(todayStr());
   const params = new URLSearchParams({ startDate, endDate });
   const cacheKey = `/api/payments?${params.toString()}`;
-  const { data: rawList, loading } = useCachedData<any[]>(cacheKey,
-    () => api.get("/api/payments?" + params.toString()),
+  const { data: rawList, loading } = useCachedData<PaginatedResponse<Payment>>(
+    cacheKey,
+    () => paymentService.listFiltered({ startDate, endDate }),
     [startDate, endDate]
   );
-  const list = rawList || [];
+  const list: Payment[] = rawList?.data ?? [];
 
-  function customerName(p: any): string {
+  function customerName(p: Payment): string {
     if (typeof p.customerId === "object" && p.customerId?.name) return p.customerId.name;
-    return p.customerId?.slice?.(-6) || "—";
+    return (typeof p.customerId === "string" ? p.customerId : "")?.slice(-6) || "—";
   }
 
-  function customerMobile(p: any): string {
+  function customerMobile(p: Payment): string {
     if (typeof p.customerId === "object" && p.customerId?.mobile) return p.customerId.mobile;
     return "";
   }
 
-  const totalAmount = list.reduce((s, p) => s + (p.amount || 0), 0);
-  const modeBreakdown = list.reduce<Record<string, number>>((acc, p) => {
-    const mode = p.paymentMode || "Cash";
+  const totalAmount: number = list.reduce((s, p) => s + (p.amount || 0), 0);
+  const modeBreakdown: Record<string, number> = list.reduce<Record<string, number>>((acc, p) => {
+    const mode: string = p.paymentMode || "Cash";
     acc[mode] = (acc[mode] || 0) + (p.amount || 0);
     return acc;
   }, {});
@@ -49,7 +51,7 @@ export default function Payments() {
       </div>
 
       <div className="mb-4">
-        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="payment" />
+        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s: string, e: string) => { setStartDate(s); setEndDate(e); }} count={list.length} label="payment" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -78,7 +80,7 @@ export default function Payments() {
           <div className="min-w-0">
             <p className="text-xs font-medium text-th-secondary uppercase tracking-wide">Mode Breakdown</p>
             <p className="text-sm font-semibold text-th-text truncate">
-              {Object.entries(modeBreakdown).map(([mode, amt]) => (
+              {Object.entries(modeBreakdown).map(([mode, amt]: [string, number]) => (
                 <span key={mode} className="mr-3">{mode}: ₹{amt.toLocaleString("en-IN")}</span>
               ))}
             </p>
@@ -89,22 +91,22 @@ export default function Payments() {
       <div className="overflow-x-auto">
         <Table
           columns={[
-            { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: any, row: any) => (
+            { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (_v: unknown, row: Payment) => (
               <div className="min-w-0">
                 <p className="font-medium text-th-text truncate">{customerName(row)}</p>
                 {customerMobile(row) && <p className="text-[11px] text-th-secondary truncate">{customerMobile(row)}</p>}
               </div>
             )},
-            { key: "amount", label: uiT("Amount", "राशि"), render: (v) => <span className="font-semibold text-[#1ed760]">₹{(v || 0).toLocaleString("en-IN")}</span> },
-            { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v) => (
+            { key: "amount", label: uiT("Amount", "राशि"), render: (v: number) => <span className="font-semibold text-[#1ed760]">₹{(v || 0).toLocaleString("en-IN")}</span> },
+            { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v: PaymentMode) => (
               <span className={`badge ${
                 v === "Cash" ? "badge-green" :
                 v === "UPI" ? "badge-blue" :
                 v === "Card" ? "badge-purple" : "badge-yellow"
               }`}>{v || "Cash"}</span>
             )},
-            { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
-            { key: "notes", label: uiT("Notes", "नोट्स"), render: (v) => <span className="text-th-secondary">{v || "—"}</span> },
+            { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v: string) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
+            { key: "notes", label: uiT("Notes", "नोट्स"), render: (v: string) => <span className="text-th-secondary">{v || "—"}</span> },
           ]}
           data={list}
           searchPlaceholder={uiT("Search", "खोजें") + " payments..."}
