@@ -1,19 +1,21 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "./auth";
+import { AuthRequest } from "../types";
+import { logger } from "../utils/logger";
 
-export function audit(req: Request, res: Response, next: NextFunction) {
-  if (process.env.NODE_ENV === "test") return next();
+export function audit(req: Request, _res: Response, next: NextFunction): void {
+  if (process.env.NODE_ENV === "test") {
+    next();
+    return;
+  }
 
   const authReq = req as AuthRequest;
-  const entry = {
-    time: Date.now(),
+  logger.audit({
     method: req.method,
     path: req.originalUrl,
-    user: authReq.user ? { id: authReq.user.sub, username: authReq.user.username } : null,
+    userId: authReq.user?.sub,
+    username: authReq.user?.username,
     ip: req.ip,
-  };
-  if (process.env.NODE_ENV !== "production") {
-    console.log("AUDIT:", JSON.stringify(entry));
-  }
+    requestId: req.headers["x-request-id"] as string,
+  });
   next();
 }

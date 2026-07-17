@@ -1,21 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt";
+import type { JwtPayload, AuthRequest } from "../types";
 
-export interface JwtPayload {
-  sub: string;
-  username: string;
-  role?: string;
-  branchId?: string;
-}
+export { JwtPayload, AuthRequest } from "../types";
 
-export interface AuthRequest extends Request {
-  user?: JwtPayload;
-}
-
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
+    res.status(401).json({ success: false, message: "Unauthorized" });
+    return;
   }
   const token = header.split(" ")[1];
   try {
@@ -23,14 +16,15 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     req.user = payload;
     next();
   } catch {
-    return res.status(401).json({ success: false, message: "Invalid token" });
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 }
 
 export function requireRole(...roles: string[]) {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user || !roles.includes(req.user.role || "")) {
-      return res.status(403).json({ success: false, message: "Forbidden" });
+      res.status(403).json({ success: false, message: "Forbidden" });
+      return;
     }
     next();
   };
