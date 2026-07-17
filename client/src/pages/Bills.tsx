@@ -9,10 +9,14 @@ import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from "lucide-reac
 import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
 import DateRangePicker from "../components/DateRangePicker";
 import { todayStr } from "../utils/date";
+import { billService, settingsService, whatsappService } from "../services";
+import type { Bill, ShopSettings } from "../types";
+
+type ResolvedCustomer = { name?: string; mobile?: string; address?: string } | null;
 
 export default function Bills() {
-  const [list, setList] = useState<Record<string, unknown>[]>([]);
-  const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
+  const [list, setList] = useState<Bill[]>([]);
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
@@ -22,52 +26,49 @@ export default function Bills() {
 
   const fetchBills = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams({ startDate, endDate });
-    api.get<Record<string, unknown>[]>(`/api/bills?${params.toString()}`)
-      .then((d) => { if (d.success) setList(d.data || []); })
+    billService.listFiltered({ startDate, endDate })
+      .then((d) => { if (d.success) setList(d.data?.data || []); })
       .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
   const fetchSettings = useCallback(() => {
-    api.get<Record<string, unknown>>("/api/settings")
+    settingsService.get()
       .then((d) => { if (d.success) setSettings(d.data || null); });
   }, []);
 
-  useEffect(() => { 
-    fetchBills(); 
-    fetchSettings(); 
+  useEffect(() => {
+    fetchBills();
+    fetchSettings();
   }, [fetchBills, fetchSettings]);
 
-  function resolveCustomer(bill: Record<string, unknown>): Record<string, unknown> | null {
-    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId as Record<string, unknown>;
+  function resolveCustomer(bill: Bill): ResolvedCustomer {
+    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId;
     return null;
   }
 
-  function handlePrint(bill: Record<string, unknown>) {
+  function handlePrint(bill: Bill) {
     const w = window.open("", "_blank");
     if (!w) return;
-    
-    // Cleanly extract variables to remove redundancies in the HTML template
-    const shop = (settings?.shopName as string) || "KMJ Optical";
-    const address = (settings?.shopAddress as string) || "";
-    const phone = (settings?.shopPhone as string) || "";
-    const email = (settings?.shopEmail as string) || "";
-    const logo = (settings?.logo as string) || "";
+
+    const shop = settings?.shopName || "KMJ Optical";
+    const address = settings?.shopAddress || "";
+    const phone = settings?.shopPhone || "";
+    const email = settings?.shopEmail || "";
+    const logo = settings?.logo || "";
     const customer = resolveCustomer(bill);
-    
-    // Formatting currency safely here to avoid messy inline HTML logic
-    const subtotal = ((bill.subtotal as number) || 0).toFixed(2);
-    const discount = bill.discount ? (bill.discount as number).toFixed(2) : null;
-    const tax = bill.tax ? (bill.tax as number).toFixed(2) : null;
-    const totalAmount = ((bill.totalAmount as number) || 0).toFixed(2);
-    const advancePaid = bill.advancePaid ? (bill.advancePaid as number).toFixed(2) : null;
-    const pendingAmount = ((bill.pendingAmount as number) || 0);
-    const billDate = new Date(bill.createdAt as string).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+    const subtotal = (bill.subtotal || 0).toFixed(2);
+    const discount = bill.discount ? bill.discount.toFixed(2) : null;
+    const tax = bill.tax ? bill.tax.toFixed(2) : null;
+    const totalAmount = (bill.totalAmount || 0).toFixed(2);
+    const advancePaid = bill.advancePaid ? bill.advancePaid.toFixed(2) : null;
+    const pendingAmount = bill.pendingAmount || 0;
+    const billDate = new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
     const isCancelled = bill.status === "Cancelled";
 
-    const items = ((bill.items as Record<string, unknown>[]) || []).map((it, idx) => {
-      const qty = (it.quantity as number) || 1;
-      const unitPrice = (it.unitPrice as number) || 0;
+    const items = (bill.items || []).map((it, idx) => {
+      const qty = it.quantity || 1;
+      const unitPrice = it.unitPrice || 0;
       return `
       <tr>
         <td class="center">${idx + 1}</td>
@@ -85,20 +86,20 @@ export default function Bills() {
 <title>Invoice ${bill.billNumber || ""}</title>
 <style>
   :root { --brand: #1e3a8a; --text: #1f2937; --muted: #6b7280; --border: #e5e7eb; --bg: #f9fafb; }
-  @media print { 
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
-    .invoice-container { padding: 10px !important; } 
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .invoice-container { padding: 10px !important; }
   }
   body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: var(--text); line-height: 1.5; }
   .invoice-container { max-width: 800px; margin: 0 auto; padding: 40px; }
-  
+
   /* Header Section */
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid var(--brand); padding-bottom: 20px; }
   .company-info { display: flex; gap: 20px; align-items: center; }
   .logo { max-width: 80px; max-height: 80px; object-fit: contain; }
   .company-details h1 { margin: 0 0 4px 0; font-size: 24px; color: var(--brand); font-weight: 700; }
   .company-details p { margin: 2px 0; font-size: 13px; color: var(--muted); }
-  
+
   .invoice-meta { text-align: right; }
   .invoice-meta h2 { margin: 0 0 8px 0; font-size: 32px; color: ${isCancelled ? '#dc2626' : 'var(--brand)'}; text-transform: uppercase; letter-spacing: 1px; }
   .invoice-meta p { margin: 4px 0; font-size: 14px; }
@@ -129,10 +130,10 @@ export default function Bills() {
   .totals-row.discount .val { color: #dc2626; }
   .totals-row.tax { color: #059669; }
   .totals-row.tax .val { color: #059669; }
-  
+
   .grand-total { border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 12px 0; margin-top: 8px; font-size: 18px; font-weight: 700; color: var(--brand); }
   .grand-total .val { color: var(--brand); }
-  
+
   .balance-due { background: ${pendingAmount > 0 ? '#fffbeb' : '#ecfdf5'}; color: ${pendingAmount > 0 ? '#b45309' : '#047857'}; padding: 12px; border-radius: 6px; margin-top: 12px; font-weight: 700; font-size: 15px; }
 
   /* Footer */
@@ -145,7 +146,7 @@ export default function Bills() {
 </head>
 <body>
 <div class="invoice-container">
-  
+
   <div class="header">
     <div class="company-info">
       ${logo ? `<img src="${logo}" class="logo" alt="Logo" />` : ""}
@@ -186,9 +187,9 @@ export default function Bills() {
 
   <div class="summary-container">
     <div class="amount-words">
-      ${bill.totalAmount ? `Amount in words:<br/><strong>${numberToWords(Math.round(bill.totalAmount as number))}</strong>` : ""}
+      ${bill.totalAmount ? `Amount in words:<br/><strong>${numberToWords(Math.round(bill.totalAmount))}</strong>` : ""}
     </div>
-    
+
     <div class="totals-box">
       <div class="totals-row">
         <span>Subtotal</span>
@@ -196,14 +197,14 @@ export default function Bills() {
       </div>
       ${discount ? `<div class="totals-row discount"><span>Discount</span><span class="val">-₹${discount}</span></div>` : ""}
       ${tax ? `<div class="totals-row tax"><span>Tax (GST)</span><span class="val">+₹${tax}</span></div>` : ""}
-      
+
       <div class="totals-row grand-total">
         <span>Total Amount</span>
         <span class="val">₹{totalAmount}</span>
       </div>
-      
+
       ${advancePaid ? `<div class="totals-row"><span>Amount Paid</span><span class="val">₹${advancePaid}</span></div>` : ""}
-      
+
       <div class="totals-row balance-due">
         <span>Balance Due</span>
         <span class="val">₹${pendingAmount.toFixed(2)}</span>
@@ -233,7 +234,7 @@ export default function Bills() {
     w.document.close();
   }
 
-  function handleThermalPrint(bill: Record<string, unknown>) {
+  function handleThermalPrint(bill: Bill) {
     const customer = resolveCustomer(bill) || {};
     const receipt = generateThermalReceipt(bill, customer, settings || {});
     const w = window.open("", "_blank");
@@ -273,14 +274,14 @@ export default function Bills() {
     return r.trim() + " Rupees Only";
   }
 
-  function handleDownloadPdf(bill: Record<string, unknown>) {
+  function handleDownloadPdf(bill: Bill) {
     const customer = resolveCustomer(bill) || {};
     downloadBillPdf(bill, customer, settings || {});
   }
 
-  async function handleDelete(bill: Record<string, unknown>) {
+  async function handleDelete(bill: Bill) {
     if (!confirm("Delete this bill permanently?")) return;
-    const res = await api.del(`/api/bills/${bill._id}`);
+    const res = await billService.remove(bill._id);
     if (res.success) {
       setList((prev) => prev.filter((b) => b._id !== bill._id));
       toast.success("Bill deleted");
@@ -289,14 +290,14 @@ export default function Bills() {
     }
   }
 
-  async function sendWhatsApp(bill: Record<string, unknown>) {
+  async function sendWhatsApp(bill: Bill) {
     const customer = resolveCustomer(bill);
     const num = customer?.mobile?.toString().replace(/\D/g, "").replace(/^0+/, "");
     if (!num) { toast.error("Customer has no mobile number"); return; }
     toast.info("Sending WhatsApp...");
     const fullNum = num.length === 10 ? `91${num}` : num;
-    const shop = (settings?.shopName as string) || "KMJ Optical";
-    
+    const shop = settings?.shopName || "KMJ Optical";
+
     try {
       const doc = generateBillPdf(bill, customer || {}, settings || {});
       const base64 = doc.output("datauristring").split(",")[1];
@@ -304,17 +305,17 @@ export default function Bills() {
         `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
         `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
       );
-      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
+      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" }) as any;
       if (mediaRes.success && mediaRes.sent) { toast.success("Bill sent on WhatsApp"); return; }
       if (mediaRes.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
     } catch {
       // fallback to text
     }
-    
-    const items = ((bill.items as Record<string, unknown>[]) || []).map((i) =>
-      `${i.description} x${i.quantity || 1} = ₹${(((i.quantity as number) || 1) * ((i.unitPrice as number) || 0)).toFixed(0)}`
+
+    const items = (bill.items || []).map((i) =>
+      `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
     ).join("\n");
-    
+
     const billLabel = t("Bill", "बिल");
     const dateLabel = t("Date", "तारीख");
     const customerLabel = t("Customer", "ग्राहक");
@@ -327,8 +328,8 @@ export default function Bills() {
     const paidLabel = t("Paid", "भुगतान");
     const pendingLabel = t("Pending", "बाकी");
     const thankYou = t("Thank you!", "धन्यवाद!");
-    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${((bill.subtotal as number) || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹{(bill.discount as number).toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹{(bill.tax as number).toFixed(0)}` : ""}\n*${totalLabel}:* ₹${((bill.totalAmount as number) || 0).toFixed(0)}\n*${paidLabel}:* ₹${((bill.advancePaid as number) || 0).toFixed(0)}\n*${pendingLabel}:* ₹${((bill.pendingAmount as number) || 0).toFixed(0)}\n\n${thankYou} 🙏`;
-    const textRes = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
+    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ""}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
+    const textRes = await whatsappService.sendMessage({ to: fullNum, message: msg }) as any;
     if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
     else toast.error("WhatsApp send failed — connect in Settings");
@@ -348,9 +349,9 @@ export default function Bills() {
       <Table
         columns={[
           { key: "billNumber", label: uiT("Bill #", "बिल #") },
-          { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: unknown, row: Record<string, unknown>) => {
+          { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: unknown, row: Bill) => {
             const c = resolveCustomer(row);
-            return c ? c.name : typeof v === "string" ? (v as string).slice(-6) : "—";
+            return c ? c.name : typeof v === "string" ? v.slice(-6) : "—";
           }},
           { key: "subtotal", label: uiT("Subtotal", "उप-कुल"), render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
           { key: "totalAmount", label: uiT("Total", "कुल"), render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
@@ -360,7 +361,7 @@ export default function Bills() {
         ]}
         data={list}
         searchPlaceholder={uiT("Search bills...", "बिल खोजें...")}
-        actions={(row) => (
+        actions={(row: Bill) => (
           <div className="flex items-center gap-1">
             <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760] active:scale-95 transition-transform duration-100" title={uiT("WhatsApp", "WhatsApp")} aria-label="Send WhatsApp">
               <MessageCircle size={15} />
