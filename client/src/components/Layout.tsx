@@ -230,7 +230,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (digits.length < 10) { setDrawerError("Mobile must be at least 10 digits"); return; }
     setDrawerSaving(true); setDrawerError("");
     try {
-      const res = await post("/api/customers", {
+      const res = await post<{ _id: string }>("/api/customers", {
         name: drawerForm.name.trim(),
         mobile: drawerForm.mobile.trim(),
         ...(drawerForm.email.trim() && { email: drawerForm.email.trim() }),
