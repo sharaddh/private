@@ -12,15 +12,15 @@ import {
   ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
   Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
 } from "lucide-react";
-import PageHeader from "./components/PageHeader";
-import VisitStepper from "./components/VisitStepper";
-import VisitTypeSection from "./components/VisitTypeSection";
-import PrescriptionPanel from "./components/PrescriptionPanel";
-import OrderItems from "./components/OrderItems";
-import BillingPanel from "./components/BillingPanel";
-import PaymentPanel from "./components/PaymentPanel";
-import ConfirmationDashboard from "./components/ConfirmationDashboard";
-import BottomNav from "./components/BottomNav";
+import PageHeader from "../../components/NewvistePage/PageHeader";
+import VisitStepper from "../../components/NewvistePage/VisitStepper";
+import VisitTypeSection from "../../components/NewvistePage/VisitTypeSection";
+import PrescriptionPanel from "../../components/NewvistePage/PrescriptionPanel";
+import OrderItems from "../../components/NewvistePage/OrderItems";
+import BillingPanel from "../../components/NewvistePage/BillingPanel";
+import PaymentPanel from "../../components/NewvistePage/PaymentPanel";
+import ConfirmationDashboard from "../../components/NewvistePage/ConfirmationDashboard";
+import BottomNav from "../../components/NewvistePage/BottomNav";
 
 export default function CustomerNewVisit() {
   const { id } = useParams();
@@ -107,9 +107,7 @@ export default function CustomerNewVisit() {
         setCustomer(custRes.data);
         if (visitsRes.success && visitsRes.data && visitsRes.data.length > 0) {
           const last = visitsRes.data[0];
-          setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : new Date().toISOString().split("T")[0]);
           setVisitDoctor(last.doctorName || "");
-          setVisitRemarks(last.remarks || "");
         }
         if (prescRes.success && prescRes.data && prescRes.data.length > 0) {
           const prev = prescRes.data[0];
@@ -120,8 +118,9 @@ export default function CustomerNewVisit() {
           });
           setUsePrescription(true);
         }
-        if (ordersRes.success && ordersRes.data && ordersRes.data.length > 0) {
-          const last = ordersRes.data[0];
+        const ordersList = ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[]);
+        if (ordersRes.success && ordersList.length > 0) {
+          const last = ordersList[0];
           if (last.frame) {
             setOrderFrames([{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }]);
           }
@@ -421,7 +420,6 @@ export default function CustomerNewVisit() {
         customer={customer}
         id={id!}
         navigate={navigate}
-        step={step}
         visitType={visitType}
         loading={loading}
         saving={saving}
@@ -474,7 +472,6 @@ export default function CustomerNewVisit() {
               setOrderAccessories={setOrderAccessories}
               updateAccessory={updateAccessory}
               removeAccessory={removeAccessory}
-              syncBillFromOrder={syncBillFromOrder}
               setStep={setStep}
               onScan={() => setScanModal(true)}
               searchInventory={searchInventory}
