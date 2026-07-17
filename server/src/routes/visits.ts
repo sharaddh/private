@@ -1,72 +1,21 @@
 import { Router } from "express";
-import { Visit } from "../models/visit";
-import { Customer } from "../models/customer";
-import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { validate } from "../middleware/validate";
 import { asyncHandler } from "../middleware/asyncHandler";
-import { cacheRoute, invalidateCache } from "../middleware/cache";
-import { AppError } from "../middleware/errorHandler";
+import { cacheRoute } from "../middleware/cache";
+import { createVisitSchema, updateVisitSchema } from "../validators/visit.validator";
+import * as visitController from "../controllers/visitController";
 
 const router = Router();
 
-const createSchema = z.object({
-  customerId: z.string(),
-  visitDate: z.string().optional(),
-  doctorName: z.string().optional(),
-  shopId: z.string().optional(),
-  remarks: z.string().optional(),
-});
+router.get("/", authenticate, cacheRoute(30), asyncHandler(visitController.list));
 
-router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
-  const { customerId } = req.query;
-  const filter: Record<string, unknown> = {};
-  if (customerId) filter.customerId = customerId;
-  const list = await Visit.find(filter).sort({ visitDate: -1 }).limit(200).lean();
-  res.json({ success: true, data: list });
-}));
+router.post("/", authenticate, validate(createVisitSchema, "body"), asyncHandler(visitController.create));
 
-router.post("/", authenticate, asyncHandler(async (req, res) => {
-  const p = createSchema.parse(req.body);
-  const customer = await Customer.findById(p.customerId).lean();
-  if (!customer) throw new AppError(404, "Customer not found");
-  const visit = await Visit.create({
-    ...p,
-    visitDate: p.visitDate ? new Date(p.visitDate) : new Date(),
-  });
-  await Customer.findByIdAndUpdate(p.customerId, { $inc: { totalVisits: 1 } });
-  await invalidateCache("/api/visits");
-  res.json({ success: true, data: visit });
-}));
+router.get("/:id", authenticate, asyncHandler(visitController.getById));
 
-router.get("/:id", authenticate, asyncHandler(async (req, res) => {
-  const v = await Visit.findById(req.params.id).lean();
-  if (!v) throw new AppError(404, "Not found");
-  res.json({ success: true, data: v });
-}));
+router.put("/:id", authenticate, validate(updateVisitSchema, "body"), asyncHandler(visitController.update));
 
-const updateSchema = z.object({
-  visitDate: z.string().optional(),
-  doctorName: z.string().optional(),
-  shopId: z.string().optional(),
-  remarks: z.string().optional(),
-}).strict();
-
-router.put("/:id", authenticate, asyncHandler(async (req, res) => {
-  const p = updateSchema.parse(req.body);
-  const updateData: Record<string, unknown> = { ...p };
-  if (p.visitDate) updateData.visitDate = new Date(p.visitDate);
-  const v = await Visit.findByIdAndUpdate(req.params.id, { $set: updateData }, { new: true, runValidators: true }).lean();
-  if (!v) throw new AppError(404, "Not found");
-  await invalidateCache("/api/visits");
-  res.json({ success: true, data: v });
-}));
-
-router.delete("/:id", authenticate, asyncHandler(async (req, res) => {
-  const v = await Visit.findByIdAndDelete(req.params.id).lean();
-  if (!v) throw new AppError(404, "Not found");
-  await Customer.findByIdAndUpdate(v.customerId, { $inc: { totalVisits: -1 } });
-  await invalidateCache("/api/visits");
-  res.json({ success: true, message: "Deleted" });
-}));
+router.delete("/:id", authenticate, asyncHandler(visitController.remove));
 
 export default router;

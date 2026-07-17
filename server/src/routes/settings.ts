@@ -1,35 +1,13 @@
 import { Router } from "express";
-import { Settings } from "../models/settings";
 import { authenticate } from "../middleware/auth";
+import { validate } from "../middleware/validate";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { updateSettingsSchema } from "../validators/settings.validator";
+import * as settingsController from "../controllers/settingsController";
 
 const router = Router();
 
-router.get("/", authenticate, asyncHandler(async (req, res) => {
-  let settings = await Settings.findOne().lean();
-  if (!settings) {
-    settings = await Settings.create({});
-  }
-  res.json({ success: true, data: settings });
-}));
-
-const allowedSettings = [
-  "shopName", "shopPhone", "shopAddress", "gstin", "email", "invoicePrefix",
-  "defaultDiscount", "taxRate", "currency", "timezone", "whatsappNumber",
-  "orderMessage", "deliveryMessage", "receiptFooter", "theme"
-];
-
-router.put("/", authenticate, asyncHandler(async (req, res) => {
-  const updates: Record<string, unknown> = {};
-  for (const key of allowedSettings) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
-  }
-  const settings = await Settings.findOneAndUpdate(
-    {},
-    { $set: updates },
-    { new: true, upsert: true, runValidators: true }
-  ).lean();
-  res.json({ success: true, data: settings });
-}));
+router.get("/", authenticate, asyncHandler(settingsController.get));
+router.put("/", authenticate, validate(updateSettingsSchema, "body"), asyncHandler(settingsController.update));
 
 export default router;

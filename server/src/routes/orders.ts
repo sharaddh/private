@@ -8,13 +8,15 @@ import { Settings } from "../models/settings";
 import { Prescription } from "../models/prescription";
 import { whatsappManager } from "../services/whatsapp";
 import PDFKit from "pdfkit";
-import { z } from "zod";
 import { authenticate } from "../middleware/auth";
+import { validate } from "../middleware/validate";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
+import { createOrderSchema, updateOrderSchema, statusUpdateSchema, classifyOrderSchema, classifyEyeSchema, demandSendSchema } from "../validators/order.validator";
+import * as orderController from "../controllers/orderController";
 
 const router = Router();
 
@@ -27,156 +29,31 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   Cancelled: [],
 };
 
-const createSchema = z.object({
-  customerId: z.string(),
-  visitId: z.string().optional(),
-  frame: z.string().optional(),
-  lens: z.string().optional(),
-  coating: z.string().optional(),
-  accessories: z.array(z.string()).optional(),
-  quantity: z.number().optional(),
-  deliveryDate: z.string().optional(),
-  status: z.string().optional()
-});
+router.get("/", authenticate, cacheRoute(30), asyncHandler(orderController.list));
 
-const updateSchema = z.object({
-  customerId: z.string().optional(),
-  visitId: z.string().optional(),
-  frame: z.string().optional(),
-  lens: z.string().optional(),
-  coating: z.string().optional(),
-  accessories: z.array(z.string()).optional(),
-  quantity: z.number().optional(),
-  deliveryDate: z.string().optional(),
-  status: z.string().optional(),
-  classification: z.string().optional(),
-  rightLensStatus: z.string().optional(),
-  leftLensStatus: z.string().optional(),
-  reviewed: z.boolean().optional(),
-  forwardedCount: z.number().optional(),
-});
-
-const statusUpdateSchema = z.object({
-  status: z.string(),
-  collectPayment: z.number().optional(),
-  paymentMode: z.enum(["Cash", "UPI", "Card", "Bank Transfer", "नकद", "कार्ड", "बैंक", "बीमा", "Insurance"]).optional(),
-  advanceQuantity: z.number().optional(),
-});
-
-router.get("/", authenticate, cacheRoute(30), asyncHandler(async (req, res) => {
-  const { customerId, startDate, endDate, status, dateField } = req.query;
-  const filter: any = {};
-  if (customerId) filter.customerId = customerId;
-  if (status) filter.status = status;
-  if (startDate || endDate) {
-    const field = (dateField as string) || "createdAt";
-    filter[field] = {};
-    if (startDate) {
-      const s = new Date(startDate as string);
-      s.setHours(0, 0, 0, 0);
-      filter[field].$gte = s;
-    }
-    if (endDate) {
-      const e = new Date(endDate as string);
-      e.setHours(23, 59, 59, 999);
-      filter[field].$lte = e;
-    }
-  }
-  const list = await Order.find(filter)
-    .populate("customerId", "name mobile")
-    .sort({ createdAt: -1 })
-    .limit(500);
-
-  // Batch-fetch latest bill per customer (avoids N+1)
-  const customerIds = [...new Set(list.map((o) => {
-    const cId = (o.customerId as any)?._id || o.customerId;
-    return cId ? String(cId) : null;
-  }).filter(Boolean))];
-
-  const latestBills = await Bill.aggregate([
-    { $match: { customerId: { $in: customerIds.map((id) => new (require("mongoose").Types.ObjectId)(id)) } } },
-    { $sort: { createdAt: -1 } },
-    { $group: { _id: "$customerId", bill: { $first: "$$ROOT" } } },
-  ]);
-
-  const billMap = new Map(latestBills.map((b: any) => [String(b._id), b.bill]));
-
-  const enriched = list.map((o) => {
-    const custId = (o.customerId as any)?._id || o.customerId;
-    const billInfo = custId ? billMap.get(String(custId)) || null : null;
-    return { ...o.toObject(), billInfo };
-  });
-
-  res.json({ success: true, data: enriched });
-}));
-
-router.post("/", authenticate, audit, asyncHandler(async (req, res) => {
-  const p = createSchema.parse(req.body);
-  const customer = await Customer.findById(p.customerId).lean();
+router.post("/", authenticate, audit, validate(createOrderSchema, "body"), asyncHandler(async (req, res) => {
+  const customer = await Customer.findById(req.body.customerId).lean();
   if (!customer) throw new AppError(404, "Customer not found");
-  const order = new Order(p as any);
-  await order.save();
+  await orderController.create(req, res);
   invalidateCache("/api/orders");
   invalidateCache("/api/dashboard");
-  res.json({ success: true, data: order });
 }));
 
-router.get("/:id", authenticate, asyncHandler(async (req, res) => {
-  const o = await Order.findById(req.params.id).populate("customerId", "name mobile");
-  if (!o) return res.status(404).json({ success: false, message: "Not found" });
-  res.json({ success: true, data: o });
-}));
+router.get("/:id", authenticate, asyncHandler(orderController.getById));
 
-router.put("/:id", authenticate, audit, asyncHandler(async (req, res) => {
-  const validated = updateSchema.parse(req.body);
-  const o = await Order.findByIdAndUpdate(req.params.id, { $set: validated }, { new: true });
-  if (!o) return res.status(404).json({ success: false, message: "Order not found" });
+router.put("/:id", authenticate, audit, validate(updateOrderSchema, "body"), asyncHandler(async (req, res) => {
+  await orderController.update(req, res);
   invalidateCache("/api/orders");
   invalidateCache("/api/dashboard");
-  res.json({ success: true, data: o });
 }));
 
-// PATCH /:id/classify — set classification
-router.patch("/:id/classify", authenticate, asyncHandler(async (req, res) => {
-  const { classification } = req.body;
-  if (!["pending", "stock", "buy", "order"].includes(classification)) {
-    return res.status(400).json({ success: false, message: "Invalid classification" });
-  }
-  const o = await Order.findByIdAndUpdate(req.params.id, { $set: { classification } }, { new: true });
-  if (!o) return res.status(404).json({ success: false, message: "Not found" });
-  invalidateCache("/api/orders");
-  invalidateCache("/api/dashboard");
-  res.json({ success: true, data: o });
-}));
+router.patch("/:id/classify", authenticate, validate(classifyOrderSchema, "body"), asyncHandler(orderController.setClassification));
 
-// PATCH /:id/classify-eye — per-eye lens classification
-router.patch("/:id/classify-eye", authenticate, asyncHandler(async (req, res) => {
-  const { eye, status } = req.body;
-  if (!["right", "left"].includes(eye)) return res.status(400).json({ success: false, message: 'eye must be "right" or "left"' });
-  if (!["pending", "stock", "buy", "order"].includes(status)) return res.status(400).json({ success: false, message: "Invalid status" });
-  const field = eye === "right" ? "rightLensStatus" : "leftLensStatus";
-  const o = await Order.findByIdAndUpdate(req.params.id, { $set: { [field]: status } }, { new: true });
-  if (!o) return res.status(404).json({ success: false, message: "Not found" });
-  invalidateCache("/api/orders");
-  invalidateCache("/api/dashboard");
-  res.json({ success: true, data: o });
-}));
+router.patch("/:id/classify-eye", authenticate, validate(classifyEyeSchema, "body"), asyncHandler(orderController.setEyeClassification));
 
-// PATCH /:id/review — toggle reviewed flag
-router.patch("/:id/review", authenticate, asyncHandler(async (req, res) => {
-  const o = await Order.findByIdAndUpdate(
-    req.params.id,
-    { $set: { reviewed: req.body.reviewed } },
-    { new: true }
-  );
-  if (!o) return res.status(404).json({ success: false, message: "Not found" });
-  invalidateCache("/api/orders");
-  invalidateCache("/api/dashboard");
-  res.json({ success: true, data: o });
-}));
+router.patch("/:id/review", authenticate, asyncHandler(orderController.setReviewed));
 
-// PATCH /:id/status — validated status transition with partial advancement support
-router.patch("/:id/status", authenticate, async (req, res) => {
+router.patch("/:id/status", authenticate, validate(statusUpdateSchema, "body"), async (req, res) => {
   try {
     const wa = whatsappManager.getInstance((req as any).branchId);
     const { status, collectPayment, paymentMode, advanceQuantity } = statusUpdateSchema.parse(req.body);
@@ -207,7 +84,6 @@ router.patch("/:id/status", authenticate, async (req, res) => {
 
     const result: any = { order, partial: newForwarded < qty, forwardedCount: newForwarded < qty ? newForwarded : 0 };
 
-    // Auto-update delivery (only on full transition)
     const delivery = await Delivery.findOne({ orderId: order._id });
     if (delivery && newForwarded >= qty) {
       if (status === "Ready") {
@@ -224,7 +100,6 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       result.delivery = delivery;
     }
 
-    // Auto-send WhatsApp when Ready for pickup (full transition only)
     if (status === "Ready" && newForwarded >= qty) {
       const customer = await Customer.findById(order.customerId).select("name mobile");
       if (customer?.mobile) {
@@ -240,7 +115,6 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       }
     }
 
-    // Auto-send WhatsApp when Delivered (full transition only)
     if (status === "Delivered" && newForwarded >= qty) {
       const customer = await Customer.findById(order.customerId).select("name mobile");
       if (customer?.mobile) {
@@ -252,7 +126,6 @@ router.patch("/:id/status", authenticate, async (req, res) => {
       }
     }
 
-    // Handle due collection on delivery (full transition only)
     if (status === "Delivered" && newForwarded >= qty && collectPayment && collectPayment > 0) {
       let bill = await Bill.findOne({ visitId: order.visitId || order._id });
       if (!bill) {
@@ -285,6 +158,60 @@ router.patch("/:id/status", authenticate, async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 });
+
+router.patch("/:id/collect-payment", authenticate, async (req, res) => {
+  try {
+    const { collectPayment, paymentMode } = req.body;
+    if (!collectPayment || collectPayment <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid payment amount" });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+    let bill = await Bill.findOne({ visitId: order.visitId || order._id });
+    if (!bill) {
+      bill = await Bill.findOne({ customerId: order.customerId }).sort({ createdAt: -1 });
+    }
+    if (!bill) {
+      return res.status(404).json({ success: false, message: "No bill found for this order" });
+    }
+    if (bill.pendingAmount <= 0) {
+      return res.status(400).json({ success: false, message: "No pending amount on this bill" });
+    }
+
+    const actualCollect = Math.min(collectPayment, bill.pendingAmount);
+    const payment = new Payment({
+      customerId: order.customerId,
+      billId: bill._id,
+      amount: actualCollect,
+      paymentMode: paymentMode || "Cash",
+      paymentDate: new Date(),
+      notes: `Collected after delivery (order ${order._id})`,
+    });
+    await payment.save();
+    bill.advancePaid = (bill.advancePaid || 0) + actualCollect;
+    bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
+    await bill.save();
+
+    await Customer.findByIdAndUpdate(order.customerId, {
+      $inc: { pendingAmount: -actualCollect },
+    });
+
+    invalidateCache("/api/orders");
+    invalidateCache("/api/dashboard");
+
+    res.json({ success: true, data: { payment, bill } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
+  await orderController.remove(req, res);
+  invalidateCache("/api/orders");
+  invalidateCache("/api/dashboard");
+}));
 
 function formatDemandRx(sph?: number, cyl?: number, axis?: number): string {
   const fmtVal = (v: number) => v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
@@ -319,12 +246,10 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
 
     const title = type === "buy" ? "PURCHASE LIST" : "LAB ORDER LIST";
 
-    // ── Header band ──
     doc.rect(0, 0, pw, 28).fillColor("#1e293b").fill();
     doc.fontSize(14).font("Helvetica-Bold").fillColor("white");
     doc.text(title, m, 9, { align: "center" });
 
-    // ── Info line ──
     y = 38;
     doc.fontSize(8).font("Helvetica").fillColor("#64748b");
     doc.text(`Date: ${new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}`, m, y);
@@ -340,7 +265,6 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
       return false;
     }
 
-    // ── Table header ──
     y += 14;
     checkPage(18);
     doc.rect(m, y, cw, 16).fillColor("#f8fafc").fill();
@@ -362,17 +286,14 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
     doc.text("Prescription", cols[5].x, y + 4, { width: cols[5].w });
     y += 16;
 
-    // ── Rows ──
     entries.forEach((e, idx) => {
       const rowH = 18;
       checkPage(rowH);
 
-      // Row background (alternating)
       if (idx % 2 === 1) {
         doc.rect(m, y, cw, rowH).fillColor("#fafafa").fill();
       }
 
-      // Border
       doc.rect(m, y, cw, rowH).lineWidth(0.3).strokeColor("#e2e8f0").stroke();
 
       doc.fontSize(7.5).font("Helvetica").fillColor("#1e293b");
@@ -391,7 +312,6 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
       y += rowH;
     });
 
-    // ── Footer ──
     if (y < pageH - 50) {
       doc.strokeColor("#cbd5e1").lineWidth(0.5).moveTo(m, y + 8).lineTo(m + cw, y + 8).stroke();
       doc.fontSize(7).font("Helvetica").fillColor("#94a3b8");
@@ -402,16 +322,7 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
   });
 }
 
-router.delete("/:id", authenticate, audit, asyncHandler(async (req, res) => {
-  const o = await Order.findByIdAndDelete(req.params.id);
-  if (!o) throw new AppError(404, "Order not found");
-  invalidateCache("/api/orders");
-  invalidateCache("/api/dashboard");
-  res.json({ success: true, message: "Deleted" });
-}));
-
-// POST /demand-send — generate demand PDF and send via WhatsApp
-router.post("/demand-send", authenticate, async (req, res) => {
+router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), async (req, res) => {
   try {
     const wa = whatsappManager.getInstance((req as any).branchId);
     const { type, orderIds } = req.body;
@@ -419,7 +330,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Type must be "buy" or "order"' });
     }
 
-    // Find orders where either eye matches the type (or legacy classification matches)
     const query: Record<string, unknown> = {
       $or: [
         { rightLensStatus: type },
@@ -441,7 +351,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
       return res.status(404).json({ success: false, message: `No ${type} items found` });
     }
 
-    // Attach prescriptions
     const visitIds = orders.map(o => {
       const vid = (o.visitId as any)?._id || o.visitId;
       return vid ? vid.toString() : null;
@@ -455,7 +364,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
       return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
     });
 
-    // Build per-eye entries
     interface DemandEntry {
       eye: string;
       customerName: string;
@@ -510,7 +418,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
           rxStr: formatRxStr(lDV, lNV, rx?.pd),
         });
       }
-      // Fallback for legacy classification
       if (!isRight && !isLeft && (o.classification as string) === type) {
         entries.push({
           eye: "R/L",
@@ -535,7 +442,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
       ? "Purchase List - Items to buy from supplier"
       : "Lab Order List - Items to order from lab";
 
-    // Send to shop owner
     const settings = await Settings.findOne().sort({ createdAt: -1 });
     let phone = settings?.shopPhone?.replace(/\D/g, "");
     if (!phone) {
@@ -561,7 +467,6 @@ router.post("/demand-send", authenticate, async (req, res) => {
       console.error(`Demand PDF sendMedia threw: ${e.message}`);
     }
 
-    // Fallback: if media send failed but WA is connected, send as text
     if (!sent && waStatus.status === "connected" && !sendError) {
       console.log("Demand PDF sendMedia returned false, trying text fallback");
       try {
