@@ -674,3 +674,179 @@ export function generateThermalReceipt(bill: PdfBill, customer: PdfCustomer, set
 
   return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// Prescription PDF
+// ---------------------------------------------------------------------------
+
+interface PdfRxEye {
+  dv?: { sph?: number; cyl?: number; axis?: number; va?: string };
+  nv?: { sph?: number; cyl?: number; axis?: number; va?: string };
+  pc?: { sph?: number; cyl?: number; axis?: number; va?: string };
+}
+
+interface PdfPrescription {
+  rightEye?: PdfRxEye;
+  leftEye?: PdfRxEye;
+  pd?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+function fmtRxVal(v?: number): string {
+  if (v == null) return "—";
+  return v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2);
+}
+
+function drawRxRow(doc: jsPDF, label: string, data: { sph?: number; cyl?: number; axis?: number; va?: string } | undefined, x: number, y: number): number {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setText(doc, primary);
+  doc.text(label, x, y);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(doc, dark);
+
+  if (!data || (data.sph == null && data.cyl == null && data.axis == null)) {
+    doc.setFont("helvetica", "italic");
+    setText(doc, gray);
+    doc.text("Plain", x + 14, y);
+    return y + 5.5;
+  }
+
+  const parts: string[] = [];
+  if (data.sph != null) parts.push(`SPH ${fmtRxVal(data.sph)}`);
+  if (data.cyl != null) parts.push(`CYL ${fmtRxVal(data.cyl)}`);
+  if (data.axis != null) parts.push(`AXIS ${data.axis}`);
+  if (data.va) parts.push(`VA ${data.va}`);
+  doc.text(parts.join("   "), x + 14, y);
+  return y + 5.5;
+}
+
+function drawRxEyeSection(doc: jsPDF, title: string, color: RGB, eye: PdfRxEye | undefined, x: number, y: number): number {
+  setFill(doc, tint(color, 0.92));
+  doc.roundedRect(x, y - 4, CONTENT_W / 2 - 2, 8, 1, 1, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  setText(doc, color);
+  doc.text(title, x + 3, y + 1.5);
+  y += 8;
+
+  y = drawRxRow(doc, "DV", eye?.dv, x + 2, y);
+  y = drawRxRow(doc, "NV", eye?.nv, x + 2, y);
+  y = drawRxRow(doc, "PC", eye?.pc, x + 2, y);
+  return y;
+}
+
+export function generatePrescriptionPdf(
+  rx: PdfPrescription,
+  customer: PdfCustomer,
+  settings: PdfSettings,
+): jsPDF {
+  const doc = new jsPDF("p", "mm", "a4");
+
+  // Header
+  setFill(doc, primary);
+  doc.rect(0, 0, PAGE_W, 4, "F");
+
+  setFill(doc, slate50);
+  doc.rect(0, 4, PAGE_W, 30, "F");
+
+  const rightX = PAGE_W - MARGIN;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  setText(doc, dark);
+  doc.text(settings.shopName || "Optical Shop", rightX, 17, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(doc, gray);
+  let infoY = 22;
+  if (settings.shopAddress) { doc.text(settings.shopAddress, rightX, infoY, { align: "right" }); infoY += 4; }
+  if (settings.shopPhone) { doc.text(`Phone: ${settings.shopPhone}`, rightX, infoY, { align: "right" }); infoY += 4; }
+
+  const lineY = 38;
+  setDraw(doc, border);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, lineY, PAGE_W - MARGIN, lineY);
+  doc.setLineWidth(0.1);
+
+  // Title
+  let y = lineY + 10;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setText(doc, primary);
+  doc.text("PRESCRIPTION", MARGIN, y);
+  y += 4;
+
+  const rxDate = rx.createdAt
+    ? new Date(rx.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+    : new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setText(doc, gray);
+  doc.text(`Date: ${rxDate}`, MARGIN, y);
+  y += 8;
+
+  // Customer info
+  setFill(doc, slate50);
+  doc.roundedRect(MARGIN, y - 4, CONTENT_W, customer.name || customer.mobile ? 14 : 0, 2, 2, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  setText(doc, dark);
+  doc.text(`Patient: ${customer.name || "—"}`, MARGIN + 3, y + 1);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(doc, gray);
+  const custDetails = [customer.mobile, customer.address].filter(Boolean).join("  |  ");
+  if (custDetails) doc.text(custDetails, MARGIN + 3, y + 6);
+  y += 14;
+
+  // Eye sections side by side
+  const colGap = 4;
+  const colW = (CONTENT_W - colGap) / 2;
+  const leftColX = MARGIN;
+  const rightColX = MARGIN + colW + colGap;
+
+  const leftEndY = drawRxEyeSection(doc, "RIGHT EYE", [110, 168, 254], rx.rightEye, leftColX, y);
+  const rightEndY = drawRxEyeSection(doc, "LEFT EYE", [232, 164, 39], rx.leftEye, rightColX, y);
+  y = Math.max(leftEndY, rightEndY) + 4;
+
+  // PD & Notes
+  if (rx.pd || rx.notes) {
+    setDraw(doc, border);
+    doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+    y += 6;
+
+    if (rx.pd) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setText(doc, dark);
+      doc.text(`PD: ${rx.pd}`, MARGIN, y);
+      y += 5;
+    }
+    if (rx.notes) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setText(doc, gray);
+      const noteLines = doc.splitTextToSize(`Notes: ${rx.notes}`, CONTENT_W);
+      doc.text(noteLines, MARGIN, y);
+      y += noteLines.length * 4;
+    }
+  }
+
+  // Footer
+  y = Math.max(y + 10, PAGE_H - 30);
+  setDraw(doc, border);
+  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+  y += 6;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(8);
+  setText(doc, gray);
+  doc.text("This is a computer-generated prescription.", PAGE_W / 2, y, { align: "center" });
+  y += 5;
+  doc.text(`Generated on ${new Date().toLocaleString("en-IN")}`, PAGE_W / 2, y, { align: "center" });
+
+  return doc;
+}
