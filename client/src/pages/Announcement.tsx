@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../api";
+import { customerService, settingsService, whatsappService } from "../services";
 import PageSkeleton from "../components/PageSkeleton";
 import { useToast } from "../context/ToastContext";
 import { useTranslate } from "../context/TranslateContext";
@@ -10,8 +11,22 @@ import {
   X, Clock, Shield, AlertTriangle, Filter,
   Hourglass, Paperclip, FileText,
 } from "lucide-react";
+import type { Customer, ShopSettings } from "../types";
 
-const ANTIBAN_PRESETS = [
+interface AntiBanPreset {
+  label: string;
+  delay: { min: number; max: number };
+  batchSize: number;
+  pause: number;
+}
+
+interface SendResult {
+  phone: string;
+  status: "sent" | "failed";
+  name?: string;
+}
+
+const ANTIBAN_PRESETS: AntiBanPreset[] = [
   { label: "Slow (Safe)", delay: { min: 4000, max: 8000 }, batchSize: 10, pause: 30000 },
   { label: "Normal", delay: { min: 2000, max: 5000 }, batchSize: 20, pause: 15000 },
   { label: "Fast", delay: { min: 1000, max: 3000 }, batchSize: 30, pause: 5000 },
@@ -23,47 +38,43 @@ const ANTIBAN_LABEL_HI: Record<string, string> = {
   "Fast": "तेज़",
 };
 
-interface SendResult {
-  phone: string;
-  status: "sent" | "failed";
-  name?: string;
-}
+type PhoneFilter = "all" | "yes" | "no";
 
 export default function Announcement() {
   const { uiT } = useTranslate();
   const toast = useToast();
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filtered, setFiltered] = useState<Customer[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [message, setMessage] = useState("");
-  const [search, setSearch] = useState("");
-  const [selectAll, setSelectAll] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [selectAll, setSelectAll] = useState<boolean>(false);
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
 
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] = useState<boolean>(false);
   const [progress, setProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
   const [results, setResults] = useState<SendResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [done, setDone] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [done, setDone] = useState<boolean>(false);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
 
-  const [antibanPreset, setAntibanPreset] = useState(ANTIBAN_PRESETS[1]);
+  const [antibanPreset, setAntibanPreset] = useState<AntiBanPreset>(ANTIBAN_PRESETS[1]);
 
   const [mediaFile, setMediaFile] = useState<{ base64: string; filename: string; mimetype: string } | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [filterHasPhone, setFilterHasPhone] = useState<"all" | "yes" | "no">("all");
+  const [filterHasPhone, setFilterHasPhone] = useState<PhoneFilter>("all");
 
   const [allPhones, setAllPhones] = useState<string[]>([]);
   const [sentPhones, setSentPhones] = useState<Set<string>>(new Set());
 
   const checkStatus = useCallback(async () => {
     try {
-      const res = await api.get("/api/whatsapp/status");
+      const res = await api.get<{ status?: string }>("/api/whatsapp/status");
       if (res.success) {
         setWaConnected(res.data?.status === "connected");
       } else {
@@ -76,24 +87,22 @@ export default function Announcement() {
 
   useEffect(() => {
     Promise.all([
-      api.get("/api/customers"),
-      api.get("/api/settings"),
+      customerService.list<Customer[]>(),
+      settingsService.get(),
     ]).then(([c, s]) => {
       if (c.success) {
-        // API returns { data: { data: [...], total, page, pages } }
-        const list = c.data?.data || (Array.isArray(c.data) ? c.data : []);
+        const list = (c.data as any)?.data || (Array.isArray(c.data) ? c.data : []) as Customer[];
         setCustomers(list);
         setFiltered(list);
-        setAllPhones(list.filter((x: any) => x.mobile).map((x: any) => x.mobile.replace(/\D/g, "")));
+        setAllPhones(list.filter((x: Customer) => x.mobile).map((x: Customer) => x.mobile!.replace(/\D/g, "")));
       }
-      if (s.success) setSettings(s.data);
+      if (s.success) setSettings(s.data ?? null);
     }).finally(() => setLoading(false));
     checkStatus();
     const interval = setInterval(checkStatus, 5000);
     return () => clearInterval(interval);
   }, [checkStatus]);
 
-  // Filter logic
   useEffect(() => {
     let list = [...customers];
     const q = search.toLowerCase().trim();
@@ -134,14 +143,14 @@ export default function Announcement() {
     return ids
       .map((id) => customers.find((c) => c._id === id))
       .filter((c) => c?.mobile)
-      .map((c) => c.mobile.replace(/\D/g, ""));
+      .map((c) => c!.mobile!.replace(/\D/g, ""));
   }
 
-  function getSelectedCustomers(): any[] {
+  function getSelectedCustomers(): Customer[] {
     const ids = selectAll ? filtered.map((c) => c._id) : [...selected];
     return ids
       .map((id) => customers.find((c) => c._id === id))
-      .filter(Boolean);
+      .filter(Boolean) as Customer[];
   }
 
   async function handleSend() {
@@ -158,7 +167,7 @@ export default function Announcement() {
 
     const msg = message;
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       numbers: phones,
       message: msg,
       antiban: {
@@ -171,10 +180,10 @@ export default function Announcement() {
     if (mediaFile) payload.media = mediaFile;
 
     try {
-      const res = await api.post("/api/whatsapp/broadcast", payload);
+      const res = await api.post<{ sent: number; failed: number; results: SendResult[] }>("/api/whatsapp/broadcast", payload);
       if (res.success) {
-        setProgress({ sent: res.data.sent, failed: res.data.failed, total: phones.length });
-        const resultsList: SendResult[] = (res.data.results || []).map((r: any) => ({
+        setProgress({ sent: res.data!.sent, failed: res.data!.failed, total: phones.length });
+        const resultsList: SendResult[] = (res.data!.results || []).map((r) => ({
           ...r,
           name: customers.find((c) => c.mobile?.replace(/\D/g, "") === r.phone)?.name || r.phone,
         }));
@@ -221,7 +230,7 @@ export default function Announcement() {
               waConnected === false ? "bg-[#e74c3c]/10 text-[#e74c3c]" :
               "bg-th-elevated text-th-muted"
             }`}>
-              <Smartphone size={20} />
+              <Smartphone size={20} aria-hidden="true" />
             </div>
             <div>
               <h3 className="font-semibold text-th-text">
@@ -234,8 +243,8 @@ export default function Announcement() {
               </p>
             </div>
           </div>
-          <button onClick={checkStatus} className="btn-secondary btn-sm flex items-center gap-1.5">
-            <RefreshCw size={14} /> Refresh
+          <button onClick={checkStatus} aria-label={uiT("Refresh WhatsApp status", "WhatsApp स्थिति रीफ्रेश करें")} className="btn-secondary btn-sm flex items-center gap-1.5">
+            <RefreshCw size={14} aria-hidden="true" /> Refresh
           </button>
         </div>
       </div>
@@ -245,7 +254,7 @@ export default function Announcement() {
         <div className="lg:col-span-1 card space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-sm flex items-center justify-center text-[#1ed760]">
-              <MessageCircle size={20} />
+              <MessageCircle size={20} aria-hidden="true" />
             </div>
             <div>
               <h3 className="font-semibold text-th-text">{uiT("Compose Message", "संदेश लिखें")}</h3>
@@ -259,6 +268,7 @@ export default function Announcement() {
               className="input-field resize-none"
               rows={8}
               placeholder={uiT("Type your announcement message here...", "यहाँ अपना संदेश लिखें...")}
+              aria-label={uiT("Announcement message", "घोषणा संदेश")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               maxLength={5000}
@@ -273,6 +283,7 @@ export default function Announcement() {
               ref={fileInputRef}
               type="file"
               className="hidden"
+              aria-label={uiT("Attach file", "फ़ाइल संलग्न करें")}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -295,7 +306,7 @@ export default function Announcement() {
                   <img src={mediaPreview} alt="Preview" className="w-10 h-10 rounded-lg object-cover" />
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center text-[#1ed760]">
-                    <FileText size={18} />
+                    <FileText size={18} aria-hidden="true" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -304,18 +315,20 @@ export default function Announcement() {
                 </div>
                 <button
                   onClick={() => { setMediaFile(null); setMediaPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  aria-label={uiT("Remove attachment", "संलग्नक हटाएं")}
                   className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted transition-colors"
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
+                aria-label={uiT("Attach file for broadcast", "प्रसारण के लिए फ़ाइल संलग्न करें")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-th-border rounded-sm text-sm text-th-secondary hover:border-[#1ed760] hover:text-[#1ed760] transition-all"
               >
-                <Paperclip size={16} /> {uiT("Attach File (Image, PDF, Document...)", "फ़ाइल संलग्न करें (चित्र, PDF, दस्तावेज़...)")}
+                <Paperclip size={16} aria-hidden="true" /> {uiT("Attach File (Image, PDF, Document...)", "फ़ाइल संलग्न करें (चित्र, PDF, दस्तावेज़...)")}
               </button>
             )}
           </div>
@@ -323,7 +336,7 @@ export default function Announcement() {
           {/* Anti-ban Preset */}
           <div>
             <label className="block text-sm font-medium text-th-secondary mb-2 flex items-center gap-1.5">
-              <Shield size={14} /> {uiT("Anti-Ban Speed", "एंटी-बैन स्पीड")}
+              <Shield size={14} aria-hidden="true" /> {uiT("Anti-Ban Speed", "एंटी-बैन स्पीड")}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {ANTIBAN_PRESETS.map((p) => (
@@ -331,6 +344,7 @@ export default function Announcement() {
                   key={p.label}
                   type="button"
                   onClick={() => setAntibanPreset(p)}
+                  aria-label={uiT(p.label, ANTIBAN_LABEL_HI[p.label] || p.label)}
                   className={`px-3 py-2 rounded-sm text-xs font-medium border transition-all ${
                     antibanPreset.label === p.label
                       ? "bg-[#1ed760]/10 border-[#1ed760]/30 text-[#1ed760]"
@@ -343,14 +357,14 @@ export default function Announcement() {
               ))}
             </div>
             <p className="text-xs text-th-secondary mt-1.5 flex items-center gap-1">
-              <Clock size={11} /> {antibanPreset.batchSize} msgs/batch · {antibanPreset.pause / 1000}s pause · Random greetings
+              <Clock size={11} aria-hidden="true" /> {antibanPreset.batchSize} msgs/batch · {antibanPreset.pause / 1000}s pause · Random greetings
             </p>
           </div>
 
           {/* Stats */}
           <div className="space-y-2">
             <div className="flex items-center gap-3 p-3 bg-th-elevated rounded-sm">
-              <Users size={18} className="text-th-muted" />
+              <Users size={18} className="text-th-muted" aria-hidden="true" />
               <div>
                 <p className="text-sm font-medium text-th-text">{customers.length} {uiT("Total Customers", "कुल ग्राहक")}</p>
                 <p className="text-xs text-th-secondary">
@@ -360,7 +374,7 @@ export default function Announcement() {
             </div>
             {remainingCount > 0 && (
               <div className="flex items-center gap-3 p-3 bg-[#1ed760]/10 rounded-sm">
-                <Hourglass size={18} className="text-[#1ed760]" />
+                <Hourglass size={18} className="text-[#1ed760]" aria-hidden="true" />
                 <div>
                   <p className="text-sm font-medium text-[#1ed760]">{uiT("Previously Sent", "पहले भेजे गए")}</p>
                   <p className="text-xs text-[#1ed760]/70">{allPhones.length - remainingCount} {uiT("sent", "भेजा गया")} · {remainingCount} {uiT("remaining", "शेष")}</p>
@@ -381,15 +395,19 @@ export default function Announcement() {
                 <div
                   className="bg-[#1ed760] h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${Math.round((progress.sent + progress.failed) / progress.total * 100)}%` }}
+                  role="progressbar"
+                  aria-valuenow={Math.round((progress.sent + progress.failed) / progress.total * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
                 />
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-[#1ed760] flex items-center gap-1">
-                  <CheckCircle size={14} /> {progress.sent} sent
+                  <CheckCircle size={14} aria-hidden="true" /> {progress.sent} sent
                 </span>
                 {progress.failed > 0 && (
                   <span className="text-[#e74c3c] flex items-center gap-1">
-                    <XCircle size={14} /> {progress.failed} failed
+                    <XCircle size={14} aria-hidden="true" /> {progress.failed} failed
                   </span>
                 )}
                 <span className="text-th-muted">/ {progress.total}</span>
@@ -408,7 +426,7 @@ export default function Announcement() {
                     <span className={`flex items-center gap-1 shrink-0 ${
                       r.status === "sent" ? "text-[#1ed760]" : "text-[#e74c3c]"
                     }`}>
-                      {r.status === "sent" ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                      {r.status === "sent" ? <CheckCircle size={11} aria-hidden="true" /> : <XCircle size={11} aria-hidden="true" />}
                       {r.status}
                     </span>
                   </div>
@@ -420,12 +438,13 @@ export default function Announcement() {
           <button
             onClick={() => setShowConfirm(true)}
             disabled={selectedCount === 0 || sending || !waConnected || (!message.trim() && !mediaFile)}
+            aria-label={uiT("Send broadcast to selected customers", "चयनित ग्राहकों को प्रसारण भेजें")}
             className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {sending ? (
-              <><Loader2 size={18} className="animate-spin" /> Sending...</>
+              <><Loader2 size={18} className="animate-spin" aria-hidden="true" /> Sending...</>
             ) : (
-              <><Send size={18} /> {uiT("Send to", "भेजें")} {selectedCount > 0 ? `${selectedCount} customer${selectedCount > 1 ? "s" : ""}` : "Selected"}</>
+              <><Send size={18} aria-hidden="true" /> {uiT("Send to", "भेजें")} {selectedCount > 0 ? `${selectedCount} customer${selectedCount > 1 ? "s" : ""}` : "Selected"}</>
             )}
           </button>
 
@@ -447,10 +466,11 @@ export default function Announcement() {
 
           {/* Search */}
           <div className="relative mb-3">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" aria-hidden="true" />
             <input
               type="text"
               placeholder={uiT("Search by name, mobile, or ID...", "नाम, मोबाइल या ID से खोजें...")}
+              aria-label={uiT("Search customers", "ग्राहक खोजें")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -459,10 +479,11 @@ export default function Announcement() {
 
           {/* Filter: Phone only */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Filter size={14} className="text-th-muted" />
+            <Filter size={14} className="text-th-muted" aria-hidden="true" />
             <select
               value={filterHasPhone}
-              onChange={(e) => setFilterHasPhone(e.target.value as any)}
+              onChange={(e) => setFilterHasPhone(e.target.value as PhoneFilter)}
+              aria-label={uiT("Filter by phone number", "फ़ोन नंबर से फ़िल्टर करें")}
               className="text-xs bg-th-elevated border border-th-border rounded-lg px-2.5 py-1.5 text-th-secondary focus:outline-none"
             >
               <option value="all">{uiT("All", "सभी")}</option>
@@ -474,9 +495,10 @@ export default function Announcement() {
           {filtered.length > 0 && (
             <button
               onClick={toggleSelectAll}
+              aria-label={selectAll ? uiT("Deselect all customers", "सभी ग्राहक हटाएं") : uiT("Select all customers", "सभी ग्राहक चुनें")}
               className="flex items-center gap-2 text-sm text-th-secondary hover:text-[#1ed760] mb-2"
             >
-              {selectAll ? <CheckSquare size={16} /> : <Square size={16} />}
+              {selectAll ? <CheckSquare size={16} aria-hidden="true" /> : <Square size={16} aria-hidden="true" />}
               {selectAll ? uiT("Deselect All", "सभी हटाएं") : uiT("Select All", "सभी चुनें")}
             </button>
           )}
@@ -484,14 +506,14 @@ export default function Announcement() {
           <div className="space-y-1 max-h-[500px] overflow-y-auto">
             {filtered.length === 0 ? (
               <div className="text-center py-8 text-th-secondary">
-                <Users size={32} className="mx-auto mb-2 opacity-50" />
+                <Users size={32} className="mx-auto mb-2 opacity-50" aria-hidden="true" />
                 <p className="text-sm">{uiT("No customers found", "कोई ग्राहक नहीं मिला")}</p>
               </div>
             ) : (
               filtered.map((c) => {
                 const isSelected = selectAll || selected.has(c._id);
                 const hasPhone = !!c.mobile?.replace(/\D/g, "");
-                const alreadySent = sentPhones.has(c.mobile?.replace(/\D/g, ""));
+                const alreadySent = sentPhones.has(c.mobile?.replace(/\D/g, "") || "");
                 return (
                   <div
                     key={c._id}
@@ -499,8 +521,8 @@ export default function Announcement() {
                       isSelected ? "bg-[#1ed760]/10" : "hover:bg-th-elevated"
                     }`}
                   >
-                    <button onClick={() => toggleSelect(c._id)} className="flex-shrink-0 text-th-muted hover:text-[#1ed760]">
-                      {isSelected ? <CheckSquare size={18} className="text-[#1ed760]" /> : <Square size={18} />}
+                    <button onClick={() => toggleSelect(c._id)} aria-label={uiT(isSelected ? "Deselect" : "Select", isSelected ? "हटाएं" : "चुनें") + " " + (c.name || "")} className="flex-shrink-0 text-th-muted hover:text-[#1ed760]">
+                      {isSelected ? <CheckSquare size={18} className="text-[#1ed760]" aria-hidden="true" /> : <Square size={18} aria-hidden="true" />}
                     </button>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 ${
                       alreadySent
@@ -512,7 +534,7 @@ export default function Announcement() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-th-text truncate flex items-center gap-1.5">
                         {c.name || "—"}
-                        {alreadySent && <CheckCircle size={11} className="text-[#1ed760] shrink-0" />}
+                        {alreadySent && <CheckCircle size={11} className="text-[#1ed760] shrink-0" aria-hidden="true" />}
                       </p>
                       <p className={`text-xs ${hasPhone ? "text-th-secondary" : "text-red-400"}`}>
                         {c.mobile || "No number"}
@@ -577,7 +599,7 @@ export default function Announcement() {
                 {mediaFile && (
                   <div className="bg-[#1ed760]/10 border border-[#1ed760]/20 rounded-sm px-4 py-3 text-xs text-[#1ed760] mb-4">
                     <p className="font-medium mb-1 flex items-center gap-1.5">
-                      <Paperclip size={13} /> Attachment:
+                      <Paperclip size={13} aria-hidden="true" /> Attachment:
                     </p>
                     <p className="opacity-80">{mediaFile.filename} ({mediaFile.mimetype})</p>
                   </div>
@@ -585,14 +607,14 @@ export default function Announcement() {
 
                 <div className="bg-amber-500/10 border border-amber-700/50 rounded-sm px-4 py-3 text-xs text-amber-300 mb-4">
                   <p className="font-medium mb-1 flex items-center gap-1.5">
-                    <AlertTriangle size={13} /> {uiT("Message preview:", "संदेश पूर्वावलोकन:")}
+                    <AlertTriangle size={13} aria-hidden="true" /> {uiT("Message preview:", "संदेश पूर्वावलोकन:")}
                   </p>
                   <p className="opacity-80 italic">"{message.slice(0, 100)}{message.length > 100 ? "..." : ""}"</p>
                 </div>
 
                 <div className="bg-th-elevated rounded-sm px-4 py-3 text-xs text-th-secondary mb-4">
                   <div className="flex items-center gap-1.5 font-medium mb-1">
-                    <Shield size={13} /> {uiT("Anti-Ban Protection", "एंटी-बैन सुरक्षा")}
+                    <Shield size={13} aria-hidden="true" /> {uiT("Anti-Ban Protection", "एंटी-बैन सुरक्षा")}
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                     <span>Delay: {antibanPreset.delay.min / 1000}s – {antibanPreset.delay.max / 1000}s</span>
@@ -603,9 +625,9 @@ export default function Announcement() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button onClick={() => setShowConfirm(false)} className="btn-secondary flex-1">{uiT("Cancel", "रद्द करें")}</button>
-                  <button onClick={handleSend} className="btn-primary flex-1 flex items-center justify-center gap-1.5">
-                    <Send size={16} /> {uiT("Send Now", "अभी भेजें")}
+                  <button onClick={() => setShowConfirm(false)} aria-label={uiT("Cancel broadcast", "प्रसारण रद्द करें")} className="btn-secondary flex-1">{uiT("Cancel", "रद्द करें")}</button>
+                  <button onClick={handleSend} aria-label={uiT("Send broadcast now", "अभी प्रसारण भेजें")} className="btn-primary flex-1 flex items-center justify-center gap-1.5">
+                    <Send size={16} aria-hidden="true" /> {uiT("Send Now", "अभी भेजें")}
                   </button>
                 </div>
               </div>
