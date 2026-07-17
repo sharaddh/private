@@ -3,6 +3,7 @@ import { Plus, X, FileText } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
 
 interface BillItem {
+  _id?: string;
   description: string;
   price: number;
   qty: number;
@@ -60,7 +61,7 @@ export default function BillingPanel({ billItems, setBillItems, updateBillItem, 
           <div className="space-y-3">
             {billItems.map((item, i) => (
               <motion.div
-                key={item._id || item.description || i}
+                key={i}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex items-center gap-3 bg-th-elevated rounded-md p-3"
