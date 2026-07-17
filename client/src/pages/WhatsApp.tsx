@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
+import { whatsappService } from "../services";
 import PageSkeleton from "../components/PageSkeleton";
 import {
   MessageCircle, RefreshCw, LogOut, Smartphone,
@@ -7,19 +8,26 @@ import {
 } from "lucide-react";
 import { useTranslate } from "../context/TranslateContext";
 
+interface WhatsAppQRResponse {
+  qr?: string;
+  status?: "connected" | "error" | "disconnected" | "initializing";
+}
+
+type WhatsAppStatus = "checking" | "qr" | "connected" | "error" | "disconnected" | "initializing";
+
 export default function WhatsApp() {
   const { uiT } = useTranslate();
-  const [status, setStatus] = useState<string>("checking");
+  const [status, setStatus] = useState<WhatsAppStatus>("checking");
   const [qr, setQr] = useState<string | null>(null);
-  const [disconnecting, setDisconnecting] = useState(false);
-  const [reinitializing, setReinitializing] = useState(false);
+  const [disconnecting, setDisconnecting] = useState<boolean>(false);
+  const [reinitializing, setReinitializing] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
     async function poll() {
       while (!cancelled) {
         try {
-          const res = await api.get("/api/whatsapp/qr");
+          const res = await api.get<WhatsAppQRResponse>("/api/whatsapp/qr");
           if (cancelled) return;
           if (res.success) {
             if (res.data?.qr) {
@@ -81,7 +89,7 @@ export default function WhatsApp() {
       <div className="max-w-lg mx-auto">
         <div className="card p-6 text-center space-y-6">
           <div className="w-16 h-16 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto">
-            <MessageCircle size={32} className="text-[#1ed760]" />
+            <MessageCircle size={32} className="text-[#1ed760]" aria-hidden="true" />
           </div>
 
           <div>
@@ -95,7 +103,7 @@ export default function WhatsApp() {
           {status === "connected" && (
             <div className="bg-[#1ed760]/10 rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-center gap-2 text-[#1ed760]">
-                <CheckCircle size={24} />
+                <CheckCircle size={24} aria-hidden="true" />
                 <span className="text-base font-semibold">{uiT("Connected", "जुड़ा हुआ")}</span>
               </div>
               <p className="body-sm text-th-secondary">
@@ -104,9 +112,10 @@ export default function WhatsApp() {
               <button
                 onClick={handleDisconnect}
                 disabled={disconnecting}
+                aria-label={uiT("Disconnect WhatsApp", "WhatsApp डिस्कनेक्ट करें")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
               >
-                <LogOut size={16} />
+                <LogOut size={16} aria-hidden="true" />
                 {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Disconnect", "डिस्कनेक्ट करें")}
               </button>
             </div>
@@ -116,24 +125,25 @@ export default function WhatsApp() {
             <div className="space-y-4">
               <div className="bg-th-elevated rounded-lg p-4">
                 <div className="flex items-center justify-center gap-2 text-amber-400 mb-2">
-                  <Smartphone size={20} />
+                  <Smartphone size={20} aria-hidden="true" />
                   <span className="body-sm font-semibold">{uiT("Scan the QR code", "QR कोड स्कैन करें")}</span>
                 </div>
                 <p className="text-xs text-th-secondary">
                   Open WhatsApp on your phone → Menu → Linked Devices → Link a Device
                 </p>
               </div>
-              <img src={qr} alt="WhatsApp QR Code" className="mx-auto w-64 h-64" />
+              <img src={qr} alt="WhatsApp QR Code" className="mx-auto w-64 h-64" aria-label={uiT("WhatsApp QR Code for linking", "WhatsApp लिंक करने के लिए QR कोड")} />
               <div className="flex items-center justify-center gap-2 text-xs text-th-muted">
-                <RefreshCw size={12} className="animate-spin" />
+                <RefreshCw size={12} className="animate-spin" aria-hidden="true" />
                 Waiting for scan...
               </div>
               <button
                 onClick={handleDisconnect}
                 disabled={disconnecting}
+                aria-label={uiT("Cancel QR scan and disconnect", "QR स्कैन रद्द करें और डिस्कनेक्ट करें")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
               >
-                <LogOut size={16} />
+                <LogOut size={16} aria-hidden="true" />
                 {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Cancel", "रद्द करें")}
               </button>
             </div>
@@ -142,7 +152,7 @@ export default function WhatsApp() {
           {status === "initializing" && (
             <div className="bg-th-elevated rounded-lg p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-th-secondary">
-                <RefreshCw size={20} className="animate-spin" />
+                <RefreshCw size={20} className="animate-spin" aria-hidden="true" />
                 <span className="body-sm font-medium">Initializing...</span>
               </div>
               <p className="text-xs text-th-muted">
@@ -151,9 +161,10 @@ export default function WhatsApp() {
               <button
                 onClick={handleReinit}
                 disabled={reinitializing}
+                aria-label={uiT("Reinitialize WhatsApp connection", "WhatsApp कनेक्शन पुनः आरंभ करें")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
               >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
+                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
                 {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
               </button>
             </div>
@@ -162,7 +173,7 @@ export default function WhatsApp() {
           {status === "disconnected" && (
             <div className="bg-th-elevated rounded-lg p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-th-secondary">
-                <Info size={20} />
+                <Info size={20} aria-hidden="true" />
                 <span className="body-sm font-medium">{uiT("Disconnected", "डिस्कनेक्ट")}</span>
               </div>
               <p className="text-xs text-th-muted">
@@ -171,9 +182,10 @@ export default function WhatsApp() {
               <button
                 onClick={handleReinit}
                 disabled={reinitializing}
+                aria-label={uiT("Reinitialize WhatsApp connection", "WhatsApp कनेक्शन पुनः आरंभ करें")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
               >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
+                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
                 {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
               </button>
             </div>
@@ -182,7 +194,7 @@ export default function WhatsApp() {
           {status === "error" && (
             <div className="bg-[#e74c3c]/10 rounded-lg p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-[#e74c3c]">
-                <XCircle size={20} />
+                <XCircle size={20} aria-hidden="true" />
                 <span className="body-sm font-medium">Connection Error</span>
               </div>
               <p className="text-xs text-th-secondary">
@@ -192,9 +204,10 @@ export default function WhatsApp() {
               <button
                 onClick={handleReinit}
                 disabled={reinitializing}
+                aria-label={uiT("Retry WhatsApp connection", "WhatsApp कनेक्शन पुनः प्रयास करें")}
                 className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
               >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} />
+                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
                 {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
               </button>
             </div>
