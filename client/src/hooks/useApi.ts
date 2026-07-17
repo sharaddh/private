@@ -5,6 +5,7 @@ import { useCache, getCacheSnapshot } from "./useCache";
 interface UseApiOptions {
   cacheKey?: string;
   enabled?: boolean;
+  ttl?: number;
 }
 
 interface UseApiResult<T> {
@@ -25,9 +26,8 @@ export function useApi<T = unknown>(
   const [error, setError] = useState<string | null>(null);
   const cache = useCache<T>(cacheKey ?? null);
   const mountedRef = useRef(true);
-  const initialLoadDone = useRef(false);
 
-  const fetch = useCallback(async (isBackground = false) => {
+  const doFetch = useCallback(async (isBackground = false) => {
     if (!enabled) return;
     if (!isBackground) setLoading(true);
     setError(null);
@@ -43,12 +43,9 @@ export function useApi<T = unknown>(
     } catch (err) {
       if (mountedRef.current) setError((err as Error).message || "Network error");
     } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-        initialLoadDone.current = true;
-      }
+      if (mountedRef.current) setLoading(false);
     }
-  }, deps);
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     mountedRef.current = true;
@@ -56,25 +53,26 @@ export function useApi<T = unknown>(
     if (snapshot?.exists && !snapshot.expired) {
       setData(snapshot.data);
       setLoading(false);
-      initialLoadDone.current = true;
-      fetch(true);
+      doFetch(true);
     } else if (snapshot?.exists && snapshot.expired) {
       setData(snapshot.data);
       setLoading(true);
-      fetch();
+      doFetch();
     } else {
-      fetch();
+      doFetch();
     }
     return () => { mountedRef.current = false; };
-  }, [fetch]);
+  }, [doFetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refetch = useCallback(() => {
     if (cacheKey) cache.invalidate();
-    fetch();
-  }, [fetch, cacheKey, cache]);
+    doFetch();
+  }, [doFetch, cacheKey, cache]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { data, loading, error, refetch };
 }
+
+// ─── Convenience Wrappers ────────────────────────────────────────────────────
 
 export function useApiGet<T = unknown>(
   path: string,
@@ -88,13 +86,20 @@ export function useApiGet<T = unknown>(
   );
 }
 
-export function useApiPost<T = any, B = any>(): {
+export function useApiPost<T = unknown, B = unknown>(): {
   execute: (path: string, body: B) => Promise<{ success: boolean; data?: T; message?: string }>;
   loading: boolean;
   error: string | null;
+  reset: () => void;
 } {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const execute = useCallback(async (path: string, body: B) => {
     setLoading(true);
@@ -105,12 +110,95 @@ export function useApiPost<T = any, B = any>(): {
       return res;
     } catch (err) {
       const msg = (err as Error).message || "Network error";
-      setError(msg);
+      if (mountedRef.current) setError(msg);
       return { success: false, message: msg };
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
-  return { execute, loading, error };
+  const reset = useCallback(() => {
+    setError(null);
+    setLoading(false);
+  }, []);
+
+  return { execute, loading, error, reset };
+}
+
+export function useApiPut<T = unknown, B = unknown>(): {
+  execute: (path: string, body: B) => Promise<{ success: boolean; data?: T; message?: string }>;
+  loading: boolean;
+  error: string | null;
+  reset: () => void;
+} {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const execute = useCallback(async (path: string, body: B) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.put<T>(path, body);
+      if (!res.success) setError(res.message || "Request failed");
+      return res;
+    } catch (err) {
+      const msg = (err as Error).message || "Network error";
+      if (mountedRef.current) setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setError(null);
+    setLoading(false);
+  }, []);
+
+  return { execute, loading, error, reset };
+}
+
+export function useApiDelete<T = unknown>(): {
+  execute: (path: string) => Promise<{ success: boolean; data?: T; message?: string }>;
+  loading: boolean;
+  error: string | null;
+  reset: () => void;
+} {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const execute = useCallback(async (path: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.del<T>(path);
+      if (!res.success) setError(res.message || "Request failed");
+      return res;
+    } catch (err) {
+      const msg = (err as Error).message || "Network error";
+      if (mountedRef.current) setError(msg);
+      return { success: false, message: msg };
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setError(null);
+    setLoading(false);
+  }, []);
+
+  return { execute, loading, error, reset };
 }
