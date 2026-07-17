@@ -9,9 +9,11 @@ import rateLimit from "express-rate-limit";
 import routes from "./routes";
 import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
+import { requestId } from "./middleware/requestId";
 
 const app = express();
 
+app.use(requestId);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: [
@@ -38,10 +40,8 @@ app.use(
 
 app.use("/api", routes);
 
-// Handle favicon to prevent 404
-app.get("/favicon.ico", (req, res) => res.status(204).end());
+app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
-// Resolve client dist directory with case-insensitive fallback
 function findDistPath(candidates: string[]): string {
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -112,7 +112,7 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
       }
     },
   }));
-  app.get("/warehouse*", (req, res) => {
+  app.get("/warehouse*", (_req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(warehouseIndex);
   });
@@ -120,12 +120,14 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
 
 app.get("*", (req, res) => {
   if (req.path.startsWith("/api")) {
-    return res.status(404).json({ success: false, message: "API route not found" });
+    res.status(404).json({ success: false, message: "API route not found" });
+    return;
   }
   const indexHtml = findIndexHtml();
   if (indexHtml) {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    return res.sendFile(indexHtml);
+    res.sendFile(indexHtml);
+    return;
   }
   res.status(200).json({ success: true, message: "KMJ ERP API" });
 });

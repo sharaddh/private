@@ -6,40 +6,38 @@ import { initCache, destroyCache } from "./services/cache";
 import { User } from "./models/user";
 import { Branch } from "./models/branch";
 import { getBranchModels } from "./models/db";
+import { logger } from "./utils/logger";
 
 let server: ReturnType<typeof app.listen> | null = null;
 
-// Catch Baileys AES-GCM decryption errors from stale/incompatible auth creds.
-// Clear all branch sessions and restart WhatsApp so a fresh QR scan can begin.
 process.on("uncaughtException", async (err) => {
   const msg = err?.message || "";
   if (msg.includes("Unsupported state") || msg.includes("unable to authenticate data")) {
-    console.error("WhatsApp: auth decryption failed, clearing stale sessions:", msg);
+    logger.error("WhatsApp: auth decryption failed, clearing stale sessions");
     try {
       const { whatsappManager } = await import("./services/whatsapp");
       await whatsappManager.clearAllStaleAuth();
     } catch {}
-    // Restart WhatsApp after a short delay
     setTimeout(async () => {
       const { whatsappManager } = await import("./services/whatsapp");
       const branches = await Branch.find({ isActive: true }).lean();
       const branchKeys = branches.map((b) => (b as any)._id.toString());
       if (branchKeys.length > 0) {
-        await whatsappManager.initAll(branchKeys).catch((err) => console.error("WhatsApp initAll after restart failed:", err?.message || err));
+        await whatsappManager.initAll(branchKeys).catch((err) => logger.error(`WhatsApp initAll after restart failed: ${err?.message || err}`));
       } else {
         const def = whatsappManager.getInstance();
-        await def.init().catch((err) => console.error("WhatsApp default init after restart failed:", err?.message || err));
+        await def.init().catch((err) => logger.error(`WhatsApp default init after restart failed: ${err?.message || err}`));
       }
     }, 2000);
     return;
   }
-  console.error("Unhandled exception:", err);
+  logger.error("Unhandled exception", { message: err.message, stack: err.stack });
   process.exit(1);
 });
 
 async function start() {
   if (!MONGO_URI) {
-    console.error("MONGO_URI not set");
+    logger.error("MONGO_URI not set");
     process.exit(1);
   }
 
@@ -50,45 +48,37 @@ async function start() {
       socketTimeoutMS: 45000,
     });
   } catch (err) {
-    console.error("MongoDB connection failed:", err);
+    logger.error("MongoDB connection failed", { error: (err as Error).message });
     process.exit(1);
   }
 
-  // Drop stale unique indexes that block customer creation (MongoDB 8.x rejects
-  // duplicate nulls in unique indexes). customerId and mobile were previously
-  // unique but the frontend never sends customerId, and mobile allowed empty
-  // strings that became null.
   try {
     const customers = mongoose.connection.db.collection("customers");
     const indexes = await customers.indexes();
     for (const idx of indexes) {
       if ((idx.key?.customerId || idx.key?.mobile) && idx.unique) {
         await customers.dropIndex(idx.name);
-        console.log("Dropped stale unique index: " + idx.name);
+        logger.info(`Dropped stale unique index: ${idx.name}`);
       }
     }
   } catch (e: any) {
     if (!e?.message?.includes?.("index not found")) {
-      console.warn("Could not check/drop indexes:", e?.message);
+      logger.warn("Could not check/drop indexes", { error: e?.message });
     }
   }
 
-  // Seed default users if none exist
   try {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       const hash = await bcrypt.hash("admin123", 10);
       await User.create({ username: "admin", passwordHash: hash, name: "Admin", role: "owner" });
       await User.create({ username: "warehouse", passwordHash: hash, name: "Warehouse Staff", role: "warehouse" });
-      console.log("  Default users created:");
-      console.log("    Owner:     admin / ********");
-      console.log("    Warehouse: warehouse / ********");
+      logger.info("Default users created (Owner: admin / ***admin123, Warehouse: warehouse / ***admin123)");
     }
   } catch (e: any) {
-    console.warn("Could not seed users:", e?.message);
+    logger.warn("Could not seed users", { error: e?.message });
   }
 
-  // Seed default branch if none exist
   try {
     const branchCount = await Branch.countDocuments();
     if (branchCount === 0) {
@@ -99,9 +89,8 @@ async function start() {
         isActive: true,
         settings: { shopName: "KMJ Optical - Govindpuri" },
       });
-      console.log(`  Default branch created: ${branch.name} (${branch.code})`);
+      logger.info(`Default branch created: ${branch.name} (${branch.code})`);
 
-      // Copy existing collections to branch database
       const branchModels = getBranchModels(branch.dbName);
       const collections = ["customers", "visits", "prescriptions", "orders", "bills", "payments", "inventory", "deliveries", "settings", "todos"];
       for (const collName of collections) {
@@ -112,45 +101,40 @@ async function start() {
         if (sourceCount > 0 && targetCount === 0) {
           const docs = await sourceColl.find({}).toArray();
           await targetColl.insertMany(docs);
-          console.log(`    Migrated ${docs.length} documents from ${collName}`);
+          logger.info(`Migrated ${docs.length} documents from ${collName}`);
         }
       }
 
-      // Assign branch to admin user
       await User.updateMany(
         { role: "owner" },
         { $set: { branches: [branch._id] } }
       );
     }
   } catch (e: any) {
-    console.warn("Could not seed branch:", e?.message);
+    logger.warn("Could not seed branch", { error: e?.message });
   }
 
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);
       await redis.connect();
-    } catch {
-      // Redis is optional
-    }
+    } catch {}
   }
 
-  // Lazy-init WhatsApp for all active branches
   async function initBranchWhatsApps() {
     try {
       const { whatsappManager } = await import("./services/whatsapp");
       const branches = await Branch.find({ isActive: true }).lean();
       const branchKeys = branches.map((b) => (b as any)._id.toString());
       if (branchKeys.length > 0) {
-        console.log(`WhatsApp: initializing for ${branchKeys.length} branch(es)...`);
+        logger.info(`WhatsApp: initializing for ${branchKeys.length} branch(es)...`);
         await whatsappManager.initAll(branchKeys);
       } else {
-        // No branches yet, init default instance
         const def = whatsappManager.getInstance();
         await def.init().catch(() => {});
       }
     } catch (e) {
-      console.error("WhatsApp init failed:", e);
+      logger.error("WhatsApp init failed", { error: (e as Error).message });
     }
   }
 
@@ -159,15 +143,17 @@ async function start() {
   }, 1000);
 
   server = app.listen(PORT, () => {
-    console.log(`\n  KMJ Optical ERP Server [${NODE_ENV}]`);
-    console.log(`  API:        http://localhost:${PORT}/api`);
-    console.log(`  Client:     http://localhost:${PORT}`);
-    console.log(`  Warehouse:  http://localhost:${PORT}/warehouse\n`);
+    logger.info(`KMJ Optical ERP Server [${NODE_ENV}] started`, {
+      port: PORT,
+      api: `http://localhost:${PORT}/api`,
+      client: `http://localhost:${PORT}`,
+      warehouse: `http://localhost:${PORT}/warehouse`,
+    });
   });
 }
 
 async function gracefulShutdown(signal: string) {
-  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
   server?.close();
   await destroyCache().catch(() => {});
   await disconnect().catch(() => {});
@@ -178,6 +164,6 @@ process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 start().catch((err) => {
-  console.error("Failed to start server:", err);
+  logger.error("Failed to start server", { error: err.message, stack: err.stack });
   process.exit(1);
 });

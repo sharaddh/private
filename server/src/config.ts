@@ -10,15 +10,6 @@ export const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
 export const REDIS_URL = process.env.REDIS_URL || "";
 export const NODE_ENV = process.env.NODE_ENV || "development";
 
-export const CACHE_TTL = {
-  DASHBOARD: 30,
-  CUSTOMERS: 60,
-  INVENTORY: 60,
-  ORDERS: 30,
-  BILLS: 30,
-  DEFAULT: 60,
-} as const;
-
 function normalizePort(val: string): number {
   const port = parseInt(val, 10);
   if (isNaN(port)) return 4000;
@@ -40,5 +31,5 @@ if (NODE_ENV === "production") {
 }
 
 if (!JWT_SECRET && NODE_ENV !== "production") {
-  console.warn("⚠ JWT_SECRET is not set — using empty string. Tokens will be insecure.");
+  console.warn("JWT_SECRET is not set - using empty string. Tokens will be insecure.");
 }
