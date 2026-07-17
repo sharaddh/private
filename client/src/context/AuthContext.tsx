@@ -1,18 +1,19 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import api from "../api";
+import type { User, BranchInfo } from "../types";
 
 interface AuthState {
   token: string | null;
   refreshToken: string | null;
-  user: Record<string, unknown> | null;
-}
-
-interface BranchInfo {
-  _id: string;
-  name: string;
-  code: string;
-  dbName: string;
-  isActive: boolean;
+  user: User | null;
+  currentBranchId: string | null;
 }
 
 interface AuthContextValue extends AuthState {
@@ -20,11 +21,10 @@ interface AuthContextValue extends AuthState {
   isAdmin: boolean;
   isStaff: boolean;
   branches: BranchInfo[];
-  currentBranchId: string | null;
   currentBranch: BranchInfo | null;
   login: (token: string, refresh: string) => void;
   logout: () => void;
-  setUser: (user: Record<string, unknown>) => void;
+  setUser: (user: User) => void;
   setCurrentBranch: (branchId: string) => void;
 }
 
@@ -36,7 +36,7 @@ const STORAGE_KEYS = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function loadAuth(): AuthState & { currentBranchId: string | null } {
+function loadAuth(): AuthState {
   return {
     token: localStorage.getItem(STORAGE_KEYS.token),
     refreshToken: localStorage.getItem(STORAGE_KEYS.refresh),
@@ -46,24 +46,36 @@ function loadAuth(): AuthState & { currentBranchId: string | null } {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState & { currentBranchId: string | null }>(loadAuth);
+  const [state, setState] = useState<AuthState>(loadAuth);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
 
   useEffect(() => {
-    if (state.token) {
-      api.get("/api/auth/me").then((d) => {
-        if (d.success) {
-          const user = d.data as Record<string, unknown>;
+    if (!state.token) return;
+
+    let cancelled = false;
+    api
+      .get<User>("/api/auth/me")
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && res.data) {
+          const user = res.data;
           setState((s) => ({ ...s, user }));
-          const userBranches = (user?.branches || []) as BranchInfo[];
-          setBranches(userBranches);
-          if (!state.currentBranchId && userBranches.length > 0) {
-            setCurrentBranch(userBranches[0]._id);
+          setBranches(user.branches || []);
+          if (!state.currentBranchId && user.branches?.length > 0) {
+            setCurrentBranch(user.branches[0]._id);
           }
-        } else logout();
-      }).catch(() => logout());
-    }
-  }, [state.token]);
+        } else {
+          logout();
+        }
+      })
+      .catch(() => {
+        if (!cancelled) logout();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback((token: string, refresh: string) => {
     localStorage.setItem(STORAGE_KEYS.token, token);
@@ -79,10 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setBranches([]);
   }, []);
 
-  const setUser = useCallback((user: Record<string, unknown>) => {
+  const setUser = useCallback((user: User) => {
     setState((s) => ({ ...s, user }));
-    const userBranches = (user?.branches || []) as BranchInfo[];
-    setBranches(userBranches);
+    setBranches(user.branches || []);
   }, []);
 
   const setCurrentBranch = useCallback((branchId: string) => {
@@ -90,10 +101,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, currentBranchId: branchId }));
   }, []);
 
-  const role = state.user?.role as string | undefined;
+  const role = state.user?.role;
   const isAdmin = !!state.token && role !== "staff";
   const isStaff = !!state.token && role === "staff";
-
   const currentBranch = branches.find((b) => b._id === state.currentBranchId) || null;
 
   return (
@@ -104,7 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isStaff,
         branches,
-        currentBranchId: state.currentBranchId,
         currentBranch,
         login,
         logout,
