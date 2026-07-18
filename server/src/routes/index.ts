@@ -17,9 +17,14 @@ import whatsapp from "./whatsapp";
 import todos from "./todos";
 import cacheAdmin from "./cache-admin";
 import branches from "./branches";
+import cameras from "./cameras";
 import recalculate from "./recalculate";
 
 const router = Router();
+
+router.get("/health", (_req, res) => {
+  res.json({ success: true, status: "ok", timestamp: new Date().toISOString() });
+});
 
 router.use("/branches", branches);
 router.use("/auth", auth);
@@ -38,6 +43,7 @@ router.use("/settings", branchScope, settings);
 router.use("/workspace", branchScope, workspace);
 router.use("/whatsapp", branchScope, whatsapp);
 router.use("/cache", cacheAdmin);
+router.use("/cameras", cameras);
 router.use("/recalculate", recalculate);
 
 export default router;
