@@ -10,7 +10,8 @@ import { useTranslate } from "../context/TranslateContext";
 
 interface WhatsAppQRResponse {
   qr?: string;
-  status?: "connected" | "error" | "disconnected" | "initializing";
+  status?: "connected" | "error" | "disconnected" | "initializing" | "qr";
+  connectedPhone?: string;
 }
 
 type WhatsAppStatus = "checking" | "qr" | "connected" | "error" | "disconnected" | "initializing";
@@ -19,6 +20,7 @@ export default function WhatsApp() {
   const { uiT } = useTranslate();
   const [status, setStatus] = useState<WhatsAppStatus>("checking");
   const [qr, setQr] = useState<string | null>(null);
+  const [connectedPhone, setConnectedPhone] = useState<string>("");
   const [disconnecting, setDisconnecting] = useState<boolean>(false);
   const [reinitializing, setReinitializing] = useState<boolean>(false);
 
@@ -27,15 +29,16 @@ export default function WhatsApp() {
     async function poll() {
       while (!cancelled) {
         try {
-          const res = await api.get<WhatsAppQRResponse>("/api/whatsapp/qr");
+          const res = await api.get<WhatsAppQRResponse>("/api/whatsapp/status");
           if (cancelled) return;
           if (res.success) {
-            if (res.data?.qr) {
-              setQr(res.data.qr);
-              setStatus("qr");
-            } else if (res.data?.status === "connected") {
+            setConnectedPhone(res.data?.connectedPhone || "");
+            if (res.data?.status === "connected") {
               setQr(null);
               setStatus("connected");
+            } else if (res.data?.status === "qr" && res.data?.qr) {
+              setQr(res.data.qr);
+              setStatus("qr");
             } else if (res.data?.status === "error") {
               setQr(null);
               setStatus("error");
@@ -106,6 +109,9 @@ export default function WhatsApp() {
                 <CheckCircle size={24} aria-hidden="true" />
                 <span className="text-base font-semibold">{uiT("Connected", "जुड़ा हुआ")}</span>
               </div>
+              {connectedPhone && (
+                <p className="text-sm text-th-text font-mono">📱 {connectedPhone}</p>
+              )}
               <p className="body-sm text-th-secondary">
                 Your WhatsApp is active. Bills and announcements will be sent automatically.
               </p>
