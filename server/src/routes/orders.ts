@@ -110,8 +110,12 @@ router.patch("/:id/status", authenticate, validate(statusUpdateSchema, "body"), 
           ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
-        const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent.ok) console.error(`WhatsApp: order ${order._id} ready message failed:`, sent.error);
+        const readyPhone = normalizePhone(customer.mobile);
+        const readyDelay = 2000 + Math.random() * 3000;
+        setTimeout(async () => {
+          const sent = await wa.sendMessage(readyPhone, msg);
+          if (!sent.ok) console.error(`WhatsApp: order ${order._id} ready message failed:`, sent.error);
+        }, readyDelay);
       }
     }
 
@@ -121,8 +125,12 @@ router.patch("/:id/status", authenticate, validate(statusUpdateSchema, "body"), 
         const settings = await Settings.findOne().sort({ createdAt: -1 });
         const shop = settings?.shopName || "KMJ Optical";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
-        const sent = await wa.sendMessage(normalizePhone(customer.mobile), msg);
-        if (!sent.ok) console.error(`WhatsApp: order ${order._id} delivered message failed:`, sent.error);
+        const deliveredPhone = normalizePhone(customer.mobile);
+        const deliveredDelay = 2000 + Math.random() * 3000;
+        setTimeout(async () => {
+          const sent = await wa.sendMessage(deliveredPhone, msg);
+          if (!sent.ok) console.error(`WhatsApp: order ${order._id} delivered message failed:`, sent.error);
+        }, deliveredDelay);
       }
     }
 
