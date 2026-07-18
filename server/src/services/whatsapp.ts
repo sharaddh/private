@@ -29,7 +29,7 @@ interface QueuedMedia {
 
 type QueueItem = QueuedMessage | QueuedMedia;
 
-import { normalizePhone, toWhatsAppJID as toJID } from "../utils/phone";
+import { normalizePhone, toWhatsAppJID as toJID, isValidWhatsAppPhone } from "../utils/phone";
 
 async function useMongoDBAuthState(collectionName: string): Promise<{
   state: AuthenticationState;
@@ -98,6 +98,23 @@ const RECONNECT_BASE_DELAY = 5000;
 const HEALTH_CHECK_INTERVAL_MS = 60000;
 const MAX_RECONNECT_DELAY = 300000;
 
+export function shouldResetSessionForError(err: string | undefined): boolean {
+  const lower = (err || "").toLowerCase();
+  return (
+    lower.includes("not authorized") ||
+    lower.includes("session expired") ||
+    lower.includes("unauthorized") ||
+    lower.includes("bad session") ||
+    lower.includes("logged out") ||
+    lower.includes("restart required") ||
+    lower.includes("missing creds") ||
+    lower.includes("no such user") ||
+    lower.includes("decode failed") ||
+    lower.includes("item-not-found") ||
+    lower.includes("invalid session")
+  );
+}
+
 class WhatsAppService {
   private sock: ReturnType<typeof makeWASocket> | null = null;
   private _ready = false;
@@ -129,25 +146,16 @@ class WhatsAppService {
   get pairingCode() { return this._pairingCode; }
   get queueLength() { return this.messageQueue.length; }
 
+  getConnectedPhone(): string | null {
+    try {
+      const id = (this.sock as any)?.user?.id;
+      if (id) return id.split(":")[0].replace(/@.*/, "");
+    } catch {}
+    return null;
+  }
+
   private isSessionError(errMsg: string): boolean {
-    const lower = errMsg.toLowerCase();
-    return (
-      lower.includes("not authorized") ||
-      lower.includes("session expired") ||
-      lower.includes("unauthorized") ||
-      lower.includes("stream terminated") ||
-      lower.includes("stream errored") ||
-      lower.includes("connection closed") ||
-      lower.includes("connection terminated") ||
-      lower.includes("bad session") ||
-      lower.includes("logged out") ||
-      lower.includes("restart required") ||
-      lower.includes("missing creds") ||
-      lower.includes("no such user") ||
-      lower.includes("decode failed") ||
-      lower.includes("item-not-found") ||
-      lower.includes("connection closed")
-    );
+    return shouldResetSessionForError(errMsg);
   }
 
   private async handleSendFailure(errMsg: string): Promise<void> {
@@ -333,7 +341,8 @@ class WhatsAppService {
 
           const needsReAuth =
             statusCode === DisconnectReason.loggedOut ||
-            statusCode === DisconnectReason.badSession;
+            statusCode === DisconnectReason.badSession ||
+            shouldResetSessionForError(errMsg);
 
           if (needsReAuth) {
             console.log(`WhatsApp [${this.authCollection}]: ${reason}, clearing session for re-auth`);
@@ -342,6 +351,7 @@ class WhatsAppService {
               if (db) await db.collection(this.authCollection).deleteOne({ _id: "auth_state" as any });
             } catch (e) { /* auth_state cleanup is best-effort */ }
           } else {
+            console.log(`WhatsApp [${this.authCollection}]: transient disconnect detected, scheduling reconnect without clearing session`);
             this.scheduleReconnect();
           }
 
@@ -424,21 +434,27 @@ class WhatsAppService {
 
   private async sendMessageNow(phone: string, message: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
+    const normalizedPhone = normalizePhone(phone);
+    if (!isValidWhatsAppPhone(normalizedPhone)) {
+      console.error(`WhatsApp [${this.authCollection}] invalid phone: "${phone}" → "${normalizedPhone}"`);
+      return { ok: false, error: `Invalid phone number: ${phone}` };
+    }
+    const jid = toJID(normalizedPhone);
+    console.log(`WhatsApp [${this.authCollection}] sending to ${normalizedPhone} (jid: ${jid})`);
     let lastError = "";
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const jid = toJID(phone);
         await this.sock.sendMessage(jid, { text: message });
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown send error";
         lastError = errMsg;
         if (attempt < retries) {
-          console.log(`WhatsApp [${this.authCollection}] send retry ${attempt + 1}/${retries}:`, errMsg);
+          console.log(`WhatsApp [${this.authCollection}] send retry ${attempt + 1}/${retries} to ${normalizedPhone}:`, errMsg);
           await new Promise((r) => setTimeout(r, 2000));
           continue;
         }
-        console.error(`WhatsApp [${this.authCollection}] send failed after ${retries + 1} attempts:`, errMsg);
+        console.error(`WhatsApp [${this.authCollection}] send failed after ${retries + 1} attempts to ${normalizedPhone}:`, errMsg);
       }
     }
     await this.handleSendFailure(lastError);
@@ -447,10 +463,16 @@ class WhatsAppService {
 
   private async sendMediaNow(phone: string, base64: string, filename: string, mimetype: string, caption?: string, retries = 2): Promise<{ ok: boolean; error?: string }> {
     if (!this.sock) return { ok: false, error: "WhatsApp socket not connected" };
+    const normalizedPhone = normalizePhone(phone);
+    if (!isValidWhatsAppPhone(normalizedPhone)) {
+      console.error(`WhatsApp [${this.authCollection}] invalid phone for media: "${phone}" → "${normalizedPhone}"`);
+      return { ok: false, error: `Invalid phone number: ${phone}` };
+    }
+    const jid = toJID(normalizedPhone);
+    console.log(`WhatsApp [${this.authCollection}] sending media to ${normalizedPhone} (jid: ${jid})`);
     let lastError = "";
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const jid = toJID(phone);
         const buffer = Buffer.from(base64, "base64");
         const isImage = mimetype.startsWith("image/");
         const msg = isImage
@@ -462,11 +484,11 @@ class WhatsAppService {
         const errMsg = err?.message || err?.toString() || "Unknown media send error";
         lastError = errMsg;
         if (attempt < retries) {
-          console.log(`WhatsApp [${this.authCollection}] sendMedia retry ${attempt + 1}/${retries} to ***${phone.slice(-4)}:`, errMsg);
+          console.log(`WhatsApp [${this.authCollection}] sendMedia retry ${attempt + 1}/${retries} to ${normalizedPhone}:`, errMsg);
           await new Promise((r) => setTimeout(r, 2000));
           continue;
         }
-        console.error(`WhatsApp [${this.authCollection}] sendMedia failed after ${retries + 1} attempts to ***${phone.slice(-4)}:`, errMsg);
+        console.error(`WhatsApp [${this.authCollection}] sendMedia failed after ${retries + 1} attempts to ${normalizedPhone}:`, errMsg);
       }
     }
     await this.handleSendFailure(lastError);
@@ -490,7 +512,8 @@ class WhatsAppService {
     }
     if (throwOnError) {
       try {
-        const jid = toJID(phone);
+        const normalizedPhone = normalizePhone(phone);
+        const jid = toJID(normalizedPhone);
         const buffer = Buffer.from(base64, "base64");
         const isImage = mimetype.startsWith("image/");
         const msg = isImage
@@ -576,12 +599,13 @@ class WhatsAppService {
   }
 
   async getStatus() {
-    if (this._error) return { status: "error", error: this._error, queueLength: this.messageQueue.length };
-    if (this._ready) return { status: "connected", queueLength: this.messageQueue.length };
-    if (this._pairingCode) return { status: "pairing", pairingCode: this._pairingCode };
-    if (this._qr) return { status: "qr", qr: this._qrBase64, queueLength: this.messageQueue.length };
-    if (this.initializing) return { status: "initializing", queueLength: this.messageQueue.length };
-    return { status: "disconnected", queueLength: this.messageQueue.length };
+    const connectedPhone = this.getConnectedPhone();
+    if (this._error) return { status: "error", error: this._error, queueLength: this.messageQueue.length, connectedPhone };
+    if (this._ready) return { status: "connected", queueLength: this.messageQueue.length, connectedPhone };
+    if (this._pairingCode) return { status: "pairing", pairingCode: this._pairingCode, connectedPhone };
+    if (this._qr) return { status: "qr", qr: this._qrBase64, queueLength: this.messageQueue.length, connectedPhone };
+    if (this.initializing) return { status: "initializing", queueLength: this.messageQueue.length, connectedPhone };
+    return { status: "disconnected", queueLength: this.messageQueue.length, connectedPhone };
   }
 
   private scheduleReconnect() {
