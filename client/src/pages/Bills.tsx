@@ -10,6 +10,7 @@ import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../uti
 import DateRangePicker from "../components/DateRangePicker";
 import { todayStr } from "../utils/date";
 import { billService, settingsService, whatsappService } from "../services";
+import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import type { Bill, ShopSettings } from "../types";
 
 type ResolvedCustomer = { name?: string; mobile?: string; address?: string } | null;
@@ -292,10 +293,10 @@ export default function Bills() {
 
   async function sendWhatsApp(bill: Bill) {
     const customer = resolveCustomer(bill);
-    const num = customer?.mobile?.toString().replace(/\D/g, "").replace(/^0+/, "");
-    if (!num) { toast.error("Customer has no mobile number"); return; }
+    const num = customer?.mobile?.toString();
+    const fullNum = normalizeWhatsAppPhone(num || "");
+    if (!fullNum) { toast.error("Customer has no mobile number"); return; }
     toast.info("Sending WhatsApp...");
-    const fullNum = num.length === 10 ? `91${num}` : num;
     const shop = settings?.shopName || "KMJ Optical";
 
     try {
@@ -332,7 +333,7 @@ export default function Bills() {
     const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg }) as any;
     if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
-    else toast.error("WhatsApp send failed — connect in Settings");
+    else toast.error(textRes.message || "WhatsApp send failed — check Settings > WhatsApp");
   }
 
   if (loading) return <PageSkeleton page="bills" />;
