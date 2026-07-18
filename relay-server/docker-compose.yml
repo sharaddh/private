@@ -1,0 +1,21 @@
+# Camera Relay Server
+# Runs dh-p2p (P2P client) + MediaMTX (RTSP→HLS converter)
+# Exposes HLS streams for the ERP frontend
+
+services:
+  # MediaMTX - converts RTSP to HLS for browser playback
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    restart: unless-stopped
+    ports:
+      - "8888:8888"   # HLS
+      - "8554:8554"   # RTSP
+      - "1935:1935"   # RTMP
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+    networks:
+      - camera-net
+
+networks:
+  camera-net:
+    driver: bridge

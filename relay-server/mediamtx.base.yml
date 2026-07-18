@@ -1,0 +1,17 @@
+# MediaMTX Base Configuration
+# DO NOT EDIT - managed by relay-manager.js
+
+api: yes
+apiAddress: 0.0.0.0:9997
+
+rtsp: yes
+protocols: [udp, multicast, tcp]
+
+hls: yes
+hlsAddress: 0.0.0.0:8888
+hlsVariant: lowLatency
+hlsSegmentCount: 3
+hlsSegmentDuration: 500ms
+hlsSegmentSize: 500000
+
+paths: {}

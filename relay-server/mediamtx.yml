@@ -1,0 +1,18 @@
+api: yes
+apiAddress: 0.0.0.0:9997
+
+rtsp: yes
+rtspAddress: 0.0.0.0:8554
+protocols: [tcp]
+
+hls: yes
+hlsAddress: 0.0.0.0:8888
+hlsVariant: lowLatency
+hlsSegmentCount: 3
+hlsSegmentDuration: 500ms
+
+paths:
+  camera_dahua:
+    source: rtsp://127.0.0.1:18554/cam/realmonitor?channel=1&subtype=0
+    sourceProtocol: tcp
+    sourceOnDemand: yes
