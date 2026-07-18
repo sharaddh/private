@@ -11,6 +11,7 @@ import {
   ChevronRight, Clock, MapPinned, IdCard, Wallet, TrendingUp, Stethoscope,
 } from "lucide-react";
 import { formatEyeRx, hasEyeData, compactRx } from "../utils/rx";
+import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 
 function getVisitId(value: unknown): string | null {
   if (!value) return null;
@@ -250,9 +251,8 @@ export default function CustomerDetail() {
     const rxData = rx || linkedPrescription;
     if (!customer?.mobile) { toast.error(uiT("No mobile number", "कोई मोबाइल नंबर नहीं")); return; }
     if (!rxData) { toast.error(uiT("No prescription data", "कोई प्रिस्क्रिप्शन डेटा नहीं")); return; }
-    const num = customer.mobile.replace(/\D/g, "");
-    if (!num) { toast.error(uiT("Invalid mobile number", "अमान्य मोबाइल नंबर")); return; }
-    const fullNum = num.length === 10 ? `91${num}` : num;
+    const fullNum = normalizeWhatsAppPhone(customer.mobile || "");
+    if (!fullNum) { toast.error(uiT("Invalid mobile number", "अमान्य मोबाइल नंबर")); return; }
     const shop = settings?.shopName || "KMJ Optical";
     setSendingRx(true);
     try {
@@ -400,9 +400,8 @@ export default function CustomerDetail() {
   }
 
   async function sendWhatsApp(phone: string, bill: any) {
-    const num = phone.replace(/\D/g, "");
-    if (!num) { toast.error(uiT("No mobile number", "कोई मोबाइल नंबर नहीं")); return; }
-    const fullNum = num.length === 10 ? `91${num}` : num;
+    const fullNum = normalizeWhatsAppPhone(phone || "");
+    if (!fullNum) { toast.error(uiT("No mobile number", "कोई मोबाइल नंबर नहीं")); return; }
     const shop = settings?.shopName || "KMJ Optical";
     const custData = { name: customer?.name, mobile: customer?.mobile, address: customer?.address, customerId: customer?.customerId };
     setSendingBill(true);
