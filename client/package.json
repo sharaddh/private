@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "framer-motion": "^12.42.2",
+    "hls.js": "^1.6.16",
     "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
