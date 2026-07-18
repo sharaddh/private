@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "../api";
@@ -8,6 +8,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import { cleanEyeSet } from "../utils/rx";
+import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import {
   ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
   Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
@@ -391,8 +392,8 @@ export default function CustomerNewVisit() {
       const customerMobile = cust?.mobile || "";
       const shopName = settings?.shopName || "KMJ Optical";
       const customerName = cust?.name || "";
-      const num = customerMobile.replace(/\D/g, "");
-      const fullNum = num.length === 10 ? `91${num}` : num;
+      const fullNum = normalizeWhatsAppPhone(customerMobile);
+      if (!fullNum) return;
       const msg = t(
         `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
         `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
