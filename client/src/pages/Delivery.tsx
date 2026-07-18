@@ -3,6 +3,7 @@ import api from "../api";
 import { useCachedData } from "../hooks/useCachedData";
 import { invalidateCache } from "../hooks/useCache";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import { Eye, Clock, Package, Truck, Wallet, CheckCircle, ArrowUpRight, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DateRangePicker from "../components/DateRangePicker";
@@ -99,34 +100,34 @@ export default function Delivery() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-th-surface rounded-xl p-4 shadow-lg text-center hover-shine">
+          <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#f59e0b]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <Truck size={20} className="text-[#f59e0b]" />
             </div>
             <p className="text-2xl font-bold text-[#f59e0b]">{readyOrders.length}</p>
             <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Ready", "तैयार")}</p>
-          </div>
-          <div className="bg-th-surface rounded-xl p-4 shadow-lg text-center hover-shine">
+          </ShineCard>
+          <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <CheckCircle size={20} className="text-[#1ed760]" />
             </div>
             <p className="text-2xl font-bold text-[#1ed760]">{deliveredOrders.length}</p>
             <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Delivered", "डिलीवर")}</p>
-          </div>
-          <div className="bg-th-surface rounded-xl p-4 shadow-lg text-center hover-shine">
+          </ShineCard>
+          <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <Wallet size={20} className="text-[#1ed760]" />
             </div>
             <p className="text-2xl font-bold text-[#1ed760]">₹{totalRevenue.toLocaleString()}</p>
             <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Revenue", "राजस्व")}</p>
-          </div>
-          <div className="bg-th-surface rounded-xl p-4 shadow-lg text-center hover-shine">
+          </ShineCard>
+          <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#e74c3c]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <Wallet size={20} className="text-[#e74c3c]" />
             </div>
             <p className="text-2xl font-bold text-[#e74c3c]">{pendingPayments}</p>
             <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Pending", "बाकी")}</p>
-          </div>
+          </ShineCard>
         </div>
 
         {/* Tabs */}
@@ -162,7 +163,7 @@ export default function Delivery() {
             {activeList.map((o: any) => {
               const isOverdue = tab === "ready" && o.deliveryDate && new Date(o.deliveryDate) < new Date();
               return (
-                <div key={o._id} className="px-5 py-4 hover:bg-th-card transition-colors hover-shine">
+                <ShineCard key={o._id} className="px-5 py-4 hover:bg-th-card cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-th-elevated flex items-center justify-center text-th-secondary font-bold text-sm flex-shrink-0">
                       {custName(o).charAt(0)?.toUpperCase() || "?"}
@@ -223,7 +224,7 @@ export default function Delivery() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </ShineCard>
               );
             })}
           </div>

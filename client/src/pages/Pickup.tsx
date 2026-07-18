@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { settingsService, orderService, billService } from "../services";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import { useToast } from "../context/ToastContext";
 import { useTranslate } from "../context/TranslateContext";
 import { Search, Phone, Check, ChevronRight, Plus, Loader2, Package, Clock, X, User, FileText, CreditCard, Receipt, Glasses, Eye, FlaskConical, Circle } from "lucide-react";
@@ -304,10 +305,10 @@ export default function Pickup() {
               const cMobile = typeof o.customerId === "object" ? o.customerId?.mobile : "";
               const totalPrice = ((o as any).framePrice || 0) + ((o as any).lensPrice || 0) + ((o as any).coatingPrice || 0);
               return (
-                <div key={o._id} onClick={() => pickReadyOrder(o)}
+                <ShineCard onClick={() => pickReadyOrder(o)}
                   role="button"
                   aria-label={uiT("Select order for", "ऑर्डर चुनें") + " " + (cName || "")}
-                  className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card active:scale-95 transition-all shadow-lg hover-shine">
+                  className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-9 h-9 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}
@@ -354,7 +355,7 @@ export default function Pickup() {
                       <ChevronRight size={16} className="text-th-muted" aria-hidden="true" />
                     </div>
                   </div>
-                </div>
+                </ShineCard>
               );
             })}
           </div>
@@ -383,10 +384,10 @@ export default function Pickup() {
         <div className="space-y-2">
           <p className="text-xs font-medium text-th-secondary uppercase tracking-wider">{customers.length} {uiT("customer(s) found", "ग्राहक मिले")}</p>
           {customers.map((c) => (
-            <div key={c._id} onClick={() => selectCustomer(c)}
+            <ShineCard key={c._id} onClick={() => selectCustomer(c)}
               role="button"
               aria-label={uiT("Select customer", "ग्राहक चुनें") + " " + (c.name || "")}
-              className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card transition-all shadow-lg hover-shine">
+              className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
@@ -399,7 +400,7 @@ export default function Pickup() {
                 </div>
                 <ChevronRight size={18} className="text-th-muted" aria-hidden="true" />
               </div>
-            </div>
+            </ShineCard>
           ))}
         </div>
       )}

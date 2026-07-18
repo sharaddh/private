@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import { useTranslate } from "../context/TranslateContext";
 import { useToast } from "../context/ToastContext";
 import {
@@ -750,9 +751,9 @@ export default function CustomerDetail() {
                   const rxBrief = linkedRx ? compactRx(linkedRx.rightEye?.dv, linkedRx.rightEye?.nv) : null;
                   const lxBrief = linkedRx ? compactRx(linkedRx.leftEye?.dv, linkedRx.leftEye?.nv) : null;
                   return (
-                  <div key={v._id} id={`visit-${v._id}`}
+                  <ShineCard key={v._id} id={`visit-${v._id}`}
                     onClick={() => openVisitDetail(v)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer group hover-shine">
+                    className="flex items-center justify-between p-3 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] cursor-pointer group">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 bg-th-hover rounded-full flex items-center justify-center text-th-secondary shrink-0">
                         <Calendar size={14} />
@@ -797,7 +798,7 @@ export default function CustomerDetail() {
                       </div>
                     </div>
                     <ChevronRight size={14} className="text-[#535353] group-hover:text-th-secondary transition-colors shrink-0" />
-                  </div>
+                  </ShineCard>
                   );
                 })}
               </div>
@@ -901,7 +902,7 @@ export default function CustomerDetail() {
                   const hasTax = (b.tax || 0) > 0;
                   const linkedVisit = visits.find((v: any) => getVisitId(v._id) === getVisitId(b.visitId));
                   return (
-                    <div key={b._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer hover-shine"
+                    <ShineCard key={b._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] cursor-pointer"
                       onClick={() => { if (linkedVisit) { setTab("visits"); openVisitDetail(linkedVisit); } }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -941,7 +942,7 @@ export default function CustomerDetail() {
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </ShineCard>
                   );
                 })}
               </div>
@@ -981,7 +982,7 @@ export default function CustomerDetail() {
                 {orders.map((o: any) => {
                   const linkedVisit = visits.find((v: any) => getVisitId(v._id) === getVisitId(o.visitId));
                   return (
-                    <div key={o._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer hover-shine"
+                    <ShineCard key={o._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] cursor-pointer"
                       onClick={() => { if (linkedVisit) { setTab("visits"); openVisitDetail(linkedVisit); } }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -1037,7 +1038,7 @@ export default function CustomerDetail() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </ShineCard>
                   );
                 })}
               </div>

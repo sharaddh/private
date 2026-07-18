@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApi, useDashboard } from "../hooks";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import CameraScanner from "../components/CameraScanner";
 import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
@@ -58,7 +59,7 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 transition-all duration-200 h-full active:scale-95 shadow-md hover-shine hover-glow cursor-default">
+    <ShineCard className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 h-full active:scale-95 shadow-md cursor-default">
       <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
         <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
           <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
@@ -75,19 +76,19 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
         <div className="text-[13px] font-medium text-th-secondary break-words">{label}</div>
         {subtitle && <div className="text-[12px] text-th-muted mt-0.5 break-words">{subtitle}</div>}
       </div>
-    </div>
+    </ShineCard>
   );
 }
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <button onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg hover-shine">
+    <ShineCard onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
       <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
         <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
       </div>
       <span className="text-[11px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
       <span className="text-[10px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
-    </button>
+    </ShineCard>
   );
 }
 
@@ -182,7 +183,7 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
     blue: "text-[#3498db]",
   };
   return (
-    <div className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg hover-shine ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
+    <ShineCard className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
       <div className="flex items-center gap-3">
         <Icon className={`w-5 h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
@@ -195,7 +196,7 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
           </button>
         )}
       </div>
-    </div>
+    </ShineCard>
   );
 }
 

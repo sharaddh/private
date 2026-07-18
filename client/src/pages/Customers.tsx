@@ -4,6 +4,7 @@ import api from "../api";
 import { invalidateCache } from "../hooks/useCache";
 import Modal from "../components/Modal";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useTranslate } from "../context/TranslateContext";
@@ -170,8 +171,8 @@ export default function Customers(): React.JSX.Element {
           <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-3">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredList.map((c: Customer) => (
-              <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] transition-all duration-150 overflow-hidden border border-th-border hover:border-[#1ed760]/30 hover-shine"
+              <ShineCard key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
+                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] overflow-hidden border border-th-border hover:border-[#1ed760]/30"
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
@@ -254,7 +255,7 @@ export default function Customers(): React.JSX.Element {
                     <span className="text-[10px] text-[#1ed760] font-medium">{uiT("Clear", "चुकता")}</span>
                   ) : null}
                 </div>
-              </div>
+              </ShineCard>
             ))}
           </div>
         </div>

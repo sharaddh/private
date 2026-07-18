@@ -126,7 +126,7 @@ export default function Table({
                 <tr
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-th-card transition-colors hover-shine ${
+                  className={`hover:bg-th-card transition-colors ${
                     onRowClick ? "cursor-pointer" : ""
                   }`}
                 >

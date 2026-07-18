@@ -3,6 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
+import ShineCard from "../components/ShineCard";
 import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
 import { orderService } from "../services";
@@ -193,14 +194,16 @@ export default function Orders() {
           { key: "In Lab", label: uiT("In Lab", "लैब में"), value: stats.inLab, color: "text-[#ff6b8a]" },
           { key: "Ready", label: uiT("Ready", "तैयार"), value: stats.ready, color: "text-[#82b6ff]" },
         ].map((s) => (
-          <button key={s.key} type="button" onClick={() => setFilter(s.key)}
+          <ShineCard key={s.key} onClick={() => setFilter(s.key)}
+            role="button"
+            tabIndex={0}
             aria-label={`Filter by ${s.label}: ${s.value}`}
-            className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer transition-all duration-150 hover:bg-th-hover hover-shine ${
+            className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer ${
               filter === s.key ? "ring-2 ring-[#1ed760]/50" : ""
             }`}>
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-sm font-medium text-th-secondary mt-1">{s.label}</p>
-          </button>
+          </ShineCard>
         ))}
       </div>
 
@@ -251,8 +254,8 @@ export default function Orders() {
             const theme = STATUS_THEME[o.status] || STATUS_THEME.Draft;
             const pending = o.billInfo?.pendingAmount || 0;
             return (
-              <div key={o._id}
-                className="group bg-th-surface rounded-lg overflow-hidden transition-all duration-150 hover:bg-th-hover shadow-lg hover-shine">
+              <ShineCard key={o._id}
+                className="group bg-th-surface rounded-lg overflow-hidden hover:bg-th-hover shadow-lg">
                 {/* Top section */}
                 <div className="p-5 pb-3">
                   <div className="flex items-center justify-between mb-3">
@@ -358,7 +361,7 @@ export default function Orders() {
                     )}
                   </div>
                 </div>
-              </div>
+              </ShineCard>
             );
           })}
         </div>

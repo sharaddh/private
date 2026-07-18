@@ -149,8 +149,69 @@ body {
 
 @layer components {
 
-  /* ===== Windows 10 Hover Shine ===== */
+  /* ===== Windows 10 Cursor-Following Shine ===== */
 
+  .shine-card {
+    --sx: -200px;
+    --sy: -200px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+  }
+
+  /* Radial glow that follows cursor */
+  .shine-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      350px circle at var(--sx) var(--sy),
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.03) 30%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .shine-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Bright edge highlight that follows cursor */
+  .shine-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      250px circle at var(--sx) var(--sy),
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 35%,
+      transparent 65%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .shine-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Subtle background lift on hover */
+  .shine-card:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  /* Legacy hover-shine (static sweep for simple elements) */
   .hover-shine {
     position: relative;
     overflow: hidden;
