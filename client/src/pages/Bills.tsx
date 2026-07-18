@@ -329,7 +329,7 @@ export default function Bills() {
     const pendingLabel = t("Pending", "बाकी");
     const thankYou = t("Thank you!", "धन्यवाद!");
     const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ""}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
-    const textRes = await whatsappService.sendMessage({ to: fullNum, message: msg }) as any;
+    const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg }) as any;
     if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
     else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
     else toast.error("WhatsApp send failed — connect in Settings");
