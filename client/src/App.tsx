@@ -18,6 +18,7 @@ const Announcement = lazy(() => import("./pages/Announcement"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const WhatsAppPage = lazy(() => import("./pages/WhatsApp"));
+const Cameras = lazy(() => import("./pages/Cameras"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const NewVisit = lazy(() => import("./pages/NewVisit"));
 const CustomerNewVisit = lazy(() => import("./pages/CustomerNewVisit"));
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/reports" element={<RoleGuard path="/reports"><SuspendedPage page="reports"><Reports /></SuspendedPage></RoleGuard>} />
           <Route path="/settings" element={<SuspendedPage page="settings"><Settings /></SuspendedPage>} />
           <Route path="/whatsapp" element={<SuspendedPage page="settings"><WhatsAppPage /></SuspendedPage>} />
+          <Route path="/cameras" element={<SuspendedPage page="cameras"><Cameras /></SuspendedPage>} />
           <Route path="/login" element={<SuspendedPage page="login"><Login /></SuspendedPage>} />
           <Route path="/staff-login" element={<SuspendedPage page="login"><StaffLogin /></SuspendedPage>} />
           <Route path="/register" element={<SuspendedPage page="register"><Register /></SuspendedPage>} />
