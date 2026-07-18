@@ -307,7 +307,7 @@ export default function Pickup() {
                 <div key={o._id} onClick={() => pickReadyOrder(o)}
                   role="button"
                   aria-label={uiT("Select order for", "ऑर्डर चुनें") + " " + (cName || "")}
-                  className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card active:scale-95 transition-all shadow-lg">
+                  className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card active:scale-95 transition-all shadow-lg hover-shine">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-9 h-9 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">
                       {(cName?.charAt(0) || "?").toUpperCase()}
@@ -386,7 +386,7 @@ export default function Pickup() {
             <div key={c._id} onClick={() => selectCustomer(c)}
               role="button"
               aria-label={uiT("Select customer", "ग्राहक चुनें") + " " + (c.name || "")}
-              className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card transition-all shadow-lg">
+              className="bg-th-surface rounded-lg p-4 cursor-pointer hover:bg-th-card transition-all shadow-lg hover-shine">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center text-[#1ed760] font-bold text-sm">

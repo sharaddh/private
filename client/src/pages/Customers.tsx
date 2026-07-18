@@ -171,7 +171,7 @@ export default function Customers(): React.JSX.Element {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredList.map((c: Customer) => (
               <div key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
-                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] transition-all duration-150 overflow-hidden border border-th-border hover:border-[#1ed760]/30"
+                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] transition-all duration-150 overflow-hidden border border-th-border hover:border-[#1ed760]/30 hover-shine"
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">

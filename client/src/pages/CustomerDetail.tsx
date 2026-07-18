@@ -752,7 +752,7 @@ export default function CustomerDetail() {
                   return (
                   <div key={v._id} id={`visit-${v._id}`}
                     onClick={() => openVisitDetail(v)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer group">
+                    className="flex items-center justify-between p-3 rounded-lg bg-th-elevated hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer group hover-shine">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 bg-th-hover rounded-full flex items-center justify-center text-th-secondary shrink-0">
                         <Calendar size={14} />
@@ -901,7 +901,7 @@ export default function CustomerDetail() {
                   const hasTax = (b.tax || 0) > 0;
                   const linkedVisit = visits.find((v: any) => getVisitId(v._id) === getVisitId(b.visitId));
                   return (
-                    <div key={b._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer"
+                    <div key={b._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer hover-shine"
                       onClick={() => { if (linkedVisit) { setTab("visits"); openVisitDetail(linkedVisit); } }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -981,7 +981,7 @@ export default function CustomerDetail() {
                 {orders.map((o: any) => {
                   const linkedVisit = visits.find((v: any) => getVisitId(v._id) === getVisitId(o.visitId));
                   return (
-                    <div key={o._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer"
+                    <div key={o._id} className="bg-th-elevated rounded-lg p-4 hover:bg-th-hover active:scale-[0.99] transition-all duration-150 cursor-pointer hover-shine"
                       onClick={() => { if (linkedVisit) { setTab("visits"); openVisitDetail(linkedVisit); } }}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">

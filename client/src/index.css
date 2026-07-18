@@ -149,6 +149,47 @@ body {
 
 @layer components {
 
+  /* ===== Windows 10 Hover Shine ===== */
+
+  .hover-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .hover-shine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.06) 45%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.06) 55%,
+      transparent 60%
+    );
+    transform: translateX(-100%);
+    transition: none;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hover-shine:hover::before {
+    animation: win10-shine 0.6s ease-out forwards;
+  }
+  @keyframes win10-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .hover-shine:hover {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 20px rgba(0,0,0,0.15);
+  }
+
+  .hover-glow {
+    transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 0 1px rgba(30,215,96,0.15), 0 4px 24px rgba(30,215,96,0.08), 0 8px 32px rgba(0,0,0,0.12);
+  }
+
   /* ===== Buttons ===== */
 
   .btn {

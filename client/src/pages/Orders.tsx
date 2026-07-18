@@ -195,7 +195,7 @@ export default function Orders() {
         ].map((s) => (
           <button key={s.key} type="button" onClick={() => setFilter(s.key)}
             aria-label={`Filter by ${s.label}: ${s.value}`}
-            className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer transition-all duration-150 hover:bg-th-hover ${
+            className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer transition-all duration-150 hover:bg-th-hover hover-shine ${
               filter === s.key ? "ring-2 ring-[#1ed760]/50" : ""
             }`}>
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
@@ -252,7 +252,7 @@ export default function Orders() {
             const pending = o.billInfo?.pendingAmount || 0;
             return (
               <div key={o._id}
-                className="group bg-th-surface rounded-lg overflow-hidden transition-all duration-150 hover:bg-th-hover shadow-lg">
+                className="group bg-th-surface rounded-lg overflow-hidden transition-all duration-150 hover:bg-th-hover shadow-lg hover-shine">
                 {/* Top section */}
                 <div className="p-5 pb-3">
                   <div className="flex items-center justify-between mb-3">

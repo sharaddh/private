@@ -58,7 +58,7 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 transition-all duration-200 h-full active:scale-95 shadow-md">
+    <div className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 transition-all duration-200 h-full active:scale-95 shadow-md hover-shine hover-glow cursor-default">
       <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
         <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
           <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
@@ -81,7 +81,7 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <button onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg">
+    <button onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 transition-all duration-200 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg hover-shine">
       <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
         <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
       </div>
@@ -182,7 +182,7 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
     blue: "text-[#3498db]",
   };
   return (
-    <div className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
+    <div className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg hover-shine ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
       <div className="flex items-center gap-3">
         <Icon className={`w-5 h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
         <div className="flex-1 min-w-0">

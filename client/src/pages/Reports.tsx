@@ -232,17 +232,17 @@ export default function Reports() {
       {activeTab === "customers" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-th-text">{(customerData?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Total Customers", "कुल ग्राहक")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">
                 {(customerData?.filter((c: Customer) => c.totalVisits === 1).length || 0).toLocaleString()}
               </p>
               <p className="text-sm text-th-secondary">{uiT("New Customers", "नए ग्राहक")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">
                 {(customerData?.filter((c: Customer) => (c.totalVisits || 0) > 1).length || 0).toLocaleString()}
               </p>
@@ -326,19 +326,19 @@ export default function Reports() {
       {activeTab === "sales" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-th-text">₹{(salesData?.totalRevenue || 0).toLocaleString()}</p>
               <p className="text-xs text-th-secondary">{uiT("Total", "कुल")} {uiT("Revenue", "राजस्व")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">₹{(salesData?.totalCollection || 0).toLocaleString()}</p>
               <p className="text-xs text-th-secondary">{uiT("Total Collection", "कुल संग्रह")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-amber-400">₹{((salesData?.totalRevenue || 0) - (salesData?.totalCollection || 0)).toLocaleString()}</p>
               <p className="text-xs text-th-secondary">{uiT("Outstanding", "बकाया")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">
                 {salesData && salesData.totalRevenue > 0 ? `${((salesData.totalCollection / salesData.totalRevenue) * 100).toFixed(1)}%` : "—"}
               </p>
@@ -368,7 +368,7 @@ export default function Reports() {
           </div>
 
           {salesData?.billCount === 0 && (
-            <div className="card text-center py-8">
+            <div className="card text-center hover-shine py-8">
               <ShoppingCart size={32} className="mx-auto mb-2 text-th-muted" />
               <p className="text-sm text-th-muted">{uiT("No data", "कोई डेटा नहीं")}</p>
             </div>
@@ -380,17 +380,17 @@ export default function Reports() {
       {activeTab === "pending" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-amber-400">{pendingData.length}</p>
               <p className="text-sm text-th-secondary">{uiT("Pending Bills", "बाकी बिल")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#e74c3c]">
                 ₹{pendingData.reduce((s: number, b: Bill) => s + (b.pendingAmount || 0), 0).toLocaleString()}
               </p>
               <p className="text-sm text-th-secondary">{uiT("Total Pending Amount", "कुल बाकी राशि")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">
                 ₹{pendingData.reduce((s: number, b: Bill) => {
                   const days = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -453,19 +453,19 @@ export default function Reports() {
       {activeTab === "inventory" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-th-text">{(invData?.totalItems || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Total Items", "कुल आइटम")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#e74c3c]">{(invData?.lowStock?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Low Stock (≤5)", "कम स्टॉक (<=5)")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">₹{(invData?.totalValue || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Stock Value", "स्टॉक मूल्य")}</p>
             </div>
-            <div className="card text-center">
+            <div className="card text-center hover-shine">
               <p className="text-3xl font-bold text-[#1ed760]">{(invData?.byCategory?.length || 0).toLocaleString()}</p>
               <p className="text-sm text-th-secondary">{uiT("Categories", "श्रेणियाँ")}</p>
             </div>
@@ -509,7 +509,7 @@ export default function Reports() {
           )}
 
           {(!invData?.lowStock || invData.lowStock.length === 0) && (
-            <div className="card text-center py-8">
+            <div className="card text-center hover-shine py-8">
               <Package size={32} className="mx-auto mb-2 text-th-muted" />
               <p className="text-sm text-th-muted">{uiT("No inventory data available.", "कोई इन्वेंट्री डेटा उपलब्ध नहीं।")}</p>
             </div>

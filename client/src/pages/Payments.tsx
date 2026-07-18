@@ -55,7 +55,7 @@ export default function Payments() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg hover-shine">
           <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center flex-shrink-0">
             <IndianRupee size={20} className="text-[#1ed760]" />
           </div>
@@ -64,7 +64,7 @@ export default function Payments() {
             <p className="text-xl font-bold text-th-text">₹{totalAmount.toLocaleString("en-IN")}</p>
           </div>
         </div>
-        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg hover-shine">
           <div className="w-10 h-10 rounded-sm bg-[#509bf5]/10 flex items-center justify-center flex-shrink-0">
             <Receipt size={20} className="text-[#509bf5]" />
           </div>
@@ -73,7 +73,7 @@ export default function Payments() {
             <p className="text-xl font-bold text-th-text">{list.length}</p>
           </div>
         </div>
-        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg">
+        <div className="bg-th-surface rounded-lg p-4 flex items-center gap-4 shadow-lg hover-shine">
           <div className="w-10 h-10 rounded-sm bg-[#af2896]/10 flex items-center justify-center flex-shrink-0">
             <TrendingUp size={20} className="text-[#af2896]" />
           </div>

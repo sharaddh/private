@@ -17,7 +17,7 @@ export default function SectionCard({ icon, title, subtitle, children, className
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className={`group/card bg-th-surface rounded-lg p-6 transition-all duration-300 shadow-lg hover:bg-th-hover ${className}`}
+      className={`group/card bg-th-surface rounded-lg p-6 transition-all duration-300 shadow-lg hover:bg-th-hover hover-shine ${className}`}
     >
       {(icon || title) && (
         <div className="flex items-center gap-3 mb-6">
