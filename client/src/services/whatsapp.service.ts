@@ -7,16 +7,8 @@ class WhatsAppService extends ApiService {
     super("/api/whatsapp");
   }
 
-  async sendMessage(data: { to: string; message: string; template?: string }): Promise<ApiResponse<void>> {
+  async sendMessage(data: { phone: string; message: string; template?: string }): Promise<ApiResponse<void>> {
     return api.post<void>(`${this.basePath}/send`, data);
-  }
-
-  async sendBill(data: { customerId: string; billId: string }): Promise<ApiResponse<void>> {
-    return api.post<void>(`${this.basePath}/send-bill`, data);
-  }
-
-  async sendReminder(data: { customerId: string; message: string }): Promise<ApiResponse<void>> {
-    return api.post<void>(`${this.basePath}/send-reminder`, data);
   }
 }
 
