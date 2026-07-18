@@ -150,6 +150,12 @@ async function start() {
       warehouse: `http://localhost:${PORT}/warehouse`,
     });
   });
+
+  if (NODE_ENV === "production") {
+    setInterval(() => {
+      fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
+    }, 10 * 60 * 1000);
+  }
 }
 
 async function gracefulShutdown(signal: string) {
