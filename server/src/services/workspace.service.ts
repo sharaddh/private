@@ -201,9 +201,13 @@ export function sendBillWhatsApp(
           logo: (settings as any)?.logo || "",
         }
       );
+
+      const randomDelay = 3000 + Math.random() * 5000;
+      await new Promise((r) => setTimeout(r, randomDelay));
+
       const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${(bill.totalAmount || 0).toFixed(2)}.`;
       const phone = normalizePhone(customer.mobile);
-      logger.info(`WhatsApp [workspace]: sending to ***${phone.slice(-4)} for bill ${bill.billNumber}`);
+      logger.info(`WhatsApp [workspace]: sending to ***${phone.slice(-4)} for bill ${bill.billNumber} (delayed ${Math.round(randomDelay)}ms)`);
       const sent = await wa.sendMedia(phone, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
       if (!sent.ok) logger.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed: ${sent.error}`);
       else logger.info(`WhatsApp [workspace]: ${bill.billNumber} sent successfully`);
