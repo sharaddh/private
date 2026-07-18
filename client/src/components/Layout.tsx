@@ -8,7 +8,7 @@ import { useTranslate } from "../context/TranslateContext";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
-  Menu, X, Search, Phone, PlusCircle,
+  Menu, X, Search, Phone, PlusCircle, Camera,
   Megaphone, UserPlus, Hand, ChevronLeft, Building2, Loader2,
 } from "lucide-react";
 
@@ -37,6 +37,7 @@ const allDesktopMenu = [
   { path: "/announcements", label: "Announcements", icon: Megaphone, staff: false },
   { path: "/reports", label: "Reports", icon: BarChart3, staff: false },
   { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle, staff: true },
+  { path: "/cameras", label: "Cameras", icon: Camera, staff: true },
   { path: "/settings", label: "Settings", icon: Settings, staff: true },
 ];
 
@@ -96,6 +97,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       "Announcements": uiT("Announcements", "घोषणाएँ"),
       "Reports": uiT("Reports", "रिपोर्ट"),
       "WhatsApp": uiT("WhatsApp", "WhatsApp"),
+      "Cameras": uiT("Cameras", "कैमरे"),
       "Settings": uiT("Settings", "सेटिंग्स"),
       "Home": uiT("Home", "होम"),
     };
