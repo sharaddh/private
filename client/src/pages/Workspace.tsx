@@ -484,7 +484,7 @@ export default function Workspace() {
         `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
         `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
       );
-      await whatsappService.sendMessage({ to: fullNum, message: msg });
+      await whatsappService.sendMessage({ phone: fullNum, message: msg });
     } catch { /* silent */ }
     navigate(`/customers/${cust?._id || ""}?visitId=${data?.visit?._id || ""}`);
   }
