@@ -21,6 +21,7 @@ import PrescriptionPanel from "../components/NewvistePage/PrescriptionPanel";
 import OrderItems from "../components/NewvistePage/OrderItems";
 import BillingPanel from "../components/NewvistePage/BillingPanel";
 import { formatRxBrief, cleanEyeSet } from "../utils/rx";
+import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
 import BottomNav from "../components/NewvistePage/BottomNav";
@@ -478,8 +479,8 @@ export default function Workspace() {
       const customerMobile = cust?.mobile || "";
       const shopName = settings?.shopName || "KMJ Optical";
       const customerName = cust?.name || "";
-      const num = customerMobile.replace(/\D/g, "");
-      const fullNum = num.length === 10 ? `91${num}` : num;
+      const fullNum = normalizeWhatsAppPhone(customerMobile);
+      if (!fullNum) return;
       const msg = t(
         `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
         `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
