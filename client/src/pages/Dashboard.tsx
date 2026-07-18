@@ -316,7 +316,7 @@ export default function Dashboard() {
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-[24px] font-bold text-th-text tracking-tight">
-            {greeting}, <span className="text-[#1ed760]">{currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
+            {greeting}, <span className="text-[#1ed760]">{"Mr "+currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
           </h1>
           <div className="flex items-center gap-2 mt-1.5 text-[14px] text-th-secondary">
             <Calendar className="w-3.5 h-3.5" />
