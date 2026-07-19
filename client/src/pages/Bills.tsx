@@ -306,9 +306,9 @@ export default function Bills() {
         `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
         `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
       );
-      const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" }) as any;
-      if (mediaRes.success && mediaRes.sent) { toast.success("Bill sent on WhatsApp"); return; }
-      if (mediaRes.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
+      const mediaRes = await whatsappService.sendMedia({ phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
+      if (mediaRes.success && mediaRes.data?.sent) { toast.success("Bill sent on WhatsApp"); return; }
+      if (mediaRes.data?.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
     } catch {
       // fallback to text
     }
@@ -330,9 +330,9 @@ export default function Bills() {
     const pendingLabel = t("Pending", "बाकी");
     const thankYou = t("Thank you!", "धन्यवाद!");
     const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ""}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
-    const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg }) as any;
-    if (textRes.queued) toast.info("WhatsApp not ready — will send when connected");
-    else if (textRes.success && textRes.sent) toast.success("Bill sent on WhatsApp");
+    const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg });
+    if (textRes.data?.queued) toast.info("WhatsApp not ready — will send when connected");
+    else if (textRes.success && textRes.data?.sent) toast.success("Bill sent on WhatsApp");
     else toast.error(textRes.message || "WhatsApp send failed — check Settings > WhatsApp");
   }
 
