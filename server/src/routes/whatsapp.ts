@@ -26,17 +26,28 @@ router.get("/queue", authenticate, asyncHandler(async (req: BranchRequest, res) 
   res.json({ success: true, data: { queueLength: wa.queueLength } });
 }));
 
+router.get("/delivery-log", authenticate, asyncHandler(async (req: BranchRequest, res) => {
+  const wa = whatsappManager.getInstance(req.branchId);
+  res.json({ success: true, data: wa.getDeliveryLog() });
+}));
+
+router.post("/check-number", authenticate, asyncHandler(async (req: BranchRequest, res) => {
+  const { phone } = req.body;
+  if (!phone) throw new AppError(400, "Phone number required");
+  const wa = whatsappManager.getInstance(req.branchId);
+  const result = await wa.checkNumberOnWhatsApp(phone);
+  res.json({ success: true, data: result || { exists: false, error: "WhatsApp not connected" } });
+}));
+
 router.post("/send", authenticate, validate(sendTextSchema, "body"), asyncHandler(async (req: BranchRequest, res) => {
   const { phone, message } = req.body;
   const wa = whatsappManager.getInstance(req.branchId);
   const result = await wa.sendMessage(phone, message);
   const status = await wa.getStatus();
-  res.json({
-    success: true,
-    sent: result.ok,
-    queued: !result.ok && status.status !== "connected",
-    message: result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects"),
-  });
+  const sent = result.ok;
+  const queued = !result.ok && status.status !== "connected";
+  const msg = result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects");
+  res.json({ success: true, data: { sent, queued }, message: msg });
 }));
 
 router.post("/send-media", authenticate, validate(sendMediaSchema, "body"), asyncHandler(async (req: BranchRequest, res) => {
@@ -45,12 +56,10 @@ router.post("/send-media", authenticate, validate(sendMediaSchema, "body"), asyn
   const wa = whatsappManager.getInstance(req.branchId);
   const result = await wa.sendMedia(phone, base64, filename, mime, caption);
   const status = await wa.getStatus();
-  res.json({
-    success: true,
-    sent: result.ok,
-    queued: !result.ok && status.status !== "connected",
-    message: result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects"),
-  });
+  const sent = result.ok;
+  const queued = !result.ok && status.status !== "connected";
+  const msg = result.ok ? "Sent" : result.error || (status.status === "connected" ? "Failed to send" : "Queued - will send when WhatsApp connects");
+  res.json({ success: true, data: { sent, queued }, message: msg });
 }));
 
 router.post("/disconnect", authenticate, asyncHandler(async (req: BranchRequest, res) => {
