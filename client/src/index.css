@@ -19,7 +19,7 @@ body {
 
 @layer base {
   :root {
-    --sidebar-width: 240px;
+    --sidebar-width: 288px;
     --nav-height: 64px;
     --spotify-green: #1ed760;
     /* Light theme (default) */
