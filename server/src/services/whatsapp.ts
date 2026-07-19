@@ -134,6 +134,8 @@ class WhatsAppService {
   private authCollection: string;
   private healthCheckTimer: ReturnType<typeof setInterval> | null = null;
   private _lastActivityAt = 0;
+  private _deliveryLog: Array<{ phone: string; status: string; timestamp: number; messageKey?: string }> = [];
+  private _deliveryLogMax = 50;
 
   constructor(branchKey: string) {
     this.authCollection = branchKey ? `baileys_auth_${branchKey}` : "baileys_auth";
@@ -227,13 +229,21 @@ class WhatsAppService {
 
     const isLoggedIn = !!state.creds.me?.id;
 
-    // Fetch latest Baileys version with fallback
+    // Fetch latest Baileys version with retry + fallback
     let waVersion = FALLBACK_WA_VERSION;
-    try {
-      const { version } = await fetchLatestBaileysVersion();
-      waVersion = version;
-    } catch {
-      console.log(`WhatsApp [${this.authCollection}]: using fallback WA version`, FALLBACK_WA_VERSION);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { version } = await fetchLatestBaileysVersion();
+        waVersion = version;
+        break;
+      } catch (err: any) {
+        if (attempt < 2) {
+          console.log(`WhatsApp [${this.authCollection}]: version fetch attempt ${attempt + 1} failed, retrying in 2s...`);
+          await new Promise((r) => setTimeout(r, 2000));
+        } else {
+          console.log(`WhatsApp [${this.authCollection}]: using fallback WA version`, FALLBACK_WA_VERSION);
+        }
+      }
     }
 
     return new Promise<void>((resolve, reject) => {
@@ -274,6 +284,20 @@ class WhatsAppService {
           } catch {
             this._qrBase64 = null;
           }
+          if (!qrTimer) {
+            qrTimer = setTimeout(() => {
+              if (!resolved) {
+                resolved = true;
+                console.log(`WhatsApp [${this.authCollection}]: QR timeout — no connection within ${QR_TIMEOUT_MS / 1000}s`);
+                try {
+                  sock.ev.removeAllListeners("connection.update");
+                  sock.ev.removeAllListeners("creds.update");
+                } catch {}
+                sock.end(new Error("QR timeout"));
+                reject(new Error("QR timeout after " + (QR_TIMEOUT_MS / 1000) + "s"));
+              }
+            }, QR_TIMEOUT_MS);
+          }
           console.log(`WhatsApp [${this.authCollection}]: QR code generated`);
         }
 
@@ -283,6 +307,7 @@ class WhatsAppService {
         }
 
         if (connection === "open") {
+          if (resolved) return;
           this._ready = true;
           this._qr = null;
           this._qrBase64 = null;
@@ -321,6 +346,11 @@ class WhatsAppService {
           if (statusCode === DisconnectReason.restartRequired) {
             this.cancelReconnect();
             if (qrTimer) clearTimeout(qrTimer);
+            if (this.saveCredsFn) {
+              try { await this.saveCredsFn(); } catch (e) {
+                console.error(`WhatsApp [${this.authCollection}]: failed to save creds before restart`, e);
+              }
+            }
             if (this.sock) {
               try {
                 this.sock.ev.removeAllListeners("connection.update");
@@ -375,16 +405,18 @@ class WhatsAppService {
         if (this.saveCredsFn) await this.saveCredsFn();
       });
 
-      qrTimer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          console.log(`WhatsApp [${this.authCollection}]: QR timeout — no connection within ${QR_TIMEOUT_MS / 1000}s`);
-          sock.ev.removeAllListeners("connection.update");
-          sock.ev.removeAllListeners("creds.update");
-          sock.end(new Error("QR timeout"));
-          reject(new Error("QR timeout after " + (QR_TIMEOUT_MS / 1000) + "s"));
+      sock.ev.on("messages.update", (updates: any[]) => {
+        for (const update of updates) {
+          const status = update.update?.status;
+          const key = update.key;
+          if (status && key?.remoteJid) {
+            const phone = key.remoteJid.replace(/@.*/, "");
+            const statusStr = status === 3 ? "delivered" : status === 4 ? "read" : status === 2 ? "pending" : `status:${status}`;
+            console.log(`WhatsApp [${this.authCollection}]: message ${phone} → ${statusStr}`);
+            this.trackDelivery(key, phone, statusStr);
+          }
         }
-      }, QR_TIMEOUT_MS);
+      });
     });
   }
 
@@ -444,7 +476,9 @@ class WhatsAppService {
     let lastError = "";
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        await this.sock.sendMessage(jid, { text: message });
+        const msgKey = await this.sock.sendMessage(jid, { text: message });
+        this.trackDelivery(msgKey, normalizedPhone, "sent");
+        console.log(`WhatsApp [${this.authCollection}] message sent to ${normalizedPhone}, key: ${msgKey?.key?.id || "unknown"}`);
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown send error";
@@ -478,7 +512,9 @@ class WhatsAppService {
         const msg = isImage
           ? { image: buffer, caption: caption || "" }
           : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
-        await this.sock.sendMessage(jid, msg);
+        const msgKey = await this.sock.sendMessage(jid, msg);
+        this.trackDelivery(msgKey, normalizedPhone, "sent");
+        console.log(`WhatsApp [${this.authCollection}] media sent to ${normalizedPhone}, key: ${msgKey?.key?.id || "unknown"}`);
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown media send error";
@@ -519,7 +555,8 @@ class WhatsAppService {
         const msg = isImage
           ? { image: buffer, caption: caption || "" }
           : { document: buffer, fileName: filename, mimetype, caption: caption || "" };
-        await this.sock.sendMessage(jid, msg);
+        const msgKey = await this.sock.sendMessage(jid, msg);
+        this.trackDelivery(msgKey, normalizedPhone, "sent");
         return { ok: true };
       } catch (err: any) {
         const errMsg = err?.message || err?.toString() || "Unknown media send error";
@@ -606,6 +643,31 @@ class WhatsAppService {
     if (this._qr) return { status: "qr", qr: this._qrBase64, queueLength: this.messageQueue.length, connectedPhone };
     if (this.initializing) return { status: "initializing", queueLength: this.messageQueue.length, connectedPhone };
     return { status: "disconnected", queueLength: this.messageQueue.length, connectedPhone };
+  }
+
+  async checkNumberOnWhatsApp(phone: string): Promise<{ exists: boolean; jid: string } | null> {
+    if (!this.sock || !this._ready) return null;
+    try {
+      const jid = toJID(normalizePhone(phone));
+      const results = await (this.sock as any).onWhatsApp(jid);
+      if (results && results.length > 0) {
+        return { exists: results[0].exists, jid: results[0].jid };
+      }
+    } catch (e: any) {
+      console.error(`WhatsApp [${this.authCollection}]: onWhatsApp check failed:`, e?.message || e);
+    }
+    return null;
+  }
+
+  getDeliveryLog() {
+    return this._deliveryLog.slice(-20);
+  }
+
+  private trackDelivery(messageKey: any, phone: string, status: string) {
+    this._deliveryLog.push({ phone, status, timestamp: Date.now(), messageKey: messageKey?.id || messageKey?.remoteJid });
+    if (this._deliveryLog.length > this._deliveryLogMax) {
+      this._deliveryLog = this._deliveryLog.slice(-this._deliveryLogMax);
+    }
   }
 
   private scheduleReconnect() {
