@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatEyeRx, hasEyeData, compactRx } from "../utils/rx";
 import { normalizeWhatsAppPhone } from "../utils/whatsapp";
+import { whatsappService } from "../services";
 
 function getVisitId(value: unknown): string | null {
   if (!value) return null;
@@ -263,9 +264,10 @@ export default function CustomerDetail() {
         `*${shop}*\n\nHi ${customer.name || ""},\nPlease find your prescription attached.\n\nThank you!`,
         `*${shop}*\n\nनमस्ते ${customer.name || ""},\nकृपया अपना प्रिस्क्रिप्शन संलग्न देखें।\n\nधन्यवाद!`
       );
-      const res = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Prescription-${customer.customerId || "rx"}.pdf`, caption, mimetype: "application/pdf" });
-      if (res.success) { toast.success(uiT("Prescription sent", "प्रिस्क्रिप्शन भेजा गया")); }
-      else { toast.error(uiT("Failed to send", "भेजने में विफल")); }
+      const res = await whatsappService.sendMedia({ phone: fullNum, base64, filename: `Prescription-${customer.customerId || "rx"}.pdf`, caption, mimetype: "application/pdf" });
+      if (res.success && res.data?.sent) { toast.success(uiT("Prescription sent", "प्रिस्क्रिप्शन भेजा गया")); }
+      else if (res.data?.queued) { toast.info(uiT("WhatsApp not ready — will send when connected", "WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा")); }
+      else { toast.error(res.message || uiT("Failed to send", "भेजने में विफल")); }
     } catch (e: any) { toast.error(e.message || uiT("Failed to send", "भेजने में विफल")); }
     finally { setSendingRx(false); }
   }
@@ -414,16 +416,18 @@ export default function CustomerDetail() {
           `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
           `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
         );
-        const mediaRes = await api.post("/api/whatsapp/send-media", { phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
-        if (mediaRes.success) { toast.success(uiT("Bill sent on WhatsApp", "बिल व्हाट्सऐप पर भेजा गया")); setSendingBill(false); return; }
+        const mediaRes = await whatsappService.sendMedia({ phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
+        if (mediaRes.success && mediaRes.data?.sent) { toast.success(uiT("Bill sent on WhatsApp", "बिल व्हाट्सऐप पर भेजा गया")); setSendingBill(false); return; }
+        if (mediaRes.data?.queued) { toast.info(uiT("WhatsApp not ready — will send when connected", "WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा")); setSendingBill(false); return; }
       }
       const items = (bill?.items || []).map((i: any) =>
         `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
       ).join("\n");
       const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ""}\n*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n*Customer:* ${customer?.name || ""}\n*Mobile:* ${customer?.mobile || ""}\n\n*Items:*\n${items}\n\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
-      const res = await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
-      if (res.success) { toast.success(uiT("Bill sent on WhatsApp", "बिल व्हाट्सऐप पर भेजा गया")); }
-      else { toast.error(uiT("Failed to send", "भेजने में विफल")); }
+      const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
+      if (res.success && res.data?.sent) { toast.success(uiT("Bill sent on WhatsApp", "बिल व्हाट्सऐप पर भेजा गया")); }
+      else if (res.data?.queued) { toast.info(uiT("WhatsApp not ready — will send when connected", "WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा")); }
+      else { toast.error(res.message || uiT("Failed to send", "भेजने में विफल")); }
     } catch (e: any) { toast.error(e.message || uiT("Failed to send", "भेजने में विफल")); }
     finally { setSendingBill(false); }
   }
