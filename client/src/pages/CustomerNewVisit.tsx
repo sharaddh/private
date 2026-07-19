@@ -9,6 +9,7 @@ import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import { cleanEyeSet } from "../utils/rx";
 import { normalizeWhatsAppPhone } from "../utils/whatsapp";
+import { whatsappService } from "../services";
 import {
   ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
   Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
@@ -398,8 +399,13 @@ export default function CustomerNewVisit() {
         `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
         `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
       );
-      await api.post("/api/whatsapp/send", { phone: fullNum, message: msg });
-    } catch { /* silent */ }
+      const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
+      if (!res.success || (res.data && !res.data.sent && !res.data.queued)) {
+        toast.info(uiT("Greeting message could not be sent: " + (res.message || "WhatsApp not connected"), "अभिवादन संदेश नहीं भेजा जा सका: " + (res.message || "WhatsApp कनेक्ट नहीं है")));
+      }
+    } catch (e: any) {
+      toast.info(uiT("Greeting message skipped", "अभिवादन संदेश छोड़ दिया गया"));
+    }
     navigate(`/customers/${id}?visitId=${data?.visit?._id || ""}`);
   }
 
