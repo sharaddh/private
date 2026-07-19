@@ -270,7 +270,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       )}
 
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} flex flex-col transition-all duration-200 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
+      <aside className={`${sidebarOpen ? "w-72" : "w-[72px]"} flex flex-col transition-all duration-200 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
         {/* Logo */}
         <div className="h-11 flex items-center justify-between px-4 border-b border-th-hover">
           <div className="flex items-center gap-2.5 min-w-0">
