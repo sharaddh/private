@@ -9,4 +9,9 @@ const router = Router();
 
 router.post("/transaction", authenticate, validate(transactionSchema, "body"), asyncHandler(workspaceController.transaction));
 
+router.get("/todos", authenticate, asyncHandler(workspaceController.listTodos));
+router.post("/todos", authenticate, asyncHandler(workspaceController.createTodo));
+router.patch("/todos/:id", authenticate, asyncHandler(workspaceController.toggleTodo));
+router.delete("/todos/:id", authenticate, asyncHandler(workspaceController.deleteTodo));
+
 export default router;
