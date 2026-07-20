@@ -10,31 +10,6 @@ import { logger } from "./utils/logger";
 
 let server: ReturnType<typeof app.listen> | null = null;
 
-process.on("uncaughtException", async (err) => {
-  const msg = err?.message || "";
-  if (msg.includes("Unsupported state") || msg.includes("unable to authenticate data")) {
-    logger.error("WhatsApp: auth decryption failed, clearing stale sessions");
-    try {
-      const { whatsappManager } = await import("./services/whatsapp");
-      await whatsappManager.clearAllStaleAuth();
-    } catch {}
-    setTimeout(async () => {
-      const { whatsappManager } = await import("./services/whatsapp");
-      const branches = await Branch.find({ isActive: true }).lean();
-      const branchKeys = branches.map((b) => (b as any)._id.toString());
-      if (branchKeys.length > 0) {
-        await whatsappManager.initAll(branchKeys).catch((err) => logger.error(`WhatsApp initAll after restart failed: ${err?.message || err}`));
-      } else {
-        const def = whatsappManager.getInstance();
-        await def.init().catch((err) => logger.error(`WhatsApp default init after restart failed: ${err?.message || err}`));
-      }
-    }, 2000);
-    return;
-  }
-  logger.error("Unhandled exception", { message: err.message, stack: err.stack });
-  process.exit(1);
-});
-
 async function start() {
   if (!MONGO_URI) {
     logger.error("MONGO_URI not set");
@@ -120,27 +95,6 @@ async function start() {
       await redis.connect();
     } catch {}
   }
-
-  async function initBranchWhatsApps() {
-    try {
-      const { whatsappManager } = await import("./services/whatsapp");
-      const branches = await Branch.find({ isActive: true }).lean();
-      const branchKeys = branches.map((b) => (b as any)._id.toString());
-      if (branchKeys.length > 0) {
-        logger.info(`WhatsApp: initializing for ${branchKeys.length} branch(es)...`);
-        await whatsappManager.initAll(branchKeys);
-      } else {
-        const def = whatsappManager.getInstance();
-        await def.init().catch(() => {});
-      }
-    } catch (e) {
-      logger.error("WhatsApp init failed", { error: (e as Error).message });
-    }
-  }
-
-  setTimeout(() => {
-    initBranchWhatsApps();
-  }, 1000);
 
   server = app.listen(PORT, () => {
     logger.info(`KMJ Optical ERP Server [${NODE_ENV}] started`, {
