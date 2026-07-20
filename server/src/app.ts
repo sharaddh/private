@@ -10,6 +10,9 @@ import routes from "./routes";
 import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestId } from "./middleware/requestId";
+import { verifyWebhook, handleWebhookVerification } from "./middleware/verifyWebhook";
+import { webhookHandler } from "./controllers/whatsapp.controller";
+import { asyncHandler } from "./middleware/asyncHandler";
 
 const app = express();
 
@@ -25,6 +28,13 @@ app.use(cors({
   credentials: true,
 }));
 app.use(compression({ level: 6, threshold: 1024 }));
+
+app.get("/api/whatsapp/webhook", (req, res) => handleWebhookVerification(req, res));
+app.post("/api/whatsapp/webhook", express.raw({ type: "application/json", limit: "1mb" }), (req, _res, next) => {
+  (req as any).rawBody = req.body;
+  next();
+}, verifyWebhook, asyncHandler(webhookHandler));
+
 app.use(express.json({ limit: "25mb" }));
 if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 app.use(audit);
