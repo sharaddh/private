@@ -1,82 +1,50 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import { whatsappService } from "../services";
 import PageSkeleton from "../components/PageSkeleton";
 import {
-  MessageCircle, RefreshCw, LogOut, Smartphone,
-  CheckCircle, XCircle, AlertTriangle, Info
+  MessageCircle, CheckCircle, XCircle, AlertTriangle
 } from "lucide-react";
 import { useTranslate } from "../context/TranslateContext";
 
-interface WhatsAppQRResponse {
-  qr?: string;
-  status?: "connected" | "error" | "disconnected" | "initializing" | "qr";
+interface WhatsAppStatusResponse {
+  status: "connected" | "error" | "disconnected";
+  error?: string;
   connectedPhone?: string;
 }
 
-type WhatsAppStatus = "checking" | "qr" | "connected" | "error" | "disconnected" | "initializing";
+type WhatsAppStatus = "checking" | "connected" | "error" | "disconnected";
 
 export default function WhatsApp() {
   const { uiT } = useTranslate();
   const [status, setStatus] = useState<WhatsAppStatus>("checking");
-  const [qr, setQr] = useState<string | null>(null);
   const [connectedPhone, setConnectedPhone] = useState<string>("");
-  const [disconnecting, setDisconnecting] = useState<boolean>(false);
-  const [reinitializing, setReinitializing] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
     async function poll() {
       while (!cancelled) {
         try {
-          const res = await api.get<WhatsAppQRResponse>("/api/whatsapp/status");
+          const res = await api.get<WhatsAppStatusResponse>("/api/whatsapp/status");
           if (cancelled) return;
           if (res.success) {
             setConnectedPhone(res.data?.connectedPhone || "");
+            setErrorMsg(res.data?.error || "");
             if (res.data?.status === "connected") {
-              setQr(null);
               setStatus("connected");
-            } else if (res.data?.status === "qr" && res.data?.qr) {
-              setQr(res.data.qr);
-              setStatus("qr");
             } else if (res.data?.status === "error") {
-              setQr(null);
               setStatus("error");
-            } else if (res.data?.status === "disconnected") {
-              setQr(null);
-              setStatus("disconnected");
             } else {
-              setQr(null);
-              setStatus("initializing");
+              setStatus("disconnected");
             }
           }
         } catch {}
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, 5000));
       }
     }
     poll();
     return () => { cancelled = true; };
   }, []);
-
-  async function handleDisconnect() {
-    setDisconnecting(true);
-    try {
-      await api.post("/api/whatsapp/disconnect", {});
-      setStatus("disconnected");
-      setQr(null);
-    } catch {}
-    setDisconnecting(false);
-  }
-
-  async function handleReinit() {
-    setReinitializing(true);
-    try {
-      await api.post("/api/whatsapp/init", {});
-      setStatus("initializing");
-      setQr(null);
-    } catch {}
-    setReinitializing(false);
-  }
 
   if (status === "checking") return <PageSkeleton page="settings" />;
 
@@ -85,7 +53,7 @@ export default function WhatsApp() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">{uiT("WhatsApp Connection", "WhatsApp कनेक्शन")}</h1>
-          <p className="page-subtitle">Connect WhatsApp to send bills and announcements</p>
+          <p className="page-subtitle">Meta WhatsApp Cloud API — send bills and announcements</p>
         </div>
       </div>
 
@@ -96,13 +64,12 @@ export default function WhatsApp() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-th-text mb-1">{uiT("Connect WhatsApp", "WhatsApp कनेक्ट करें")}</h2>
+            <h2 className="text-lg font-semibold text-th-text mb-1">{uiT("WhatsApp Cloud API", "WhatsApp क्लाउड API")}</h2>
             <p className="body-sm text-th-secondary">
-              Link your WhatsApp account to send automated messages
+              Send automated messages via Meta WhatsApp Business API
             </p>
           </div>
 
-          {/* Status Display */}
           {status === "connected" && (
             <div className="bg-[#1ed760]/10 rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-center gap-2 text-[#1ed760]">
@@ -110,90 +77,23 @@ export default function WhatsApp() {
                 <span className="text-base font-semibold">{uiT("Connected", "जुड़ा हुआ")}</span>
               </div>
               {connectedPhone && (
-                <p className="text-sm text-th-text font-mono">📱 {connectedPhone}</p>
+                <p className="text-sm text-th-text font-mono">Phone ID: {connectedPhone}</p>
               )}
               <p className="body-sm text-th-secondary">
-                Your WhatsApp is active. Bills and announcements will be sent automatically.
+                WhatsApp Cloud API is active. Bills and announcements will be sent automatically.
               </p>
-              <button
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                aria-label={uiT("Disconnect WhatsApp", "WhatsApp डिस्कनेक्ट करें")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
-              >
-                <LogOut size={16} aria-hidden="true" />
-                {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Disconnect", "डिस्कनेक्ट करें")}
-              </button>
-            </div>
-          )}
-
-          {status === "qr" && qr && (
-            <div className="space-y-4">
-              <div className="bg-th-elevated rounded-lg p-4">
-                <div className="flex items-center justify-center gap-2 text-amber-400 mb-2">
-                  <Smartphone size={20} aria-hidden="true" />
-                  <span className="body-sm font-semibold">{uiT("Scan the QR code", "QR कोड स्कैन करें")}</span>
-                </div>
-                <p className="text-xs text-th-secondary">
-                  Open WhatsApp on your phone → Menu → Linked Devices → Link a Device
-                </p>
-              </div>
-              <img src={qr} alt="WhatsApp QR Code" className="mx-auto w-64 h-64" aria-label={uiT("WhatsApp QR Code for linking", "WhatsApp लिंक करने के लिए QR कोड")} />
-              <div className="flex items-center justify-center gap-2 text-xs text-th-muted">
-                <RefreshCw size={12} className="animate-spin" aria-hidden="true" />
-                Waiting for scan...
-              </div>
-              <button
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                aria-label={uiT("Cancel QR scan and disconnect", "QR स्कैन रद्द करें और डिस्कनेक्ट करें")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
-              >
-                <LogOut size={16} aria-hidden="true" />
-                {disconnecting ? uiT("Disconnect", "डिस्कनेक्ट करें") + "..." : uiT("Cancel", "रद्द करें")}
-              </button>
-            </div>
-          )}
-
-          {status === "initializing" && (
-            <div className="bg-th-elevated rounded-lg p-6 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-th-secondary">
-                <RefreshCw size={20} className="animate-spin" aria-hidden="true" />
-                <span className="body-sm font-medium">Initializing...</span>
-              </div>
-              <p className="text-xs text-th-muted">
-                Starting WhatsApp Web client. This may take up to 30 seconds.
-              </p>
-              <button
-                onClick={handleReinit}
-                disabled={reinitializing}
-                aria-label={uiT("Reinitialize WhatsApp connection", "WhatsApp कनेक्शन पुनः आरंभ करें")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
-              >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
-                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
-              </button>
             </div>
           )}
 
           {status === "disconnected" && (
             <div className="bg-th-elevated rounded-lg p-6 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-th-secondary">
-                <Info size={20} aria-hidden="true" />
-                <span className="body-sm font-medium">{uiT("Disconnected", "डिस्कनेक्ट")}</span>
+              <div className="flex items-center justify-center gap-2 text-amber-400">
+                <AlertTriangle size={20} aria-hidden="true" />
+                <span className="body-sm font-medium">{uiT("Not Configured", "कॉन्फ़िगर नहीं")}</span>
               </div>
               <p className="text-xs text-th-muted">
-                Session has been reset. A new QR code will appear shortly.
+                Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in your environment to enable WhatsApp.
               </p>
-              <button
-                onClick={handleReinit}
-                disabled={reinitializing}
-                aria-label={uiT("Reinitialize WhatsApp connection", "WhatsApp कनेक्शन पुनः आरंभ करें")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
-              >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
-                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
-              </button>
             </div>
           )}
 
@@ -201,21 +101,11 @@ export default function WhatsApp() {
             <div className="bg-[#e74c3c]/10 rounded-lg p-6 space-y-3">
               <div className="flex items-center justify-center gap-2 text-[#e74c3c]">
                 <XCircle size={20} aria-hidden="true" />
-                <span className="body-sm font-medium">Connection Error</span>
+                <span className="body-sm font-medium">Configuration Error</span>
               </div>
               <p className="text-xs text-th-secondary">
-                WhatsApp failed to start. The server will keep retrying automatically.
-                If the issue persists, try clicking "Retry Connection" below.
+                {errorMsg || "WhatsApp Cloud API is not properly configured. Check your environment variables."}
               </p>
-              <button
-                onClick={handleReinit}
-                disabled={reinitializing}
-                aria-label={uiT("Retry WhatsApp connection", "WhatsApp कनेक्शन पुनः प्रयास करें")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] hover:bg-[#1db954] text-black body-sm font-medium rounded-lg transition-colors disabled:opacity-50 mx-auto active:scale-95"
-              >
-                <RefreshCw size={16} className={reinitializing ? "animate-spin" : ""} aria-hidden="true" />
-                {reinitializing ? uiT("Reinitialize", "पुनः आरंभ करें") + "..." : uiT("Reinitialize", "पुनः आरंभ करें")}
-              </button>
             </div>
           )}
         </div>
