@@ -3,12 +3,10 @@ import { ApiService } from "./base";
 import type { ApiResponse } from "../types";
 
 export interface WhatsAppStatus {
-  status: "connected" | "qr" | "pairing" | "initializing" | "disconnected" | "error";
+  status: "connected" | "error" | "disconnected";
   error?: string;
-  qr?: string | null;
-  pairingCode?: string;
-  queueLength?: number;
   connectedPhone?: string | null;
+  queueLength?: number;
 }
 
 export interface WhatsAppSendResult {
@@ -16,6 +14,7 @@ export interface WhatsAppSendResult {
   sent?: boolean;
   queued?: boolean;
   message?: string;
+  messageId?: string;
 }
 
 export interface WhatsAppBroadcastResult {
@@ -39,26 +38,6 @@ class WhatsAppService extends ApiService {
 
   async getStatus(): Promise<ApiResponse<WhatsAppStatus>> {
     return api.get<WhatsAppStatus>(`${this.basePath}/status`);
-  }
-
-  async getQR(): Promise<ApiResponse<{ qr: string | null; status: string }>> {
-    return api.get<{ qr: string | null; status: string }>(`${this.basePath}/qr`);
-  }
-
-  async getQueue(): Promise<ApiResponse<{ queueLength: number }>> {
-    return api.get<{ queueLength: number }>(`${this.basePath}/queue`);
-  }
-
-  async disconnect(): Promise<ApiResponse<null>> {
-    return api.post<null>(`${this.basePath}/disconnect`, {});
-  }
-
-  async init(): Promise<ApiResponse<null>> {
-    return api.post<null>(`${this.basePath}/init`, {});
-  }
-
-  async pair(data: { phone: string }): Promise<ApiResponse<{ pairingCode: string }>> {
-    return api.post<{ pairingCode: string }>(`${this.basePath}/pair`, data);
   }
 
   async broadcast(data: { numbers: string[]; message?: string; antiban?: { delayMin?: number; delayMax?: number; batchSize?: number; pause?: number }; media?: { base64: string; filename: string; mimetype: string } }): Promise<ApiResponse<WhatsAppBroadcastResult>> {
