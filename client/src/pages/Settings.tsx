@@ -11,7 +11,7 @@ import {
   Save, User, Shield, Upload, MessageCircle, RefreshCw, LogOut,
   Sun, Moon, Trash2, X, Building2, Globe, Store, Phone, Mail, MapPin,
   Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
-  WifiOff, ArrowRight, Eye, EyeOff, Crown, Languages,
+  ArrowRight, Eye, EyeOff, Crown, Languages,
 } from "lucide-react";
 import type { User as AppUser, BranchInfo, ShopSettings } from "../types";
 import SettingsHeader from "./settings/SettingsHeader";
@@ -67,8 +67,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [waStatus, setWaStatus] = useState<string>("checking");
-  const [waQr, setWaQr] = useState<string | null>(null);
-  const [waDisconnecting, setWaDisconnecting] = useState(false);
+
   const [users, setUsers] = useState<(AppUser & { id?: string })[]>([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
@@ -171,25 +170,19 @@ export default function Settings() {
     async function poll() {
       while (!cancelled) {
         try {
-          const res = await api.get<{ qr?: string; status?: string }>("/api/whatsapp/qr");
+          const res = await api.get<{ status?: string; error?: string; connectedPhone?: string }>("/api/whatsapp/status");
           if (cancelled) return;
           if (res.success) {
-            if (res.data?.qr) {
-              setWaQr(res.data.qr);
-              setWaStatus("qr");
-            } else if (res.data?.status === "connected") {
-              setWaQr(null);
+            if (res.data?.status === "connected") {
               setWaStatus("connected");
             } else if (res.data?.status === "error") {
-              setWaQr(null);
               setWaStatus("error");
             } else {
-              setWaQr(null);
-              setWaStatus("initializing");
+              setWaStatus("disconnected");
             }
           }
         } catch {}
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, 5000));
       }
     }
     poll();
@@ -550,75 +543,37 @@ export default function Settings() {
                         ? "bg-[#1ed760]/5 border-[#1ed760]/20"
                         : waStatus === "error"
                         ? "bg-[#e74c3c]/5 border-[#e74c3c]/20"
-                        : waStatus === "qr"
-                        ? "bg-th-elevated bg-[#1ed760]/5 border-blue-200 border-blue-500/20"
                         : "bg-th-elevated border-th-border"
                     }`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-2.5 h-2.5 rounded-full ${
                             waStatus === "connected" ? "bg-[#1ed760] animate-pulse" :
-                            waStatus === "qr" ? "bg-[#1ed760] animate-pulse" :
                             waStatus === "error" ? "bg-[#e74c3c]" :
-                            waStatus === "initializing" ? "bg-amber-500 animate-pulse" :
                             "bg-th-muted"
                           }`} />
                            <span className="text-sm font-medium text-th-text">
                              {waStatus === "connected" ? uiT("Connected", "कनेक्टेड") :
-                              waStatus === "qr" ? uiT("Scan QR Code", "QR कोड स्कैन करें") :
-                              waStatus === "disconnected" ? uiT("Disconnected", "डिस्कनेक्टेड") :
-                              waStatus === "initializing" ? uiT("Initializing...", "प्रारंभ हो रहा है...") :
-                              waStatus === "error" ? uiT("Connection Error", "कनेक्शन त्रुटि") :
+                              waStatus === "disconnected" ? uiT("Not Configured", "कॉन्फ़िगर नहीं") :
+                              waStatus === "error" ? uiT("Configuration Error", "कॉन्फ़िगरेशन त्रुटि") :
                               uiT("Checking...", "जांच रहे हैं...")}
                           </span>
                         </div>
-                        {(waStatus === "connected" || waStatus === "qr") && (
-                          <button
-                            onClick={async () => {
-                              setWaDisconnecting(true);
-                              await api.post("/api/whatsapp/disconnect", {});
-                              setWaDisconnecting(false);
-                              setWaStatus("disconnected");
-                            }}
-                            disabled={waDisconnecting}
-                            className="flex items-center gap-1.5 text-xs font-medium text-[#e74c3c] hover:text-[#e74c3c] px-2.5 py-1.5 rounded-lg bg-[#e74c3c]/10 transition-colors"
-                          >
-                            {waDisconnecting ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : (
-                              <WifiOff size={12} />
-                            )}
-                            {waDisconnecting ? uiT("Disconnecting...", "डिस्कनेक्ट हो रहा है...") : uiT("Disconnect", "डिस्कनेक्ट")}
-                          </button>
-                        )}
                       </div>
-                      {waStatus === "qr" && waQr && (
-                        <div className="flex justify-center py-4">
-                          <div className="bg-th-surface rounded-lg p-4 border border-th-border">
-                            <img src={waQr} alt="WhatsApp QR" className="w-48 h-48" />
-                          </div>
-                        </div>
-                      )}
                       {waStatus === "connected" && (
                         <div className="flex items-center gap-2 text-[#1ed760]">
                           <CheckCircle2 size={16} />
-                          <span className="text-xs font-medium">{uiT("WhatsApp is connected and ready", "WhatsApp कनेक्टेड और तैयार है")}</span>
+                          <span className="text-xs font-medium">{uiT("WhatsApp Cloud API is active", "WhatsApp क्लाउड API सक्रिय है")}</span>
                         </div>
                       )}
                       {waStatus === "disconnected" && (
-                        <p className="text-xs text-th-secondary">{uiT("Disconnected. QR will appear shortly.", "डिस्कनेक्टेड। QR जल्द दिखाई देगा।")}</p>
-                      )}
-                      {waStatus === "initializing" && (
-                        <div className="flex items-center gap-2 text-xs text-th-secondary">
-                          <Loader2 size={14} className="animate-spin" />
-                          {uiT("Connecting to WhatsApp...", "WhatsApp से कनेक्ट हो रहा है...")}
-                        </div>
+                        <p className="text-xs text-th-secondary">{uiT("Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env", ".env में WHATSAPP_ACCESS_TOKEN और WHATSAPP_PHONE_NUMBER_ID सेट करें")}</p>
                       )}
                       {waStatus === "error" && (
-                        <p className="text-xs text-red-500">{uiT("Connection error. Please restart the server.", "कनेक्शन त्रुटि। कृपया सर्वर पुनरारंभ करें।")}</p>
+                        <p className="text-xs text-red-500">{uiT("Configuration error. Check your environment variables.", "कॉन्फ़िगरेशन त्रुटि। अपने एनवायरनमेंट वेरिएबल जांचें।")}</p>
                       )}
                       {waStatus === "checking" && (
-                        <p className="text-xs text-th-muted">{uiT("Checking connection status...", "कनेक्शन स्थिति जांच रहे हैं...")}</p>
+                        <p className="text-xs text-th-muted">{uiT("Checking configuration...", "कॉन्फ़िगरेशन जांच रहे हैं...")}</p>
                       )}
                     </div>
                   </div>
