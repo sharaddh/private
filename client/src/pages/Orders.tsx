@@ -34,7 +34,7 @@ function DotProgress({ status, forwardedCount, quantity }: { status: OrderStatus
     <div className="flex items-center gap-1 px-1">
       {STATUS_STEPS.slice(0, 4).map((step, i) => (
         <div key={step} className="flex items-center flex-1 last:flex-none">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[14px] font-bold transition-all duration-300 ${
             i < currentIdx
               ? "bg-[#1ed760] text-black"
               : i === currentIdx
@@ -265,26 +265,26 @@ export default function Orders() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-th-text truncate leading-tight">{customerName(o)}</p>
-                        {customerMobile(o) && <p className="text-[11px] text-th-secondary truncate">{customerMobile(o)}</p>}
+                        {customerMobile(o) && <p className="text-[15px] text-th-secondary truncate">{customerMobile(o)}</p>}
                       </div>
                     </div>
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${theme.badge} flex-shrink-0`}>
+                    <span className={`text-[14px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${theme.badge} flex-shrink-0`}>
                       {o.status}
                     </span>
                   </div>
                   {/* Order items */}
                   <div className="flex flex-wrap gap-1.5 mb-2.5">
                     {o.frameBrand ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
                         <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
                       </span>
                     ) : o.frame ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
                         <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frame}
                       </span>
                     ) : null}
                     {o.lensBrand && (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
                         <Eye size={11} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lensType ? ` \u00B7 ${o.lensType}` : ""}
                       </span>
                     )}
@@ -294,14 +294,14 @@ export default function Orders() {
                         : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-[#e8115b] flex-shrink-0" />
                         : <Package size={11} className="text-th-secondary flex-shrink-0" />;
                       return (
-                        <span key={a || i} className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
+                        <span key={a || i} className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
                           {accIcon} {a}
                         </span>
                       );
                     })}
                   </div>
                   {/* Delivery + Amount */}
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-[15px]">
                     {o.deliveryDate ? (
                       <span className="flex items-center gap-1 text-th-secondary">
                         <Clock size={11} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
@@ -312,7 +312,7 @@ export default function Orders() {
                     {(o.billInfo?.totalAmount ?? 0) > 0 && (
                       <span className="font-bold text-th-text tracking-tight">
                         \u20B9{(o.billInfo?.totalAmount ?? 0).toLocaleString()}
-                        {pending > 0 && <span className="text-[10px] text-[#e8115b] font-medium ml-1">({pending})</span>}
+                        {pending > 0 && <span className="text-[14px] text-[#e8115b] font-medium ml-1">({pending})</span>}
                       </span>
                     )}
                   </div>
@@ -326,7 +326,7 @@ export default function Orders() {
                 {/* Partial progress indicator */}
                 {(o.forwardedCount || 0) > 0 && (o.forwardedCount || 0) < (o.quantity || 1) && (
                   <div className="px-5 pb-2">
-                    <span className="text-[11px] font-medium text-[#e8115b] bg-[#e8115b]/10 px-2.5 py-1 rounded-lg">
+                    <span className="text-[15px] font-medium text-[#e8115b] bg-[#e8115b]/10 px-2.5 py-1 rounded-lg">
                       {o.forwardedCount} of {o.quantity} pair(s) advanced to {VALID_NEXT[o.status] || "next"}
                     </span>
                   </div>

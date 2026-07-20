@@ -38,7 +38,7 @@ export default function SettingsHeader({
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
               >
                 <Loader2 size={12} className="text-[#1ed760] animate-spin" />
-                <span className="text-[11px] font-medium text-[#1ed760]">{uiT("Saving", "सहेज रहे हैं")}</span>
+                <span className="text-[15px] font-medium text-[#1ed760]">{uiT("Saving", "सहेज रहे हैं")}</span>
               </motion.div>
             ) : saved ? (
               <motion.div
@@ -49,7 +49,7 @@ export default function SettingsHeader({
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
               >
                 <CheckCircle2 size={12} className="text-[#1ed760]" />
-                <span className="text-[11px] font-medium text-[#1ed760]">{uiT("Saved", "सहेजा गया")}</span>
+                <span className="text-[15px] font-medium text-[#1ed760]">{uiT("Saved", "सहेजा गया")}</span>
               </motion.div>
             ) : null}
           </AnimatePresence>

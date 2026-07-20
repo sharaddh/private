@@ -181,14 +181,14 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
             {useCamera ? <Camera size={18} className="text-[#1ed760]" /> : <Search size={18} className="text-[#1ed760]" />}
-            <h3 className="text-[16px] font-bold text-th-text">Scan QR Code</h3>
+            <h3 className="text-[20px] font-bold text-th-text">Scan QR Code</h3>
           </div>
           <button onClick={onClose} title="Close (Esc)" aria-label="Close scanner" className="p-1.5 hover:bg-th-elevated rounded-[9999px] text-th-secondary">
             <X size={18} />
           </button>
         </div>
         <div className="px-5 pb-2">
-          <p className="text-[14px] text-th-secondary">
+          <p className="text-[18px] text-th-secondary">
             {useCamera ? "Point the QR code toward the camera." : "Enter the SKU manually below."}
           </p>
         </div>
@@ -222,14 +222,14 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         {!useCamera && (
           <div className="px-5 py-6 space-y-3">
             {error && (
-              <div className="flex items-center gap-2 text-[14px] text-[#f59e0b] bg-[#f59e0b]/10 px-4 py-3 rounded-[8px]">
+              <div className="flex items-center gap-2 text-[18px] text-[#f59e0b] bg-[#f59e0b]/10 px-4 py-3 rounded-[8px]">
                 <AlertTriangle size={16} className="flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
             <div className="flex gap-2">
               <input
-                className="flex-1 text-[16px] tracking-wider font-mono px-4 py-2.5 rounded-lg bg-th-elevated text-th-text placeholder-th-muted focus:outline-none focus:border-[#1ed760] transition-all duration-200"
+                className="flex-1 text-[20px] tracking-wider font-mono px-4 py-2.5 rounded-lg bg-th-elevated text-th-text placeholder-th-muted focus:outline-none focus:border-[#1ed760] transition-all duration-200"
                 style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
                 placeholder="Type or scan SKU..."
                 value={scanInput}
@@ -239,11 +239,11 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 spellCheck={false}
                 autoComplete="off"
               />
-              <button type="button" onClick={handleManualSubmit} className="flex items-center gap-1.5 px-4 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold rounded-lg uppercase tracking-wider text-[14px] transition-all duration-200">
+              <button type="button" onClick={handleManualSubmit} className="flex items-center gap-1.5 px-4 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold rounded-lg uppercase tracking-wider text-[18px] transition-all duration-200">
                 <Search size={16} /> Lookup
               </button>
             </div>
-            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-[14px] text-[#1ed760] hover:underline">
+            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-[18px] text-[#1ed760] hover:underline">
               <RefreshCw size={14} /> Try camera again
             </button>
           </div>
@@ -251,7 +251,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
 
         {useCamera && !starting && (
           <>
-            <div className="flex items-center justify-center gap-2 px-5 py-3 text-[12px] text-th-secondary border-t border-th-border">
+            <div className="flex items-center justify-center gap-2 px-5 py-3 text-[16px] text-th-secondary border-t border-th-border">
               <CameraOff size={13} />
               {scanTimer > 8 && <span className="text-amber-500 font-medium">Still scanning... try bringing the QR closer.</span>}
               {scanTimer <= 8 && <span>Press Esc or click outside to cancel</span>}

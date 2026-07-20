@@ -88,7 +88,7 @@ export default function VisitTypeSection({
                   <Icon size={20} className="text-th-text" />
                 </div>
                 <div className="text-sm font-semibold text-th-text mb-1">{vt.label}</div>
-                <div className="text-[11px] text-th-secondary leading-tight">{vt.description}</div>
+                <div className="text-[15px] text-th-secondary leading-tight">{vt.description}</div>
 
                 {selected && (
                   <motion.div

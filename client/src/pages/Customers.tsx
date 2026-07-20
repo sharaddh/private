@@ -123,12 +123,12 @@ export default function Customers(): React.JSX.Element {
               }
               setRecalculating(false);
             }} disabled={recalculating}
-              className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-50">
+              className="flex items-center gap-1.5 text-[15px] font-bold uppercase tracking-wider px-4 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-50">
               <Activity size={14} />
               {recalculating ? uiT("Fixing...", "सुधार हो रहा है...") : uiT("Fix Data", "डेटा ठीक करें")}
             </button>
           )}
-          <button onClick={openCreate} className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
+          <button onClick={openCreate} className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
             <Plus size={16} />
             <span>{uiT("Add Customer", "ग्राहक जोड़ें")}</span>
           </button>
@@ -162,13 +162,13 @@ export default function Customers(): React.JSX.Element {
           <p className="text-sm text-th-secondary mb-5">
             {searchQuery ? `${uiT("No results matching", "कोई परिणाम मेल नहीं खा रहा")} "${searchQuery}"` : uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")}
           </p>
-          <button onClick={openCreate} className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-colors">
+          <button onClick={openCreate} className="inline-flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-colors">
             <UserPlus size={16} /> {uiT("Add Customer", "ग्राहक जोड़ें")}
           </button>
         </div>
       ) : (
         <div className="mt-6">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-3">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
+          <p className="text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-3">{filteredList.length} {uiT("customer(s)", "ग्राहक")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredList.map((c: Customer) => (
               <ShineCard key={c._id} onClick={() => navigate(`/customers/${c._id}`)}
@@ -193,11 +193,11 @@ export default function Customers(): React.JSX.Element {
                       <div className="flex items-center gap-1.5">
                         <h3 className="font-semibold text-sm text-th-text truncate">{c.name}</h3>
                         {c.age && (
-                          <span className="text-[10px] text-th-secondary shrink-0">{c.age}y{c.gender ? `, ${c.gender}` : ""}</span>
+                          <span className="text-[14px] text-th-secondary shrink-0">{c.age}y{c.gender ? `, ${c.gender}` : ""}</span>
                         )}
                       </div>
                       {c.customerId && (
-                        <span className="text-[10px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg inline-block mt-0.5">
+                        <span className="text-[14px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg inline-block mt-0.5">
                           #{c.customerId.replace("CUST-", "").slice(-6)}
                         </span>
                       )}
@@ -233,10 +233,10 @@ export default function Customers(): React.JSX.Element {
                   {c.tags && c.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {c.tags.slice(0, 2).map((t: string) => (
-                        <span key={t} className="px-1.5 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded text-[9px] font-medium">{t}</span>
+                        <span key={t} className="px-1.5 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded text-[13px] font-medium">{t}</span>
                       ))}
                       {c.tags.length > 2 && (
-                        <span className="text-[9px] text-th-secondary px-0.5">+{c.tags.length - 2}</span>
+                        <span className="text-[13px] text-th-secondary px-0.5">+{c.tags.length - 2}</span>
                       )}
                     </div>
                   )}
@@ -244,15 +244,15 @@ export default function Customers(): React.JSX.Element {
 
                 <div className="flex items-center justify-between px-4 py-2.5 bg-th-elevated/50 border-t border-th-border">
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-th-secondary">
+                    <span className="flex items-center gap-1 text-[15px] font-bold text-th-secondary">
                       <Calendar size={10} /> {c.totalVisits || 0}
                     </span>
-                    <span className="text-[11px] font-bold text-[#1ed760]">₹{(c.totalSpent || 0).toLocaleString()}</span>
+                    <span className="text-[15px] font-bold text-[#1ed760]">₹{(c.totalSpent || 0).toLocaleString()}</span>
                   </div>
                   {(c.pendingAmount || 0) > 0 ? (
-                    <span className="text-[10px] font-semibold text-[#e8a427]">₹{(c.pendingAmount || 0).toLocaleString()} {uiT("due", "बकाया")}</span>
+                    <span className="text-[14px] font-semibold text-[#e8a427]">₹{(c.pendingAmount || 0).toLocaleString()} {uiT("due", "बकाया")}</span>
                   ) : (c.totalVisits || 0) > 0 ? (
-                    <span className="text-[10px] text-[#1ed760] font-medium">{uiT("Clear", "चुकता")}</span>
+                    <span className="text-[14px] text-[#1ed760] font-medium">{uiT("Clear", "चुकता")}</span>
                   ) : null}
                 </div>
               </ShineCard>
@@ -272,20 +272,20 @@ export default function Customers(): React.JSX.Element {
               {error && <div className="bg-red-500/10 border border-red-500/20 text-red-300 px-3 py-2.5 rounded-lg text-sm mb-3">{error}</div>}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="bg-th-elevated rounded-lg p-4">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                  <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <UserPlus size={14} className="text-[#1ed760]" /> {uiT("Personal Info", "व्यक्तिगत जानकारी")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Name", "नाम")} *</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Name", "नाम")} *</label>
                       <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })} required aria-label={uiT("Customer name", "ग्राहक का नाम")} />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Age", "आयु")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Age", "आयु")}</label>
                       <input type="number" inputMode="numeric" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" value={form.age} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, age: e.target.value })} aria-label={uiT("Customer age", "ग्राहक की आयु")} />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Gender", "लिंग")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Gender", "लिंग")}</label>
                       <select className="w-full bg-th-hover text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.gender} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, gender: e.target.value })} aria-label={uiT("Customer gender", "ग्राहक का लिंग")}>
                         <option value="">{uiT("Select", "चुनें")}</option>
                         <option value="Male">{uiT("Male", "पुरुष")}</option>
@@ -297,51 +297,51 @@ export default function Customers(): React.JSX.Element {
                 </div>
 
                 <div className="bg-th-elevated rounded-lg p-4">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                  <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <Phone size={14} className="text-[#1ed760]" /> {uiT("Contact", "संपर्क")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Mobile", "मोबाइल")} *</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Mobile", "मोबाइल")} *</label>
                       <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.mobile} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, mobile: e.target.value })} aria-label={uiT("Mobile number", "मोबाइल नंबर")} />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</label>
                       <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.alternateMobile} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, alternateMobile: e.target.value })} aria-label={uiT("Alternate mobile number", "वैकल्पिक मोबाइल नंबर")} />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Email", "ईमेल")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Email", "ईमेल")}</label>
                       <input type="email" className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} aria-label={uiT("Email address", "ईमेल पता")} />
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-th-elevated rounded-lg p-4">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                  <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <MapPin size={14} className="text-[#1ed760]" /> {uiT("Address", "पता")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Address", "पता")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("Address", "पता")}</label>
                       <textarea className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" rows={2} value={form.address} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, address: e.target.value })} aria-label={uiT("Address", "पता")} />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("City", "शहर")}</label>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">{uiT("City", "शहर")}</label>
                       <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, city: e.target.value })} aria-label={uiT("City", "शहर")} />
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-th-elevated rounded-lg p-4">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                  <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <Tag size={14} className="text-[#1ed760]" /> {uiT("Tags", "टैग")}
                   </h3>
                   <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" placeholder="tag1, tag2" value={form.tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, tags: e.target.value })} aria-label={uiT("Tags", "टैग")} />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
-                  <button type="button" onClick={() => setShowForm(false)} className="text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors">{uiT("Cancel", "रद्द करें")}</button>
-                  <button type="submit" disabled={isLoading} className="text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform disabled:opacity-50">{isLoading ? uiT("Saving...", "सहेजा जा रहा है...") : editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</button>
+                  <button type="button" onClick={() => setShowForm(false)} className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors">{uiT("Cancel", "रद्द करें")}</button>
+                  <button type="submit" disabled={isLoading} className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform disabled:opacity-50">{isLoading ? uiT("Saving...", "सहेजा जा रहा है...") : editing ? uiT("Edit", "संपादित करें") : uiT("Add Customer", "ग्राहक जोड़ें")}</button>
                 </div>
               </form>
             </div>
@@ -366,62 +366,62 @@ export default function Customers(): React.JSX.Element {
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <Activity size={16} className="text-[#1ed760] mx-auto mb-1" />
                 <p className="text-lg font-bold text-th-text">{detailCustomer.totalVisits || 0}</p>
-                <p className="text-[10px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Visits", "विज़िट")}</p>
+                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Visits", "विज़िट")}</p>
               </div>
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#1ed760] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#1ed760]">₹{(detailCustomer.totalSpent || 0).toLocaleString()}</p>
-                <p className="text-[10px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Spent", "खर्च")}</p>
+                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Spent", "खर्च")}</p>
               </div>
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#e8a427] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#e8a427]">₹{(detailCustomer.pendingAmount || 0).toLocaleString()}</p>
-                <p className="text-[10px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Pending", "बाकी")}</p>
+                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Pending", "बाकी")}</p>
               </div>
             </div>
 
             <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                 <UserPlus size={14} className="text-[#1ed760]" /> {uiT("Personal Info", "व्यक्तिगत जानकारी")}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Age", "आयु")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Age", "आयु")}</p>
                   <p className="text-th-text">{detailCustomer.age || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Gender", "लिंग")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Gender", "लिंग")}</p>
                   <p className="text-th-text">{detailCustomer.gender || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Member Since", "सदस्य तब से")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Member Since", "सदस्य तब से")}</p>
                   <p className="text-th-text">{detailCustomer.createdAt ? new Date(detailCustomer.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                 <Phone size={14} className="text-[#1ed760]" /> {uiT("Contact", "संपर्क")}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Mobile", "मोबाइल")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Mobile", "मोबाइल")}</p>
                   <p className="text-th-text">{detailCustomer.mobile || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Alt Mobile", "वैकल्पिक मोबाइल")}</p>
                   <p className="text-th-text">{detailCustomer.alternateMobile || "—"}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[11px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Email", "ईमेल")}</p>
+                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">{uiT("Email", "ईमेल")}</p>
                   <p className="text-th-text">{detailCustomer.email || "—"}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                 <MapPin size={14} className="text-[#1ed760]" /> {uiT("Address", "पता")}
               </h3>
               <p className="text-sm text-th-secondary">{detailCustomer.address ? `${detailCustomer.address}${detailCustomer.city ? `, ${detailCustomer.city}` : ""}` : "—"}</p>
@@ -429,25 +429,25 @@ export default function Customers(): React.JSX.Element {
 
             {detailCustomer.tags && detailCustomer.tags.length > 0 && (
               <div className="bg-th-surface rounded-lg p-4">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                   <Tag size={14} className="text-[#1ed760]" /> {uiT("Tags", "टैग")}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {detailCustomer.tags.map((t: string, i: number) => (
-                    <span key={t} className="px-2 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[11px] font-medium">{t}</span>
+                    <span key={t} className="px-2 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[15px] font-medium">{t}</span>
                   ))}
                 </div>
               </div>
             )}
 
             <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
-              <button onClick={() => setShowDetail(false)} className="text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors">{uiT("Close", "बंद करें")}</button>
+              <button onClick={() => setShowDetail(false)} className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors">{uiT("Close", "बंद करें")}</button>
               <button onClick={() => { setShowDetail(false); openEdit(detailCustomer); }}
-                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
+                className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
                 <Edit2 size={14} /> {uiT("Edit", "संपादित करें")}
               </button>
               <button onClick={() => { setShowDetail(false); navigate(`/customers/${detailCustomer._id}`); }}
-                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
+                className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform">
                 <Eye size={14} /> {uiT("View Full Profile", "पूरी प्रोफ़ाइल देखें")}
               </button>
             </div>

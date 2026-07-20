@@ -462,11 +462,11 @@ export default function NewVisit() {
                             const fields = type === "pc" ? ["h", "v", "add"] : ["sph", "cyl", "axis", "prism", "add"];
                             return (
                               <div key={type} className="border border-th-border rounded-sm p-3">
-                                <p className="text-[11px] font-semibold text-th-muted uppercase mb-1.5">{typeLabel}</p>
+                                <p className="text-[15px] font-semibold text-th-muted uppercase mb-1.5">{typeLabel}</p>
                                 <div className="space-y-1">
                                   {fields.map((f) => (
                                     <div key={f} className="flex items-center gap-1.5">
-                                      <span className="text-[10px] font-medium text-th-muted w-6 uppercase">{f}</span>
+                                      <span className="text-[14px] font-medium text-th-muted w-6 uppercase">{f}</span>
                                       <input className="w-full text-xs py-1 px-1.5 rounded-md border border-th-border bg-th-surface"
                                         value={(data[type] as any)?.[f] || ""}
                                         onChange={(e) => {
@@ -567,7 +567,7 @@ export default function NewVisit() {
                         <div className="flex gap-1 flex-wrap">
                           {[{ en: "Single Vision", hi: "सिंगल विज़न" }, { en: "Bifocal", hi: "बाईफोकल" }, { en: "Progressive", hi: "प्रोग्रेसिव" }, { en: "Blue Cut", hi: "ब्लू कट" }, { en: "Photochromic", hi: "फोटोक्रोमिक" }, { en: "Anti-Glare", hi: "एंटी-ग्लेयर" }].map((f) => (
                             <button key={f.en} type="button" onClick={() => toggleFeature(i, f.en)}
-                              className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
+                              className={`text-[14px] px-2 py-0.5 rounded-full border transition-all ${
                                 l.features.includes(f.en) ? "bg-[#1ed760]/10 border-[#1ed760] text-[#1ed760]" : "bg-th-surface border-th-border text-th-secondary"
                               }`}>{uiT(f.en, f.hi)}</button>
                           ))}
@@ -618,7 +618,7 @@ export default function NewVisit() {
                         const active = orderDeliveryDate === dateStr;
                         return (
                           <button key={s.label} type="button" onClick={() => setOrderDeliveryDate(dateStr)}
-                            className={`px-2 py-1 text-[10px] font-medium rounded-md transition-all ${active ? "bg-[#1ed760] text-th-text" : "bg-th-elevated text-th-muted hover:bg-th-card"
+                            className={`px-2 py-1 text-[14px] font-medium rounded-md transition-all ${active ? "bg-[#1ed760] text-th-text" : "bg-th-elevated text-th-muted hover:bg-th-card"
                               }`}>
                             {s.label}
                           </button>

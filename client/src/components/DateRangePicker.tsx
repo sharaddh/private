@@ -77,7 +77,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
           const isActive = isActivePreset(p);
           return (
             <button key={p.label} onClick={() => applyPreset(p)}
-              className={`text-[13px] font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 uppercase tracking-wider ${
+              className={`text-[17px] font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 uppercase tracking-wider ${
                 isActive
                   ? "bg-[#1ed760] text-black"
                   : "text-th-secondary bg-th-elevated hover:bg-th-hover"
@@ -92,18 +92,18 @@ export default function DateRangePicker({ startDate, endDate, onChange, count, l
           <ChevronLeft size={14} />
         </button>
         <input type="date" value={startDate} onChange={(e) => { onChange(e.target.value, endDate); }}
-          className="text-[13px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
+          className="text-[17px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
           style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }} />
-        <span className="text-[13px] font-medium text-th-secondary">—</span>
+        <span className="text-[17px] font-medium text-th-secondary">—</span>
         <input type="date" value={endDate} onChange={(e) => { onChange(startDate, e.target.value); }}
-          className="text-[13px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
+          className="text-[17px] font-medium py-1.5 pl-2 pr-1 rounded-lg bg-th-elevated text-th-text focus:border-[#1ed760] transition-all duration-200 w-28 hover:border-[#b3b3b3] cursor-pointer"
           style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }} />
         <button onClick={() => shift(1)} aria-label="Next period" className="w-7 h-7 rounded-[9999px] flex items-center justify-center text-th-secondary hover:text-th-text hover:bg-th-elevated transition-all duration-200 bg-th-elevated">
           <ChevronRight size={14} />
         </button>
       </div>
       {count !== undefined && (
-        <span className="text-[13px] font-medium text-th-secondary ml-auto px-3 py-1.5 bg-th-elevated rounded-lg">
+        <span className="text-[17px] font-medium text-th-secondary ml-auto px-3 py-1.5 bg-th-elevated rounded-lg">
           {count} {label}{count !== 1 ? "s" : ""}
         </span>
       )}

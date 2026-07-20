@@ -19,10 +19,10 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
     <div className="bg-th-surface rounded-[8px] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[14px] font-bold text-th-text">Sales Trend</h3>
-          <p className="text-[13px] text-th-secondary mt-0.5">Last 30 days</p>
+          <h3 className="text-[18px] font-bold text-th-text">Sales Trend</h3>
+          <p className="text-[17px] text-th-secondary mt-0.5">Last 30 days</p>
         </div>
-        <span className={`text-[12px] font-medium px-2 py-0.5 rounded-lg ${trendUp ? "text-[#1ed760] bg-[#1ed760]/10" : "text-[#e91429] bg-[#e91429]/10"}`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
+        <span className={`text-[16px] font-medium px-2 py-0.5 rounded-lg ${trendUp ? "text-[#1ed760] bg-[#1ed760]/10" : "text-[#e91429] bg-[#e91429]/10"}`}>{chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}</span>
       </div>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
@@ -33,13 +33,13 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 11, fill: "rgba(107,114,128,0.6)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "rgba(107,114,128,0.6)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+            <XAxis dataKey="date" tickFormatter={formatDateLabel} tick={{ fontSize: 15, fill: "rgba(107,114,128,0.6)" }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 15, fill: "rgba(107,114,128,0.6)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
             <Tooltip
               labelFormatter={(label) => formatDateLabel(label)}
               formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Sales"]}
               contentStyle={{
-                fontSize: 13, borderRadius: 8,
+                fontSize: 17, borderRadius: 8,
                 border: "none",
                 background: "var(--bg-hover)",
                 color: "var(--text-base)",
@@ -62,8 +62,8 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
     <div className="bg-th-surface rounded-[8px] p-5 h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[14px] font-bold text-th-text">Order Status</h3>
-          <p className="text-[13px] text-th-secondary mt-0.5">{total} total</p>
+          <h3 className="text-[18px] font-bold text-th-text">Order Status</h3>
+          <p className="text-[17px] text-th-secondary mt-0.5">{total} total</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -74,7 +74,7 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
                 {data.map((d, i) => <Cell key={d.status || i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
               </Pie>
               <Tooltip formatter={(value) => [Number(value), "Orders"]} contentStyle={{
-                fontSize: 13, borderRadius: 8,
+                fontSize: 17, borderRadius: 8,
                 border: "none",
                 background: "var(--bg-hover)",
                 color: "var(--text-base)",

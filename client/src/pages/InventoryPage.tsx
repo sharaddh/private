@@ -110,9 +110,9 @@ export default function InventoryPage() {
                font-family: Arial, sans-serif; display: flex; align-items: center; }
         .label { display: flex; align-items: center; gap: 4mm; width: 100%; }
         .qr img { width: 40mm; height: 40mm; }
-        .info { flex: 1; font-size: 8pt; line-height: 1.3; }
-        .info .sku { font-size: 10pt; font-weight: bold; }
-        .info .brand { font-size: 9pt; }
+        .info { flex: 1; font-size: 10pt; line-height: 1.3; }
+        .info .sku { font-size: 12pt; font-weight: bold; }
+        .info .brand { font-size: 11pt; }
         .info .detail { color: #555; }
       </style></head><body>
       <div class="label">
@@ -235,7 +235,7 @@ export default function InventoryPage() {
           { key: "category", label: uiT("Category", "श्रेणी"), render: (v: string, row: InventoryItem) => (
             <span className="flex flex-col gap-0.5">
               <span className={`badge ${categoryLabel(v)}`}>{v || "Frame"}</span>
-              {row.inventoryType && <span className="text-[10px] text-muted-400 capitalize">{row.inventoryType}</span>}
+              {row.inventoryType && <span className="text-[14px] text-muted-400 capitalize">{row.inventoryType}</span>}
             </span>
           )},
           { key: "brand", label: uiT("Brand", "ब्रांड") },

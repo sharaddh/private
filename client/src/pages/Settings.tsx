@@ -455,7 +455,7 @@ export default function Settings() {
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 text-th-muted">
                         <Upload size={22} />
-                        <span className="text-[10px] font-medium">{uiT("Upload Logo", "लोगो अपलोड करें")}</span>
+                        <span className="text-[14px] font-medium">{uiT("Upload Logo", "लोगो अपलोड करें")}</span>
                       </div>
                     )}
                   </div>
@@ -653,7 +653,7 @@ export default function Settings() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-semibold text-th-text">{b.name}</p>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
+                              <span className={`text-[14px] px-2 py-0.5 rounded-lg font-medium ${
                                 b.isActive ? "badge-green" : "badge-gray"
                               }`}>
                                 {b.isActive ? uiT("Active", "सक्रिय") : uiT("Inactive", "निष्क्रिय")}
@@ -794,11 +794,11 @@ export default function Settings() {
                     <span className="text-base font-semibold text-th-text">
                       @{user?.username as string}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium bg-th-elevated bg-violet-900/20 text-violet-300 ring-1 ring-violet-500/20">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[14px] font-medium bg-th-elevated bg-violet-900/20 text-violet-300 ring-1 ring-violet-500/20">
                       <Building2 size={10} />
                       {currentBranch?.name || "—"}
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
+                    <span className={`text-[14px] px-2 py-0.5 rounded-lg font-medium ${
                       isStaff ? "badge-blue" : "badge-purple"
                     }`}>
                       {(user?.role as string) || "—"}

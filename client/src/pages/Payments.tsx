@@ -95,7 +95,7 @@ export default function Payments() {
             { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (_v: unknown, row: Payment) => (
               <div className="min-w-0">
                 <p className="font-medium text-th-text truncate">{customerName(row)}</p>
-                {customerMobile(row) && <p className="text-[11px] text-th-secondary truncate">{customerMobile(row)}</p>}
+                {customerMobile(row) && <p className="text-[15px] text-th-secondary truncate">{customerMobile(row)}</p>}
               </div>
             )},
             { key: "amount", label: uiT("Amount", "राशि"), render: (v: number) => <span className="font-semibold text-[#1ed760]">₹{(v || 0).toLocaleString("en-IN")}</span> },

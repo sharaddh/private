@@ -85,7 +85,7 @@ export default function Header({
             onFocus={() => {
               if (searchQuery.trim()) setSearchOpen(true);
             }}
-            className="w-full bg-transparent py-3 pr-4 text-[15px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
+            className="w-full bg-transparent py-3 pr-4 text-[19px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
             aria-label="Search customers"
           />
 

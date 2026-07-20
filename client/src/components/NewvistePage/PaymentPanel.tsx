@@ -79,7 +79,7 @@ export default function PaymentPanel({
               </div>
               <div>
                 <h2 className="text-base font-bold text-th-text">{uiT("Discount", "छूट")}</h2>
-                <p className="text-[11px] font-medium text-th-secondary">{uiT("Apply concession", "छूट लागू करें")}</p>
+                <p className="text-[15px] font-medium text-th-secondary">{uiT("Apply concession", "छूट लागू करें")}</p>
               </div>
             </div>
 
@@ -121,7 +121,7 @@ export default function PaymentPanel({
               </div>
               <div>
                 <h2 className="text-base font-bold text-th-text">{uiT("Payment", "भुगतान")}</h2>
-                <p className="text-[11px] font-medium text-th-secondary">{uiT("Mode & advance collected", "मोड और अग्रिम एकत्र")}</p>
+                <p className="text-[15px] font-medium text-th-secondary">{uiT("Mode & advance collected", "मोड और अग्रिम एकत्र")}</p>
               </div>
             </div>
 
@@ -133,7 +133,7 @@ export default function PaymentPanel({
                   <button
                     key={m.value}
                     onClick={() => setPaymentMode(m.value)}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-md text-[10px] font-bold transition-all ${
+                    className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-md text-[14px] font-bold transition-all ${
                       selected
                         ? "bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760]"
                         : "bg-th-elevated text-th-secondary hover:bg-th-card"
@@ -158,7 +158,7 @@ export default function PaymentPanel({
               />
               <button
                 onClick={() => setAdvancePaid(finalTotal)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-th-card text-[10px] font-bold rounded-md text-th-text hover:bg-[#1ed760] hover:text-black transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-th-card text-[14px] font-bold rounded-md text-th-text hover:bg-[#1ed760] hover:text-black transition-colors"
               >
                 Max
               </button>
@@ -174,7 +174,7 @@ export default function PaymentPanel({
             </div>
             <div>
               <h2 className="text-base font-bold text-th-text">{uiT("Delivery Setup", "डिलीवरी सेटअप")}</h2>
-              <p className="text-[11px] font-medium text-th-secondary">{uiT("Schedule when the order will be ready", "शेड्यूल करें कि ऑर्डर कब तैयार होगा")}</p>
+              <p className="text-[15px] font-medium text-th-secondary">{uiT("Schedule when the order will be ready", "शेड्यूल करें कि ऑर्डर कब तैयार होगा")}</p>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export default function PaymentPanel({
                     <button
                       key={shortcut.label}
                       onClick={() => setDeliveryDate(targetDate)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[15px] font-bold transition-all ${
                         isActive
                           ? "bg-[#1ed760] text-black"
                           : "bg-th-elevated text-th-secondary hover:bg-th-card"

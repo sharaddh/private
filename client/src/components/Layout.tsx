@@ -73,7 +73,7 @@ const SearchResultItem = memo(function SearchResultItem({ customer, isHighlighte
           {customer.customerId ? <span>{String(customer.customerId)}</span> : null}
         </p>
       </div>
-      <div className="rounded-lg bg-th-hover px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
+      <div className="rounded-lg bg-th-hover px-2 py-1 text-[14px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
         Open
       </div>
     </button>
@@ -383,7 +383,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         onFocus={() => {
           if (searchQuery.trim()) setSearchOpen(true);
         }}
-        className="w-full bg-transparent py-3 pr-4 text-[15px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
+        className="w-full bg-transparent py-3 pr-4 text-[19px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
         aria-label="Search customers"
       />
 

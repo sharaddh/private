@@ -584,7 +584,7 @@ export default function Announcement() {
                   <div className="mb-4 max-h-28 overflow-y-auto space-y-1">
                     {selectedCustomers.slice(0, 5).map((c) => (
                       <div key={c._id} className="flex items-center gap-2 text-xs text-th-secondary">
-                        <div className="w-5 h-5 rounded-full bg-[#1ed760]/20 flex items-center justify-center text-[#1ed760] font-semibold text-[9px]">
+                        <div className="w-5 h-5 rounded-full bg-[#1ed760]/20 flex items-center justify-center text-[#1ed760] font-semibold text-[13px]">
                           {c.name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                         {c.name} — {c.mobile || "No number"}

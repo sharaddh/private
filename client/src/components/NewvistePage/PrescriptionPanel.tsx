@@ -19,7 +19,7 @@ function EyeRow({
     <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 sm:items-center">
       {/* Row Label */}
       <div className="w-full sm:w-[100px] shrink-0">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-th-secondary">
+        <span className="text-[15px] font-bold uppercase tracking-wider text-th-secondary">
           {label}
         </span>
       </div>
@@ -28,7 +28,7 @@ function EyeRow({
       <div className="grid grid-cols-4 gap-2 w-full flex-1">
         {FIELDS.map((f) => (
           <div key={f} className="flex flex-col gap-1">
-            <span className="sm:hidden text-[9px] font-semibold text-th-secondary uppercase text-center mt-1">
+            <span className="sm:hidden text-[13px] font-semibold text-th-secondary uppercase text-center mt-1">
               {f}
             </span>
             <input
@@ -50,7 +50,7 @@ function EyeTableHeader() {
       <div className="w-[100px] shrink-0"></div>
       <div className="grid grid-cols-4 gap-2 w-full flex-1">
         {FIELDS.map((f) => (
-          <div key={f} className="text-center text-[10px] font-bold text-th-secondary uppercase tracking-wider">
+          <div key={f} className="text-center text-[14px] font-bold text-th-secondary uppercase tracking-wider">
             {f}
           </div>
         ))}
@@ -110,7 +110,7 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
             </div>
             <div>
               <h3 className="text-sm font-bold text-th-text">{uiT("Right Eye (O.D.)", "दायाँ आँख (O.D.)")}</h3>
-              <p className="text-[11px] text-th-secondary">Oculus Dexter</p>
+              <p className="text-[15px] text-th-secondary">Oculus Dexter</p>
             </div>
           </div>
 
@@ -137,7 +137,7 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
             </div>
             <div>
               <h3 className="text-sm font-bold text-th-text">{uiT("Left Eye (O.S.)", "बायाँ आँख (O.S.)")}</h3>
-              <p className="text-[11px] text-th-secondary">Oculus Sinister</p>
+              <p className="text-[15px] text-th-secondary">Oculus Sinister</p>
             </div>
           </div>
 

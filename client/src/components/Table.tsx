@@ -75,7 +75,7 @@ export default function Table({
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-[#1ed760] transition-all duration-200 bg-th-elevated text-th-text placeholder-th-muted text-[14px]"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-[#1ed760] transition-all duration-200 bg-th-elevated text-th-text placeholder-th-muted text-[18px]"
             style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
           />
         </div>
@@ -89,7 +89,7 @@ export default function Table({
                 <th
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
-                  className={`px-4 py-3.5 text-left text-[11px] font-semibold text-th-secondary uppercase tracking-wider ${
+                  className={`px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider ${
                     col.sortable !== false ? "cursor-pointer hover:text-th-text select-none" : ""
                   }`}
                 >
@@ -102,7 +102,7 @@ export default function Table({
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-th-secondary uppercase tracking-wider">
+                <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">
                   Actions
                 </th>
               )}
@@ -117,7 +117,7 @@ export default function Table({
                 >
                   <div className="flex flex-col items-center gap-3">
                     <Search size={28} className="text-[#535353]" />
-                    <span className="text-[15px]">No data available</span>
+                    <span className="text-[19px]">No data available</span>
                   </div>
                 </td>
               </tr>
@@ -131,7 +131,7 @@ export default function Table({
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5 text-[16px] text-th-text whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 text-[20px] text-th-text whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
                     </td>
                   ))}
@@ -149,7 +149,7 @@ export default function Table({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-[14px] text-th-secondary">
+          <p className="text-[18px] text-th-secondary">
             Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
@@ -167,7 +167,7 @@ export default function Table({
                 <button
                   key={pg}
                   onClick={() => setPage(pg)}
-                  className={`w-8 h-8 rounded-[9999px] text-[14px] font-medium transition-colors ${
+                  className={`w-8 h-8 rounded-[9999px] text-[18px] font-medium transition-colors ${
                     pg === page
                       ? "bg-[#1ed760] text-black"
                       : "hover:bg-th-elevated text-th-secondary"

@@ -31,11 +31,11 @@ export default function StatCard({ title, value, icon, color = "primary", subtit
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-[22px] font-bold text-th-text tracking-tight">{value}</p>
-          <p className="text-[13px] text-th-secondary truncate">{title}</p>
+          <p className="text-[26px] font-bold text-th-text tracking-tight">{value}</p>
+          <p className="text-[17px] text-th-secondary truncate">{title}</p>
         </div>
       </div>
-      {subtitle && <p className="text-[11px] text-th-secondary mt-1.5 ml-[3.25rem]">{subtitle}</p>}
+      {subtitle && <p className="text-[15px] text-th-secondary mt-1.5 ml-[3.25rem]">{subtitle}</p>}
     </div>
   );
 }

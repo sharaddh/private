@@ -317,20 +317,20 @@ export default function Pickup() {
                       <p className="text-sm font-semibold text-th-text truncate">{cName || "—"}</p>
                       {cMobile && <p className="text-xs text-th-secondary">{cMobile}</p>}
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#1ed760]/10 text-[#1ed760] uppercase tracking-wider">{uiT("Ready", "तैयार")}</span>
+                    <span className="text-[14px] font-bold px-2 py-0.5 rounded-lg bg-[#1ed760]/10 text-[#1ed760] uppercase tracking-wider">{uiT("Ready", "तैयार")}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {(o as any).frameBrand ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
                         <Glasses size={11} className="text-th-secondary flex-shrink-0" aria-hidden="true" /> {(o as any).frameBrand}{(o as any).frameModel ? ` ${(o as any).frameModel}` : ""}
                       </span>
                     ) : (o as any).frame ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
                         <Glasses size={11} className="text-th-secondary flex-shrink-0" aria-hidden="true" /> {(o as any).frame}
                       </span>
                     ) : null}
                     {o.lensBrand && (
-                      <span className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
                         <Eye size={11} className="text-th-secondary flex-shrink-0" aria-hidden="true" /> {o.lensBrand}{o.lensType ? ` · ${o.lensType}` : ""}
                       </span>
                     )}
@@ -340,7 +340,7 @@ export default function Pickup() {
                         : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-th-secondary flex-shrink-0" aria-hidden="true" />
                         : <Package size={11} className="text-th-secondary flex-shrink-0" aria-hidden="true" />;
                       return (
-                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
+                        <span key={i} className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-lg text-th-secondary font-medium truncate max-w-full">
                           {accIcon} {a}
                         </span>
                       );
@@ -479,21 +479,21 @@ export default function Pickup() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {(selectedOrder as any).frame && (
                   <div className="bg-th-elevated rounded-lg px-4 py-3">
-                    <p className="text-[10px] text-[#1ed760] uppercase tracking-wider mb-0.5 flex items-center gap-1"><Glasses size={11} aria-hidden="true" /> {uiT("Frame", "फ्रेम")}</p>
+                    <p className="text-[14px] text-[#1ed760] uppercase tracking-wider mb-0.5 flex items-center gap-1"><Glasses size={11} aria-hidden="true" /> {uiT("Frame", "फ्रेम")}</p>
                     <p className="text-sm font-medium text-th-text">{selectedOrder.frameBrand ? `${selectedOrder.frameBrand} ${selectedOrder.frameModel || ""}`.trim() : (selectedOrder as any).frame}</p>
                     {(selectedOrder as any).framePrice > 0 && <p className="text-xs text-th-secondary mt-0.5">₹{(selectedOrder as any).framePrice}</p>}
                   </div>
                 )}
                 {selectedOrder.lensBrand && (
                   <div className="bg-th-elevated rounded-lg px-4 py-3">
-                    <p className="text-[10px] text-th-secondary uppercase tracking-wider mb-0.5 flex items-center gap-1"><Eye size={11} aria-hidden="true" /> {uiT("Lens", "लेंस")}</p>
+                    <p className="text-[14px] text-th-secondary uppercase tracking-wider mb-0.5 flex items-center gap-1"><Eye size={11} aria-hidden="true" /> {uiT("Lens", "लेंस")}</p>
                     <p className="text-sm font-medium text-th-text">{selectedOrder.lensBrand}{selectedOrder.lensType ? ` · ${selectedOrder.lensType}` : ""}</p>
                     {(selectedOrder as any).lensPrice > 0 && <p className="text-xs text-th-secondary mt-0.5">₹{(selectedOrder as any).lensPrice}</p>}
                   </div>
                 )}
                 {selectedOrder.deliveryDate && (
                   <div className="bg-th-elevated rounded-lg px-4 py-3">
-                    <p className="text-[10px] text-th-secondary uppercase tracking-wider mb-0.5">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
+                    <p className="text-[14px] text-th-secondary uppercase tracking-wider mb-0.5">{uiT("Delivery Date", "डिलीवरी तिथि")}</p>
                     <p className="text-sm font-medium">{new Date(selectedOrder.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                   </div>
                 )}

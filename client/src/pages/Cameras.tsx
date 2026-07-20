@@ -96,7 +96,7 @@ function CameraCard({
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: statusColor }} />
           <span className="text-sm font-semibold text-th-text truncate">{cam.name}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
+          <span className="text-[14px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
             style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
             {statusLabel}
           </span>
@@ -264,7 +264,7 @@ function AddEditModal({
             placeholder={t("Find on camera label or Easyviewer app", "कैमरे के लेबल या Easyviewer ऐप पर देखें")}
             className="w-full bg-th-base border border-th-border rounded-lg px-3 py-2.5 text-sm text-th-text placeholder-th-muted outline-none focus:border-[#1ed760] transition-colors font-mono"
           />
-          <p className="mt-1.5 text-[11px] text-th-muted leading-relaxed">
+          <p className="mt-1.5 text-[15px] text-th-muted leading-relaxed">
             {t(
               "The serial number from your Dahua camera. You can find it on the camera label, in the Easyviewer app, or on the camera's web interface under Settings > System Info.",
               "आपके Dahua कैमरे का सीरियल नंबर। यह कैमरे के लेबल, Easyviewer ऐप, या कैमरे के वेब इंटरफ़ेस (Settings > System Info) में मिल सकता है।"
@@ -304,7 +304,7 @@ function AddEditModal({
         <div className="bg-th-base/50 rounded-lg p-3 border border-th-border">
           <div className="flex items-start gap-2">
             <Wifi size={14} className="text-[#1ed760] mt-0.5 flex-shrink-0" />
-            <p className="text-[11px] text-th-secondary leading-relaxed">
+            <p className="text-[15px] text-th-secondary leading-relaxed">
               {t(
                 "The camera will be connected via Dahua's P2P cloud using the serial number. No port forwarding or IP address needed. The relay server on our cloud handles the connection automatically.",
                 "कैमरा सीरियल नंबर का उपयोग करके Dahua के P2P क्लाउड से कनेक्ट किया जाएगा। कोई पोर्ट फॉरवर्डिंग या IP पता की आवश्यकता नहीं है। हमारे क्लाउड पर रिले सर्वर स्वचालित रूप से कनेक्शन संभालता है।"

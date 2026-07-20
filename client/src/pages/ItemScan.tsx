@@ -51,9 +51,9 @@ export default function ItemScan() {
                font-family: Arial, sans-serif; display: flex; align-items: center; }
         .label { display: flex; align-items: center; gap: 4mm; width: 100%; }
         .qr img { width: 40mm; height: 40mm; }
-        .info { flex: 1; font-size: 8pt; line-height: 1.3; }
-        .info .sku { font-size: 10pt; font-weight: bold; }
-        .info .brand { font-size: 9pt; }
+        .info { flex: 1; font-size: 10pt; line-height: 1.3; }
+        .info .sku { font-size: 12pt; font-weight: bold; }
+        .info .brand { font-size: 11pt; }
         .info .detail { color: #555; }
       </style></head><body>
       <div class="label">

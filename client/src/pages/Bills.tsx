@@ -98,48 +98,48 @@ export default function Bills() {
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid var(--brand); padding-bottom: 20px; }
   .company-info { display: flex; gap: 20px; align-items: center; }
   .logo { max-width: 80px; max-height: 80px; object-fit: contain; }
-  .company-details h1 { margin: 0 0 4px 0; font-size: 24px; color: var(--brand); font-weight: 700; }
-  .company-details p { margin: 2px 0; font-size: 13px; color: var(--muted); }
+  .company-details h1 { margin: 0 0 4px 0; font-size: 28px; color: var(--brand); font-weight: 700; }
+  .company-details p { margin: 2px 0; font-size: 17px; color: var(--muted); }
 
   .invoice-meta { text-align: right; }
-  .invoice-meta h2 { margin: 0 0 8px 0; font-size: 32px; color: ${isCancelled ? '#dc2626' : 'var(--brand)'}; text-transform: uppercase; letter-spacing: 1px; }
-  .invoice-meta p { margin: 4px 0; font-size: 14px; }
+  .invoice-meta h2 { margin: 0 0 8px 0; font-size: 36px; color: ${isCancelled ? '#dc2626' : 'var(--brand)'}; text-transform: uppercase; letter-spacing: 1px; }
+  .invoice-meta p { margin: 4px 0; font-size: 18px; }
   .invoice-meta .label { color: var(--muted); margin-right: 8px; }
   .invoice-meta .value { font-weight: 600; }
 
   /* Customer Details */
   .bill-to { background: var(--bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid var(--border); }
-  .bill-to h3 { margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
-  .bill-to p { margin: 4px 0; font-size: 14px; }
+  .bill-to h3 { margin: 0 0 10px 0; font-size: 16px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
+  .bill-to p { margin: 4px 0; font-size: 18px; }
   .bill-to .customer-name { font-size: 16px; font-weight: 600; color: var(--text); }
 
   /* Table */
   table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-  th { background: var(--brand); color: white; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; font-weight: 600; }
+  th { background: var(--brand); color: white; padding: 12px; text-align: left; font-size: 16px; text-transform: uppercase; font-weight: 600; }
   th.right, td.right { text-align: right; }
   th.center, td.center { text-align: center; }
-  td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 18px; }
   .bold { font-weight: 600; }
 
   /* Summary Section */
   .summary-container { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
-  .amount-words { flex: 1; padding-right: 40px; font-size: 12px; color: var(--muted); font-style: italic; }
+  .amount-words { flex: 1; padding-right: 40px; font-size: 16px; color: var(--muted); font-style: italic; }
   .totals-box { width: 320px; }
-  .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: var(--muted); }
+  .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 18px; color: var(--muted); }
   .totals-row .val { color: var(--text); font-weight: 500; }
   .totals-row.discount { color: #dc2626; }
   .totals-row.discount .val { color: #dc2626; }
   .totals-row.tax { color: #059669; }
   .totals-row.tax .val { color: #059669; }
 
-  .grand-total { border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 12px 0; margin-top: 8px; font-size: 18px; font-weight: 700; color: var(--brand); }
+  .grand-total { border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 12px 0; margin-top: 8px; font-size: 22px; font-weight: 700; color: var(--brand); }
   .grand-total .val { color: var(--brand); }
 
-  .balance-due { background: ${pendingAmount > 0 ? '#fffbeb' : '#ecfdf5'}; color: ${pendingAmount > 0 ? '#b45309' : '#047857'}; padding: 12px; border-radius: 6px; margin-top: 12px; font-weight: 700; font-size: 15px; }
+  .balance-due { background: ${pendingAmount > 0 ? '#fffbeb' : '#ecfdf5'}; color: ${pendingAmount > 0 ? '#b45309' : '#047857'}; padding: 12px; border-radius: 6px; margin-top: 12px; font-weight: 700; font-size: 19px; }
 
   /* Footer */
-  .footer { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; font-size: 12px; color: var(--muted); }
-  .terms h4 { margin: 0 0 6px 0; font-size: 12px; color: var(--text); text-transform: uppercase; }
+  .footer { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px; font-size: 16px; color: var(--muted); }
+  .terms h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--text); text-transform: uppercase; }
   .terms p { margin: 2px 0; }
   .signature { text-align: center; }
   .sig-line { width: 160px; border-top: 1px solid var(--text); margin-bottom: 8px; }
@@ -244,7 +244,7 @@ export default function Bills() {
 <html><head><title>Thermal Receipt - ${bill.billNumber}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.3;
+  body { font-family: 'Courier New', monospace; font-size: 16px; line-height: 1.3;
          margin: 0; padding: 4mm; width: 72mm; color: #000; background: #fff;
          white-space: pre-wrap; }
   @media print { body { margin: 0; padding: 2mm; } }

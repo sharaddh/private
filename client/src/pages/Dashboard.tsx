@@ -65,7 +65,7 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
           <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
         </div>
         {trend && (
-          <span className="flex items-center gap-0.5 text-[10px] md:text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+          <span className="flex items-center gap-0.5 text-[14px] md:text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
             <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3" />
             {trend}
           </span>
@@ -73,8 +73,8 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
       </div>
       <div className="text-lg sm:text-xl md:text-2xl font-bold text-th-text tracking-tight mb-0.5 md:mb-1 break-words" style={{ color }}>{value}</div>
       <div className="mt-auto">
-        <div className="text-[13px] font-medium text-th-secondary break-words">{label}</div>
-        {subtitle && <div className="text-[12px] text-th-muted mt-0.5 break-words">{subtitle}</div>}
+        <div className="text-[17px] font-medium text-th-secondary break-words">{label}</div>
+        {subtitle && <div className="text-[16px] text-th-muted mt-0.5 break-words">{subtitle}</div>}
       </div>
     </ShineCard>
   );
@@ -86,8 +86,8 @@ function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon
       <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
         <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
       </div>
-      <span className="text-[11px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
-      <span className="text-[10px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
+      <span className="text-[15px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
+      <span className="text-[14px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
     </ShineCard>
   );
 }
@@ -96,11 +96,11 @@ function SectionHeader({ title, count, action, actionLabel }: { title: string; c
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
-        <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{title}</h3>
-        {count !== undefined && <span className="text-[12px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{count}</span>}
+        <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{title}</h3>
+        {count !== undefined && <span className="text-[16px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{count}</span>}
       </div>
       {action && (
-        <button onClick={action} aria-label={actionLabel || "View all"} className="flex items-center gap-1.5 text-[12px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
+        <button onClick={action} aria-label={actionLabel || "View all"} className="flex items-center gap-1.5 text-[16px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
           {actionLabel || "View all"}
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -118,7 +118,7 @@ function StatusBadge({ status }: { status: string }) {
     "In Transit": "bg-[#f59e0b]/15 text-[#fbbf24]",
   };
   return (
-    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap uppercase tracking-wider ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
+    <span className={`text-[15px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap uppercase tracking-wider ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
       {status}
     </span>
   );
@@ -130,10 +130,10 @@ function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: {
       <div className="w-14 h-14 rounded-xl bg-th-elevated flex items-center justify-center mb-4">
         <Icon className="w-7 h-7 text-th-muted" />
       </div>
-      <p className="text-[16px] font-semibold text-th-text">{title}</p>
-      <p className="text-[14px] text-th-secondary mt-1 mb-5 max-w-xs">{description}</p>
+      <p className="text-[20px] font-semibold text-th-text">{title}</p>
+      <p className="text-[18px] text-th-secondary mt-1 mb-5 max-w-xs">{description}</p>
       {actionLabel && onAction && (
-        <button onClick={onAction} aria-label={actionLabel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
+        <button onClick={onAction} aria-label={actionLabel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[18px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
           <Plus className="w-4 h-4" />
           {actionLabel}
         </button>
@@ -150,7 +150,7 @@ function SegmentedControl({ options, value, onChange, compact }: { options: { la
         return (
           <button key={opt.value} onClick={(e) => { e.stopPropagation(); onChange(isActive ? "pending" : opt.value); }}
             aria-label={opt.label}
-            className={`${compact ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-[11px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
+            className={`${compact ? "px-2 py-1 text-[14px]" : "px-3 py-1.5 text-[15px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
               isActive
                 ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
                 : "text-th-secondary hover:text-th-text hover:bg-th-card/50"
@@ -187,11 +187,11 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
       <div className="flex items-center gap-3">
         <Icon className={`w-5 h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-[13px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
+          <p className={`text-[17px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
           <p className={`text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
         </div>
         {action && (
-          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
+          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-4 py-2 rounded-lg text-[16px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
             {actionLabel || "View"}
           </button>
         )}
@@ -315,10 +315,10 @@ export default function Dashboard() {
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-[24px] font-bold text-th-text tracking-tight">
+          <h1 className="text-[28px] font-bold text-th-text tracking-tight">
             {greeting}, <span className="text-[#1ed760]">{"Mr "+currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
           </h1>
-          <div className="flex items-center gap-2 mt-1.5 text-[14px] text-th-secondary">
+          <div className="flex items-center gap-2 mt-1.5 text-[18px] text-th-secondary">
             <Calendar className="w-3.5 h-3.5" />
             <span>{dateStr}</span>
             <span className="text-th-muted">·</span>
@@ -329,12 +329,12 @@ export default function Dashboard() {
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => navigate("/workspace")} aria-label={uiT("New Sale", "नई बिक्री")}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1ed760] text-black rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1ed760] text-black rounded-lg text-[18px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
           <Plus className="w-3.5 h-3.5" />
           {uiT("New Sale", "नई बिक्री")}
         </button>
         <button onClick={() => setShowScanner(true)} aria-label={uiT("Scan", "स्कैन")}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-th-elevated text-th-text rounded-lg text-[14px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-th-elevated text-th-text rounded-lg text-[18px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
           <ScanLine className="w-3.5 h-3.5" />
           {uiT("Scan", "स्कैन")}
         </button>
@@ -350,26 +350,26 @@ export default function Dashboard() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-6 flex-wrap">
           <div>
-            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
-            <p className="text-[22px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
+            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
+            <p className="text-[26px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
           </div>
           <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
-            <p className="text-[22px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
+            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
+            <p className="text-[26px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
           </div>
           <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
-            <p className="text-[22px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
+            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
+            <p className="text-[26px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
           </div>
           <div className="w-px h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
-            <p className="text-[22px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
+            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
+            <p className="text-[26px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[12px] text-th-muted">
+        <div className="flex items-center gap-2 text-[16px] text-th-muted">
           <TrendingUp className="w-3.5 h-3.5 text-[#1ed760]" />
           {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह")}
         </div>
@@ -461,26 +461,26 @@ export default function Dashboard() {
         <div className="px-5 py-4 border-b border-th-card">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
-              <span className="text-[12px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
+              <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
+              <span className="text-[16px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
             </div>
             <div className="flex items-center gap-2">
               {selectedOrders.size > 0 && (
-                <span className="text-[12px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
+                <span className="text-[16px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
               )}
               <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Buy lenses", "लेंस खरीदें")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[16px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <ShoppingBag className="w-3.5 h-3.5" />
                 {sendingDemand === "buy" ? "..." : uiT("Buy", "खरीदें")}
               </button>
               <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Order lenses", "लेंस ऑर्डर करें")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[16px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <Send className="w-3.5 h-3.5" />
                 {sendingDemand === "order" ? "..." : uiT("Order", "ऑर्डर")}
               </button>
             </div>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer text-[12px] font-medium text-th-secondary hover:text-th-text transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer text-[16px] font-medium text-th-secondary hover:text-th-text transition-colors">
             <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
               onChange={() => toggleAllOrders(allIds)}
               aria-label={uiT("Select all", "सभी चुनें")}
@@ -538,20 +538,20 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-[14px] font-bold text-th-text truncate">{cName || "—"}</p>
-                        {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
-                        <span className="text-[12px] text-th-muted hidden sm:inline">·</span>
-                        <span className="text-[12px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
+                        <p className="text-[18px] font-bold text-th-text truncate">{cName || "—"}</p>
+                        {!!(cMobile) && <span className="text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
+                        <span className="text-[16px] text-th-muted hidden sm:inline">·</span>
+                        <span className="text-[16px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        {!!(o.frameBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.frameBrand?.trim()}</span>}
-                        {!!(o.lensBrand) && <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand}</span>}
-                        {!!(o.lensType) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType}</span>}
-                        {!!(o.lensIndex) && <span className="text-[11px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
+                        {!!(o.frameBrand) && <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.frameBrand?.trim()}</span>}
+                        {!!(o.lensBrand) && <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand}</span>}
+                        {!!(o.lensType) && <span className="text-[15px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType}</span>}
+                        {!!(o.lensIndex) && <span className="text-[15px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
                       </div>
                     </div>
                     <button onClick={goToCustomer} aria-label={uiT("Open", "खोलें")}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
                       {uiT("Open", "खोलें")} <ArrowUpRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -560,12 +560,12 @@ export default function Dashboard() {
                   <div className="ml-[52px] mt-3 space-y-2">
                     {/* R Eye */}
                     <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[11px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
-                      <span className="text-[13px] font-mono font-semibold text-th-text min-w-[120px]">{rRx || "—"}</span>
+                      <span className="w-6 h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
+                      <span className="text-[17px] font-mono font-semibold text-th-text min-w-[120px]">{rRx || "—"}</span>
                       {inStock ? (
-                        <span className="text-[10px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
-                        <span className="text-[10px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
                       )}
                       <SegmentedControl compact
                         options={[
@@ -579,12 +579,12 @@ export default function Dashboard() {
                     </div>
                     {/* L Eye */}
                     <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[11px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
-                      <span className="text-[13px] font-mono font-semibold text-th-text min-w-[120px]">{lRx || "—"}</span>
+                      <span className="w-6 h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
+                      <span className="text-[17px] font-mono font-semibold text-th-text min-w-[120px]">{lRx || "—"}</span>
                       {inStock ? (
-                        <span className="text-[10px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
-                        <span className="text-[10px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
                       )}
                       <SegmentedControl compact
                         options={[
@@ -629,11 +629,11 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
+                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-[12px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
-                  {!!(o.frameBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand}</span>}
-                  {!!(o.lensBrand) && <span className="text-[11px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand}</span>}
+                  <span className="text-[16px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
+                  {!!(o.frameBrand) && <span className="text-[15px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand}</span>}
+                  {!!(o.lensBrand) && <span className="text-[15px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand}</span>}
                 </div>
               </div>
               <StatusBadge status={o.status || "—"} />
@@ -662,13 +662,13 @@ export default function Dashboard() {
             <div key={b._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <UserAvatar name={cName} className="w-10 h-10 text-sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[16px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="text-right flex items-center gap-3 flex-shrink-0">
-                <p className="text-[16px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+                <p className="text-[20px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider">
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[18px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider">
                   {uiT("Collect", "वसूलें")}
                 </button>
               </div>
@@ -702,13 +702,13 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[12px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[16px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <StatusBadge status={dl.status || "—"} />
                 <button onClick={() => navigate(`/delivery?order=${dl._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
-                  className="p-2.5 rounded-lg text-[14px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
+                  className="p-2.5 rounded-lg text-[18px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
                   <PackageCheck className="w-4 h-4" />
                 </button>
               </div>
@@ -744,10 +744,10 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[14px] font-semibold text-th-text truncate">{cName}</p>
-                    {!!(cMobile) && <span className="text-[12px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
+                    <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
+                    {!!(cMobile) && <span className="text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
                   </div>
-                  <p className="text-[12px] text-th-secondary mt-0.5">
+                  <p className="text-[16px] text-th-secondary mt-0.5">
                     {!!(o.frameBrand) ? `${o.frameBrand}` : ""}
                     {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
                     {!!(o.lensBrand) ? `${o.lensBrand}` : ""}
@@ -755,7 +755,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[16px] font-bold text-th-text">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
+                  <span className="text-[20px] font-bold text-th-text">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
                   <StatusBadge status="Delivered" />
                 </div>
               </div>
@@ -780,8 +780,8 @@ export default function Dashboard() {
           <div key={c._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
             <UserAvatar name={c.name || "?"} className="w-10 h-10 text-sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-th-text truncate">{v(c.name)}</p>
-              <p className="text-[12px] text-th-secondary mt-0.5 flex items-center gap-2 flex-wrap">
+              <p className="text-[18px] font-semibold text-th-text truncate">{v(c.name)}</p>
+              <p className="text-[16px] text-th-secondary mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>{c.mobile ? maskPhone(c.mobile) : "—"}</span>
                 <span className="text-th-muted">·</span>
                 <span>{c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""}</span>
@@ -790,7 +790,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-[16px] font-bold text-th-text">₹{(c.totalSpent || 0).toLocaleString()}</p>
+              <p className="text-[20px] font-bold text-th-text">₹{(c.totalSpent || 0).toLocaleString()}</p>
             </div>
           </div>
         ))}
@@ -807,16 +807,16 @@ export default function Dashboard() {
           <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
             <CheckSquare className="w-4 h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
+          <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
         </div>
-        <span className="text-[12px] font-bold text-th-secondary bg-th-elevated px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
+        <span className="text-[16px] font-bold text-th-secondary bg-th-elevated px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
       <div className="flex items-center gap-2 mb-4">
         <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTodo()}
           aria-label={uiT("Add a task", "कार्य जोड़ें")}
-          className="flex-1 px-4 py-2.5 bg-th-elevated border border-th-card rounded-lg text-[14px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
+          className="flex-1 px-4 py-2.5 bg-th-elevated border border-th-card rounded-lg text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
         <button onClick={addTodo} disabled={!newTask.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
           className="p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
           <Plus className="w-4 h-4" />
@@ -832,7 +832,7 @@ export default function Dashboard() {
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
                 {t.done && <Check className="w-3 h-3 text-th-text" />}
               </button>
-              <span className={`flex-1 text-[14px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
+              <span className={`flex-1 text-[18px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
               <button onClick={() => deleteTodo(t._id)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -853,7 +853,7 @@ export default function Dashboard() {
           <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
             <Wallet className="w-4 h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
+          <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2.5">
           {d.paymentModeSplit.map((p, idx) => {
@@ -864,10 +864,10 @@ export default function Dashboard() {
                   <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#1ed760" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold text-th-text">{p.mode}</p>
-                  <p className="text-[12px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
+                  <p className="text-[18px] font-semibold text-th-text">{p.mode}</p>
+                  <p className="text-[16px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
                 </div>
-                <p className="text-[16px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
+                <p className="text-[20px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
               </div>
             );
           })}
@@ -912,16 +912,16 @@ export default function Dashboard() {
           <ChevronRight className="w-4 h-4 text-th-muted transition-transform duration-300 group-open:rotate-90" />
           <div className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4 text-th-secondary" />
-            <span className="text-[14px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
+            <span className="text-[18px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
           </div>
-          <span className="text-[12px] text-th-muted">({rows.length} metrics)</span>
+          <span className="text-[16px] text-th-muted">({rows.length} metrics)</span>
         </summary>
         <div className="px-6 pb-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-0.5 pt-3 border-t border-th-card">
             {rows.map((r) => (
               <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-th-elevated last:border-0">
-                <span className="text-[14px] text-th-secondary">{r.label}</span>
-                <span className="text-[14px] font-bold text-th-text" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
+                <span className="text-[18px] text-th-secondary">{r.label}</span>
+                <span className="text-[18px] font-bold text-th-text" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
               </div>
             ))}
           </div>

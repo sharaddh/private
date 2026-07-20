@@ -33,7 +33,7 @@ function SectionCard({ icon, title, count, onAdd, onScan, children, emptyText }:
           </div>
           <div>
             <h2 className="text-base font-bold text-th-text">{title}</h2>
-            <span className="text-[11px] font-medium text-th-secondary">{count} item{count !== 1 ? "s" : ""}</span>
+            <span className="text-[15px] font-medium text-th-secondary">{count} item{count !== 1 ? "s" : ""}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
               <div className="col-span-1 sm:col-span-2 bg-th-elevated p-2.5 rounded-md">
                 <div className="flex items-center gap-1.5 mb-2 px-1">
                   <Layers size={12} className="text-th-secondary" />
-                  <span className="text-[10px] font-bold text-th-secondary uppercase tracking-wider">{uiT("Lens Types & Features", "लेंस प्रकार और विशेषताएँ")}</span>
+                  <span className="text-[14px] font-bold text-th-secondary uppercase tracking-wider">{uiT("Lens Types & Features", "लेंस प्रकार और विशेषताएँ")}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {LENS_FEATURES.map((feature) => {
@@ -233,7 +233,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                             : [...l.features, feature];
                           updateLens(i, "features", newFeatures);
                         }}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-[15px] font-semibold transition-all ${
                           isSelected
                             ? "bg-[#1ed760] text-black"
                             : "bg-th-elevated text-th-secondary hover:bg-th-card"

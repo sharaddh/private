@@ -37,7 +37,7 @@ export default function BillingPanel({ billItems, setBillItems, updateBillItem, 
             </div>
             <div>
               <h2 className="text-base font-bold text-th-text">{uiT("Bill Items", "बिल आइटम")}</h2>
-              <span className="text-[11px] font-medium text-th-secondary">
+              <span className="text-[15px] font-medium text-th-secondary">
                 {billItems.length} {uiT("item(s)", "आइटम")}
               </span>
             </div>
@@ -76,7 +76,7 @@ export default function BillingPanel({ billItems, setBillItems, updateBillItem, 
 
                 {/* Price Input */}
                 <div className="relative w-28">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-th-secondary">₹</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] font-bold text-th-secondary">₹</span>
                   <input
                     type="number"
                     placeholder={uiT("Price", "मूल्य")}

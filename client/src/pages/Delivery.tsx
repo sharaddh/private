@@ -105,42 +105,42 @@ export default function Delivery() {
               <Truck size={20} className="text-[#f59e0b]" />
             </div>
             <p className="text-2xl font-bold text-[#f59e0b]">{readyOrders.length}</p>
-            <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Ready", "तैयार")}</p>
+            <p className="text-[15px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Ready", "तैयार")}</p>
           </ShineCard>
           <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <CheckCircle size={20} className="text-[#1ed760]" />
             </div>
             <p className="text-2xl font-bold text-[#1ed760]">{deliveredOrders.length}</p>
-            <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Delivered", "डिलीवर")}</p>
+            <p className="text-[15px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Delivered", "डिलीवर")}</p>
           </ShineCard>
           <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <Wallet size={20} className="text-[#1ed760]" />
             </div>
             <p className="text-2xl font-bold text-[#1ed760]">₹{totalRevenue.toLocaleString()}</p>
-            <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Revenue", "राजस्व")}</p>
+            <p className="text-[15px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Revenue", "राजस्व")}</p>
           </ShineCard>
           <ShineCard className="bg-th-surface rounded-xl p-4 shadow-lg text-center">
             <div className="w-10 h-10 bg-[#e74c3c]/10 rounded-full flex items-center justify-center mx-auto mb-2">
               <Wallet size={20} className="text-[#e74c3c]" />
             </div>
             <p className="text-2xl font-bold text-[#e74c3c]">{pendingPayments}</p>
-            <p className="text-[11px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Pending", "बाकी")}</p>
+            <p className="text-[15px] text-th-secondary mt-0.5 uppercase tracking-wider font-medium">{uiT("Pending", "बाकी")}</p>
           </ShineCard>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-th-surface rounded-xl p-1 shadow-lg">
           <button onClick={() => setTab("ready")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[17px] font-bold transition-all ${
               tab === "ready" ? "bg-[#f59e0b]/10 text-[#f59e0b]" : "text-th-secondary hover:text-th-text"
             }`}>
             <Truck size={16} />
             {uiT("Ready for Pickup", "पिकअप के लिए तैयार")} ({readyOrders.length})
           </button>
           <button onClick={() => setTab("delivered")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[17px] font-bold transition-all ${
               tab === "delivered" ? "bg-[#1ed760]/10 text-[#1ed760]" : "text-th-secondary hover:text-th-text"
             }`}>
             <CheckCircle size={16} />
@@ -170,25 +170,25 @@ export default function Delivery() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-[14px] font-bold text-th-text truncate">{custName(o)}</p>
-                        {custMobile(o) && <span className="text-[12px] text-th-muted hidden sm:inline">{custMobile(o)}</span>}
+                        <p className="text-[18px] font-bold text-th-text truncate">{custName(o)}</p>
+                        {custMobile(o) && <span className="text-[16px] text-th-muted hidden sm:inline">{custMobile(o)}</span>}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {o.frameBrand && (
-                          <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md font-medium">
+                          <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md font-medium">
                             {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
                           </span>
                         )}
                         {o.lensBrand && (
-                          <span className="text-[11px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md font-medium">
+                          <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md font-medium">
                             {o.lensBrand}
                           </span>
                         )}
                         {o.billInfo?.totalAmount > 0 && (
-                          <span className="text-[11px] font-bold text-th-text">₹{o.billInfo.totalAmount.toLocaleString()}</span>
+                          <span className="text-[15px] font-bold text-th-text">₹{o.billInfo.totalAmount.toLocaleString()}</span>
                         )}
                         {o.billInfo?.pendingAmount > 0 && (
-                          <span className="text-[10px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded">₹{o.billInfo.pendingAmount.toLocaleString()} {uiT("due", "बाकी")}</span>
+                          <span className="text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded">₹{o.billInfo.pendingAmount.toLocaleString()} {uiT("due", "बाकी")}</span>
                         )}
                       </div>
                     </div>
@@ -196,30 +196,30 @@ export default function Delivery() {
                       {tab === "ready" && (
                         <>
                           {o.deliveryDate && (
-                            <span className={`text-[11px] font-bold px-2 py-1 rounded-lg ${isOverdue ? "text-[#e74c3c] bg-[#e74c3c]/10" : "text-th-secondary bg-th-elevated"}`}>
+                            <span className={`text-[15px] font-bold px-2 py-1 rounded-lg ${isOverdue ? "text-[#e74c3c] bg-[#e74c3c]/10" : "text-th-secondary bg-th-elevated"}`}>
                               <Clock size={11} className="inline mr-1" />
                               {daysUntil(o.deliveryDate)}
                             </span>
                           )}
                           <button onClick={() => navigate(`/pickup?orderId=${o._id}`)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider">
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider">
                             <CheckCircle size={13} /> {uiT("Deliver", "डिलीवर")}
                           </button>
                         </>
                       )}
                       {tab === "delivered" && o.actualDeliveryDate && (
-                        <span className="text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 py-1 rounded-lg">
+                        <span className="text-[15px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 py-1 rounded-lg">
                           {new Date(o.actualDeliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                         </span>
                       )}
                       {tab === "delivered" && (o.billInfo?.pendingAmount || 0) > 0 && (
                         <button onClick={() => navigate(`/pickup?orderId=${o._id}&collect=true`)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all active:scale-95 uppercase tracking-wider">
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[15px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all active:scale-95 uppercase tracking-wider">
                           {uiT("Collect", "एकत्र")} ₹{o.billInfo.pendingAmount.toLocaleString()}
                         </button>
                       )}
                       <button onClick={() => navigate(`/customers/${custId(o)}?visitId=${o.visitId || ""}`)}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[11px] font-bold bg-th-elevated text-th-secondary hover:text-[#1ed760] hover:bg-[#1ed760]/10 transition-all active:scale-95">
+                        className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[15px] font-bold bg-th-elevated text-th-secondary hover:text-[#1ed760] hover:bg-[#1ed760]/10 transition-all active:scale-95">
                         <ArrowUpRight size={13} /> {uiT("View", "देखें")}
                       </button>
                     </div>

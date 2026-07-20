@@ -107,7 +107,7 @@ export default function ConfirmationDashboard({
           )}
           {visitRemarks && (
             <div className="pt-2 mt-2 border-t border-[#1f1f1f]">
-              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Remarks", "टिप्पणी")}</span>
+              <span className="text-[15px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Remarks", "टिप्पणी")}</span>
               <p className="text-sm text-th-text italic">"{visitRemarks}"</p>
             </div>
           )}
@@ -128,7 +128,7 @@ export default function ConfirmationDashboard({
             const labels: Record<string, string> = { dv: "Dist", nv: "Near", pc: "Prog" };
             return (
               <div className="border border-[#1f1f1f] rounded-md overflow-hidden">
-                <div className="grid grid-cols-3 text-[10px] font-bold text-th-secondary uppercase bg-th-elevated px-3 py-1.5">
+                <div className="grid grid-cols-3 text-[14px] font-bold text-th-secondary uppercase bg-th-elevated px-3 py-1.5">
                   <span>{uiT("Type", "प्रकार")}</span>
                   <span className="text-center">{uiT("Right", "दायाँ")}</span>
                   <span className="text-center">{uiT("Left", "बायाँ")}</span>
@@ -161,7 +161,7 @@ export default function ConfirmationDashboard({
           )}
           {prescription.problems && (
             <div>
-              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Reported Problems", "बताई गई समस्याएँ")}</span>
+              <span className="text-[15px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Reported Problems", "बताई गई समस्याएँ")}</span>
               <p className="text-sm font-medium text-[#e53935] flex items-start gap-1.5">
                 <HeartPulse size={14} className="mt-0.5 flex-shrink-0" />
                 {prescription.problems}
@@ -170,7 +170,7 @@ export default function ConfirmationDashboard({
           )}
           {prescription.notes && (
             <div>
-              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Notes", "नोट्स")}</span>
+              <span className="text-[15px] font-semibold text-th-secondary uppercase tracking-wider block mb-0.5">{uiT("Notes", "नोट्स")}</span>
               <p className="text-sm text-th-text">{prescription.notes}</p>
             </div>
           )}
@@ -189,7 +189,7 @@ export default function ConfirmationDashboard({
           {orderFrames.map((f, i) => (
               <div key={`f-${i}`} className="flex justify-between items-start gap-2">
               <div>
-                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Frame", "फ्रेम")}</span>
+                <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Frame", "फ्रेम")}</span>
                 <p className="text-sm font-medium text-th-text">{f.brand || uiT("Unknown Brand", "अज्ञात ब्रांड")} {f.model}</p>
                 {f.color && <p className="text-xs text-th-secondary">{uiT("Color", "रंग")}: {f.color}</p>}
               </div>
@@ -199,7 +199,7 @@ export default function ConfirmationDashboard({
           {orderLenses.map((l, i) => (
             <div key={`l-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]">
               <div>
-                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Lens", "लेंस")}</span>
+                <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Lens", "लेंस")}</span>
                 <p className="text-sm font-medium text-th-text">
                   {l.brand || uiT("Standard", "मानक")} {l.features.join(" + ")}
                 </p>
@@ -215,7 +215,7 @@ export default function ConfirmationDashboard({
           {orderAccessories.map((a, i) => (
             <div key={`a-${i}`} className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]">
               <div>
-                <span className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Accessory", "एक्सेसरी")}</span>
+                <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">{uiT("Accessory", "एक्सेसरी")}</span>
                 <p className="text-sm font-medium text-th-text">{a.name}</p>
               </div>
               <span className="text-sm font-bold text-th-text tabular-nums">₹{a.price}</span>
@@ -282,7 +282,7 @@ export default function ConfirmationDashboard({
         <div className="space-y-4">
           {deliveryDate && (
             <div>
-              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Expected Delivery", "अपेक्षित डिलीवरी")}</span>
+              <span className="text-[15px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Expected Delivery", "अपेक्षित डिलीवरी")}</span>
               <p className="text-sm font-bold text-th-text flex items-center gap-2">
                 <CalendarDays size={15} className="text-[#1ed760]" />
                 {formatDate(deliveryDate)}
@@ -291,7 +291,7 @@ export default function ConfirmationDashboard({
           )}
           {deliveryAddress && (
             <div>
-              <span className="text-[11px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Shipping Address", "शिपिंग पता")}</span>
+              <span className="text-[15px] font-semibold text-th-secondary uppercase tracking-wider block mb-1">{uiT("Shipping Address", "शिपिंग पता")}</span>
               <p className="text-sm font-medium text-th-text flex items-start gap-2">
                 <MapPin size={15} className="text-[#1ed760] mt-0.5 shrink-0" />
                 {deliveryAddress}
