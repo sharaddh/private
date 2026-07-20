@@ -119,7 +119,7 @@ export default function PageSkeleton({ page }: { page: string }) {
             </div>
           </div>
           <SkeletonSearchBar />
-          <p className="text-[11px]"><Skeleton className="h-3 w-28 inline-block" delay={200} /></p>
+          <span className="text-[11px] block"><Skeleton className="h-3 w-28 inline-block" delay={200} /></span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-th-surface rounded-xl p-4 animate-skeleton-stagger" style={{ animationDelay: `${220 + i * 40}ms` }}>
