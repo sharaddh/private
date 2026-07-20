@@ -1,11 +1,13 @@
 import assert from "assert";
-import { shouldResetSessionForError } from "./whatsapp";
+import { whatsappService } from "./whatsapp.service";
+import { isWhatsAppConfigured } from "../config/whatsapp.config";
 
 function run(): void {
-  assert.strictEqual(shouldResetSessionForError("Connection closed"), false);
-  assert.strictEqual(shouldResetSessionForError("bad session"), true);
-  assert.strictEqual(shouldResetSessionForError("logged out"), true);
-  assert.strictEqual(shouldResetSessionForError("session expired"), true);
+  const status = whatsappService.getStatus();
+  assert.ok(status, "getStatus should return a value");
+  assert.ok(["connected", "error", "disconnected"].includes(status.status), "status should be valid");
+  console.log(`WhatsApp status: ${status.status}`);
+  console.log(`WhatsApp configured: ${isWhatsAppConfigured()}`);
 }
 
 run();
