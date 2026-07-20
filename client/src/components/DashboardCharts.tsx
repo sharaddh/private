@@ -85,7 +85,7 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
         </div>
         <div className="flex-1 space-y-1.5">
           {data.map((d, i) => (
-            <div key={d.status} className="flex items-center gap-2 text-xs">
+            <div key={`${d.status}-${i}`} className="flex items-center gap-2 text-xs">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
               <span className="font-medium text-th-secondary">{d.status}</span>
               <span className="text-th-muted ml-auto">{d.count}</span>
