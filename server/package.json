@@ -12,7 +12,7 @@
     "postinstall": "node -e \"console.log('no postinstall needed')\""
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.17.16",
+    "@types/qrcode": "^1.5.6",
     "bcrypt": "^5.1.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
@@ -37,7 +37,6 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/morgan": "^1.9.4",
     "@types/pdfkit": "^0.17.6",
-    "@types/qrcode": "^1.5.6",
     "ts-node-dev": "^2.0.0",
     "typescript": "5.2.2"
   }
