@@ -856,10 +856,10 @@ export default function Dashboard() {
           <h3 className="text-[16px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2.5">
-          {d.paymentModeSplit.map((p) => {
+          {d.paymentModeSplit.map((p, idx) => {
             const Icon = paymentModeIcon[p.mode] || IndianRupee;
             return (
-              <div key={p.mode} className="flex items-center gap-3 bg-th-elevated rounded-lg px-4 py-3 transition-all hover:bg-th-card">
+              <div key={`${p.mode}-${idx}`} className="flex items-center gap-3 bg-th-elevated rounded-lg px-4 py-3 transition-all hover:bg-th-card">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#1ed760"}15` }}>
                   <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#1ed760" }} />
                 </div>
