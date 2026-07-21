@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { VALID_PAYMENT_MODES } from "../types";
 
 export const createBillSchema = z.object({
   customerId: z.string().min(1),
@@ -12,7 +11,7 @@ export const createBillSchema = z.object({
   discount: z.number().min(0).optional(),
   tax: z.number().min(0).optional(),
   advancePaid: z.number().min(0).optional(),
-});
+}).strict();
 
 export const updateBillSchema = z.object({
   items: z.array(z.object({
