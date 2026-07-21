@@ -93,7 +93,9 @@ async function start() {
     try {
       const redis = initCache(REDIS_URL);
       await redis.connect();
-    } catch {}
+    } catch (err) {
+      logger.warn("Redis connection failed, caching disabled", { error: (err as Error).message });
+    }
   }
 
   server = app.listen(PORT, () => {
