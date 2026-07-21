@@ -38,7 +38,7 @@ export default function Header({
         <button 
           onClick={() => setSidebarOpen(true)} 
           aria-label="Open sidebar" 
-          className="hidden h-9 w-9 items-center justify-center rounded-xl border border-transparent text-th-text transition-all duration-200 hover:border-[#1ed760]/20 hover:bg-th-hover/80 hover:shadow-sm lg:flex"
+          className="hidden h-9 w-9 items-center justify-center rounded-xl border border-transparent text-th-text transition-all duration-200 hover:border-[#1ed760]/20 hover:bg-th-hover/80 hover:shadow-sm hover:-translate-y-0.5 lg:flex"
         >
           <PanelLeft size={20} />
         </button>
@@ -158,7 +158,7 @@ export default function Header({
       {/* --- Right Section: Branch Indicator --- */}
       <div className="flex w-1/4 items-center justify-end">
         {currentBranch && (
-          <div className="flex items-center gap-2 rounded-full border border-[#1ed760]/20 bg-gradient-to-r from-[#1ed760]/10 to-[#509bf5]/10 px-3 py-1.5 text-xs font-semibold text-th-text shadow-sm">
+          <div className="flex items-center gap-2 rounded-full border border-[#1ed760]/20 bg-gradient-to-r from-[#1ed760]/10 to-[#509bf5]/10 px-3 py-1.5 text-xs font-semibold text-th-text shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
             <Building2 size={14} className="text-[#1ed760]" />
             <span className="hidden sm:inline-block max-w-[120px] truncate">
               {currentBranch.name}
