@@ -23,7 +23,7 @@ export default function Header({
   uiT 
 }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border/80 bg-white/80 px-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border/80 bg-white/85 px-4 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:px-6">
       
       {/* --- Left Section: Menus & Title --- */}
       <div className="flex w-1/4 items-center gap-3">
