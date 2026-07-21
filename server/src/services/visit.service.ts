@@ -15,10 +15,10 @@ interface VisitData {
 
 const UPDATE_WHITELIST = ["customerId", "visitDate", "visitType", "doctorName", "shop", "shopId", "remarks"] as const;
 
-export async function listVisits(customerId?: string) {
+export async function listVisits(customerId?: string, limit = 100) {
   const filter: Record<string, unknown> = {};
   if (customerId) filter.customerId = customerId;
-  return Visit.find(filter).sort({ visitDate: -1 }).limit(200).lean();
+  return Visit.find(filter).sort({ visitDate: -1 }).limit(Math.min(limit, 200)).lean();
 }
 
 export async function getVisitById(id: string) {

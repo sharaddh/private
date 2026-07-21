@@ -1,14 +1,14 @@
 import { Delivery } from "../models/delivery";
 import { AppError } from "../middleware/errorHandler";
 
-export async function listDeliveries(status?: string) {
+export async function listDeliveries(status?: string, limit = 100) {
   const filter: Record<string, unknown> = {};
   if (status) filter.status = status;
   return Delivery.find(filter)
     .populate("customerId", "name mobile")
     .populate("orderId", "frame lens status")
     .sort({ expectedDeliveryDate: -1 })
-    .limit(200)
+    .limit(Math.min(limit, 200))
     .lean();
 }
 

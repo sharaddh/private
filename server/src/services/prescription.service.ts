@@ -14,10 +14,10 @@ interface PrescriptionData {
 
 const UPDATE_WHITELIST = ["customerId", "visitId", "rightEye", "leftEye", "pd", "notes"] as const;
 
-export async function listPrescriptions(customerId?: string) {
+export async function listPrescriptions(customerId?: string, limit = 100) {
   const filter: Record<string, unknown> = {};
   if (customerId) filter.customerId = customerId;
-  return Prescription.find(filter).sort({ createdAt: -1 }).limit(200).lean();
+  return Prescription.find(filter).sort({ createdAt: -1 }).limit(Math.min(limit, 200)).lean();
 }
 
 export async function getPrescriptionById(id: string) {

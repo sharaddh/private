@@ -70,7 +70,7 @@ export async function listInventory(query?: { search?: string }) {
       { supplier: searchRegex },
     ];
   }
-  return Inventory.find(filter).sort({ createdAt: -1 }).limit(200).lean();
+  return Inventory.find(filter).sort({ createdAt: -1 }).limit(Math.min(200, 200)).lean();
 }
 
 export async function getInventoryById(id: string) {
