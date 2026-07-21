@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import { Branch } from "../models/branch";
 import { getBranchModels, type BranchModels } from "../models/db";
 import { ctx, type RequestContext } from "../utils/requestContext";
+import { logger } from "../utils/logger";
 import type { AuthRequest } from "../types";
 
 export interface BranchRequest extends AuthRequest {
@@ -34,7 +35,7 @@ export async function branchScope(req: BranchRequest, _res: Response, next: Next
         return;
       }
     } catch (err) {
-      console.error("Branch scope lookup failed:", err);
+      logger.error("Branch scope lookup failed", { error: (err as Error).message });
     }
   }
   next();
