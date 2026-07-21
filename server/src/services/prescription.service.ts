@@ -12,6 +12,8 @@ interface PrescriptionData {
   notes?: string;
 }
 
+const UPDATE_WHITELIST = ["customerId", "visitId", "rightEye", "leftEye", "pd", "notes"] as const;
+
 export async function listPrescriptions(customerId?: string) {
   const filter: Record<string, unknown> = {};
   if (customerId) filter.customerId = customerId;
@@ -39,7 +41,13 @@ export async function createPrescription(data: PrescriptionData) {
 }
 
 export async function updatePrescription(id: string, data: PrescriptionData) {
-  const prescription = await Prescription.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
+  const filtered: Record<string, unknown> = {};
+  for (const key of UPDATE_WHITELIST) {
+    if (key in data) {
+      filtered[key] = (data as Record<string, unknown>)[key];
+    }
+  }
+  const prescription = await Prescription.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
   if (!prescription) throw new AppError(404, "Prescription not found");
   return prescription;
 }
