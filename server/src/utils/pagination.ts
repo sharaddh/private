@@ -15,8 +15,8 @@ export interface PaginatedResult<T> {
   nextCursor: string | null;
 }
 
-const DEFAULT_LIMIT = 1000;
-const MAX_LIMIT = 5000;
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
 
 export async function paginateQuery<T extends Document>(
   baseQuery: Query<T[], T>,
