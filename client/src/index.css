@@ -17,6 +17,23 @@ body {
   color: var(--text-base);
 }
 
+::selection {
+  background: rgba(30, 215, 96, 0.28);
+  color: var(--text-base);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(30, 215, 96, 0.65), rgba(80, 155, 245, 0.65));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 @layer base {
   :root {
     --sidebar-width: 288px;

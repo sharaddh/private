@@ -23,7 +23,7 @@ export default function Header({
   uiT 
 }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border px-4 shadow-sm glass-header lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border/80 bg-white/80 px-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl lg:px-6">
       
       {/* --- Left Section: Menus & Title --- */}
       <div className="flex w-1/4 items-center gap-3">
@@ -43,7 +43,7 @@ export default function Header({
           <PanelLeft size={20} />
         </button>
         
-        <h2 className="hidden truncate text-sm font-semibold tracking-wide text-th-text sm:block">
+        <h2 className="hidden truncate text-sm font-semibold uppercase tracking-[0.22em] text-th-text/90 sm:block">
           {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
         </h2>
       </div>
@@ -54,10 +54,10 @@ export default function Header({
         className="relative mx-2 flex w-full max-w-xl flex-1 items-center justify-center lg:mx-4"
       >
         <div
-          className={`group flex w-full items-center rounded-full border bg-gradient-to-r from-th-hover/80 to-th-hover/60 backdrop-blur-md transition-all duration-300 ease-out ${
+          className={`group flex w-full items-center rounded-full border bg-th-surface/90 backdrop-blur-xl transition-all duration-300 ease-out ${
             searchOpen
-              ? "border-[#1ed760]/50 ring-4 ring-[#1ed760]/10 shadow-[0_8px_30px_rgba(30,215,96,0.15)]"
-              : "border-white/10 hover:border-[#1ed760]/30 hover:shadow-md"
+              ? "border-[#1ed760]/50 ring-4 ring-[#1ed760]/10 shadow-[0_10px_32px_rgba(30,215,96,0.14)]"
+              : "border-th-border/70 hover:border-[#1ed760]/30 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
           }`}
         >
           {/* Search Icon / Loader */}
@@ -85,7 +85,7 @@ export default function Header({
             onFocus={() => {
               if (searchQuery.trim()) setSearchOpen(true);
             }}
-            className="w-full bg-transparent py-3 pr-4 text-[19px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
+            className="w-full bg-transparent py-3 pr-4 text-[16px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
             aria-label="Search customers"
           />
 
@@ -158,7 +158,7 @@ export default function Header({
       {/* --- Right Section: Branch Indicator --- */}
       <div className="flex w-1/4 items-center justify-end">
         {currentBranch && (
-          <div className="flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary shadow-sm">
+          <div className="flex items-center gap-2 rounded-full border border-[#1ed760]/20 bg-gradient-to-r from-[#1ed760]/10 to-[#509bf5]/10 px-3 py-1.5 text-xs font-semibold text-th-text shadow-sm">
             <Building2 size={14} className="text-[#1ed760]" />
             <span className="hidden sm:inline-block max-w-[120px] truncate">
               {currentBranch.name}

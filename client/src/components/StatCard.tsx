@@ -24,10 +24,10 @@ export default function StatCard({ title, value, icon, color = "primary", subtit
 
   return (
     <div onClick={onClick}
-      className={`bg-th-surface rounded-[8px] p-4 transition-all duration-200 hover:bg-th-card ${onClick ? "cursor-pointer active:scale-[0.95]" : ""}`}
+      className={`rounded-[14px] border border-th-border/70 bg-gradient-to-br from-th-surface to-th-elevated p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#1ed760]/30 hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${onClick ? "cursor-pointer active:scale-[0.98]" : ""}`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-11 h-11 ${cc.bg} rounded-[8px] flex items-center justify-center ${cc.icon} ring-1 flex-shrink-0`}>
+        <div className={`w-11 h-11 ${cc.bg} rounded-[10px] flex items-center justify-center ${cc.icon} ring-1 flex-shrink-0`}>
           {icon}
         </div>
         <div className="min-w-0">
