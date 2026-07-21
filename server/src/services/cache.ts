@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { logger } from "../utils/logger";
 
 export const CACHE_PREFIX = "route:";
 const DEFAULT_TTL = 60;
@@ -20,7 +21,7 @@ export function initCache(redisUrl: string): Redis {
   });
 
   client.on("connect", () => { connected = true; });
-  client.on("ready", () => { console.log("Redis ready for cache operations"); });
+  client.on("ready", () => { logger.info("Redis ready for cache operations"); });
   client.on("close", () => { connected = false; });
   client.on("reconnecting", () => {});
   client.on("error", (err) => {
