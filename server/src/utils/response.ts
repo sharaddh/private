@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { logger } from "./logger";
 
 export function sendSuccess<T>(res: Response, data: T, message?: string, status = 200): void {
   const body: Record<string, unknown> = { success: true, data };
@@ -21,6 +22,6 @@ export function sendNotFound(res: Response, message = "Resource not found"): voi
 }
 
 export function sendServerError(res: Response, error: unknown): void {
-  console.error(error);
+  logger.error("Internal server error", { error: (error as Error).message });
   sendError(res, "Internal Server Error", 500);
 }
