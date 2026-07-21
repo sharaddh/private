@@ -30,7 +30,7 @@ export default function Header({
         <button 
           onClick={() => setMobileOpen(true)} 
           aria-label="Open mobile menu" 
-          className="flex h-9 w-9 items-center justify-center rounded-md text-th-text transition-colors hover:bg-th-hover lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-th-text transition-all duration-200 hover:border-[#1ed760]/20 hover:bg-th-hover/80 hover:shadow-sm lg:hidden"
         >
           <Menu size={20} />
         </button>
@@ -38,7 +38,7 @@ export default function Header({
         <button 
           onClick={() => setSidebarOpen(true)} 
           aria-label="Open sidebar" 
-          className="hidden h-9 w-9 items-center justify-center rounded-md text-th-text transition-colors hover:bg-th-hover lg:flex"
+          className="hidden h-9 w-9 items-center justify-center rounded-xl border border-transparent text-th-text transition-all duration-200 hover:border-[#1ed760]/20 hover:bg-th-hover/80 hover:shadow-sm lg:flex"
         >
           <PanelLeft size={20} />
         </button>
