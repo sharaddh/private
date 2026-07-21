@@ -161,13 +161,46 @@ export async function createOrder(data: CreateOrderData): Promise<OrderResult> {
   return order.toObject() as unknown as OrderResult;
 }
 
+const UPDATE_WHITELIST = [
+  "customerId",
+  "visitId",
+  "frame",
+  "frameBrand",
+  "frameModel",
+  "frameColor",
+  "frameSize",
+  "framePrice",
+  "lens",
+  "lensBrand",
+  "lensType",
+  "lensIndex",
+  "lensPrice",
+  "coating",
+  "coatingPrice",
+  "accessories",
+  "quantity",
+  "deliveryDate",
+  "status",
+  "classification",
+  "rightLensStatus",
+  "leftLensStatus",
+  "reviewed",
+  "forwardedCount",
+] as const;
+
 export async function updateOrder(
   orderId: string,
   updates: UpdateOrderData
 ): Promise<OrderResult> {
+  const filtered: Record<string, unknown> = {};
+  for (const key of UPDATE_WHITELIST) {
+    if (key in updates) {
+      filtered[key] = (updates as Record<string, unknown>)[key];
+    }
+  }
   const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
     orderId,
-    { $set: updates },
+    { $set: filtered },
     { new: true, runValidators: true }
   );
   if (!order) {
