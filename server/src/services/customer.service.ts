@@ -7,6 +7,7 @@ import { Prescription } from "../models/prescription";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
+import { escapeRegex } from "../utils/string";
 import { AppError } from "../middleware/errorHandler";
 import type { PaginatedResult } from "../types";
 
@@ -67,10 +68,6 @@ interface CustomerSummary extends CustomerResult {
   visitCount: number;
   orderCount: number;
   totalBilled: number;
-}
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function generateCustomerId(): string {

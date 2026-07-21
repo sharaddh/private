@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
 import { Inventory } from "../models/inventory";
+import { escapeRegex } from "../utils/string";
 import { AppError } from "../middleware/errorHandler";
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 interface InventoryData {
   sku?: string;
