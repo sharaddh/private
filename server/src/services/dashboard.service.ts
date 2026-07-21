@@ -91,6 +91,9 @@ export async function getStats() {
     todayBillCount,
     weekBillCount,
     monthBillCount,
+    incompleteOrders,
+    orderCounts,
+    paymentCounts,
   ] = await Promise.all([
     Customer.countDocuments(),
     Order.countDocuments(),
@@ -154,6 +157,17 @@ export async function getStats() {
     Bill.countDocuments({ createdAt: { $gte: dayStart, $lte: dayEnd }, status: "Active" }),
     Bill.countDocuments({ createdAt: { $gte: weekStart, $lte: weekEnd }, status: "Active" }),
     Bill.countDocuments({ createdAt: { $gte: monthStart, $lte: monthEnd }, status: "Active" }),
+    Order.find({ status: { $in: ["Draft", "Ordered", "In Lab"] } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+    Payment.aggregate([
+      { $match: { paymentDate: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
+      { $sort: { _id: 1 } },
+    ]),
   ]);
 
   const todaySales = todaySalesResult[0]?.total || 0;
@@ -166,23 +180,6 @@ export async function getStats() {
 
   const salesTrendObj = calcTrend(monthSales, prevMonthSales);
   const salesTrend = salesTrendObj.direction === "flat" ? "0" : `${salesTrendObj.direction === "up" ? "" : "-"}${salesTrendObj.value}`;
-
-  const incompleteOrders = await Order.find({ status: { $in: ["Draft", "Ordered", "In Lab"] } })
-    .sort({ createdAt: -1 })
-    .populate("customerId", "name mobile")
-    .lean();
-
-  const orderCounts = await Order.aggregate([
-    { $match: { createdAt: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
-    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
-    { $sort: { _id: 1 } },
-  ]);
-
-  const paymentCounts = await Payment.aggregate([
-    { $match: { paymentDate: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
-    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
-    { $sort: { _id: 1 } },
-  ]);
 
   return {
     counts: {
