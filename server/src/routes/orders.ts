@@ -15,19 +15,11 @@ import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
+import { VALID_TRANSITIONS } from "../types";
 import { createOrderSchema, updateOrderSchema, statusUpdateSchema, classifyOrderSchema, classifyEyeSchema, demandSendSchema } from "../validators/order.validator";
 import * as orderController from "../controllers/orderController";
 
 const router = Router();
-
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  Draft: ["Ordered", "Cancelled"],
-  Ordered: ["In Lab", "Cancelled"],
-  "In Lab": ["Ready", "Cancelled"],
-  Ready: ["Delivered", "Cancelled"],
-  Delivered: [],
-  Cancelled: [],
-};
 
 router.get("/", authenticate, cacheRoute(30), asyncHandler(orderController.list));
 
