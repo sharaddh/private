@@ -16,7 +16,7 @@ import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
 import { VALID_TRANSITIONS } from "../types";
-import { createOrderSchema, updateOrderSchema, statusUpdateSchema, classifyOrderSchema, classifyEyeSchema, demandSendSchema } from "../validators/order.validator";
+import { createOrderSchema, updateOrderSchema, statusUpdateSchema, classifyOrderSchema, classifyEyeSchema, demandSendSchema, collectPaymentSchema } from "../validators/order.validator";
 import * as orderController from "../controllers/orderController";
 
 const router = Router();
@@ -159,7 +159,7 @@ router.patch("/:id/status", authenticate, validate(statusUpdateSchema, "body"), 
   }
 });
 
-router.patch("/:id/collect-payment", authenticate, async (req, res) => {
+router.patch("/:id/collect-payment", authenticate, validate(collectPaymentSchema, "body"), async (req, res) => {
   try {
     const { collectPayment, paymentMode } = req.body;
     if (!collectPayment || collectPayment <= 0) {

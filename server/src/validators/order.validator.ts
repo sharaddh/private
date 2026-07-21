@@ -70,3 +70,8 @@ export const demandSendSchema = z.object({
   type: z.enum(["buy", "order"]),
   orderIds: z.array(z.string()).optional(),
 });
+
+export const collectPaymentSchema = z.object({
+  collectPayment: z.number().positive("Payment amount must be positive"),
+  paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
+});
