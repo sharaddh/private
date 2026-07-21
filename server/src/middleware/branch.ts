@@ -1,16 +1,11 @@
 import { Response, NextFunction } from "express";
 import { Branch } from "../models/branch";
-import { getBranchModels, type BranchModels } from "../models/db";
+import { getBranchModels } from "../models/db";
 import { ctx, type RequestContext } from "../utils/requestContext";
 import { logger } from "../utils/logger";
-import type { AuthRequest } from "../types";
+import type { AuthRequest, BranchRequest, BranchModels } from "../types";
 
-export interface BranchRequest extends AuthRequest {
-  branchId?: string;
-  branchDb?: string;
-  branchName?: string;
-  branchModels?: BranchModels;
-}
+export type { BranchRequest } from "../types";
 
 export async function branchScope(req: BranchRequest, _res: Response, next: NextFunction): Promise<void> {
   const branchId = req.headers["x-branch-id"] as string || req.query._branch as string;
