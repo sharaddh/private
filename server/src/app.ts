@@ -6,6 +6,7 @@ import compression from "compression";
 import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
+import { CORS_ORIGINS } from "./config";
 import routes from "./routes";
 import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
@@ -19,12 +20,7 @@ const app = express();
 app.use(requestId);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: [
-    "https://kmjoptical.onrender.com",
-    "http://localhost:5173",
-    "http://localhost:4000",
-    "http://localhost:5174",
-  ],
+  origin: CORS_ORIGINS,
   credentials: true,
 }));
 app.use(compression({ level: 6, threshold: 1024 }));

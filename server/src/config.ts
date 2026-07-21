@@ -9,6 +9,9 @@ export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "24h";
 export const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
 export const REDIS_URL = process.env.REDIS_URL || "";
 export const NODE_ENV = process.env.NODE_ENV || "development";
+export const CORS_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
+  : ["https://kmjoptical.onrender.com", "http://localhost:5173", "http://localhost:4000", "http://localhost:5174"];
 
 function normalizePort(val: string): number {
   const port = parseInt(val, 10);
