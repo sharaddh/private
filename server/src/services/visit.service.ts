@@ -13,6 +13,8 @@ interface VisitData {
   remarks?: string;
 }
 
+const UPDATE_WHITELIST = ["customerId", "visitDate", "visitType", "doctorName", "shop", "shopId", "remarks"] as const;
+
 export async function listVisits(customerId?: string) {
   const filter: Record<string, unknown> = {};
   if (customerId) filter.customerId = customerId;
@@ -33,7 +35,13 @@ export async function createVisit(data: VisitData) {
 }
 
 export async function updateVisit(id: string, data: VisitData) {
-  const visit = await Visit.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
+  const filtered: Record<string, unknown> = {};
+  for (const key of UPDATE_WHITELIST) {
+    if (key in data) {
+      filtered[key] = (data as Record<string, unknown>)[key];
+    }
+  }
+  const visit = await Visit.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
   if (!visit) throw new AppError(404, "Visit not found");
   return visit;
 }
