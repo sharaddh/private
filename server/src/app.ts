@@ -6,7 +6,7 @@ import compression from "compression";
 import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
-import { CORS_ORIGINS } from "./config";
+import { CORS_ORIGINS, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX } from "./config";
 import routes from "./routes";
 import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
@@ -37,8 +37,8 @@ app.use(audit);
 
 app.use(
   rateLimit({
-    windowMs: 60 * 1000,
-    max: 200,
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    max: RATE_LIMIT_MAX,
     standardHeaders: true,
     legacyHeaders: false,
   })
