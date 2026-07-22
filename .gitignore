@@ -46,3 +46,17 @@ client/public/*.pdf
 *.new
 *.v2
 ann.diff
+
+# OS files
+Thumbs.db
+Desktop.ini
+._*
+
+# TypeScript build output
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Docker
+docker-compose.override.yml
