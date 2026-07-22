@@ -17,6 +17,9 @@ export interface PaginatedResult<T> {
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+const MIN_LIMIT = 1;
+
+export { DEFAULT_LIMIT, MAX_LIMIT, MIN_LIMIT };
 
 export async function paginateQuery<T extends Document>(
   baseQuery: Query<T[], T>,
