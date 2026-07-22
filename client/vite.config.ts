@@ -56,6 +56,7 @@ export default defineConfig({
     minifySyntax: true,
     minifyWhitespace: true,
     reportCompressedSize: true,
+    emptyOutDir: true,
   },
   optimizeDeps: {
     include: ["react", "react-dom", "react-router-dom", "lucide-react", "html5-qrcode"],
