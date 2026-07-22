@@ -4,6 +4,7 @@ import { logger } from "../utils/logger";
 
 export class AppError extends Error {
   public readonly statusCode: number;
+  public readonly code: string;
   public readonly details?: Record<string, unknown>;
   public readonly isOperational: boolean;
 
@@ -16,9 +17,34 @@ export class AppError extends Error {
     super(message);
     this.name = "AppError";
     this.statusCode = statusCode;
+    this.code = `ERR_${statusCode}`;
     this.details = details;
     this.isOperational = isOperational;
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  static badRequest(message: string, details?: Record<string, unknown>): AppError {
+    return new AppError(400, message, details);
+  }
+
+  static unauthorized(message = "Unauthorized"): AppError {
+    return new AppError(401, message);
+  }
+
+  static forbidden(message = "Forbidden"): AppError {
+    return new AppError(403, message);
+  }
+
+  static notFound(message = "Resource not found"): AppError {
+    return new AppError(404, message);
+  }
+
+  static conflict(message: string): AppError {
+    return new AppError(409, message);
+  }
+
+  static tooMany(message = "Too many requests"): AppError {
+    return new AppError(429, message);
   }
 }
 
@@ -28,12 +54,14 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   if (err instanceof AppError) {
     logger.warn(`AppError: ${err.message}`, {
       statusCode: err.statusCode,
+      code: err.code,
       path: req.originalUrl,
       method: req.method,
       requestId,
     });
     res.status(err.statusCode).json({
       success: false,
+      code: err.code,
       message: err.message,
       ...(err.details || {}),
     });
