@@ -15,6 +15,7 @@ export const CORS_ORIGINS = process.env.CORS_ORIGINS
 
 export const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || "60000", 10);
 export const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || "200", 10);
+export const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 
 function normalizePort(val: string): number {
   const port = parseInt(val, 10);
