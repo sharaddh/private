@@ -7,6 +7,15 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 };
 
+const LEVEL_COLORS: Record<LogLevel, string> = {
+  debug: "\x1b[36m",
+  info: "\x1b[32m",
+  warn: "\x1b[33m",
+  error: "\x1b[31m",
+};
+
+const RESET = "\x1b[0m";
+
 const MIN_LEVEL: LogLevel = (process.env.LOG_LEVEL as LogLevel) || "info";
 
 function shouldLog(level: LogLevel): boolean {
@@ -18,7 +27,9 @@ function formatTimestamp(): string {
 }
 
 function formatMessage(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
-  const base = `[${formatTimestamp()}] [${level.toUpperCase()}] ${message}`;
+  const color = process.env.NODE_ENV !== "production" ? LEVEL_COLORS[level] : "";
+  const reset = color ? RESET : "";
+  const base = `${color}[${formatTimestamp()}] [${level.toUpperCase()}]${reset} ${message}`;
   if (meta && Object.keys(meta).length > 0) {
     return `${base} ${JSON.stringify(meta)}`;
   }
