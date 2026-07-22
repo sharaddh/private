@@ -13,6 +13,9 @@ export const CORS_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
   : ["https://kmjoptical.onrender.com", "http://localhost:5173", "http://localhost:4000", "http://localhost:5174"];
 
+export const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || "60000", 10);
+export const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || "200", 10);
+
 function normalizePort(val: string): number {
   const port = parseInt(val, 10);
   if (isNaN(port)) return 4000;
