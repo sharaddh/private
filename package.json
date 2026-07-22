@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "description": "KMJ Optical ERP System",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "erp",
+    "optical",
+    "inventory",
+    "billing",
+    "customer-management"
+  ],
   "scripts": {
     "install-all": "npm install && npm install --prefix client && npm install --prefix server && npm install --prefix warehouse",
     "postinstall": "npm install --prefix client && npm install --prefix server && npm install --prefix warehouse",
