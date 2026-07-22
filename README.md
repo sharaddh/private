@@ -2,6 +2,20 @@
 
 A comprehensive Enterprise Resource Planning (ERP) system designed for KMJ Optical, featuring customer management, order processing, billing, inventory tracking, and delivery management.
 
+## Architecture
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   React SPA  │────▶│  Express API │────▶│   MongoDB    │
+│   (Vite)     │     │  (TypeScript)│     │   + Redis    │
+└──────────────┘     └──────────────┘     └──────────────┘
+       │                    │
+       │              ┌─────┴─────┐
+       │              │  WhatsApp  │
+       ▼              │  Webhook   │
+  Warehouse App       └───────────┘
+```
+
 ## Tech Stack
 
 ### Frontend
@@ -178,6 +192,10 @@ See `server/docs/openapi.yaml` for the OpenAPI specification.
 - ✅ Unified Vite configuration
 - ✅ Streamlined dependency versions
 - ✅ Clean build pipeline
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## License
 
