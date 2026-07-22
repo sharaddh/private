@@ -17,6 +17,8 @@ import { asyncHandler } from "./middleware/asyncHandler";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(requestId);
 
 app.use((_req, res, next) => {
