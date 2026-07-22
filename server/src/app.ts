@@ -18,6 +18,18 @@ import { asyncHandler } from "./middleware/asyncHandler";
 const app = express();
 
 app.use(requestId);
+
+app.use((_req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (duration > 1000) {
+      console.warn(`[SLOW] ${_req.method} ${_req.originalUrl} took ${duration}ms`);
+    }
+  });
+  next();
+});
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: CORS_ORIGINS,
