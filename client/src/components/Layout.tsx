@@ -5,12 +5,14 @@ import { invalidateCache } from "../hooks/useCache";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { useTranslate } from "../context/TranslateContext";
+import { useTheme } from "../context/ThemeContext";
+import { useSettings } from "../hooks/useSettings";
 import {
   LayoutDashboard, Users, ShoppingCart, FileText, CreditCard,
   Package, Truck, BarChart3, Settings, MessageCircle,
   Menu, X, Search, Phone, PlusCircle, Camera,
   Megaphone, UserPlus, Hand, ChevronLeft, Building2, Loader2,
-  PanelLeft,
+  PanelLeft, Sun, Moon,
 } from "lucide-react";
 
 interface DrawerForm {
@@ -83,6 +85,8 @@ const SearchResultItem = memo(function SearchResultItem({ customer, isHighlighte
 export default function Layout({ children }: { children: ReactNode }) {
   const { isStaff, currentBranch } = useAuth();
   const { uiT } = useTranslate();
+  const { dark, toggle: toggleTheme } = useTheme();
+  const { settings } = useSettings();
 
   const trLabel = useCallback((label: string) => {
     const map: Record<string, string> = {
@@ -270,52 +274,57 @@ export default function Layout({ children }: { children: ReactNode }) {
       )}
 
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? "w-72" : "w-[72px]"} flex flex-col transition-all duration-200 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
+      <aside className={`${sidebarOpen ? "w-64" : "w-[60px]"} flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
         {/* Logo */}
-        <div className="h-11 flex items-center justify-between px-4 border-b border-th-hover">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1ed760' }}>
-              <span className="font-bold text-xs" style={{ color: '#121212' }}>K</span>
+        <div className="flex items-center justify-center py-3 px-3 border-b border-th-hover relative">
+          {settings?.logo ? (
+            <img src={settings.logo} alt="Logo" className={`${sidebarOpen ? "h-20 w-20" : "h-9 w-9"} object-contain transition-all duration-300`} />
+          ) : (
+            <div className={`${sidebarOpen ? "h-20 w-20" : "h-9 w-9"} rounded-xl flex items-center justify-center transition-all duration-300`} style={{ backgroundColor: '#1ed760' }}>
+              <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
             </div>
-            {sidebarOpen && (
-              <div className="min-w-0">
-                <h1 className="text-sm font-semibold text-th-text leading-tight truncate">KMJ Optical</h1>
-                <p className="text-xs text-th-secondary">ERP System</p>
-              </div>
-            )}
-          </div>
+          )}
           <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
-            className={`p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
+            className={`absolute right-2 p-1 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary ${sidebarOpen ? "block" : "hidden"}`}>
             <ChevronLeft size={14} />
           </button>
           <button onClick={() => setSidebarOpen(true)} aria-label="Expand sidebar"
-            className={`p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
+            className={`p-1 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden" : "block"}`}>
             <Menu size={14} />
-          </button>
-          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="p-1 rounded-sm transition-colors hover:bg-th-hover text-th-secondary lg:hidden">
-            <X size={14} />
           </button>
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-px scrollbar-none">
+        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5">
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
               <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-sm transition-colors duration-150 ${
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 ${
                   active
-                    ? "text-th-text font-semibold"
-                    : "hover:text-th-text hover:bg-th-hover text-th-secondary"
+                    ? "bg-[#1ed760]/10 text-[#1ed760] font-semibold"
+                    : "hover:bg-th-hover text-th-secondary hover:text-th-text"
                 }`}>
-                <Icon size={16} className={active ? "text-th-text" : "text-th-secondary"} />
-                {sidebarOpen && <span className="text-sm">{trLabel(item.label)}</span>}
-                {active && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#1ed760' }} />}
+                <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                {sidebarOpen && <span className="text-[13px] truncate">{trLabel(item.label)}</span>}
               </Link>
             );
           })}
         </nav>
+
+        {/* Theme toggle */}
+        <div className="px-2 py-2 border-t border-th-hover">
+          <button onClick={toggleTheme}
+            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 hover:bg-th-hover text-th-secondary hover:text-th-text`}
+            aria-label="Toggle theme">
+            <div className="relative w-[17px] h-[17px] flex items-center justify-center">
+              <Sun size={17} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
+              <Moon size={17} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
+            </div>
+            {sidebarOpen && <span className="text-[13px]">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>}
+          </button>
+        </div>
       </aside>
 
       {/* Main content */}

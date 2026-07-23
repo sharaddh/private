@@ -643,7 +643,7 @@ export default function Pickup() {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-3 border-t border-th-border">
-                <button onClick={() => setShowConfirmDeliver(true)} disabled={delivering || !bill || collectAmount <= 0}
+                <button onClick={() => setShowConfirmDeliver(true)} disabled={delivering || !bill}
                   aria-label={uiT("Deliver order", "ऑर्डर डिलीवर करें")}
                   className="bg-[#1ed760] hover:bg-[#1db954] text-black font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-2 px-8 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all shadow-[0_8px_24px_rgb(30,215,96,0.3)]">
                   {delivering ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : <Check size={20} aria-hidden="true" />}
