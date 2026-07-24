@@ -599,7 +599,7 @@ export default function Dashboard() {
                     {/* R Eye */}
                     <div className="flex items-center gap-2 sm:gap-3">
                       <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
-                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{rRx || "—"}</span>
+                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{rRx || uiT("plain", "plain")}</span>
                       {inStock ? (
                         <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
@@ -618,7 +618,7 @@ export default function Dashboard() {
                     {/* L Eye */}
                     <div className="flex items-center gap-2 sm:gap-3">
                       <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
-                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{lRx || "—"}</span>
+                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{lRx || uiT("plain", "plain")}</span>
                       {inStock ? (
                         <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
