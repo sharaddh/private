@@ -32,13 +32,13 @@ export function SalesTrendChart({ data, dark }: { data: { date: string; total: n
   const trendUp = chartTrend === "N/A" ? true : Number(chartTrend) >= 0;
   void dark;
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
-          <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">Sales Trend</h3>
-          <p className="text-[15px] text-th-secondary mt-0.5">Last 30 days</p>
+          <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">Sales Trend</h3>
+          <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">Last 30 days</p>
         </div>
-        <span className={`text-[14px] font-bold px-2.5 py-1 rounded-lg ${trendUp ? "text-[#1ed760] bg-[#1ed760]/10" : "text-[#e91429] bg-[#e91429]/10"}`}>
+        <span className={`text-[12px] sm:text-[14px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg ${trendUp ? "text-[#1ed760] bg-[#1ed760]/10" : "text-[#e91429] bg-[#e91429]/10"}`}>
           {chartTrend === "N/A" ? "NEW" : `${trendUp ? "+" : ""}${chartTrend}%`}
         </span>
       </div>
@@ -69,31 +69,31 @@ export function OrderStatusDonut({ data, dark }: { data: { status: string; count
   const total = data.reduce((s, d) => s + d.count, 0);
   void dark;
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
-          <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">Order Status</h3>
-          <p className="text-[15px] text-th-secondary mt-0.5">{total} total orders</p>
+          <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">Order Status</h3>
+          <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">{total} total orders</p>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="h-40 w-40 flex-shrink-0">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="h-28 w-28 sm:h-40 sm:w-40 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={28} outerRadius={56} paddingAngle={3}>
+              <Pie data={data} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={20} outerRadius={40} paddingAngle={3}>
                 {data.map((d, i) => <Cell key={d.status || i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
               </Pie>
               <Tooltip formatter={(value) => [Number(value), "Orders"]} contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-1.5 sm:space-y-2">
           {data.map((d, i) => (
-            <div key={`${d.status}-${i}`} className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-              <span className="text-[14px] font-medium text-th-secondary flex-1">{d.status}</span>
-              <span className="text-[14px] font-bold text-th-text">{d.count}</span>
-              <span className="text-[12px] text-th-muted">{total > 0 ? Math.round((d.count / total) * 100) : 0}%</span>
+            <div key={`${d.status}-${i}`} className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+              <span className="text-[12px] sm:text-[14px] font-medium text-th-secondary flex-1 truncate">{d.status}</span>
+              <span className="text-[12px] sm:text-[14px] font-bold text-th-text">{d.count}</span>
+              <span className="text-[10px] sm:text-[12px] text-th-muted">{total > 0 ? Math.round((d.count / total) * 100) : 0}%</span>
             </div>
           ))}
         </div>
@@ -114,11 +114,11 @@ export function PaymentModeBarChart({ data, dark }: { data: { mode: string; tota
   }));
 
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
-          <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">Payment Modes</h3>
-          <p className="text-[15px] text-th-secondary mt-0.5">This month</p>
+          <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">Payment Modes</h3>
+          <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">This month</p>
         </div>
       </div>
       <div className="h-48">

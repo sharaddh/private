@@ -59,44 +59,44 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-3 py-4 h-full active:scale-95 shadow-md cursor-default">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mb-2.5" style={{ backgroundColor: `${color}15` }}>
-        <Icon className="w-5 h-5" style={{ color }} />
+    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-full active:scale-95 shadow-md cursor-default">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mb-1.5 sm:mb-2.5" style={{ backgroundColor: `${color}15` }}>
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
       </div>
-      <span className="text-lg font-bold text-th-text tracking-tight leading-tight" style={{ color }}>{value}</span>
+      <span className="text-base sm:text-lg font-bold text-th-text tracking-tight leading-tight" style={{ color }}>{value}</span>
       {trend && (
-        <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded-md mt-1 whitespace-nowrap">
-          <TrendingUp className="w-2.5 h-2.5" />
+        <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded-md mt-0.5 sm:mt-1 whitespace-nowrap">
+          <TrendingUp className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
           {trend}
         </span>
       )}
-      <p className="text-[12px] font-semibold text-th-secondary mt-1.5 leading-tight line-clamp-2">{label}</p>
-      {subtitle && <p className="text-[11px] text-th-muted mt-0.5 leading-tight line-clamp-1">{subtitle}</p>}
+      <p className="text-[11px] sm:text-[12px] font-semibold text-th-secondary mt-1 sm:mt-1.5 leading-tight line-clamp-2">{label}</p>
+      {subtitle && <p className="text-[10px] sm:text-[11px] text-th-muted mt-0.5 leading-tight line-clamp-1">{subtitle}</p>}
     </ShineCard>
   );
 }
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <ShineCard onClick={onClick} aria-label={label} className="h-20 flex flex-col items-center justify-center gap-1 bg-th-surface rounded-lg p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
-        <Icon className="w-4 h-4" style={{ color: color || "#1ed760" }} />
+    <ShineCard onClick={onClick} aria-label={label} className="h-[70px] sm:h-20 flex flex-col items-center justify-center gap-0.5 sm:gap-1 bg-th-surface rounded-lg p-1.5 sm:p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
+        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: color || "#1ed760" }} />
       </div>
-      <span className="text-[15px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
-      <span className="text-[14px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
+      <span className="text-[13px] sm:text-[15px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] sm:text-[14px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
     </ShineCard>
   );
 }
 
 function SectionHeader({ title, count, action, actionLabel }: { title: string; count?: number; action?: () => void; actionLabel?: string }) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{title}</h3>
-        {count !== undefined && <span className="text-[16px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{count}</span>}
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{title}</h3>
+        {count !== undefined && <span className="text-[13px] sm:text-[16px] font-medium text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 rounded-lg">{count}</span>}
       </div>
       {action && (
-        <button onClick={action} aria-label={actionLabel || "View all"} className="flex items-center gap-1.5 text-[16px] font-bold text-[#1ed760] hover:text-[#1ed760] px-3 py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
+        <button onClick={action} aria-label={actionLabel || "View all"} className="flex items-center gap-1 sm:gap-1.5 text-[13px] sm:text-[16px] font-bold text-[#1ed760] hover:text-[#1ed760] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
           {actionLabel || "View all"}
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -114,7 +114,7 @@ function StatusBadge({ status }: { status: string }) {
     "In Transit": "bg-[#f59e0b]/15 text-[#fbbf24]",
   };
   return (
-    <span className={`text-[13px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap uppercase tracking-wider flex-shrink-0 ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
+    <span className={`text-[11px] sm:text-[13px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap uppercase tracking-wider flex-shrink-0 ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
       {status}
     </span>
   );
@@ -122,15 +122,15 @@ function StatusBadge({ status }: { status: string }) {
 
 function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; title: string; description: string; actionLabel?: string; onAction?: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-14 text-center px-6">
-      <div className="w-14 h-14 rounded-xl bg-th-elevated flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-th-muted" />
+    <div className="flex flex-col items-center justify-center py-8 sm:py-14 text-center px-4 sm:px-6">
+      <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-th-elevated flex items-center justify-center mb-3 sm:mb-4">
+        <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-th-muted" />
       </div>
-      <p className="text-[20px] font-semibold text-th-text">{title}</p>
-      <p className="text-[18px] text-th-secondary mt-1 mb-5 max-w-xs">{description}</p>
+      <p className="text-[16px] sm:text-[20px] font-semibold text-th-text">{title}</p>
+      <p className="text-[14px] sm:text-[18px] text-th-secondary mt-1 mb-4 sm:mb-5 max-w-xs">{description}</p>
       {actionLabel && onAction && (
-        <button onClick={onAction} aria-label={actionLabel} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[18px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
-          <Plus className="w-4 h-4" />
+        <button onClick={onAction} aria-label={actionLabel} className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[14px] sm:text-[18px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider">
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           {actionLabel}
         </button>
       )}
@@ -146,7 +146,7 @@ function SegmentedControl({ options, value, onChange, compact }: { options: { la
         return (
           <button key={opt.value} onClick={(e) => { e.stopPropagation(); onChange(isActive ? "pending" : opt.value); }}
             aria-label={opt.label}
-            className={`${compact ? "px-2 py-1 text-[14px]" : "px-3 py-1.5 text-[15px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
+            className={`${compact ? "px-1.5 sm:px-2 py-0.5 sm:py-1 text-[11px] sm:text-[14px]" : "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-[15px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
               isActive
                 ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
                 : "text-th-secondary hover:text-th-text hover:bg-th-card/50"
@@ -179,15 +179,15 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
     blue: "text-[#3498db]",
   };
   return (
-    <ShineCard className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-4 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
-      <div className="flex items-center gap-3">
-        <Icon className={`w-5 h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
+    <ShineCard className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-3 sm:p-4 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-[17px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
-          <p className={`text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
+          <p className={`text-[14px] sm:text-[17px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
+          <p className={`text-lg sm:text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
         </div>
         {action && (
-          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-4 py-2 rounded-lg text-[16px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
+          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[16px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
             {actionLabel || "View"}
           </button>
         )}
@@ -308,33 +308,34 @@ export default function Dashboard() {
   // Header
 
   const renderHeader = () => (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold text-th-text tracking-tight">
+    <div className="flex items-center justify-between gap-3 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-[20px] sm:text-[28px] font-bold text-th-text tracking-tight truncate">
             {greeting}, <span className="text-[#1ed760]">{"Mr "+currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
           </h1>
-          <div className="flex items-center gap-2 mt-1.5 text-[18px] text-th-secondary">
-            <Calendar className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1 text-[13px] sm:text-[18px] text-th-secondary">
+            <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>{dateStr}</span>
             <span className="text-th-muted">·</span>
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>{timeStr}</span>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         <button onClick={() => navigate("/workspace")} aria-label={uiT("New Sale", "नई बिक्री")}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1ed760] text-black rounded-lg text-[18px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
-          <Plus className="w-3.5 h-3.5" />
-          {uiT("New Sale", "नई बिक्री")}
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#1ed760] text-black rounded-lg text-[13px] sm:text-[18px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
+          <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <span className="hidden xs:inline">{uiT("New Sale", "नई बिक्री")}</span>
+          <span className="xs:hidden">{uiT("Sale", "बिक्री")}</span>
         </button>
         <button onClick={() => setShowScanner(true)} aria-label={uiT("Scan", "स्कैन")}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-th-elevated text-th-text rounded-lg text-[18px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
-          <ScanLine className="w-3.5 h-3.5" />
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-th-elevated text-th-text rounded-lg text-[13px] sm:text-[18px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
+          <ScanLine className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           {uiT("Scan", "स्कैन")}
         </button>
-        <div className="w-8 h-8 rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold text-xs flex-shrink-0">S</div>
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold text-[10px] sm:text-xs flex-shrink-0">S</div>
       </div>
     </div>
   );
@@ -342,31 +343,31 @@ export default function Dashboard() {
   // Hero Section
 
   const renderHero = () => (
-    <div className="bg-th-surface rounded-xl p-5 md:p-6 shadow-lg border border-th-border">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-6 flex-wrap">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 md:p-6 shadow-lg border border-th-border">
+      <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
+        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div>
-            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
-            <p className="text-[26px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
           </div>
-          <div className="w-px h-8 bg-th-border hidden sm:block" />
+          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
-            <p className="text-[26px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
           </div>
-          <div className="w-px h-8 bg-th-border hidden sm:block" />
+          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
-            <p className="text-[26px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
           </div>
-          <div className="w-px h-8 bg-th-border hidden sm:block" />
+          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
-            <p className="text-[26px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[16px] text-th-muted">
-          <TrendingUp className="w-3.5 h-3.5 text-[#1ed760]" />
+        <div className="flex items-center gap-1.5 text-[12px] sm:text-[16px] text-th-muted">
+          <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1ed760]" />
           {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह")}
         </div>
       </div>
@@ -378,7 +379,7 @@ export default function Dashboard() {
   const renderQuickActions = () => (
     <div>
       <SectionHeader title={uiT("Quick Actions", "त्वरित कार्य")} />
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2">
         <QuickActionCard icon={ShoppingCart} label={uiT("New Sale", "नई बिक्री")} subtitle={uiT("Create a new order", "नया ऑर्डर बनाएं")} onClick={() => navigate("/workspace")} color="#6366f1" />
         <QuickActionCard icon={UserPlus} label={uiT("Customers", "ग्राहक")} subtitle={uiT("Manage your clients", "अपने ग्राहकों का प्रबंधन करें")} onClick={() => navigate("/customers")} color="#10b981" />
         <QuickActionCard icon={Boxes} label={uiT("Inventory", "इन्वेंट्री")} subtitle={uiT("Track stock & lenses", "स्टॉक और लेंस ट्रैक करें")} onClick={() => navigate("/inventory")} color="#f59e0b" />
@@ -396,7 +397,7 @@ export default function Dashboard() {
   const renderKPIs = () => (
     <div>
       <SectionHeader title={uiT("Key Metrics", "मुख्य मापदंड")} />
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
         <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
         <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
         <MetricCard label={uiT("Today's Orders", "आज के ऑर्डर")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "इस सप्ताह")}` : undefined} />
@@ -422,12 +423,12 @@ export default function Dashboard() {
     if (!hasSales && !hasOrders && !hasPayments) return null;
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         {/* Row 1: Sales Trend (large) + Order Status Donut */}
         {(hasSales || hasOrders) && (
           <div>
             <SectionHeader title={uiT("Analytics Overview", "विश्लेषण अवलोकन")} />
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
               {hasSales && (
                 <div className="lg:col-span-3">
                   <SalesTrendChart data={d.dailySales || []} dark={dark} />
@@ -443,7 +444,7 @@ export default function Dashboard() {
         )}
 
         {/* Row 2: Sales vs Collection + Daily Orders + Payment Modes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
           {hasSales && hasCollections && (
             <SalesVsCollectionChart
               salesData={d.dailySales || []}
@@ -461,7 +462,7 @@ export default function Dashboard() {
 
         {/* Row 3: Inventory Category Breakdown (if exists) */}
         {hasCategories && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             <CategoryPieChart data={d.categoryBreakdown || []} dark={dark} />
           </div>
         )}
@@ -482,7 +483,7 @@ export default function Dashboard() {
     return (
       <div>
         <SectionHeader title={uiT("Needs Attention", "ध्यान दें")} count={items.length} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {items.map((item) => (
             <AlertCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} action={item.action} actionLabel={item.actionLabel} onClick={item.onClick} />
           ))}
@@ -498,29 +499,29 @@ export default function Dashboard() {
 
     return (
       <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-        <div className="px-5 py-4 border-b border-th-card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
-              <span className="text-[16px] font-medium text-th-secondary bg-th-elevated px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
+        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
+              <span className="text-[13px] sm:text-[16px] font-medium text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {selectedOrders.size > 0 && (
-                <span className="text-[16px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2.5 py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
+                <span className="text-[13px] sm:text-[16px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
               )}
               <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Buy lenses", "लेंस खरीदें")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[16px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
-                <ShoppingBag className="w-3.5 h-3.5" />
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[13px] sm:text-[16px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {sendingDemand === "buy" ? "..." : uiT("Buy", "खरीदें")}
               </button>
               <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Order lenses", "लेंस ऑर्डर करें")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[16px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
-                <Send className="w-3.5 h-3.5" />
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[13px] sm:text-[16px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
+                <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {sendingDemand === "order" ? "..." : uiT("Order", "ऑर्डर")}
               </button>
             </div>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer text-[16px] font-medium text-th-secondary hover:text-th-text transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer text-[13px] sm:text-[16px] font-medium text-th-secondary hover:text-th-text transition-colors">
             <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
               onChange={() => toggleAllOrders(allIds)}
               aria-label={uiT("Select all", "सभी चुनें")}
@@ -561,51 +562,51 @@ export default function Dashboard() {
 
               return (
                 <div key={id}
-                  className={`px-5 py-4 transition-all duration-150 cursor-pointer group ${isSelected ? "bg-[#1ed760]/5 border-l-2 border-l-[#1ed760]" : "hover:bg-th-card border-l-2 border-l-transparent"}`}
+                  className={`px-3 sm:px-5 py-3 sm:py-4 transition-all duration-150 cursor-pointer group ${isSelected ? "bg-[#1ed760]/5 border-l-2 border-l-[#1ed760]" : "hover:bg-th-card border-l-2 border-l-transparent"}`}
                   onClick={goToCustomer}>
 
                   {/* Line 1: Avatar + Name + Meta */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
                     <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
                       onClick={(e) => e.stopPropagation()}
                       aria-label={cName || uiT("Select order", "ऑर्डर चुनें")}
                       className="w-4 h-4 rounded accent-[#1ed760] cursor-pointer flex-shrink-0" />
                     <div className="relative flex-shrink-0">
-                      <UserAvatar name={cName} className="w-10 h-10 text-xs" />
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                      <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-xs" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#f59e0b]" />
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[18px] font-bold text-th-text truncate">{cName || "—"}</p>
-                        {!!(cMobile) && <span className="text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
-                        <span className="text-[16px] text-th-muted hidden sm:inline">·</span>
-                        <span className="text-[16px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <p className="text-[15px] sm:text-[18px] font-bold text-th-text truncate">{cName || "—"}</p>
+                        {!!(cMobile) && <span className="text-[13px] sm:text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
+                        <span className="text-[13px] sm:text-[16px] text-th-muted hidden sm:inline">·</span>
+                        <span className="text-[13px] sm:text-[16px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        {!!(o.frameBrand) && <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.frameBrand?.trim()}</span>}
-                        {!!(o.lensBrand) && <span className="text-[15px] text-th-secondary bg-th-elevated px-2 py-0.5 rounded-md">{o.lensBrand}</span>}
-                        {!!(o.lensType) && <span className="text-[15px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensType}</span>}
-                        {!!(o.lensIndex) && <span className="text-[15px] text-th-muted bg-th-elevated px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
+                      <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5 flex-wrap">
+                        {!!(o.frameBrand) && <span className="text-[13px] sm:text-[15px] text-th-secondary bg-th-elevated px-1.5 sm:px-2 py-0.5 rounded-md">{o.frameBrand?.trim()}</span>}
+                        {!!(o.lensBrand) && <span className="text-[13px] sm:text-[15px] text-th-secondary bg-th-elevated px-1.5 sm:px-2 py-0.5 rounded-md">{o.lensBrand}</span>}
+                        {!!(o.lensType) && <span className="text-[13px] sm:text-[15px] text-th-muted bg-th-elevated px-1.5 sm:px-2 py-0.5 rounded-md">{o.lensType}</span>}
+                        {!!(o.lensIndex) && <span className="text-[13px] sm:text-[15px] text-th-muted bg-th-elevated px-1.5 sm:px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
                       </div>
                     </div>
                     <button onClick={goToCustomer} aria-label={uiT("Open", "खोलें")}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
+                      className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
                       {uiT("Open", "खोलें")} <ArrowUpRight className="w-3 h-3" />
                     </button>
                   </div>
 
                   {/* Line 2 & 3: Eye classifiers */}
-                  <div className="ml-[52px] mt-3 space-y-2">
+                  <div className="ml-[44px] sm:ml-[52px] mt-2 sm:mt-3 space-y-1.5 sm:space-y-2">
                     {/* R Eye */}
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
-                      <span className="text-[17px] font-mono font-semibold text-th-text min-w-[120px]">{rRx || "—"}</span>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
+                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{rRx || "—"}</span>
                       {inStock ? (
-                        <span className="text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
-                        <span className="text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
                       )}
                       <SegmentedControl compact
                         options={[
@@ -618,13 +619,13 @@ export default function Dashboard() {
                       />
                     </div>
                     {/* L Eye */}
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
-                      <span className="text-[17px] font-mono font-semibold text-th-text min-w-[120px]">{lRx || "—"}</span>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
+                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{lRx || "—"}</span>
                       {inStock ? (
-                        <span className="text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
                       ) : (
-                        <span className="text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
                       )}
                       <SegmentedControl compact
                         options={[
@@ -650,7 +651,7 @@ export default function Dashboard() {
 
   const renderRecentOrders = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-5 py-4 border-b border-th-border">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-border">
         <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-none">
@@ -661,16 +662,16 @@ export default function Dashboard() {
           const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={o._id || idx} className="flex items-center gap-3 px-5 py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id}`)}>
+            <div key={o._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id}`)}>
               <div className="relative flex-shrink-0">
-                <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                  <div className={`w-2 h-2 rounded-full ${o.status === "Delivered" ? "bg-[#1ed760]" : o.status === "Draft" ? "bg-th-muted" : o.status === "Ordered" ? "bg-[#a78bfa]" : o.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
+                <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${o.status === "Delivered" ? "bg-[#1ed760]" : o.status === "Draft" ? "bg-th-muted" : o.status === "Ordered" ? "bg-[#a78bfa]" : o.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                   {o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}
                   {!!(o.frameBrand) ? ` · ${o.frameBrand}` : ""}
                   {!!(o.lensBrand) ? ` · ${o.lensBrand}` : ""}
@@ -688,7 +689,7 @@ export default function Dashboard() {
 
   const renderPendingBills = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-5 py-4 border-b border-th-card">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
         <SectionHeader title={uiT("Pending Bills", "लंबित बिल")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
@@ -699,16 +700,16 @@ export default function Dashboard() {
           const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={b._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
-              <UserAvatar name={cName} className="w-10 h-10 text-sm" />
+            <div key={b._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
+              <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
+                <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
               </div>
-              <div className="flex items-center gap-2.5 flex-shrink-0">
-                <p className="text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+                <p className="text-[14px] sm:text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider whitespace-nowrap">
+                  className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[12px] sm:text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider whitespace-nowrap">
                   {uiT("Collect", "वसूलें")}
                 </button>
               </div>
@@ -723,7 +724,7 @@ export default function Dashboard() {
 
   const renderDeliveries = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-5 py-4 border-b border-th-card">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
         <SectionHeader title={uiT("Today's Deliveries", "आज की डिलीवरी")} count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
@@ -734,22 +735,22 @@ export default function Dashboard() {
           const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
           return (
-            <div key={dl._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
+            <div key={dl._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
               <div className="relative flex-shrink-0">
-                <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                  <div className={`w-2 h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
+                <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
+                <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <StatusBadge status={dl.status || "—"} />
                 <button onClick={() => navigate(`/delivery?order=${dl._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
-                  className="p-2 rounded-lg text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
-                  <PackageCheck className="w-4 h-4" />
+                  className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
+                  <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
@@ -766,7 +767,7 @@ export default function Dashboard() {
     if (delivered.length === 0) return null;
     return (
       <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-[#1ed760]/20">
-        <div className="px-5 py-4 border-b border-[#1ed760]/15 bg-gradient-to-r from-[#1ed760]/5 to-transparent">
+        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[#1ed760]/15 bg-gradient-to-r from-[#1ed760]/5 to-transparent">
           <SectionHeader title={uiT("Today's Delivered", "आज डिलीवर हुए")} count={delivered.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
         </div>
         <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
@@ -775,24 +776,24 @@ export default function Dashboard() {
             const cName = custObj?.name ?? "—";
             const cMobile = custObj?.mobile ?? "";
             return (
-              <div key={o._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${custObj?._id ?? ""}?visitId=${o.visitId || ""}`)}>
+              <div key={o._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${custObj?._id ?? ""}?visitId=${o.visitId || ""}`)}>
                 <div className="relative flex-shrink-0">
-                  <UserAvatar name={cName} className="w-10 h-10 text-sm" />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-[#1ed760]" />
+                  <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1ed760]" />
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                  <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                  <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                     {!!(o.frameBrand) ? o.frameBrand : ""}
                     {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
                     {!!(o.lensBrand) ? o.lensBrand : ""}
                     {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                  <span className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
                   <StatusBadge status="Delivered" />
                 </div>
               </div>
@@ -807,22 +808,22 @@ export default function Dashboard() {
 
   const renderRecentCustomers = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-5 py-4 border-b border-th-card">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
         <SectionHeader title={uiT("Recent Customers", "हाल के ग्राहक")} count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.recentCustomers.length === 0 ? (
           <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
         ) : d.recentCustomers.map((c, idx) => (
-          <div key={c._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
-            <UserAvatar name={c.name || "?"} className="w-10 h-10 text-sm" />
+          <div key={c._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
+            <UserAvatar name={c.name || "?"} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-[17px] font-semibold text-th-text truncate">{v(c.name)}</p>
-              <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+              <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{v(c.name)}</p>
+              <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 {c.mobile ? maskPhone(c.mobile) : "—"} · {c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""} · {c.totalVisits ?? 0} {uiT("visits", "विज़िट")}
               </p>
             </div>
-            <p className="text-[17px] font-bold text-th-text whitespace-nowrap flex-shrink-0">₹{(c.totalSpent || 0).toLocaleString()}</p>
+            <p className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap flex-shrink-0">₹{(c.totalSpent || 0).toLocaleString()}</p>
           </div>
         ))}
       </div>
@@ -832,25 +833,25 @@ export default function Dashboard() {
   // Todo
 
   const renderTodo = () => (
-    <div className="bg-th-surface rounded-xl p-5 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
-            <CheckSquare className="w-4 h-4 text-[#1ed760]" />
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
+            <CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
+          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
         </div>
-        <span className="text-[16px] font-bold text-th-secondary bg-th-elevated px-2.5 py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
+        <span className="text-[13px] sm:text-[16px] font-bold text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
         <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTodo()}
           aria-label={uiT("Add a task", "कार्य जोड़ें")}
-          className="flex-1 px-4 py-2.5 bg-th-elevated border border-th-card rounded-lg text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
+          className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-card rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
         <button onClick={addTodo} disabled={!newTask.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
-          className="p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
-          <Plus className="w-4 h-4" />
+          className="p-2 sm:p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
       <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-none pr-1">
@@ -858,14 +859,14 @@ export default function Dashboard() {
           <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
-            <div key={t._id} className={`flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
+            <div key={t._id} className={`flex items-center gap-2.5 sm:gap-3 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
               <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "अपूर्ण चिह्नित करें") : uiT("Mark complete", "पूर्ण चिह्नित करें")}
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
-                {t.done && <Check className="w-3 h-3 text-th-text" />}
+                className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
+                {t.done && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-th-text" />}
               </button>
-              <span className={`flex-1 text-[18px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
-              <button onClick={() => deleteTodo(t._id)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
-                <Trash2 className="w-3.5 h-3.5" />
+              <span className={`flex-1 text-[15px] sm:text-[18px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
+              <button onClick={() => deleteTodo(t._id)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1 sm:p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
+                <Trash2 className="w-3 sm:w-3.5 sm:h-3.5 h-3" />
               </button>
             </div>
           ))
@@ -880,26 +881,26 @@ export default function Dashboard() {
     const todayPayments = d.todayPaymentModeSplit;
     if (!todayPayments?.length) return null;
     return (
-      <div className="bg-th-surface rounded-xl p-5 shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
-            <Wallet className="w-4 h-4 text-[#1ed760]" />
+      <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
+          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
-        <div className="space-y-2.5">
+        <div className="space-y-2 sm:space-y-2.5">
           {todayPayments.map((p, idx) => {
             const Icon = paymentModeIcon[p.mode] || IndianRupee;
             return (
-              <div key={`${p.mode}-${idx}`} className="flex items-center gap-3 bg-th-elevated rounded-lg px-4 py-3 transition-all hover:bg-th-card">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#1ed760"}15` }}>
-                  <Icon className="w-4 h-4" style={{ color: paymentModeColors[p.mode] || "#1ed760" }} />
+              <div key={`${p.mode}-${idx}`} className="flex items-center gap-2.5 sm:gap-3 bg-th-elevated rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 transition-all hover:bg-th-card">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${paymentModeColors[p.mode] || "#1ed760"}15` }}>
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: paymentModeColors[p.mode] || "#1ed760" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[18px] font-semibold text-th-text">{p.mode}</p>
-                  <p className="text-[16px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
+                  <p className="text-[14px] sm:text-[18px] font-semibold text-th-text">{p.mode}</p>
+                  <p className="text-[12px] sm:text-[16px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
                 </div>
-                <p className="text-[20px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
+                <p className="text-[15px] sm:text-[20px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
               </div>
             );
           })}
@@ -940,20 +941,20 @@ export default function Dashboard() {
 
     return (
       <details className="group bg-th-surface rounded-xl overflow-hidden shadow-lg">
-        <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer list-none hover:bg-th-card transition-colors">
-          <ChevronRight className="w-4 h-4 text-th-muted transition-transform duration-300 group-open:rotate-90" />
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4 text-th-secondary" />
-            <span className="text-[18px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
+        <summary className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 cursor-pointer list-none hover:bg-th-card transition-colors">
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-th-muted transition-transform duration-300 group-open:rotate-90" />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-th-secondary" />
+            <span className="text-[15px] sm:text-[18px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
           </div>
-          <span className="text-[16px] text-th-muted">({rows.length} metrics)</span>
+          <span className="text-[13px] sm:text-[16px] text-th-muted">({rows.length} metrics)</span>
         </summary>
-        <div className="px-6 pb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-0.5 pt-3 border-t border-th-card">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-0.5 pt-3 border-t border-th-card">
             {rows.map((r) => (
               <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-th-elevated last:border-0">
-                <span className="text-[18px] text-th-secondary">{r.label}</span>
-                <span className="text-[18px] font-bold text-th-text" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
+                <span className="text-[14px] sm:text-[18px] text-th-secondary">{r.label}</span>
+                <span className="text-[14px] sm:text-[18px] font-bold text-th-text" style={r.color ? { color: r.color } : undefined}>{r.value}</span>
               </div>
             ))}
           </div>
@@ -966,7 +967,7 @@ export default function Dashboard() {
 
   return (
     <div className="bg-th-base min-h-screen" role="main">
-      <div className="max-w-7xl mx-auto space-y-6 px-4 md:px-6 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
         {renderHeader()}
         {renderHero()}
         {renderQuickActions()}
@@ -975,13 +976,13 @@ export default function Dashboard() {
         {renderNeedsAttention()}
 
         {/* Bottom grid: Pending Bills, Today's Deliveries */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {renderPendingBills()}
           {renderDeliveries()}
         </div>
 
         {/* Lens Demand + Recent Orders side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
           {renderLensDemand()}
           {renderRecentOrders()}
         </div>
@@ -990,7 +991,7 @@ export default function Dashboard() {
         {renderTodayDelivered()}
 
         {/* Bottom grid: Recent Customers, Todo, Payments */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           {renderRecentCustomers()}
           {renderTodo()}
           {renderPayments()}

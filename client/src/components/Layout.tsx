@@ -385,10 +385,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 z-1">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border px-4 lg:px-6 bg-th-surface/80 backdrop-blur-xl shadow-sm flex-shrink-0">
+        <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-th-border px-3 sm:px-4 lg:px-6 bg-th-surface/80 backdrop-blur-xl shadow-sm flex-shrink-0">
 
           {/* Left: Mobile menu + Sidebar toggle + Page title */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open mobile menu"
@@ -411,7 +411,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {/* Center: Search Bar */}
           <div
             ref={searchRef}
-            className="relative mx-4 flex w-full max-w-xl flex-1 items-center justify-center"
+            className="relative mx-2 sm:mx-4 flex w-full max-w-xl flex-1 items-center justify-center"
           >
             <div
               className={`group flex w-full items-center rounded-xl border bg-th-hover/50 transition-all duration-300 ease-out ${
@@ -440,7 +440,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 onFocus={() => { if (searchQuery.trim()) setSearchOpen(true); }}
-                className="w-full bg-transparent py-2.5 pr-3 text-sm font-medium text-th-text placeholder-th-secondary/60 outline-none"
+                className="w-full bg-transparent py-2 sm:py-2.5 pr-2 sm:pr-3 text-xs sm:text-sm font-medium text-th-text placeholder-th-secondary/60 outline-none"
                 aria-label="Search customers"
               />
               {searchQuery.trim() && (
@@ -503,7 +503,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {/* Right: Branch Indicator */}
           <div className="flex items-center justify-end flex-shrink-0">
             {currentBranch && (
-              <div className="flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary">
+              <div className="hidden sm:flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary">
                 <Building2 size={14} className="text-[#1ed760] flex-shrink-0" />
                 <span className="hidden max-w-[120px] truncate sm:inline-block">
                   {currentBranch.name}
@@ -515,15 +515,15 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto pb-[64px] lg:pb-4 scrollbar-none scroll-smooth">
-          <div className="max-w-7xl mx-auto p-4 lg:p-5 animate-fade-in">{children}</div>
+        <main className="flex-1 overflow-auto pb-[60px] lg:pb-4 scrollbar-none scroll-smooth">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:p-5 animate-fade-in">{children}</div>
         </main>
       </div>
 
       {/* Mobile bottom nav — frosted glass */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
         <div className="border-t border-th-hover glass-nav">
-          <div className="flex items-center justify-around h-16 px-2 pb-1">
+          <div className="flex items-center justify-around h-[60px] px-1 pb-0.5">
             {mobileNav.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -534,7 +534,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   className="nav-link flex-1 max-w-[72px] py-1"
                 >
                   <div className={`nav-link-icon ${active ? "text-[#1ed760]" : "text-th-secondary"}`}>
-                    <Icon size={active ? 22 : 20} className={`transition-all duration-200 ${active ? "scale-105" : ""}`} />
+                    <Icon size={active ? 21 : 19} className={`transition-all duration-200 ${active ? "scale-105" : ""}`} />
                   </div>
                   <span className={`nav-link-label ${active ? "text-[#1ed760] font-semibold" : "text-th-secondary font-normal"}`}>
                     {trLabel(item.label)}
