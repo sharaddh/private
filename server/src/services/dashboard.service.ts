@@ -209,6 +209,19 @@ export async function getStats() {
     return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
   });
 
+  const incompleteOrderVisitIds = incompleteOrders
+    .map((o: any) => o.visitId?._id?.toString() || (typeof o.visitId === "string" ? o.visitId : null))
+    .filter(Boolean);
+  const allVisitIds = [...new Set([...recentOrderVisitIds, ...incompleteOrderVisitIds])];
+  const allPrescriptions = allVisitIds.length > 0
+    ? await Prescription.find({ visitId: { $in: allVisitIds } }).lean()
+    : [];
+  const fullRxMap = new Map(allPrescriptions.map((p: any) => [p.visitId.toString(), p]));
+  const incompleteOrdersWithRx = incompleteOrders.map((o: any) => {
+    const vid = o.visitId?._id?.toString() || (typeof o.visitId === "string" ? o.visitId : null);
+    return { ...o, prescription: vid ? fullRxMap.get(vid) || null : null };
+  });
+
   const todaySales = todaySalesResult[0]?.total || 0;
   const todayCollection = todayCollectionResult[0]?.total || 0;
   const weekSales = weekSalesResult[0]?.total || 0;
@@ -251,7 +264,7 @@ export async function getStats() {
     recentOrders: recentOrdersWithRx,
     todayDeliveries,
     pendingBills,
-    incompleteOrders,
+    incompleteOrders: incompleteOrdersWithRx,
     orderCounts,
     paymentCounts,
     dailySales: mappedDailySales,
