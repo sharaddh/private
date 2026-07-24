@@ -846,7 +846,8 @@ export default function Dashboard() {
   // Payments
 
   const renderPayments = () => {
-    if (!d.paymentModeSplit?.length) return null;
+    const todayPayments = d.todayPaymentModeSplit;
+    if (!todayPayments?.length) return null;
     return (
       <div className="bg-th-surface rounded-xl p-5 shadow-lg">
         <div className="flex items-center gap-3 mb-4">
@@ -856,7 +857,7 @@ export default function Dashboard() {
           <h3 className="text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2.5">
-          {d.paymentModeSplit.map((p, idx) => {
+          {todayPayments.map((p, idx) => {
             const Icon = paymentModeIcon[p.mode] || IndianRupee;
             return (
               <div key={`${p.mode}-${idx}`} className="flex items-center gap-3 bg-th-elevated rounded-lg px-4 py-3 transition-all hover:bg-th-card">
