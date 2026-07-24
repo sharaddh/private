@@ -981,11 +981,11 @@ export default function Dashboard() {
           {renderDeliveries()}
         </div>
 
-        {/* Lens Demand + Recent Orders side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-          {renderLensDemand()}
-          {renderRecentOrders()}
-        </div>
+        {/* Lens Demand */}
+        {renderLensDemand()}
+
+        {/* Recent Orders — full width */}
+        {renderRecentOrders()}
 
         {/* Today's Delivered */}
         {renderTodayDelivered()}
