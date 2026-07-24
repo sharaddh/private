@@ -97,6 +97,10 @@ export async function getStats() {
     incompleteOrders,
     orderCounts,
     paymentCounts,
+    dailyCollectionAgg,
+    weeklyOrderTrend,
+    categoryBreakdown,
+    todayPaymentModeSplit,
   ] = await Promise.all([
     Customer.countDocuments(),
     Order.countDocuments(),
@@ -171,6 +175,25 @@ export async function getStats() {
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
       { $sort: { _id: 1 } },
     ]),
+    Payment.aggregate([
+      { $match: { paymentDate: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, total: { $sum: "$amount" } } },
+      { $sort: { _id: 1 } },
+    ]),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+    Inventory.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 }, totalValue: { $sum: { $multiply: ["$sellingPrice", "$quantity"] } } } },
+      { $sort: { count: -1 } },
+    ]),
+    Payment.aggregate([
+      { $match: { paymentDate: { $gte: dayStart, $lte: dayEnd } } },
+      { $group: { _id: "$paymentMode", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      { $sort: { total: -1 } },
+    ]),
   ]);
 
   const todaySales = todaySalesResult[0]?.total || 0;
@@ -183,6 +206,11 @@ export async function getStats() {
 
   const salesTrendObj = calcTrend(monthSales, prevMonthSales);
   const salesTrend = salesTrendObj.direction === "flat" ? "0" : `${salesTrendObj.direction === "up" ? "" : "-"}${salesTrendObj.value}`;
+
+  const mappedDailySales = dailySalesAgg.map((d: { _id: string; total: number; count: number }) => ({ date: d._id, total: d.total }));
+  const mappedDailyCollections = dailyCollectionAgg.map((d: { _id: string; total: number }) => ({ date: d._id, total: d.total }));
+  const mappedWeeklyOrderTrend = weeklyOrderTrend.map((d: { _id: string; count: number }) => ({ date: d._id, count: d.count }));
+  const mappedCategoryBreakdown = categoryBreakdown.map((d: { _id: string; count: number; totalValue: number }) => ({ category: d._id, count: d.count, totalValue: d.totalValue }));
 
   return {
     counts: {
@@ -209,7 +237,7 @@ export async function getStats() {
     incompleteOrders,
     orderCounts,
     paymentCounts,
-    dailySales: dailySalesAgg,
+    dailySales: mappedDailySales,
     paymentModeSplit,
     orderStatusCounts,
     salesTrend,
@@ -221,5 +249,9 @@ export async function getStats() {
     todayBills: todayBillCount,
     weekBills: weekBillCount,
     monthBills: monthBillCount,
+    dailyCollections: mappedDailyCollections,
+    weeklyOrderTrend: mappedWeeklyOrderTrend,
+    categoryBreakdown: mappedCategoryBreakdown,
+    todayPaymentModeSplit,
   };
 }
