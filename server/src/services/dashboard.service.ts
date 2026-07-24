@@ -212,6 +212,10 @@ export async function getStats() {
   const mappedWeeklyOrderTrend = weeklyOrderTrend.map((d: { _id: string; count: number }) => ({ date: d._id, count: d.count }));
   const mappedCategoryBreakdown = categoryBreakdown.map((d: { _id: string; count: number; totalValue: number }) => ({ category: d._id, count: d.count, totalValue: d.totalValue }));
 
+  const mappedPaymentModeSplit = paymentModeSplit.map((d: { _id: string; total: number; count: number }) => ({ mode: d._id, total: d.total, count: d.count }));
+  const mappedOrderStatusCounts = orderStatusCounts.map((d: { _id: string; count: number }) => ({ status: d._id, count: d.count }));
+  const mappedTodayPaymentModeSplit = todayPaymentModeSplit.map((d: { _id: string; total: number; count: number }) => ({ mode: d._id, total: d.total, count: d.count }));
+
   return {
     counts: {
       customers: customerCount,
@@ -238,8 +242,8 @@ export async function getStats() {
     orderCounts,
     paymentCounts,
     dailySales: mappedDailySales,
-    paymentModeSplit,
-    orderStatusCounts,
+    paymentModeSplit: mappedPaymentModeSplit,
+    orderStatusCounts: mappedOrderStatusCounts,
     salesTrend,
     collectionTrend: calcTrend(todayCollection, prevDayCollection),
     todayDeliveredOrders,
@@ -252,6 +256,6 @@ export async function getStats() {
     dailyCollections: mappedDailyCollections,
     weeklyOrderTrend: mappedWeeklyOrderTrend,
     categoryBreakdown: mappedCategoryBreakdown,
-    todayPaymentModeSplit,
+    todayPaymentModeSplit: mappedTodayPaymentModeSplit,
   };
 }
