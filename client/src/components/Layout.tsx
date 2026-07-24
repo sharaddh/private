@@ -63,8 +63,8 @@ const SearchResultItem = memo(function SearchResultItem({ customer, isHighlighte
 }) {
   return (
     <button type="button" onClick={onClick}
-      className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-th-hover/70 last:border-b-0 ${isHighlighted ? "bg-th-hover/90" : "hover:bg-th-hover"}`}>
-      <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0 transition-transform duration-150 group-hover:scale-105" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
+      className={`group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-th-border/50 last:border-b-0 ${isHighlighted ? "bg-th-hover" : "hover:bg-th-hover/60"}`}>
+      <div className="flex h-9 w-9 items-center justify-center rounded-full font-semibold text-xs flex-shrink-0" style={{ backgroundColor: '#1ed760', color: '#121212' }}>
         {String(customer.name ?? "?").charAt(0).toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ const SearchResultItem = memo(function SearchResultItem({ customer, isHighlighte
           {customer.customerId ? <span>{String(customer.customerId)}</span> : null}
         </p>
       </div>
-      <div className="rounded-lg bg-th-hover px-2 py-1 text-[14px] font-semibold uppercase tracking-wide text-th-secondary transition-all duration-150 group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760]">
+      <div className="rounded-lg bg-th-elevated px-2 py-1 text-xs font-semibold uppercase tracking-wide text-th-secondary group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760] transition-all">
         Open
       </div>
     </button>
@@ -385,151 +385,134 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 z-1">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border px-4 shadow-sm glass-header lg:px-6">
-  
-  {/* --- Left Section: Menus & Title --- */}
-  <div className="flex w-1/4 items-center gap-3">
-    <button 
-      onClick={() => setMobileOpen(true)} 
-      aria-label="Open mobile menu" 
-      className="flex h-9 w-9 items-center justify-center rounded-md text-th-text transition-colors hover:bg-th-hover lg:hidden"
-    >
-      <Menu size={20} />
-    </button>
-    
-    <button 
-      onClick={() => setSidebarOpen(true)} 
-      aria-label="Open sidebar" 
-      className="hidden h-9 w-9 items-center justify-center rounded-md text-th-text transition-colors hover:bg-th-hover lg:flex"
-    >
-      <PanelLeft size={20} />
-    </button>
-    
-    <h2 className="hidden truncate text-sm font-semibold tracking-wide text-th-text sm:block">
-      {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
-    </h2>
-  </div>
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-th-border px-4 lg:px-6 bg-th-surface/80 backdrop-blur-xl shadow-sm flex-shrink-0">
 
-  {/* --- Center Section: Search Bar --- */}
-  <div 
-    ref={searchRef} 
-    className="relative rounded-none mx-2 flex w-full max-w-xl flex-1 items-center justify-center lg:mx-4"
-  >
-    <div
-      className={`group flex w-full items-center rounded-2xl border bg-gradient-to-r from-th-hover/80 to-th-hover/60 backdrop-blur-md transition-all duration-300 ease-out ${
-        searchOpen
-          ? "border-[#1ed760]/30 ring-4 ring-[#1ed760]/10 shadow-[0_8px_30px_rgba(30,215,96,0.15)]"
-          : "border-white/10 hover:border-[#1ed760]/10 hover:shadow-md"
-      }`}
-    >
-      {/* Search Icon / Loader */}
-      <div
-        className={`ml-4 mr-2 flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
-          searchLoading || searchOpen
-            ? "text-[#1ed760]"
-            : "text-th-secondary group-hover:text-[#1ed760]"
-        }`}
-      >
-        {searchLoading ? (
-          <Loader2 size={18} className="animate-spin" />
-        ) : (
-          <Search size={18} className="transition-transform duration-300 group-hover:scale-110" />
-        )}
-      </div>
+          {/* Left: Mobile menu + Sidebar toggle + Page title */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open mobile menu"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:hidden"
+            >
+              <Menu size={20} />
+            </button>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+              className="hidden h-9 w-9 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:flex"
+            >
+              <PanelLeft size={20} />
+            </button>
+            <h2 className="hidden truncate text-sm font-semibold text-th-text sm:block">
+              {desktopMenu.find((m) => m.path === location.pathname)?.label || "Dashboard"}
+            </h2>
+          </div>
 
-      {/* Input Field */}
-      <input
-        type="text"
-        placeholder={uiT("Search customers...", "ग्राहक खोजें...")}
-        value={searchQuery}
-        onChange={(e) => handleSearch(e.target.value)}
-        onKeyDown={handleSearchKeyDown}
-        onFocus={() => {
-          if (searchQuery.trim()) setSearchOpen(true);
-        }}
-        className="w-full bg-transparent py-3 pr-4 text-[19px] font-medium text-th-text placeholder-th-secondary/70 outline-none transition-all duration-300 placeholder:font-normal"
-        aria-label="Search customers"
-      />
-
-      {/* Clear Button */}
-      {searchQuery.trim() && (
-        <button
-          type="button"
-          onClick={clearSearch}
-          aria-label="Clear search"
-          className="mr-2 flex h-9 w-9 items-center justify-center rounded-full text-th-secondary/80 transition-all duration-200 hover:bg-white/15 hover:text-th-text hover:scale-110 active:scale-95"
-        >
-          <X size={16} />
-        </button>
-      )}
-    </div>
-
-    {/* --- Search Results Dropdown --- */}
-    {searchOpen && searchQuery.trim() && (
-      <div className="absolute bg-stone-900 left-0 right-0 top-full z-50 mt-3 flex max-h-[22rem] flex-col overflow-hidden rounded-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] ">
-        
-        {/* Scrollable Results Area */}
-        <div className="flex-1 overflow-y-auto scrollbar-none">
-          {searchLoading ? (
-            <div className="space-y-3 px-4 py-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex animate-pulse items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-th-hover" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-32 rounded bg-th-hover" />
-                    <div className="h-2.5 w-20 rounded bg-th-hover/60" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : searchResults.length > 0 ? (
-            <div className="py-2">
-              {searchResults.map((c, index) => (
-                <SearchResultItem
-                  key={String(c._id ?? `${(c).name}-${index}`)}
-                  customer={c}
-                  isHighlighted={index === highlightedIndex}
-                  onClick={() => goToCustomer(String(c._id ?? ""))}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="px-4 py-8 text-center text-sm text-th-secondary">
-              <p className="font-medium text-th-text">{uiT("No customer found", "कोई ग्राहक नहीं मिला")}</p>
-              <p className="mt-1.5 text-xs opacity-80">
-                {uiT("Try a name, phone number, or customer ID", "नाम, फोन नंबर या ग्राहक आईडी से कोशिश करें")}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Action Footer */}
-        <div className="border-t border-white/10 bg-black/20 p-3 backdrop-blur-md">
-          <button 
-            onClick={goAddCustomer}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1ed760] px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg active:scale-[0.98]"
+          {/* Center: Search Bar */}
+          <div
+            ref={searchRef}
+            className="relative mx-4 flex w-full max-w-xl flex-1 items-center justify-center"
           >
-            <UserPlus size={16} /> 
-            {uiT("Add New Customer", "नया ग्राहक जोड़ें")}
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
+            <div
+              className={`group flex w-full items-center rounded-xl border bg-th-hover/50 transition-all duration-300 ease-out ${
+                searchOpen
+                  ? "border-[#1ed760]/30 ring-4 ring-[#1ed760]/10 shadow-[0_8px_30px_rgba(30,215,96,0.15)]"
+                  : "border-th-border hover:border-[#1ed760]/15 hover:shadow-sm"
+              }`}
+            >
+              <div
+                className={`ml-3 mr-2 flex h-8 w-8 items-center justify-center transition-colors duration-300 ${
+                  searchLoading || searchOpen
+                    ? "text-[#1ed760]"
+                    : "text-th-secondary group-hover:text-[#1ed760]"
+                }`}
+              >
+                {searchLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Search size={16} />
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder={uiT("Search customers...", "ग्राहक खोजें...")}
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                onFocus={() => { if (searchQuery.trim()) setSearchOpen(true); }}
+                className="w-full bg-transparent py-2.5 pr-3 text-sm font-medium text-th-text placeholder-th-secondary/60 outline-none"
+                aria-label="Search customers"
+              />
+              {searchQuery.trim() && (
+                <button type="button" onClick={clearSearch} aria-label="Clear search"
+                  className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-th-secondary transition-all hover:bg-th-card hover:text-th-text">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
 
-  {/* --- Right Section: Branch Indicator --- */}
-  <div className="flex w-1/4 items-center justify-end">
-    {currentBranch && (
-      <div className="flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary shadow-sm">
-        <Building2 size={14} className="text-[#1ed760]" />
-        <span className="hidden max-w-[120px] truncate sm:inline-block">
-          {currentBranch.name}
-        </span>
-      </div>
-    )}
-  </div>
-  
-</header>
+            {/* Search Results Dropdown */}
+            {searchOpen && searchQuery.trim() && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-3 flex max-h-[22rem] flex-col overflow-hidden rounded-2xl border border-th-border bg-th-surface shadow-xl">
+                <div className="flex-1 overflow-y-auto scrollbar-none">
+                  {searchLoading ? (
+                    <div className="space-y-3 px-4 py-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex animate-pulse items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-th-hover" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3.5 w-32 rounded bg-th-hover" />
+                            <div className="h-2.5 w-20 rounded bg-th-hover/60" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="py-2">
+                      {searchResults.map((c, index) => (
+                        <SearchResultItem
+                          key={String(c._id ?? `${(c).name}-${index}`)}
+                          customer={c}
+                          isHighlighted={index === highlightedIndex}
+                          onClick={() => goToCustomer(String(c._id ?? ""))}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center text-sm text-th-secondary">
+                      <p className="font-medium text-th-text">{uiT("No customer found", "कोई ग्राहक नहीं मिला")}</p>
+                      <p className="mt-1.5 text-xs opacity-80">
+                        {uiT("Try a name, phone number, or customer ID", "नाम, फोन नंबर या ग्राहक आईडी से कोशिश करें")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-th-border p-3 bg-th-elevated">
+                  <button
+                    onClick={goAddCustomer}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1ed760] px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:brightness-110 hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <UserPlus size={16} />
+                    {uiT("Add New Customer", "नया ग्राहक जोड़ें")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Branch Indicator */}
+          <div className="flex items-center justify-end flex-shrink-0">
+            {currentBranch && (
+              <div className="flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary">
+                <Building2 size={14} className="text-[#1ed760] flex-shrink-0" />
+                <span className="hidden max-w-[120px] truncate sm:inline-block">
+                  {currentBranch.name}
+                </span>
+              </div>
+            )}
+          </div>
+
+        </header>
 
         {/* Page content */}
         <main className="flex-1 overflow-auto pb-[64px] lg:pb-4 scrollbar-none scroll-smooth">
