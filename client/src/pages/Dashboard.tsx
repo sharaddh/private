@@ -118,7 +118,7 @@ function StatusBadge({ status }: { status: string }) {
     "In Transit": "bg-[#f59e0b]/15 text-[#fbbf24]",
   };
   return (
-    <span className={`text-[15px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap uppercase tracking-wider ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
+    <span className={`text-[13px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap uppercase tracking-wider flex-shrink-0 ${styles[status] || "bg-th-elevated text-th-secondary"}`}>
       {status}
     </span>
   );
@@ -629,12 +629,12 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-[16px] text-th-secondary">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
-                  {!!(o.frameBrand) && <span className="text-[15px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.frameBrand}</span>}
-                  {!!(o.lensBrand) && <span className="text-[15px] text-th-muted bg-th-elevated px-1.5 py-0.5 rounded">{o.lensBrand}</span>}
-                </div>
+                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}
+                  {!!(o.frameBrand) ? ` · ${o.frameBrand}` : ""}
+                  {!!(o.lensBrand) ? ` · ${o.lensBrand}` : ""}
+                </p>
               </div>
               <StatusBadge status={o.status || "—"} />
             </div>
@@ -662,13 +662,13 @@ export default function Dashboard() {
             <div key={b._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all">
               <UserAvatar name={cName} className="w-10 h-10 text-sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[16px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
               </div>
-              <div className="text-right flex items-center gap-3 flex-shrink-0">
-                <p className="text-[20px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+              <div className="flex items-center gap-2.5 flex-shrink-0">
+                <p className="text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
                 <button onClick={() => navigate(`/bills?id=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[18px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider">
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider whitespace-nowrap">
                   {uiT("Collect", "वसूलें")}
                 </button>
               </div>
@@ -702,13 +702,13 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[16px] text-th-secondary mt-0.5">{maskPhone(cMobile)}</p>}
+                <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                {!!(cMobile) && <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <StatusBadge status={dl.status || "—"} />
                 <button onClick={() => navigate(`/delivery?order=${dl._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
-                  className="p-2.5 rounded-lg text-[18px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
+                  className="p-2 rounded-lg text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
                   <PackageCheck className="w-4 h-4" />
                 </button>
               </div>
@@ -743,19 +743,16 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[18px] font-semibold text-th-text truncate">{cName}</p>
-                    {!!(cMobile) && <span className="text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
-                  </div>
-                  <p className="text-[16px] text-th-secondary mt-0.5">
-                    {!!(o.frameBrand) ? `${o.frameBrand}` : ""}
+                  <p className="text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                  <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {!!(o.frameBrand) ? o.frameBrand : ""}
                     {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
-                    {!!(o.lensBrand) ? `${o.lensBrand}` : ""}
+                    {!!(o.lensBrand) ? o.lensBrand : ""}
                     {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[20px] font-bold text-th-text">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
+                  <span className="text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
                   <StatusBadge status="Delivered" />
                 </div>
               </div>
@@ -780,18 +777,12 @@ export default function Dashboard() {
           <div key={c._id || idx} className="flex items-center gap-3 px-5 py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
             <UserAvatar name={c.name || "?"} className="w-10 h-10 text-sm" />
             <div className="flex-1 min-w-0">
-              <p className="text-[18px] font-semibold text-th-text truncate">{v(c.name)}</p>
-              <p className="text-[16px] text-th-secondary mt-0.5 flex items-center gap-2 flex-wrap">
-                <span>{c.mobile ? maskPhone(c.mobile) : "—"}</span>
-                <span className="text-th-muted">·</span>
-                <span>{c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""}</span>
-                <span className="text-th-muted">·</span>
-                <span>{c.totalVisits ?? 0} {uiT("visits", "विज़िट")}</span>
+              <p className="text-[17px] font-semibold text-th-text truncate">{v(c.name)}</p>
+              <p className="text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                {c.mobile ? maskPhone(c.mobile) : "—"} · {c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""} · {c.totalVisits ?? 0} {uiT("visits", "विज़िट")}
               </p>
             </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-[20px] font-bold text-th-text">₹{(c.totalSpent || 0).toLocaleString()}</p>
-            </div>
+            <p className="text-[17px] font-bold text-th-text whitespace-nowrap flex-shrink-0">₹{(c.totalSpent || 0).toLocaleString()}</p>
           </div>
         ))}
       </div>
