@@ -25,7 +25,7 @@ const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | str
 
 const maskPhone = (p: string): string => {
   if (!p || p.length < 6) return v(p) as string;
-  return p.slice(0, 2) + "****" + p.slice(-2);
+  return p;
 };
 
 function formatTimeAgo(dateStr: string, t?: (en: string, hi: string) => string): string {
@@ -146,11 +146,10 @@ function SegmentedControl({ options, value, onChange, compact }: { options: { la
         return (
           <button key={opt.value} onClick={(e) => { e.stopPropagation(); onChange(isActive ? "pending" : opt.value); }}
             aria-label={opt.label}
-            className={`${compact ? "px-1.5 sm:px-2 py-0.5 sm:py-1 text-[11px] sm:text-[14px]" : "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-[15px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${
-              isActive
-                ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
-                : "text-th-secondary hover:text-th-text hover:bg-th-card/50"
-            }`}>
+            className={`${compact ? "px-1.5 sm:px-2 py-0.5 sm:py-1 text-[11px] sm:text-[14px]" : "px-2.5 sm:px-3 py-1 sm:py-1.5 text-[13px] sm:text-[15px]"} rounded-md font-bold transition-all leading-tight uppercase tracking-wider ${isActive
+              ? `${opt.color || "bg-[#1ed760] text-black"} shadow-sm`
+              : "text-th-secondary hover:text-th-text hover:bg-th-card/50"
+              }`}>
             {opt.label}
           </button>
         );
@@ -311,7 +310,7 @@ export default function Dashboard() {
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
       <div className="min-w-0">
         <h1 className="text-[20px] sm:text-[28px] font-bold text-th-text tracking-tight truncate">
-          {greeting}, <span className="text-[#1ed760]">{"Mr "+currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
+          {greeting}, <span className="text-[#1ed760]">{"Mr " + currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
         </h1>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 text-[12px] sm:text-[15px] text-th-secondary">
           <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -595,20 +594,26 @@ export default function Dashboard() {
                   </div>
 
                   {/* Line 2 & 3: Eye classifiers */}
-                  <div className="ml-[44px] sm:ml-[52px] mt-2 sm:mt-3 space-y-1.5 sm:space-y-2">
+                  <div className=" mt-2 sm:mt-3 space-y-1.5 sm:space-y-2">
                     {/* R Eye */}
                     <div className="flex items-center gap-2 sm:gap-3">
                       <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#1ed760]/10 text-[#1ed760] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">R</span>
                       <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{rRx || uiT("plain", "plain")}</span>
                       {inStock ? (
-                        <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
+                          {uiT("In Stock", "स्टॉक में")}
+                        </span>
                       ) : (
-                        <span className="text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
+                          {uiT("Out", "बाहर")}
+                        </span>
                       )}
-                      <SegmentedControl compact
+
+                      <SegmentedControl
+                        compact
                         options={[
-                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black" },
-                          { label: uiT("Buy", "खरीदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black " },
+                          { label: uiT("Buy", "खरೀदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
                           { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
                         ]}
                         value={rStatus}
@@ -617,17 +622,31 @@ export default function Dashboard() {
                     </div>
                     {/* L Eye */}
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">L</span>
-                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{lRx || uiT("plain", "plain")}</span>
+                      {/* Left Side: Icon and Label */}
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-[#f59e0b]/10 text-[#f59e0b] text-[13px] sm:text-[15px] font-extrabold flex items-center justify-center flex-shrink-0">
+                        L
+                      </span>
+                      <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">
+                        {lRx || "—"}
+                      </span>
+
+                      {/* Right Side: Status Badge and Segmented Control */}
+                      {/* Adding 'ml-auto' pushes this element and everything after it to the right */}
                       {inStock ? (
-                        <span className="text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("In Stock", "स्टॉक में")}</span>
+                        <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
+                          {uiT("In Stock", "स्टॉक में")}
+                        </span>
                       ) : (
-                        <span className="text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">{uiT("Out", "बाहर")}</span>
+                        <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
+                          {uiT("Out", "बाहर")}
+                        </span>
                       )}
-                      <SegmentedControl compact
+
+                      <SegmentedControl
+                        compact
                         options={[
-                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black" },
-                          { label: uiT("Buy", "खरीदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black " },
+                          { label: uiT("Buy", "खरೀदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
                           { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
                         ]}
                         value={lStatus}
@@ -651,7 +670,7 @@ export default function Dashboard() {
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-border">
         <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-none flex-1">
+      <div className="divide-y divide-th-border max-h-[465px] overflow-y-auto scrollbar-none flex-1">
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
