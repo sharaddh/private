@@ -5,7 +5,7 @@ import { useApi, useDashboard } from "../hooks";
 import PageSkeleton from "../components/PageSkeleton";
 import ShineCard from "../components/ShineCard";
 import CameraScanner from "../components/CameraScanner";
-import { SalesTrendChart, OrderStatusDonut } from "../components/DashboardCharts";
+import { SalesTrendChart, OrderStatusDonut, PaymentModeBarChart, SalesVsCollectionChart, WeeklyOrdersChart, CategoryPieChart } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
@@ -59,23 +59,19 @@ function UserAvatar({ name, className = "" }: { name: string; className?: string
 
 function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string; trend?: string; subtitle?: string }) {
   return (
-    <ShineCard className="flex flex-col bg-th-surface rounded-lg p-4 md:p-5 h-full active:scale-95 shadow-md cursor-default">
-      <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
-        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
-          <Icon className="w-4 h-4 md:w-5 md:h-5" style={{ color }} />
-        </div>
-        {trend && (
-          <span className="flex items-center gap-0.5 text-[14px] md:text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg whitespace-nowrap flex-shrink-0">
-            <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3" />
-            {trend}
-          </span>
-        )}
+    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-3 py-4 h-full active:scale-95 shadow-md cursor-default">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mb-2.5" style={{ backgroundColor: `${color}15` }}>
+        <Icon className="w-5 h-5" style={{ color }} />
       </div>
-      <div className="text-lg sm:text-xl md:text-2xl font-bold text-th-text tracking-tight mb-0.5 md:mb-1 break-words" style={{ color }}>{value}</div>
-      <div className="mt-auto">
-        <div className="text-[17px] font-medium text-th-secondary break-words">{label}</div>
-        {subtitle && <div className="text-[16px] text-th-muted mt-0.5 break-words">{subtitle}</div>}
-      </div>
+      <span className="text-lg font-bold text-th-text tracking-tight leading-tight" style={{ color }}>{value}</span>
+      {trend && (
+        <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1.5 py-0.5 rounded-md mt-1 whitespace-nowrap">
+          <TrendingUp className="w-2.5 h-2.5" />
+          {trend}
+        </span>
+      )}
+      <p className="text-[12px] font-semibold text-th-secondary mt-1.5 leading-tight line-clamp-2">{label}</p>
+      {subtitle && <p className="text-[11px] text-th-muted mt-0.5 leading-tight line-clamp-1">{subtitle}</p>}
     </ShineCard>
   );
 }
@@ -400,7 +396,7 @@ export default function Dashboard() {
   const renderKPIs = () => (
     <div>
       <SectionHeader title={uiT("Key Metrics", "मुख्य मापदंड")} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
         <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
         <MetricCard label={uiT("Today's Orders", "आज के ऑर्डर")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "इस सप्ताह")}` : undefined} />
@@ -416,15 +412,59 @@ export default function Dashboard() {
   // Charts
 
   const renderCharts = () => {
-    if (d.dailySales?.length === 0 && d.orderStatusCounts?.length === 0) return null;
+    const hasSales = d.dailySales && d.dailySales.length > 0;
+    const hasOrders = d.orderStatusCounts && d.orderStatusCounts.length > 0;
+    const hasPayments = d.paymentModeSplit && d.paymentModeSplit.length > 0;
+    const hasCollections = d.dailyCollections && d.dailyCollections.length > 0;
+    const hasOrdersTrend = d.weeklyOrderTrend && d.weeklyOrderTrend.length > 0;
+    const hasCategories = d.categoryBreakdown && d.categoryBreakdown.length > 0;
+
+    if (!hasSales && !hasOrders && !hasPayments) return null;
+
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <SalesTrendChart data={d.dailySales || []} dark={dark} />
+      <div className="space-y-5">
+        {/* Row 1: Sales Trend (large) + Order Status Donut */}
+        {(hasSales || hasOrders) && (
+          <div>
+            <SectionHeader title={uiT("Analytics Overview", "विश्लेषण अवलोकन")} />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              {hasSales && (
+                <div className="lg:col-span-3">
+                  <SalesTrendChart data={d.dailySales || []} dark={dark} />
+                </div>
+              )}
+              {hasOrders && (
+                <div className={hasSales ? "lg:col-span-2" : "lg:col-span-5"}>
+                  <OrderStatusDonut data={d.orderStatusCounts || []} dark={dark} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Row 2: Sales vs Collection + Daily Orders + Payment Modes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {hasSales && hasCollections && (
+            <SalesVsCollectionChart
+              salesData={d.dailySales || []}
+              collectionData={d.dailyCollections || []}
+              dark={dark}
+            />
+          )}
+          {hasOrdersTrend && (
+            <WeeklyOrdersChart data={d.weeklyOrderTrend || []} dark={dark} />
+          )}
+          {hasPayments && (
+            <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
+          )}
         </div>
-        <div className="lg:col-span-2">
-          <OrderStatusDonut data={d.orderStatusCounts || []} dark={dark} />
-        </div>
+
+        {/* Row 3: Inventory Category Breakdown (if exists) */}
+        {hasCategories && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <CategoryPieChart data={d.categoryBreakdown || []} dark={dark} />
+          </div>
+        )}
       </div>
     );
   };
@@ -934,16 +974,16 @@ export default function Dashboard() {
         {renderCharts()}
         {renderNeedsAttention()}
 
-        {/* Lens Demand + Recent Orders side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {renderLensDemand()}
-          {renderRecentOrders()}
-        </div>
-
         {/* Bottom grid: Pending Bills, Today's Deliveries */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {renderPendingBills()}
           {renderDeliveries()}
+        </div>
+
+        {/* Lens Demand + Recent Orders side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {renderLensDemand()}
+          {renderRecentOrders()}
         </div>
 
         {/* Today's Delivered */}
