@@ -3,7 +3,8 @@ import { Branch } from "../models/branch";
 import { getBranchModels } from "../models/db";
 import { ctx, type RequestContext } from "../utils/requestContext";
 import { logger } from "../utils/logger";
-import type { AuthRequest, BranchRequest, BranchModels } from "../types";
+import type { AuthRequest, BranchRequest } from "../types";
+import type { BranchModels } from "../models/db";
 
 export type { BranchRequest } from "../types";
 
