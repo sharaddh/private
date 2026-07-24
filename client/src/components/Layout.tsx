@@ -273,29 +273,84 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-20 lg:hidden" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? "w-64" : "w-[60px]"} flex flex-col transition-all duration-300 ease-out fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} bg-th-surface border-r border-th-border`}>
-        {/* Logo */}
-        <div className="flex items-center justify-center py-3 px-3 border-b border-th-hover relative">
-          {settings?.logo ? (
-            <img src={settings.logo} alt="Logo" className={`${sidebarOpen ? "h-20 w-20" : "h-9 w-9"} object-contain transition-all duration-300`} />
-          ) : (
-            <div className={`${sidebarOpen ? "h-20 w-20" : "h-9 w-9"} rounded-xl flex items-center justify-center transition-all duration-300`} style={{ backgroundColor: '#1ed760' }}>
-              <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
-            </div>
-          )}
-          <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
-            className={`absolute right-2 p-1 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary ${sidebarOpen ? "block" : "hidden"}`}>
-            <ChevronLeft size={14} />
-          </button>
-          <button onClick={() => setSidebarOpen(true)} aria-label="Expand sidebar"
-            className={`p-1 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary ${sidebarOpen ? "hidden" : "block"}`}>
-            <Menu size={14} />
+      {/* Mobile Sidebar Overlay */}
+      <aside className={`${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden fixed z-30 h-full w-60 flex flex-col bg-th-surface border-r border-th-border transition-transform duration-300`}>
+        <div className="flex items-center h-16 px-4 border-b border-th-border flex-shrink-0">
+          <div className="flex items-center justify-center flex-shrink-0">
+            {settings?.logo ? (
+              <img src={settings.logo} alt="Logo" className="h-10 w-10 object-contain" />
+            ) : (
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#1ed760' }}>
+                <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
+              </div>
+            )}
+          </div>
+          <button onClick={() => setMobileOpen(false)} aria-label="Close mobile menu"
+            className="ml-auto p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary">
+            <X size={18} />
           </button>
         </div>
+        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
+          {desktopMenu.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 ${
+                  active
+                    ? "bg-[#1ed760]/10 text-[#1ed760] font-semibold"
+                    : "hover:bg-th-hover text-th-secondary hover:text-th-text"
+                }`}>
+                <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                <span className="text-[13px] truncate">{trLabel(item.label)}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="px-2 py-2 border-t border-th-border">
+          <button onClick={toggleTheme}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 hover:bg-th-hover text-th-secondary hover:text-th-text"
+            aria-label="Toggle theme">
+            <div className="relative w-[17px] h-[17px] flex items-center justify-center flex-shrink-0">
+              <Sun size={17} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
+              <Moon size={17} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
+            </div>
+            <span className="text-[13px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside className={`${sidebarOpen ? "w-60" : "w-[60px]"} hidden lg:flex flex-col transition-all duration-300 ease-out relative z-30 h-full bg-th-surface border-r border-th-border flex-shrink-0`}>
+        {/* Logo */}
+        <div className={`flex items-center h-16 border-b border-th-border flex-shrink-0 ${sidebarOpen ? "px-4 justify-between" : "px-0 justify-center"}`}>
+          <div className="flex items-center justify-center flex-shrink-0">
+            {settings?.logo ? (
+              <img src={settings.logo} alt="Logo" className={`${sidebarOpen ? "h-10 w-10" : "h-8 w-8"} object-contain transition-all duration-300`} />
+            ) : (
+              <div className={`${sidebarOpen ? "h-10 w-10" : "h-8 w-8"} rounded-xl flex items-center justify-center transition-all duration-300`} style={{ backgroundColor: '#1ed760' }}>
+                <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
+              </div>
+            )}
+          </div>
+          {sidebarOpen && (
+            <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
+              className="p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary">
+              <ChevronLeft size={16} />
+            </button>
+          )}
+        </div>
+        {!sidebarOpen && (
+          <div className="flex justify-center py-1 border-b border-th-border">
+            <button onClick={() => setSidebarOpen(true)} aria-label="Expand sidebar"
+              className="p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary">
+              <Menu size={16} />
+            </button>
+          </div>
+        )}
 
         {/* Nav items */}
-        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5">
+        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -314,15 +369,15 @@ export default function Layout({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Theme toggle */}
-        <div className="px-2 py-2 border-t border-th-hover">
+        <div className="px-2 py-2 border-t border-th-border">
           <button onClick={toggleTheme}
             className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 hover:bg-th-hover text-th-secondary hover:text-th-text`}
             aria-label="Toggle theme">
-            <div className="relative w-[17px] h-[17px] flex items-center justify-center">
+            <div className="relative w-[17px] h-[17px] flex items-center justify-center flex-shrink-0">
               <Sun size={17} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
               <Moon size={17} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
             </div>
-            {sidebarOpen && <span className="text-[13px]">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>}
+            {sidebarOpen && <span className="text-[13px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>}
           </button>
         </div>
       </aside>
