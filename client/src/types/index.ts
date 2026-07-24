@@ -360,7 +360,12 @@ export interface DashboardData {
   paymentModeSplit: { mode: string; total: number; count: number }[];
   orderStatusCounts: { status: string; count: number }[];
   salesTrend: string;
+  collectionTrend: { value: number; direction: "up" | "down" | "flat" };
   todayDeliveredOrders: Order[];
+  dailyCollections: { date: string; total: number }[];
+  weeklyOrderTrend: { date: string; count: number }[];
+  categoryBreakdown: { category: string; count: number; totalValue: number }[];
+  todayPaymentModeSplit: { mode: string; total: number; count: number }[];
 }
 
 // ─── Reports ─────────────────────────────────────────────────────────────────
