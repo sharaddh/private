@@ -42,7 +42,7 @@ export function SkeletonCard() {
         </div>
       </div>
       <div className="px-5 pb-5 pt-0">
-        <div className="pt-3 border-t border-th-hover">
+        <div className="pt-3">
           <Skeleton className="h-12 w-full" delay={450} />
         </div>
       </div>
@@ -53,13 +53,13 @@ export function SkeletonCard() {
 export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
     <div className="space-y-0 rounded-lg overflow-hidden bg-th-surface">
-      <div className="flex items-center gap-4 px-4 py-3 border-b border-th-hover">
+      <div className="flex items-center gap-4 px-4 py-3">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-3.5 flex-1" delay={i * 40} />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className={`flex items-center gap-4 px-4 py-3 ${r < rows - 1 ? "border-b border-th-hover/50" : ""}`}>
+        <div key={r} className="flex items-center gap-4 px-4 py-3">
           {Array.from({ length: cols }).map((_, c) => (
             <Skeleton key={c} className={`h-3.5 ${c === 0 ? "w-1/3" : "flex-1"}`} delay={(r * cols + c) * 30 + 100} />
           ))}

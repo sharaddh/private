@@ -130,7 +130,7 @@ export default function PageSkeleton({ page }: { page: string }) {
                     <Skeleton className="h-3 w-24" delay={280 + i * 40} />
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-th-hover flex items-center justify-between">
+                <div className="mt-3 pt-3 flex items-center justify-between">
                   <Skeleton className="h-3 w-16" delay={310 + i * 40} />
                   <Skeleton className="h-6 w-14 rounded-full" delay={340 + i * 40} />
                 </div>

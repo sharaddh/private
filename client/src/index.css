@@ -153,7 +153,7 @@ body {
 .animate-skeleton-wave::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -1px;
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
   animation: skeleton-wave 1.6s ease-in-out infinite;
 }

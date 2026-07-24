@@ -39,6 +39,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
+    const icon = dark ? "/favicon-dark.svg" : "/favicon-light.svg";
+    document.getElementById("favicon")?.setAttribute("href", icon);
+    document.getElementById("apple-icon")?.setAttribute("href", icon);
     localStorage.setItem("theme", theme);
   }, [dark, theme]);
 

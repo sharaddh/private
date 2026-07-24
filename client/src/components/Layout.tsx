@@ -47,7 +47,7 @@ const allDesktopMenu = [
 const allMobileNav = [
   { path: "/", label: "Home", icon: LayoutDashboard, staff: true },
   { path: "/customers", label: "Customers", icon: Users, staff: true },
-  { path: "/workspace", label: "New Visit", icon: PlusCircle, staff: true },
+  { path: "/pickup", label: "Pickup", icon: Hand, staff: true },
   { path: "/orders", label: "Orders", icon: ShoppingCart, staff: true },
   { path: "/bills", label: "Bills", icon: FileText, staff: true },
 ];
@@ -277,13 +277,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       <aside className={`${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden fixed z-30 h-full w-60 flex flex-col bg-th-surface border-r border-th-border transition-transform duration-300`}>
         <div className="flex items-center h-16 px-4 border-b border-th-border flex-shrink-0">
           <div className="flex items-center justify-center flex-shrink-0">
-            {settings?.logo ? (
-              <img src={settings.logo} alt="Logo" className="h-10 w-10 object-contain" />
-            ) : (
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#1ed760' }}>
-                <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
-              </div>
-            )}
+            <img src={dark ? "/favicon-dark.svg" : "/favicon-light.svg"} alt="Logo" className="h-10 w-10 object-contain" />
+            <span className="ml-2.5 font-semibold text-base text-th-text whitespace-nowrap">KMJ Optical</span>
           </div>
           <button onClick={() => setMobileOpen(false)} aria-label="Close mobile menu"
             className="ml-auto p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary">
@@ -301,8 +296,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                     ? "bg-[#1ed760]/10 text-[#1ed760] font-semibold"
                     : "hover:bg-th-hover text-th-secondary hover:text-th-text"
                 }`}>
-                <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
-                <span className="text-[13px] truncate">{trLabel(item.label)}</span>
+                <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+                <span className="text-[15px] truncate">{trLabel(item.label)}</span>
               </Link>
             );
           })}
@@ -311,11 +306,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button onClick={toggleTheme}
             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 hover:bg-th-hover text-th-secondary hover:text-th-text"
             aria-label="Toggle theme">
-            <div className="relative w-[17px] h-[17px] flex items-center justify-center flex-shrink-0">
-              <Sun size={17} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
-              <Moon size={17} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
+            <div className="relative w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <Sun size={20} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
+              <Moon size={20} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
             </div>
-            <span className="text-[13px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>
+            <span className="text-[15px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>
           </button>
         </div>
       </aside>
@@ -325,13 +320,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         {/* Logo */}
         <div className={`flex items-center h-16 border-b border-th-border flex-shrink-0 ${sidebarOpen ? "px-4 justify-between" : "px-0 justify-center"}`}>
           <div className="flex items-center justify-center flex-shrink-0">
-            {settings?.logo ? (
-              <img src={settings.logo} alt="Logo" className={`${sidebarOpen ? "h-10 w-10" : "h-8 w-8"} object-contain transition-all duration-300`} />
-            ) : (
-              <div className={`${sidebarOpen ? "h-10 w-10" : "h-8 w-8"} rounded-xl flex items-center justify-center transition-all duration-300`} style={{ backgroundColor: '#1ed760' }}>
-                <span className="font-bold text-sm" style={{ color: '#121212' }}>K</span>
-              </div>
-            )}
+            <img src={dark ? "/favicon-dark.svg" : "/favicon-light.svg"} alt="Logo" className={`${sidebarOpen ? "h-10 w-10" : "h-8 w-8"} object-contain transition-all duration-300`} />
+            {sidebarOpen && <span className="ml-2.5 font-semibold text-base text-th-text whitespace-nowrap">KMJ Optical</span>}
           </div>
           {sidebarOpen && (
             <button onClick={() => setSidebarOpen(false)} aria-label="Collapse sidebar"
@@ -361,8 +351,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                     ? "bg-[#1ed760]/10 text-[#1ed760] font-semibold"
                     : "hover:bg-th-hover text-th-secondary hover:text-th-text"
                 }`}>
-                <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
-                {sidebarOpen && <span className="text-[13px] truncate">{trLabel(item.label)}</span>}
+                <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+                {sidebarOpen && <span className="text-[15px] truncate">{trLabel(item.label)}</span>}
               </Link>
             );
           })}
@@ -373,11 +363,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button onClick={toggleTheme}
             className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 hover:bg-th-hover text-th-secondary hover:text-th-text`}
             aria-label="Toggle theme">
-            <div className="relative w-[17px] h-[17px] flex items-center justify-center flex-shrink-0">
-              <Sun size={17} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
-              <Moon size={17} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
+            <div className="relative w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <Sun size={20} className={`absolute transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}`} />
+              <Moon size={20} className={`absolute transition-all duration-300 ${dark ? "-rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
             </div>
-            {sidebarOpen && <span className="text-[13px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>}
+            {sidebarOpen && <span className="text-[15px] truncate">{dark ? uiT("Light Mode", "लाइट मोड") : uiT("Dark Mode", "डार्क मोड")}</span>}
           </button>
         </div>
       </aside>
