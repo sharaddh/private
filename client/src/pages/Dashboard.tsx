@@ -658,6 +658,18 @@ export default function Dashboard() {
           const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
           const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
+          const rx = (o as any).prescription;
+          const rxParts: string[] = [];
+          if (rx?.rightEye?.dv) {
+            const r = rx.rightEye.dv;
+            const parts = [r.sph != null ? `SPH ${r.sph}` : "", r.cyl != null ? `CYL ${r.cyl}` : "", r.axis != null ? `AX ${r.axis}` : ""].filter(Boolean);
+            if (parts.length) rxParts.push(`R: ${parts.join(" ")}`);
+          }
+          if (rx?.leftEye?.dv) {
+            const l = rx.leftEye.dv;
+            const parts = [l.sph != null ? `SPH ${l.sph}` : "", l.cyl != null ? `CYL ${l.cyl}` : "", l.axis != null ? `AX ${l.axis}` : ""].filter(Boolean);
+            if (parts.length) rxParts.push(`L: ${parts.join(" ")}`);
+          }
           return (
             <div key={o._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-3.5 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/workspace?order=${o._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/workspace?order=${o._id}`)}>
               <div className="relative flex-shrink-0">
@@ -673,6 +685,11 @@ export default function Dashboard() {
                   {!!(o.frameBrand) ? ` · ${o.frameBrand}` : ""}
                   {!!(o.lensBrand) ? ` · ${o.lensBrand}` : ""}
                 </p>
+                {rxParts.length > 0 && (
+                  <p className="text-[11px] sm:text-[12px] text-[#1ed760] font-medium mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {rxParts.join(" · ")}
+                  </p>
+                )}
               </div>
               <StatusBadge status={o.status || "—"} />
             </div>

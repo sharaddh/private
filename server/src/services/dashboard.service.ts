@@ -6,6 +6,7 @@ import { Payment } from "../models/payment";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
+import { Prescription } from "../models/prescription";
 
 function getDayRange(date?: Date): { start: Date; end: Date } {
   const d = date || new Date();
@@ -196,6 +197,18 @@ export async function getStats() {
     ]),
   ]);
 
+  const recentOrderVisitIds = recentOrders
+    .map((o: any) => o.visitId?._id?.toString() || (typeof o.visitId === "string" ? o.visitId : null))
+    .filter(Boolean);
+  const recentPrescriptions = recentOrderVisitIds.length > 0
+    ? await Prescription.find({ visitId: { $in: recentOrderVisitIds } }).lean()
+    : [];
+  const rxMap = new Map(recentPrescriptions.map((p: any) => [p.visitId.toString(), p]));
+  const recentOrdersWithRx = recentOrders.map((o: any) => {
+    const vid = o.visitId?._id?.toString() || (typeof o.visitId === "string" ? o.visitId : null);
+    return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
+  });
+
   const todaySales = todaySalesResult[0]?.total || 0;
   const todayCollection = todayCollectionResult[0]?.total || 0;
   const weekSales = weekSalesResult[0]?.total || 0;
@@ -235,7 +248,7 @@ export async function getStats() {
     lowStock: lowStockItems,
     pendingPayments: pendingBills.length,
     recentCustomers,
-    recentOrders,
+    recentOrders: recentOrdersWithRx,
     todayDeliveries,
     pendingBills,
     incompleteOrders,
