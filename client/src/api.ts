@@ -119,10 +119,7 @@ async function request<T = unknown>(
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
     } else {
       clearTokens();
-      const returnUrl = encodeURIComponent(
-        window.location.pathname + window.location.search
-      );
-      window.location.href = `/login?redirect=${returnUrl}`;
+      window.location.hash = "#/login";
       return { success: false, message: "Session expired. Please login again." };
     }
   }
