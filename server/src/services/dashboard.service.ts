@@ -53,6 +53,9 @@ export async function getStats() {
   prevDay.setDate(prevDay.getDate() - 1);
   const { start: prevDayStart, end: prevDayEnd } = getDayRange(prevDay);
 
+  const thirtyDaysAgo = new Date(dayStart);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
   const prevMonthStart = new Date(monthStart);
   prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
   const prevMonthEnd = new Date(monthStart);
@@ -138,7 +141,7 @@ export async function getStats() {
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
     Bill.aggregate([
-      { $match: { createdAt: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd }, status: "Active" } },
+      { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd }, status: "Active" } },
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
@@ -159,12 +162,12 @@ export async function getStats() {
     Bill.countDocuments({ createdAt: { $gte: monthStart, $lte: monthEnd }, status: "Active" }),
     Order.find({ status: { $in: ["Draft", "Ordered", "In Lab"] } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
     Order.aggregate([
-      { $match: { createdAt: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
+      { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
     Payment.aggregate([
-      { $match: { paymentDate: { $gte: new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000), $lte: dayEnd } } },
+      { $match: { paymentDate: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
       { $sort: { _id: 1 } },
     ]),
