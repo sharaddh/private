@@ -498,7 +498,7 @@ export default function Dashboard() {
     const allIds = draftOrders.map((o) => o._id);
 
     return (
-      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
         <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -650,11 +650,11 @@ export default function Dashboard() {
   // Recent Orders
 
   const renderRecentOrders = () => (
-    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-border">
         <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-none">
+      <div className="divide-y divide-th-border max-h-[340px] overflow-y-auto scrollbar-none flex-1">
         {d.recentOrders.length === 0 ? (
           <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
@@ -981,11 +981,11 @@ export default function Dashboard() {
           {renderDeliveries()}
         </div>
 
-        {/* Lens Demand */}
-        {renderLensDemand()}
-
-        {/* Recent Orders — full width */}
-        {renderRecentOrders()}
+        {/* Lens Demand + Recent Orders side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          {renderLensDemand()}
+          {renderRecentOrders()}
+        </div>
 
         {/* Today's Delivered */}
         {renderTodayDelivered()}
