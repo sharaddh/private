@@ -160,7 +160,8 @@ body {
   }
 
   .glass-card {
-    @apply bg-th-surface/80 backdrop-blur-xl border border-th-border rounded-md p-5;
+    @apply backdrop-blur-xl border border-th-border rounded-md p-5;
+    background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
     box-shadow: var(--shadow-card);
   }
 
