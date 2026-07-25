@@ -3,20 +3,18 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import {
-  LayoutDashboard, Package, PlusCircle, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog,
+  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses,
 } from "lucide-react";
 
 const sidebarMenu = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/inventory", label: "Lenses", icon: Package },
-  { path: "/inventory/new", label: "Add Lens", icon: PlusCircle },
+  { path: "/lens-stock", label: "Lens Stock", icon: Glasses },
   { path: "/users", label: "Users", icon: Users },
 ];
 
 const mobileNav = [
   { path: "/", label: "Home", icon: LayoutDashboard },
-  { path: "/inventory", label: "Lenses", icon: Package },
-  { path: "/inventory/new", label: "Add", icon: PlusCircle },
+  { path: "/lens-stock", label: "Stock", icon: Glasses },
   { path: "/users", label: "Users", icon: UserCog },
 ];
 
@@ -110,7 +108,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-th-surface/80 backdrop-blur-xl border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10">
+        <header className="h-16 backdrop-blur-xl border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10" style={{ background: "color-mix(in srgb, var(--bg-surface) 80%, transparent)" }}>
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-th-hover rounded-lg lg:hidden">
               <Menu size={20} className="text-th-text" />
@@ -130,7 +128,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 bg-th-base/85 backdrop-blur-xl border-t border-th-border flex items-center justify-around z-10">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 backdrop-blur-xl border-t border-th-border flex items-center justify-around z-10" style={{ background: "color-mix(in srgb, var(--bg-base) 85%, transparent)" }}>
           {mobileNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
