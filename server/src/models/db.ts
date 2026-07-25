@@ -12,6 +12,7 @@ export interface BranchModels {
   Bill: Model<any>;
   Payment: Model<any>;
   Inventory: Model<any>;
+  LensStock: Model<any>;
   Delivery: Model<any>;
   Settings: Model<any>;
   Todo: Model<any>;
@@ -30,6 +31,7 @@ function loadSchemas() {
     Bill: require("./bill").BillSchema,
     Payment: require("./payment").PaymentSchema,
     Inventory: require("./inventory").InventorySchema,
+    LensStock: require("./lensStock").LensStockSchema,
     Delivery: require("./delivery").DeliverySchema,
     Settings: require("./settings").SettingsSchema,
     Todo: require("./todo").TodoSchema,
@@ -53,6 +55,7 @@ function registerModels(conn: mongoose.Connection): BranchModels {
     Bill: getModel("Bill", s.Bill),
     Payment: getModel("Payment", s.Payment),
     Inventory: getModel("Inventory", s.Inventory),
+    LensStock: getModel("LensStock", s.LensStock),
     Delivery: getModel("Delivery", s.Delivery),
     Settings: getModel("Settings", s.Settings),
     Todo: getModel("Todo", s.Todo),
