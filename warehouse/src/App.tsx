@@ -7,6 +7,7 @@ import Spinner from "./components/Spinner";
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Inventory = lazy(() => import("./pages/Inventory"));
+const LensStock = lazy(() => import("./pages/LensStock"));
 const Users = lazy(() => import("./pages/Users"));
 const Register = lazy(() => import("./pages/Register"));
 
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/inventory" element={<ProtectedRoute><SuspendedPage><Inventory /></SuspendedPage></ProtectedRoute>} />
         <Route path="/inventory/new" element={<ProtectedRoute><SuspendedPage><Inventory /></SuspendedPage></ProtectedRoute>} />
         <Route path="/inventory/edit/:id" element={<ProtectedRoute><SuspendedPage><Inventory /></SuspendedPage></ProtectedRoute>} />
+        <Route path="/lens-stock" element={<ProtectedRoute><SuspendedPage><LensStock /></SuspendedPage></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><SuspendedPage><Users /></SuspendedPage></ProtectedRoute>} />
         <Route path="/users/new" element={<ProtectedRoute><SuspendedPage><Register /></SuspendedPage></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
