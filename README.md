@@ -68,6 +68,8 @@ A comprehensive Enterprise Resource Planning (ERP) system designed for KMJ Optic
 - **Payment Processing** - Manage payment records
 - **User Authentication** - Secure login and registration
 - **Audit Trail** - Track system activities
+- **Multi-branch Support** - Manage multiple store locations
+- **Reporting** - Generate business reports and analytics
 
 ## Quick Start
 
