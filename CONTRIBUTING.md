@@ -48,3 +48,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - Run the full test suite before submitting PRs
 - Ensure all features work correctly
 - Test edge cases and error scenarios
+
+## Code Review
+
+- All PRs require at least one review before merging
+- Address review comments promptly
+- Keep discussions focused and constructive
