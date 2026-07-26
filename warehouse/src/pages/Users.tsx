@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
 import { Users as UsersIcon, Trash2, ChevronDown, ChevronRight, Clock, PackageMinus } from "lucide-react";
@@ -35,7 +35,6 @@ export default function Users() {
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -45,16 +44,32 @@ export default function Users() {
   }, []);
 
   const fetchWithdrawals = useCallback(async () => {
-    setLoadingHistory(true);
     const res = await api.get<WithdrawalRecord[]>("/api/cart/withdrawals/all");
     if (res.success && Array.isArray(res.data)) setWithdrawals(res.data);
-    setLoadingHistory(false);
   }, []);
 
   useEffect(() => {
     fetchUsers();
     fetchWithdrawals();
   }, [fetchUsers, fetchWithdrawals]);
+
+  const withdrawalsByUser = useMemo(() => {
+    const map = new Map<string, WithdrawalRecord[]>();
+    for (const w of withdrawals) {
+      const existing = map.get(w.user);
+      if (existing) existing.push(w);
+      else map.set(w.user, [w]);
+    }
+    return map;
+  }, [withdrawals]);
+
+  const userTotals = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const [userId, recs] of withdrawalsByUser) {
+      map.set(userId, recs.reduce((sum, w) => sum + w.totalQuantity, 0));
+    }
+    return map;
+  }, [withdrawalsByUser]);
 
   async function handleDelete(id: string) {
     setDeleting(id);
@@ -65,24 +80,12 @@ export default function Users() {
     setDeleteTarget(null);
   }
 
-  function getUserWithdrawals(userId: string): WithdrawalRecord[] {
-    return withdrawals.filter((w) => w.user === userId);
-  }
-
-  function getUserTotalItems(userId: string): number {
-    return getUserWithdrawals(userId).reduce((sum, w) => sum + w.totalQuantity, 0);
-  }
-
-  function toggleUser(userId: string) {
-    setExpandedUser((prev) => (prev === userId ? null : userId));
-  }
-
   if (loading) {
     return <Spinner size={32} className="mx-auto mt-16" />;
   }
 
   return (
-    <div className="space-y-4 pb-20 lg:pb-0 animate-fade-in">
+    <div className="space-y-4 pb-20 lg:pb-0 animate-page-enter">
       <div>
         <h1 className="page-title">Users</h1>
         <p className="page-subtitle">{users.length} user(s) &middot; {withdrawals.length} withdrawal(s)</p>
@@ -111,8 +114,8 @@ export default function Users() {
               </thead>
               <tbody>
                 {users.map((u) => {
-                  const userWithdrawals = getUserWithdrawals(u.id);
-                  const totalItems = getUserTotalItems(u.id);
+                  const userWithdrawals = withdrawalsByUser.get(u.id) || [];
+                  const totalItems = userTotals.get(u.id) || 0;
                   const isExpanded = expandedUser === u.id;
 
                   return (
@@ -127,7 +130,7 @@ export default function Users() {
                         <td className="px-4 py-3">
                           {userWithdrawals.length > 0 ? (
                             <button
-                              onClick={() => toggleUser(u.id)}
+                              onClick={() => setExpandedUser((prev) => (prev === u.id ? null : u.id))}
                               className="flex items-center gap-1.5 text-body text-primary-500 font-medium hover:underline"
                             >
                               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -153,42 +156,38 @@ export default function Users() {
                         <tr className="bg-th-elevated/50">
                           <td colSpan={7} className="px-4 py-3">
                             <div className="space-y-2">
-                              {loadingHistory ? (
-                                <p className="text-center text-th-muted text-micro py-2">Loading...</p>
-                              ) : (
-                                userWithdrawals.map((rec) => (
-                                  <div key={rec._id} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <Clock size={12} className="text-th-muted shrink-0" />
-                                        <span className="text-small text-th-muted">
-                                          {formatDate(rec.withdrawnAt)}
-                                          {" "}
-                                          {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                        </span>
-                                        <span className="text-small text-th-muted">&middot;</span>
-                                        <span className="text-small font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
-                                      </div>
-                                      <div className="flex flex-wrap gap-1">
-                                        {rec.items.map((it, idx) => {
-                                          const isNeg = it.powerKey.startsWith("-");
-                                          const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
-                                          return (
-                                            <span
-                                              key={idx}
-                                              className={`px-1.5 py-0.5 rounded text-micro font-medium ${
-                                                isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
-                                              }`}
-                                            >
-                                              {it.coating} {it.powerKey} x{it.quantity}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
+                              {userWithdrawals.map((rec) => (
+                                <div key={rec._id} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Clock size={12} className="text-th-muted shrink-0" />
+                                      <span className="text-small text-th-muted">
+                                        {formatDate(rec.withdrawnAt)}
+                                        {" "}
+                                        {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                      <span className="text-small text-th-muted">&middot;</span>
+                                      <span className="text-small font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {rec.items.map((it, idx) => {
+                                        const isNeg = it.powerKey.startsWith("-");
+                                        const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
+                                        return (
+                                          <span
+                                            key={idx}
+                                            className={`px-1.5 py-0.5 rounded text-micro font-medium ${
+                                              isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
+                                            }`}
+                                          >
+                                            {it.coating} {it.powerKey} x{it.quantity}
+                                          </span>
+                                        );
+                                      })}
                                     </div>
                                   </div>
-                                ))
-                              )}
+                                </div>
+                              ))}
                             </div>
                           </td>
                         </tr>
@@ -203,8 +202,8 @@ export default function Users() {
           {/* Mobile: card list */}
           <div className="lg:hidden space-y-2">
             {users.map((u) => {
-              const userWithdrawals = getUserWithdrawals(u.id);
-              const totalItems = getUserTotalItems(u.id);
+              const userWithdrawals = withdrawalsByUser.get(u.id) || [];
+              const totalItems = userTotals.get(u.id) || 0;
               const isExpanded = expandedUser === u.id;
 
               return (
@@ -228,11 +227,10 @@ export default function Users() {
                     )}
                   </div>
 
-                  {/* Withdrawal history toggle */}
                   {userWithdrawals.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-th-border">
                       <button
-                        onClick={() => toggleUser(u.id)}
+                        onClick={() => setExpandedUser((prev) => (prev === u.id ? null : u.id))}
                         className="flex items-center gap-2 w-full"
                       >
                         {isExpanded ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
@@ -245,41 +243,37 @@ export default function Users() {
 
                       {isExpanded && (
                         <div className="mt-2 space-y-2 pl-5">
-                          {loadingHistory ? (
-                            <p className="text-center text-th-muted text-micro py-2">Loading...</p>
-                          ) : (
-                            userWithdrawals.map((rec) => (
-                              <div key={rec._id} className="bg-th-elevated/50 rounded-lg p-2.5">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <div className="flex items-center gap-1.5">
-                                    <Clock size={11} className="text-th-muted" />
-                                    <span className="text-micro text-th-muted">
-                                      {formatDate(rec.withdrawnAt)}
-                                      {" "}
-                                      {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                    </span>
-                                  </div>
-                                  <span className="text-micro font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
+                          {userWithdrawals.map((rec) => (
+                            <div key={rec._id} className="bg-th-elevated/50 rounded-lg p-2.5">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock size={11} className="text-th-muted" />
+                                  <span className="text-micro text-th-muted">
+                                    {formatDate(rec.withdrawnAt)}
+                                    {" "}
+                                    {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
                                 </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {rec.items.map((it, idx) => {
-                                    const isNeg = it.powerKey.startsWith("-");
-                                    const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className={`px-1.5 py-0.5 rounded text-micro font-medium ${
-                                          isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
-                                        }`}
-                                      >
-                                        {it.coating} {it.powerKey} x{it.quantity}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
+                                <span className="text-micro font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
                               </div>
-                            ))
-                          )}
+                              <div className="flex flex-wrap gap-1">
+                                {rec.items.map((it, idx) => {
+                                  const isNeg = it.powerKey.startsWith("-");
+                                  const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`px-1.5 py-0.5 rounded text-micro font-medium ${
+                                        isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
+                                      }`}
+                                    >
+                                      {it.coating} {it.powerKey} x{it.quantity}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

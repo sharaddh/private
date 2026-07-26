@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useCart } from "../context/CartContext";
+import { useCartCount } from "../context/CartContext";
 import {
   LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart,
 } from "lucide-react";
@@ -23,6 +23,26 @@ const mobileNav = [
   { path: "/users", label: "User", icon: UserCog },
 ];
 
+const CartBadge = memo(function CartBadge() {
+  const count = useCartCount();
+  if (count <= 0) return null;
+  return (
+    <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary-500 text-surface-950 text-micro font-bold leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+});
+
+const MobileCartBadge = memo(function MobileCartBadge() {
+  const count = useCartCount();
+  if (count <= 0) return null;
+  return (
+    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+});
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,7 +50,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { dark, toggle } = useTheme();
-  const { count } = useCart();
 
   const isAuthPage = location.pathname === "/login";
   if (isAuthPage) return <>{children}</>;
@@ -46,7 +65,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-th-base overflow-hidden">
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Sidebar */}
@@ -95,11 +114,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} />
                 )}
                 {sidebarOpen && <span>{item.label}</span>}
-                {item.path === "/cart" && count > 0 && (
-                  <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary-500 text-surface-950 text-micro font-bold leading-none">
-                    {count > 99 ? "99+" : count}
-                  </span>
-                )}
+                {item.path === "/cart" && <CartBadge />}
               </Link>
             );
           })}
@@ -123,7 +138,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 backdrop-blur-xl border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10" style={{ background: "color-mix(in srgb, var(--bg-surface) 80%, transparent)" }}>
+        <header className="h-16 border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10" style={{ background: "color-mix(in srgb, var(--bg-surface) 95%, var(--bg-base))" }}>
           <div className="flex items-center gap-3">
             <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-th-hover rounded-lg lg:hidden">
               <Menu size={20} className="text-th-text" />
@@ -143,7 +158,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 backdrop-blur-xl border-t border-th-border flex items-center justify-around z-10" style={{ background: "color-mix(in srgb, var(--bg-base) 85%, transparent)" }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 border-t border-th-border flex items-center justify-around z-10" style={{ background: "color-mix(in srgb, var(--bg-base) 95%, var(--bg-surface))" }}>
           {mobileNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -151,11 +166,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link key={item.path} to={item.path} className="nav-link">
                 <div className="nav-link-icon relative" {...(item.path === "/cart" ? { "data-cart-icon": "" } : {})}>
                   <Icon size={20} className={active ? "text-primary-500" : "text-th-muted"} />
-                  {item.path === "/cart" && count > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
-                      {count > 99 ? "99+" : count}
-                    </span>
-                  )}
+                  {item.path === "/cart" && <MobileCartBadge />}
                 </div>
                 <span className={`nav-link-label ${active ? "text-primary-500" : "text-th-muted"}`}>
                   {item.label}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { POWER_VALUES } from "../../constants";
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react";
 
@@ -8,44 +8,67 @@ interface Props {
   onDecrement: (powerKey: string) => void;
 }
 
-export default function PowerRow({ quantities, onIncrement, onDecrement }: Props) {
-  const negatives = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
-  const positives = POWER_VALUES.filter((p) => p.startsWith("+"));
-  const hasZero = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
+const negatives = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
+const positives = POWER_VALUES.filter((p) => p.startsWith("+"));
+const hasZero = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
 
+const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement }: {
+  power: string;
+  qty: number;
+  onIncrement: (p: string) => void;
+  onDecrement: (p: string) => void;
+}) {
+  const isNeg = power.startsWith("-");
+  const isPos = power.startsWith("+") && power !== "+0.00";
+  const isZero = power === "+0.00" || power === "0.00";
+
+  const border = isNeg ? "border-amber-400/40" : isPos ? "border-emerald-400/40" : "border-th-border";
+  const bg = isNeg ? "bg-amber-400/5" : isPos ? "bg-emerald-400/5" : "bg-th-elevated";
+  const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
+
+  return (
+    <div className={`flex flex-col items-center gap-2 p-2.5 rounded-xl border ${border} ${bg}`}>
+      <span className="text-xs sm:text-sm font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
+      <span className={`text-base sm:text-lg font-bold leading-none ${qtyClr}`}>{qty}</span>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onDecrement(power)}
+          className="w-10 h-10 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
+        >
+          <Minus size={18} strokeWidth={2.5} />
+        </button>
+        <button
+          onClick={() => onIncrement(power)}
+          className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+        </button>
+      </div>
+    </div>
+  );
+});
+
+const MemoizedPowerCell = memo(function MemoizedPowerCell({ power, qty, onIncrement, onDecrement }: {
+  power: string;
+  qty: number;
+  onIncrement: (p: string) => void;
+  onDecrement: (p: string) => void;
+}) {
+  return <PowerCell power={power} qty={qty} onIncrement={onIncrement} onDecrement={onDecrement} />;
+});
+
+export default function PowerRow({ quantities, onIncrement, onDecrement }: Props) {
   const [openGroup, setOpenGroup] = useState<string>("Negative");
 
-  function renderCell(power: string) {
-    const qty = quantities[power] || 0;
-    const isNeg = power.startsWith("-");
-    const isPos = power.startsWith("+") && power !== "+0.00";
-    const isZero = power === "+0.00" || power === "0.00";
+  const negativeEntries = useMemo(() =>
+    negatives.filter((p) => (quantities[p] || 0) > 0),
+  [quantities]);
 
-    const border = isNeg ? "border-amber-400/40" : isPos ? "border-emerald-400/40" : "border-th-border";
-    const bg = isNeg ? "bg-amber-400/5" : isPos ? "bg-emerald-400/5" : "bg-th-elevated";
-    const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
+  const positiveEntries = useMemo(() =>
+    positives.filter((p) => (quantities[p] || 0) > 0),
+  [quantities]);
 
-    return (
-      <div key={power} className={`flex flex-col items-center gap-2 p-2.5 rounded-xl border ${border} ${bg}`}>
-        <span className="text-xs sm:text-sm font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
-        <span className={`text-base sm:text-lg font-bold leading-none ${qtyClr}`}>{qty}</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => onDecrement(power)}
-            className="w-10 h-10 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
-          >
-            <Minus size={18} strokeWidth={2.5} />
-          </button>
-          <button
-            onClick={() => onIncrement(power)}
-            className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
-          >
-            <Plus size={18} strokeWidth={2.5} />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const zeroQty = quantities["+0.00"] || quantities["0.00"] || 0;
 
   function toggle(label: string) {
     setOpenGroup((prev) => (prev === label ? "" : label));
@@ -61,11 +84,13 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
           >
             {openGroup === "Negative" ? <ChevronDown size={16} className="text-amber-500" /> : <ChevronRight size={16} className="text-amber-500" />}
             <span className="px-2.5 py-0.5 rounded-pill bg-amber-500/10 text-amber-500 text-xs font-bold">NEGATIVE</span>
-            <span className="text-xs text-th-muted">({negatives.length})</span>
+            <span className="text-xs text-th-muted">({negativeEntries.length})</span>
           </button>
           {openGroup === "Negative" && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
-              {negatives.map((p) => renderCell(p))}
+              {negatives.map((p) => (
+                <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
+              ))}
             </div>
           )}
         </div>
@@ -82,7 +107,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
           </button>
           {openGroup === "Zero" && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
-              {renderCell("+0.00")}
+              <MemoizedPowerCell power="+0.00" qty={zeroQty} onIncrement={onIncrement} onDecrement={onDecrement} />
             </div>
           )}
         </div>
@@ -96,11 +121,13 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
           >
             {openGroup === "Positive" ? <ChevronDown size={16} className="text-emerald-500" /> : <ChevronRight size={16} className="text-emerald-500" />}
             <span className="px-2.5 py-0.5 rounded-pill bg-emerald-500/10 text-emerald-500 text-xs font-bold">POSITIVE</span>
-            <span className="text-xs text-th-muted">({positives.length})</span>
+            <span className="text-xs text-th-muted">({positiveEntries.length})</span>
           </button>
           {openGroup === "Positive" && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
-              {positives.map((p) => renderCell(p))}
+              {positives.map((p) => (
+                <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
+              ))}
             </div>
           )}
         </div>

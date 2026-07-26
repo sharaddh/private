@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import type { LensStockItem, LensType } from "../types/lensStock";
 import api from "../api";
 import { useToast } from "../context";
 import { useCart } from "../context/CartContext";
 import { flyToCart } from "../utils/flyToCart";
-import { Glasses, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Glasses, ChevronDown, ChevronRight, X, Plus, Check } from "lucide-react";
+import { POWER_VALUES } from "../constants";
 
 function getTotalQty(item: LensStockItem): number {
   const q = item.quantities as Record<string, Record<string, number>> || {};
@@ -26,20 +27,7 @@ const TABS: { key: LensType; label: string }[] = [
   { key: "compound", label: "Both" },
 ];
 
-function generatePowerValues(): string[] {
-  const values: string[] = [];
-  for (let i = 0; i <= 24; i++) {
-    const num = i * 0.25;
-    const formatted = num.toFixed(2);
-    values.push(`+${formatted}`);
-    if (num > 0) values.unshift(`-${formatted}`);
-  }
-  return values;
-}
-
-const POWER_VALUES = generatePowerValues();
-
-interface LensCardProps {
+const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType, powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove }: {
   coating: string;
   lensType: LensType;
   powerKey: string;
@@ -49,9 +37,7 @@ interface LensCardProps {
   atMax: boolean;
   onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onRemove: (e: React.MouseEvent) => void;
-}
-
-function LensCard({ coating, lensType, powerKey, qty, inCart, cartQty, atMax, onAdd, onRemove }: LensCardProps) {
+}) {
   const isNeg = powerKey.startsWith("-");
   const isPos = powerKey.startsWith("+") && powerKey !== "+0.00";
 
@@ -70,7 +56,7 @@ function LensCard({ coating, lensType, powerKey, qty, inCart, cartQty, atMax, on
   return (
     <div
       data-lens-card
-      className={`relative flex flex-col items-center gap-1 py-3 px-2 rounded-md border transition-all duration-200 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
+      className={`relative flex flex-col items-center gap-1 py-3 px-2 rounded-md border transition-all duration-150 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
     >
       {inCart && (
         <span
@@ -91,9 +77,18 @@ function LensCard({ coating, lensType, powerKey, qty, inCart, cartQty, atMax, on
       </button>
     </div>
   );
-}
+});
 
-function CompoundLensCard({ coating, powerKey, qty, inCart, cartQty, atMax, onAdd, onRemove }: { coating: string; powerKey: string; qty: number; inCart: boolean; cartQty: number; atMax: boolean; onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void; onRemove: (e: React.MouseEvent) => void }) {
+const CompoundLensCard = memo(function CompoundLensCard({ coating: _coating, powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove }: {
+  coating: string;
+  powerKey: string;
+  qty: number;
+  inCart: boolean;
+  cartQty: number;
+  atMax: boolean;
+  onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onRemove: (e: React.MouseEvent) => void;
+}) {
   const sph = powerKey.split("|")[0];
   const isNeg = sph.startsWith("-");
   const isPos = sph.startsWith("+") && sph !== "+0.00";
@@ -113,7 +108,7 @@ function CompoundLensCard({ coating, powerKey, qty, inCart, cartQty, atMax, onAd
   return (
     <div
       data-lens-card
-      className={`relative flex flex-col items-center gap-1 py-2 px-1.5 rounded-md border transition-all duration-200 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
+      className={`relative flex flex-col items-center gap-1 py-2 px-1.5 rounded-md border transition-all duration-150 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
     >
       {inCart && (
         <span
@@ -134,25 +129,25 @@ function CompoundLensCard({ coating, powerKey, qty, inCart, cartQty, atMax, onAd
       </button>
     </div>
   );
-}
+});
 
 interface FlatGridProps {
   quantities: Record<string, number>;
   coating: string;
   lensType: LensType;
-  addToCart: (coating: string, lensType: string, powerKey: string) => boolean;
+  addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
 }
 
-function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQty, removeByDetails }: FlatGridProps) {
+const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQty, removeByDetails }: FlatGridProps) {
   const [openGroup, setOpenGroup] = useState<string>("Negative");
-  const allEntries = Object.entries(quantities).filter(([, q]) => q > 0);
+  const allEntries = useMemo(() => Object.entries(quantities).filter(([, q]) => q > 0), [quantities]);
 
-  const negatives = allEntries.filter(([p]) => p.startsWith("-")).sort((a, b) => b[0].localeCompare(a[0]));
-  const positives = allEntries.filter(([p]) => p.startsWith("+") && p !== "+0.00").sort((a, b) => a[0].localeCompare(b[0]));
-  const zeros = allEntries.filter(([p]) => p === "+0.00" || p === "0.00" || p === "-0.00");
+  const negatives = useMemo(() => allEntries.filter(([p]) => p.startsWith("-")).sort((a, b) => b[0].localeCompare(a[0])), [allEntries]);
+  const positives = useMemo(() => allEntries.filter(([p]) => p.startsWith("+") && p !== "+0.00").sort((a, b) => a[0].localeCompare(b[0])), [allEntries]);
+  const zeros = useMemo(() => allEntries.filter(([p]) => p === "+0.00" || p === "0.00" || p === "-0.00"), [allEntries]);
 
   if (allEntries.length === 0) {
     return <p className="text-center text-th-muted text-body py-12">No stock for this lens type</p>;
@@ -167,18 +162,6 @@ function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQ
     { label: "Zero", entries: zeros, color: "text-th-muted" },
     { label: "Positive", entries: positives, color: "text-emerald-500" },
   ];
-
-  function handleAdd(power: string, e: React.MouseEvent<HTMLButtonElement>) {
-    const stockQty = quantities[power] || 0;
-    const currentCartQty = getItemQty(coating, lensType, power);
-    if (stockQty > 0 && currentCartQty >= stockQty) return;
-    addToCart(coating, lensType, power);
-    flyToCart(e.currentTarget);
-  }
-
-  function handleRemove(power: string) {
-    removeByDetails(coating, lensType, power);
-  }
 
   return (
     <div className="space-y-2">
@@ -211,8 +194,14 @@ function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQ
                       inCart={isInCart(coating, lensType, power)}
                       cartQty={currentCartQty}
                       atMax={atMax}
-                      onAdd={(e) => handleAdd(power, e)}
-                      onRemove={() => handleRemove(power)}
+                      onAdd={(e) => {
+                        const stockQty = quantities[power] || 0;
+                        const currentCartQty = getItemQty(coating, lensType, power);
+                        if (stockQty > 0 && currentCartQty >= stockQty) return;
+                        addToCart(coating, lensType, power);
+                        flyToCart(e.currentTarget);
+                      }}
+                      onRemove={() => removeByDetails(coating, lensType, power)}
                     />
                   );
                 })}
@@ -223,73 +212,28 @@ function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQ
       })}
     </div>
   );
-}
+});
 
 interface CompoundViewProps {
   quantities: Record<string, number>;
   coating: string;
-  addToCart: (coating: string, lensType: string, powerKey: string) => boolean;
+  addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
 }
 
-function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails }: CompoundViewProps) {
+const negSph = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
+const posSph = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
+const hasZeroSph = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
+
+const CompoundView = memo(function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails }: CompoundViewProps) {
   const [openCyl, setOpenCyl] = useState<string>("");
-  const hasAny = Object.values(quantities).some((q) => q > 0);
+  const hasAny = useMemo(() => Object.values(quantities).some((q) => q > 0), [quantities]);
 
   if (!hasAny) {
     return <p className="text-center text-th-muted text-body py-12">No stock for this lens type</p>;
   }
-
-  function renderSphSection(sphValues: string[], filter: "neg" | "pos" | "zero") {
-    const filtered = sphValues.filter((sph) => {
-      const qty = quantities[`${sph}|${openCyl}`] || 0;
-      if (qty <= 0) return false;
-      if (filter === "neg") return sph.startsWith("-");
-      if (filter === "zero") return sph === "+0.00" || sph === "0.00" || sph === "-0.00";
-      return sph.startsWith("+") && sph !== "+0.00";
-    });
-
-    if (filtered.length === 0) return null;
-
-    return (
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
-        {filtered.map((sph) => {
-          const key = `${sph}|${openCyl}`;
-          const qty = quantities[key] || 0;
-          const inCart = isInCart(coating, "compound", key);
-          const cartQty = getItemQty(coating, "compound", key);
-          const atMax = qty > 0 && cartQty >= qty;
-          return (
-            <CompoundLensCard
-              key={key}
-              coating={coating}
-              powerKey={key}
-              qty={qty}
-              inCart={inCart}
-              cartQty={cartQty}
-              atMax={atMax}
-              onAdd={(e) => {
-                const stockQty = quantities[key] || 0;
-                const currentCartQty = getItemQty(coating, "compound", key);
-                if (stockQty > 0 && currentCartQty >= stockQty) return;
-                addToCart(coating, "compound", key);
-                flyToCart(e.currentTarget);
-              }}
-              onRemove={() => {
-                removeByDetails(coating, "compound", key);
-              }}
-            />
-          );
-        })}
-      </div>
-    );
-  }
-
-  const negSph = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
-  const posSph = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
-  const hasZero = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
 
   return (
     <div className="space-y-2">
@@ -320,22 +264,103 @@ function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, re
             </button>
             {isOpen && (
               <div className="mt-2 ml-5 space-y-3">
-                {renderSphSection(negSph, "neg") && (
+                {negSph.length > 0 && (
                   <div>
                     <div className="text-micro font-bold text-amber-500 uppercase tracking-wider mb-1.5">Negative SPH</div>
-                    {renderSphSection(negSph, "neg")}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                      {negSph.map((sph) => {
+                        const key = `${sph}|${cyl}`;
+                        const qty = quantities[key] || 0;
+                        if (qty <= 0) return null;
+                        const inCart = isInCart(coating, "compound", key);
+                        const cartQty = getItemQty(coating, "compound", key);
+                        const atMax = qty > 0 && cartQty >= qty;
+                        return (
+                          <CompoundLensCard
+                            key={key}
+                            coating={coating}
+                            powerKey={key}
+                            qty={qty}
+                            inCart={inCart}
+                            cartQty={cartQty}
+                            atMax={atMax}
+                            onAdd={(e) => {
+                              const stockQty = quantities[key] || 0;
+                              const currentCartQty = getItemQty(coating, "compound", key);
+                              if (stockQty > 0 && currentCartQty >= stockQty) return;
+                              addToCart(coating, "compound", key);
+                              flyToCart(e.currentTarget);
+                            }}
+                            onRemove={() => removeByDetails(coating, "compound", key)}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-                {hasZero && renderSphSection(POWER_VALUES, "zero") && (
+                {hasZeroSph && (
                   <div>
                     <div className="text-micro font-bold text-th-muted uppercase tracking-wider mb-1.5">Zero</div>
-                    {renderSphSection(POWER_VALUES, "zero")}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                      {(() => {
+                        const key = `+0.00|${cyl}`;
+                        const qty = quantities[key] || 0;
+                        if (qty <= 0) return null;
+                        return (
+                          <CompoundLensCard
+                            key={key}
+                            coating={coating}
+                            powerKey={key}
+                            qty={qty}
+                            inCart={isInCart(coating, "compound", key)}
+                            cartQty={getItemQty(coating, "compound", key)}
+                            atMax={qty > 0 && getItemQty(coating, "compound", key) >= qty}
+                            onAdd={(e) => {
+                              const stockQty = quantities[key] || 0;
+                              const currentCartQty = getItemQty(coating, "compound", key);
+                              if (stockQty > 0 && currentCartQty >= stockQty) return;
+                              addToCart(coating, "compound", key);
+                              flyToCart(e.currentTarget);
+                            }}
+                            onRemove={() => removeByDetails(coating, "compound", key)}
+                          />
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
-                {renderSphSection(posSph, "pos") && (
+                {posSph.length > 0 && (
                   <div>
                     <div className="text-micro font-bold text-emerald-500 uppercase tracking-wider mb-1.5">Positive SPH</div>
-                    {renderSphSection(posSph, "pos")}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                      {posSph.map((sph) => {
+                        const key = `${sph}|${cyl}`;
+                        const qty = quantities[key] || 0;
+                        if (qty <= 0) return null;
+                        const inCart = isInCart(coating, "compound", key);
+                        const cartQty = getItemQty(coating, "compound", key);
+                        const atMax = qty > 0 && cartQty >= qty;
+                        return (
+                          <CompoundLensCard
+                            key={key}
+                            coating={coating}
+                            powerKey={key}
+                            qty={qty}
+                            inCart={inCart}
+                            cartQty={cartQty}
+                            atMax={atMax}
+                            onAdd={(e) => {
+                              const stockQty = quantities[key] || 0;
+                              const currentCartQty = getItemQty(coating, "compound", key);
+                              if (stockQty > 0 && currentCartQty >= stockQty) return;
+                              addToCart(coating, "compound", key);
+                              flyToCart(e.currentTarget);
+                            }}
+                            onRemove={() => removeByDetails(coating, "compound", key)}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -345,13 +370,15 @@ function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, re
       })}
     </div>
   );
-}
+});
 
 export default function LensStock() {
   const [items, setItems] = useState<LensStockItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lensType, setLensType] = useState<LensType>("sph");
   const [loading, setLoading] = useState(true);
+  const [mobileAdding, setMobileAdding] = useState(false);
+  const [mobileNewName, setMobileNewName] = useState("");
   const { toast } = useToast();
   const { addToCart, isInCart, getItemQty, removeByDetails } = useCart();
 
@@ -370,15 +397,30 @@ export default function LensStock() {
     fetchItems();
   }, []);
 
-  const selectedItem = items.find((i) => i._id === selectedId) || null;
-  const quantities = (selectedItem?.quantities?.[lensType] || {}) as Record<string, number>;
+  const selectedItem = useMemo(() => items.find((i) => i._id === selectedId) || null, [items, selectedId]);
+  const quantities = useMemo(() => (selectedItem?.quantities?.[lensType] || {}) as Record<string, number>, [selectedItem, lensType]);
+
+  const handleMobileAdd = useCallback(async () => {
+    const name = mobileNewName.trim();
+    if (!name) return;
+    const res = await api.post<LensStockItem>("/api/lens-stock", { coating: name });
+    if (res.success && res.data) {
+      setItems((prev) => [...prev, res.data!]);
+      setSelectedId(res.data!._id);
+      setMobileNewName("");
+      setMobileAdding(false);
+      toast("Coating added", "success");
+    } else {
+      toast(res.message || "Failed to add", "error");
+    }
+  }, [mobileNewName, toast]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><span className="text-th-muted text-body">Loading...</span></div>;
   }
 
   return (
-    <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0">
+    <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0 animate-page-enter">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg bg-primary-500/15 flex items-center justify-center">
           <Glasses size={18} className="text-primary-500" />
@@ -390,36 +432,63 @@ export default function LensStock() {
       </div>
 
       {/* Mobile: coating select + lens type tabs */}
-      <div className="lg:hidden flex items-center gap-2">
-        <select
-          value={selectedId || ""}
-          onChange={(e) => setSelectedId(e.target.value)}
-          className="flex-1 px-3 py-2 rounded-xl bg-th-surface border border-th-border text-sm font-bold text-th-text appearance-none cursor-pointer"
-        >
-          {items.map((item) => {
-            const total = getTotalQty(item);
-            return (
-              <option key={item._id} value={item._id}>
-                {item.coating} ({total})
-              </option>
-            );
-          })}
-        </select>
-        <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setLensType(t.key)}
-              className={`px-2.5 py-1.5 rounded-pill text-micro font-bold transition-all ${
-                lensType === t.key
-                  ? "bg-primary-500 text-surface-950 shadow-sm"
-                  : "text-th-secondary"
-              }`}
-            >
-              {t.label}
+      <div className="lg:hidden">
+        {mobileAdding ? (
+          <div className="flex gap-2 mb-2">
+            <input
+              autoFocus
+              value={mobileNewName}
+              onChange={(e) => setMobileNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); } }}
+              className="flex-1 px-3 py-2 rounded-xl bg-th-input border border-th-border text-sm font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+              placeholder="Coating name..."
+            />
+            <button onClick={handleMobileAdd} className="p-2 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
+              <Check size={18} strokeWidth={2.5} />
             </button>
-          ))}
-        </div>
+            <button onClick={() => { setMobileAdding(false); setMobileNewName(""); }} className="p-2 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+              <X size={18} strokeWidth={2.5} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedId || ""}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl bg-th-surface border border-th-border text-sm font-bold text-th-text appearance-none cursor-pointer"
+            >
+              {items.map((item) => {
+                const total = getTotalQty(item);
+                return (
+                  <option key={item._id} value={item._id}>
+                    {item.coating} ({total})
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              onClick={() => { setMobileAdding(true); setMobileNewName(""); }}
+              className="p-2 rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
+            >
+              <Plus size={18} className="text-primary-500" />
+            </button>
+            <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setLensType(t.key)}
+                  className={`px-2.5 py-1.5 rounded-pill text-micro font-bold transition-all ${
+                    lensType === t.key
+                      ? "bg-primary-500 text-surface-950 shadow-sm"
+                      : "text-th-secondary"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop: sidebar + content */}
@@ -434,7 +503,7 @@ export default function LensStock() {
                 <div
                   key={item._id}
                   onClick={() => setSelectedId(item._id)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-150 ${
                     isSelected
                       ? "bg-primary-500/10 border border-primary-500/30 shadow-sm ring-1 ring-primary-500/10"
                       : "hover:bg-th-elevated border border-transparent hover:border-th-border"

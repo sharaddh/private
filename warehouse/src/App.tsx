@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Spinner from "./components/Spinner";
+import { PageLoader } from "./components";
 
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -15,11 +15,7 @@ const Cart = lazy(() => import("./pages/Cart"));
 
 function SuspendedPage({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <Spinner size={32} />
-      </div>
-    }>
+    <Suspense fallback={<PageLoader />}>
       {children}
     </Suspense>
   );

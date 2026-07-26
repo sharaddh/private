@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { LensType, LensStockItem } from "../../types/lensStock";
 import api from "../../api";
 import { useToast } from "../../context";
@@ -22,52 +22,66 @@ export default function LensGrid({ item, onUpdate }: Props) {
 
   const quantities = item.quantities?.[lensType] || {};
 
-  const handleIncrement = async (powerKey: string) => {
+  const handleIncrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
+    const newQty = current + 1;
+    onUpdate({
+      ...item,
+      quantities: {
+        ...item.quantities,
+        [lensType]: { ...quantities, [powerKey]: newQty },
+      },
+    });
     const res = await api.put<{ _id: string }>(`/api/lens-stock/${item._id}/quantity`, {
       lensType,
       powerKey,
-      quantity: current + 1,
+      quantity: newQty,
     });
-    if (res.success) {
+    if (!res.success) {
       onUpdate({
         ...item,
         quantities: {
           ...item.quantities,
-          [lensType]: { ...quantities, [powerKey]: current + 1 },
+          [lensType]: { ...quantities },
         },
       });
-    } else {
       toast(res.message || "Failed to update", "error");
     }
-  };
+  }, [item, lensType, quantities, onUpdate, toast]);
 
-  const handleDecrement = async (powerKey: string) => {
+  const handleDecrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
     if (current <= 0) return;
+    const newQty = current - 1;
+    const updated = { ...quantities };
+    if (newQty <= 0) {
+      delete updated[powerKey];
+    } else {
+      updated[powerKey] = newQty;
+    }
+    onUpdate({
+      ...item,
+      quantities: {
+        ...item.quantities,
+        [lensType]: updated,
+      },
+    });
     const res = await api.put<{ _id: string }>(`/api/lens-stock/${item._id}/quantity`, {
       lensType,
       powerKey,
-      quantity: current - 1,
+      quantity: newQty,
     });
-    if (res.success) {
-      const updated = { ...quantities };
-      if (current - 1 <= 0) {
-        delete updated[powerKey];
-      } else {
-        updated[powerKey] = current - 1;
-      }
+    if (!res.success) {
       onUpdate({
         ...item,
         quantities: {
           ...item.quantities,
-          [lensType]: updated,
+          [lensType]: { ...quantities },
         },
       });
-    } else {
       toast(res.message || "Failed to update", "error");
     }
-  };
+  }, [item, lensType, quantities, onUpdate, toast]);
 
   return (
     <div className="flex flex-col gap-2">

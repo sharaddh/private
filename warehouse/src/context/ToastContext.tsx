@@ -15,6 +15,18 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 let nextId = 0;
 
+const TOAST_ICONS = {
+  success: <CheckCircle size={16} className="text-primary-500" />,
+  error: <AlertTriangle size={16} className="text-negative" />,
+  info: <Info size={16} className="text-announcement" />,
+};
+
+const TOAST_BG = {
+  success: "bg-primary-500/10 border-primary-500/30",
+  error: "bg-negative/10 border-negative/30",
+  info: "bg-announcement/10 border-announcement/30",
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -30,35 +42,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const icons = {
-    success: <CheckCircle size={16} className="text-primary-500" />,
-    error: <AlertTriangle size={16} className="text-negative" />,
-    info: <Info size={16} className="text-announcement" />,
-  };
-
-  const bgColors = {
-    success: "bg-primary-500/10 border-primary-500/30",
-    error: "bg-negative/10 border-negative/30",
-    info: "bg-announcement/10 border-announcement/30",
-  };
-
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-20 lg:bottom-6 right-4 z-[100] space-y-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`flex items-center gap-3 px-4 py-3 rounded-md border backdrop-blur-xl shadow-lg animate-slide-up ${bgColors[t.type]}`}
-          >
-            {icons[t.type]}
-            <span className="text-sm text-th-text">{t.message}</span>
-            <button onClick={() => remove(t.id)} className="text-th-muted hover:text-th-text ml-2">
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-      </div>
+      {toasts.length > 0 && (
+        <div className="fixed bottom-20 lg:bottom-6 right-4 z-[100] space-y-2">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md border shadow-lg animate-slide-up ${TOAST_BG[t.type]}`}
+            >
+              {TOAST_ICONS[t.type]}
+              <span className="text-sm text-th-text">{t.message}</span>
+              <button onClick={() => remove(t.id)} className="text-th-muted hover:text-th-text ml-2">
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </ToastContext.Provider>
   );
 }
