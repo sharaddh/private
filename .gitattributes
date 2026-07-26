@@ -15,3 +15,7 @@
 *.svg text eol=lf
 *.lock -diff linguist-generated=true
 package-lock.json -diff linguist-generated=true
+*.jpg binary
+*.png binary
+*.gif binary
+*.ico binary
