@@ -19,3 +19,4 @@ package-lock.json -diff linguist-generated=true
 *.png binary
 *.gif binary
 *.ico binary
+*.pdf binary
