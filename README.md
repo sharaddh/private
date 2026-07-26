@@ -205,3 +205,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 Private Project
 
+## Support
+
+For issues and questions, please open an issue on the repository.
+
