@@ -399,7 +399,7 @@ export async function listWarehouseUsers(
     throw new AppError(403, "Access denied");
   }
 
-  const users = await User.find({ role: "warehouse" })
+  const users = await User.find({ role: { $in: ["warehouse", "owner"] } })
     .select("-passwordHash")
     .sort({ createdAt: -1 })
     .lean();

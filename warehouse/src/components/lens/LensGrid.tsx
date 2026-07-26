@@ -10,10 +10,10 @@ interface Props {
   onUpdate: (updated: LensStockItem) => void;
 }
 
-const TABS: { key: LensType; label: string; desc: string }[] = [
-  { key: "sph", label: "SPH", desc: "Spherical" },
-  { key: "cyl", label: "CYL", desc: "Cylindrical" },
-  { key: "compound", label: "Both", desc: "Spherical + Cylindrical" },
+const TABS: { key: LensType; label: string }[] = [
+  { key: "sph", label: "SPH" },
+  { key: "cyl", label: "CYL" },
+  { key: "compound", label: "Both" },
 ];
 
 export default function LensGrid({ item, onUpdate }: Props) {
@@ -69,38 +69,22 @@ export default function LensGrid({ item, onUpdate }: Props) {
     }
   };
 
-  const totalQty = Object.values(quantities).reduce((sum, q) => sum + q, 0);
-  const stockCount = Object.values(quantities).filter((q) => q > 0).length;
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1.5 bg-th-elevated rounded-pill p-1">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setLensType(t.key)}
-              className={`px-4 py-1.5 rounded-pill text-micro font-bold transition-all ${
-                lensType === t.key
-                  ? "bg-primary-500 text-surface-950 shadow-sm"
-                  : "text-th-secondary hover:text-th-text"
-              }`}
-            >
-              {t.label}
-              <span className="hidden sm:inline ml-1 font-normal opacity-70">({t.desc})</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-4 text-micro">
-          <div className="flex items-center gap-1.5 text-th-secondary">
-            <span className="w-2 h-2 rounded-full bg-primary-500" />
-            <span><strong className="text-th-text">{stockCount}</strong> powers in stock</span>
-          </div>
-          <div className="text-th-secondary">
-            Total: <strong className="text-primary-500">{totalQty}</strong> pcs
-          </div>
-        </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5 w-fit">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setLensType(t.key)}
+            className={`px-3 sm:px-4 py-1.5 rounded-pill text-xs font-bold transition-all active:scale-95 ${
+              lensType === t.key
+                ? "bg-primary-500 text-surface-950 shadow-sm"
+                : "text-th-secondary active:bg-th-hover"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {lensType === "compound" ? (

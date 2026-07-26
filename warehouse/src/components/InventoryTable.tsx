@@ -31,6 +31,13 @@ const InventoryRow = memo(function InventoryRow({ item, onEdit, onWithdraw, onDe
         <Badge variant="blue">{item.category}</Badge>
       </td>
       <td className="px-4 py-3">
+        {item.branchName ? (
+          <Badge variant="purple">{item.branchName}</Badge>
+        ) : (
+          <span className="text-th-muted">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3">
         <Badge variant={item.location === "warehouse" ? "purple" : "green"}>
           {item.location}
         </Badge>
@@ -72,6 +79,7 @@ export default function InventoryTable({ items, onEdit, onWithdraw, onDelete, de
               <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">SKU</th>
               <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Brand / Model</th>
               <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Category</th>
+              <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Branch</th>
               <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Location</th>
               <th className="text-right text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Qty</th>
               <th className="text-right text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Price</th>

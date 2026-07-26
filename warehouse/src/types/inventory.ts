@@ -14,6 +14,9 @@ export interface InventoryItem {
   purchasePrice: number;
   sellingPrice: number;
   description: string;
+  branchId?: string;
+  branchName?: string;
+  branchCode?: string;
   createdAt: string;
   updatedAt: string;
 }

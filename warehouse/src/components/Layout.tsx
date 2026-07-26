@@ -2,20 +2,25 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useCart } from "../context/CartContext";
 import {
-  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses,
+  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart,
 } from "lucide-react";
 
 const sidebarMenu = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/lens-stock", label: "Lens Stock", icon: Glasses },
+  { path: "/update-stock", label: "Update Stock", icon: PackagePlus },
+  { path: "/cart", label: "Cart", icon: ShoppingCart },
   { path: "/users", label: "Users", icon: Users },
 ];
 
 const mobileNav = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/lens-stock", label: "Stock", icon: Glasses },
-  { path: "/users", label: "Users", icon: UserCog },
+  { path: "/update-stock", label: "Update", icon: PackagePlus },
+  { path: "/cart", label: "Cart", icon: ShoppingCart },
+  { path: "/users", label: "User", icon: UserCog },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -25,6 +30,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { dark, toggle } = useTheme();
+  const { count } = useCart();
 
   const isAuthPage = location.pathname === "/login";
   if (isAuthPage) return <>{children}</>;
@@ -83,8 +89,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     ? "bg-th-hover text-th-text font-bold"
                     : "text-th-secondary hover:text-th-text hover:bg-th-hover"
                 }`}>
-                <Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} />
+                {item.path === "/cart" ? (
+                  <span data-cart-icon><Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} /></span>
+                ) : (
+                  <Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} />
+                )}
                 {sidebarOpen && <span>{item.label}</span>}
+                {item.path === "/cart" && count > 0 && (
+                  <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary-500 text-surface-950 text-micro font-bold leading-none">
+                    {count > 99 ? "99+" : count}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -134,8 +149,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             const active = isActive(item.path);
             return (
               <Link key={item.path} to={item.path} className="nav-link">
-                <div className="nav-link-icon">
+                <div className="nav-link-icon relative" {...(item.path === "/cart" ? { "data-cart-icon": "" } : {})}>
                   <Icon size={20} className={active ? "text-primary-500" : "text-th-muted"} />
+                  {item.path === "/cart" && count > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
+                      {count > 99 ? "99+" : count}
+                    </span>
+                  )}
                 </div>
                 <span className={`nav-link-label ${active ? "text-primary-500" : "text-th-muted"}`}>
                   {item.label}

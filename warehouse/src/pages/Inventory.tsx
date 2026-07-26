@@ -41,7 +41,7 @@ export default function Inventory() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const res = await api.get<InventoryItem[]>("/api/inventory");
+    const res = await api.get<InventoryItem[]>("/api/warehouse/inventory");
     if (res.success && Array.isArray(res.data)) {
       setItems(res.data);
     }

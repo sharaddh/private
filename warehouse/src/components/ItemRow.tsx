@@ -11,7 +11,7 @@ export default function ItemRow({ item, onClick }: Props) {
       className="flex items-center justify-between p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md -mx-1">
       <div>
         <p className="text-body text-th-text">{item.brand} {item.model}</p>
-        <p className="text-small text-th-muted">{item.sku} — {item.category}</p>
+        <p className="text-small text-th-muted">{item.sku} — {item.category}{item.branchName ? ` — ${item.branchName}` : ""}</p>
       </div>
       <div className="text-right">
         <p className="text-body-bold text-th-text">Qty: {item.quantity}</p>

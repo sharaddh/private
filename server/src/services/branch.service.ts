@@ -1,4 +1,6 @@
+import bcrypt from "bcrypt";
 import { Branch } from "../models/branch";
+import { User } from "../models/user";
 import { clearBranchCache } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
 
@@ -10,6 +12,11 @@ interface BranchData {
   email?: string;
   dbName?: string;
   isActive?: boolean;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
+  ownerUsername?: string;
+  ownerPassword?: string;
   settings?: Record<string, string>;
 }
 
@@ -45,6 +52,8 @@ export async function createBranch(data: BranchData) {
   if (!data.name?.trim()) throw new AppError(400, "Branch name is required");
   if (!data.code?.trim()) throw new AppError(400, "Branch code is required");
   if (!data.dbName?.trim()) throw new AppError(400, "Database name is required");
+  if (!data.ownerUsername?.trim()) throw new AppError(400, "Owner username is required");
+  if (!data.ownerPassword?.trim()) throw new AppError(400, "Owner password is required");
 
   const existing = await Branch.findOne({ $or: [{ code: data.code }, { dbName: data.dbName }] }).lean();
   if (existing) {
@@ -52,7 +61,34 @@ export async function createBranch(data: BranchData) {
     if (existing.dbName === data.dbName) throw new AppError(409, "Database name already exists");
   }
 
-  const branch = await Branch.create(data);
+  const existingUser = await User.findOne({ username: data.ownerUsername }).lean();
+  if (existingUser) throw new AppError(409, "Owner username already exists");
+
+  const branch = await Branch.create({
+    name: data.name,
+    code: data.code,
+    dbName: data.dbName,
+    address: data.address || "",
+    phone: data.phone || "",
+    email: data.email || "",
+    settings: {
+      shopName: data.ownerName || "",
+      shopAddress: data.address || "",
+      shopPhone: data.ownerPhone || "",
+      shopEmail: data.ownerEmail || "",
+    },
+  });
+
+  const passwordHash = await bcrypt.hash(data.ownerPassword, 10);
+  await User.create({
+    username: data.ownerUsername,
+    passwordHash,
+    name: data.ownerName || "",
+    mobile: data.ownerPhone || "",
+    role: "owner",
+    branches: [branch._id],
+  });
+
   clearBranchCache();
   return branch;
 }

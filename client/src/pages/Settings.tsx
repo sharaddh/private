@@ -81,7 +81,7 @@ export default function Settings() {
   const [saveProfileMsg, setSaveProfileMsg] = useState("");
   const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [showAddBranch, setShowAddBranch] = useState(false);
-  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
+  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
   const [branchSaving, setBranchSaving] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -323,13 +323,17 @@ export default function Settings() {
       toast.error("Name, code, and database name are required");
       return;
     }
+    if (!branchForm.ownerUsername.trim() || !branchForm.ownerPassword.trim()) {
+      toast.error("Owner username and password are required");
+      return;
+    }
     setBranchSaving(true);
     const res = await api.post("/api/branches", branchForm);
     setBranchSaving(false);
     if (res.success) {
       toast.success("Branch created");
       setShowAddBranch(false);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
       loadBranches();
     } else {
       toast.error(res.message || "Failed to create branch");
@@ -348,6 +352,8 @@ export default function Settings() {
       ownerName: branch.settings?.shopName || "",
       ownerPhone: branch.settings?.shopPhone || "",
       ownerEmail: branch.settings?.shopEmail || "",
+      ownerUsername: "",
+      ownerPassword: "",
     });
     setShowAddBranch(true);
   }
@@ -362,7 +368,7 @@ export default function Settings() {
       toast.success("Branch updated");
       setShowAddBranch(false);
       setEditingBranch(null);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
       loadBranches();
     } else {
       toast.error(res.message || "Failed to update branch");
@@ -615,7 +621,7 @@ export default function Settings() {
                   <motion.button
                     onClick={() => {
                       setEditingBranch(null);
-                      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "" });
+                      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
                       setShowAddBranch(true);
                     }}
                     whileHover={{ scale: 1.02 }}
@@ -1185,7 +1191,7 @@ export default function Settings() {
                     </div>
                     <div className="mt-4">
                       <Input
-                        label={uiT("Owner Email", "मालिक का ईमेल")}
+                        label={uiT("Owner Email", "मालिक का ईमल")}
                         icon={<Mail size={15} />}
                         type="email"
                         value={branchForm.ownerEmail}
@@ -1193,6 +1199,27 @@ export default function Settings() {
                         placeholder="owner@example.com"
                       />
                     </div>
+                    {!editingBranch && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        <Input
+                          label={uiT("Owner Username *", "मालिक यूज़रनेम *")}
+                          icon={<User size={15} />}
+                          value={branchForm.ownerUsername}
+                          onChange={(e) => setBranchForm({ ...branchForm, ownerUsername: e.target.value })}
+                          placeholder="Login username"
+                          required
+                        />
+                        <Input
+                          label={uiT("Owner Password *", "मालिक पासवर्ड *")}
+                          icon={<User size={15} />}
+                          type="password"
+                          value={branchForm.ownerPassword}
+                          onChange={(e) => setBranchForm({ ...branchForm, ownerPassword: e.target.value })}
+                          placeholder="Min 4 characters"
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4 border-t border-th-border">

@@ -20,6 +20,8 @@ import cacheAdmin from "./cache-admin";
 import branches from "./branches";
 import cameras from "./cameras";
 import recalculate from "./recalculate";
+import warehouse from "./warehouse";
+import cart from "./cart";
 
 const router = Router();
 
@@ -29,6 +31,8 @@ router.get("/health", (_req, res) => {
 
 router.use("/branches", branches);
 router.use("/auth", auth);
+router.use("/warehouse", warehouse);
+router.use("/cart", cart);
 router.use("/customers", branchScope, customers);
 router.use("/orders", branchScope, orders);
 router.use("/todos", branchScope, todos);
