@@ -33,3 +33,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 2. Make your changes
 3. Test thoroughly
 4. Submit a pull request with a clear description
+
+## Testing
+
+- Run the full test suite before submitting PRs
+- Ensure all features work correctly
+- Test edge cases and error scenarios
