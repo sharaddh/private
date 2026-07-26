@@ -60,3 +60,12 @@ coverage/
 
 # Docker
 docker-compose.override.yml
+
+# Build artifacts
+*.tsbuildinfo
+*.jsbuildinfo
+
+# Editor backups
+*~
+*.swp
+*.swo
