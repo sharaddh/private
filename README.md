@@ -194,6 +194,8 @@ See `server/docs/openapi.yaml` for the OpenAPI specification.
 - ✅ Unified Vite configuration
 - ✅ Streamlined dependency versions
 - ✅ Clean build pipeline
+- ✅ Multi-branch support added
+- ✅ Warehouse management module
 
 ## Contributing
 
