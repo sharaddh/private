@@ -36,6 +36,13 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 3. Test thoroughly
 4. Submit a pull request with a clear description
 
+## Development Guidelines
+
+- Keep PRs focused on a single change
+- Update documentation when adding features
+- Follow the project's commit message conventions
+- Review your changes before submitting
+
 ## Testing
 
 - Run the full test suite before submitting PRs
