@@ -16,3 +16,6 @@ services:
         value: production
     autoDeploy: true
     plan: starter
+    disk:
+      mountPath: /var/data
+      sizeGB: 1
