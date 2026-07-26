@@ -15,6 +15,8 @@ Thank you for your interest in contributing to the KMJ Optical ERP system.
 - Follow the existing code conventions
 - Run linting before committing
 - Write meaningful commit messages in conventional format
+- Keep functions small and focused
+- Use meaningful variable and function names
 
 ## Commit Messages
 
