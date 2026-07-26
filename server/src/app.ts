@@ -62,55 +62,41 @@ app.use("/api", routes);
 
 app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
-function findDistPath(candidates: string[]): string {
+function findDistPath(candidates: string[], label: string): string {
+  console.log(`[DIST] Searching for ${label}...`);
   for (const p of candidates) {
+    console.log(`[DIST]   Checking: ${p} -> ${fs.existsSync(p) ? "FOUND" : "missing"}`);
     if (fs.existsSync(p)) return p;
-    if (process.platform === "win32") {
-      const dir = path.dirname(p);
-      const base = path.basename(p);
-      if (fs.existsSync(dir)) {
-        const entries = fs.readdirSync(dir);
-        const match = entries.find((e) => e.toLowerCase() === base.toLowerCase());
-        if (match) return path.join(dir, match);
-      }
-    }
   }
+  console.log(`[DIST] ${label} not found in any candidate path`);
   return "";
 }
 
-function findIndexHtml(): string {
-  const fromDirname = path.resolve(__dirname, "../../client/dist/index.html");
-  const fromDirname2 = path.resolve(__dirname, "../client/dist/index.html");
-  const fromCwd = path.resolve(process.cwd(), "client/dist/index.html");
-  const fromCwd2 = path.resolve(process.cwd(), "../client/dist/index.html");
-  const candidates = [fromDirname, fromDirname2, fromCwd, fromCwd2];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
-  }
-  return "";
-}
+console.log(`[BOOT] __dirname=${__dirname}, cwd=${process.cwd()}, platform=${process.platform}`);
 
-const clientDist = path.resolve(__dirname, "../../client/dist");
-const possiblePaths = [
-  clientDist,
+const clientDistCandidates = [
+  path.resolve(__dirname, "../../client/dist"),
   path.resolve(__dirname, "../client/dist"),
   path.resolve(process.cwd(), "client/dist"),
   path.resolve(process.cwd(), "../client/dist"),
+  path.resolve(process.cwd(), "../../client/dist"),
 ];
-const distPath = findDistPath(possiblePaths);
+const distPath = findDistPath(clientDistCandidates, "client/dist");
 const distIndex = distPath ? path.join(distPath, "index.html") : "";
 
-const warehouseDist = path.resolve(__dirname, "../../warehouse/dist");
-const warehousePossiblePaths = [
-  warehouseDist,
+const warehouseDistCandidates = [
+  path.resolve(__dirname, "../../warehouse/dist"),
   path.resolve(__dirname, "../warehouse/dist"),
   path.resolve(process.cwd(), "warehouse/dist"),
   path.resolve(process.cwd(), "../warehouse/dist"),
+  path.resolve(process.cwd(), "../../warehouse/dist"),
+  path.join(__dirname, "..", "..", "warehouse", "dist"),
 ];
-const warehouseDistPath = findDistPath(warehousePossiblePaths);
+const warehouseDistPath = findDistPath(warehouseDistCandidates, "warehouse/dist");
 const warehouseIndex = warehouseDistPath ? path.join(warehouseDistPath, "index.html") : "";
 
 if (distIndex && fs.existsSync(distIndex)) {
+  console.log(`[SERVE] Client dist: ${distPath}`);
   app.use(express.static(distPath, {
     maxAge: "1y",
     immutable: true,
@@ -120,9 +106,12 @@ if (distIndex && fs.existsSync(distIndex)) {
       }
     },
   }));
+} else {
+  console.warn("[SERVE] Client dist NOT found - client app will not be served");
 }
 
 if (warehouseIndex && fs.existsSync(warehouseIndex)) {
+  console.log(`[SERVE] Warehouse dist: ${warehouseDistPath}`);
   app.use("/warehouse", express.static(warehouseDistPath, {
     maxAge: "1y",
     immutable: true,
@@ -136,6 +125,8 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(warehouseIndex);
   });
+} else {
+  console.warn("[SERVE] Warehouse dist NOT found - warehouse app will not be served");
 }
 
 app.get("*", (req, res) => {
@@ -143,10 +134,14 @@ app.get("*", (req, res) => {
     res.status(404).json({ success: false, message: "API route not found" });
     return;
   }
-  const indexHtml = findIndexHtml();
-  if (indexHtml) {
+  if (distIndex && fs.existsSync(distIndex)) {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(indexHtml);
+    res.sendFile(distIndex);
+    return;
+  }
+  if (warehouseIndex && fs.existsSync(warehouseIndex)) {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.sendFile(warehouseIndex);
     return;
   }
   res.status(200).json({ success: true, message: "KMJ ERP API" });
@@ -155,3 +150,4 @@ app.get("*", (req, res) => {
 app.use(errorHandler);
 
 export default app;
+
