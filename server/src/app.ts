@@ -72,6 +72,15 @@ function findDistPath(candidates: string[], label: string): string {
   return "";
 }
 
+function isAssetRequest(reqPath: string): boolean {
+  return path.extname(reqPath) !== "";
+}
+
+function sendSpaIndex(res: express.Response, indexPath: string): void {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.sendFile(indexPath);
+}
+
 console.log(`[BOOT] __dirname=${__dirname}, cwd=${process.cwd()}, platform=${process.platform}`);
 
 const clientDistCandidates = [
@@ -121,9 +130,15 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
       }
     },
   }));
-  app.get("/warehouse*", (_req, res) => {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(warehouseIndex);
+  app.get(["/warehouse", "/warehouse/"], (_req, res) => {
+    sendSpaIndex(res, warehouseIndex);
+  });
+  app.get("/warehouse/*", (req, res) => {
+    if (isAssetRequest(req.path)) {
+      res.status(404).end();
+      return;
+    }
+    sendSpaIndex(res, warehouseIndex);
   });
 } else {
   console.warn("[SERVE] Warehouse dist NOT found - warehouse app will not be served");
@@ -135,13 +150,19 @@ app.get("*", (req, res) => {
     return;
   }
   if (distIndex && fs.existsSync(distIndex)) {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(distIndex);
+    if (isAssetRequest(req.path)) {
+      res.status(404).end();
+      return;
+    }
+    sendSpaIndex(res, distIndex);
     return;
   }
   if (warehouseIndex && fs.existsSync(warehouseIndex)) {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(warehouseIndex);
+    if (isAssetRequest(req.path)) {
+      res.status(404).end();
+      return;
+    }
+    sendSpaIndex(res, warehouseIndex);
     return;
   }
   res.status(200).json({ success: true, message: "KMJ ERP API" });

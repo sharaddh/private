@@ -19,6 +19,7 @@
     "dev": "concurrently -n server,client,warehouse -c blue,green,yellow \"npm run dev --prefix server\" \"npm run dev --prefix client\" \"npm run dev --prefix warehouse\"",
     "build": "npm run build --prefix client && npm run build --prefix server && npm run build --prefix warehouse",
     "start": "npm start --prefix server",
+    "start:prod": "npm run build --prefix client && npm run build --prefix warehouse && npm run build --prefix server && npm start --prefix server",
     "client": "npm run dev --prefix client",
     "server": "npm run dev --prefix server",
     "warehouse": "npm run dev --prefix warehouse"
