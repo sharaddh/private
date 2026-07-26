@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: npm install && npm install --prefix client && npm install --prefix server && npm install --prefix warehouse && npm run build --prefix client && npm run build --prefix server && npm run build --prefix warehouse
+    buildCommand: npm install && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/health
     envVars:
