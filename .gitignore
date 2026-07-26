@@ -52,6 +52,11 @@ Thumbs.db
 Desktop.ini
 ._*
 
+# IDE files
+.vscode/settings.json
+.idea/
+*.code-workspace
+
 # TypeScript build output
 *.tsbuildinfo
 
