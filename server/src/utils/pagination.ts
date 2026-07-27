@@ -16,7 +16,7 @@ export interface PaginatedResult<T> {
 }
 
 const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 200;
+const MAX_LIMIT = 10000;
 const MIN_LIMIT = 1;
 
 export { DEFAULT_LIMIT, MAX_LIMIT, MIN_LIMIT };
