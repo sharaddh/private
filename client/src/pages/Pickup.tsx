@@ -553,7 +553,7 @@ export default function Pickup() {
                           <div>
                             <label className="block text-xs font-medium text-th-secondary mb-1">{uiT("Mode", "मोड")}</label>
                             <div className="grid grid-cols-3 gap-1">
-                              {[uiT("Cash", "नकद"), "UPI", "Card"].map((m) => (
+                              {["Cash", "UPI", "Card"].map((m) => (
                                 <button key={m} onClick={() => setCollectMode(m)}
                                   aria-label={uiT("Payment mode", "भुगतान मोड") + ": " + m}
                                   className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
