@@ -91,6 +91,8 @@ export default function Orders() {
     if (!showAll) {
       params.startDate = startDate;
       params.endDate = endDate;
+    } else {
+      params.limit = "10000";
     }
     const res = await orderService.listFiltered(params);
     if (res.success && res.data) setList(res.data.data as OrderCard[]);
