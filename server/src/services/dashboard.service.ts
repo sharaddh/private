@@ -8,6 +8,17 @@ import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
 
+const PAYMENT_MODE_MAP: Record<string, string> = {
+  "नकद": "Cash",
+  "कार्ड": "Card",
+  "बैंक": "Bank Transfer",
+  "बीमा": "Insurance",
+};
+
+function normalizePaymentMode(mode: string): string {
+  return PAYMENT_MODE_MAP[mode] || mode;
+}
+
 function getDayRange(date?: Date): { start: Date; end: Date } {
   const d = date || new Date();
   const start = new Date(d);
@@ -152,6 +163,12 @@ export async function getStats() {
     ]),
     Payment.aggregate([
       { $match: { paymentDate: { $gte: monthStart, $lte: monthEnd } } },
+      { $addFields: { paymentMode: { $switch: { branches: [
+        { case: { $eq: ["$paymentMode", "नकद"] }, then: "Cash" },
+        { case: { $eq: ["$paymentMode", "कार्ड"] }, then: "Card" },
+        { case: { $eq: ["$paymentMode", "बैंक"] }, then: "Bank Transfer" },
+        { case: { $eq: ["$paymentMode", "बीमा"] }, then: "Insurance" },
+      ], default: "$paymentMode" } } } },
       { $group: { _id: "$paymentMode", total: { $sum: "$amount" }, count: { $sum: 1 } } },
       { $sort: { total: -1 } },
     ]),
@@ -192,6 +209,12 @@ export async function getStats() {
     ]),
     Payment.aggregate([
       { $match: { paymentDate: { $gte: dayStart, $lte: dayEnd } } },
+      { $addFields: { paymentMode: { $switch: { branches: [
+        { case: { $eq: ["$paymentMode", "नकद"] }, then: "Cash" },
+        { case: { $eq: ["$paymentMode", "कार्ड"] }, then: "Card" },
+        { case: { $eq: ["$paymentMode", "बैंक"] }, then: "Bank Transfer" },
+        { case: { $eq: ["$paymentMode", "बीमा"] }, then: "Insurance" },
+      ], default: "$paymentMode" } } } },
       { $group: { _id: "$paymentMode", total: { $sum: "$amount" }, count: { $sum: 1 } } },
       { $sort: { total: -1 } },
     ]),
