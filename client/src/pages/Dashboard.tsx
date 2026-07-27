@@ -40,10 +40,12 @@ function formatTimeAgo(dateStr: string, t?: (en: string, hi: string) => string):
 
 const paymentModeIcon: Record<string, typeof CreditCard> = {
   Cash: IndianRupee, UPI: Smartphone, Card: CreditCard, "Bank Transfer": Building2,
+  "नकद": IndianRupee, "कार्ड": CreditCard, "बैंक": Building2, "बीमा": Building2, Insurance: Building2,
 };
 
 const paymentModeColors: Record<string, string> = {
   Cash: "#10b981", UPI: "#6366f1", Card: "#f59e0b", "Bank Transfer": "#06b6d4",
+  "नकद": "#10b981", "कार्ड": "#f59e0b", "बैंक": "#06b6d4", "बीमा": "#8b5cf6", Insurance: "#8b5cf6",
 };
 
 // Sub-components
