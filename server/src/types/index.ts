@@ -76,7 +76,7 @@ export const VALID_TRANSITIONS: Record<string, readonly string[]> = {
 } as const;
 
 export const VALID_CLASSIFICATIONS = ["pending", "stock", "buy", "order"] as const;
-export const VALID_PAYMENT_MODES = ["Cash", "UPI", "Card", "Bank Transfer", "नकद", "कार्ड", "बैंक", "बीमा", "Insurance"] as const;
+export const VALID_PAYMENT_MODES = ["Cash", "UPI", "Card", "Bank Transfer", "Insurance"] as const;
 export const VALID_VISIT_TYPES = ["new", "frame_change", "new_lens", "contact_lens", "service", "other"] as const;
 export const VALID_DELIVERY_STATUSES = ["Pending", "In Transit", "Ready", "Delivered", "Cancelled"] as const;
 export const VALID_BILL_STATUSES = ["Active", "Cancelled"] as const;
