@@ -43,11 +43,11 @@ export default function PaymentPanel({
   const isFullyPaid = advancePaid >= finalTotal;
 
   const PAYMENT_METHODS = [
-    { value: uiT("Cash", "नकद"), icon: Banknote },
-    { value: "UPI", icon: Smartphone },
-    { value: uiT("Card", "कार्ड"), icon: CardIcon },
-    { value: uiT("Bank", "बैंक"), icon: Building2 },
-    { value: uiT("Insurance", "बीमा"), icon: Shield },
+    { value: "Cash", label: uiT("Cash", "नकद"), icon: Banknote },
+    { value: "UPI", label: "UPI", icon: Smartphone },
+    { value: "Card", label: uiT("Card", "कार्ड"), icon: CardIcon },
+    { value: "Bank Transfer", label: uiT("Bank", "बैंक"), icon: Building2 },
+    { value: "Insurance", label: uiT("Insurance", "बीमा"), icon: Shield },
   ];
 
   const DATE_SHORTCUTS = [
@@ -140,7 +140,7 @@ export default function PaymentPanel({
                     }`}
                   >
                     <Icon size={16} />
-                    <span className="truncate w-full text-center">{m.value}</span>
+                    <span className="truncate w-full text-center">{m.label}</span>
                   </button>
                 );
               })}
