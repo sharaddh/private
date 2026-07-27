@@ -33,9 +33,14 @@ export default function Payments() {
     return "";
   }
 
+  const PAYMENT_MODE_NORMALIZE: Record<string, string> = {
+    "नकद": "Cash", "कार्ड": "Card", "बैंक": "Bank Transfer", "बीमा": "Insurance",
+  };
+
   const totalAmount: number = list.reduce((s, p) => s + (p.amount || 0), 0);
   const modeBreakdown: Record<string, number> = list.reduce<Record<string, number>>((acc, p) => {
-    const mode: string = p.paymentMode || "Cash";
+    const raw: string = p.paymentMode || "Cash";
+    const mode: string = PAYMENT_MODE_NORMALIZE[raw] || raw;
     acc[mode] = (acc[mode] || 0) + (p.amount || 0);
     return acc;
   }, {});
@@ -99,13 +104,15 @@ export default function Payments() {
               </div>
             )},
             { key: "amount", label: uiT("Amount", "राशि"), render: (v: number) => <span className="font-semibold text-[#1ed760]">₹{(v || 0).toLocaleString("en-IN")}</span> },
-            { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v: PaymentMode) => (
+            { key: "paymentMode", label: uiT("Mode", "माध्यम"), render: (v: PaymentMode) => {
+              const normalized = PAYMENT_MODE_NORMALIZE[v as string] || v;
+              return (
               <span className={`badge ${
-                v === "Cash" ? "badge-green" :
-                v === "UPI" ? "badge-blue" :
-                v === "Card" ? "badge-purple" : "badge-yellow"
-              }`}>{v || "Cash"}</span>
-            )},
+                normalized === "Cash" ? "badge-green" :
+                normalized === "UPI" ? "badge-blue" :
+                normalized === "Card" ? "badge-purple" : "badge-yellow"
+              }`}>{normalized || "Cash"}</span>
+            )}},
             { key: "paymentDate", label: uiT("Date", "तारीख"), render: (v: string) => v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—" },
             { key: "notes", label: uiT("Notes", "नोट्स"), render: (v: string) => <span className="text-th-secondary">{v || "—"}</span> },
           ]}
