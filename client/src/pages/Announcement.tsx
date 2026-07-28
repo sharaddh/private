@@ -477,7 +477,6 @@ export default function Announcement() {
             />
           </div>
 
-          {/* Filter: Phone only */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <Filter size={14} className="text-th-muted" aria-hidden="true" />
             <select
@@ -551,7 +550,6 @@ export default function Announcement() {
         </div>
       </div>
 
-      {/* ──────────────── CONFIRM DRAWER ──────────────── */}
       <AnimatePresence>
         {showConfirm && (
           <>
