@@ -96,7 +96,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const res = await api.post<CartItemData>("/api/cart", { coating, lensType, powerKey, quantity });
     if (res.success && res.data) {
       setItems((prev) => {
-        const next = [...prev, res.data!];
+        const key = itemKey(coating, lensType, powerKey);
+        const idx = prev.findIndex((i) => itemKey(i.coating, i.lensType, i.powerKey) === key);
+        let next: CartItemData[];
+        if (idx >= 0) {
+          next = [...prev];
+          next[idx] = res.data!;
+        } else {
+          next = [...prev, res.data!];
+        }
         saveLocal(next);
         return next;
       });

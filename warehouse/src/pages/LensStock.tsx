@@ -89,9 +89,9 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating: _coating, pow
   onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onRemove: (e: React.MouseEvent) => void;
 }) {
-  const sph = powerKey.split("|")[0];
-  const isNeg = sph.startsWith("-");
-  const isPos = sph.startsWith("+") && sph !== "+0.00";
+  const cyl = powerKey.split("|")[1];
+  const isNeg = cyl.startsWith("-");
+  const isPos = cyl.startsWith("+") && cyl !== "+0.00";
 
   const baseBorder = isNeg
     ? "border-amber-400/40 bg-amber-400/5"
@@ -124,7 +124,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating: _coating, pow
         disabled={atMax}
         className="flex flex-col items-center gap-1 w-full disabled:cursor-not-allowed"
       >
-        <span className="text-micro font-bold text-th-secondary leading-none">{sph === "+0.00" ? "0.00" : sph}</span>
+        <span className="text-micro font-bold text-th-secondary leading-none">{cyl === "+0.00" ? "0.00" : cyl}</span>
         <span className={`text-body-bold leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
       </button>
     </div>
@@ -223,148 +223,93 @@ interface CompoundViewProps {
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
 }
 
-const negSph = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
-const posSph = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
-const hasZeroSph = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
+const SPH_RANGE = POWER_VALUES.filter((p) => {
+  const n = parseFloat(p);
+  return n >= -4 && n <= 4;
+});
+const negSphList = SPH_RANGE.filter((p) => p.startsWith("-")).reverse();
+const zeroSphList = SPH_RANGE.filter((p) => p === "+0.00" || p === "0.00" || p === "-0.00");
+const posSphList = SPH_RANGE.filter((p) => p.startsWith("+") && p !== "+0.00");
+
+const CYL_RANGE = POWER_VALUES.filter((p) => {
+  const n = parseFloat(p);
+  return n >= -2 && n <= 2;
+});
 
 const CompoundView = memo(function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails }: CompoundViewProps) {
-  const [openCyl, setOpenCyl] = useState<string>("");
-  const hasAny = useMemo(() => Object.values(quantities).some((q) => q > 0), [quantities]);
+  const [openSph, setOpenSph] = useState<string>("");
 
-  if (!hasAny) {
-    return <p className="text-center text-th-muted text-body py-12">No stock for this lens type</p>;
-  }
+  const sphGroups: { label: string; values: string[]; color: string }[] = [
+    { label: "Negative SPH", values: negSphList, color: "text-amber-500" },
+    { label: "Zero", values: zeroSphList, color: "text-th-muted" },
+    { label: "Positive SPH", values: posSphList, color: "text-emerald-500" },
+  ];
 
   return (
     <div className="space-y-2">
-      {POWER_VALUES.map((cyl) => {
-        const cylNeg = cyl.startsWith("-");
-        const cylLabel = cylNeg ? "text-amber-500" : cyl === "+0.00" ? "text-th-muted" : "text-emerald-500";
-        const cylBg = cylNeg ? "bg-amber-500/10" : cyl === "+0.00" ? "bg-th-elevated" : "bg-emerald-500/10";
-        const isOpen = openCyl === cyl;
-
-        let stockCount = 0;
-        for (const sph of POWER_VALUES) {
-          if ((quantities[`${sph}|${cyl}`] || 0) > 0) stockCount++;
-        }
-
+      {sphGroups.map((group) => {
+        if (group.values.length === 0) return null;
         return (
-          <div key={cyl}>
-            <button
-              onClick={() => setOpenCyl((prev) => (prev === cyl ? "" : cyl))}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors"
-            >
-              {isOpen ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
-              <span className={`px-2.5 py-0.5 rounded-pill ${cylBg} ${cylLabel} text-micro font-bold`}>
-                CYL {cyl}
-              </span>
-              {stockCount > 0 && (
-                <span className="text-micro text-primary-500 font-medium">{stockCount} in stock</span>
-              )}
-            </button>
-            {isOpen && (
-              <div className="mt-2 ml-5 space-y-3">
-                {negSph.length > 0 && (
-                  <div>
-                    <div className="text-micro font-bold text-amber-500 uppercase tracking-wider mb-1.5">Negative SPH</div>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
-                      {negSph.map((sph) => {
-                        const key = `${sph}|${cyl}`;
-                        const qty = quantities[key] || 0;
-                        if (qty <= 0) return null;
-                        const inCart = isInCart(coating, "compound", key);
-                        const cartQty = getItemQty(coating, "compound", key);
-                        const atMax = qty > 0 && cartQty >= qty;
-                        return (
-                          <CompoundLensCard
-                            key={key}
-                            coating={coating}
-                            powerKey={key}
-                            qty={qty}
-                            inCart={inCart}
-                            cartQty={cartQty}
-                            atMax={atMax}
-                            onAdd={(e) => {
-                              const stockQty = quantities[key] || 0;
-                              const currentCartQty = getItemQty(coating, "compound", key);
-                              if (stockQty > 0 && currentCartQty >= stockQty) return;
-                              addToCart(coating, "compound", key);
-                              flyToCart(e.currentTarget);
-                            }}
-                            onRemove={() => removeByDetails(coating, "compound", key)}
-                          />
-                        );
-                      })}
-                    </div>
+          <div key={group.label}>
+            <div className="text-micro font-bold uppercase tracking-wider mb-1.5 px-1">{group.label}</div>
+            <div className="space-y-1">
+              {group.values.map((sph) => {
+                const isOpen = openSph === sph;
+                const sphNeg = sph.startsWith("-");
+                const sphColor = sphNeg ? "text-amber-500" : sph === "+0.00" ? "text-th-muted" : "text-emerald-500";
+                const sphBg = sphNeg ? "bg-amber-500/10" : sph === "+0.00" ? "bg-th-elevated" : "bg-emerald-500/10";
+
+                let cylStockCount = 0;
+                for (const cyl of CYL_RANGE) {
+                  if ((quantities[`${sph}|${cyl}`] || 0) > 0) cylStockCount++;
+                }
+
+                return (
+                  <div key={sph}>
+                    <button
+                      onClick={() => setOpenSph((prev) => (prev === sph ? "" : sph))}
+                      className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors"
+                    >
+                      {isOpen ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
+                      <span className={`px-2.5 py-0.5 rounded-pill ${sphBg} ${sphColor} text-micro font-bold`}>
+                        SPH {sph}
+                      </span>
+                      <span className="text-micro text-primary-500 font-medium">{cylStockCount} in stock</span>
+                    </button>
+                    {isOpen && (
+                      <div className="mt-2 ml-5 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                        {CYL_RANGE.map((cyl) => {
+                          const key = `${sph}|${cyl}`;
+                          const qty = quantities[key] || 0;
+                          const inCart = isInCart(coating, "compound", key);
+                          const cartQty = getItemQty(coating, "compound", key);
+                          const atMax = qty <= 0 || cartQty >= qty;
+                          return (
+                            <CompoundLensCard
+                              key={key}
+                              coating={coating}
+                              powerKey={key}
+                              qty={qty}
+                              inCart={inCart}
+                              cartQty={cartQty}
+                              atMax={atMax}
+                              onAdd={(e) => {
+                                const stockQty = quantities[key] || 0;
+                                const currentCartQty = getItemQty(coating, "compound", key);
+                                if (stockQty <= 0 || currentCartQty >= stockQty) return;
+                                addToCart(coating, "compound", key);
+                                flyToCart(e.currentTarget);
+                              }}
+                              onRemove={() => removeByDetails(coating, "compound", key)}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-                {hasZeroSph && (
-                  <div>
-                    <div className="text-micro font-bold text-th-muted uppercase tracking-wider mb-1.5">Zero</div>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
-                      {(() => {
-                        const key = `+0.00|${cyl}`;
-                        const qty = quantities[key] || 0;
-                        if (qty <= 0) return null;
-                        return (
-                          <CompoundLensCard
-                            key={key}
-                            coating={coating}
-                            powerKey={key}
-                            qty={qty}
-                            inCart={isInCart(coating, "compound", key)}
-                            cartQty={getItemQty(coating, "compound", key)}
-                            atMax={qty > 0 && getItemQty(coating, "compound", key) >= qty}
-                            onAdd={(e) => {
-                              const stockQty = quantities[key] || 0;
-                              const currentCartQty = getItemQty(coating, "compound", key);
-                              if (stockQty > 0 && currentCartQty >= stockQty) return;
-                              addToCart(coating, "compound", key);
-                              flyToCart(e.currentTarget);
-                            }}
-                            onRemove={() => removeByDetails(coating, "compound", key)}
-                          />
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-                {posSph.length > 0 && (
-                  <div>
-                    <div className="text-micro font-bold text-emerald-500 uppercase tracking-wider mb-1.5">Positive SPH</div>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
-                      {posSph.map((sph) => {
-                        const key = `${sph}|${cyl}`;
-                        const qty = quantities[key] || 0;
-                        if (qty <= 0) return null;
-                        const inCart = isInCart(coating, "compound", key);
-                        const cartQty = getItemQty(coating, "compound", key);
-                        const atMax = qty > 0 && cartQty >= qty;
-                        return (
-                          <CompoundLensCard
-                            key={key}
-                            coating={coating}
-                            powerKey={key}
-                            qty={qty}
-                            inCart={inCart}
-                            cartQty={cartQty}
-                            atMax={atMax}
-                            onAdd={(e) => {
-                              const stockQty = quantities[key] || 0;
-                              const currentCartQty = getItemQty(coating, "compound", key);
-                              if (stockQty > 0 && currentCartQty >= stockQty) return;
-                              addToCart(coating, "compound", key);
-                              flyToCart(e.currentTarget);
-                            }}
-                            onRemove={() => removeByDetails(coating, "compound", key)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
         );
       })}
