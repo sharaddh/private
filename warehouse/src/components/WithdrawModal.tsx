@@ -19,7 +19,7 @@ export default function WithdrawModal({ item, onClose, onSaved }: Props) {
   async function handleWithdraw() {
     if (!item || qty <= 0) return;
     setWithdrawing(true);
-    const res = await api.put("/api/inventory/" + item._id + "/stock", { quantity: -qty });
+    const res = await api.put("/api/warehouse/inventory/" + item._id + "/stock", { quantity: -qty });
     if (res.success) { toast("Stock withdrawn successfully"); onSaved(); onClose(); }
     else { toast(res.message || "Failed to withdraw", "error"); }
     setWithdrawing(false);

@@ -89,7 +89,7 @@ export default function Inventory() {
 
   async function handleDelete(id: string) {
     setDeleting(id);
-    const res = await api.del("/api/inventory/" + id);
+    const res = await api.del("/api/warehouse/inventory/" + id);
     if (res.success) { toast("Item deleted"); fetchItems(); }
     else { toast(res.message || "Failed to delete", "error"); }
     setDeleting(null);

@@ -403,7 +403,7 @@ export default function LensStock() {
   const handleMobileAdd = useCallback(async () => {
     const name = mobileNewName.trim();
     if (!name) return;
-    const res = await api.post<LensStockItem>("/api/lens-stock", { coating: name });
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name });
     if (res.success && res.data) {
       setItems((prev) => [...prev, res.data!]);
       setSelectedId(res.data!._id);

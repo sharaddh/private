@@ -37,7 +37,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
-    const res = await api.post<LensStockItem>("/api/lens-stock", { coating: name });
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name });
     if (res.success && res.data) {
       onAdd(res.data);
       setNewName("");
@@ -50,7 +50,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete "${name}"?`)) return;
-    const res = await api.del(`/api/lens-stock/${id}`);
+    const res = await api.del(`/api/warehouse/lens-stock/${id}`);
     if (res.success) {
       onDelete(id);
       toast("Coating deleted", "success");
@@ -62,7 +62,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
   const handleRename = async (id: string) => {
     const name = editName.trim();
     if (!name) return;
-    const res = await api.put<LensStockItem>(`/api/lens-stock/${id}`, { coating: name });
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${id}`, { coating: name });
     if (res.success) {
       onRename(id, name);
       setEditingId(null);

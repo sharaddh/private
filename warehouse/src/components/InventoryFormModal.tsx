@@ -43,11 +43,11 @@ export default function InventoryFormModal({ open, onClose, editing, onSaved }: 
     setSaving(true); setError("");
     try {
       if (editing) {
-        const res = await api.put("/api/inventory/" + editing._id, form);
+        const res = await api.put("/api/warehouse/inventory/" + editing._id, form);
         if (res.success) { toast("Lens updated successfully"); onSaved(); onClose(); }
         else { setError(res.message || "Failed to update"); }
       } else {
-        const res = await api.post("/api/inventory", form);
+        const res = await api.post("/api/warehouse/inventory", form);
         if (res.success) { toast("Lens created successfully"); onSaved(); onClose(); }
         else { setError(res.message || "Failed to create"); }
       }

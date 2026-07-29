@@ -32,7 +32,7 @@ export default function LensGrid({ item, onUpdate }: Props) {
         [lensType]: { ...quantities, [powerKey]: newQty },
       },
     });
-    const res = await api.put<{ _id: string }>(`/api/lens-stock/${item._id}/quantity`, {
+    const res = await api.put<{ _id: string }>(`/api/warehouse/lens-stock/${item._id}/quantity`, {
       lensType,
       powerKey,
       quantity: newQty,
@@ -66,7 +66,7 @@ export default function LensGrid({ item, onUpdate }: Props) {
         [lensType]: updated,
       },
     });
-    const res = await api.put<{ _id: string }>(`/api/lens-stock/${item._id}/quantity`, {
+    const res = await api.put<{ _id: string }>(`/api/warehouse/lens-stock/${item._id}/quantity`, {
       lensType,
       powerKey,
       quantity: newQty,
