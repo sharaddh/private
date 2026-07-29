@@ -8,6 +8,7 @@ export const JWT_SECRET = process.env.JWT_SECRET || "";
 export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "24h";
 export const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
 export const REDIS_URL = process.env.REDIS_URL || "";
+export const WAREHOUSE_DB_NAME = process.env.WAREHOUSE_DB_NAME || "kmj_warehouse";
 export const NODE_ENV = process.env.NODE_ENV || "development";
 export const CORS_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())

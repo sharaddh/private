@@ -1,7 +1,7 @@
-import { CartItem } from "../models/cart";
-import { LensStock } from "../models/lensStock";
-import { Withdrawal } from "../models/withdrawal";
+import { getWarehouseModels } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
+
+const { CartItem, LensStock, Withdrawal } = getWarehouseModels();
 
 export async function getCartItems(userId: string) {
   return CartItem.find({ user: userId }).sort({ createdAt: 1 }).lean();

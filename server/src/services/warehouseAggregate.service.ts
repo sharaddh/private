@@ -1,11 +1,10 @@
 import { Branch } from "../models/branch";
-import { getBranchModels } from "../models/db";
-import { Inventory as MainInventory } from "../models/inventory";
-import { LensStock as MainLensStock } from "../models/lensStock";
-import { Withdrawal } from "../models/withdrawal";
+import { getBranchModels, getWarehouseModels } from "../models/db";
 import { User } from "../models/user";
 import { escapeRegex } from "../utils/string";
 import { logger } from "../utils/logger";
+
+const { Inventory: WHInventory, LensStock: WHLensStock, Withdrawal: WHWithdrawal } = getWarehouseModels();
 
 interface BranchItem {
   branchId: string;
@@ -91,7 +90,7 @@ export async function getAllBranchInventory(query?: { search?: string }) {
   );
 
   try {
-    const mainItems = await MainInventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
+    const mainItems = await WHInventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
     for (const item of mainItems) {
       allItems.push({
         ...(item as unknown as AggregatedInventory),
@@ -175,14 +174,14 @@ export async function getAllBranchStats() {
 
   try {
     const [mainCount, mainLow, mainWh, mainValResult, mainRecent, mainLowItems] = await Promise.all([
-      MainInventory.countDocuments(),
-      MainInventory.countDocuments({ quantity: { $lte: 5 } }),
-      MainInventory.countDocuments({ location: "warehouse" }),
-      MainInventory.aggregate([
+      WHInventory.countDocuments(),
+      WHInventory.countDocuments({ quantity: { $lte: 5 } }),
+      WHInventory.countDocuments({ location: "warehouse" }),
+      WHInventory.aggregate([
         { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
       ]),
-      MainInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-      MainInventory.find({ quantity: { $lte: 5, $gt: 0 } }).sort({ quantity: 1 }).limit(10).lean(),
+      WHInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
+      WHInventory.find({ quantity: { $lte: 5, $gt: 0 } }).sort({ quantity: 1 }).limit(10).lean(),
     ]);
 
     totalItems += mainCount;
@@ -207,7 +206,7 @@ export async function getAllBranchStats() {
       });
     }
 
-    const mainLensDocs = await MainLensStock.find().lean();
+    const mainLensDocs = await WHLensStock.find().lean();
     totalLensCoatings += mainLensDocs.length;
     for (const doc of mainLensDocs) {
       const q = (doc.quantities as Record<string, Record<string, number>>) || {};
@@ -226,13 +225,13 @@ export async function getAllBranchStats() {
 
   const [totalUsers, totalWithdrawals, withdrawalAgg] = await Promise.all([
     User.countDocuments(),
-    Withdrawal.countDocuments(),
-    Withdrawal.aggregate([
+    WHWithdrawal.countDocuments(),
+    WHWithdrawal.aggregate([
       { $group: { _id: null, totalItems: { $sum: "$totalQuantity" } } },
     ]),
   ]);
 
-  const recentWithdrawals = await Withdrawal.find()
+  const recentWithdrawals = await WHWithdrawal.find()
     .sort({ withdrawnAt: -1 })
     .limit(10)
     .lean();
@@ -277,7 +276,7 @@ export async function getAllBranchLensStock() {
   );
 
   try {
-    const mainItems = await MainLensStock.find().sort({ coating: 1 }).lean();
+    const mainItems = await WHLensStock.find().sort({ coating: 1 }).lean();
     for (const item of mainItems) {
       allItems.push({
         ...(item as unknown as AggregatedLensStock),

@@ -1,11 +1,11 @@
 import mongoose, { connect, disconnect } from "mongoose";
 import bcrypt from "bcrypt";
-import { PORT, MONGO_URI, REDIS_URL, NODE_ENV } from "./config";
+import { PORT, MONGO_URI, REDIS_URL, NODE_ENV, WAREHOUSE_DB_NAME } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
 import { User } from "./models/user";
 import { Branch } from "./models/branch";
-import { getBranchModels } from "./models/db";
+import { getBranchModels, getWarehouseModels } from "./models/db";
 import { logger } from "./utils/logger";
 
 let server: ReturnType<typeof app.listen> | null = null;
@@ -52,6 +52,26 @@ async function start() {
     }
   } catch (e: any) {
     logger.warn("Could not seed users", { error: e?.message });
+  }
+
+  try {
+    const whConn = mongoose.connection.useDb(WAREHOUSE_DB_NAME);
+    const whCollections = ["inventory", "lensstocks", "cartitems", "withdrawals"];
+    for (const collName of whCollections) {
+      const sourceColl = mongoose.connection.db.collection(collName);
+      const targetColl = whConn.collection(collName);
+      const sourceCount = await sourceColl.countDocuments();
+      const targetCount = await targetColl.countDocuments();
+      if (sourceCount > 0 && targetCount === 0) {
+        const docs = await sourceColl.find({}).toArray();
+        if (docs.length > 0) {
+          await targetColl.insertMany(docs);
+          logger.info(`Migrated ${docs.length} documents from ${collName} to ${WAREHOUSE_DB_NAME}`);
+        }
+      }
+    }
+  } catch (e: any) {
+    logger.warn("Could not migrate warehouse data", { error: e?.message });
   }
 
   try {

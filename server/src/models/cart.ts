@@ -1,6 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-const CartItemSchema = new Schema(
+const CartItemSchemaObj = new Schema(
   {
     user: { type: Types.ObjectId, ref: "User", required: true, index: true },
     coating: { type: String, required: true },
@@ -11,6 +11,7 @@ const CartItemSchema = new Schema(
   { timestamps: true }
 );
 
-CartItemSchema.index({ user: 1, coating: 1, lensType: 1, powerKey: 1 }, { unique: true });
+CartItemSchemaObj.index({ user: 1, coating: 1, lensType: 1, powerKey: 1 }, { unique: true });
 
-export const CartItem = model("CartItem", CartItemSchema);
+export const CartItemSchema = CartItemSchemaObj;
+export const CartItem = model("CartItem", CartItemSchemaObj);

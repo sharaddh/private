@@ -1,6 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-const WithdrawalItemSchema = new Schema(
+const WithdrawalItemSchemaObj = new Schema(
   {
     coating: { type: String, required: true },
     lensType: { type: String, required: true },
@@ -10,15 +10,16 @@ const WithdrawalItemSchema = new Schema(
   { _id: false }
 );
 
-const WithdrawalSchema = new Schema(
+const WithdrawalSchemaObj = new Schema(
   {
     user: { type: Types.ObjectId, ref: "User", required: true, index: true },
     username: { type: String, required: true },
-    items: { type: [WithdrawalItemSchema], required: true },
+    items: { type: [WithdrawalItemSchemaObj], required: true },
     totalQuantity: { type: Number, required: true },
     withdrawnAt: { type: Date, default: Date.now, index: true },
   },
   { timestamps: true }
 );
 
-export const Withdrawal = model("Withdrawal", WithdrawalSchema);
+export const WithdrawalSchema = WithdrawalSchemaObj;
+export const Withdrawal = model("Withdrawal", WithdrawalSchemaObj);
