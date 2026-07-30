@@ -373,6 +373,7 @@ export default function Settings() {
       setEditingBranch(null);
       setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
       loadBranches();
+      api.get<(AppUser & { id?: string })[]>("/api/auth/users").then((d) => { if (d.success) setUsers(d.data || []); });
     } else {
       toast.error(res.message || "Failed to update branch");
     }

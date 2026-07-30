@@ -121,22 +121,14 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
   const branch = await Branch.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
   if (!branch) throw new AppError(404, "Branch not found");
 
-  if (data.ownerUsername || data.ownerPassword) {
-    const ownerUser = await User.findOne({ branches: new mongoose.Types.ObjectId(id), role: "owner" }).lean();
-    if (ownerUser) {
-      const updateUser: Record<string, unknown> = {};
-      if (data.ownerUsername && data.ownerUsername !== ownerUser.username) {
-        const existing = await User.findOne({ username: data.ownerUsername, _id: { $ne: ownerUser._id } }).lean();
-        if (existing) throw new AppError(409, "Owner username already exists");
-        updateUser.username = data.ownerUsername;
-      }
-      if (data.ownerPassword) {
-        updateUser.passwordHash = await bcrypt.hash(data.ownerPassword as string, 10);
-      }
-      if (Object.keys(updateUser).length > 0) {
-        await User.findByIdAndUpdate(ownerUser._id, { $set: updateUser });
-      }
-    }
+  if (data.ownerUsername) {
+    const existing = await User.findOne({ username: data.ownerUsername, branches: { $ne: new mongoose.Types.ObjectId(id) } }).lean();
+    if (existing) throw new AppError(409, "Owner username already exists");
+    await User.updateOne({ branches: new mongoose.Types.ObjectId(id), role: "owner" }, { $set: { username: data.ownerUsername } });
+  }
+  if (data.ownerPassword) {
+    const hash = await bcrypt.hash(data.ownerPassword as string, 10);
+    await User.updateOne({ branches: new mongoose.Types.ObjectId(id), role: "owner" }, { $set: { passwordHash: hash } });
   }
 
   clearBranchCache();
