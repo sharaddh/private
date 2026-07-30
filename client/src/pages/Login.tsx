@@ -4,7 +4,6 @@ import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useTranslate } from "../context/TranslateContext";
 import { LogIn, Eye, EyeOff } from "lucide-react";
-import type { BranchInfo } from "../types";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -12,24 +11,19 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [branches, setBranches] = useState<any[]>([]);
-  const [selectedBranchId, setSelectedBranchId] = useState("");
   const navigate = useNavigate();
   const { login, setCurrentBranch } = useAuth();
   const { uiT } = useTranslate();
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) navigate("/", { replace: true });
-    api.get<BranchInfo[]>("/api/branches/active").then((res) => {
-      if (res.success) setBranches(res.data!);
-    }).catch(() => {});
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(""); setIsLoading(true);
     try {
-      const res = await api.post<{ access: string; refresh: string; branchId?: string }>("/api/auth/login", { username, password, branchId: selectedBranchId || undefined });
+      const res = await api.post<{ access: string; refresh: string; branchId?: string }>("/api/auth/login", { username, password });
       if (res.success) {
         login(res.data!.access, res.data!.refresh);
         if (res.data!.branchId) {
@@ -76,16 +70,6 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Branch", "शाखा")}</label>
-              <select value={selectedBranchId} onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all">
-                <option value="">{uiT("Select branch (optional)", "शाखा चुनें (वैकल्पिक)")}</option>
-                {branches.map((b: any) => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
-              </select>
             </div>
             <button type="submit" disabled={isLoading}
               className="w-full py-3 bg-[#1ed760] text-black rounded-[9999px] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 mt-2 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">

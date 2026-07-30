@@ -20,7 +20,6 @@ interface RegisterData {
 interface LoginData {
   username: string;
   password: string;
-  branchId?: string;
 }
 
 interface UpdateProfileData {
@@ -92,11 +91,7 @@ async function formatUserWithBranches(user: any): Promise<FormattedUser> {
   const branches = user.branches as mongoose.Types.ObjectId[] | undefined;
 
   let branchList: FormattedUser["branches"] = [];
-  if (role === "owner") {
-    branchList = await Branch.find({ isActive: true })
-      .select("name code dbName isActive settings")
-      .lean();
-  } else if (branches && branches.length > 0) {
+  if (branches && branches.length > 0) {
     branchList = await Branch.find({ _id: { $in: branches }, isActive: true })
       .select("name code dbName isActive settings")
       .lean();
@@ -175,9 +170,11 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
   }
 
   const formatted = await formatUserWithBranches(user);
-  const branches = formatted.branches || [];
-  const selectedBranchId =
-    data.branchId || (branches.length > 0 ? branches[0]._id : undefined);
+  const userBranches = formatted.branches || [];
+  if (userBranches.length === 0) {
+    throw new AppError(403, "Your account has not been assigned to any branch. Contact admin.");
+  }
+  const selectedBranchId = userBranches[0]._id;
 
   const access = signAccess({
     sub: String(user._id),

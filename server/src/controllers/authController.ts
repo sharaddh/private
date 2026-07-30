@@ -9,8 +9,8 @@ export async function register(req: AuthRequest, res: Response) {
 }
 
 export async function login(req: AuthRequest, res: Response) {
-  const { username, password, branchId } = req.body;
-  const data = await authService.loginUser({ username, password, branchId });
+  const { username, password } = req.body;
+  const data = await authService.loginUser({ username, password });
   sendSuccess(res, data);
 }
 

@@ -103,8 +103,7 @@ export default function Users() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-th-border bg-th-base">
-                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Username</th>
-                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Name</th>
+                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Branch Owner</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Mobile</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Role</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Withdrawals</th>
@@ -121,8 +120,7 @@ export default function Users() {
                   return (
                     <Fragment key={u.id}>
                       <tr className="border-b border-th-border hover:bg-th-hover transition-colors">
-                        <td className="px-4 py-3 text-body-bold text-th-text">{u.username}</td>
-                        <td className="px-4 py-3 text-body text-th-secondary">{u.name || "—"}</td>
+                        <td className="px-4 py-3 text-body-bold text-th-text">{u.name || u.username}</td>
                         <td className="px-4 py-3 text-body text-th-secondary">{u.mobile || "—"}</td>
                         <td className="px-4 py-3">
                           <Badge variant={u.role === "owner" ? "green" : "blue"}>{u.role}</Badge>
@@ -211,10 +209,9 @@ export default function Users() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-th-text">{u.username}</span>
+                        <span className="text-sm font-bold text-th-text">{u.name || u.username}</span>
                         <Badge variant={u.role === "owner" ? "green" : "blue"}>{u.role}</Badge>
                       </div>
-                      {u.name && <p className="text-xs text-th-secondary mt-1">{u.name}</p>}
                       {u.mobile && <p className="text-xs text-th-muted mt-0.5">{u.mobile}</p>}
                       <p className="text-micro text-th-muted mt-1">{formatDate(u.createdAt)}</p>
                     </div>

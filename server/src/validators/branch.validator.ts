@@ -32,6 +32,8 @@ export const updateBranchSchema = z.object({
   ownerName: z.string().optional(),
   ownerPhone: z.string().optional(),
   ownerEmail: z.string().optional(),
+  ownerUsername: z.string().optional(),
+  ownerPassword: z.string().optional(),
   settings: z.object({
     shopName: z.string().optional(),
     shopAddress: z.string().optional(),
@@ -40,4 +42,4 @@ export const updateBranchSchema = z.object({
     adminWhatsApp: z.string().optional(),
     logo: z.string().optional(),
   }).optional(),
-}).strict();
+});

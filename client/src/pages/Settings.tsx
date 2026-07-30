@@ -342,6 +342,9 @@ export default function Settings() {
 
   async function handleEditBranch(branch: Branch) {
     setEditingBranch(branch);
+    const ownerUser = users.find(
+      (u) => u.role === "owner" && (u.branches || []).some((b: any) => (b._id || b)?.toString() === branch._id)
+    );
     setBranchForm({
       name: branch.name,
       code: branch.code,
@@ -352,7 +355,7 @@ export default function Settings() {
       ownerName: branch.settings?.shopName || "",
       ownerPhone: branch.settings?.shopPhone || "",
       ownerEmail: branch.settings?.shopEmail || "",
-      ownerUsername: "",
+      ownerUsername: ownerUser?.username || "",
       ownerPassword: "",
     });
     setShowAddBranch(true);
@@ -1199,27 +1202,23 @@ export default function Settings() {
                         placeholder="owner@example.com"
                       />
                     </div>
-                    {!editingBranch && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                         <Input
-                          label={uiT("Owner Username *", "मालिक यूज़रनेम *")}
+                          label={editingBranch ? uiT("Owner Username", "मालिक यूज़रनेम") : uiT("Owner Username *", "मालिक यूज़रनेम *")}
                           icon={<User size={15} />}
                           value={branchForm.ownerUsername}
                           onChange={(e) => setBranchForm({ ...branchForm, ownerUsername: e.target.value })}
                           placeholder="Login username"
-                          required
                         />
                         <Input
-                          label={uiT("Owner Password *", "मालिक पासवर्ड *")}
+                          label={editingBranch ? uiT("Owner Password", "मालिक पासवर्ड") : uiT("Owner Password *", "मालिक पासवर्ड *")}
                           icon={<User size={15} />}
                           type="password"
                           value={branchForm.ownerPassword}
                           onChange={(e) => setBranchForm({ ...branchForm, ownerPassword: e.target.value })}
-                          placeholder="Min 4 characters"
-                          required
+                          placeholder={editingBranch ? "Leave blank to keep current" : "Min 4 characters"}
                         />
                       </div>
-                    )}
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
