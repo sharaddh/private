@@ -81,7 +81,7 @@ export async function createBranch(data: BranchData) {
   });
 
   const passwordHash = await bcrypt.hash(data.ownerPassword, 10);
-  await User.create({
+  const newOwner = await User.create({
     username: data.ownerUsername,
     passwordHash,
     name: data.ownerName || "",
@@ -89,6 +89,11 @@ export async function createBranch(data: BranchData) {
     role: "owner",
     branches: [branch._id],
   });
+
+  await User.updateMany(
+    { role: "owner", _id: { $ne: newOwner._id } },
+    { $addToSet: { branches: branch._id } }
+  );
 
   clearBranchCache();
   return branch;

@@ -60,9 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.success && res.data) {
           const user = res.data;
           setState((s) => ({ ...s, user }));
-          setBranches(user.branches || []);
-          if (!state.currentBranchId && user.branches?.length > 0) {
-            setCurrentBranch(user.branches[0]._id);
+          const userBranches = user.branches || [];
+          setBranches(userBranches);
+          if (!state.currentBranchId && userBranches.length > 0) {
+            setCurrentBranch(userBranches[0]._id);
+          } else if (state.currentBranchId) {
+            const found = userBranches.some((b) => b._id === state.currentBranchId);
+            if (!found) {
+              api.get<BranchInfo>(`/api/branches/${state.currentBranchId}`).then((br) => {
+                if (!cancelled && br.success && br.data) {
+                  setBranches((prev) => [...prev, br.data!]);
+                }
+              });
+            }
           }
         } else {
           logout();
