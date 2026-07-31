@@ -16,6 +16,9 @@ const BranchSchema = new Schema(
       shopEmail: { type: String, default: "" },
       adminWhatsApp: { type: String, default: "" },
       logo: { type: String, default: "" },
+      ownerName: { type: String, default: "" },
+      ownerPhone: { type: String, default: "" },
+      ownerEmail: { type: String, default: "" },
     },
   },
   { timestamps: true }

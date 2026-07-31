@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { Branch } from "../models/branch";
 import { User } from "../models/user";
-import { clearBranchCache } from "../models/db";
+import { clearBranchCache, getBranchModels } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
 
 interface BranchData {
@@ -18,7 +18,31 @@ interface BranchData {
   ownerEmail?: string;
   ownerUsername?: string;
   ownerPassword?: string;
+  logo?: string;
   settings?: Record<string, string>;
+}
+
+async function syncBranchShopSettings(branch: any) {
+  try {
+    const s = branch.settings || {};
+    const models = getBranchModels(branch.dbName);
+    await models.Settings.findOneAndUpdate(
+      {},
+      {
+        $set: {
+          shopName: s.shopName || branch.name || "",
+          shopAddress: s.shopAddress || branch.address || "",
+          shopPhone: s.shopPhone || branch.phone || "",
+          shopEmail: s.shopEmail || branch.email || "",
+          adminWhatsApp: s.ownerPhone || "",
+          logo: s.logo || "",
+        },
+      },
+      { upsert: true }
+    );
+  } catch (e: any) {
+    console.warn("Could not sync branch shop settings", e?.message);
+  }
 }
 
 const UPDATE_WHITELIST = [
@@ -73,12 +97,18 @@ export async function createBranch(data: BranchData) {
     phone: data.phone || "",
     email: data.email || "",
     settings: {
-      shopName: data.ownerName || "",
+      shopName: data.name || "",
       shopAddress: data.address || "",
-      shopPhone: data.ownerPhone || "",
-      shopEmail: data.ownerEmail || "",
+      shopPhone: data.phone || "",
+      shopEmail: data.email || "",
+      logo: data.logo || "",
+      ownerName: data.ownerName || "",
+      ownerPhone: data.ownerPhone || "",
+      ownerEmail: data.ownerEmail || "",
     },
   });
+
+  await syncBranchShopSettings(branch);
 
   const passwordHash = await bcrypt.hash(data.ownerPassword, 10);
   const newOwner = await User.create({
@@ -90,6 +120,14 @@ export async function createBranch(data: BranchData) {
     branches: [branch._id],
   });
 
+  const otherBranchIds = (await Branch.find({ _id: { $ne: branch._id } }).select("_id").lean()).map((b) => b._id);
+  if (otherBranchIds.length > 0) {
+    await User.updateOne(
+      { _id: newOwner._id },
+      { $addToSet: { branches: { $each: otherBranchIds } } }
+    );
+  }
+
   await User.updateMany(
     { role: "owner", _id: { $ne: newOwner._id } },
     { $addToSet: { branches: branch._id } }
@@ -100,11 +138,17 @@ export async function createBranch(data: BranchData) {
 }
 
 export async function updateBranch(id: string, data: Record<string, unknown>) {
-  if (data.ownerName || data.ownerPhone || data.ownerEmail) {
-    const settings = (data.settings as Record<string, string>) || {};
-    if (data.ownerName) settings.shopName = data.ownerName as string;
-    if (data.ownerPhone) settings.shopPhone = data.ownerPhone as string;
-    if (data.ownerEmail) settings.shopEmail = data.ownerEmail as string;
+  if (data.ownerName || data.ownerPhone || data.ownerEmail || data.logo || data.name || data.address || data.phone || data.email) {
+    const existing = await Branch.findById(id).select("settings").lean();
+    const settings = { ...((existing?.settings as Record<string, string>) || {}) };
+    if (data.name) settings.shopName = data.name as string;
+    if (data.address) settings.shopAddress = data.address as string;
+    if (data.phone) settings.shopPhone = data.phone as string;
+    if (data.email) settings.shopEmail = data.email as string;
+    if (data.ownerName) settings.ownerName = data.ownerName as string;
+    if (data.ownerPhone) settings.ownerPhone = data.ownerPhone as string;
+    if (data.ownerEmail) settings.ownerEmail = data.ownerEmail as string;
+    if (data.logo) settings.logo = data.logo as string;
     data.settings = settings;
   }
   const filtered: Record<string, unknown> = {};
@@ -125,6 +169,8 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
 
   const branch = await Branch.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
   if (!branch) throw new AppError(404, "Branch not found");
+
+  await syncBranchShopSettings(branch);
 
   if (data.ownerUsername) {
     const existing = await User.findOne({ username: data.ownerUsername, branches: { $ne: new mongoose.Types.ObjectId(id) } }).lean();

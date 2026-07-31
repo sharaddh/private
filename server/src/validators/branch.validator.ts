@@ -10,6 +10,7 @@ export const createBranchSchema = z.object({
   ownerName: z.string().optional(),
   ownerPhone: z.string().optional(),
   ownerEmail: z.string().optional(),
+  logo: z.string().optional(),
   ownerUsername: z.string().min(1, "Owner username is required"),
   ownerPassword: z.string().min(4, "Owner password must be at least 4 characters"),
   settings: z.object({
@@ -32,6 +33,7 @@ export const updateBranchSchema = z.object({
   ownerName: z.string().optional(),
   ownerPhone: z.string().optional(),
   ownerEmail: z.string().optional(),
+  logo: z.string().optional(),
   ownerUsername: z.string().optional(),
   ownerPassword: z.string().optional(),
   settings: z.object({
