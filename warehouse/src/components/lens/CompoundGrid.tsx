@@ -103,7 +103,7 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
                         {sphInnerGroups.map((sphGroup) => (
                           <div key={sphGroup.label}>
                             <div className="text-xs font-bold uppercase tracking-wider mb-1.5 px-1 text-th-muted">{sphGroup.label}</div>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5">
                               {sphGroup.values.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;

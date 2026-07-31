@@ -87,7 +87,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
             <span className="text-xs text-th-muted">({negativeEntries.length})</span>
           </button>
           {openGroup === "Negative" && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
               {negatives.map((p) => (
                 <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
               ))}
@@ -106,7 +106,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
             <span className="px-2.5 py-0.5 rounded-pill bg-th-elevated text-th-secondary text-xs font-bold">ZERO</span>
           </button>
           {openGroup === "Zero" && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
               <MemoizedPowerCell power="+0.00" qty={zeroQty} onIncrement={onIncrement} onDecrement={onDecrement} />
             </div>
           )}
@@ -124,7 +124,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
             <span className="text-xs text-th-muted">({positiveEntries.length})</span>
           </button>
           {openGroup === "Positive" && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
               {positives.map((p) => (
                 <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
               ))}

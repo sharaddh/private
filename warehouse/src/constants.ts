@@ -13,7 +13,7 @@ export const LENS_TYPES = ["sph", "cyl", "compound"] as const;
 export const LENS_TYPE_LABELS: Record<string, string> = {
   sph: "SPH (Spherical)",
   cyl: "CYL (Cylindrical)",
-  compound: "Compound",
+  compound: "Both (SPH + CYL)",
 };
 
 function generatePowerValues(): string[] {

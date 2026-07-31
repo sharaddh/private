@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import type { LensStockItem, LensType } from "../types/lensStock";
 import api from "../api";
 import { useToast } from "../context";
 import { useCart } from "../context/CartContext";
 import { flyToCart } from "../utils/flyToCart";
-import { Glasses, ChevronDown, ChevronRight, X, Plus, Check } from "lucide-react";
+import { Glasses, ChevronDown, ChevronRight, X } from "lucide-react";
 import { POWER_VALUES } from "../constants";
 
 function getTotalQty(item: LensStockItem): number {
@@ -62,9 +62,9 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
         <span
           role="button"
           onClick={onRemove}
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
+          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
         >
-          <X size={10} className="text-white" strokeWidth={3} />
+          <X size={12} className="text-white" strokeWidth={3} />
         </span>
       )}
       <button
@@ -72,7 +72,7 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
         disabled={atMax}
         className="flex flex-col items-center gap-1 w-full disabled:cursor-not-allowed"
       >
-        <span className="text-micro font-bold text-th-secondary leading-none">{powerKey}</span>
+        <span className="text-small-bold text-th-secondary leading-none">{powerKey}</span>
         <span className={`text-body-bold leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
       </button>
     </div>
@@ -116,9 +116,9 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating, powerKey, qty
         <span
           role="button"
           onClick={onRemove}
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
+          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
         >
-          <X size={10} className="text-white" strokeWidth={3} />
+          <X size={12} className="text-white" strokeWidth={3} />
         </span>
       )}
       <button
@@ -126,8 +126,8 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating, powerKey, qty
         disabled={atMax}
         className="flex flex-col items-center gap-0.5 w-full disabled:cursor-not-allowed"
       >
-        <span className="text-micro text-th-muted leading-none truncate w-full text-center" title={coating}>{coatingShort}</span>
-        <span className="text-micro font-bold text-th-secondary leading-none">{sph === "+0.00" ? "0.00" : sph}</span>
+        <span className="text-small text-th-muted leading-none truncate w-full text-center" title={coating}>{coatingShort}</span>
+        <span className="text-small-bold text-th-secondary leading-none">{sph === "+0.00" ? "0.00" : sph}</span>
         <span className={`text-body-bold leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
       </button>
     </div>
@@ -178,11 +178,11 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
               className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors"
             >
               {isOpen ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
-              <span className={`text-xs font-bold uppercase tracking-wider ${group.color}`}>{group.label}</span>
-              <span className="text-xs text-th-muted font-medium">({group.entries.length})</span>
+              <span className={`text-small font-bold uppercase tracking-wider ${group.color}`}>{group.label}</span>
+              <span className="text-small text-th-muted font-medium">({group.entries.length})</span>
             </button>
             {isOpen && (
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mt-2 pl-5">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mt-2 pl-5 pr-1">
                 {group.entries.map(([power, qty]) => {
                   const stockQty = qty;
                   const currentCartQty = getItemQty(coating, lensType, power);
@@ -261,7 +261,7 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
         if (group.values.length === 0) return null;
         return (
           <div key={group.label}>
-            <div className="text-micro font-bold uppercase tracking-wider mb-1.5 px-1">{group.label}</div>
+            <div className="text-small font-bold uppercase tracking-wider mb-1.5 px-1">{group.label}</div>
             <div className="space-y-1">
               {group.values.map((cyl) => {
                 const isOpen = openCyl === cyl;
@@ -281,17 +281,17 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
                       className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-th-elevated transition-colors"
                     >
                       {isOpen ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
-                      <span className={`px-2.5 py-0.5 rounded-pill ${cylBg} ${cylColor} text-micro font-bold`}>
+                      <span className={`px-2.5 py-0.5 rounded-pill ${cylBg} ${cylColor} text-small-bold`}>
                         CYL {cyl}
                       </span>
-                      <span className="text-micro text-primary-500 font-medium">{sphStockCount} in stock</span>
+                      <span className="text-small text-primary-500 font-medium">{sphStockCount} in stock</span>
                     </button>
                     {isOpen && (
                       <div className="mt-2 ml-5 space-y-3">
                         {sphInnerGroups.map((sphGroup) => (
                           <div key={sphGroup.label}>
-                            <div className="text-micro font-bold uppercase tracking-wider mb-1.5 px-1 text-th-muted">{sphGroup.label}</div>
-                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+                            <div className="text-small font-bold uppercase tracking-wider mb-1.5 px-1 text-th-muted">{sphGroup.label}</div>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 pr-1">
                               {sphGroup.values.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;
@@ -339,8 +339,6 @@ export default function LensStock() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lensType, setLensType] = useState<LensType>("sph");
   const [loading, setLoading] = useState(true);
-  const [mobileAdding, setMobileAdding] = useState(false);
-  const [mobileNewName, setMobileNewName] = useState("");
   const { toast } = useToast();
   const { addToCart, isInCart, getItemQty, removeByDetails } = useCart();
 
@@ -362,21 +360,6 @@ export default function LensStock() {
   const selectedItem = useMemo(() => items.find((i) => i._id === selectedId) || null, [items, selectedId]);
   const quantities = useMemo(() => (selectedItem?.quantities?.[lensType] || {}) as Record<string, number>, [selectedItem, lensType]);
 
-  const handleMobileAdd = useCallback(async () => {
-    const name = mobileNewName.trim();
-    if (!name) return;
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name });
-    if (res.success && res.data) {
-      setItems((prev) => [...prev, res.data!]);
-      setSelectedId(res.data!._id);
-      setMobileNewName("");
-      setMobileAdding(false);
-      toast("Coating added", "success");
-    } else {
-      toast(res.message || "Failed to add", "error");
-    }
-  }, [mobileNewName, toast]);
-
   if (loading) {
     return <div className="flex items-center justify-center h-64"><span className="text-th-muted text-body">Loading...</span></div>;
   }
@@ -384,79 +367,52 @@ export default function LensStock() {
   return (
     <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0 animate-page-enter">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-primary-500/15 flex items-center justify-center">
-          <Glasses size={18} className="text-primary-500" />
+        <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
+          <Glasses size={22} className="text-primary-500" />
         </div>
         <div>
           <h1 className="text-feature font-bold text-th-text leading-tight">Lens Stock</h1>
-          <p className="text-micro text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
+          <p className="text-small text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
       {/* Mobile: coating select + lens type tabs */}
-      <div className="lg:hidden">
-        {mobileAdding ? (
-          <div className="flex gap-2 mb-2">
-            <input
-              autoFocus
-              value={mobileNewName}
-              onChange={(e) => setMobileNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); } }}
-              className="flex-1 px-3 py-2 rounded-xl bg-th-input border border-th-border text-sm font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
-              placeholder="Coating name..."
-            />
-            <button onClick={handleMobileAdd} className="p-2 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
-              <Check size={18} strokeWidth={2.5} />
-            </button>
-            <button onClick={() => { setMobileAdding(false); setMobileNewName(""); }} className="p-2 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
-              <X size={18} strokeWidth={2.5} />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedId || ""}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl bg-th-surface border border-th-border text-sm font-bold text-th-text appearance-none cursor-pointer"
-            >
-              {items.map((item) => {
-                const total = getTotalQty(item);
-                return (
-                  <option key={item._id} value={item._id}>
-                    {item.coating} ({total})
-                  </option>
-                );
-              })}
-            </select>
+      <div className="lg:hidden space-y-2.5">
+        <select
+          value={selectedId || ""}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="w-full px-3.5 py-2.5 rounded-xl bg-th-surface border border-th-border text-small font-bold text-th-text appearance-none cursor-pointer"
+        >
+          {items.map((item) => {
+            const total = getTotalQty(item);
+            return (
+              <option key={item._id} value={item._id}>
+                {item.coating} ({total}) · ₹{item.price ?? 0}
+              </option>
+            );
+          })}
+        </select>
+        <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5 w-fit">
+          {TABS.map((t) => (
             <button
-              onClick={() => { setMobileAdding(true); setMobileNewName(""); }}
-              className="p-2 rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
+              key={t.key}
+              onClick={() => setLensType(t.key)}
+              className={`px-3 py-2 rounded-pill text-small font-bold transition-all ${
+                lensType === t.key
+                  ? "bg-primary-500 text-surface-950 shadow-sm"
+                  : "text-th-secondary"
+              }`}
             >
-              <Plus size={18} className="text-primary-500" />
+              {t.label}
             </button>
-            <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setLensType(t.key)}
-                  className={`px-2.5 py-1.5 rounded-pill text-micro font-bold transition-all ${
-                    lensType === t.key
-                      ? "bg-primary-500 text-surface-950 shadow-sm"
-                      : "text-th-secondary"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Desktop: sidebar + content */}
       <div className="flex-1 flex gap-4 min-h-0">
         <div className="hidden lg:flex w-56 shrink-0 card p-4 flex-col overflow-hidden">
-          <h3 className="text-xs font-bold text-th-text uppercase tracking-wider mb-4">Coatings</h3>
+          <h3 className="text-small font-bold text-th-text uppercase tracking-wider mb-4">Coatings</h3>
           <div className="flex-1 overflow-auto scrollbar-thin space-y-1.5">
             {items.map((item) => {
               const total = getTotalQty(item);
@@ -473,12 +429,13 @@ export default function LensStock() {
                 >
                   <div className={`w-1 h-10 rounded-sm flex-shrink-0 transition-colors ${isSelected ? "bg-primary-500" : "bg-th-border"}`} />
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-semibold truncate ${isSelected ? "text-th-text" : "text-th-secondary"}`}>
+                    <div className={`text-small-bold truncate ${isSelected ? "text-th-text" : "text-th-secondary"}`}>
                       {item.coating}
                     </div>
-                    <div className={`text-xs mt-0.5 font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
+                    <div className={`text-small mt-0.5 font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
                       {total > 0 ? `${total} in stock` : "Empty"}
                     </div>
+                    <div className="text-small mt-0.5 font-bold text-th-muted">₹{item.price ?? 0}</div>
                   </div>
                 </div>
               );
@@ -491,13 +448,14 @@ export default function LensStock() {
             <>
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-th-border">
                 <div className="w-2 h-2 rounded-full bg-primary-500" />
-                <span className="text-sm lg:text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
+                <span className="text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
+                <span className="text-small-bold text-primary-500 shrink-0">₹{selectedItem.price ?? 0}</span>
                 <div className="ml-auto hidden lg:flex gap-1 bg-th-elevated rounded-pill p-1">
                   {TABS.map((t) => (
                     <button
                       key={t.key}
                       onClick={() => setLensType(t.key)}
-                      className={`px-3 py-1 rounded-pill text-micro font-bold transition-all ${
+                      className={`px-3 py-1.5 rounded-pill text-small font-bold transition-all ${
                         lensType === t.key
                           ? "bg-primary-500 text-surface-950 shadow-sm"
                           : "text-th-secondary hover:text-th-text"
@@ -508,7 +466,7 @@ export default function LensStock() {
                   ))}
                 </div>
               </div>
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {lensType === "compound" ? (
                   <CompoundView
                     quantities={quantities}
@@ -532,8 +490,11 @@ export default function LensStock() {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-th-muted text-body">Select a coating to view stock</p>
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="w-14 h-14 rounded-full bg-th-elevated flex items-center justify-center">
+                <Glasses size={24} className="text-th-muted" />
+              </div>
+              <p className="text-th-muted text-body font-bold">Select a coating to view stock</p>
             </div>
           )}
         </div>
