@@ -140,7 +140,7 @@ export async function getStats() {
     Delivery.countDocuments({ status: "Ready" }),
     Customer.countDocuments({ createdAt: { $gte: dayStart, $lte: dayEnd } }),
     Inventory.countDocuments({ quantity: { $lte: 5 } }),
-    Bill.find({ status: "Active", pendingAmount: { $gt: 0 } }).sort({ createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
+    Bill.find({ status: "Active", pendingAmount: { $gt: 0 } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
     Customer.find().sort({ createdAt: -1 }).limit(5).select("name mobile totalSpent totalVisits").lean(),
     Order.find().sort({ createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
     Delivery.find({ status: { $in: ["Pending", "In Transit"] } }).sort({ expectedDeliveryDate: 1 }).limit(10).populate("customerId", "name mobile").lean(),

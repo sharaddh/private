@@ -41,3 +41,4 @@ if (NODE_ENV === "production") {
 if (!JWT_SECRET && NODE_ENV !== "production") {
   console.warn("JWT_SECRET is not set - using empty string. Tokens will be insecure.");
 }
+
