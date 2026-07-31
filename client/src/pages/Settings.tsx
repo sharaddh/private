@@ -6,14 +6,13 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
 import { useToast } from "../context/ToastContext";
-import PageSkeleton from "../components/PageSkeleton";
 import {
   Save, User, Shield, Upload, MessageCircle, RefreshCw, LogOut,
-  Sun, Moon, Trash2, X, Building2, Globe, Store, Phone, Mail, MapPin,
+  Sun, Moon, Trash2, X, Building2, Globe, Phone, Mail, MapPin,
   Smartphone, Key, AtSign, UserPlus, CheckCircle2, AlertCircle, Loader2,
   ArrowRight, Eye, EyeOff, Crown, Languages,
 } from "lucide-react";
-import type { User as AppUser, BranchInfo, ShopSettings } from "../types";
+import type { User as AppUser, BranchInfo } from "../types";
 import SettingsHeader from "./settings/SettingsHeader";
 import SectionNav from "./settings/SectionNav";
 import type { Section } from "./settings/SectionNav";
@@ -37,11 +36,13 @@ interface Branch {
     shopEmail: string;
     adminWhatsApp: string;
     logo: string;
+    ownerName: string;
+    ownerPhone: string;
+    ownerEmail: string;
   };
 }
 
 const ALL_SECTIONS: Section[] = [
-  { id: "general", label: "Shop", icon: <Store size={15} /> },
   { id: "whatsapp", label: "WhatsApp", icon: <MessageCircle size={15} /> },
   { id: "branches", label: "Branches", icon: <Building2 size={15} /> },
   { id: "staff", label: "Staff", icon: <Shield size={15} /> },
@@ -54,18 +55,6 @@ export default function Settings() {
   const { lang, toggleLang, uiLang, toggleUiLang, uiT } = useTranslate();
   const toast = useToast();
   const navigate = useNavigate();
-  const [shopName, setShopName] = useState("KMJ Optical");
-  const [shopAddress, setShopAddress] = useState("");
-  const [shopPhone, setShopPhone] = useState("");
-  const [shopEmail, setShopEmail] = useState("");
-  const [adminWhatsApp, setAdminWhatsApp] = useState("");
-  const [logo, setLogo] = useState("");
-  const [logoPreview, setLogoPreview] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [waStatus, setWaStatus] = useState<string>("checking");
 
   const [users, setUsers] = useState<(AppUser & { id?: string })[]>([]);
@@ -73,7 +62,6 @@ export default function Settings() {
   const [staffForm, setStaffForm] = useState({ username: "", password: "", name: "", mobile: "" });
   const [staffBranch, setStaffBranch] = useState("");
   const [staffSaving, setStaffSaving] = useState(false);
-  const [editingAccount, setEditingAccount] = useState(true);
   const [editName, setEditName] = useState((user?.name as string) || "");
   const [editMobile, setEditMobile] = useState((user?.mobile as string) || "");
   const [editPassword, setEditPassword] = useState("");
@@ -81,13 +69,14 @@ export default function Settings() {
   const [saveProfileMsg, setSaveProfileMsg] = useState("");
   const [allBranches, setAllBranches] = useState<Branch[]>([]);
   const [showAddBranch, setShowAddBranch] = useState(false);
-  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+  const [branchForm, setBranchForm] = useState({ name: "", code: "", dbName: "", address: "", phone: "", email: "", logo: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+  const [branchLogoPreview, setBranchLogoPreview] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [branchSaving, setBranchSaving] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const sectionLabelMap: Record<string, string> = {
-    general: uiT("Shop", "दुकान"),
     whatsapp: "WhatsApp",
     branches: uiT("Branches", "शाखाएँ"),
     staff: uiT("Staff", "स्टाफ"),
@@ -101,7 +90,6 @@ export default function Settings() {
     [isStaff, uiT]
   );
   const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || "account");
-  const [dragOver, setDragOver] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const getCurrentBranchStaff = useCallback(() => {
@@ -124,39 +112,8 @@ export default function Settings() {
   }, [user]);
 
   useEffect(() => {
-    loadSettings();
     loadBranches();
   }, [currentBranch]);
-
-  async function loadSettings() {
-    setLoading(true);
-    setShopName("");
-    setShopAddress("");
-    setShopPhone("");
-    setShopEmail("");
-    setAdminWhatsApp("");
-    setLogo("");
-    setLogoPreview("");
-    setError("");
-    try {
-      const d = await api.get<ShopSettings & { adminWhatsApp?: string }>("/api/settings");
-      if (d.success && d.data) {
-        setShopName(d.data.shopName || "KMJ Optical");
-        setShopAddress(d.data.shopAddress || "");
-        setShopPhone(d.data.shopPhone || "");
-        setShopEmail(d.data.shopEmail || "");
-        setAdminWhatsApp(d.data.adminWhatsApp || "");
-        setLogo(d.data.logo || "");
-        setLogoPreview(d.data.logo || "");
-      } else {
-        setShopName("KMJ Optical");
-      }
-    } catch {
-      setShopName("KMJ Optical");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function loadBranches() {
     try {
@@ -205,60 +162,23 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
-      setLogoPreview(dataUrl);
-      setLogo(dataUrl);
+      setBranchLogoPreview(dataUrl);
+      setBranchForm((f) => ({ ...f, logo: dataUrl }));
     };
     reader.readAsDataURL(file);
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
-      setLogoPreview(dataUrl);
-      setLogo(dataUrl);
+      setBranchLogoPreview(dataUrl);
+      setBranchForm((f) => ({ ...f, logo: dataUrl }));
     };
     reader.readAsDataURL(file);
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(true);
-  }
-
-  function handleDragLeave() {
-    setDragOver(false);
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      setError("");
-      const res = await api.put("/api/settings", {
-        shopName, shopAddress, shopPhone, shopEmail, adminWhatsApp, logo,
-      });
-      if (res.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } else {
-        setError(res.message || "Failed to save settings");
-      }
-    } catch (e: any) {
-      setError(e?.message || "An error occurred");
-    } finally { setSaving(false); }
-  }
-
-  function handleEditAccount() {
-    setEditName((user?.name as string) || (user?.username as string) || "");
-    setEditMobile((user?.mobile as string) || "");
-    setEditPassword("");
-    setSaveProfileMsg("");
-    setEditingAccount(true);
   }
 
   async function handleSaveProfile() {
@@ -267,7 +187,6 @@ export default function Settings() {
     const res = await api.put("/api/auth/me", { name: editName, mobile: editMobile, password: editPassword });
     setSavingProfile(false);
     if (res.success) {
-      setEditingAccount(false);
       setSaveProfileMsg("Profile updated");
       if (res.data) setUser(res.data as AppUser);
     } else {
@@ -333,7 +252,7 @@ export default function Settings() {
     if (res.success) {
       toast.success("Branch created");
       setShowAddBranch(false);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", logo: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
       loadBranches();
     } else {
       toast.error(res.message || "Failed to create branch");
@@ -352,12 +271,14 @@ export default function Settings() {
       address: branch.address || "",
       phone: branch.phone || "",
       email: branch.email || "",
-      ownerName: branch.settings?.shopName || "",
-      ownerPhone: branch.settings?.shopPhone || "",
-      ownerEmail: branch.settings?.shopEmail || "",
+      logo: branch.settings?.logo || "",
+      ownerName: branch.settings?.ownerName || "",
+      ownerPhone: branch.settings?.ownerPhone || "",
+      ownerEmail: branch.settings?.ownerEmail || "",
       ownerUsername: ownerUser?.username || "",
       ownerPassword: "",
     });
+    setBranchLogoPreview(branch.settings?.logo || "");
     setShowAddBranch(true);
   }
 
@@ -371,7 +292,7 @@ export default function Settings() {
       toast.success("Branch updated");
       setShowAddBranch(false);
       setEditingBranch(null);
-      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", logo: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
       loadBranches();
       api.get<(AppUser & { id?: string })[]>("/api/auth/users").then((d) => { if (d.success) setUsers(d.data || []); });
     } else {
@@ -403,8 +324,6 @@ export default function Settings() {
 
   const branchStaff = useMemo(() => getCurrentBranchStaff(), [getCurrentBranchStaff]);
 
-  if (loading) return <PageSkeleton page="settings" />;
-
   return (
     <div className="max-w-4xl mx-auto">
       <SettingsHeader
@@ -413,8 +332,6 @@ export default function Settings() {
         branches={branches}
         isStaff={isStaff}
         onSwitchBranch={handleSwitchBranch}
-        saved={saved}
-        saving={saving}
       />
 
       <SectionNav
@@ -424,189 +341,51 @@ export default function Settings() {
       />
 
       <div className="space-y-8">
-        {/* ──────────────── GENERAL / SHOP ──────────────── */}
-        {!isStaff && (
-          <div ref={(el) => { sectionRefs.current["general"] = el; }}>
-            <SectionCard icon={<Store size={16} />} title={uiT("Shop Profile", "दुकान प्रोफ़ाइल")} subtitle={uiT("Manage your store information and branding", "अपनी दुकान की जानकारी प्रबंधित करें")}>
-              <form onSubmit={handleSave} className="space-y-5">
-                <AnimatePresence>
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-center gap-2.5 px-4 py-3 bg-[#e74c3c]/10 border border-[#e74c3c]/20 rounded-sm text-[#e74c3c] text-sm"
-                    >
-                      <AlertCircle size={16} className="shrink-0" />
-                      {error}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex flex-col sm:flex-row gap-5">
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    className={`relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 border-2 border-dashed rounded-sm flex flex-col items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden ${
-                      dragOver
-                        ? "border-[#1ed760] bg-th-elevated bg-[#1ed760]/10"
-                        : "border-surface-300 hover:border-[#1ed760] bg-th-elevated"
-                    }`}
-                  >
-                    {logoPreview ? (
-                      <>
-                        <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Upload size={20} className="text-th-text" />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1.5 text-th-muted">
-                        <Upload size={22} />
-                        <span className="text-[14px] font-medium">{uiT("Upload Logo", "लोगो अपलोड करें")}</span>
-                      </div>
-                    )}
-                  </div>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label={uiT("Shop Name", "दुकान का नाम")}
-                      icon={<Store size={15} />}
-                      value={shopName}
-                      onChange={(e) => setShopName(e.target.value)}
-                      placeholder={uiT("Your shop name", "आपकी दुकान का नाम")}
-                    />
-                    <Input
-                      label={uiT("Phone", "फ़ोन")}
-                      icon={<Phone size={15} />}
-                      value={shopPhone}
-                      onChange={(e) => setShopPhone(e.target.value)}
-                      placeholder={uiT("Contact number", "संपर्क नंबर")}
-                    />
-                  </div>
-                </div>
-
-                <Textarea
-                  label={uiT("Address", "पता")}
-                  icon={<MapPin size={15} />}
-                  rows={2}
-                  value={shopAddress}
-                  onChange={(e) => setShopAddress(e.target.value)}
-                  placeholder={uiT("Shop address", "दुकान का पता")}
-                  className="pl-10"
-                />
-
-                <Input
-                  label={uiT("Email", "ईमेल")}
-                  icon={<Mail size={15} />}
-                  type="email"
-                  value={shopEmail}
-                  onChange={(e) => setShopEmail(e.target.value)}
-                  placeholder="shop@example.com"
-                />
-
-                <div className="flex items-center justify-end pt-2 border-t border-th-border">
-                  <motion.button
-                    type="submit"
-                    disabled={saving}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-primary"
-                  >
-                    {saving ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 size={15} className="animate-spin" />
-                        {uiT("Saving...", "सहेज रहे हैं...")}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Save size={15} />
-                        {uiT("Save Changes", "परिवर्तन सहेजें")}
-                      </span>
-                    )}
-                  </motion.button>
-                </div>
-              </form>
-            </SectionCard>
-          </div>
-        )}
-
         {/* ──────────────── WHATSAPP ──────────────── */}
         {!isStaff && (
           <div ref={(el) => { sectionRefs.current["whatsapp"] = el; }}>
             <SectionCard icon={<MessageCircle size={16} />} title={uiT("WhatsApp Integration", "WhatsApp इंटीग्रेशन")} subtitle={uiT("Connect WhatsApp for automated messaging", "स्वचालित संदेशों के लिए WhatsApp कनेक्ट करें")}>
               <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-4">
-                    <Input
-                      label={uiT("Admin WhatsApp Number", "एडमिन WhatsApp नंबर")}
-                      icon={<Smartphone size={15} />}
-                      value={adminWhatsApp}
-                      onChange={(e) => setAdminWhatsApp(e.target.value)}
-                      placeholder="e.g. 919XXXXXXXXX"
-                      helperText={uiT("Include country code without +", "देश कोड बिना + के लिखें")}
-                    />
-                    <div className={`rounded-sm border p-5 transition-all duration-500 ${
-                      waStatus === "connected"
-                        ? "bg-[#1ed760]/5 border-[#1ed760]/20"
-                        : waStatus === "error"
-                        ? "bg-[#e74c3c]/5 border-[#e74c3c]/20"
-                        : "bg-th-elevated border-th-border"
-                    }`}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2.5 h-2.5 rounded-full ${
-                            waStatus === "connected" ? "bg-[#1ed760] animate-pulse" :
-                            waStatus === "error" ? "bg-[#e74c3c]" :
-                            "bg-th-muted"
-                          }`} />
-                           <span className="text-sm font-medium text-th-text">
-                             {waStatus === "connected" ? uiT("Connected", "कनेक्टेड") :
-                              waStatus === "disconnected" ? uiT("Not Configured", "कॉन्फ़िगर नहीं") :
-                              waStatus === "error" ? uiT("Configuration Error", "कॉन्फ़िगरेशन त्रुटि") :
-                              uiT("Checking...", "जांच रहे हैं...")}
-                          </span>
-                        </div>
-                      </div>
-                      {waStatus === "connected" && (
-                        <div className="flex items-center gap-2 text-[#1ed760]">
-                          <CheckCircle2 size={16} />
-                          <span className="text-xs font-medium">{uiT("WhatsApp Cloud API is active", "WhatsApp क्लाउड API सक्रिय है")}</span>
-                        </div>
-                      )}
-                      {waStatus === "disconnected" && (
-                        <p className="text-xs text-th-secondary">{uiT("Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env", ".env में WHATSAPP_ACCESS_TOKEN और WHATSAPP_PHONE_NUMBER_ID सेट करें")}</p>
-                      )}
-                      {waStatus === "error" && (
-                        <p className="text-xs text-red-500">{uiT("Configuration error. Check your environment variables.", "कॉन्फ़िगरेशन त्रुटि। अपने एनवायरनमेंट वेरिएबल जांचें।")}</p>
-                      )}
-                      {waStatus === "checking" && (
-                        <p className="text-xs text-th-muted">{uiT("Checking configuration...", "कॉन्फ़िगरेशन जांच रहे हैं...")}</p>
-                      )}
+                <div className={`rounded-sm border p-5 transition-all duration-500 ${
+                  waStatus === "connected"
+                    ? "bg-[#1ed760]/5 border-[#1ed760]/20"
+                    : waStatus === "error"
+                    ? "bg-[#e74c3c]/5 border-[#e74c3c]/20"
+                    : "bg-th-elevated border-th-border"
+                }`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        waStatus === "connected" ? "bg-[#1ed760] animate-pulse" :
+                        waStatus === "error" ? "bg-[#e74c3c]" :
+                        "bg-th-muted"
+                      }`} />
+                       <span className="text-sm font-medium text-th-text">
+                         {waStatus === "connected" ? uiT("Connected", "कनेक्टेड") :
+                          waStatus === "disconnected" ? uiT("Not Configured", "कॉन्फ़िगर नहीं") :
+                          waStatus === "error" ? uiT("Configuration Error", "कॉन्फ़िगरेशन त्रुटि") :
+                          uiT("Checking...", "जांच रहे हैं...")}
+                      </span>
                     </div>
+                    {currentBranch?.settings?.ownerPhone && (
+                      <span className="text-xs font-medium text-th-secondary">{uiT("Admin Number:", "एडमिन नंबर:")} {currentBranch?.settings?.ownerPhone}</span>
+                    )}
                   </div>
-
-                  <div className="hidden sm:flex flex-col items-center justify-center p-6 bg-th-elevated rounded-sm border border-green-500/20">
-                    <MessageCircle size={40} className="text-th-secondary mb-3" />
-                    <p className="text-sm font-medium text-th-text text-center">{uiT("WhatsApp Messaging", "WhatsApp संदेश")}</p>
-                    <p className="text-xs text-th-secondary text-center mt-1">{uiT("Send automated order updates and notifications to customers", "ग्राहकों को स्वचालित ऑर्डर अपडेट और सूचनाएं भेजें")}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end pt-2 border-t border-th-border">
-                  <motion.button
-                    onClick={handleSave}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-primary"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Save size={15} />
-                      {uiT("Save WhatsApp Settings", "WhatsApp सेटिंग्स सहेजें")}
-                    </span>
-                  </motion.button>
+                  {waStatus === "connected" && (
+                    <div className="flex items-center gap-2 text-[#1ed760]">
+                      <CheckCircle2 size={16} />
+                      <span className="text-xs font-medium">{uiT("WhatsApp Cloud API is active", "WhatsApp क्लाउड API सक्रिय है")}</span>
+                    </div>
+                  )}
+                  {waStatus === "disconnected" && (
+                    <p className="text-xs text-th-secondary">{uiT("Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env", ".env में WHATSAPP_ACCESS_TOKEN और WHATSAPP_PHONE_NUMBER_ID सेट करें")}</p>
+                  )}
+                  {waStatus === "error" && (
+                    <p className="text-xs text-red-500">{uiT("Configuration error. Check your environment variables.", "कॉन्फ़िगरेशन त्रुटि। अपने एनवायरनमेंट वेरिएबल जांचें।")}</p>
+                  )}
+                  {waStatus === "checking" && (
+                    <p className="text-xs text-th-muted">{uiT("Checking configuration...", "कॉन्फ़िगरेशन जांच रहे हैं...")}</p>
+                  )}
                 </div>
               </div>
             </SectionCard>
@@ -625,7 +404,7 @@ export default function Settings() {
                   <motion.button
                     onClick={() => {
                       setEditingBranch(null);
-                      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+                      setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", logo: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
                       setShowAddBranch(true);
                     }}
                     whileHover={{ scale: 1.02 }}
@@ -815,7 +594,7 @@ export default function Settings() {
                     </span>
                   </div>
                   <p className="text-xs text-th-secondary">
-                    Owner name, phone &amp; email are managed per branch in <strong>Shop Profile</strong> above
+                    Owner name, phone &amp; email are managed per branch in <strong>Branch Management</strong> above
                   </p>
                 </div>
               </div>
@@ -1126,6 +905,37 @@ export default function Settings() {
                     placeholder="e.g. Govindpuri"
                     required
                   />
+                  <div className="flex items-center gap-4">
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDrop={handleDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={`relative w-20 h-20 shrink-0 border-2 border-dashed rounded-sm flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-colors ${
+                        branchLogoPreview ? "border-th-border bg-th-elevated" : "border-th-border bg-th-elevated hover:border-[#1ed760]"
+                      }`}
+                    >
+                      {branchLogoPreview ? (
+                        <img src={branchLogoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-th-muted">
+                          <Upload size={16} />
+                          <span className="text-[11px] font-medium">{uiT("Logo", "लोगो")}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-th-text">{uiT("Branch Logo", "शाखा लोगो")}</p>
+                      <p className="text-xs text-th-secondary mt-0.5">{uiT("Appears on dashboard and bills", "डैशबोर्ड और बिल पर दिखाई देता है")}</p>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-2 text-xs font-medium text-[#1ed760] hover:underline"
+                      >
+                        {branchLogoPreview ? uiT("Change Logo", "लोगो बदलें") : uiT("Upload Logo", "लोगो अपलोड करें")}
+                      </button>
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                       label={uiT("Branch Code *", "शाखा कोड *")}
