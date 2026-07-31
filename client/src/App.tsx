@@ -11,6 +11,7 @@ const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Bills = lazy(() => import("./pages/Bills"));
 const Payments = lazy(() => import("./pages/Payments"));
+const CollectPayment = lazy(() => import("./pages/CollectPayment"));
 const InventoryPage = lazy(() => import("./pages/InventoryPage"));
 const Delivery = lazy(() => import("./pages/Delivery"));
 const Pickup = lazy(() => import("./pages/Pickup"));
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
           <Route path="/orders" element={<SuspendedPage page="orders"><Orders /></SuspendedPage>} />
           <Route path="/bills" element={<SuspendedPage page="bills"><Bills /></SuspendedPage>} />
+          <Route path="/collect" element={<SuspendedPage page="bills"><CollectPayment /></SuspendedPage>} />
           <Route path="/payments" element={<RoleGuard path="/payments"><SuspendedPage page="payments"><Payments /></SuspendedPage></RoleGuard>} />
           <Route path="/inventory" element={<RoleGuard path="/inventory"><SuspendedPage page="inventory"><InventoryPage /></SuspendedPage></RoleGuard>} />
           <Route path="/inventory/scan/:code" element={<SuspendedPage page="inventory"><ItemScan /></SuspendedPage>} />

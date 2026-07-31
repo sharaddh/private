@@ -40,6 +40,9 @@ export interface BranchInfo {
     shopEmail?: string;
     adminWhatsApp?: string;
     logo?: string;
+    ownerName?: string;
+    ownerPhone?: string;
+    ownerEmail?: string;
   };
 }
 

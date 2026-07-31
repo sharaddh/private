@@ -312,7 +312,7 @@ export default function Dashboard() {
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
       <div className="min-w-0">
         <h1 className="text-[20px] sm:text-[28px] font-bold text-th-text tracking-tight truncate">
-          {greeting}, <span className="text-[#1ed760]">{"Mr " + currentBranch?.settings?.shopName || user?.name || user?.username || ""}</span>
+          {greeting}, <span className="text-[#1ed760]">{"Mr " + (currentBranch?.settings?.ownerName || user?.name || user?.username || "")}</span>
         </h1>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 text-[12px] sm:text-[15px] text-th-secondary">
           <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -730,7 +730,7 @@ export default function Dashboard() {
       <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
-        ) : d.pendingBills.slice(0, 6).map((b, idx) => {
+        ) : d.pendingBills.map((b, idx) => {
           const custObj = typeof b.customerId === "object" && b.customerId ? b.customerId : null;
           const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
@@ -743,7 +743,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
                 <p className="text-[14px] sm:text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
-                <button onClick={() => navigate(`/bills?id=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
+                <button onClick={() => navigate(`/collect?billId=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
                   className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[12px] sm:text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider whitespace-nowrap">
                   {uiT("Collect", "वसूलें")}
                 </button>
