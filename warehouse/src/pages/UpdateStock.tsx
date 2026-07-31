@@ -5,7 +5,8 @@ import { useToast } from "../context";
 import CoatingList from "../components/lens/CoatingList";
 import LensGrid from "../components/lens/LensGrid";
 import { PageLoader } from "../components";
-import { PackagePlus, Plus, Check, X } from "lucide-react";
+import { formatCurrency } from "../utils/helpers";
+import { PackagePlus, Plus, Check, X, Pencil } from "lucide-react";
 
 function getTotalQty(item: LensStockItem): number {
   const q = item.quantities as Record<string, Record<string, number>> || {};
@@ -27,6 +28,9 @@ export default function UpdateStock() {
   const [loading, setLoading] = useState(true);
   const [mobileAdding, setMobileAdding] = useState(false);
   const [mobileNewName, setMobileNewName] = useState("");
+  const [mobileNewPrice, setMobileNewPrice] = useState("");
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceDraft, setPriceDraft] = useState("");
   const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
@@ -64,8 +68,8 @@ export default function UpdateStock() {
     });
   }, [selectedId]);
 
-  const handleRename = useCallback((id: string, coating: string) => {
-    setItems((prev) => prev.map((i) => (i._id === id ? { ...i, coating } : i)));
+  const handleRename = useCallback((id: string, coating: string, price: number) => {
+    setItems((prev) => prev.map((i) => (i._id === id ? { ...i, coating, price } : i)));
   }, []);
 
   const handleGridUpdate = useCallback((updated: LensStockItem) => {
@@ -75,50 +79,85 @@ export default function UpdateStock() {
   const handleMobileAdd = useCallback(async () => {
     const name = mobileNewName.trim();
     if (!name) return;
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name });
+    const price = mobileNewPrice.trim() === "" ? 0 : Number(mobileNewPrice);
+    if (Number.isNaN(price) || price < 0) {
+      toast("Enter a valid price", "error");
+      return;
+    }
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, price });
     if (res.success && res.data) {
       setItems((prev) => [...prev, res.data!]);
       setSelectedId(res.data!._id);
       setMobileNewName("");
+      setMobileNewPrice("");
       setMobileAdding(false);
       toast("Coating added", "success");
     } else {
       toast(res.message || "Failed to add", "error");
     }
-  }, [mobileNewName, toast]);
+  }, [mobileNewName, mobileNewPrice, toast]);
+
+  const savePrice = useCallback(async () => {
+    if (!selectedItem) return;
+    const price = Number(priceDraft);
+    if (Number.isNaN(price) || price < 0) {
+      toast("Enter a valid price", "error");
+      return;
+    }
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${selectedItem._id}`, { coating: selectedItem.coating, price });
+    if (res.success && res.data) {
+      handleGridUpdate(res.data);
+      setEditingPrice(false);
+      toast("Price updated", "success");
+    } else {
+      toast(res.message || "Failed to update price", "error");
+    }
+  }, [selectedItem, priceDraft, toast, handleGridUpdate]);
 
   if (loading) return <PageLoader />;
 
   return (
     <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0 animate-page-enter">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-primary-500/15 flex items-center justify-center">
-          <PackagePlus size={18} className="text-primary-500" />
+        <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
+          <PackagePlus size={22} className="text-primary-500" />
         </div>
         <div>
           <h1 className="text-feature font-bold text-th-text leading-tight">Update Stock</h1>
-          <p className="text-micro text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
+          <p className="text-small text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
       {/* Mobile: coating strip */}
       <div className="lg:hidden">
         {mobileAdding ? (
-          <div className="flex gap-2 mb-2">
-            <input
-              autoFocus
-              value={mobileNewName}
-              onChange={(e) => setMobileNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); } }}
-              className="flex-1 px-3 py-2 rounded-xl bg-th-input border border-th-border text-sm font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
-              placeholder="Coating name..."
-            />
-            <button onClick={handleMobileAdd} className="p-2 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
-              <Check size={18} strokeWidth={2.5} />
-            </button>
-            <button onClick={() => { setMobileAdding(false); setMobileNewName(""); }} className="p-2 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
-              <X size={18} strokeWidth={2.5} />
-            </button>
+          <div className="flex flex-col gap-2 mb-2">
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={mobileNewName}
+                onChange={(e) => setMobileNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); } }}
+                className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                placeholder="Coating name..."
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={mobileNewPrice}
+                onChange={(e) => setMobileNewPrice(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); } }}
+                className="w-28 px-3 py-2.5 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                placeholder="Price ₹"
+              />
+              <button onClick={handleMobileAdd} className="p-2.5 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
+                <Check size={20} strokeWidth={2.5} />
+              </button>
+              <button onClick={() => { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); }} className="p-2.5 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
@@ -129,27 +168,28 @@ export default function UpdateStock() {
                 <button
                   key={item._id}
                   onClick={() => setSelectedId(item._id)}
-                  className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all ${
+                  className={`shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-w-[96px] rounded-xl border transition-all ${
                     isSelected
                       ? "bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/10"
                       : "border-th-border hover:border-th-border-med bg-th-surface"
                   }`}
                 >
-                  <span className={`text-xs font-bold truncate max-w-[80px] ${isSelected ? "text-th-text" : "text-th-secondary"}`}>
+                  <span className={`text-small font-bold truncate w-full text-center ${isSelected ? "text-th-text" : "text-th-secondary"}`}>
                     {item.coating}
                   </span>
-                  <span className={`text-micro font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
-                    {total > 0 ? total : "Empty"}
+                  <span className={`text-small font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
+                    {total > 0 ? `${total} in stock` : "Empty"}
                   </span>
+                  <span className="text-small font-bold text-th-muted">{formatCurrency(item.price ?? 0)}</span>
                 </button>
               );
             })}
             <button
-              onClick={() => { setMobileAdding(true); setMobileNewName(""); }}
-              className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
+              onClick={() => { setMobileAdding(true); setMobileNewName(""); setMobileNewPrice(""); }}
+              className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-w-[96px] rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
             >
-              <Plus size={16} className="text-primary-500" />
-              <span className="text-xs font-bold text-th-muted">Add</span>
+              <Plus size={20} className="text-primary-500" />
+              <span className="text-small font-bold text-th-muted">Add</span>
             </button>
           </div>
         )}
@@ -172,16 +212,49 @@ export default function UpdateStock() {
           {selectedItem ? (
             <>
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-th-border">
-                <div className="w-2 h-2 rounded-full bg-primary-500" />
-                <span className="text-sm lg:text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />
+                <span className="text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
+                {editingPrice ? (
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <span className="text-small font-bold text-th-muted">₹</span>
+                    <input
+                      autoFocus
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={priceDraft}
+                      onChange={(e) => setPriceDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") savePrice(); if (e.key === "Escape") { setEditingPrice(false); setPriceDraft(String(selectedItem.price ?? 0)); } }}
+                      className="w-28 px-2.5 py-1.5 rounded-lg bg-th-input border border-th-border text-small font-bold text-th-text focus:outline-none focus:border-primary-500"
+                    />
+                    <button onClick={savePrice} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
+                      <Check size={16} strokeWidth={2.5} />
+                    </button>
+                    <button onClick={() => { setEditingPrice(false); setPriceDraft(String(selectedItem.price ?? 0)); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+                      <X size={16} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setEditingPrice(true); setPriceDraft(String(selectedItem.price ?? 0)); }}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-th-elevated text-primary-500 hover:bg-primary-500/10 text-small font-bold transition-colors"
+                    title="Edit price"
+                  >
+                    <span>{formatCurrency(selectedItem.price ?? 0)}</span>
+                    <Pencil size={14} />
+                  </button>
+                )}
               </div>
               <div className="flex-1 overflow-auto">
                 <LensGrid item={selectedItem} onUpdate={handleGridUpdate} />
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-th-muted text-body">Select a coating to update</p>
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="w-14 h-14 rounded-full bg-th-elevated flex items-center justify-center">
+                <PackagePlus size={24} className="text-th-muted" />
+              </div>
+              <p className="text-th-muted text-body font-bold">Select a coating to update</p>
             </div>
           )}
         </div>

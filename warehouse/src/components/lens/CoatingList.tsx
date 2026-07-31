@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { LensStockItem } from "../../types/lensStock";
 import api from "../../api";
 import { useToast } from "../../context";
+import { formatCurrency } from "../../utils/helpers";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
   onSelect: (id: string) => void;
   onAdd: (item: LensStockItem) => void;
   onDelete: (id: string) => void;
-  onRename: (id: string, coating: string) => void;
+  onRename: (id: string, coating: string, price: number) => void;
 }
 
 function getTotalQty(item: LensStockItem): number {
@@ -30,17 +31,25 @@ function getTotalQty(item: LensStockItem): number {
 export default function CoatingList({ items, selectedId, onSelect, onAdd, onDelete, onRename }: Props) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
   const { toast } = useToast();
 
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name });
+    const price = newPrice.trim() === "" ? 0 : Number(newPrice);
+    if (Number.isNaN(price) || price < 0) {
+      toast("Enter a valid price", "error");
+      return;
+    }
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, price });
     if (res.success && res.data) {
       onAdd(res.data);
       setNewName("");
+      setNewPrice("");
       setAdding(false);
       toast("Coating added", "success");
     } else {
@@ -62,9 +71,14 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
   const handleRename = async (id: string) => {
     const name = editName.trim();
     if (!name) return;
-    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${id}`, { coating: name });
+    const price = editPrice.trim() === "" ? 0 : Number(editPrice);
+    if (Number.isNaN(price) || price < 0) {
+      toast("Enter a valid price", "error");
+      return;
+    }
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${id}`, { coating: name, price });
     if (res.success) {
-      onRename(id, name);
+      onRename(id, name, price);
       setEditingId(null);
       toast("Renamed", "success");
     } else {
@@ -75,32 +89,47 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-th-text uppercase tracking-wider">Coatings</h3>
+        <h3 className="text-small font-bold text-th-text uppercase tracking-wider">Coatings</h3>
         <button
           onClick={() => { setAdding(true); setNewName(""); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500 text-surface-950 text-xs font-bold hover:bg-primary-400 active:scale-95 transition-all shadow-sm"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-500 text-surface-950 text-small font-bold hover:bg-primary-400 active:scale-95 transition-all shadow-sm"
         >
-          <Plus size={14} strokeWidth={2.5} />
+          <Plus size={16} strokeWidth={2.5} />
           Add
         </button>
       </div>
 
       {adding && (
-        <div className="flex gap-2 mb-3 p-2.5 rounded-lg bg-th-input border border-th-border">
-          <input
-            autoFocus
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setAdding(false); }}
-            className="flex-1 px-2.5 py-1.5 text-sm bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
-            placeholder="Coating name..."
-          />
-          <button onClick={handleAdd} className="p-1.5 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
-            <Check size={14} strokeWidth={2.5} />
-          </button>
-          <button onClick={() => setAdding(false)} className="p-1.5 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
-            <X size={14} strokeWidth={2.5} />
-          </button>
+        <div className="flex flex-col gap-2 mb-3 p-2.5 rounded-lg bg-th-input border border-th-border">
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAdding(false); setNewPrice(""); } }}
+              className="flex-1 min-w-0 px-2.5 py-1.5 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
+              placeholder="Coating name..."
+            />
+            <button onClick={handleAdd} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
+              <Check size={16} strokeWidth={2.5} />
+            </button>
+            <button onClick={() => { setAdding(false); setNewPrice(""); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+              <X size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-small font-bold text-th-muted">₹</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+              className="flex-1 min-w-0 px-2.5 py-1 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
+              placeholder="Price"
+            />
+          </div>
         </div>
       )}
 
@@ -125,46 +154,61 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
               }`} />
 
               {isEditing ? (
-                <div className="flex-1 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); if (e.key === "Escape") setEditingId(null); }}
-                    className="flex-1 px-2.5 py-1.5 text-sm bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
-                  />
-                  <button onClick={() => handleRename(item._id)} className="p-1.5 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors">
-                    <Check size={14} strokeWidth={2.5} />
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="p-1.5 text-th-muted hover:bg-th-elevated rounded-lg transition-colors">
-                    <X size={14} strokeWidth={2.5} />
-                  </button>
+                <div className="flex-1 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-1.5">
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); if (e.key === "Escape") setEditingId(null); }}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 text-small bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
+                    />
+                    <button onClick={() => handleRename(item._id)} className="p-2 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors">
+                      <Check size={16} strokeWidth={2.5} />
+                    </button>
+                    <button onClick={() => setEditingId(null)} className="p-2 text-th-muted hover:bg-th-elevated rounded-lg transition-colors">
+                      <X size={16} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-small font-bold text-th-muted">₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); }}
+                      className="flex-1 min-w-0 px-2 py-1 text-small bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
+                    />
+                  </div>
                 </div>
               ) : (
                 <>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-semibold truncate ${isSelected ? "text-th-text" : "text-th-secondary group-hover:text-th-text"}`}>
+                    <div className={`text-small-bold truncate ${isSelected ? "text-th-text" : "text-th-secondary group-hover:text-th-text"}`}>
                       {item.coating}
                     </div>
-                    <div className={`text-xs mt-0.5 font-medium ${
+                    <div className={`text-small mt-0.5 font-medium ${
                       totalQty > 0 ? "text-primary-500" : "text-th-muted"
                     }`}>
                       {totalQty > 0 ? `${totalQty} in stock` : "Empty"}
                     </div>
+                    <div className="text-small mt-0.5 font-bold text-th-muted">{formatCurrency(item.price ?? 0)}</div>
                   </div>
 
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => { setEditingId(item._id); setEditName(item.coating); }}
-                      className="p-1.5 text-th-muted hover:text-th-text hover:bg-th-elevated rounded-lg transition-colors"
+                      onClick={() => { setEditingId(item._id); setEditName(item.coating); setEditPrice(String(item.price ?? 0)); }}
+                      className="p-2 text-th-muted hover:text-th-text hover:bg-th-elevated rounded-lg transition-colors"
                     >
-                      <Pencil size={13} />
+                      <Pencil size={16} />
                     </button>
                     <button
                       onClick={() => handleDelete(item._id, item.coating)}
-                      className="p-1.5 text-th-muted hover:text-negative hover:bg-negative/10 rounded-lg transition-colors"
+                      className="p-2 text-th-muted hover:text-negative hover:bg-negative/10 rounded-lg transition-colors"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </>
@@ -175,13 +219,13 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
 
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-10 h-10 rounded-full bg-th-elevated flex items-center justify-center mb-3">
-              <Plus size={18} className="text-th-muted" />
+            <div className="w-12 h-12 rounded-full bg-th-elevated flex items-center justify-center mb-3">
+              <Plus size={20} className="text-th-muted" />
             </div>
-            <p className="text-th-muted text-sm font-medium mb-1">No coatings yet</p>
+            <p className="text-th-muted text-small font-medium mb-1">No coatings yet</p>
             <button
               onClick={() => { setAdding(true); setNewName(""); }}
-              className="text-primary-500 text-sm font-semibold hover:underline"
+              className="text-primary-500 text-small font-semibold hover:underline"
             >
               Add your first coating
             </button>

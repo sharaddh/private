@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import api from "../api";
 import { useToast } from "../context/ToastContext";
-import { Users as UsersIcon, Trash2, ChevronDown, ChevronRight, Clock, PackageMinus } from "lucide-react";
+import { Users as UsersIcon, Trash2, ChevronDown, ChevronRight, Clock, PackageMinus, CheckCircle2 } from "lucide-react";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import Badge from "../components/Badge";
-import { formatDate } from "../utils/helpers";
+import { formatDate, formatCurrency } from "../utils/helpers";
 
 interface WarehouseUser {
   id: string;
@@ -21,8 +21,10 @@ interface WithdrawalRecord {
   _id: string;
   user: string;
   username: string;
-  items: { coating: string; lensType: string; powerKey: string; quantity: number }[];
+  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number }[];
   totalQuantity: number;
+  totalPrice?: number;
+  paid?: boolean;
   withdrawnAt: string;
 }
 
@@ -86,9 +88,14 @@ export default function Users() {
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0 animate-page-enter">
-      <div>
-        <h1 className="page-title">Users</h1>
-        <p className="page-subtitle">{users.length} user(s) &middot; {withdrawals.length} withdrawal(s)</p>
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
+          <UsersIcon size={22} className="text-primary-500" />
+        </div>
+        <div>
+          <h1 className="page-title leading-tight">Users</h1>
+          <p className="page-subtitle">{users.length} user(s) &middot; {withdrawals.length} withdrawal(s)</p>
+        </div>
       </div>
 
       {users.length === 0 ? (
@@ -152,13 +159,13 @@ export default function Users() {
 
                       {isExpanded && userWithdrawals.length > 0 && (
                         <tr className="bg-th-elevated/50">
-                          <td colSpan={7} className="px-4 py-3">
+                          <td colSpan={6} className="px-4 py-3">
                             <div className="space-y-2">
-                              {userWithdrawals.map((rec) => (
-                                <div key={rec._id} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0">
+                              {userWithdrawals.map((rec, idx) => (
+                                <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0 animate-fade-up">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <Clock size={12} className="text-th-muted shrink-0" />
+                                      <Clock size={14} className="text-th-muted shrink-0" />
                                       <span className="text-small text-th-muted">
                                         {formatDate(rec.withdrawnAt)}
                                         {" "}
@@ -174,7 +181,7 @@ export default function Users() {
                                         return (
                                           <span
                                             key={idx}
-                                            className={`px-1.5 py-0.5 rounded text-micro font-medium ${
+                                            className={`px-2 py-0.5 rounded text-small font-medium ${
                                               isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
                                             }`}
                                           >
@@ -182,6 +189,18 @@ export default function Users() {
                                           </span>
                                         );
                                       })}
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 flex-wrap mt-1.5">
+                                      <span className="text-body-bold font-bold text-th-text">
+                                        {formatCurrency(rec.totalPrice ?? 0)}
+                                      </span>
+                                      {rec.paid ? (
+                                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
+                                          <CheckCircle2 size={14} /> Paid
+                                        </span>
+                                      ) : (
+                                        <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -209,11 +228,11 @@ export default function Users() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-th-text">{u.name || u.username}</span>
+                        <span className="text-body-bold font-bold text-th-text">{u.name || u.username}</span>
                         <Badge variant={u.role === "owner" ? "green" : "blue"}>{u.role}</Badge>
                       </div>
-                      {u.mobile && <p className="text-xs text-th-muted mt-0.5">{u.mobile}</p>}
-                      <p className="text-micro text-th-muted mt-1">{formatDate(u.createdAt)}</p>
+                      {u.mobile && <p className="text-small text-th-muted mt-0.5">{u.mobile}</p>}
+                      <p className="text-small text-th-muted mt-1">{formatDate(u.createdAt)}</p>
                     </div>
                     {u.role !== "owner" && (
                       <button onClick={() => setDeleteTarget(u.id)} disabled={deleting === u.id}
@@ -232,26 +251,26 @@ export default function Users() {
                       >
                         {isExpanded ? <ChevronDown size={14} className="text-th-muted" /> : <ChevronRight size={14} className="text-th-muted" />}
                         <PackageMinus size={14} className="text-primary-500" />
-                        <span className="text-xs font-bold text-th-text uppercase tracking-wider">Withdrawals</span>
-                        <span className="text-xs text-th-muted font-medium ml-auto">
+                        <span className="text-small font-bold text-th-text uppercase tracking-wider">Withdrawals</span>
+                        <span className="text-small text-th-muted font-medium ml-auto">
                           {userWithdrawals.length} ({totalItems} items)
                         </span>
                       </button>
 
                       {isExpanded && (
                         <div className="mt-2 space-y-2 pl-5">
-                          {userWithdrawals.map((rec) => (
-                            <div key={rec._id} className="bg-th-elevated/50 rounded-lg p-2.5">
+                          {userWithdrawals.map((rec, idx) => (
+                            <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="bg-th-elevated/50 rounded-lg p-2.5 animate-fade-up">
                               <div className="flex items-center justify-between mb-1.5">
                                 <div className="flex items-center gap-1.5">
-                                  <Clock size={11} className="text-th-muted" />
-                                  <span className="text-micro text-th-muted">
+                                  <Clock size={14} className="text-th-muted" />
+                                  <span className="text-small text-th-muted">
                                     {formatDate(rec.withdrawnAt)}
                                     {" "}
                                     {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
                                 </div>
-                                <span className="text-micro font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
+                                <span className="text-small font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
                               </div>
                               <div className="flex flex-wrap gap-1">
                                 {rec.items.map((it, idx) => {
@@ -260,7 +279,7 @@ export default function Users() {
                                   return (
                                     <span
                                       key={idx}
-                                      className={`px-1.5 py-0.5 rounded text-micro font-medium ${
+                                      className={`px-2 py-0.5 rounded text-small font-medium ${
                                         isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
                                       }`}
                                     >
@@ -268,6 +287,18 @@ export default function Users() {
                                     </span>
                                   );
                                 })}
+                              </div>
+                              <div className="flex items-center justify-between gap-2 flex-wrap mt-1.5">
+                                <span className="text-body-bold font-bold text-th-text">
+                                  {formatCurrency(rec.totalPrice ?? 0)}
+                                </span>
+                                {rec.paid ? (
+                                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
+                                    <CheckCircle2 size={14} /> Paid
+                                  </span>
+                                ) : (
+                                  <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
+                                )}
                               </div>
                             </div>
                           ))}

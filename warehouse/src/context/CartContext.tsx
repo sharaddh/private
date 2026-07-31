@@ -10,6 +10,7 @@ export interface CartItemData {
   lensType: string;
   powerKey: string;
   quantity: number;
+  price?: number;
   createdAt?: string;
 }
 
