@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VALID_PAYMENT_MODES } from "../types";
 
 export const createBillSchema = z.object({
   customerId: z.string().min(1),
@@ -23,4 +24,9 @@ export const updateBillSchema = z.object({
   tax: z.number().min(0).optional(),
   advancePaid: z.number().min(0).optional(),
   status: z.enum(["Active", "Cancelled"]).optional(),
+}).strict();
+
+export const collectPaymentSchema = z.object({
+  amount: z.number().positive("Payment amount must be positive"),
+  paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
 }).strict();

@@ -4,7 +4,7 @@ import { validate } from "../middleware/validate";
 import { audit } from "../middleware/audit";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
-import { createBillSchema, updateBillSchema } from "../validators/bill.validator";
+import { createBillSchema, updateBillSchema, collectPaymentSchema } from "../validators/bill.validator";
 import * as billController from "../controllers/billController";
 
 const router = Router();
@@ -18,6 +18,12 @@ router.post("/", authenticate, audit, validate(createBillSchema, "body"), asyncH
 }));
 
 router.get("/:id", authenticate, asyncHandler(billController.getById));
+
+router.post("/:id/collect-payment", authenticate, audit, validate(collectPaymentSchema, "body"), asyncHandler(async (req, res) => {
+  await billController.collectPayment(req, res);
+  await invalidateCache("/api/bills");
+  await invalidateCache("/api/dashboard");
+}));
 
 router.put("/:id", authenticate, audit, validate(updateBillSchema, "body"), asyncHandler(async (req, res) => {
   await billController.update(req, res);

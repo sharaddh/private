@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
+import { Payment } from "../models/payment";
 import { withTransaction } from "../utils/transaction";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
@@ -222,6 +223,53 @@ export async function updateBill(
   });
 
   return result as unknown as BillResult;
+}
+
+export async function collectBillPayment(
+  billId: string,
+  amount: number,
+  paymentMode: string
+): Promise<{ payment: unknown; bill: unknown }> {
+  const result = await withTransaction(async (session) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bill = await (Bill as any).findById(billId).session(session);
+    if (!bill) {
+      throw new AppError(404, "Bill not found");
+    }
+    if (bill.pendingAmount <= 0) {
+      throw new AppError(400, "No pending amount on this bill");
+    }
+
+    const actualCollect = Math.min(amount, bill.pendingAmount);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payment = await (Payment as any).create(
+      [
+        {
+          customerId: bill.customerId,
+          billId: bill._id,
+          amount: actualCollect,
+          paymentMode: paymentMode || "Cash",
+          paymentDate: new Date(),
+          notes: "Payment collected",
+        },
+      ],
+      { session }
+    );
+
+    bill.advancePaid = (bill.advancePaid || 0) + actualCollect;
+    bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
+    await bill.save({ session });
+
+    await Customer.findByIdAndUpdate(
+      bill.customerId,
+      { $inc: { pendingAmount: -actualCollect } },
+      { session }
+    );
+
+    return { payment: payment[0], bill };
+  });
+
+  return result as { payment: unknown; bill: unknown };
 }
 
 export async function deleteBill(billId: string): Promise<void> {

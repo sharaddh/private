@@ -18,6 +18,12 @@ export async function remove(req: Request, res: Response) {
   sendSuccess(res, null, "Bill deleted");
 }
 
+export async function collectPayment(req: Request, res: Response) {
+  const { amount, paymentMode } = req.body;
+  const data = await billService.collectBillPayment(req.params.id, Number(amount), paymentMode || "Cash");
+  sendSuccess(res, data);
+}
+
 export async function getById(req: Request, res: Response) {
   const data = await billService.getBillById(req.params.id);
   sendSuccess(res, data);
