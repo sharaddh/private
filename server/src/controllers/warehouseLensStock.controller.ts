@@ -13,22 +13,38 @@ export async function getById(req: Request, res: Response) {
 }
 
 export async function create(req: Request, res: Response) {
-  const { coating } = req.body;
+  const { coating, price } = req.body;
   if (!coating || typeof coating !== "string" || !coating.trim()) {
     res.status(400).json({ success: false, message: "Coating name is required" });
     return;
   }
-  const data = await warehouseLensStockService.createLensStock(coating.trim());
+  let parsedPrice = 0;
+  if (price !== undefined) {
+    parsedPrice = Number(price);
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      res.status(400).json({ success: false, message: "Price must be a non-negative number" });
+      return;
+    }
+  }
+  const data = await warehouseLensStockService.createLensStock(coating.trim(), parsedPrice);
   sendCreated(res, data);
 }
 
 export async function rename(req: Request, res: Response) {
-  const { coating } = req.body;
+  const { coating, price } = req.body;
   if (!coating || typeof coating !== "string" || !coating.trim()) {
     res.status(400).json({ success: false, message: "Coating name is required" });
     return;
   }
-  const data = await warehouseLensStockService.renameLensStock(req.params.id, coating.trim());
+  let parsedPrice: number | undefined;
+  if (price !== undefined) {
+    parsedPrice = Number(price);
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      res.status(400).json({ success: false, message: "Price must be a non-negative number" });
+      return;
+    }
+  }
+  const data = await warehouseLensStockService.renameLensStock(req.params.id, coating.trim(), parsedPrice);
   sendSuccess(res, data);
 }
 

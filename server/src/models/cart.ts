@@ -7,6 +7,7 @@ const CartItemSchemaObj = new Schema(
     lensType: { type: String, required: true, enum: ["sph", "cyl", "compound"] },
     powerKey: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1, default: 1 },
+    price: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

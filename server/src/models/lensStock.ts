@@ -4,6 +4,7 @@ import { withBranch } from "../utils/branchProxy";
 const LensStockSchemaObj = new Schema(
   {
     coating: { type: String, required: true },
+    price: { type: Number, default: 0, min: 0 },
     quantities: {
       type: Schema.Types.Mixed,
       default: { sph: {}, cyl: {}, compound: {} },

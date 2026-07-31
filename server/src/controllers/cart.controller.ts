@@ -61,3 +61,8 @@ export async function getAllWithdrawals(_req: AuthRequest, res: Response) {
   const data = await cartService.getAllWithdrawals();
   sendSuccess(res, data);
 }
+
+export async function markWithdrawalPaid(req: AuthRequest, res: Response) {
+  const data = await cartService.markWithdrawalPaid(req.user!.sub, req.params.id);
+  sendSuccess(res, data, "Withdrawal marked as paid");
+}

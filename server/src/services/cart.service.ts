@@ -18,13 +18,16 @@ export async function addToCart(
   powerKey: string,
   quantity: number = 1
 ) {
+  const stock = await LensStock.findOne({ coating });
+  const price = stock?.price || 0;
   const existing = await CartItem.findOne({ user: userId, coating, lensType, powerKey });
   if (existing) {
     existing.quantity += quantity;
+    existing.price = price;
     await existing.save();
     return existing.toJSON();
   }
-  const item = new CartItem({ user: userId, coating, lensType, powerKey, quantity });
+  const item = new CartItem({ user: userId, coating, lensType, powerKey, quantity, price });
   await item.save();
   return item.toJSON();
 }
@@ -54,8 +57,9 @@ export async function withdrawCart(userId: string, username: string) {
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
-  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number }[] = [];
+  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number }[] = [];
   let totalQuantity = 0;
+  let totalPrice = 0;
 
   for (const item of items) {
     const lensStock = await LensStock.findOne({ coating: item.coating });
@@ -80,8 +84,10 @@ export async function withdrawCart(userId: string, username: string) {
     lensStock.markModified("quantities");
     await lensStock.save();
 
-    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity });
+    const price = item.price ?? (lensStock.price as number) ?? 0;
+    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price });
     totalQuantity += item.quantity;
+    totalPrice += price * item.quantity;
   }
 
   if (withdrawnItems.length > 0) {
@@ -90,6 +96,7 @@ export async function withdrawCart(userId: string, username: string) {
       username,
       items: withdrawnItems,
       totalQuantity,
+      totalPrice,
     });
   }
 
@@ -104,4 +111,15 @@ export async function getWithdrawals(userId: string) {
 
 export async function getAllWithdrawals() {
   return Withdrawal.find({}).sort({ withdrawnAt: -1 }).limit(200).lean();
+}
+
+export async function markWithdrawalPaid(userId: string, id: string) {
+  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  if (!withdrawal) throw new AppError(404, "Withdrawal not found");
+  if (!withdrawal.paid) {
+    withdrawal.paid = true;
+    withdrawal.paidAt = new Date();
+    await withdrawal.save();
+  }
+  return withdrawal.toJSON();
 }

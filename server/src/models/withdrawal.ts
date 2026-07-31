@@ -6,6 +6,7 @@ const WithdrawalItemSchemaObj = new Schema(
     lensType: { type: String, required: true },
     powerKey: { type: String, required: true },
     quantity: { type: Number, required: true },
+    price: { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -16,6 +17,9 @@ const WithdrawalSchemaObj = new Schema(
     username: { type: String, required: true },
     items: { type: [WithdrawalItemSchemaObj], required: true },
     totalQuantity: { type: Number, required: true },
+    totalPrice: { type: Number, default: 0 },
+    paid: { type: Boolean, default: false },
+    paidAt: { type: Date, default: null },
     withdrawnAt: { type: Date, default: Date.now, index: true },
   },
   { timestamps: true }
