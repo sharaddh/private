@@ -18,7 +18,6 @@ const sidebarMenu = [
 const mobileNav = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/lens-stock", label: "Stock", icon: Glasses },
-  { path: "/update-stock", label: "Update", icon: PackagePlus },
   { path: "/cart", label: "Cart", icon: ShoppingCart },
   { path: "/users", label: "User", icon: UserCog },
 ];
@@ -37,7 +36,7 @@ const MobileCartBadge = memo(function MobileCartBadge() {
   const count = useCartCount();
   if (count <= 0) return null;
   return (
-    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
+    <span className="absolute -top-1.5 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
       {count > 99 ? "99+" : count}
     </span>
   );

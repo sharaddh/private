@@ -19,7 +19,7 @@ export default function InventoryFilters({ search, onSearchChange, locationFilte
           value={search}
           onChange={onSearchChange}
           placeholder="Search by SKU, brand, model..."
-          className="flex-1 min-w-[200px]"
+          className="flex-1 min-w-[160px] sm:min-w-[200px]"
         />
         <FilterSelect
           value={locationFilter}

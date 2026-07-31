@@ -98,12 +98,17 @@ export default function Inventory() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Lens Warehouse</h1>
-          <p className="page-subtitle">Manage warehouse lens stock — {filtered.length} items</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
+            <Package size={22} className="text-primary-500" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="page-title leading-tight">Lens Warehouse</h1>
+            <p className="page-subtitle">Manage warehouse lens stock — {filtered.length} items</p>
+          </div>
         </div>
-        <button onClick={openAdd} className="btn-primary flex items-center gap-2">
+        <button onClick={openAdd} className="btn-primary flex items-center gap-2 shrink-0 px-4 sm:px-8">
           <Plus size={18} /> Add Lens
         </button>
       </div>

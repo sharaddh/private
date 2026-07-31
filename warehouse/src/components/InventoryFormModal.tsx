@@ -91,7 +91,7 @@ export default function InventoryFormModal({ open, onClose, editing, onSaved }: 
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-caption-bold text-th-secondary mb-1.5 uppercase tracking-wider">Color</label>
             <input className="input-field" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />

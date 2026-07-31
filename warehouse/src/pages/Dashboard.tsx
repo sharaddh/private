@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { Users, ShoppingCart, PackageMinus, Glasses, Clock } from "lucide-react";
+import { Users, ShoppingCart, PackageMinus, Glasses, Clock, Warehouse, Activity, ListChecks } from "lucide-react";
 import { SkeletonStats } from "../components/Skeleton";
 import StatCard from "../components/StatCard";
 import SectionHeader from "../components/SectionHeader";
@@ -58,9 +58,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-20 lg:pb-0">
-      <div>
-        <h1 className="page-title">Lens Warehouse</h1>
-        <p className="page-subtitle">Overview of lens stock and activity</p>
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
+          <Warehouse size={22} className="text-primary-500" />
+        </div>
+        <div>
+          <h1 className="page-title leading-tight">Lens Warehouse</h1>
+          <p className="page-subtitle">Overview of lens stock and activity</p>
+        </div>
       </div>
 
       {/* Stats */}
@@ -98,8 +103,8 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="glass-card">
-        <SectionHeader title="Quick Actions" />
-        <div className="grid grid-cols-3 gap-3">
+        <SectionHeader title="Quick Actions" icon={Activity} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <QuickAction
             icon={Glasses}
             label="Lens Stock"
@@ -124,13 +129,14 @@ export default function Dashboard() {
       {/* Recent Withdrawals */}
       {recent.length > 0 && (
         <div className="glass-card">
-          <SectionHeader title="Recent Withdrawals" />
+          <SectionHeader title="Recent Withdrawals" icon={ListChecks} />
           <div className="space-y-1">
-            {recent.map((rec) => (
+            {recent.map((rec, idx) => (
               <div
                 key={rec._id}
                 onClick={() => navigate("/users")}
-                className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md"
+                style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
+                className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
               >
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
                   <PackageMinus size={14} className="text-emerald-500" />

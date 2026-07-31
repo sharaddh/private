@@ -10,7 +10,7 @@ interface Props {
 
 export default function EmptyState({ icon: Icon = Package, title = "No items found", message, action }: Props) {
   return (
-    <div className="card p-12 text-center">
+    <div className="card p-6 sm:p-12 text-center">
       <Icon size={40} className="mx-auto text-th-muted mb-3" />
       <p className="text-th-secondary text-body">{title}</p>
       {message && <p className="text-th-muted text-small mt-1">{message}</p>}
