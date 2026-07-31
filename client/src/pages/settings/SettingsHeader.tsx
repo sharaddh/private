@@ -1,5 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { Building2, CheckCircle2, Loader2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
 import type { User } from "../../types";
 
@@ -9,8 +8,6 @@ interface SettingsHeaderProps {
   branches: { _id: string; name: string; code: string; dbName: string; isActive: boolean }[];
   isStaff: boolean;
   onSwitchBranch: (id: string) => void;
-  saved: boolean;
-  saving: boolean;
 }
 
 export default function SettingsHeader({
@@ -19,8 +16,6 @@ export default function SettingsHeader({
   branches,
   isStaff,
   onSwitchBranch,
-  saved,
-  saving,
 }: SettingsHeaderProps) {
   const { uiT } = useTranslate();
   return (
@@ -28,31 +23,6 @@ export default function SettingsHeader({
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight text-th-text">{uiT("Settings", "सेटिंग्स")}</h1>
-          <AnimatePresence mode="wait">
-            {saving ? (
-              <motion.div
-                key="saving"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
-              >
-                <Loader2 size={12} className="text-[#1ed760] animate-spin" />
-                <span className="text-[15px] font-medium text-[#1ed760]">{uiT("Saving", "सहेज रहे हैं")}</span>
-              </motion.div>
-            ) : saved ? (
-              <motion.div
-                key="saved"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1ed760]/10 rounded-lg"
-              >
-                <CheckCircle2 size={12} className="text-[#1ed760]" />
-                <span className="text-[15px] font-medium text-[#1ed760]">{uiT("Saved", "सहेजा गया")}</span>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
         </div>
         <p className="text-sm text-th-secondary mt-1">
           {uiT("Configure your application preferences", "अपनी ऐप प्राथमिकताएं कॉन्फ़िगर करें")}
