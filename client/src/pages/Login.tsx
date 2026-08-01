@@ -29,8 +29,10 @@ export default function Login() {
         if (res.data!.branchId) {
           localStorage.setItem("currentBranchId", res.data!.branchId);
           setCurrentBranch(res.data!.branchId);
+          navigate("/", { replace: true });
+        } else {
+          navigate("/settings", { replace: true });
         }
-        navigate("/", { replace: true });
       } else { setError(res.message || "Login failed"); }
     } catch { setError("Connection error. Try again."); }
     finally { setIsLoading(false); }
