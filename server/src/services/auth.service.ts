@@ -95,9 +95,23 @@ async function formatUserWithBranches(user: any): Promise<FormattedUser> {
 
   let branchList: FormattedUser["branches"] = [];
   if (branches && branches.length > 0) {
-    branchList = await Branch.find({ _id: { $in: branches }, isActive: true })
+    const branchIds = branches.map((b) => String(b));
+    const docs = await Branch.find({ _id: { $in: branches }, isActive: true })
       .select("name code dbName isActive settings")
       .lean();
+
+    const docMap = new Map(docs.map((b) => [String(b._id), b]));
+    branchList = branchIds
+      .map((id) => docMap.get(id))
+      .filter((b): b is NonNullable<(typeof docs)[number]> => Boolean(b))
+      .map((b) => ({
+        _id: String(b._id),
+        name: b.name,
+        code: b.code,
+        dbName: b.dbName,
+        isActive: b.isActive,
+        settings: b.settings,
+      }));
   }
 
   return {
@@ -106,14 +120,7 @@ async function formatUserWithBranches(user: any): Promise<FormattedUser> {
     name: user.name || "",
     mobile: user.mobile || "",
     role,
-    branches: branchList.map((b) => ({
-      _id: String(b._id),
-      name: b.name,
-      code: b.code,
-      dbName: b.dbName,
-      isActive: b.isActive,
-      settings: b.settings,
-    })),
+    branches: branchList,
   };
 }
 
