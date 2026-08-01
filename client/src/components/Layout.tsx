@@ -126,7 +126,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const isAuthPage = ["/login", "/staff-login", "/register"].includes(location.pathname);
+  const isAuthPage = ["/login", "/staff-login"].includes(location.pathname);
 
   useEffect(() => {
     if (isAuthPage) { document.title = "KMJ Optical — Login"; return; }

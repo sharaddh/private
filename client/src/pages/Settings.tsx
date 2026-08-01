@@ -90,7 +90,6 @@ export default function Settings() {
     [isStaff, uiT]
   );
   const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || "account");
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const getCurrentBranchStaff = useCallback(() => {
     return users.filter(
@@ -311,21 +310,16 @@ export default function Settings() {
     }
   }
 
-  async function handleSwitchBranch(branchId: string) {
+  async   function handleSwitchBranch(branchId: string) {
     setCurrentBranch(branchId);
     toast.success("Branch switched");
     window.location.reload();
   }
 
-  function scrollToSection(id: string) {
-    setActiveSection(id);
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   const branchStaff = useMemo(() => getCurrentBranchStaff(), [getCurrentBranchStaff]);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <SettingsHeader
         user={user}
         currentBranch={currentBranch}
@@ -334,16 +328,28 @@ export default function Settings() {
         onSwitchBranch={handleSwitchBranch}
       />
 
-      <SectionNav
-        sections={visibleSections}
-        activeSection={activeSection}
-        onSectionClick={scrollToSection}
-      />
+      <div className="flex flex-col lg:flex-row gap-6">
+        <aside className="shrink-0 lg:w-52">
+          <SectionNav
+            sections={visibleSections}
+            activeSection={activeSection}
+            onSectionClick={setActiveSection}
+          />
+        </aside>
 
-      <div className="space-y-8">
+        <main className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-8"
+            >
         {/* ──────────────── WHATSAPP ──────────────── */}
-        {!isStaff && (
-          <div ref={(el) => { sectionRefs.current["whatsapp"] = el; }}>
+        {activeSection === "whatsapp" && !isStaff && (
+          <div>
             <SectionCard icon={<MessageCircle size={16} />} title={uiT("WhatsApp Integration", "WhatsApp इंटीग्रेशन")} subtitle={uiT("Connect WhatsApp for automated messaging", "स्वचालित संदेशों के लिए WhatsApp कनेक्ट करें")}>
               <div className="space-y-5">
                 <div className={`rounded-sm border p-5 transition-all duration-500 ${
@@ -393,8 +399,8 @@ export default function Settings() {
         )}
 
         {/* ──────────────── BRANCHES ──────────────── */}
-        {!isStaff && (
-          <div ref={(el) => { sectionRefs.current["branches"] = el; }}>
+        {activeSection === "branches" && !isStaff && (
+          <div>
             <SectionCard icon={<Globe size={16} />} title={uiT("Branch Management", "शाखा प्रबंधन")} subtitle={uiT("Manage all your business locations", "अपने सभी व्यापार स्थान प्रबंधित करें")}>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -417,10 +423,23 @@ export default function Settings() {
                 </div>
 
                 {allBranches.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 px-4 bg-th-elevated rounded-sm border border-dashed border-th-border">
-                    <Building2 size={36} className="text-th-muted mb-3" />
-                    <p className="text-sm font-medium text-th-secondary">{uiT("No branches yet", "अभी तक कोई शाखा नहीं")}</p>
-                    <p className="text-xs text-th-secondary mt-1">{uiT("Add your first branch to get started", "शुरू करने के लिए अपनी पहली शाखा जोड़ें")}</p>
+                  <div className="flex flex-col items-center justify-center py-12 px-4 bg-th-elevated rounded-sm border border-dashed border-th-border text-center">
+                    <Building2 size={40} className="text-[#1ed760] mb-3" />
+                    <p className="text-base font-semibold text-th-text">{uiT("Get started with your first branch", "अपनी पहली शाखा से शुरुआत करें")}</p>
+                    <p className="text-xs text-th-secondary mt-1 mb-6 max-w-sm">{uiT("Add a branch to create its database and owner login, then start selling", "शाखा जोड़ें — इसका डेटाबेस और मालिक लॉगिन बनेगा, फिर बिक्री शुरू करें")}</p>
+                    <motion.button
+                      onClick={() => {
+                        setEditingBranch(null);
+                        setBranchForm({ name: "", code: "", dbName: "", address: "", phone: "", email: "", logo: "", ownerName: "", ownerPhone: "", ownerEmail: "", ownerUsername: "", ownerPassword: "" });
+                        setShowAddBranch(true);
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="btn-primary"
+                    >
+                      <UserPlus size={15} />
+                      {uiT("Add your first branch", "अपनी पहली शाखा जोड़ें")}
+                    </motion.button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
@@ -492,8 +511,8 @@ export default function Settings() {
         )}
 
         {/* ──────────────── STAFF & SECURITY ──────────────── */}
-        {!isStaff && (
-          <div ref={(el) => { sectionRefs.current["staff"] = el; }}>
+        {activeSection === "staff" && !isStaff && (
+          <div>
             <SectionCard icon={<Shield size={16} />} title={uiT("Staff & Security", "स्टाफ और सुरक्षा")} subtitle={uiT("Manage team members and access control", "टीम के सदस्यों और पहुँच नियंत्रण का प्रबंधन करें")}>
               <div className="space-y-5">
                 <div className="flex items-center justify-between p-4 bg-th-elevated rounded-sm border border-th-border">
@@ -571,7 +590,8 @@ export default function Settings() {
         )}
 
         {/* ──────────────── ACCOUNT ──────────────── */}
-        <div ref={(el) => { sectionRefs.current["account"] = el; }}>
+        {activeSection === "account" && (
+        <div>
           <SectionCard icon={<User size={16} />} title={uiT("Login Credentials", "लॉगिन जानकारी")} subtitle={uiT("Your sign-in identity — used across all branches", "आपकी साइन-इन पहचान — सभी शाखाओं में उपयोग होती है")}>
             <div className="space-y-5">
               <div className="flex flex-col sm:flex-row gap-4 p-5 bg-th-elevated bg-violet-900/10 rounded-sm border border-violet-500/20">
@@ -746,6 +766,10 @@ export default function Settings() {
             </div>
           </SectionCard>
         </div>
+        )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
       </div>
 
       {/* ──────────────── ADD STAFF DRAWER ──────────────── */}

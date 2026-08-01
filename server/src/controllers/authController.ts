@@ -1,7 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import * as authService from "../services/auth.service";
-import * as branchService from "../services/branch.service";
 import { sendSuccess, sendCreated } from "../utils/response";
 
 export async function register(req: AuthRequest, res: Response) {
@@ -29,11 +28,6 @@ export async function warehouseLogin(req: AuthRequest, res: Response) {
 
 export async function registerOwner(req: AuthRequest, res: Response) {
   const data = await authService.registerOwner(req.body, req.user?.role || "");
-  sendCreated(res, data);
-}
-
-export async function registerBranchOwner(req: AuthRequest, res: Response) {
-  const data = await branchService.createBranch(req.body);
   sendCreated(res, data);
 }
 
