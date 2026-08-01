@@ -18,7 +18,7 @@ import {
   Clock, Activity, Plus, Check, Trash2, ArrowUpRight, UserPlus, FileText,
   BarChart3, AlertTriangle, AlertCircle, CreditCard, Smartphone, Building2,
   X, ChevronRight, ShoppingCart, CheckSquare, Send, Eye, MessageSquare,
-  Calendar, LayoutDashboard,
+  Calendar, LayoutDashboard, Warehouse,
 } from "lucide-react";
 
 const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
@@ -386,6 +386,7 @@ export default function Dashboard() {
         <QuickActionCard icon={ClipboardList} label={uiT("Orders", "ऑर्डर")} subtitle={uiT("View all orders", "सभी ऑर्डर देखें")} onClick={() => navigate("/orders")} color="#06b6d4" />
         <QuickActionCard icon={ScanLine} label={uiT("Scanner", "स्कैनर")} subtitle={uiT("Scan product barcodes", "उत्पाद बारकोड स्कैन करें")} onClick={() => setShowScanner(true)} color="#f97316" />
         <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle={uiT("Send messages & PDFs", "संदेश और PDF भेजें")} onClick={() => navigate("/whatsapp")} color="#22c55e" />
+        <QuickActionCard icon={Warehouse} label={uiT("Warehouse", "वेयरहाउस")} subtitle={uiT("Manage central stock", "केंद्रीय स्टॉक प्रबंधित करें")} onClick={() => window.open("https://kmj-m9aq.onrender.com/#/", "_blank", "noopener,noreferrer")} color="#0ea5e9" />
       </div>
     </div>
   );
