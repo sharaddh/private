@@ -20,6 +20,19 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   }
 }
 
+export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+  const header = req.headers.authorization;
+  if (header && header.startsWith("Bearer ")) {
+    try {
+      const payload = verifyToken<JwtPayload>(header.split(" ")[1]);
+      req.user = payload;
+    } catch {
+      req.user = undefined;
+    }
+  }
+  next();
+}
+
 export function requireRole(...roles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user || !roles.includes(req.user.role || "")) {

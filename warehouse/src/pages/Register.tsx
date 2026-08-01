@@ -24,12 +24,12 @@ export default function Register() {
     }
     setIsLoading(true);
     try {
-      const res = await api.post("/api/auth/warehouse-register", form);
+      const res = await api.post("/api/auth/register-owner", form);
       if (res.success) {
-        toast(`User "${form.username}" created successfully`);
+        toast(`Owner "${form.username}" created successfully`);
         navigate("/users");
       } else {
-        setError(res.message || "Failed to create user");
+        setError(res.message || "Failed to create owner");
       }
     } catch {
       setError("Connection error. Try again.");
@@ -44,8 +44,8 @@ export default function Register() {
         <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-caption text-th-secondary hover:text-th-text mb-4 transition-colors">
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 className="page-title">Register Warehouse User</h1>
-        <p className="page-subtitle">Create a new account for warehouse staff</p>
+        <h1 className="page-title">Register Owner</h1>
+        <p className="page-subtitle">Create a new owner account</p>
       </div>
 
       <div className="glass-card p-6">
@@ -82,7 +82,7 @@ export default function Register() {
             className="btn-primary w-full py-3 flex items-center justify-center gap-2">
             {isLoading ? (
               <><Spinner size={14} className="border-surface-950 border-t-transparent" /> Creating...</>
-            ) : <><UserPlus size={18} /> Create Warehouse User</>}
+            ) : <><UserPlus size={18} /> Create Owner</>}
           </button>
         </form>
       </div>

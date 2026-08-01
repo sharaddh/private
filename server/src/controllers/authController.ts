@@ -26,8 +26,8 @@ export async function warehouseLogin(req: AuthRequest, res: Response) {
   sendSuccess(res, data);
 }
 
-export async function warehouseRegister(req: AuthRequest, res: Response) {
-  const data = await authService.registerWarehouseUser(req.body, req.user?.role || "");
+export async function registerOwner(req: AuthRequest, res: Response) {
+  const data = await authService.registerOwner(req.body, req.user?.role || "");
   sendCreated(res, data);
 }
 

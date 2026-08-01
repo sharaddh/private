@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth";
+import { authenticate, optionalAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { registerSchema, loginSchema, refreshSchema, updateMeSchema, updateUserSchema } from "../validators/auth.validator";
@@ -8,10 +8,10 @@ import * as authController from "../controllers/authController";
 const router = Router();
 
 router.post("/register", authenticate, validate(registerSchema, "body"), asyncHandler(authController.register));
+router.post("/register-owner", optionalAuth, validate(registerSchema, "body"), asyncHandler(authController.registerOwner));
 router.post("/login", validate(loginSchema, "body"), asyncHandler(authController.login));
 router.post("/staff-login", validate(loginSchema, "body"), asyncHandler(authController.staffLogin));
 router.post("/warehouse-login", validate(loginSchema, "body"), asyncHandler(authController.warehouseLogin));
-router.post("/warehouse-register", authenticate, validate(registerSchema, "body"), asyncHandler(authController.warehouseRegister));
 router.post("/refresh", validate(refreshSchema, "body"), asyncHandler(authController.refresh));
 router.get("/me", authenticate, asyncHandler(authController.me));
 router.put("/me", authenticate, validate(updateMeSchema, "body"), asyncHandler(authController.updateMe));

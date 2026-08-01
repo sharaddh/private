@@ -6,7 +6,7 @@ const UserSchema = new Schema(
     passwordHash: { type: String, required: true },
     name: { type: String, default: "" },
     mobile: { type: String, default: "" },
-    role: { type: String, enum: ["owner", "staff", "warehouse"], default: "owner" },
+    role: { type: String, enum: ["owner", "staff"], default: "owner" },
     branches: [{ type: Types.ObjectId, ref: "Branch" }],
   },
   { timestamps: true }

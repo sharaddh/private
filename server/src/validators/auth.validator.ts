@@ -5,7 +5,7 @@ export const registerSchema = z.object({
   password: z.string().min(1, "Password is required"),
   name: z.string().optional(),
   mobile: z.string().optional(),
-  role: z.enum(["staff", "warehouse"]).optional(),
+  role: z.enum(["staff"]).optional(),
   branchId: z.string().optional(),
   branches: z.array(z.string()).optional(),
 });

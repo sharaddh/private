@@ -1,11 +1,7 @@
 import mongoose, { connect, disconnect } from "mongoose";
-import bcrypt from "bcrypt";
 import { PORT, MONGO_URI, REDIS_URL, NODE_ENV, WAREHOUSE_DB_NAME } from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
-import { User } from "./models/user";
-import { Branch } from "./models/branch";
-import { getBranchModels, getWarehouseModels } from "./models/db";
 import { logger } from "./utils/logger";
 
 let server: ReturnType<typeof app.listen> | null = null;
@@ -43,18 +39,6 @@ async function start() {
   }
 
   try {
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      const hash = await bcrypt.hash("admin123", 10);
-      await User.create({ username: "admin", passwordHash: hash, name: "Admin", role: "owner" });
-      await User.create({ username: "warehouse", passwordHash: hash, name: "Warehouse Staff", role: "warehouse" });
-      logger.info("Default users created (Owner: admin / ***admin123, Warehouse: warehouse / ***admin123)");
-    }
-  } catch (e: any) {
-    logger.warn("Could not seed users", { error: e?.message });
-  }
-
-  try {
     const whConn = mongoose.connection.useDb(WAREHOUSE_DB_NAME);
     const whCollections = ["inventory", "lensstocks", "cartitems", "withdrawals"];
     for (const collName of whCollections) {
@@ -72,41 +56,6 @@ async function start() {
     }
   } catch (e: any) {
     logger.warn("Could not migrate warehouse data", { error: e?.message });
-  }
-
-  try {
-    const branchCount = await Branch.countDocuments();
-    if (branchCount === 0) {
-      const branch = await Branch.create({
-        name: "Govindpuri",
-        code: "GVP",
-        dbName: "kmj_govindpuri",
-        isActive: true,
-        settings: { shopName: "KMJ Optical - Govindpuri" },
-      });
-      logger.info(`Default branch created: ${branch.name} (${branch.code})`);
-
-      const branchModels = getBranchModels(branch.dbName);
-      const collections = ["customers", "visits", "prescriptions", "orders", "bills", "payments", "inventory", "deliveries", "settings", "todos"];
-      for (const collName of collections) {
-        const sourceColl = mongoose.connection.db.collection(collName);
-        const targetColl = mongoose.connection.useDb(branch.dbName).collection(collName);
-        const sourceCount = await sourceColl.countDocuments();
-        const targetCount = await targetColl.countDocuments();
-        if (sourceCount > 0 && targetCount === 0) {
-          const docs = await sourceColl.find({}).toArray();
-          await targetColl.insertMany(docs);
-          logger.info(`Migrated ${docs.length} documents from ${collName}`);
-        }
-      }
-
-      await User.updateMany(
-        { role: "owner" },
-        { $set: { branches: [branch._id] } }
-      );
-    }
-  } catch (e: any) {
-    logger.warn("Could not seed branch", { error: e?.message });
   }
 
   if (REDIS_URL) {

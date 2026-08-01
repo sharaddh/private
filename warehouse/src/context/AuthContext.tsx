@@ -18,7 +18,6 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   isAuthenticated: boolean;
   isOwner: boolean;
-  isWarehouseUser: boolean;
   login: (token: string, user?: User) => void;
   logout: () => void;
 }
@@ -57,10 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isOwner = state.user?.role === "owner";
-  const isWarehouseUser = state.user?.role === "warehouse";
 
   return (
-    <AuthContext.Provider value={{ ...state, isAuthenticated: !!state.token, isOwner, isWarehouseUser, login, logout }}>
+    <AuthContext.Provider value={{ ...state, isAuthenticated: !!state.token, isOwner, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -22,7 +22,7 @@ export interface User {
   username: string;
   name?: string;
   mobile?: string;
-  role: "owner" | "staff" | "warehouse";
+  role: "owner" | "staff";
   branches: BranchInfo[];
   createdAt?: string;
 }

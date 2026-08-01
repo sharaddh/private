@@ -36,7 +36,7 @@ interface UpdateUserData {
   password?: string;
 }
 
-interface RegisterWarehouseData {
+interface RegisterOwnerData {
   username: string;
   password: string;
   name?: string;
@@ -246,8 +246,8 @@ export async function warehouseLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Invalid credentials");
   }
 
-  if (user.role !== "warehouse" && user.role !== "owner") {
-    throw new AppError(403, "Access denied. Warehouse access requires a warehouse account.");
+  if (user.role !== "owner") {
+    throw new AppError(403, "Access denied. Only owners can access the warehouse.");
   }
 
   const match = await bcrypt.compare(data.password, user.passwordHash);
@@ -270,14 +270,10 @@ export async function warehouseLogin(data: LoginData): Promise<LoginResult> {
   };
 }
 
-export async function registerWarehouseUser(
-  data: RegisterWarehouseData,
+export async function registerOwner(
+  data: RegisterOwnerData,
   requestorRole: string
 ): Promise<FormattedUser> {
-  if (requestorRole !== "owner" && requestorRole !== "warehouse") {
-    throw new AppError(403, "Only admin or warehouse users can create warehouse accounts");
-  }
-
   if (!data.username?.trim() || !data.password?.trim()) {
     throw new AppError(400, "Username and password required");
   }
@@ -287,13 +283,18 @@ export async function registerWarehouseUser(
     throw new AppError(409, "Username already exists");
   }
 
+  const ownerCount = await User.countDocuments({ role: "owner" });
+  if (ownerCount > 0 && requestorRole !== "owner") {
+    throw new AppError(403, "Only owners can create new owners");
+  }
+
   const passwordHash = await bcrypt.hash(data.password, 10);
   const user = await User.create({
     username: data.username,
     passwordHash,
     name: data.name || "",
     mobile: data.mobile || "",
-    role: "warehouse",
+    role: "owner",
   });
 
   return formatUserWithBranches(user);
@@ -355,7 +356,7 @@ export async function updateUser(
   data: UpdateUserData,
   requestorRole: string
 ): Promise<FormattedUser> {
-  if (requestorRole !== "owner" && requestorRole !== "warehouse") {
+  if (requestorRole !== "owner") {
     throw new AppError(403, "Access denied");
   }
 
@@ -395,11 +396,11 @@ export async function listUsers(
 export async function listWarehouseUsers(
   requestorRole: string
 ): Promise<Array<{ id: string; username: string; name: string; mobile: string; role: string; createdAt: Date }>> {
-  if (requestorRole !== "owner" && requestorRole !== "warehouse") {
+  if (requestorRole !== "owner") {
     throw new AppError(403, "Access denied");
   }
 
-  const users = await User.find({ role: { $in: ["warehouse", "owner"] } })
+  const users = await User.find({ role: "owner" })
     .select("-passwordHash")
     .sort({ createdAt: -1 })
     .lean();
@@ -419,7 +420,7 @@ export async function deleteUser(
   requestorRole: string,
   requestorUserId: string
 ): Promise<void> {
-  if (requestorRole !== "owner" && requestorRole !== "warehouse") {
+  if (requestorRole !== "owner") {
     throw new AppError(403, "Access denied");
   }
 
@@ -428,12 +429,8 @@ export async function deleteUser(
     throw new AppError(404, "User not found");
   }
 
-  if (target.role !== "warehouse" && requestorRole === "warehouse") {
-    throw new AppError(403, "Warehouse users can only delete warehouse accounts");
-  }
-
   if (target.role === "owner") {
-    throw new AppError(400, "Cannot delete admin account");
+    throw new AppError(400, "Owner accounts cannot be deleted");
   }
 
   if (String(target._id) === requestorUserId) {

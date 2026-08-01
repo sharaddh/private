@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import api from "../api";
-import { useToast } from "../context/ToastContext";
-import { Users as UsersIcon, Trash2, ChevronDown, ChevronRight, Clock, PackageMinus, CheckCircle2 } from "lucide-react";
+import { Users as UsersIcon, ChevronDown, ChevronRight, Clock, PackageMinus, CheckCircle2 } from "lucide-react";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
-import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import Badge from "../components/Badge";
 import { formatDate, formatCurrency } from "../utils/helpers";
 
 interface WarehouseUser {
@@ -31,9 +28,6 @@ interface WithdrawalRecord {
 export default function Users() {
   const [users, setUsers] = useState<WarehouseUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -73,15 +67,6 @@ export default function Users() {
     return map;
   }, [withdrawalsByUser]);
 
-  async function handleDelete(id: string) {
-    setDeleting(id);
-    const res = await api.del("/api/auth/users/" + id);
-    if (res.success) { toast("User deleted"); fetchUsers(); fetchWithdrawals(); }
-    else { toast(res.message || "Failed to delete", "error"); }
-    setDeleting(null);
-    setDeleteTarget(null);
-  }
-
   if (loading) {
     return <Spinner size={32} className="mx-auto mt-16" />;
   }
@@ -94,14 +79,15 @@ export default function Users() {
         </div>
         <div>
           <h1 className="page-title leading-tight">Users</h1>
-          <p className="page-subtitle">{users.length} user(s) &middot; {withdrawals.length} withdrawal(s)</p>
+          <p className="page-subtitle">{users.length} owner(s) &middot; {withdrawals.length} withdrawal(s)</p>
         </div>
       </div>
 
       {users.length === 0 ? (
         <EmptyState
           icon={UsersIcon}
-          title="No users yet"
+          title="No owners yet"
+          message="Create the first owner to get started"
         />
       ) : (
         <>
@@ -112,10 +98,8 @@ export default function Users() {
                 <tr className="border-b border-th-border bg-th-base">
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Branch Owner</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Mobile</th>
-                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Role</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Withdrawals</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Created</th>
-                  <th className="text-right text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,9 +114,6 @@ export default function Users() {
                         <td className="px-4 py-3 text-body-bold text-th-text">{u.name || u.username}</td>
                         <td className="px-4 py-3 text-body text-th-secondary">{u.mobile || "—"}</td>
                         <td className="px-4 py-3">
-                          <Badge variant={u.role === "owner" ? "green" : "blue"}>{u.role}</Badge>
-                        </td>
-                        <td className="px-4 py-3">
                           {userWithdrawals.length > 0 ? (
                             <button
                               onClick={() => setExpandedUser((prev) => (prev === u.id ? null : u.id))}
@@ -146,20 +127,11 @@ export default function Users() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-small text-th-muted">{formatDate(u.createdAt)}</td>
-                        <td className="px-4 py-3 text-right">
-                          {u.role !== "owner" && (
-                            <button onClick={() => setDeleteTarget(u.id)} disabled={deleting === u.id}
-                              className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted hover:text-negative transition-colors disabled:opacity-40"
-                              title="Delete">
-                              <Trash2 size={15} />
-                            </button>
-                          )}
-                        </td>
                       </tr>
 
                       {isExpanded && userWithdrawals.length > 0 && (
                         <tr className="bg-th-elevated/50">
-                          <td colSpan={6} className="px-4 py-3">
+                          <td colSpan={4} className="px-4 py-3">
                             <div className="space-y-2">
                               {userWithdrawals.map((rec, idx) => (
                                 <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0 animate-fade-up">
@@ -229,18 +201,10 @@ export default function Users() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-body-bold font-bold text-th-text">{u.name || u.username}</span>
-                        <Badge variant={u.role === "owner" ? "green" : "blue"}>{u.role}</Badge>
                       </div>
                       {u.mobile && <p className="text-small text-th-muted mt-0.5">{u.mobile}</p>}
                       <p className="text-small text-th-muted mt-1">{formatDate(u.createdAt)}</p>
                     </div>
-                    {u.role !== "owner" && (
-                      <button onClick={() => setDeleteTarget(u.id)} disabled={deleting === u.id}
-                        className="shrink-0 w-9 h-9 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all disabled:opacity-40"
-                        title="Delete">
-                        <Trash2 size={16} strokeWidth={2} />
-                      </button>
-                    )}
                   </div>
 
                   {userWithdrawals.length > 0 && (
@@ -312,13 +276,6 @@ export default function Users() {
           </div>
         </>
       )}
-
-      <DeleteConfirmModal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
-        message="Delete this user permanently?"
-      />
     </div>
   );
 }
