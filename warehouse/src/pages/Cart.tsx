@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
-import { formatCurrency } from "../utils/helpers";
-import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Clock, ChevronDown, ChevronRight, CheckCircle2, Glasses } from "lucide-react";
+import { formatCurrency, formatLensPower, powerChipClass, powerTextClass } from "../utils/helpers";
+import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Clock, ChevronDown, ChevronRight, CheckCircle2, Glasses, LogOut } from "lucide-react";
 
 interface WithdrawalRecord {
   _id: string;
@@ -20,7 +21,8 @@ interface WithdrawalRecord {
 
 export default function Cart() {
   const { items, count, updateQty, removeItem, clearCart, withdraw } = useCart();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [withdrawing, setWithdrawing] = useState(false);
   const [history, setHistory] = useState<WithdrawalRecord[]>([]);
@@ -92,8 +94,31 @@ export default function Cart() {
     fetchHistory();
   }
 
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="h-full flex flex-col gap-4 pb-20 lg:pb-0 animate-page-enter">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-th-border bg-th-surface px-4 py-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-primary-500/15 flex items-center justify-center shrink-0">
+            <span className="text-body-bold text-primary-500">{(user?.name || user?.username || "U").charAt(0).toUpperCase()}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-body-bold text-th-text truncate">{user?.name || user?.username || "User"}</p>
+            <p className="text-small text-th-muted truncate">@{user?.username || "—"} · {user?.role === "owner" ? "Owner" : user?.role || "User"}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-small font-bold text-negative bg-negative/10 active:scale-95 transition-all shrink-0"
+        >
+          <LogOut size={16} /> Logout
+        </button>
+      </div>
+
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-primary-500/15 flex items-center justify-center">
@@ -128,10 +153,7 @@ export default function Cart() {
         <>
           <div className="flex-1 overflow-auto space-y-3">
             {items.map((item, idx) => {
-              const isNeg = item.powerKey.startsWith("-");
-              const isPos = item.powerKey.startsWith("+") && item.powerKey !== "+0.00";
               const lensLabel = item.lensType === "compound" ? "Both" : item.lensType.toUpperCase();
-              const qtyColor = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-secondary";
               const stock = getStockQty(item.coating, item.lensType, item.powerKey);
               const atMax = stock > 0 && item.quantity >= stock;
               const price = item.price ?? priceMap[item.coating] ?? 0;
@@ -149,7 +171,7 @@ export default function Cart() {
                           <span className="px-2 py-0.5 rounded text-small font-bold bg-th-elevated text-th-secondary">{lensLabel}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1 min-w-0">
-                          <span className={`text-small-bold ${qtyColor} truncate min-w-0`}>{item.powerKey}</span>
+                          <span className={`text-small-bold ${powerTextClass(item.powerKey)} truncate min-w-0`}>{formatLensPower(item.powerKey)}</span>
                           {stock > 0 && (
                             <span className={`text-small font-medium ${atMax ? "text-negative" : "text-th-muted"}`}>
                               stock: {stock}
@@ -257,20 +279,14 @@ export default function Cart() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
-                    {rec.items.map((it, idx) => {
-                      const isNeg = it.powerKey.startsWith("-");
-                      const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
-                      return (
-                        <span
-                          key={idx}
-                          className={`px-2 py-0.5 rounded text-small font-medium ${
-                            isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-elevated text-th-secondary"
-                          }`}
-                        >
-                          {it.coating} {it.powerKey} x{it.quantity}
-                        </span>
-                      );
-                    })}
+                    {rec.items.map((it, idx) => (
+                      <span
+                        key={idx}
+                        className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}
+                      >
+                        {it.coating} · {formatLensPower(it.powerKey)} x{it.quantity}
+                      </span>
+                    ))}
                   </div>
                   <div className="flex items-center justify-between gap-2 flex-wrap mt-3 pt-3 border-t border-th-border">
                     <span className="text-body-bold text-th-text">

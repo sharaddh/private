@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import api from "../api";
-import { Users as UsersIcon, ChevronDown, ChevronRight, Clock, PackageMinus, CheckCircle2 } from "lucide-react";
+import {
+  Users as UsersIcon, ChevronDown, ChevronRight, Clock, PackageMinus,
+  CheckCircle2, Boxes, Wallet, Phone, Calendar,
+} from "lucide-react";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
-import { formatDate, formatCurrency } from "../utils/helpers";
+import StatCard from "../components/StatCard";
+import Badge from "../components/Badge";
+import { formatDate, formatCurrency, formatLensPower, powerChipClass } from "../utils/helpers";
 
 interface WarehouseUser {
   id: string;
@@ -14,15 +19,66 @@ interface WarehouseUser {
   createdAt: string;
 }
 
+interface WithdrawalItem {
+  coating: string;
+  lensType: string;
+  powerKey: string;
+  quantity: number;
+  price?: number;
+}
+
 interface WithdrawalRecord {
   _id: string;
   user: string;
   username: string;
-  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number }[];
+  items: WithdrawalItem[];
   totalQuantity: number;
   totalPrice?: number;
   paid?: boolean;
   withdrawnAt: string;
+}
+
+function OwnerAvatar({ name }: { name: string }) {
+  return (
+    <div className="w-10 h-10 rounded-full bg-primary-500/15 flex items-center justify-center shrink-0">
+      <span className="text-body-bold text-primary-500">{(name || "?").charAt(0).toUpperCase()}</span>
+    </div>
+  );
+}
+
+function WithdrawalDetail({ rec }: { rec: WithdrawalRecord }) {
+  return (
+    <div className="bg-th-elevated/50 rounded-lg p-3 border border-th-border">
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+        <div className="flex items-center gap-1.5">
+          <Clock size={14} className="text-th-muted shrink-0" />
+          <span className="text-small text-th-muted">
+            {formatDate(rec.withdrawnAt)}
+            {" · "}
+            {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </div>
+        <span className="text-small font-bold text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {rec.items.map((it, idx) => (
+          <span key={idx} className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}>
+            {it.coating} · {formatLensPower(it.powerKey)} x{it.quantity}
+          </span>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2 border-t border-th-border">
+        <span className="text-body-bold text-th-text">{formatCurrency(rec.totalPrice ?? 0)}</span>
+        {rec.paid ? (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
+            <CheckCircle2 size={14} /> Paid
+          </span>
+        ) : (
+          <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function Users() {
@@ -67,6 +123,9 @@ export default function Users() {
     return map;
   }, [withdrawalsByUser]);
 
+  const totalItemsAll = useMemo(() => withdrawals.reduce((sum, w) => sum + w.totalQuantity, 0), [withdrawals]);
+  const unpaidTotal = useMemo(() => withdrawals.filter((w) => !w.paid).reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [withdrawals]);
+
   if (loading) {
     return <Spinner size={32} className="mx-auto mt-16" />;
   }
@@ -81,6 +140,14 @@ export default function Users() {
           <h1 className="page-title leading-tight">Users</h1>
           <p className="page-subtitle">{users.length} owner(s) &middot; {withdrawals.length} withdrawal(s)</p>
         </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard icon={UsersIcon} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={users.length} label="Owners" />
+        <StatCard icon={PackageMinus} iconColor="text-blue-500" iconBg="bg-blue-500/10" value={withdrawals.length} label="Withdrawals" />
+        <StatCard icon={Boxes} iconColor="text-amber-500" iconBg="bg-amber-500/10" value={totalItemsAll} label="Items Withdrawn" />
+        <StatCard icon={Wallet} iconColor="text-negative" iconBg="bg-negative/10" value={formatCurrency(unpaidTotal)} label="Unpaid Total" />
       </div>
 
       {users.length === 0 ? (
@@ -111,8 +178,28 @@ export default function Users() {
                   return (
                     <Fragment key={u.id}>
                       <tr className="border-b border-th-border hover:bg-th-hover transition-colors">
-                        <td className="px-4 py-3 text-body-bold text-th-text">{u.name || u.username}</td>
-                        <td className="px-4 py-3 text-body text-th-secondary">{u.mobile || "—"}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <OwnerAvatar name={u.name || u.username} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-body-bold text-th-text">{u.name || u.username}</span>
+                                <Badge variant={u.role === "owner" ? "purple" : "gray"}>{u.role === "owner" ? "Owner" : u.role}</Badge>
+                              </div>
+                              <p className="text-small text-th-muted truncate">@{u.username}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {u.mobile ? (
+                            <span className="flex items-center gap-1.5 text-body text-th-secondary">
+                              <Phone size={14} className="text-th-muted shrink-0" />
+                              {u.mobile}
+                            </span>
+                          ) : (
+                            <span className="text-body text-th-muted">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           {userWithdrawals.length > 0 ? (
                             <button
@@ -120,13 +207,18 @@ export default function Users() {
                               className="flex items-center gap-1.5 text-body text-primary-500 font-medium hover:underline"
                             >
                               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                              {userWithdrawals.length} ({totalItems} items)
+                              {userWithdrawals.length} withdrawal{userWithdrawals.length !== 1 ? "s" : ""} ({totalItems} items)
                             </button>
                           ) : (
-                            <span className="text-body text-th-muted">—</span>
+                            <span className="text-body text-th-muted">No withdrawals</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-small text-th-muted">{formatDate(u.createdAt)}</td>
+                        <td className="px-4 py-3">
+                          <span className="flex items-center gap-1.5 text-small text-th-muted">
+                            <Calendar size={13} className="shrink-0" />
+                            {formatDate(u.createdAt)}
+                          </span>
+                        </td>
                       </tr>
 
                       {isExpanded && userWithdrawals.length > 0 && (
@@ -134,47 +226,8 @@ export default function Users() {
                           <td colSpan={4} className="px-4 py-3">
                             <div className="space-y-2">
                               {userWithdrawals.map((rec, idx) => (
-                                <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="flex items-start justify-between gap-3 py-2 border-b border-th-border last:border-0 animate-fade-up">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <Clock size={14} className="text-th-muted shrink-0" />
-                                      <span className="text-small text-th-muted">
-                                        {formatDate(rec.withdrawnAt)}
-                                        {" "}
-                                        {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                      </span>
-                                      <span className="text-small text-th-muted">&middot;</span>
-                                      <span className="text-small font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {rec.items.map((it, idx) => {
-                                        const isNeg = it.powerKey.startsWith("-");
-                                        const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
-                                        return (
-                                          <span
-                                            key={idx}
-                                            className={`px-2 py-0.5 rounded text-small font-medium ${
-                                              isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
-                                            }`}
-                                          >
-                                            {it.coating} {it.powerKey} x{it.quantity}
-                                          </span>
-                                        );
-                                      })}
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2 flex-wrap mt-1.5">
-                                      <span className="text-body-bold font-bold text-th-text">
-                                        {formatCurrency(rec.totalPrice ?? 0)}
-                                      </span>
-                                      {rec.paid ? (
-                                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
-                                          <CheckCircle2 size={14} /> Paid
-                                        </span>
-                                      ) : (
-                                        <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
-                                      )}
-                                    </div>
-                                  </div>
+                                <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="animate-fade-up">
+                                  <WithdrawalDetail rec={rec} />
                                 </div>
                               ))}
                             </div>
@@ -197,13 +250,26 @@ export default function Users() {
 
               return (
                 <div key={u.id} className="card p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    <OwnerAvatar name={u.name || u.username} />
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-body-bold font-bold text-th-text">{u.name || u.username}</span>
+                        <Badge variant={u.role === "owner" ? "purple" : "gray"}>{u.role === "owner" ? "Owner" : u.role}</Badge>
                       </div>
-                      {u.mobile && <p className="text-small text-th-muted mt-0.5">{u.mobile}</p>}
-                      <p className="text-small text-th-muted mt-1">{formatDate(u.createdAt)}</p>
+                      <p className="text-small text-th-muted truncate">@{u.username}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                        {u.mobile && (
+                          <span className="flex items-center gap-1 text-small text-th-secondary">
+                            <Phone size={12} className="text-th-muted" />
+                            {u.mobile}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 text-small text-th-muted">
+                          <Calendar size={12} />
+                          {formatDate(u.createdAt)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -222,48 +288,10 @@ export default function Users() {
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-2 space-y-2 pl-5">
+                        <div className="mt-2 space-y-2 pl-2">
                           {userWithdrawals.map((rec, idx) => (
-                            <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="bg-th-elevated/50 rounded-lg p-2.5 animate-fade-up">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <Clock size={14} className="text-th-muted" />
-                                  <span className="text-small text-th-muted">
-                                    {formatDate(rec.withdrawnAt)}
-                                    {" "}
-                                    {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                  </span>
-                                </div>
-                                <span className="text-small font-medium text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {rec.items.map((it, idx) => {
-                                  const isNeg = it.powerKey.startsWith("-");
-                                  const isPos = it.powerKey.startsWith("+") && it.powerKey !== "+0.00";
-                                  return (
-                                    <span
-                                      key={idx}
-                                      className={`px-2 py-0.5 rounded text-small font-medium ${
-                                        isNeg ? "bg-amber-400/15 text-amber-500" : isPos ? "bg-emerald-400/15 text-emerald-500" : "bg-th-surface text-th-secondary"
-                                      }`}
-                                    >
-                                      {it.coating} {it.powerKey} x{it.quantity}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                              <div className="flex items-center justify-between gap-2 flex-wrap mt-1.5">
-                                <span className="text-body-bold font-bold text-th-text">
-                                  {formatCurrency(rec.totalPrice ?? 0)}
-                                </span>
-                                {rec.paid ? (
-                                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
-                                    <CheckCircle2 size={14} /> Paid
-                                  </span>
-                                ) : (
-                                  <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
-                                )}
-                              </div>
+                            <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="animate-fade-up">
+                              <WithdrawalDetail rec={rec} />
                             </div>
                           ))}
                         </div>

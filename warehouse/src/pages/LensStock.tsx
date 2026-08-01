@@ -90,12 +90,17 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating, powerKey, qty
   onRemove: (e: React.MouseEvent) => void;
 }) {
   const sph = powerKey.split("|")[0];
-  const isNeg = sph.startsWith("-");
-  const isPos = sph.startsWith("+") && sph !== "+0.00";
+  const cyl = powerKey.split("|")[1] || "";
+  const sphLabel = sph === "+0.00" || sph === "0.00" || sph === "-0.00" ? "0.00" : sph;
+  const cylLabel = cyl === "+0.00" || cyl === "0.00" || cyl === "-0.00" ? "0.00" : cyl;
+  const sphNeg = sph.startsWith("-");
+  const sphPos = sph.startsWith("+") && sph !== "+0.00";
+  const cylNeg = cyl.startsWith("-");
+  const cylPos = cyl.startsWith("+") && cyl !== "+0.00";
 
-  const baseBorder = isNeg
+  const baseBorder = sphNeg
     ? "border-amber-400/40 bg-amber-400/5"
-    : isPos
+    : sphPos
     ? "border-emerald-400/40 bg-emerald-400/5"
     : "border-th-border bg-th-elevated";
 
@@ -126,9 +131,10 @@ const CompoundLensCard = memo(function CompoundLensCard({ coating, powerKey, qty
         disabled={atMax}
         className="flex flex-col items-center gap-0.5 w-full disabled:cursor-not-allowed"
       >
-        <span className="text-small text-th-muted leading-none truncate w-full text-center" title={coating}>{coatingShort}</span>
-        <span className="text-small-bold text-th-secondary leading-none">{sph === "+0.00" ? "0.00" : sph}</span>
-        <span className={`text-body-bold leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+        <span className="text-micro text-th-muted leading-none truncate w-full text-center" title={coating}>{coatingShort}</span>
+        <span className={`text-small-bold leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}`}>SPH {sphLabel}</span>
+        <span className={`text-micro leading-none ${cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}`}>CYL {cylLabel}</span>
+        <span className={`text-body-bold leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
       </button>
     </div>
   );

@@ -47,7 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
 
   const isAuthPage = location.pathname === "/login";
@@ -121,6 +121,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Bottom actions */}
         <div className="p-2.5 border-t border-th-border space-y-0.5">
+          {user && (
+            <div className={`flex items-center gap-3 px-3 py-2.5 ${sidebarOpen ? "" : "justify-center"}`}>
+              <div className="w-8 h-8 rounded-full bg-primary-500/15 flex items-center justify-center shrink-0">
+                <span className="text-small-bold text-primary-500">{(user.name || user.username || "U").charAt(0).toUpperCase()}</span>
+              </div>
+              {sidebarOpen && (
+                <div className="min-w-0">
+                  <p className="text-small-bold text-th-text truncate">{user.name || user.username}</p>
+                  <p className="text-micro text-th-muted truncate">@{user.username}</p>
+                </div>
+              )}
+            </div>
+          )}
           <button onClick={toggle}
             className="flex items-center gap-3 px-3 py-2.5 rounded-pill text-th-secondary hover:text-th-text hover:bg-th-hover w-full transition-all text-nav">
             {dark ? <Sun size={18} /> : <Moon size={18} />}
