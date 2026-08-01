@@ -173,13 +173,19 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
   await syncBranchShopSettings(branch);
 
   if (data.ownerUsername) {
-    const existing = await User.findOne({ username: data.ownerUsername, branches: { $ne: new mongoose.Types.ObjectId(id) } }).lean();
-    if (existing) throw new AppError(409, "Owner username already exists");
-    await User.updateOne({ branches: new mongoose.Types.ObjectId(id), role: "owner" }, { $set: { username: data.ownerUsername } });
+    const branchOwner = await User.findOne({ role: "owner", "branches.0": new mongoose.Types.ObjectId(id) }).select("_id").lean();
+    if (branchOwner) {
+      const existing = await User.findOne({ username: data.ownerUsername, _id: { $ne: branchOwner._id } }).lean();
+      if (existing) throw new AppError(409, "Owner username already exists");
+      await User.updateOne({ _id: branchOwner._id }, { $set: { username: data.ownerUsername } });
+    }
   }
   if (data.ownerPassword) {
-    const hash = await bcrypt.hash(data.ownerPassword as string, 10);
-    await User.updateOne({ branches: new mongoose.Types.ObjectId(id), role: "owner" }, { $set: { passwordHash: hash } });
+    const branchOwner = await User.findOne({ role: "owner", "branches.0": new mongoose.Types.ObjectId(id) }).select("_id").lean();
+    if (branchOwner) {
+      const hash = await bcrypt.hash(data.ownerPassword as string, 10);
+      await User.updateOne({ _id: branchOwner._id }, { $set: { passwordHash: hash } });
+    }
   }
 
   clearBranchCache();

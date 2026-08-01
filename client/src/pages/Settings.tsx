@@ -261,7 +261,7 @@ export default function Settings() {
   async function handleEditBranch(branch: Branch) {
     setEditingBranch(branch);
     const ownerUser = users.find(
-      (u) => u.role === "owner" && (u.branches || []).some((b: any) => (b._id || b)?.toString() === branch._id)
+      (u) => u.role === "owner" && u.branches?.[0]?._id === branch._id
     );
     setBranchForm({
       name: branch.name,
