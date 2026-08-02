@@ -8,7 +8,7 @@ import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import StatCard from "../components/StatCard";
 import Badge from "../components/Badge";
-import { formatDate, formatCurrency, formatLensPower, powerChipClass } from "../utils/helpers";
+import { formatDate, formatCurrency, formatLensPower, lensTypeLabel, powerChipClass } from "../utils/helpers";
 
 interface WarehouseUser {
   id: string;
@@ -25,6 +25,7 @@ interface WithdrawalItem {
   powerKey: string;
   quantity: number;
   price?: number;
+  fogMark?: string;
 }
 
 interface WithdrawalRecord {
@@ -63,7 +64,8 @@ function WithdrawalDetail({ rec }: { rec: WithdrawalRecord }) {
       <div className="flex flex-wrap gap-1">
         {rec.items.map((it, idx) => (
           <span key={idx} className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}>
-            {it.coating} · {formatLensPower(it.powerKey)} x{it.quantity}
+            {it.coating} · {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{it.quantity}
+            {it.fogMark ? ` · ${it.fogMark}` : ""}
           </span>
         ))}
       </div>
