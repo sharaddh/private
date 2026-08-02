@@ -10,7 +10,7 @@ interface Props {
 
 const CYL_RANGE = POWER_VALUES.filter((p) => {
   const n = parseFloat(p);
-  return n >= -2 && n <= 2;
+  return n >= -6 && n <= 6;
 });
 const negCylList = CYL_RANGE.filter((p) => p.startsWith("-")).reverse();
 const posCylList = CYL_RANGE.filter((p) => p.startsWith("+") && p !== "+0.00");
