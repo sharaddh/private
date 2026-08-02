@@ -14,7 +14,7 @@ export async function getCount(req: AuthRequest, res: Response) {
 }
 
 export async function addItem(req: AuthRequest, res: Response) {
-  const { coating, lensType, powerKey, quantity } = req.body;
+  const { coating, lensType, powerKey, quantity, fogMark } = req.body;
   if (!coating || !lensType || !powerKey) {
     res.status(400).json({ success: false, message: "coating, lensType, and powerKey are required" });
     return;
@@ -23,17 +23,22 @@ export async function addItem(req: AuthRequest, res: Response) {
     res.status(400).json({ success: false, message: "lensType must be sph, cyl, or compound" });
     return;
   }
-  const data = await cartService.addToCart(req.user!.sub, coating, lensType, powerKey, quantity || 1);
+  const data = await cartService.addToCart(req.user!.sub, coating, lensType, powerKey, quantity || 1, typeof fogMark === "string" ? fogMark : "");
   sendCreated(res, data);
 }
 
 export async function updateItem(req: AuthRequest, res: Response) {
-  const { quantity } = req.body;
+  const { quantity, fogMark } = req.body;
   if (typeof quantity !== "number" || quantity < 1) {
     res.status(400).json({ success: false, message: "quantity must be a positive number" });
     return;
   }
-  const data = await cartService.updateCartItem(req.user!.sub, req.params.id, quantity);
+  const data = await cartService.updateCartItem(
+    req.user!.sub,
+    req.params.id,
+    quantity,
+    typeof fogMark === "string" ? fogMark : undefined
+  );
   sendSuccess(res, data);
 }
 
@@ -65,4 +70,14 @@ export async function getAllWithdrawals(_req: AuthRequest, res: Response) {
 export async function markWithdrawalPaid(req: AuthRequest, res: Response) {
   const data = await cartService.markWithdrawalPaid(req.user!.sub, req.params.id);
   sendSuccess(res, data, "Withdrawal marked as paid");
+}
+
+export async function sendWithdrawalPdf(req: AuthRequest, res: Response) {
+  const { phone } = req.body || {};
+  const data = await cartService.sendWithdrawalPdf(
+    req.user!.sub,
+    req.params.id,
+    typeof phone === "string" ? phone : undefined
+  );
+  sendSuccess(res, data, "Lens list PDF sent on WhatsApp");
 }

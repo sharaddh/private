@@ -8,6 +8,7 @@ const CartItemSchemaObj = new Schema(
     powerKey: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1, default: 1 },
     price: { type: Number, default: 0, min: 0 },
+    fogMark: { type: String, default: "" },
   },
   { timestamps: true }
 );

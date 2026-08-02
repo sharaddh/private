@@ -16,7 +16,8 @@ export async function addToCart(
   coating: string,
   lensType: string,
   powerKey: string,
-  quantity: number = 1
+  quantity: number = 1,
+  fogMark: string = ""
 ) {
   const stock = await LensStock.findOne({ coating });
   const price = stock?.price || 0;
@@ -24,19 +25,21 @@ export async function addToCart(
   if (existing) {
     existing.quantity += quantity;
     existing.price = price;
+    if (fogMark) existing.fogMark = fogMark;
     await existing.save();
     return existing.toJSON();
   }
-  const item = new CartItem({ user: userId, coating, lensType, powerKey, quantity, price });
+  const item = new CartItem({ user: userId, coating, lensType, powerKey, quantity, price, fogMark });
   await item.save();
   return item.toJSON();
 }
 
-export async function updateCartItem(userId: string, itemId: string, quantity: number) {
+export async function updateCartItem(userId: string, itemId: string, quantity: number, fogMark?: string) {
   if (quantity < 1) throw new AppError(400, "Quantity must be at least 1");
   const item = await CartItem.findOne({ _id: itemId, user: userId });
   if (!item) throw new AppError(404, "Cart item not found");
   item.quantity = quantity;
+  if (typeof fogMark === "string") item.fogMark = fogMark;
   await item.save();
   return item.toJSON();
 }
@@ -57,7 +60,7 @@ export async function withdrawCart(userId: string, username: string) {
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
-  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number }[] = [];
+  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number; fogMark?: string }[] = [];
   let totalQuantity = 0;
   let totalPrice = 0;
 
@@ -85,7 +88,7 @@ export async function withdrawCart(userId: string, username: string) {
     await lensStock.save();
 
     const price = item.price ?? (lensStock.price as number) ?? 0;
-    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price });
+    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price, fogMark: item.fogMark || undefined });
     totalQuantity += item.quantity;
     totalPrice += price * item.quantity;
   }
@@ -122,4 +125,47 @@ export async function markWithdrawalPaid(userId: string, id: string) {
     await withdrawal.save();
   }
   return withdrawal.toJSON();
+}
+
+export async function sendWithdrawalPdf(userId: string, id: string, phone?: string) {
+  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  if (!withdrawal) throw new AppError(404, "Withdrawal not found");
+
+  const { generateWithdrawalPdf } = await import("../utils/pdf");
+  const { whatsappManager } = await import("./whatsapp");
+  const { normalizePhone, isValidWhatsAppPhone } = await import("../utils/phone");
+  const { User } = await import("../models/user");
+
+  let targetPhone = "";
+  if (phone) {
+    targetPhone = phone;
+  } else {
+    const userDoc = await User.findById(withdrawal.user).select("mobile").lean();
+    targetPhone = userDoc?.mobile || "";
+  }
+  const target = normalizePhone(targetPhone);
+  if (!target || !isValidWhatsAppPhone(target)) {
+    throw new AppError(400, "No valid WhatsApp number available for this withdrawal");
+  }
+
+  const pdfBuffer = generateWithdrawalPdf({
+    username: withdrawal.username,
+    withdrawnAt: withdrawal.withdrawnAt,
+    items: withdrawal.items,
+    totalQuantity: withdrawal.totalQuantity,
+    totalPrice: withdrawal.totalPrice,
+  });
+
+  const base64 = pdfBuffer.toString("base64");
+  const filename = `Lens_List_${new Date(withdrawal.withdrawnAt).toISOString().slice(0, 10)}.pdf`;
+  const caption = `Lens list — ${withdrawal.username} · ${withdrawal.totalQuantity} items`;
+
+  const wa = whatsappManager.getInstance();
+  const result = await wa.sendMedia(target, base64, filename, "application/pdf", caption, true);
+
+  if (!result.ok && result.error) {
+    throw new AppError(500, result.error);
+  }
+
+  return { sent: true, phone: target, filename };
 }

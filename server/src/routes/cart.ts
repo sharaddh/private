@@ -15,5 +15,6 @@ router.post("/withdraw", authenticate, asyncHandler(cartController.withdraw));
 router.get("/withdrawals", authenticate, asyncHandler(cartController.getMyWithdrawals));
 router.get("/withdrawals/all", authenticate, asyncHandler(cartController.getAllWithdrawals));
 router.put("/withdrawals/:id/pay", authenticate, asyncHandler(cartController.markWithdrawalPaid));
+router.post("/withdrawals/:id/send-pdf", authenticate, asyncHandler(cartController.sendWithdrawalPdf));
 
 export default router;
