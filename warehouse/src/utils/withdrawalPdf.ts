@@ -6,7 +6,7 @@ export interface WithdrawalPdfItem {
   lensType: string;
   powerKey: string;
   quantity: number;
-  price?: number;
+  price?: number; // Kept in interface to prevent type errors from your data source, but ignored in UI
   fogMark?: string;
 }
 
@@ -15,7 +15,7 @@ export interface WithdrawalPdfData {
   withdrawnAt?: string;
   items: WithdrawalPdfItem[];
   totalQuantity?: number;
-  totalPrice?: number;
+  totalPrice?: number; // Kept in interface, but ignored in UI
 }
 
 const LENS_TYPE_LABEL: Record<string, string> = {
@@ -24,14 +24,19 @@ const LENS_TYPE_LABEL: Record<string, string> = {
   compound: "Compound",
 };
 
-function formatPower(powerKey: string): string {
-  if (!powerKey) return "—";
+// Helper to combine type and power nicely
+function formatLensDetails(lensType: string, powerKey: string): string {
+  const typeLabel = LENS_TYPE_LABEL[lensType] || lensType || "—";
+  
+  if (!powerKey) return typeLabel;
+  
   if (powerKey.includes("|")) {
     const [sph, cyl] = powerKey.split("|");
     const norm = (v: string) => (v === "+0.00" || v === "-0.00" ? "0.00" : v);
-    return `SPH ${norm(sph)} · CYL ${norm(cyl)}`;
+    return `${typeLabel} · SPH ${norm(sph)} / CYL ${norm(cyl)}`;
   }
-  return powerKey;
+  
+  return `${typeLabel} ${powerKey}`;
 }
 
 export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
@@ -41,125 +46,129 @@ export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
 
-  const indigo: [number, number, number] = [30, 64, 175];
-  const gray: [number, number, number] = [107, 114, 128];
-  const dark: [number, number, number] = [17, 24, 39];
-  const light: [number, number, number] = [249, 250, 251];
+  // Color Palette
+  const indigo: [number, number, number] = [30, 64, 175];   // Brand primary
+  const gray: [number, number, number] = [107, 114, 128];   // Muted text
+  const dark: [number, number, number] = [17, 24, 39];      // Main text
+  const light: [number, number, number] = [249, 250, 251];  // Backgrounds
+  const border: [number, number, number] = [229, 231, 235]; // Lines
 
-  // Header bar
+  // 1. Top Header Banner
   doc.setFillColor(...indigo);
-  doc.rect(0, 0, pageWidth, 20, "F");
+  doc.rect(0, 0, pageWidth, 28, "F");
 
-  // Title
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...indigo);
-  doc.setFontSize(20);
-  doc.text("LENS LIST", margin, 35);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.text("LENS WITHDRAWAL RECORD", margin, 18);
 
-  // Meta block
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  // 2. Meta Information Block (Larger & better formatted)
+  const totalQty = data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0);
+  const dateStr = data.withdrawnAt 
+    ? new Date(data.withdrawnAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) 
+    : "—";
+
+  // Left Side: User Info
   doc.setTextColor(...gray);
-  const metaLines = [
-    `User: ${data.username || "—"}`,
-    `Date: ${data.withdrawnAt ? new Date(data.withdrawnAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}`,
-    `Items: ${data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0)}`,
-    ...(data.totalPrice != null ? [`Total: \u20B9${data.totalPrice.toFixed(2)}`] : []),
-  ];
-  let metaY = 26;
-  for (const line of metaLines) {
-    doc.text(line, pageWidth - margin, metaY, { align: "right" });
-    metaY += 5;
-  }
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Issued To:", margin, 40);
+  
+  doc.setTextColor(...dark);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(data.username || "Guest User", margin, 47);
 
-  // Divider
-  doc.setDrawColor(229, 231, 235);
-  doc.setLineWidth(0.3);
-  doc.line(margin, 46, pageWidth - margin, 46);
+  // Right Side: Date
+  doc.setTextColor(...gray);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Date & Time:", pageWidth - margin, 40, { align: "right" });
+  
+  doc.setTextColor(...dark);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text(dateStr, pageWidth - margin, 47, { align: "right" });
 
+  // Divider Line
+  doc.setDrawColor(...border);
+  doc.setLineWidth(0.4);
+  doc.line(margin, 56, pageWidth - margin, 56);
+
+  // 3. Table Data Preparation
   const items = data.items || [];
   const rows = items.map((it) => [
     it.coating || "—",
-    LENS_TYPE_LABEL[it.lensType] || it.lensType || "—",
-    formatPower(it.powerKey),
+    formatLensDetails(it.lensType, it.powerKey),
     it.fogMark || "—",
     String(it.quantity),
-    it.price != null ? `\u20B9${(it.price * it.quantity).toFixed(2)}` : "—",
   ]);
 
-  // Table
+  // 4. AutoTable Configuration
   autoTable(doc, {
-    startY: 50,
+    startY: 62,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Type", "Power", "Fog Mark", "Qty", "Amount"]],
+    head: [["Coating", "Lens Details (Type & Power)", "Fog Mark", "Quantity"]],
     body: rows,
     theme: "grid",
     headStyles: {
       fillColor: indigo,
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 9,
-      cellPadding: 2.5,
+      fontSize: 10,
+      cellPadding: 4,
     },
     styles: {
-      fontSize: 9,
+      fontSize: 9.5,
       textColor: dark,
-      cellPadding: 2.5,
-      lineColor: [229, 231, 235],
+      cellPadding: 4,
+      lineColor: border,
       lineWidth: 0.15,
+      valign: "middle",
     },
     alternateRowStyles: { fillColor: light },
     columnStyles: {
-      0: { cellWidth: contentWidth * 0.18 },
-      1: { cellWidth: contentWidth * 0.14 },
-      2: { cellWidth: contentWidth * 0.22 },
-      3: { cellWidth: contentWidth * 0.16 },
-      4: { cellWidth: contentWidth * 0.08, halign: "center" },
-      5: { cellWidth: contentWidth * 0.12, halign: "right" },
+      0: { cellWidth: contentWidth * 0.25 }, // Coating
+      1: { cellWidth: contentWidth * 0.45 }, // Type & Power combined
+      2: { cellWidth: contentWidth * 0.18 }, // Fog Mark
+      3: { cellWidth: contentWidth * 0.12, halign: "center" }, // Qty
     },
-    didDrawPage: () => {},
   });
 
   const tableEnd = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
-  let y = tableEnd + 12;
+  let y = tableEnd + 15;
 
-  // Totals box
-  const totalBoxW = contentWidth * 0.45;
+  // 5. Totals Summary Box (Qty Only)
+  const totalBoxW = contentWidth * 0.40;
   const totalBoxX = pageWidth - margin - totalBoxW;
-  const totalRowH = 6;
-  const pad = 4;
-  const totalRows = [
-    { label: "Total Items", value: String(data.totalQuantity ?? items.reduce((s, it) => s + it.quantity, 0)), bold: false },
-  ];
-  if (data.totalPrice != null) {
-    totalRows.push({ label: "Total", value: `\u20B9${data.totalPrice.toFixed(2)}`, bold: true });
-  }
-  const boxH = totalRows.length * (totalRowH + pad) + pad + 2;
+  const boxH = 14;
 
+  // Box background & border
   doc.setFillColor(...light);
   doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, "F");
-  doc.setDrawColor(229, 231, 235);
+  doc.setDrawColor(...border);
   doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, "S");
 
-  let ty = y + pad + totalRowH / 2 + 1;
-  for (const row of totalRows) {
-    doc.setFont("helvetica", row.bold ? "bold" : "normal");
-    doc.setFontSize(row.bold ? 11 : 9);
-    doc.setTextColor(...(row.bold ? indigo : dark));
-    doc.text(row.label, totalBoxX + 8, ty);
-    doc.text(row.value, totalBoxX + totalBoxW - 8, ty, { align: "right" });
-    ty += totalRowH + pad;
-  }
+  // Box Text
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...indigo);
+  doc.text("Total Items Withdrawn:", totalBoxX + 6, y + 9);
+  doc.setFontSize(12);
+  doc.text(String(totalQty), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
 
-  // Footer
-  const footerY = Math.max(y + boxH + 10, pageHeight - 25);
-  doc.setDrawColor(229, 231, 235);
+  // 6. Footer
+  const footerY = Math.max(y + boxH + 20, pageHeight - 20);
+  doc.setDrawColor(...border);
   doc.setLineWidth(0.3);
   doc.line(margin, footerY, pageWidth - margin, footerY);
+  
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(156, 163, 175);
-  doc.text("Generated by KMJ Optical Warehouse", pageWidth / 2, footerY + 7, { align: "center" });
+  doc.text("Generated securely by KMJ Optical Warehouse", pageWidth / 2, footerY + 6, { align: "center" });
 
-  doc.save(`Lens_List_${data.username || "withdrawal"}.pdf`);
+  // Save PDF
+  const safeUsername = (data.username || "withdrawal").replace(/[^a-z0-9]/gi, '_');
+  doc.save(`Lens_List_${safeUsername}.pdf`);
 }
