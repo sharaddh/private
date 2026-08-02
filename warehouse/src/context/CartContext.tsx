@@ -11,6 +11,7 @@ export interface CartItemData {
   powerKey: string;
   quantity: number;
   price?: number;
+  fogMark?: string;
   createdAt?: string;
 }
 
@@ -42,6 +43,7 @@ interface CartContextType {
   updateQty: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => Promise<void>;
+  setFogMark: (itemId: string, fogMark: string) => Promise<void>;
   clearCart: () => Promise<void>;
   withdraw: () => Promise<{ withdrawn: number; errors: string[] } | null>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
@@ -186,6 +188,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [keyMap, toast]);
 
+  const setFogMark = useCallback(async (itemId: string, fogMark: string) => {
+    const item = itemsRef.current.find((i) => i._id === itemId);
+    if (!item) return;
+    setItems((prev) => {
+      const next = prev.map((i) => (i._id === itemId ? { ...i, fogMark } : i));
+      saveLocal(next);
+      return next;
+    });
+    const res = await api.put(`/api/cart/${itemId}`, { quantity: item.quantity, fogMark });
+    if (!res.success) {
+      setItems((prev) => {
+        const next = prev.map((i) => (i._id === itemId ? { ...i, fogMark: item.fogMark } : i));
+        saveLocal(next);
+        return next;
+      });
+      toast(res.message || "Failed to update fog mark", "error");
+    }
+  }, [toast]);
+
   const clearCart = useCallback(async () => {
     const prev = itemsRef.current;
     setItems([]);
@@ -224,8 +245,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [keyMap]);
 
   const value = useMemo<CartContextType>(() => ({
-    items, count, loading, addToCart, updateQty, removeItem, removeByDetails, clearCart, withdraw, isInCart, getItemQty,
-  }), [items, count, loading, addToCart, updateQty, removeItem, removeByDetails, clearCart, withdraw, isInCart, getItemQty]);
+    items, count, loading, addToCart, updateQty, removeItem, removeByDetails, setFogMark, clearCart, withdraw, isInCart, getItemQty,
+  }), [items, count, loading, addToCart, updateQty, removeItem, removeByDetails, setFogMark, clearCart, withdraw, isInCart, getItemQty]);
 
   return (
     <CartContext.Provider value={value}>
