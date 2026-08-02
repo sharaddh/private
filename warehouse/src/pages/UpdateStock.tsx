@@ -211,8 +211,8 @@ export default function UpdateStock() {
         <div className="flex-1 card p-3 lg:p-4 overflow-hidden flex flex-col">
           {selectedItem ? (
             <>
-              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-th-border">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />
+              <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-th-border">
+                <div className="w-2 h-2 rounded-full bg-primary-500" />
                 <span className="text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
                 {editingPrice ? (
                   <div className="ml-auto flex items-center gap-1.5">

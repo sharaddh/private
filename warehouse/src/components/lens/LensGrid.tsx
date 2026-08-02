@@ -4,23 +4,28 @@ import api from "../../api";
 import { useToast } from "../../context";
 import PowerRow from "./PowerRow";
 import CompoundGrid from "./CompoundGrid";
+import PlainGrid from "./PlainGrid";
 
 interface Props {
   item: LensStockItem;
   onUpdate: (updated: LensStockItem) => void;
 }
 
-const TABS: { key: LensType; label: string }[] = [
+type TabKey = LensType | "plain";
+
+const TABS: { key: TabKey; label: string }[] = [
   { key: "sph", label: "SPH" },
   { key: "cyl", label: "CYL" },
-  { key: "compound", label: "Both" },
+  { key: "compound", label: "Compound" },
+  { key: "plain", label: "Plain" },
 ];
 
 export default function LensGrid({ item, onUpdate }: Props) {
-  const [lensType, setLensType] = useState<LensType>("sph");
+  const [lensType, setLensType] = useState<TabKey>("sph");
   const { toast } = useToast();
 
-  const quantities = item.quantities?.[lensType] || {};
+  const effectiveLensType: LensType = lensType === "plain" ? "sph" : lensType;
+  const quantities = item.quantities?.[effectiveLensType] || {};
 
   const handleIncrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
@@ -29,11 +34,11 @@ export default function LensGrid({ item, onUpdate }: Props) {
       ...item,
       quantities: {
         ...item.quantities,
-        [lensType]: { ...quantities, [powerKey]: newQty },
+        [effectiveLensType]: { ...quantities, [powerKey]: newQty },
       },
     });
     const res = await api.put<{ _id: string }>(`/api/warehouse/lens-stock/${item._id}/quantity`, {
-      lensType,
+      lensType: effectiveLensType,
       powerKey,
       quantity: newQty,
     });
@@ -42,12 +47,12 @@ export default function LensGrid({ item, onUpdate }: Props) {
         ...item,
         quantities: {
           ...item.quantities,
-          [lensType]: { ...quantities },
+          [effectiveLensType]: { ...quantities },
         },
       });
       toast(res.message || "Failed to update", "error");
     }
-  }, [item, lensType, quantities, onUpdate, toast]);
+  }, [item, effectiveLensType, quantities, onUpdate, toast]);
 
   const handleDecrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
@@ -63,11 +68,11 @@ export default function LensGrid({ item, onUpdate }: Props) {
       ...item,
       quantities: {
         ...item.quantities,
-        [lensType]: updated,
+        [effectiveLensType]: updated,
       },
     });
     const res = await api.put<{ _id: string }>(`/api/warehouse/lens-stock/${item._id}/quantity`, {
-      lensType,
+      lensType: effectiveLensType,
       powerKey,
       quantity: newQty,
     });
@@ -76,21 +81,21 @@ export default function LensGrid({ item, onUpdate }: Props) {
         ...item,
         quantities: {
           ...item.quantities,
-          [lensType]: { ...quantities },
+          [effectiveLensType]: { ...quantities },
         },
       });
       toast(res.message || "Failed to update", "error");
     }
-  }, [item, lensType, quantities, onUpdate, toast]);
+  }, [item, effectiveLensType, quantities, onUpdate, toast]);
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5 w-fit">
+      <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setLensType(t.key)}
-            className={`px-3 sm:px-4 py-1.5 rounded-pill text-xs font-bold transition-all active:scale-95 ${
+            className={`flex-1 px-2 py-2.5 rounded-pill text-small-bold transition-all active:scale-95 ${
               lensType === t.key
                 ? "bg-primary-500 text-surface-950 shadow-sm"
                 : "text-th-secondary active:bg-th-hover"
@@ -103,6 +108,12 @@ export default function LensGrid({ item, onUpdate }: Props) {
 
       {lensType === "compound" ? (
         <CompoundGrid
+          quantities={quantities}
+          onIncrement={handleIncrement}
+          onDecrement={handleDecrement}
+        />
+      ) : lensType === "plain" ? (
+        <PlainGrid
           quantities={quantities}
           onIncrement={handleIncrement}
           onDecrement={handleDecrement}

@@ -8,9 +8,8 @@ interface Props {
   onDecrement: (powerKey: string) => void;
 }
 
-const negatives = POWER_VALUES.filter((p) => p.startsWith("-")).reverse();
-const positives = POWER_VALUES.filter((p) => p.startsWith("+"));
-const hasZero = POWER_VALUES.some((p) => p === "+0.00" || p === "0.00");
+const negatives = POWER_VALUES.filter((p) => p.startsWith("-") && p !== "-0.00").reverse();
+const positives = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
 
 const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement }: {
   power: string;
@@ -27,21 +26,21 @@ const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement
   const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
 
   return (
-    <div className={`flex flex-col items-center gap-2 p-2.5 rounded-xl border ${border} ${bg}`}>
-      <span className="text-xs sm:text-sm font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
-      <span className={`text-base sm:text-lg font-bold leading-none ${qtyClr}`}>{qty}</span>
-      <div className="flex items-center gap-1.5">
+    <div className={`flex flex-col items-center gap-2.5 p-3 rounded-xl border ${border} ${bg}`}>
+      <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
+      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onDecrement(power)}
-          className="w-10 h-10 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
+          className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
         >
-          <Minus size={18} strokeWidth={2.5} />
+          <Minus size={22} strokeWidth={2.5} />
         </button>
         <button
           onClick={() => onIncrement(power)}
-          className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
+          className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus size={22} strokeWidth={2.5} />
         </button>
       </div>
     </div>
@@ -68,46 +67,27 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
     positives.filter((p) => (quantities[p] || 0) > 0),
   [quantities]);
 
-  const zeroQty = quantities["+0.00"] || quantities["0.00"] || 0;
-
   function toggle(label: string) {
     setOpenGroup((prev) => (prev === label ? "" : label));
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {negatives.length > 0 && (
         <div>
           <button
             onClick={() => toggle("Negative")}
-            className="flex items-center gap-2 w-full px-2 py-2 rounded-lg active:bg-th-elevated transition-colors"
+            className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >
-            {openGroup === "Negative" ? <ChevronDown size={16} className="text-amber-500" /> : <ChevronRight size={16} className="text-amber-500" />}
-            <span className="px-2.5 py-0.5 rounded-pill bg-amber-500/10 text-amber-500 text-xs font-bold">NEGATIVE</span>
-            <span className="text-xs text-th-muted">({negativeEntries.length})</span>
+            {openGroup === "Negative" ? <ChevronDown size={20} className="text-amber-500" /> : <ChevronRight size={20} className="text-amber-500" />}
+            <span className="px-2.5 py-0.5 rounded-pill bg-amber-500/10 text-amber-500 text-body font-bold">NEGATIVE</span>
+            <span className="text-body text-th-muted">({negativeEntries.length})</span>
           </button>
           {openGroup === "Negative" && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
               {negatives.map((p) => (
                 <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
               ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {hasZero && (
-        <div>
-          <button
-            onClick={() => toggle("Zero")}
-            className="flex items-center gap-2 w-full px-2 py-2 rounded-lg active:bg-th-elevated transition-colors"
-          >
-            {openGroup === "Zero" ? <ChevronDown size={16} className="text-th-muted" /> : <ChevronRight size={16} className="text-th-muted" />}
-            <span className="px-2.5 py-0.5 rounded-pill bg-th-elevated text-th-secondary text-xs font-bold">ZERO</span>
-          </button>
-          {openGroup === "Zero" && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
-              <MemoizedPowerCell power="+0.00" qty={zeroQty} onIncrement={onIncrement} onDecrement={onDecrement} />
             </div>
           )}
         </div>
@@ -117,14 +97,14 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
         <div>
           <button
             onClick={() => toggle("Positive")}
-            className="flex items-center gap-2 w-full px-2 py-2 rounded-lg active:bg-th-elevated transition-colors"
+            className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >
-            {openGroup === "Positive" ? <ChevronDown size={16} className="text-emerald-500" /> : <ChevronRight size={16} className="text-emerald-500" />}
-            <span className="px-2.5 py-0.5 rounded-pill bg-emerald-500/10 text-emerald-500 text-xs font-bold">POSITIVE</span>
-            <span className="text-xs text-th-muted">({positiveEntries.length})</span>
+            {openGroup === "Positive" ? <ChevronDown size={20} className="text-emerald-500" /> : <ChevronRight size={20} className="text-emerald-500" />}
+            <span className="px-2.5 py-0.5 rounded-pill bg-emerald-500/10 text-emerald-500 text-body font-bold">POSITIVE</span>
+            <span className="text-body text-th-muted">({positiveEntries.length})</span>
           </button>
           {openGroup === "Positive" && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5 mt-1 ml-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
               {positives.map((p) => (
                 <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
               ))}

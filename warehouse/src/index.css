@@ -260,7 +260,7 @@ html {
   }
 
   .page-container {
-    @apply space-y-5;
+    @apply space-y-4;
   }
 
   .scrollbar-thin {
