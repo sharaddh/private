@@ -431,7 +431,7 @@ export default function LensStock() {
               const total = getTotalQty(item);
               return (
                 <option key={item._id} value={item._id}>
-                  {item.coating} · {total} in stock · ₹{item.price ?? 0}
+                  {item.coating} · {total} in stock · −₹{item.priceNeg ?? 0}/+₹{item.pricePos ?? 0}
                 </option>
               );
             })}
@@ -485,7 +485,7 @@ export default function LensStock() {
                     </div>
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                    <span className="text-small font-bold text-th-muted">₹{item.price ?? 0}</span>
+                    <span className="text-small font-bold text-th-muted">−₹{item.priceNeg ?? 0}/+₹{item.pricePos ?? 0}</span>
                     {total > 0 && (
                       <span className={`px-2 py-0.5 rounded-pill text-micro font-bold ${isSelected ? "bg-primary-500 text-surface-950" : "bg-primary-500/15 text-primary-500"}`}>
                         {total}
@@ -507,7 +507,7 @@ export default function LensStock() {
                 <span className="px-2 py-0.5 rounded-pill bg-th-elevated text-th-secondary text-micro font-bold shrink-0">
                   {getTotalQty(selectedItem)} in stock
                 </span>
-                <span className="text-small-bold text-primary-500 shrink-0">₹{selectedItem.price ?? 0}</span>
+                <span className="text-small-bold text-primary-500 shrink-0">−₹{selectedItem.priceNeg ?? 0}/+₹{selectedItem.pricePos ?? 0}</span>
                 <div className="ml-auto hidden lg:flex gap-1 bg-th-elevated rounded-pill p-1">
                   {TABS.map((t) => (
                     <button

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
+import { priceForPower } from "../types/lensStock";
 import type { FogMark } from "../types/fogMark";
 import { formatCurrency, formatLensPower, lensTypeLabel, powerChipClass, powerTextClass } from "../utils/helpers";
 import { generateWithdrawalPdf } from "../utils/withdrawalPdf";
@@ -30,7 +31,7 @@ export default function Cart() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
-  const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+  const [priceMap, setPriceMap] = useState<Record<string, LensStockItem>>({});
   const [fogMarks, setFogMarks] = useState<FogMark[]>([]);
   const [savingMark, setSavingMark] = useState<string | null>(null);
 
@@ -39,9 +40,9 @@ export default function Cart() {
       const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
       if (res.success && Array.isArray(res.data)) {
         const map: Record<string, number> = {};
-        const prices: Record<string, number> = {};
+        const itemsByCoating: Record<string, LensStockItem> = {};
         for (const item of res.data) {
-          prices[item.coating] = item.price ?? 0;
+          itemsByCoating[item.coating] = item;
           const q = (item.quantities as Record<string, Record<string, number>>) || {};
           for (const lensType of Object.keys(q)) {
             for (const [power, qty] of Object.entries(q[lensType])) {
@@ -51,7 +52,7 @@ export default function Cart() {
           }
         }
         setStockMap(map);
-        setPriceMap(prices);
+        setPriceMap(itemsByCoating);
       }
     }
     fetchStock();
@@ -67,7 +68,7 @@ export default function Cart() {
     return stockMap[`${coating}::${lensType}::${powerKey}`] || 0;
   }
 
-  const totalPrice = items.reduce((sum, i) => sum + (i.price ?? priceMap[i.coating] ?? 0) * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + (i.price ?? priceForPower(priceMap[i.coating], i.powerKey) ?? 0) * i.quantity, 0);
 
   async function fetchHistory() {
     setLoadingHistory(true);

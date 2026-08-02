@@ -1,5 +1,6 @@
 import { getWarehouseModels } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
+import { getPriceForPower } from "./lensStock.service";
 
 const { CartItem, LensStock, Withdrawal } = getWarehouseModels();
 
@@ -20,7 +21,7 @@ export async function addToCart(
   fogMark: string = ""
 ) {
   const stock = await LensStock.findOne({ coating });
-  const price = stock?.price || 0;
+  const price = getPriceForPower(stock, powerKey);
   const existing = await CartItem.findOne({ user: userId, coating, lensType, powerKey });
   if (existing) {
     existing.quantity += quantity;

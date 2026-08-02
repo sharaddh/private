@@ -30,7 +30,8 @@ export default function UpdateStock() {
   const [mobileNewName, setMobileNewName] = useState("");
   const [mobileNewPrice, setMobileNewPrice] = useState("");
   const [editingPrice, setEditingPrice] = useState(false);
-  const [priceDraft, setPriceDraft] = useState("");
+  const [priceNegDraft, setPriceNegDraft] = useState("");
+  const [pricePosDraft, setPricePosDraft] = useState("");
   const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
@@ -68,8 +69,8 @@ export default function UpdateStock() {
     });
   }, [selectedId]);
 
-  const handleRename = useCallback((id: string, coating: string, price: number) => {
-    setItems((prev) => prev.map((i) => (i._id === id ? { ...i, coating, price } : i)));
+  const handleRename = useCallback((id: string, coating: string, priceNeg: number, pricePos: number) => {
+    setItems((prev) => prev.map((i) => (i._id === id ? { ...i, coating, priceNeg, pricePos, price: priceNeg } : i)));
   }, []);
 
   const handleGridUpdate = useCallback((updated: LensStockItem) => {
@@ -79,12 +80,12 @@ export default function UpdateStock() {
   const handleMobileAdd = useCallback(async () => {
     const name = mobileNewName.trim();
     if (!name) return;
-    const price = mobileNewPrice.trim() === "" ? 0 : Number(mobileNewPrice);
-    if (Number.isNaN(price) || price < 0) {
+    const priceNeg = mobileNewPrice.trim() === "" ? 0 : Number(mobileNewPrice);
+    if (Number.isNaN(priceNeg) || priceNeg < 0) {
       toast("Enter a valid price", "error");
       return;
     }
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, price });
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, priceNeg });
     if (res.success && res.data) {
       setItems((prev) => [...prev, res.data!]);
       setSelectedId(res.data!._id);
@@ -99,20 +100,34 @@ export default function UpdateStock() {
 
   const savePrice = useCallback(async () => {
     if (!selectedItem) return;
-    const price = Number(priceDraft);
-    if (Number.isNaN(price) || price < 0) {
-      toast("Enter a valid price", "error");
+    const priceNeg = priceNegDraft.trim() === "" ? 0 : Number(priceNegDraft);
+    const pricePos = pricePosDraft.trim() === "" ? 0 : Number(pricePosDraft);
+    if (Number.isNaN(priceNeg) || priceNeg < 0 || Number.isNaN(pricePos) || pricePos < 0) {
+      toast("Enter valid prices", "error");
       return;
     }
-    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${selectedItem._id}`, { coating: selectedItem.coating, price });
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${selectedItem._id}`, { coating: selectedItem.coating, priceNeg, pricePos });
     if (res.success && res.data) {
       handleGridUpdate(res.data);
       setEditingPrice(false);
-      toast("Price updated", "success");
+      toast("Prices updated", "success");
     } else {
-      toast(res.message || "Failed to update price", "error");
+      toast(res.message || "Failed to update prices", "error");
     }
-  }, [selectedItem, priceDraft, toast, handleGridUpdate]);
+  }, [selectedItem, priceNegDraft, pricePosDraft, toast, handleGridUpdate]);
+
+  const startPriceEdit = useCallback(() => {
+    if (!selectedItem) return;
+    setPriceNegDraft(String(selectedItem.priceNeg ?? selectedItem.price ?? 0));
+    setPricePosDraft(String(selectedItem.pricePos ?? selectedItem.price ?? 0));
+    setEditingPrice(true);
+  }, [selectedItem]);
+
+  const cancelPriceEdit = useCallback(() => {
+    setEditingPrice(false);
+    setPriceNegDraft("");
+    setPricePosDraft("");
+  }, []);
 
   if (loading) return <PageLoader />;
 
@@ -180,7 +195,7 @@ export default function UpdateStock() {
                   <span className={`text-small font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
                     {total > 0 ? `${total} in stock` : "Empty"}
                   </span>
-                  <span className="text-small font-bold text-th-muted">{formatCurrency(item.price ?? 0)}</span>
+                  <span className="text-small font-bold text-th-muted">−{formatCurrency(item.priceNeg ?? 0)}/+{formatCurrency(item.pricePos ?? 0)}</span>
                 </button>
               );
             })}
@@ -216,31 +231,41 @@ export default function UpdateStock() {
                 <span className="text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
                 {editingPrice ? (
                   <div className="ml-auto flex items-center gap-1.5">
-                    <span className="text-small font-bold text-th-muted">₹</span>
+                    <span className="text-small font-bold text-th-muted">Neg ₹</span>
                     <input
                       autoFocus
                       type="number"
                       min={0}
                       step="0.01"
-                      value={priceDraft}
-                      onChange={(e) => setPriceDraft(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") savePrice(); if (e.key === "Escape") { setEditingPrice(false); setPriceDraft(String(selectedItem.price ?? 0)); } }}
-                      className="w-28 px-2.5 py-1.5 rounded-lg bg-th-input border border-th-border text-small font-bold text-th-text focus:outline-none focus:border-primary-500"
+                      value={priceNegDraft}
+                      onChange={(e) => setPriceNegDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") savePrice(); if (e.key === "Escape") cancelPriceEdit(); }}
+                      className="w-24 px-2.5 py-1.5 rounded-lg bg-th-input border border-th-border text-small font-bold text-th-text focus:outline-none focus:border-primary-500"
+                    />
+                    <span className="text-small font-bold text-th-muted">Pos ₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={pricePosDraft}
+                      onChange={(e) => setPricePosDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") savePrice(); if (e.key === "Escape") cancelPriceEdit(); }}
+                      className="w-24 px-2.5 py-1.5 rounded-lg bg-th-input border border-th-border text-small font-bold text-th-text focus:outline-none focus:border-primary-500"
                     />
                     <button onClick={savePrice} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
                       <Check size={16} strokeWidth={2.5} />
                     </button>
-                    <button onClick={() => { setEditingPrice(false); setPriceDraft(String(selectedItem.price ?? 0)); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+                    <button onClick={cancelPriceEdit} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
                       <X size={16} strokeWidth={2.5} />
                     </button>
                   </div>
                 ) : (
                   <button
-                    onClick={() => { setEditingPrice(true); setPriceDraft(String(selectedItem.price ?? 0)); }}
+                    onClick={startPriceEdit}
                     className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-th-elevated text-primary-500 hover:bg-primary-500/10 text-small font-bold transition-colors"
-                    title="Edit price"
+                    title="Edit prices"
                   >
-                    <span>{formatCurrency(selectedItem.price ?? 0)}</span>
+                    <span>−{formatCurrency(selectedItem.priceNeg ?? 0)} / +{formatCurrency(selectedItem.pricePos ?? 0)}</span>
                     <Pencil size={14} />
                   </button>
                 )}

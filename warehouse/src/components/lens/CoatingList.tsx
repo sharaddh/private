@@ -11,7 +11,7 @@ interface Props {
   onSelect: (id: string) => void;
   onAdd: (item: LensStockItem) => void;
   onDelete: (id: string) => void;
-  onRename: (id: string, coating: string, price: number) => void;
+  onRename: (id: string, coating: string, priceNeg: number, pricePos: number) => void;
 }
 
 function getTotalQty(item: LensStockItem): number {
@@ -31,25 +31,29 @@ function getTotalQty(item: LensStockItem): number {
 export default function CoatingList({ items, selectedId, onSelect, onAdd, onDelete, onRename }: Props) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newPrice, setNewPrice] = useState("");
+  const [newPriceNeg, setNewPriceNeg] = useState("");
+  const [newPricePos, setNewPricePos] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editPrice, setEditPrice] = useState("");
+  const [editPriceNeg, setEditPriceNeg] = useState("");
+  const [editPricePos, setEditPricePos] = useState("");
   const { toast } = useToast();
 
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
-    const price = newPrice.trim() === "" ? 0 : Number(newPrice);
-    if (Number.isNaN(price) || price < 0) {
-      toast("Enter a valid price", "error");
+    const priceNeg = newPriceNeg.trim() === "" ? 0 : Number(newPriceNeg);
+    const pricePos = newPricePos.trim() === "" ? 0 : Number(newPricePos);
+    if (Number.isNaN(priceNeg) || priceNeg < 0 || Number.isNaN(pricePos) || pricePos < 0) {
+      toast("Enter valid prices", "error");
       return;
     }
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, price });
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, priceNeg, pricePos });
     if (res.success && res.data) {
       onAdd(res.data);
       setNewName("");
-      setNewPrice("");
+      setNewPriceNeg("");
+      setNewPricePos("");
       setAdding(false);
       toast("Coating added", "success");
     } else {
@@ -71,14 +75,15 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
   const handleRename = async (id: string) => {
     const name = editName.trim();
     if (!name) return;
-    const price = editPrice.trim() === "" ? 0 : Number(editPrice);
-    if (Number.isNaN(price) || price < 0) {
-      toast("Enter a valid price", "error");
+    const priceNeg = editPriceNeg.trim() === "" ? 0 : Number(editPriceNeg);
+    const pricePos = editPricePos.trim() === "" ? 0 : Number(editPricePos);
+    if (Number.isNaN(priceNeg) || priceNeg < 0 || Number.isNaN(pricePos) || pricePos < 0) {
+      toast("Enter valid prices", "error");
       return;
     }
-    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${id}`, { coating: name, price });
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${id}`, { coating: name, priceNeg, pricePos });
     if (res.success) {
-      onRename(id, name, price);
+      onRename(id, name, priceNeg, pricePos);
       setEditingId(null);
       toast("Renamed", "success");
     } else {
@@ -106,28 +111,39 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAdding(false); setNewPrice(""); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") { setAdding(false); setNewPriceNeg(""); setNewPricePos(""); } }}
               className="flex-1 min-w-0 px-2.5 py-1.5 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
               placeholder="Coating name..."
             />
             <button onClick={handleAdd} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
               <Check size={16} strokeWidth={2.5} />
             </button>
-            <button onClick={() => { setAdding(false); setNewPrice(""); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+            <button onClick={() => { setAdding(false); setNewPriceNeg(""); setNewPricePos(""); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
               <X size={16} strokeWidth={2.5} />
             </button>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-small font-bold text-th-muted">₹</span>
+            <span className="text-small font-bold text-th-muted">−₹</span>
             <input
               type="number"
               min={0}
               step="0.01"
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
+              value={newPriceNeg}
+              onChange={(e) => setNewPriceNeg(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
               className="flex-1 min-w-0 px-2.5 py-1 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
-              placeholder="Price"
+              placeholder="Neg price"
+            />
+            <span className="text-small font-bold text-th-muted">+₹</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={newPricePos}
+              onChange={(e) => setNewPricePos(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+              className="flex-1 min-w-0 px-2.5 py-1 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
+              placeholder="Pos price"
             />
           </div>
         </div>
@@ -171,13 +187,23 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
                     </button>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-small font-bold text-th-muted">₹</span>
+                    <span className="text-small font-bold text-th-muted">−₹</span>
                     <input
                       type="number"
                       min={0}
                       step="0.01"
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
+                      value={editPriceNeg}
+                      onChange={(e) => setEditPriceNeg(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); }}
+                      className="flex-1 min-w-0 px-2 py-1 text-small bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
+                    />
+                    <span className="text-small font-bold text-th-muted">+₹</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={editPricePos}
+                      onChange={(e) => setEditPricePos(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); }}
                       className="flex-1 min-w-0 px-2 py-1 text-small bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
                     />
@@ -194,12 +220,12 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
                     }`}>
                       {totalQty > 0 ? `${totalQty} in stock` : "Empty"}
                     </div>
-                    <div className="text-small mt-0.5 font-bold text-th-muted">{formatCurrency(item.price ?? 0)}</div>
+                    <div className="text-small mt-0.5 font-bold text-th-muted">−{formatCurrency(item.priceNeg ?? 0)} / +{formatCurrency(item.pricePos ?? 0)}</div>
                   </div>
 
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => { setEditingId(item._id); setEditName(item.coating); setEditPrice(String(item.price ?? 0)); }}
+                      onClick={() => { setEditingId(item._id); setEditName(item.coating); setEditPriceNeg(String(item.priceNeg ?? item.price ?? 0)); setEditPricePos(String(item.pricePos ?? item.price ?? 0)); }}
                       className="p-2 text-th-muted hover:text-th-text hover:bg-th-elevated rounded-lg transition-colors"
                     >
                       <Pencil size={16} />
