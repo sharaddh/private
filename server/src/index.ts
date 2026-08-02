@@ -58,6 +58,23 @@ async function start() {
     logger.warn("Could not migrate warehouse data", { error: e?.message });
   }
 
+  try {
+    const whConn = mongoose.connection.useDb(WAREHOUSE_DB_NAME);
+    const fogMarkColl = whConn.collection("fogmarks");
+    const fogMarkCount = await fogMarkColl.countDocuments();
+    if (fogMarkCount === 0) {
+      const defaults = ["HD PX", "HD Pixi", "Super"].map((name) => ({
+        name,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      await fogMarkColl.insertMany(defaults);
+      logger.info("Seeded default fog marks");
+    }
+  } catch (e: any) {
+    logger.warn("Could not seed fog marks", { error: e?.message });
+  }
+
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);
