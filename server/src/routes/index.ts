@@ -22,6 +22,7 @@ import cameras from "./cameras";
 import recalculate from "./recalculate";
 import warehouse from "./warehouse";
 import cart from "./cart";
+import fogMarks from "./fogMarks";
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use("/branches", branches);
 router.use("/auth", auth);
 router.use("/warehouse", warehouse);
 router.use("/cart", cart);
+router.use("/fog-marks", fogMarks);
 router.use("/customers", branchScope, customers);
 router.use("/orders", branchScope, orders);
 router.use("/todos", branchScope, todos);

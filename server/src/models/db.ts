@@ -25,6 +25,7 @@ export interface WarehouseModels {
   LensStock: Model<any>;
   CartItem: Model<any>;
   Withdrawal: Model<any>;
+  FogMark: Model<any>;
 }
 
 // Schemas imported lazily to avoid circular deps
@@ -56,6 +57,7 @@ function loadWarehouseSchemas() {
     LensStock: require("./lensStock").LensStockSchema,
     CartItem: require("./cart").CartItemSchema,
     Withdrawal: require("./withdrawal").WithdrawalSchema,
+    FogMark: require("./fogMark").FogMarkSchema,
   };
   return whSchemas;
 }
@@ -109,6 +111,7 @@ function registerWarehouseModels(conn: mongoose.Connection): WarehouseModels {
     LensStock: getModel("LensStock", s.LensStock),
     CartItem: getModel("CartItem", s.CartItem),
     Withdrawal: getModel("Withdrawal", s.Withdrawal),
+    FogMark: getModel("FogMark", s.FogMark),
   };
 }
 
