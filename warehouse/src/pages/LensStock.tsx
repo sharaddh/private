@@ -271,14 +271,14 @@ interface CompoundViewProps {
 
 const CYL_RANGE = POWER_VALUES.filter((p) => {
   const n = parseFloat(p);
-  return n >= -6 && n <= 6;
+  return n >= -2 && n <= 2;
 });
 const negCylList = CYL_RANGE.filter((p) => p.startsWith("-")).reverse();
 const posCylList = CYL_RANGE.filter((p) => p.startsWith("+") && p !== "+0.00");
 
 const SPH_INNER = POWER_VALUES.filter((p) => {
   const n = parseFloat(p);
-  return (n >= -4 && n <= -0.25) || (n >= 0.25 && n <= 4);
+  return (n >= -6 && n <= -0.25) || (n >= 0.25 && n <= 6);
 });
 const negSphInner = SPH_INNER.filter((p) => p.startsWith("-")).reverse();
 const posSphInner = SPH_INNER.filter((p) => p.startsWith("+") && p !== "+0.00");
