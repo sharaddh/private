@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useCartCount } from "../context/CartContext";
 import {
-  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart,
+  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart, Tags,
 } from "lucide-react";
 
 const sidebarMenu = [
@@ -12,6 +12,7 @@ const sidebarMenu = [
   { path: "/lens-stock", label: "Lens Stock", icon: Glasses },
   { path: "/update-stock", label: "Update Stock", icon: PackagePlus },
   { path: "/cart", label: "Cart", icon: ShoppingCart },
+  { path: "/fog-marks", label: "Fog Marks", icon: Tags },
   { path: "/users", label: "Users", icon: Users },
 ];
 
@@ -166,7 +167,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 lg:p-5 page-container">{children}</div>
+          <div className="p-3 lg:p-4 page-container">{children}</div>
         </main>
 
         {/* Mobile bottom nav */}

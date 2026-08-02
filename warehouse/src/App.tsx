@@ -12,6 +12,7 @@ const UpdateStock = lazy(() => import("./pages/UpdateStock"));
 const Users = lazy(() => import("./pages/Users"));
 const Register = lazy(() => import("./pages/Register"));
 const Cart = lazy(() => import("./pages/Cart"));
+const FogMarks = lazy(() => import("./pages/FogMarks"));
 
 function SuspendedPage({ children }: { children: React.ReactNode }) {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/users" element={<ProtectedRoute><SuspendedPage><Users /></SuspendedPage></ProtectedRoute>} />
         <Route path="/users/new" element={<ProtectedRoute><SuspendedPage><Register /></SuspendedPage></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><SuspendedPage><Cart /></SuspendedPage></ProtectedRoute>} />
+        <Route path="/fog-marks" element={<ProtectedRoute><SuspendedPage><FogMarks /></SuspendedPage></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
