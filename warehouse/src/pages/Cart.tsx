@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
-import { formatCurrency, formatLensPower, powerChipClass, powerTextClass } from "../utils/helpers";
-import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Clock, ChevronDown, ChevronRight, CheckCircle2, Glasses, LogOut } from "lucide-react";
+import type { FogMark } from "../types/fogMark";
+import { formatCurrency, formatLensPower, lensTypeLabel, powerChipClass, powerTextClass } from "../utils/helpers";
+import { generateWithdrawalPdf } from "../utils/withdrawalPdf";
+import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Clock, ChevronDown, ChevronRight, CheckCircle2, Glasses, Tags, MessageCircle } from "lucide-react";
 
 interface WithdrawalRecord {
   _id: string;
   username: string;
-  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number }[];
+  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number; fogMark?: string }[];
   totalQuantity: number;
   totalPrice?: number;
   paid?: boolean;
@@ -20,9 +21,8 @@ interface WithdrawalRecord {
 }
 
 export default function Cart() {
-  const { items, count, updateQty, removeItem, clearCart, withdraw } = useCart();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { items, count, updateQty, removeItem, clearCart, withdraw, setFogMark } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [withdrawing, setWithdrawing] = useState(false);
   const [history, setHistory] = useState<WithdrawalRecord[]>([]);
@@ -31,6 +31,8 @@ export default function Cart() {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+  const [fogMarks, setFogMarks] = useState<FogMark[]>([]);
+  const [savingMark, setSavingMark] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchStock() {
@@ -53,6 +55,12 @@ export default function Cart() {
       }
     }
     fetchStock();
+  }, []);
+
+  useEffect(() => {
+    api.get<FogMark[]>("/api/fog-marks").then((res) => {
+      if (res.success && Array.isArray(res.data)) setFogMarks(res.data);
+    });
   }, []);
 
   function getStockQty(coating: string, lensType: string, powerKey: string): number {
@@ -94,9 +102,21 @@ export default function Cart() {
     fetchHistory();
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login", { replace: true });
+  async function handleFogMark(itemId: string, mark: string) {
+    setSavingMark(itemId);
+    await setFogMark(itemId, mark);
+    setSavingMark(null);
+  }
+
+  function handleSendPdf(rec: WithdrawalRecord) {
+    generateWithdrawalPdf({
+      username: rec.username,
+      withdrawnAt: rec.withdrawnAt,
+      items: rec.items,
+      totalQuantity: rec.totalQuantity,
+      totalPrice: rec.totalPrice,
+    });
+    window.open("https://web.whatsapp.com/", "_blank");
   }
 
   return (
@@ -111,12 +131,6 @@ export default function Cart() {
             <p className="text-small text-th-muted truncate">@{user?.username || "—"} · {user?.role === "owner" ? "Owner" : user?.role || "User"}</p>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-small font-bold text-negative bg-negative/10 active:scale-95 transition-all shrink-0"
-        >
-          <LogOut size={16} /> Logout
-        </button>
       </div>
 
       <div className="flex items-center justify-between gap-3">
@@ -153,10 +167,9 @@ export default function Cart() {
         <>
           <div className="flex-1 overflow-auto space-y-3">
             {items.map((item, idx) => {
-              const lensLabel = item.lensType === "compound" ? "Both" : item.lensType.toUpperCase();
+              const lensLabel = item.lensType === "compound" ? "Compound" : item.lensType.toUpperCase();
               const stock = getStockQty(item.coating, item.lensType, item.powerKey);
               const atMax = stock > 0 && item.quantity >= stock;
-              const price = item.price ?? priceMap[item.coating] ?? 0;
 
               return (
                 <div key={item._id} style={{ animationDelay: `${Math.min(idx, 10) * 35}ms` }} className="card p-3 sm:p-4 animate-fade-up">
@@ -180,18 +193,26 @@ export default function Cart() {
                         </div>
                       </div>
                     </div>
-
-                    <div className="text-right shrink-0">
-                      <div className="text-small-bold text-th-text">{formatCurrency(price)}</div>
-                      <div className="text-small text-th-muted">per lens</div>
-                    </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-th-border">
-                    <div className="flex items-baseline gap-1.5 min-w-0">
-                      <span className="text-small font-bold text-th-secondary">{formatCurrency(price)} × {item.quantity}</span>
-                      <span className="text-small font-bold text-th-muted">=</span>
-                      <span className="text-body-bold text-primary-500">{formatCurrency(price * item.quantity)}</span>
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <Tags size={14} className="text-th-muted shrink-0" />
+                      <select
+                        value={item.fogMark || ""}
+                        disabled={savingMark === item._id}
+                        onChange={(e) => handleFogMark(item._id, e.target.value)}
+                        className={`flex-1 min-w-0 px-2.5 py-1.5 rounded-lg text-small font-medium border bg-th-base outline-none focus:ring-2 focus:ring-primary-500/40 disabled:opacity-50 ${
+                          item.fogMark
+                            ? "border-primary-500/40 text-primary-500"
+                            : "border-th-border text-th-muted"
+                        }`}
+                      >
+                        <option value="">No mark</option>
+                        {fogMarks.map((m) => (
+                          <option key={m._id} value={m.name}>{m.name}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
@@ -224,15 +245,27 @@ export default function Cart() {
             })}
           </div>
 
-          <div className="shrink-0">
-            <button
-              onClick={handleWithdraw}
-              disabled={withdrawing}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-primary-500 text-surface-950 text-body font-bold active:scale-95 transition-all disabled:opacity-50"
-            >
-              <PackageMinus size={20} />
-              {withdrawing ? "Withdrawing..." : `Withdraw ${count} item${count !== 1 ? "s" : ""} · ${formatCurrency(totalPrice)}`}
-            </button>
+          <div className="shrink-0 card p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-5">
+                <div>
+                  <div className="text-small text-th-muted">Items</div>
+                  <div className="text-body-bold text-th-text">{count}</div>
+                </div>
+                <div>
+                  <div className="text-small text-th-muted">Total</div>
+                  <div className="text-feature font-bold text-primary-500">{formatCurrency(totalPrice)}</div>
+                </div>
+              </div>
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawing}
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-primary-500 text-surface-950 text-body font-bold active:scale-95 transition-all disabled:opacity-50 shrink-0"
+              >
+                <PackageMinus size={20} />
+                {withdrawing ? "Withdrawing..." : "Withdraw"}
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -254,7 +287,7 @@ export default function Cart() {
         </button>
 
         {historyOpen && (
-          <div className="mt-2 space-y-2 max-h-72 overflow-auto">
+          <div className="mt-2 space-y-2 flex-1 min-h-0 overflow-auto">
             {loadingHistory ? (
               <p className="text-center text-th-muted text-small py-4">Loading...</p>
             ) : history.length === 0 ? (
@@ -284,7 +317,8 @@ export default function Cart() {
                         key={idx}
                         className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}
                       >
-                        {it.coating} · {formatLensPower(it.powerKey)} x{it.quantity}
+                        {it.coating} · {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{it.quantity}
+                        {it.fogMark ? ` · ${it.fogMark}` : ""}
                       </span>
                     ))}
                   </div>
@@ -292,7 +326,15 @@ export default function Cart() {
                     <span className="text-body-bold text-th-text">
                       Total: <span className="text-primary-500">{formatCurrency(rec.totalPrice ?? 0)}</span>
                     </span>
-                    {rec.paid ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSendPdf(rec)}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold active:scale-95 transition-all"
+                      >
+                        <MessageCircle size={16} />
+                        WhatsApp
+                      </button>
+                      {rec.paid ? (
                       <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
                         <CheckCircle2 size={16} /> Paid
                       </span>
@@ -309,6 +351,7 @@ export default function Cart() {
                         </button>
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
               ))

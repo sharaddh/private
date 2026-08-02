@@ -24,6 +24,11 @@ export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+export function lensTypeLabel(lensType: string): string {
+  if (lensType === "compound") return "Compound";
+  return (lensType || "").toUpperCase();
+}
+
 function normPower(v: string): string {
   return v === "+0.00" || v === "0.00" || v === "-0.00" ? "0.00" : v;
 }
