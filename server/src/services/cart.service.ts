@@ -117,14 +117,113 @@ export async function getAllWithdrawals() {
   return Withdrawal.find({}).sort({ withdrawnAt: -1 }).limit(200).lean();
 }
 
-export async function markWithdrawalPaid(userId: string, id: string) {
+export async function markWithdrawalPaid(userId: string, id: string, paid: boolean = true) {
   const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
-  if (!withdrawal.paid) {
-    withdrawal.paid = true;
-    withdrawal.paidAt = new Date();
-    await withdrawal.save();
+  withdrawal.paid = !!paid;
+  withdrawal.paidAt = withdrawal.paid ? new Date() : undefined;
+  await withdrawal.save();
+  return withdrawal.toJSON();
+}
+
+export async function updateWithdrawal(
+  userId: string,
+  id: string,
+  items: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[]
+) {
+  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  if (!withdrawal) throw new AppError(404, "Withdrawal not found");
+
+  const normalized: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[] = [];
+  for (const it of items || []) {
+    if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
+    const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
+    if (qty === 0) continue;
+    normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, fogMark: it.fogMark || "" });
   }
+
+  const oldMap = new Map<string, number>();
+  for (const it of withdrawal.items || []) {
+    const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
+    oldMap.set(key, (oldMap.get(key) || 0) + it.quantity);
+  }
+  const newMap = new Map<string, number>();
+  for (const it of normalized) {
+    const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
+    newMap.set(key, (newMap.get(key) || 0) + it.quantity);
+  }
+
+  // Determine stock deltas. Positive delta = we need to ADD stock back (qty reduced/removed).
+  // Negative delta = we need to DEDUCT stock (qty increased or new line added).
+  // Validate all deltas first, then apply — avoids partial updates on validation failure.
+  const allKeys = new Set([...oldMap.keys(), ...newMap.keys()]);
+  const errors: string[] = [];
+  const lensStockCache = new Map<string, any>();
+
+  const getStock = async (coating: string) => {
+    if (!lensStockCache.has(coating)) {
+      lensStockCache.set(coating, await LensStock.findOne({ coating }));
+    }
+    return lensStockCache.get(coating);
+  };
+
+  const deltas: { stock: any; lensType: string; powerKey: string; delta: number }[] = [];
+  for (const key of allKeys) {
+    const [coating, lensType, powerKey] = key.split("|");
+    const oldQty = oldMap.get(key) || 0;
+    const newQty = newMap.get(key) || 0;
+    const delta = oldQty - newQty;
+    if (delta === 0) continue;
+    const lensStock = await getStock(coating);
+    if (!lensStock) {
+      if (delta > 0) continue; // returning stock for a removed coating: nothing to add back
+      errors.push(`${coating}: lens stock not found`);
+      continue;
+    }
+    const q = (lensStock.quantities as Record<string, Record<string, number>>) || {};
+    const current = q[lensType]?.[powerKey] || 0;
+    if (current + delta < 0) {
+      errors.push(`${coating} ${powerKey}: only ${current} available`);
+      continue;
+    }
+    deltas.push({ stock: lensStock, lensType, powerKey, delta });
+  }
+
+  if (errors.length > 0) throw new AppError(400, errors.join("; "));
+
+  for (const { stock, lensType, powerKey, delta } of deltas) {
+    const q = (stock.quantities as Record<string, Record<string, number>>) || {};
+    if (!q[lensType]) q[lensType] = {};
+    q[lensType][powerKey] = (q[lensType][powerKey] || 0) + delta;
+    stock.quantities = q;
+    stock.markModified("quantities");
+    await stock.save();
+  }
+
+  const mergedItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number; fogMark: string }[] = [];
+  const fogByKey = new Map<string, string>();
+  for (const it of normalized) {
+    const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
+    if (!fogByKey.has(key)) fogByKey.set(key, it.fogMark || "");
+  }
+  for (const it of normalized) {
+    const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
+    if (newMap.get(key) === undefined) continue;
+    const qty = newMap.get(key)!;
+    const lensStock = await getStock(it.coating);
+    const price = getPriceForPower(lensStock, it.powerKey);
+    mergedItems.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, price, fogMark: fogByKey.get(key) || "" });
+    newMap.delete(key);
+  }
+
+  const totalQuantity = mergedItems.reduce((s, it) => s + it.quantity, 0);
+  const totalPrice = mergedItems.reduce((s, it) => s + it.price * it.quantity, 0);
+
+  withdrawal.items = mergedItems as typeof withdrawal.items;
+  withdrawal.totalQuantity = totalQuantity;
+  withdrawal.totalPrice = totalPrice;
+  await withdrawal.save();
+
   return withdrawal.toJSON();
 }
 

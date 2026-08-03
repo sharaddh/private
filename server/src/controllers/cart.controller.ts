@@ -68,8 +68,19 @@ export async function getAllWithdrawals(_req: AuthRequest, res: Response) {
 }
 
 export async function markWithdrawalPaid(req: AuthRequest, res: Response) {
-  const data = await cartService.markWithdrawalPaid(req.user!.sub, req.params.id);
-  sendSuccess(res, data, "Withdrawal marked as paid");
+  const paid = (req.body || {}).paid !== false;
+  const data = await cartService.markWithdrawalPaid(req.user!.sub, req.params.id, paid);
+  sendSuccess(res, data, paid ? "Withdrawal marked as paid" : "Withdrawal marked as unpaid");
+}
+
+export async function updateWithdrawal(req: AuthRequest, res: Response) {
+  const { items } = req.body || {};
+  if (!Array.isArray(items)) {
+    res.status(400).json({ success: false, message: "items array is required" });
+    return;
+  }
+  const data = await cartService.updateWithdrawal(req.user!.sub, req.params.id, items);
+  sendSuccess(res, data, "Withdrawal updated");
 }
 
 export async function sendWithdrawalPdf(req: AuthRequest, res: Response) {

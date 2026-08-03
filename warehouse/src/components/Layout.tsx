@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useCartCount } from "../context/CartContext";
 import {
-  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart, Tags,
+  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart, Tags, History,
 } from "lucide-react";
 
 const sidebarMenu = [
@@ -12,6 +12,7 @@ const sidebarMenu = [
   { path: "/lens-stock", label: "Lens Stock", icon: Glasses },
   { path: "/update-stock", label: "Update Stock", icon: PackagePlus },
   { path: "/cart", label: "Cart", icon: ShoppingCart },
+  { path: "/withdrawals", label: "Withdrawals", icon: History },
   { path: "/fog-marks", label: "Fog Marks", icon: Tags },
   { path: "/users", label: "Users", icon: Users },
 ];
@@ -20,6 +21,7 @@ const mobileNav = [
   { path: "/", label: "Home", icon: LayoutDashboard },
   { path: "/lens-stock", label: "Stock", icon: Glasses },
   { path: "/cart", label: "Cart", icon: ShoppingCart },
+  { path: "/withdrawals", label: "History", icon: History },
   { path: "/users", label: "User", icon: UserCog },
 ];
 

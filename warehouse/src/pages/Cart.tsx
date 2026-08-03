@@ -1,61 +1,45 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
 import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
 import { priceForPower } from "../types/lensStock";
 import type { FogMark } from "../types/fogMark";
-import { formatCurrency, formatLensPower, lensTypeLabel, powerChipClass, powerTextClass } from "../utils/helpers";
-import { generateWithdrawalPdf } from "../utils/withdrawalPdf";
-import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Clock, ChevronDown, ChevronRight, CheckCircle2, Glasses, Tags, MessageCircle } from "lucide-react";
-
-interface WithdrawalRecord {
-  _id: string;
-  username: string;
-  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number; fogMark?: string }[];
-  totalQuantity: number;
-  totalPrice?: number;
-  paid?: boolean;
-  paidAt?: string;
-  withdrawnAt: string;
-}
+import { formatCurrency, formatLensPower, powerTextClass } from "../utils/helpers";
+import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags, History } from "lucide-react";
 
 export default function Cart() {
   const { items, count, updateQty, removeItem, clearCart, withdraw, setFogMark } = useCart();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [withdrawing, setWithdrawing] = useState(false);
-  const [history, setHistory] = useState<WithdrawalRecord[]>([]);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [payingId, setPayingId] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [priceMap, setPriceMap] = useState<Record<string, LensStockItem>>({});
   const [fogMarks, setFogMarks] = useState<FogMark[]>([]);
   const [savingMark, setSavingMark] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchStock() {
-      const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
-      if (res.success && Array.isArray(res.data)) {
-        const map: Record<string, number> = {};
-        const itemsByCoating: Record<string, LensStockItem> = {};
-        for (const item of res.data) {
-          itemsByCoating[item.coating] = item;
-          const q = (item.quantities as Record<string, Record<string, number>>) || {};
-          for (const lensType of Object.keys(q)) {
-            for (const [power, qty] of Object.entries(q[lensType])) {
-              const key = `${item.coating}::${lensType}::${power}`;
-              map[key] = qty;
-            }
+  async function loadStock() {
+    const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
+    if (res.success && Array.isArray(res.data)) {
+      const map: Record<string, number> = {};
+      const itemsByCoating: Record<string, LensStockItem> = {};
+      for (const item of res.data) {
+        itemsByCoating[item.coating] = item;
+        const q = (item.quantities as Record<string, Record<string, number>>) || {};
+        for (const lensType of Object.keys(q)) {
+          for (const [power, qty] of Object.entries(q[lensType])) {
+            const key = `${item.coating}::${lensType}::${power}`;
+            map[key] = qty;
           }
         }
-        setStockMap(map);
-        setPriceMap(itemsByCoating);
       }
+      setStockMap(map);
+      setPriceMap(itemsByCoating);
     }
-    fetchStock();
+  }
+
+  useEffect(() => {
+    loadStock();
   }, []);
 
   useEffect(() => {
@@ -70,54 +54,17 @@ export default function Cart() {
 
   const totalPrice = items.reduce((sum, i) => sum + (i.price ?? priceForPower(priceMap[i.coating], i.powerKey) ?? 0) * i.quantity, 0);
 
-  async function fetchHistory() {
-    setLoadingHistory(true);
-    const res = await api.get<WithdrawalRecord[]>("/api/cart/withdrawals");
-    if (res.success && Array.isArray(res.data)) {
-      setHistory(res.data);
-    }
-    setLoadingHistory(false);
-  }
-
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  async function markPaid(id: string) {
-    setPayingId(id);
-    const res = await api.put<WithdrawalRecord>(`/api/cart/withdrawals/${id}/pay`, {});
-    if (res.success && res.data) {
-      setHistory((prev) => prev.map((r) => (r._id === id ? res.data! : r)));
-      toast("Withdrawal marked as paid", "success");
-    } else {
-      toast(res.message || "Failed to mark as paid", "error");
-    }
-    setPayingId(null);
-  }
-
   async function handleWithdraw() {
     if (!confirm("Withdraw all items? This will reduce lens stock and save to your history.")) return;
     setWithdrawing(true);
     await withdraw();
     setWithdrawing(false);
-    fetchHistory();
   }
 
   async function handleFogMark(itemId: string, mark: string) {
     setSavingMark(itemId);
     await setFogMark(itemId, mark);
     setSavingMark(null);
-  }
-
-  function handleSendPdf(rec: WithdrawalRecord) {
-    generateWithdrawalPdf({
-      username: rec.username,
-      withdrawnAt: rec.withdrawnAt,
-      items: rec.items,
-      totalQuantity: rec.totalQuantity,
-      totalPrice: rec.totalPrice,
-    });
-    window.open("https://web.whatsapp.com/", "_blank");
   }
 
   return (
@@ -144,14 +91,22 @@ export default function Cart() {
             <p className="text-small text-th-muted">{count} item{count !== 1 ? "s" : ""}</p>
           </div>
         </div>
-        {items.length > 0 && (
-          <button
-            onClick={clearCart}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-negative text-small font-bold bg-negative/10 active:scale-95 transition-all"
+        <div className="flex items-center gap-2">
+          <Link
+            to="/withdrawals"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-small font-bold bg-th-elevated text-th-text active:scale-95 transition-all"
           >
-            <Trash2 size={16} /> Clear All
-          </button>
-        )}
+            <History size={16} /> My Withdrawals
+          </Link>
+          {items.length > 0 && (
+            <button
+              onClick={clearCart}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-negative text-small font-bold bg-negative/10 active:scale-95 transition-all"
+            >
+              <Trash2 size={16} /> Clear All
+            </button>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -270,96 +225,6 @@ export default function Cart() {
           </div>
         </>
       )}
-
-      {/* Withdrawal History */}
-      <div className="shrink-0">
-        <button
-          onClick={() => { setHistoryOpen(!historyOpen); if (!historyOpen && history.length === 0) fetchHistory(); }}
-          className="flex items-center gap-2 w-full px-2 py-2 rounded-lg hover:bg-th-elevated transition-colors"
-        >
-          {historyOpen ? <ChevronDown size={16} className="text-th-muted" /> : <ChevronRight size={16} className="text-th-muted" />}
-          <Clock size={16} className="text-th-muted" />
-          <span className="text-small font-bold text-th-text uppercase tracking-wider">My Withdrawals</span>          <span className="ml-auto flex items-center gap-2 min-w-0">
-            {user?.username && <span className="text-small font-medium text-primary-500 truncate min-w-0">{user.username}</span>}
-            {history.length > 0 && (
-              <span className="px-2 py-0.5 rounded-pill bg-th-elevated text-small font-bold text-th-text shrink-0">{history.length}</span>
-            )}
-          </span>
-        </button>
-
-        {historyOpen && (
-          <div className="mt-2 space-y-2 flex-1 min-h-0 overflow-auto">
-            {loadingHistory ? (
-              <p className="text-center text-th-muted text-small py-4">Loading...</p>
-            ) : history.length === 0 ? (
-              <p className="text-center text-th-muted text-small py-4">No withdrawals yet for {user?.username || "you"}</p>
-            ) : (
-              history.map((rec, idx) => (
-                <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="card p-3 sm:p-4 animate-fade-up">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <PackageMinus size={16} className="text-emerald-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-body-bold text-th-text truncate">{rec.username}</span>
-                        <div className="mt-0.5 text-small text-th-muted">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</div>
-                      </div>
-                    </div>
-                    <span className="text-small text-th-muted text-right whitespace-nowrap shrink-0">
-                      {new Date(rec.withdrawnAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      <br />
-                      {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {rec.items.map((it, idx) => (
-                      <span
-                        key={idx}
-                        className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}
-                      >
-                        {it.coating} · {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{it.quantity}
-                        {it.fogMark ? ` · ${it.fogMark}` : ""}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between gap-2 flex-wrap mt-3 pt-3 border-t border-th-border">
-                    <span className="text-body-bold text-th-text">
-                      Total: <span className="text-primary-500">{formatCurrency(rec.totalPrice ?? 0)}</span>
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleSendPdf(rec)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold active:scale-95 transition-all"
-                      >
-                        <MessageCircle size={16} />
-                        WhatsApp
-                      </button>
-                      {rec.paid ? (
-                      <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-emerald-500/15 text-emerald-500 text-small-bold">
-                        <CheckCircle2 size={16} /> Paid
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
-                        <button
-                          onClick={() => markPaid(rec._id)}
-                          disabled={payingId === rec._id}
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-primary-500 text-surface-950 text-small-bold active:scale-95 transition-all disabled:opacity-50"
-                        >
-                          <CheckCircle2 size={16} />
-                          Mark as Paid
-                        </button>
-                      </div>
-                    )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
