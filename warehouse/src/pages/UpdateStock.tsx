@@ -28,7 +28,8 @@ export default function UpdateStock() {
   const [loading, setLoading] = useState(true);
   const [mobileAdding, setMobileAdding] = useState(false);
   const [mobileNewName, setMobileNewName] = useState("");
-  const [mobileNewPrice, setMobileNewPrice] = useState("");
+  const [mobileNewPriceNeg, setMobileNewPriceNeg] = useState("");
+  const [mobileNewPricePos, setMobileNewPricePos] = useState("");
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceNegDraft, setPriceNegDraft] = useState("");
   const [pricePosDraft, setPricePosDraft] = useState("");
@@ -80,23 +81,25 @@ export default function UpdateStock() {
   const handleMobileAdd = useCallback(async () => {
     const name = mobileNewName.trim();
     if (!name) return;
-    const priceNeg = mobileNewPrice.trim() === "" ? 0 : Number(mobileNewPrice);
-    if (Number.isNaN(priceNeg) || priceNeg < 0) {
-      toast("Enter a valid price", "error");
+    const priceNeg = mobileNewPriceNeg.trim() === "" ? 0 : Number(mobileNewPriceNeg);
+    const pricePos = mobileNewPricePos.trim() === "" ? 0 : Number(mobileNewPricePos);
+    if (Number.isNaN(priceNeg) || priceNeg < 0 || Number.isNaN(pricePos) || pricePos < 0) {
+      toast("Enter valid prices", "error");
       return;
     }
-    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, priceNeg });
+    const res = await api.post<LensStockItem>("/api/warehouse/lens-stock", { coating: name, priceNeg, pricePos });
     if (res.success && res.data) {
       setItems((prev) => [...prev, res.data!]);
       setSelectedId(res.data!._id);
       setMobileNewName("");
-      setMobileNewPrice("");
+      setMobileNewPriceNeg("");
+      setMobileNewPricePos("");
       setMobileAdding(false);
       toast("Coating added", "success");
     } else {
       toast(res.message || "Failed to add", "error");
     }
-  }, [mobileNewName, mobileNewPrice, toast]);
+  }, [mobileNewName, mobileNewPriceNeg, mobileNewPricePos, toast]);
 
   const savePrice = useCallback(async () => {
     if (!selectedItem) return;
@@ -152,26 +155,44 @@ export default function UpdateStock() {
                 autoFocus
                 value={mobileNewName}
                 onChange={(e) => setMobileNewName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); setMobileNewPriceNeg(""); setMobileNewPricePos(""); } }}
                 className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
                 placeholder="Coating name..."
-              />
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={mobileNewPrice}
-                onChange={(e) => setMobileNewPrice(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); if (e.key === "Escape") { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); } }}
-                className="w-28 px-3 py-2.5 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
-                placeholder="Price ₹"
               />
               <button onClick={handleMobileAdd} className="p-2.5 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
                 <Check size={20} strokeWidth={2.5} />
               </button>
-              <button onClick={() => { setMobileAdding(false); setMobileNewName(""); setMobileNewPrice(""); }} className="p-2.5 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+              <button onClick={() => { setMobileAdding(false); setMobileNewName(""); setMobileNewPriceNeg(""); setMobileNewPricePos(""); }} className="p-2.5 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors">
                 <X size={20} strokeWidth={2.5} />
               </button>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1 flex-1">
+                <span className="text-small font-bold text-th-muted shrink-0">−₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={mobileNewPriceNeg}
+                  onChange={(e) => setMobileNewPriceNeg(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); }}
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                  placeholder="Neg price"
+                />
+              </div>
+              <div className="flex items-center gap-1 flex-1">
+                <span className="text-small font-bold text-th-muted shrink-0">+₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={mobileNewPricePos}
+                  onChange={(e) => setMobileNewPricePos(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleMobileAdd(); }}
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                  placeholder="Pos price"
+                />
+              </div>
             </div>
           </div>
         ) : (
@@ -200,7 +221,7 @@ export default function UpdateStock() {
               );
             })}
             <button
-              onClick={() => { setMobileAdding(true); setMobileNewName(""); setMobileNewPrice(""); }}
+              onClick={() => { setMobileAdding(true); setMobileNewName(""); setMobileNewPriceNeg(""); setMobileNewPricePos(""); }}
               className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-w-[96px] rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
             >
               <Plus size={20} className="text-primary-500" />

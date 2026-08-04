@@ -282,15 +282,21 @@ html {
   }
 
   .nav-link {
-    @apply relative flex flex-col items-center justify-center gap-0.5 px-2 py-1 transition-all duration-200;
+    @apply relative flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-300 ease-out;
+  }
+  .nav-link:active {
+    transform: scale(0.9);
   }
 
   .nav-link-icon {
-    @apply w-6 h-6 flex items-center justify-center transition-all duration-200;
+    @apply w-7 h-7 flex items-center justify-center transition-all duration-300 ease-out;
+  }
+  .nav-link.active .nav-link-icon {
+    transform: translateY(-2px) scale(1.15);
   }
 
   .nav-link-label {
-    @apply text-micro font-medium transition-all duration-200;
+    @apply text-xs font-semibold transition-all duration-300 ease-out;
   }
 }
 

@@ -405,7 +405,8 @@ export default function Withdrawals() {
                         <span className="w-8 text-center text-body-bold text-th-text">{it.quantity}</span>
                         <button
                           onClick={() => changeEditQty(idx, 1)}
-                          className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all"
+                          disabled={it.quantity >= stock}
+                          className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
                         >
                           <Plus size={14} strokeWidth={2.5} />
                         </button>
@@ -431,7 +432,6 @@ export default function Withdrawals() {
                           <option key={m._id} value={m.name}>{m.name}</option>
                         ))}
                       </select>
-                      <span className="text-badge text-th-muted whitespace-nowrap shrink-0">Stock: {stock}</span>
                     </div>
                   </div>
                 );

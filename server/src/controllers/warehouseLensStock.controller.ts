@@ -13,7 +13,7 @@ export async function getById(req: Request, res: Response) {
 }
 
 export async function create(req: Request, res: Response) {
-  const { coating, price } = req.body;
+  const { coating, price, priceNeg, pricePos } = req.body;
   if (!coating || typeof coating !== "string" || !coating.trim()) {
     res.status(400).json({ success: false, message: "Coating name is required" });
     return;
@@ -26,12 +26,16 @@ export async function create(req: Request, res: Response) {
       return;
     }
   }
-  const data = await warehouseLensStockService.createLensStock(coating.trim(), parsedPrice);
+  const parsedPriceNeg = parseOptionalPrice(priceNeg, res);
+  if (parsedPriceNeg === null) return;
+  const parsedPricePos = parseOptionalPrice(pricePos, res);
+  if (parsedPricePos === null) return;
+  const data = await warehouseLensStockService.createLensStock(coating.trim(), parsedPrice, parsedPriceNeg, parsedPricePos);
   sendCreated(res, data);
 }
 
 export async function rename(req: Request, res: Response) {
-  const { coating, price } = req.body;
+  const { coating, price, priceNeg, pricePos } = req.body;
   if (!coating || typeof coating !== "string" || !coating.trim()) {
     res.status(400).json({ success: false, message: "Coating name is required" });
     return;
@@ -44,8 +48,22 @@ export async function rename(req: Request, res: Response) {
       return;
     }
   }
-  const data = await warehouseLensStockService.renameLensStock(req.params.id, coating.trim(), parsedPrice);
+  const parsedPriceNeg = parseOptionalPrice(priceNeg, res);
+  if (parsedPriceNeg === null) return;
+  const parsedPricePos = parseOptionalPrice(pricePos, res);
+  if (parsedPricePos === null) return;
+  const data = await warehouseLensStockService.renameLensStock(req.params.id, coating.trim(), parsedPrice, parsedPriceNeg, parsedPricePos);
   sendSuccess(res, data);
+}
+
+function parseOptionalPrice(value: unknown, res: Response): number | null {
+  if (value === undefined) return undefined as unknown as number;
+  const n = Number(value);
+  if (Number.isNaN(n) || n < 0) {
+    res.status(400).json({ success: false, message: "Price must be a non-negative number" });
+    return null;
+  }
+  return n;
 }
 
 export async function remove(req: Request, res: Response) {

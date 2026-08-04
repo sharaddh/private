@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
@@ -7,7 +6,7 @@ import type { LensStockItem } from "../types/lensStock";
 import { priceForPower } from "../types/lensStock";
 import type { FogMark } from "../types/fogMark";
 import { formatCurrency, formatLensPower, powerTextClass } from "../utils/helpers";
-import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags, History } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags } from "lucide-react";
 
 export default function Cart() {
   const { items, count, updateQty, removeItem, clearCart, withdraw, setFogMark } = useCart();
@@ -52,7 +51,11 @@ export default function Cart() {
     return stockMap[`${coating}::${lensType}::${powerKey}`] || 0;
   }
 
-  const totalPrice = items.reduce((sum, i) => sum + (i.price ?? priceForPower(priceMap[i.coating], i.powerKey) ?? 0) * i.quantity, 0);
+  function getItemPrice(item: { coating: string; powerKey: string; price?: number }) {
+    return priceForPower(priceMap[item.coating], item.powerKey) || item.price || 0;
+  }
+
+  const totalPrice = items.reduce((sum, i) => sum + getItemPrice(i) * i.quantity, 0);
 
   async function handleWithdraw() {
     if (!confirm("Withdraw all items? This will reduce lens stock and save to your history.")) return;
@@ -92,12 +95,6 @@ export default function Cart() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            to="/withdrawals"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-small font-bold bg-th-elevated text-th-text active:scale-95 transition-all"
-          >
-            <History size={16} /> My Withdrawals
-          </Link>
           {items.length > 0 && (
             <button
               onClick={clearCart}
@@ -138,14 +135,11 @@ export default function Cart() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-body-bold text-th-text truncate">{item.coating}</span>
                           <span className="px-2 py-0.5 rounded text-small font-bold bg-th-elevated text-th-secondary">{lensLabel}</span>
+                          <span className={`text-small-bold ${powerTextClass(item.powerKey)}`}>{formatLensPower(item.powerKey)}</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 min-w-0">
-                          <span className={`text-small-bold ${powerTextClass(item.powerKey)} truncate min-w-0`}>{formatLensPower(item.powerKey)}</span>
-                          {stock > 0 && (
-                            <span className={`text-small font-medium ${atMax ? "text-negative" : "text-th-muted"}`}>
-                              stock: {stock}
-                            </span>
-                          )}
+                        <div className="mt-1">
+                          <span className="text-small text-th-muted">{formatCurrency(getItemPrice(item))} × {item.quantity}</span>
+                          <span className="text-small-bold text-primary-500 ml-2">{formatCurrency(getItemPrice(item) * item.quantity)}</span>
                         </div>
                       </div>
                     </div>

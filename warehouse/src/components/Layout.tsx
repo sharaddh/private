@@ -173,14 +173,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-16 border-t border-th-border flex items-center justify-around z-10" style={{ background: "color-mix(in srgb, var(--bg-base) 95%, var(--bg-surface))" }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-[72px] border-t border-th-border flex items-center justify-around z-10 px-1" style={{ background: "color-mix(in srgb, var(--bg-base) 95%, var(--bg-surface))" }}>
           {mobileNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
-              <Link key={item.path} to={item.path} className="nav-link">
+              <Link key={item.path} to={item.path} className={`nav-link ${active ? "active" : ""}`}>
                 <div className="nav-link-icon relative" {...(item.path === "/cart" ? { "data-cart-icon": "" } : {})}>
-                  <Icon size={20} className={active ? "text-primary-500" : "text-th-muted"} />
+                  <Icon size={24} className={active ? "text-primary-500 drop-shadow-[0_0_6px_rgba(var(--primary-500-rgb,59,130,246),0.5)]" : "text-th-muted"} />
                   {item.path === "/cart" && <MobileCartBadge />}
                 </div>
                 <span className={`nav-link-label ${active ? "text-primary-500" : "text-th-muted"}`}>
