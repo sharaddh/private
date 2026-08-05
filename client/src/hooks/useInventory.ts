@@ -14,7 +14,14 @@ export function useInventory(params?: PaginationParams & { category?: string; lo
     { cacheKey: `/api/inventory${qs}` }
   );
 
-  return { items: data?.data ?? [], total: data?.total ?? 0, pages: data?.pages ?? 0, loading, error, refetch };
+  return {
+    items: Array.isArray(data) ? data : data?.data ?? [],
+    total: data && !Array.isArray(data) ? data.total ?? 0 : 0,
+    pages: data && !Array.isArray(data) ? data.pages ?? 0 : 0,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useInventoryItem(id: string) {

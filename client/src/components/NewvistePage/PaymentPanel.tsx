@@ -4,11 +4,12 @@ import {
   Banknote, Smartphone, CreditCard as CardIcon, Building2, Shield, CalendarClock
 } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
+import { toDateKey } from "../../utils/date";
 
 const getDateFromOffset = (daysOffset: number) => {
   const date = new Date();
   date.setDate(date.getDate() + daysOffset);
-  return date.toISOString().split("T")[0];
+  return toDateKey(date);
 };
 
 interface Props {

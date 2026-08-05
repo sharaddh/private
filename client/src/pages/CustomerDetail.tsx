@@ -11,6 +11,7 @@ import {
   ChevronRight, Clock, MapPinned, IdCard, Wallet, TrendingUp, Stethoscope,
 } from "lucide-react";
 import { formatEyeRx, hasEyeData, compactRx } from "../utils/rx";
+import { toDateKey } from "../utils/date";
 import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import { whatsappService } from "../services";
 
@@ -48,10 +49,10 @@ function findLinkedPrescription(prescriptions: any[], visit: any) {
   if (exactMatch) return exactMatch;
   const dataPrescriptions = prescriptions.filter((p: any) => hasPrescriptionData(p));
   if (dataPrescriptions.length === 0) return null;
-  const visitDate = visit?.visitDate ? new Date(visit.visitDate).toISOString().split("T")[0] : null;
+  const visitDate = visit?.visitDate ? toDateKey(visit.visitDate) : null;
   const dateMatch = visitDate
     ? dataPrescriptions.find((p: any) => {
-        const createdDate = p.createdAt ? new Date(p.createdAt).toISOString().split("T")[0] : null;
+        const createdDate = p.createdAt ? toDateKey(p.createdAt) : null;
         return createdDate === visitDate;
       })
     : null;
@@ -221,7 +222,7 @@ export default function CustomerDetail() {
 
   function openVisitDetail(v: any) {
     setSelectedVisit(v);
-    setEditVisitForm({ visitDate: v.visitDate?.split("T")[0] || "", visitType: v.visitType || "new", doctorName: v.doctorName || "", remarks: v.remarks || "" });
+    setEditVisitForm({ visitDate: v.visitDate ? toDateKey(v.visitDate) : "", visitType: v.visitType || "new", doctorName: v.doctorName || "", remarks: v.remarks || "" });
     setEditingVisit(false);
     setEditingBillAdvance(false);
     setEditingRx(false);
@@ -318,9 +319,9 @@ export default function CustomerDetail() {
       lensIndex: o?.lensIndex || "", lensPrice: o?.lensPrice ?? "",
       coating: o?.coating || "", coatingPrice: o?.coatingPrice ?? "",
       accessories: o?.accessories?.join(", ") || "",
-      quantity: o?.quantity ?? 1, deliveryDate: o?.deliveryDate?.split("T")[0] || "",
+      quantity: o?.quantity ?? 1, deliveryDate: o?.deliveryDate ? toDateKey(o.deliveryDate) : "",
       status: o?.status || "Draft",
-      labAssigned: o?.labAssigned || "", labExpectedDate: o?.labExpectedDate?.split("T")[0] || "", labRemarks: o?.labRemarks || "",
+      labAssigned: o?.labAssigned || "", labExpectedDate: o?.labExpectedDate ? toDateKey(o.labExpectedDate) : "", labRemarks: o?.labRemarks || "",
     });
     setEditingOrder(true);
   }

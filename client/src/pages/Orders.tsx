@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { useTranslate } from "../context/TranslateContext";
 import PageSkeleton from "../components/PageSkeleton";
 import ShineCard from "../components/ShineCard";
-import { Eye, Clock, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check } from "lucide-react";
+import { Eye, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check, Clock, CalendarDays } from "lucide-react";
 import DateRangePicker from "../components/DateRangePicker";
 import { orderService } from "../services";
+import { compactRx } from "../utils/rx";
 import type { Order, OrderStatus, Customer } from "../types";
 
 const STATUS_STEPS: readonly OrderStatus[] = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"] as const;
@@ -67,6 +69,13 @@ const STATUS_THEME: Record<OrderStatus, { dot: string; badge: string }> = {
   Cancelled: { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
 };
 
+const LENS_STATUS: Record<string, { dot: string; badge: string }> = {
+  pending: { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
+  stock:   { dot: "bg-[#1ed760]", badge: "bg-[#1ed760]/10 text-[#1ed760]" },
+  buy:     { dot: "bg-[#509bf5]", badge: "bg-[#509bf5]/10 text-[#82b6ff]" },
+  order:   { dot: "bg-[#af2896]", badge: "bg-[#af2896]/10 text-[#e854c7]" },
+};
+
 function todayStr(): string {
   const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -74,6 +83,7 @@ function todayStr(): string {
 
 export default function Orders() {
   const toast = useToast();
+  const navigate = useNavigate();
   const { isStaff } = useAuth();
   const { uiT } = useTranslate();
   const [filter, setFilter] = useState<string>("all");
@@ -255,80 +265,146 @@ export default function Orders() {
           {filteredList.map((o) => {
             const theme = STATUS_THEME[o.status] || STATUS_THEME.Draft;
             const pending = o.billInfo?.pendingAmount || 0;
+            const total = o.billInfo?.totalAmount || 0;
+            const qty = o.quantity || 1;
+
+            let dlBadge = "";
+            let dlOverdue = false;
+            if (o.deliveryDate) {
+              const d = new Date(o.deliveryDate);
+              const today = new Date(todayStr());
+              const diff = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              if (diff < 0) { dlOverdue = true; dlBadge = `${Math.abs(diff)}d ${uiT("late", "पार")}`; }
+              else if (diff === 0) dlBadge = uiT("Today", "आज");
+              else if (diff === 1) dlBadge = uiT("Tomorrow", "कल");
+            }
+
+            const rx = o.prescription;
+            const rRx = rx?.rightEye ? compactRx(rx.rightEye.dv as Record<string, unknown> | undefined, rx.rightEye.nv as Record<string, unknown> | undefined) : null;
+            const lRx = rx?.leftEye ? compactRx(rx.leftEye.dv as Record<string, unknown> | undefined, rx.leftEye.nv as Record<string, unknown> | undefined) : null;
+            const rStatus = o.rightLensStatus || "pending";
+            const lStatus = o.leftLensStatus || "pending";
+
+            const viewOrder = () => {
+              const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
+              navigate(`/customers/${cid}?visitId=${o.visitId || ""}`);
+            };
+
+            const goPickup = () => {
+              navigate(`/pickup?orderId=${o._id}`);
+            };
+
             return (
               <ShineCard key={o._id}
-                className="group bg-th-surface rounded-lg overflow-hidden hover:bg-th-hover shadow-lg">
-                {/* Top section */}
-                <div className="p-5 pb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${theme.badge}`}>
-                        {customerName(o).charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-th-text truncate leading-tight">{customerName(o)}</p>
-                        {customerMobile(o) && <p className="text-[15px] text-th-secondary truncate">{customerMobile(o)}</p>}
-                      </div>
+                className="group bg-th-surface rounded-2xl overflow-hidden hover:bg-th-hover shadow-lg border border-th-border transition-all">
+                <div className="p-4 pb-3">
+                  {/* Header */}
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${theme.badge}`}>
+                      {customerName(o).charAt(0)?.toUpperCase() || "?"}
                     </div>
-                    <span className={`text-[14px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${theme.badge} flex-shrink-0`}>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-bold text-th-text truncate leading-tight">{customerName(o)}</p>
+                      {customerMobile(o) && <p className="text-[13px] text-th-secondary truncate">{customerMobile(o)}</p>}
+                    </div>
+                    <span className={`text-[12px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${theme.badge} flex-shrink-0`}>
                       {o.status}
                     </span>
                   </div>
+
+                  {/* Prescription + lens status */}
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="bg-th-elevated rounded-lg px-3 py-1.5">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#82b6ff]">{uiT("R", "दाएं")}</span>
+                        {rStatus !== "pending" && (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).dot}`} /> {rStatus}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-th-text truncate">{rRx || uiT("plain", "plain")}</p>
+                    </div>
+                    <div className="bg-th-elevated rounded-lg px-3 py-1.5">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#ff6b8a]">{uiT("L", "बाएं")}</span>
+                        {lStatus !== "pending" && (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).dot}`} /> {lStatus}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-th-text truncate">{lRx || uiT("plain", "plain")}</p>
+                    </div>
+                  </div>
+
                   {/* Order items */}
-                  <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  <div className="flex flex-wrap gap-1 mb-2.5">
                     {o.frameBrand ? (
-                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
-                        <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
+                      <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
+                        <Glasses size={12} className="text-th-secondary flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
                       </span>
                     ) : o.frame ? (
-                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
-                        <Glasses size={11} className="text-th-secondary flex-shrink-0" /> {o.frame}
+                      <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
+                        <Glasses size={12} className="text-th-secondary flex-shrink-0" /> {o.frame}
                       </span>
                     ) : null}
                     {o.lensBrand && (
-                      <span className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
-                        <Eye size={11} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lensType ? ` \u00B7 ${o.lensType}` : ""}
+                      <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
+                        <Eye size={12} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lensType ? ` \u00B7 ${o.lensType}` : ""}
                       </span>
                     )}
                     {(o.accessories || []).map((a: string, i: number) => {
                       const lower = a.toLowerCase();
-                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={11} className="text-[#1ed760] flex-shrink-0" />
-                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={11} className="text-[#e8115b] flex-shrink-0" />
-                        : <Package size={11} className="text-th-secondary flex-shrink-0" />;
+                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={12} className="text-[#1ed760] flex-shrink-0" />
+                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={12} className="text-[#e8115b] flex-shrink-0" />
+                        : <Package size={12} className="text-th-secondary flex-shrink-0" />;
                       return (
-                        <span key={a || i} className="inline-flex items-center gap-1 text-[15px] bg-th-elevated px-2 py-0.5 rounded-sm text-th-secondary font-medium truncate max-w-full">
+                        <span key={a || i} className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
                           {accIcon} {a}
                         </span>
                       );
                     })}
                   </div>
-                  {/* Delivery + Amount */}
-                  <div className="flex items-center justify-between text-[15px]">
+
+                  {/* Meta */}
+                  <div className="flex items-center gap-1.5 flex-wrap text-[13px] text-th-secondary">
                     {o.deliveryDate ? (
-                      <span className="flex items-center gap-1 text-th-secondary">
-                        <Clock size={11} /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      <span className={`inline-flex items-center gap-1 ${dlOverdue ? "text-[#e8115b] font-semibold" : ""}`}>
+                        <Clock size={12} className="flex-shrink-0" /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        {dlBadge && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${dlOverdue ? "bg-[#e8115b]/10 text-[#e8115b]" : "bg-[#1ed760]/10 text-[#1ed760]"}`}>
+                            {dlBadge}
+                          </span>
+                        )}
                       </span>
                     ) : (
-                      <span />
+                      <span className="inline-flex items-center gap-1"><Clock size={12} /> {"\u2014"}</span>
                     )}
-                    {(o.billInfo?.totalAmount ?? 0) > 0 && (
-                      <span className="font-bold text-th-text tracking-tight">
-                        \u20B9{(o.billInfo?.totalAmount ?? 0).toLocaleString()}
-                        {pending > 0 && <span className="text-[14px] text-[#e8115b] font-medium ml-1">({pending})</span>}
+                    <span className="text-th-muted">{"\u00B7"}</span>
+                    <span className="inline-flex items-center gap-1"><CalendarDays size={12} /> {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "\u2014"}</span>
+                    <span className="text-th-muted">{"\u00B7"}</span>
+                    <span>{qty} {uiT("pair", "जोड़ी")}</span>
+                    {pending > 0 ? (
+                      <span className="ml-auto inline-flex items-center gap-1 text-[13px] font-bold text-[#e8115b] bg-[#e8115b]/10 px-1.5 py-0.5 rounded">
+                        {uiT("Due", "बकाया")} ₹{pending.toLocaleString()}
                       </span>
-                    )}
+                    ) : total > 0 ? (
+                      <span className="ml-auto text-[14px] font-bold text-th-text">₹{total.toLocaleString()}</span>
+                    ) : null}
                   </div>
                 </div>
+
                 {/* Progress bar */}
                 {VALID_NEXT[o.status] && (
-                  <div className="px-5 pb-2">
+                  <div className="px-4 pb-2">
                     <DotProgress status={o.status} forwardedCount={o.forwardedCount} quantity={o.quantity} />
                   </div>
                 )}
                 {/* Partial progress indicator */}
                 {(o.forwardedCount || 0) > 0 && (o.forwardedCount || 0) < (o.quantity || 1) && (
-                  <div className="px-5 pb-2">
-                    <span className="text-[15px] font-medium text-[#e8115b] bg-[#e8115b]/10 px-2.5 py-1 rounded-lg">
+                  <div className="px-4 pb-2">
+                    <span className="text-[13px] font-medium text-[#e8115b] bg-[#e8115b]/10 px-2 py-0.5 rounded-lg">
                       {o.forwardedCount} of {o.quantity} pair(s) advanced to {VALID_NEXT[o.status] || "next"}
                     </span>
                   </div>
@@ -336,10 +412,7 @@ export default function Orders() {
                 {/* Actions */}
                 <div className="px-4 pb-4 pt-0">
                   <div className="flex items-center gap-2 pt-3 border-t border-th-hover">
-                    <button type="button" onClick={() => {
-                      const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
-                      window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
-                    }}
+                    <button type="button" onClick={viewOrder}
                       aria-label={`View order for ${customerName(o)}`}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-black bg-[#1ed760] hover:bg-[#1fdf64] active:scale-95 transition-all duration-150">
                       <Eye size={16} /> View
@@ -352,11 +425,8 @@ export default function Orders() {
                         {VALID_NEXT[o.status]}
                       </button>
                     ) : (
-                      <button type="button" onClick={() => {
-                        const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
-                        window.open(`/customers/${cid}?visitId=${o.visitId || ""}`, "_blank");
-                      }}
-                        aria-label={`Open customer page for ${customerName(o)}`}
+                      <button type="button" onClick={o.status === "Ready" ? goPickup : viewOrder}
+                        aria-label={o.status === "Ready" ? `Open pickup for ${customerName(o)}` : `Open customer page for ${customerName(o)}`}
                         className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-th-secondary bg-th-elevated hover:bg-th-hover active:scale-95 transition-all duration-150">
                         <ArrowUpRight size={16} />
                       </button>

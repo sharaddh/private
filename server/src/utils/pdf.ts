@@ -1,6 +1,7 @@
 import PDFKit from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { formatISTDate } from "./date";
 
 interface PdfBillItem {
   description?: string;
@@ -95,7 +96,7 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   doc.text("DATE", margin + 75, y);
   doc.font("Helvetica").fillColor("#111827");
   doc.fontSize(11);
-  doc.text(bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—", margin + 75, y + 5);
+  doc.text(bill.createdAt ? formatISTDate(bill.createdAt) : "—", margin + 75, y + 5);
 
   // Customer details (right column)
   const rightX = pageWidth / 2 + 10;

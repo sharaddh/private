@@ -14,6 +14,7 @@ router.get("/lens-stock", authenticate, asyncHandler(warehouseAggController.list
 
 // Warehouse lens stock CRUD
 router.post("/lens-stock", authenticate, asyncHandler(warehouseLensStockController.create));
+router.get("/lens-stock/list", authenticate, asyncHandler(warehouseLensStockController.list));
 router.get("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.getById));
 router.put("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.rename));
 router.delete("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.remove));

@@ -12,6 +12,7 @@ import { AppError } from "../middleware/errorHandler";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
 import { logger } from "../utils/logger";
+import { decrementStockForOrder, assertStockAvailable } from "./inventory.service";
 
 interface TransactionInput {
   customerId?: string;
@@ -58,6 +59,10 @@ export async function executeTransaction(
 ): Promise<Record<string, unknown>> {
   return withTransaction(async (session) => {
     const result: Record<string, unknown> = {};
+
+    if (body.order) {
+      await assertStockAvailable(body.order as { frame?: string; lens?: string; accessories?: string[]; quantity?: number }, session);
+    }
 
     let customer: InstanceType<typeof Customer> | null = null;
     if (body.customerId) {
@@ -113,6 +118,7 @@ export async function executeTransaction(
         ...body.order,
       });
       await order.save({ session });
+      await decrementStockForOrder(order, session);
       result.order = order;
     }
 

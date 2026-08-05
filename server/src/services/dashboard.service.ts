@@ -7,6 +7,16 @@ import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
+import {
+  BUSINESS_TIMEZONE,
+  istDateKey,
+  istStartOfDay,
+  istEndOfDay,
+  shiftDateKey,
+  istStartOfMonth,
+  istEndOfMonth,
+  istDayOfWeek,
+} from "../utils/date";
 
 const PAYMENT_MODE_MAP: Record<string, string> = {
   "नकद": "Cash",
@@ -21,30 +31,21 @@ function normalizePaymentMode(mode: string): string {
 
 function getDayRange(date?: Date): { start: Date; end: Date } {
   const d = date || new Date();
-  const start = new Date(d);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(d);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
+  const key = istDateKey(d);
+  return { start: istStartOfDay(key), end: istEndOfDay(key) };
 }
 
 function getWeekRange(): { start: Date; end: Date } {
   const now = new Date();
-  const start = new Date(now);
-  start.setDate(now.getDate() - now.getDay());
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
+  const todayKey = istDateKey(now);
+  const startKey = shiftDateKey(todayKey, -istDayOfWeek(now));
+  return { start: istStartOfDay(startKey), end: istEndOfDay(todayKey) };
 }
 
 function getMonthRange(): { start: Date; end: Date } {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
+  const todayKey = istDateKey(now);
+  return { start: istStartOfMonth(todayKey), end: istEndOfDay(todayKey) };
 }
 
 function calcTrend(current: number, previous: number): { value: number; direction: "up" | "down" | "flat" } {
@@ -61,18 +62,14 @@ export async function getStats() {
   const { start: weekStart, end: weekEnd } = getWeekRange();
   const { start: monthStart, end: monthEnd } = getMonthRange();
 
-  const prevDay = new Date(dayStart);
-  prevDay.setDate(prevDay.getDate() - 1);
-  const { start: prevDayStart, end: prevDayEnd } = getDayRange(prevDay);
+  const prevDayKey = shiftDateKey(istDateKey(dayStart), -1);
+  const { start: prevDayStart, end: prevDayEnd } = getDayRange(istStartOfDay(prevDayKey));
 
-  const thirtyDaysAgo = new Date(dayStart);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  const thirtyDaysAgoKey = shiftDateKey(istDateKey(dayStart), -29);
+  const thirtyDaysAgo = istStartOfDay(thirtyDaysAgoKey);
 
-  const prevMonthStart = new Date(monthStart);
-  prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
-  const prevMonthEnd = new Date(monthStart);
-  prevMonthEnd.setDate(0);
-  prevMonthEnd.setHours(23, 59, 59, 999);
+  const prevMonthStart = istStartOfMonth(shiftDateKey(istDateKey(monthStart), -1));
+  const prevMonthEnd = istEndOfMonth(istDateKey(monthStart));
 
   const [
     customerCount,
@@ -142,7 +139,7 @@ export async function getStats() {
     Inventory.countDocuments({ quantity: { $lte: 5 } }),
     Bill.find({ status: "Active", pendingAmount: { $gt: 0 } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
     Customer.find().sort({ createdAt: -1 }).limit(5).select("name mobile totalSpent totalVisits").lean(),
-    Order.find().sort({ createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
+    Order.find({ createdAt: { $gte: dayStart, $lte: dayEnd } }).sort({ createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
     Delivery.find({ status: { $in: ["Pending", "In Transit"] } }).sort({ expectedDeliveryDate: 1 }).limit(10).populate("customerId", "name mobile").lean(),
     Bill.aggregate([
       { $match: { createdAt: { $gte: prevDayStart, $lte: prevDayEnd }, status: "Active" } },
@@ -158,7 +155,7 @@ export async function getStats() {
     ]),
     Bill.aggregate([
       { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd }, status: "Active" } },
-      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: BUSINESS_TIMEZONE } }, total: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
     Payment.aggregate([
@@ -185,22 +182,22 @@ export async function getStats() {
     Order.find({ status: { $in: ["Draft", "Ordered", "In Lab"] } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
     Order.aggregate([
       { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
-      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: BUSINESS_TIMEZONE } }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
     Payment.aggregate([
       { $match: { paymentDate: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
-      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate", timezone: BUSINESS_TIMEZONE } }, count: { $sum: 1 }, total: { $sum: "$amount" } } },
       { $sort: { _id: 1 } },
     ]),
     Payment.aggregate([
       { $match: { paymentDate: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
-      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate" } }, total: { $sum: "$amount" } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$paymentDate", timezone: BUSINESS_TIMEZONE } }, total: { $sum: "$amount" } } },
       { $sort: { _id: 1 } },
     ]),
     Order.aggregate([
       { $match: { createdAt: { $gte: thirtyDaysAgo, $lte: dayEnd } } },
-      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: BUSINESS_TIMEZONE } }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
     Inventory.aggregate([

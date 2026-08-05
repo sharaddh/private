@@ -21,6 +21,7 @@ import PrescriptionPanel from "../components/NewvistePage/PrescriptionPanel";
 import OrderItems from "../components/NewvistePage/OrderItems";
 import BillingPanel from "../components/NewvistePage/BillingPanel";
 import { formatRxBrief, cleanEyeSet } from "../utils/rx";
+import { todayStr, toDateKey } from "../utils/date";
 import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import PaymentPanel from "../components/NewvistePage/PaymentPanel";
 import ConfirmationDashboard from "../components/NewvistePage/ConfirmationDashboard";
@@ -97,7 +98,7 @@ export default function Workspace() {
   const [step, setStep] = useState<string>("service");
 
   const [visitType, setVisitType] = useState<string>("new");
-  const [visitDate, setVisitDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [visitDate, setVisitDate] = useState<string>(todayStr());
   const [visitDoctor, setVisitDoctor] = useState<string>("");
   const [visitRemarks, setVisitRemarks] = useState<string>("");
 
@@ -304,7 +305,7 @@ export default function Workspace() {
     ]);
     if (visitsRes.success && visitsRes.data && visitsRes.data.length > 0) {
       const last = visitsRes.data[0];
-      setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : new Date().toISOString().split("T")[0]);
+      setVisitDate(last.visitDate ? toDateKey(last.visitDate) : todayStr());
       setVisitDoctor(last.doctorName || "");
       setVisitRemarks(last.notes || "");
     }
@@ -397,6 +398,7 @@ export default function Workspace() {
       if (visitType !== "service" && visitType !== "other") {
         const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
         const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
+        const frameBillItem = billItems.find((b) => b.description.trim().startsWith("Frame:"));
         payload.order = {
           frame: firstFrame.sku || undefined, frameBrand: firstFrame.brand || undefined,
           frameModel: firstFrame.model || undefined, frameColor: firstFrame.color || undefined,
@@ -406,6 +408,7 @@ export default function Workspace() {
           lensPrice: firstLens.price || 0,
           coating: firstLens.coating || undefined,
           accessories: orderAccessories.map((a) => a.name).filter(Boolean),
+          quantity: frameBillItem?.qty || 1,
           deliveryDate: deliveryDate || undefined,
         };
         if (visitType === "frame_change") {
@@ -504,7 +507,7 @@ export default function Workspace() {
     setPhoneSearch(""); setSearchResults([]); setSearched(false);
     setCustomerForm({ name: "", mobile: "", email: "", address: "", city: "", age: undefined, gender: "" });
     setStep("service"); setVisitType("new");
-    setVisitDate(new Date().toISOString().split("T")[0]); setVisitDoctor(""); setVisitRemarks("");
+    setVisitDate(todayStr()); setVisitDoctor(""); setVisitRemarks("");
     setUsePrescription(false);
     setPrescription({ rightEye: { dv: {}, nv: {}, pc: {} }, leftEye: { dv: {}, nv: {}, pc: {} }, pd: "", notes: "", problems: "" });
     setOrderFrames([]); setOrderLenses([]); setOrderAccessories([]);

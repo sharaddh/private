@@ -276,6 +276,23 @@ export interface InventoryFormData {
   addPower: string;
 }
 
+// ─── Lens Stock ───────────────────────────────────────────────────────────────
+
+export type LensType = "sph" | "cyl" | "compound";
+
+export type LensStockScope = "shop" | "warehouse";
+
+export interface LensStockItem {
+  _id: string;
+  coating: string;
+  price?: number;
+  priceNeg?: number;
+  pricePos?: number;
+  quantities: Record<LensType, Record<string, number>>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Delivery ────────────────────────────────────────────────────────────────
 
 export type DeliveryStatus = "Pending" | "In Transit" | "Ready" | "Delivered" | "Cancelled";

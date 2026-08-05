@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslate } from "../context/TranslateContext";
 import type { Customer, Bill, InventoryItem } from "../types";
+import { toDateKey, todayStr } from "../utils/date";
 
 interface RevenueData {
   totalRevenue: number;
@@ -50,7 +51,7 @@ function getDateRange(presetDays: number): { start: string; end: string } {
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - presetDays);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return { start: toDateKey(start), end: toDateKey(end) };
 }
 
 export default function Reports() {
@@ -134,7 +135,7 @@ export default function Reports() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reports-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `reports-${activeTab}-${todayStr()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -152,7 +153,7 @@ export default function Reports() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reports-pending-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `reports-pending-${todayStr()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

@@ -8,6 +8,7 @@ import PageSkeleton from "../../components/PageSkeleton";
 import Modal from "../../components/Modal";
 import CameraScanner from "../../components/CameraScanner";
 import { cleanEyeSet } from "../../utils/rx";
+import { todayStr } from "../../utils/date";
 import { normalizeWhatsAppPhone } from "../../utils/whatsapp";
 import { whatsappService } from "../../services";
 import {
@@ -55,7 +56,7 @@ export default function CustomerNewVisit() {
   const [step, setStep] = useState("service");
 
   const [visitType, setVisitType] = useState("new");
-  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
+  const [visitDate, setVisitDate] = useState(todayStr());
   const [visitDoctor, setVisitDoctor] = useState("");
   const [visitRemarks, setVisitRemarks] = useState("");
 
@@ -298,6 +299,7 @@ export default function CustomerNewVisit() {
       if (visitType !== "service" && visitType !== "other") {
         const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
         const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
+        const frameBillItem = billItems.find((b) => b.description.trim().startsWith("Frame:"));
         payload.order = {
           frame: firstFrame.sku || undefined, frameBrand: firstFrame.brand || undefined,
           frameModel: firstFrame.model || undefined, frameColor: firstFrame.color || undefined,
@@ -307,6 +309,7 @@ export default function CustomerNewVisit() {
           lensPrice: firstLens.price || 0,
           coating: firstLens.coating || undefined,
           accessories: orderAccessories.map((a) => a.name).filter(Boolean),
+          quantity: frameBillItem?.qty || 1,
           deliveryDate: deliveryDate || undefined,
         };
         if (visitType === "frame_change") {

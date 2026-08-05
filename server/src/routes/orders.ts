@@ -15,6 +15,7 @@ import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
+import { formatISTDate, formatISTDateTime } from "../utils/date";
 import { VALID_TRANSITIONS } from "../types";
 import { createOrderSchema, updateOrderSchema, statusUpdateSchema, classifyOrderSchema, classifyEyeSchema, demandSendSchema, collectPaymentSchema } from "../validators/order.validator";
 import * as orderController from "../controllers/orderController";
@@ -99,7 +100,7 @@ router.patch("/:id/status", authenticate, validate(statusUpdateSchema, "body"), 
         const shop = settings?.shopName || "KMJ Optical";
         const items = [order.frame, order.lens, order.coating].filter(Boolean).join(", ");
         const deliveryDate = order.deliveryDate
-          ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
+          ? formatISTDate(order.deliveryDate)
           : "soon";
         const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order is ready for pickup! 🎉\n\n${items ? `Items: ${items}\n` : ""}Delivery Date: ${deliveryDate}\n\nPlease visit the store to collect your order.\nThank you! 🙏`;
         const readyPhone = normalizePhone(customer.mobile);
@@ -252,7 +253,7 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
 
     y = 38;
     doc.fontSize(8).font("Helvetica").fillColor("#64748b");
-    doc.text(`Date: ${new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}`, m, y);
+    doc.text(`Date: ${formatISTDateTime(new Date())}`, m, y);
     doc.text(`Items: ${entries.length}`, m + 220, y);
     doc.text(`KMJ Optical`, m + cw - 60, y);
 

@@ -4,8 +4,10 @@ import { Customer } from "../models/customer";
 import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
+import { Prescription } from "../models/prescription";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
+import { decrementStockForOrder, restoreStockForOrder, assertStockAvailable } from "./inventory.service";
 import {
   VALID_TRANSITIONS,
   VALID_CLASSIFICATIONS,
@@ -109,6 +111,10 @@ interface OrderResult {
   classification: string;
   rightLensStatus: string;
   leftLensStatus: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prescription?: Record<string, any> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  billInfo?: Record<string, any> | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -135,6 +141,8 @@ export async function createOrder(data: CreateOrderData): Promise<OrderResult> {
     throw new AppError(404, "Customer not found");
   }
 
+  await assertStockAvailable(data);
+
   const order = new Order({
     customerId: data.customerId,
     visitId: data.visitId,
@@ -158,6 +166,7 @@ export async function createOrder(data: CreateOrderData): Promise<OrderResult> {
   });
 
   await order.save();
+  await decrementStockForOrder(order);
   return order.toObject() as unknown as OrderResult;
 }
 
@@ -214,6 +223,7 @@ export async function deleteOrder(orderId: string): Promise<void> {
   if (!order) {
     throw new AppError(404, "Order not found");
   }
+  await restoreStockForOrder(order);
 }
 
 export async function getOrderById(orderId: string): Promise<OrderResult> {
@@ -235,7 +245,8 @@ export async function listOrders(
     filter.customerId = filters.customerId;
   }
   if (filters.status) {
-    filter.status = filters.status;
+    const statuses = String(filters.status).split(",").map((s) => s.trim()).filter(Boolean);
+    filter.status = statuses.length > 1 ? { $in: statuses } : statuses[0];
   }
 
   const dateField = filters.dateField || "createdAt";
@@ -258,7 +269,6 @@ export async function listOrders(
     cursor: filters.cursor,
   }) as unknown as PaginatedResult<OrderResult>;
 
-  // Batch-fetch bill per order via visitId (avoids N+1)
   const orderVisitIds: { orderId: string; visitId: string }[] = result.data
     .map((o: OrderResult) => {
       const oId = String((o as any)._id);
@@ -269,10 +279,19 @@ export async function listOrders(
 
   if (orderVisitIds.length > 0) {
     const uniqueVisitIds = [...new Set(orderVisitIds.map((v) => v.visitId))];
+
+    // Batch-fetch prescriptions per visit (avoids N+1)
+    const prescriptions = await Prescription.find({
+      visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    }).sort({ createdAt: -1 }).lean();
+    const rxByVisit = new Map(
+      prescriptions.map((p: any) => [String(p.visitId), p])
+    );
+
+    // Batch-fetch bill per order via visitId (avoids N+1)
     const bills = await Bill.find({
       visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
     }).sort({ createdAt: -1 }).lean();
-
     const billByVisit = new Map(
       bills.map((b: any) => [String(b.visitId), b])
     );
@@ -280,7 +299,8 @@ export async function listOrders(
     result.data = result.data.map((o: OrderResult) => {
       const vId = o.visitId ? String(o.visitId) : null;
       const billInfo = vId ? billByVisit.get(vId) || null : null;
-      return { ...o, billInfo } as unknown as OrderResult;
+      const prescription = vId ? rxByVisit.get(vId) || null : null;
+      return { ...o, billInfo, prescription } as unknown as OrderResult;
     });
   }
 
@@ -310,6 +330,7 @@ export async function updateOrderStatus(
   const currentForwarded = order.forwardedCount || 0;
   const newForwarded = currentForwarded + advQty;
 
+  const oldStatus = order.status;
   if (newForwarded >= qty) {
     order.status = statusData.status;
     order.forwardedCount = 0;
@@ -320,6 +341,14 @@ export async function updateOrderStatus(
     order.forwardedCount = newForwarded;
   }
   await order.save();
+
+  if (newForwarded >= qty) {
+    if (statusData.status === "Cancelled" && oldStatus !== "Cancelled") {
+      await restoreStockForOrder(order);
+    } else if (oldStatus === "Cancelled" && statusData.status !== "Cancelled") {
+      await decrementStockForOrder(order);
+    }
+  }
 
   const result: StatusUpdateResult = {
     order: order.toObject() as unknown as OrderResult,

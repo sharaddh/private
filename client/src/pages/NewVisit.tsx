@@ -5,6 +5,7 @@ import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Save, Camera, User, Ey
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import { cleanEyeSet } from "../utils/rx";
+import { todayStr, toDateKey } from "../utils/date";
 import { useTranslate } from "../context/TranslateContext";
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
 const VISIT_TYPES = [
@@ -34,7 +35,7 @@ export default function NewVisit() {
     name: "", mobile: "", email: "", address: "", city: "", age: undefined as number | undefined, gender: ""
   });
   const [visitType, setVisitType] = useState("new");
-  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
+  const [visitDate, setVisitDate] = useState(todayStr());
   const [visitDoctor, setVisitDoctor] = useState("");
   const [visitRemarks, setVisitRemarks] = useState("");
 
@@ -155,7 +156,7 @@ export default function NewVisit() {
       ]);
       if (visitsRes.success && visitsRes.data!.length > 0) {
         const last = visitsRes.data![0];
-        setVisitDate(last.visitDate ? last.visitDate.split("T")[0] : "");
+        setVisitDate(last.visitDate ? toDateKey(last.visitDate) : "");
         setVisitDoctor(last.doctorName || "");
         setVisitRemarks(last.remarks || "");
       }
@@ -172,7 +173,7 @@ export default function NewVisit() {
         const last = ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[])[0];
         setOrderFrames(last.frame ? [{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }] : []);
         setOrderLenses(last.lens ? [{ sku: last.lens || "", brand: last.lensBrand || "", features: last.lensType ? last.lensType.split(", ") : [], index: last.lensIndex || "", price: last.lensPrice || 0, coating: last.coating || "" }] : []);
-        setOrderDeliveryDate(last.deliveryDate ? last.deliveryDate.split("T")[0] : "");
+        setOrderDeliveryDate(last.deliveryDate ? toDateKey(last.deliveryDate) : "");
       }
     })();
   }

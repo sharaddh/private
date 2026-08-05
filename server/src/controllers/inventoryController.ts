@@ -8,8 +8,8 @@ export async function getStats(_req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const { search } = req.query;
-  const data = await inventoryService.listInventory({ search: search as string });
+  const { search, q } = req.query;
+  const data = await inventoryService.listInventory({ search: (search || q) as string });
   sendSuccess(res, data);
 }
 

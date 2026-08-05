@@ -4,6 +4,7 @@ export { billService } from "./bill.service";
 export { visitService } from "./visit.service";
 export { paymentService } from "./payment.service";
 export { inventoryService } from "./inventory.service";
+export { lensStockService } from "./lensStock.service";
 export { deliveryService } from "./delivery.service";
 export { dashboardService } from "./dashboard.service";
 export { settingsService } from "./settings.service";

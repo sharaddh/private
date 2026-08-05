@@ -16,6 +16,15 @@ export const createInventorySchema = z.object({
   sellingPrice: z.number().min(0).optional(),
   description: z.string().optional(),
   location: z.enum(VALID_LOCATIONS).optional(),
+  lensIndex: z.string().optional(),
+  lensCoating: z.string().optional(),
+  sphRight: z.string().optional(),
+  cylRight: z.string().optional(),
+  axisRight: z.string().optional(),
+  sphLeft: z.string().optional(),
+  cylLeft: z.string().optional(),
+  axisLeft: z.string().optional(),
+  addPower: z.string().optional(),
 });
 
 export const updateInventorySchema = z.object({
@@ -33,6 +42,15 @@ export const updateInventorySchema = z.object({
   inventoryType: z.enum(VALID_INVENTORY_TYPES).optional(),
   location: z.enum(VALID_LOCATIONS).optional(),
   sku: z.string().optional(),
+  lensIndex: z.string().optional(),
+  lensCoating: z.string().optional(),
+  sphRight: z.string().optional(),
+  cylRight: z.string().optional(),
+  axisRight: z.string().optional(),
+  sphLeft: z.string().optional(),
+  cylLeft: z.string().optional(),
+  axisLeft: z.string().optional(),
+  addPower: z.string().optional(),
 }).strict();
 
 export const stockAdjustSchema = z.object({

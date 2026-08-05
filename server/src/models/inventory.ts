@@ -4,7 +4,7 @@ import { withBranch } from "../utils/branchProxy";
 const InventorySchemaObj = new Schema(
   {
     sku: { type: String, index: true, unique: true },
-    category: { type: String, enum: ["Frame", "Lens", "Accessories"], default: "Frame" },
+    category: { type: String, enum: ["Specs", "Sunglasses", "Contact Lens", "Hearing Aid", "Solution", "Kit"], default: "Specs" },
     inventoryType: { type: String, enum: ["spectacles", "sunglasses", "lens", "bifocal", "progressive", "blue-cut", "photochromic", "accessory", "hearing-aid", "cleaner", "case", "other"], default: "spectacles" },
     brand: { type: String },
     model: { type: String },

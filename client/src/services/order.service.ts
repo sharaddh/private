@@ -7,7 +7,7 @@ class OrderService extends ApiService {
     super("/api/orders");
   }
 
-  async listFiltered(params: PaginationParams & DateRangeParams & { status?: string }): Promise<ApiResponse<PaginatedResponse<Order>>> {
+  async listFiltered(params: PaginationParams & DateRangeParams & { status?: string; dateField?: string }): Promise<ApiResponse<PaginatedResponse<Order>>> {
     const qs = buildQueryString(params);
     return api.get<PaginatedResponse<Order>>(`${this.basePath}${qs}`);
   }

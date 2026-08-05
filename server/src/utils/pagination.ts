@@ -1,4 +1,5 @@
 import { Query, Document } from "mongoose";
+import { istStartOfDay, istEndOfDay } from "./date";
 
 export interface PaginationOptions {
   page?: string;
@@ -80,12 +81,10 @@ export function parseDateRange(query: { startDate?: string; endDate?: string }):
   let end: Date | undefined;
 
   if (query.startDate) {
-    start = new Date(query.startDate);
-    start.setHours(0, 0, 0, 0);
+    start = istStartOfDay(query.startDate);
   }
   if (query.endDate) {
-    end = new Date(query.endDate);
-    end.setHours(23, 59, 59, 999);
+    end = istEndOfDay(query.endDate);
   }
 
   return { start, end };

@@ -1,10 +1,14 @@
 import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Customer } from "../models/customer";
-import { Order } from "../models/order";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
-import { AppError } from "../middleware/errorHandler";
+import {
+  BUSINESS_TIMEZONE,
+  istStartOfDay,
+  istEndOfDay,
+  istStartOfToday,
+} from "../utils/date";
 
 export async function getRevenueReport(start?: string, end?: string) {
   const match: Record<string, unknown> = {};
@@ -12,8 +16,8 @@ export async function getRevenueReport(start?: string, end?: string) {
 
   if (start || end) {
     const dateFilter: Record<string, Date> = {};
-    if (start) dateFilter.$gte = new Date(start);
-    if (end) dateFilter.$lte = new Date(end + "T23:59:59.999Z");
+    if (start) dateFilter.$gte = istStartOfDay(start);
+    if (end) dateFilter.$lte = istEndOfDay(end);
     match.createdAt = dateFilter;
     payMatch.paymentDate = { ...dateFilter };
   }
@@ -60,10 +64,10 @@ export async function getMonthlyReport() {
   const year = now.getFullYear();
 
   const monthlyRevenue = await Bill.aggregate([
-    { $match: { status: "Active", createdAt: { $gte: new Date(year, 0, 1), $lte: now } } },
+    { $match: { status: "Active", createdAt: { $gte: istStartOfDay(`${year}-01-01`), $lte: now } } },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: BUSINESS_TIMEZONE } },
         revenue: { $sum: "$totalAmount" },
         collected: { $sum: "$advancePaid" },
         pending: { $sum: "$pendingAmount" },
@@ -74,10 +78,10 @@ export async function getMonthlyReport() {
   ]);
 
   const monthlyCollection = await Payment.aggregate([
-    { $match: { paymentDate: { $gte: new Date(year, 0, 1), $lte: now } } },
+    { $match: { paymentDate: { $gte: istStartOfDay(`${year}-01-01`), $lte: now } } },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m", date: "$paymentDate" } },
+        _id: { $dateToString: { format: "%Y-%m", date: "$paymentDate", timezone: BUSINESS_TIMEZONE } },
         total: { $sum: "$amount" },
         count: { $sum: 1 },
       },
@@ -93,14 +97,14 @@ export async function getCustomerReport(filters?: { city?: string; startDate?: s
   if (filters?.city) match.city = filters.city;
   if (filters?.startDate || filters?.endDate) {
     const dateFilter: Record<string, Date> = {};
-    if (filters.startDate) dateFilter.$gte = new Date(filters.startDate);
-    if (filters.endDate) dateFilter.$lte = new Date(filters.endDate);
+    if (filters.startDate) dateFilter.$gte = istStartOfDay(filters.startDate);
+    if (filters.endDate) dateFilter.$lte = istEndOfDay(filters.endDate);
     match.createdAt = dateFilter;
   }
 
   const [topCustomers, newCustomers, totalCustomers, cityBreakdown] = await Promise.all([
     Customer.find(match).sort({ totalSpent: -1 }).limit(10).select("name mobile totalSpent totalVisits city").lean(),
-    Customer.countDocuments(filters?.startDate || filters?.endDate ? match : { createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) } }),
+    Customer.countDocuments(filters?.startDate || filters?.endDate ? match : { createdAt: { $gte: istStartOfToday() } }),
     Customer.countDocuments(match),
     Customer.aggregate([
       { $match: match },

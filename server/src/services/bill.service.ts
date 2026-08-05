@@ -4,6 +4,7 @@ import { Customer } from "../models/customer";
 import { Payment } from "../models/payment";
 import { withTransaction } from "../utils/transaction";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
+import { istDateKey } from "../utils/date";
 import { AppError } from "../middleware/errorHandler";
 import type { PaginatedResult } from "../types";
 
@@ -78,8 +79,7 @@ function calculateBillAmounts(
 }
 
 export async function generateBillNumber(): Promise<string> {
-  const today = new Date();
-  const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
+  const datePart = istDateKey(new Date()).replace(/-/g, "");
   const prefix = `BILL-${datePart}-`;
 
   const Counter = mongoose.connection.collection("counters");

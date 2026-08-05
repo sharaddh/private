@@ -8,6 +8,7 @@ import PageSkeleton from "../components/PageSkeleton";
 import Modal from "../components/Modal";
 import CameraScanner from "../components/CameraScanner";
 import { cleanEyeSet } from "../utils/rx";
+import { todayStr } from "../utils/date";
 import { normalizeWhatsAppPhone } from "../utils/whatsapp";
 import { whatsappService } from "../services";
 import {
@@ -46,7 +47,7 @@ export default function CustomerNewVisit() {
   const [step, setStep] = useState("service");
 
   const [visitType, setVisitType] = useState("new");
-  const [visitDate, setVisitDate] = useState(new Date().toISOString().split("T")[0]);
+  const [visitDate, setVisitDate] = useState(todayStr());
   const [visitDoctor, setVisitDoctor] = useState("");
   const [visitRemarks, setVisitRemarks] = useState("");
 

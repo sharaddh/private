@@ -671,11 +671,11 @@ export default function Dashboard() {
   const renderRecentOrders = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-border">
-        <SectionHeader title={uiT("Recent Orders", "हाल के ऑर्डर")} count={d.recentOrders.length} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
+        <SectionHeader title={uiT("Today's Orders", "आज के ऑर्डर")} count={d.todayOrders} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-border max-h-[465px] overflow-y-auto scrollbar-none flex-1">
         {d.recentOrders.length === 0 ? (
-          <EmptyState icon={ClipboardList} title={uiT("No orders yet", "अभी तक कोई ऑर्डर नहीं")} description={uiT("Create your first order to get started.", "शुरू करने के लिए अपना पहला ऑर्डर बनाएं।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
+          <EmptyState icon={ClipboardList} title={uiT("No orders today", "आज कोई ऑर्डर नहीं")} description={uiT("Today's orders will appear here.", "आज के ऑर्डर यहां दिखाई देंगे।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
           const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
           const cName = custObj?.name ?? "—";

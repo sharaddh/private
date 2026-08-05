@@ -1,6 +1,7 @@
 import { getWarehouseModels } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
 import { getPriceForPower } from "./lensStock.service";
+import { istDateKey } from "../utils/date";
 
 const { CartItem, LensStock, Withdrawal } = getWarehouseModels();
 
@@ -257,7 +258,7 @@ export async function sendWithdrawalPdf(userId: string, id: string, phone?: stri
   });
 
   const base64 = pdfBuffer.toString("base64");
-  const filename = `Lens_List_${new Date(withdrawal.withdrawnAt).toISOString().slice(0, 10)}.pdf`;
+  const filename = `Lens_List_${istDateKey(withdrawal.withdrawnAt)}.pdf`;
   const caption = `Lens list — ${withdrawal.username} · ${withdrawal.totalQuantity} items`;
 
   const wa = whatsappManager.getInstance();
