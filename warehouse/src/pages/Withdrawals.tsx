@@ -41,6 +41,13 @@ function powerDisplay(item: { lensType: string; powerKey: string }): string {
   return `${lensTypeLabel(item.lensType)} ${formatted}`;
 }
 
+function formatWithdrawalDate(d: string): string {
+  return new Date(d).toLocaleString("en-IN", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
 export default function Withdrawals() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -254,8 +261,8 @@ export default function Withdrawals() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-body-bold text-th-text truncate">{rec.username}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-body-bold text-th-text truncate">{formatWithdrawalDate(rec.withdrawnAt)}</span>
                         {isPaid ? (
                           <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">Paid</span>
                         ) : (
@@ -263,10 +270,7 @@ export default function Withdrawals() {
                         )}
                       </div>
                       <div className="mt-0.5 text-small text-th-muted truncate">
-                        {new Date(rec.withdrawnAt).toLocaleString("en-IN", {
-                          day: "numeric", month: "short", year: "numeric",
-                          hour: "2-digit", minute: "2-digit",
-                        })}
+                        {rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}
                       </div>
                     </div>
                   </div>
@@ -282,48 +286,35 @@ export default function Withdrawals() {
                       "Saving..."
                     ) : isPaid ? (
                       <>
-                        <Undo2 size={16} /> Mark Unpaid
+                        <Undo2 size={16} /> <span className="hidden sm:inline">Mark Unpaid</span>
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={16} /> Mark Paid
+                        <CheckCircle2 size={16} /> <span className="hidden sm:inline">Mark Paid</span>
                       </>
                     )}
                   </button>
                 </div>
 
                 {/* Items Body */}
-                <div className="px-4 py-3">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-th-border text-badge text-th-muted uppercase tracking-wider">
-                        <th className="py-2 pr-2 font-bold">#</th>
-                        <th className="py-2 pr-2 font-bold">Power</th>
-                        <th className="py-2 pr-2 font-bold">Coating</th>
-                        <th className="py-2 pr-2 font-bold">ID</th>
-                        <th className="py-2 font-bold text-right">Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rec.items.map((it, idx) => (
-                        <tr key={idx} className="border-b border-th-border/50 last:border-0">
-                          <td className="py-2 pr-2 text-small text-th-muted whitespace-nowrap">{idx + 1}</td>
-                          <td className={`py-2 pr-2 text-small-bold whitespace-nowrap ${powerTextClass(it.powerKey)}`}>
-                            {powerDisplay(it)}
-                          </td>
-                          <td className="py-2 pr-2 text-small-bold text-th-text">{it.coating}</td>
-                          <td className="py-2 pr-2 text-small text-th-secondary">
-                            {it.fogMark || "—"}
-                          </td>
-                          <td className="py-2 text-small-bold text-th-text text-right whitespace-nowrap">×{it.quantity}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="px-4 py-1">
+                  {rec.items.map((it, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3 py-2.5 border-b border-th-border/50 last:border-0">
+                      <div className="min-w-0">
+                        <div className={`text-small-bold truncate ${powerTextClass(it.powerKey)}`}>
+                          {powerDisplay(it)}
+                        </div>
+                        <div className="text-small text-th-muted truncate">
+                          {it.coating}{it.fogMark ? ` · ${it.fogMark}` : ""}
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">×{it.quantity}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Footer Strip */}
-                <div className="flex items-center justify-between gap-2 flex-wrap px-4 py-3 border-t border-th-border bg-th-elevated/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-th-border bg-th-elevated/20">
                   <div className="min-w-0">
                     <div className="text-badge text-th-muted uppercase tracking-wider">Total</div>
                     <div className="text-body-bold text-th-text">
@@ -334,14 +325,14 @@ export default function Withdrawals() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleSendPdf(rec)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-pill bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20 text-small-bold active:scale-95 transition-all"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-pill bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20 text-small-bold active:scale-95 transition-all"
                     >
                       <MessageCircle size={16} />
                       WhatsApp
                     </button>
                     <button
                       onClick={() => openEdit(rec)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-pill bg-th-elevated text-th-text hover:bg-th-elevated/80 text-small-bold active:scale-95 transition-all"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-pill bg-th-elevated text-th-text hover:bg-th-elevated/80 text-small-bold active:scale-95 transition-all"
                     >
                       <Pencil size={16} />
                       Edit

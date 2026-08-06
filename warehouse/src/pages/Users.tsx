@@ -2,12 +2,11 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import api from "../api";
 import {
   Users as UsersIcon, ChevronDown, ChevronRight, Clock, PackageMinus,
-  CheckCircle2, Boxes, Wallet, Phone, Calendar,
+  CheckCircle2, Boxes, Wallet, Coins,
 } from "lucide-react";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import StatCard from "../components/StatCard";
-import Badge from "../components/Badge";
 import { formatDate, formatCurrency, formatLensPower, lensTypeLabel, powerChipClass } from "../utils/helpers";
 
 interface WarehouseUser {
@@ -89,6 +88,8 @@ export default function Users() {
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -107,15 +108,27 @@ export default function Users() {
     fetchWithdrawals();
   }, [fetchUsers, fetchWithdrawals]);
 
+  const filteredWithdrawals = useMemo(() => {
+    const from = dateFrom ? new Date(dateFrom + "T00:00:00").getTime() : null;
+    const to = dateTo ? new Date(dateTo + "T23:59:59.999").getTime() : null;
+    if (!from && !to) return withdrawals;
+    return withdrawals.filter((w) => {
+      const t = new Date(w.withdrawnAt).getTime();
+      if (from !== null && t < from) return false;
+      if (to !== null && t > to) return false;
+      return true;
+    });
+  }, [withdrawals, dateFrom, dateTo]);
+
   const withdrawalsByUser = useMemo(() => {
     const map = new Map<string, WithdrawalRecord[]>();
-    for (const w of withdrawals) {
+    for (const w of filteredWithdrawals) {
       const existing = map.get(w.user);
       if (existing) existing.push(w);
       else map.set(w.user, [w]);
     }
     return map;
-  }, [withdrawals]);
+  }, [filteredWithdrawals]);
 
   const userTotals = useMemo(() => {
     const map = new Map<string, number>();
@@ -125,8 +138,17 @@ export default function Users() {
     return map;
   }, [withdrawalsByUser]);
 
-  const totalItemsAll = useMemo(() => withdrawals.reduce((sum, w) => sum + w.totalQuantity, 0), [withdrawals]);
-  const unpaidTotal = useMemo(() => withdrawals.filter((w) => !w.paid).reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [withdrawals]);
+  const userAmounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const [userId, recs] of withdrawalsByUser) {
+      map.set(userId, recs.reduce((sum, w) => sum + (w.totalPrice ?? 0), 0));
+    }
+    return map;
+  }, [withdrawalsByUser]);
+
+  const totalItemsAll = useMemo(() => filteredWithdrawals.reduce((sum, w) => sum + w.totalQuantity, 0), [filteredWithdrawals]);
+  const totalAmountAll = useMemo(() => filteredWithdrawals.reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [filteredWithdrawals]);
+  const unpaidTotal = useMemo(() => filteredWithdrawals.filter((w) => !w.paid).reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [filteredWithdrawals]);
 
   if (loading) {
     return <Spinner size={32} className="mx-auto mt-16" />;
@@ -140,15 +162,48 @@ export default function Users() {
         </div>
         <div>
           <h1 className="page-title leading-tight">Users</h1>
-          <p className="page-subtitle">{users.length} owner(s) &middot; {withdrawals.length} withdrawal(s)</p>
+          <p className="page-subtitle">{users.length} owner(s) &middot; {filteredWithdrawals.length} withdrawal(s)</p>
         </div>
       </div>
 
+      {/* Date filter */}
+      <div className="card p-3 flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-badge text-th-muted uppercase tracking-wider mb-1.5">From</label>
+          <input
+            type="date"
+            className="input-field"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => setDateFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-badge text-th-muted uppercase tracking-wider mb-1.5">To</label>
+          <input
+            type="date"
+            className="input-field"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => setDateTo(e.target.value)}
+          />
+        </div>
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => { setDateFrom(""); setDateTo(""); }}
+            className="px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-negative text-small-bold border border-th-border"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {/* Summary stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard icon={UsersIcon} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={users.length} label="Owners" />
-        <StatCard icon={PackageMinus} iconColor="text-blue-500" iconBg="bg-blue-500/10" value={withdrawals.length} label="Withdrawals" />
+        <StatCard icon={PackageMinus} iconColor="text-blue-500" iconBg="bg-blue-500/10" value={filteredWithdrawals.length} label="Withdrawals" />
         <StatCard icon={Boxes} iconColor="text-amber-500" iconBg="bg-amber-500/10" value={totalItemsAll} label="Items Withdrawn" />
+        <StatCard icon={Coins} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={formatCurrency(totalAmountAll)} label="Total Amount" />
         <StatCard icon={Wallet} iconColor="text-negative" iconBg="bg-negative/10" value={formatCurrency(unpaidTotal)} label="Unpaid Total" />
       </div>
 
@@ -166,9 +221,8 @@ export default function Users() {
               <thead>
                 <tr className="border-b border-th-border bg-th-base">
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Branch Owner</th>
-                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Mobile</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Withdrawals</th>
-                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Created</th>
+                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Total Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,23 +238,9 @@ export default function Users() {
                           <div className="flex items-center gap-3 min-w-0">
                             <OwnerAvatar name={u.name || u.username} />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-body-bold text-th-text">{u.name || u.username}</span>
-                                <Badge variant={u.role === "owner" ? "purple" : "gray"}>{u.role === "owner" ? "Owner" : u.role}</Badge>
-                              </div>
-                              <p className="text-small text-th-muted truncate">@{u.username}</p>
+                              <span className="text-body-bold text-th-text">{u.name || u.username}</span>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {u.mobile ? (
-                            <span className="flex items-center gap-1.5 text-body text-th-secondary">
-                              <Phone size={14} className="text-th-muted shrink-0" />
-                              {u.mobile}
-                            </span>
-                          ) : (
-                            <span className="text-body text-th-muted">—</span>
-                          )}
                         </td>
                         <td className="px-4 py-3">
                           {userWithdrawals.length > 0 ? (
@@ -216,16 +256,13 @@ export default function Users() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="flex items-center gap-1.5 text-small text-th-muted">
-                            <Calendar size={13} className="shrink-0" />
-                            {formatDate(u.createdAt)}
-                          </span>
+                          <span className="text-body-bold text-th-text">{formatCurrency(userAmounts.get(u.id) || 0)}</span>
                         </td>
                       </tr>
 
                       {isExpanded && userWithdrawals.length > 0 && (
                         <tr className="bg-th-elevated/50">
-                          <td colSpan={4} className="px-4 py-3">
+                          <td colSpan={3} className="px-4 py-3">
                             <div className="space-y-2">
                               {userWithdrawals.map((rec, idx) => (
                                 <div key={rec._id} style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }} className="animate-fade-up">
@@ -255,28 +292,16 @@ export default function Users() {
                   <div className="flex items-start gap-3">
                     <OwnerAvatar name={u.name || u.username} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-body-bold font-bold text-th-text">{u.name || u.username}</span>
-                        <Badge variant={u.role === "owner" ? "purple" : "gray"}>{u.role === "owner" ? "Owner" : u.role}</Badge>
-                      </div>
-                      <p className="text-small text-th-muted truncate">@{u.username}</p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
-                        {u.mobile && (
-                          <span className="flex items-center gap-1 text-small text-th-secondary">
-                            <Phone size={12} className="text-th-muted" />
-                            {u.mobile}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1 text-small text-th-muted">
-                          <Calendar size={12} />
-                          {formatDate(u.createdAt)}
-                        </span>
-                      </div>
+                      <span className="text-body-bold font-bold text-th-text">{u.name || u.username}</span>
                     </div>
                   </div>
 
                   {userWithdrawals.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-th-border">
+                    <div className="mt-2 pt-2 border-t border-th-border space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-small font-bold text-th-text uppercase tracking-wider">Total Amount</span>
+                        <span className="text-body-bold text-primary-500">{formatCurrency(userAmounts.get(u.id) || 0)}</span>
+                      </div>
                       <button
                         onClick={() => setExpandedUser((prev) => (prev === u.id ? null : u.id))}
                         className="flex items-center gap-2 w-full"

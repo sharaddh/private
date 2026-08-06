@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, memo } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import type { LensStockItem, LensType } from "../types/lensStock";
 import { priceForPower } from "../types/lensStock";
 import api from "../api";
 import { useToast } from "../context";
 import { useCart } from "../context/CartContext";
+import { useLocalStorage } from "../hooks";
 import { flyToCart } from "../utils/flyToCart";
 import { generateDemandPdf } from "../utils/demandPdf";
 import { Glasses, ChevronDown, ChevronRight, X, Download, ClipboardList, Minus, Plus } from "lucide-react";
@@ -500,12 +501,13 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
 
 export default function LensStock() {
   const [items, setItems] = useState<LensStockItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [lensType, setLensType] = useState<TabKey>("sph");
+  const [selectedId, setSelectedId] = useLocalStorage<string | null>("wh_lens_selected_id", null);
+  const [lensType, setLensType] = useLocalStorage<TabKey>("wh_lens_tab", "sph");
   const [loading, setLoading] = useState(true);
-  const [demandMode, setDemandMode] = useState(false);
-  const [demandTarget, setDemandTarget] = useState(10);
-  const [demandSel, setDemandSel] = useState<Map<string, number>>(new Map());
+  const [demandMode, setDemandMode] = useLocalStorage<boolean>("wh_lens_demand_mode", false);
+  const [demandTarget, setDemandTarget] = useLocalStorage<number>("wh_lens_demand_target", 10);
+  const [demandEntries, setDemandEntries] = useLocalStorage<[string, number][]>("wh_lens_demand_sel", []);
+  const demandSel = useMemo(() => new Map(demandEntries), [demandEntries]);
   const { toast } = useToast();
   const { addToCart, isInCart, getItemQty, removeByDetails } = useCart();
 
@@ -515,49 +517,62 @@ export default function LensStock() {
       const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
       if (res.success && res.data) {
         setItems(res.data);
-        if (res.data.length > 0) setSelectedId(res.data[0]._id);
+        if (res.data.length > 0) {
+          if (selectedId && res.data.some((i) => i._id === selectedId)) {
+            setSelectedId(selectedId);
+          } else {
+            setSelectedId(res.data[0]._id);
+          }
+        }
       } else {
         toast(res.message || "Failed to load lens stock", "error");
       }
       setLoading(false);
     }
     fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const incrementDemand = (key: string) => {
-    setDemandSel((prev) => {
-      const next = new Map(prev);
-      next.set(key, (next.get(key) || 0) + 1);
-      return next;
+  const incrementDemand = useCallback((key: string) => {
+    setDemandEntries((prev) => {
+      const m = new Map(prev);
+      m.set(key, (m.get(key) || 0) + 1);
+      return Array.from(m.entries());
     });
-  };
+  }, [setDemandEntries]);
 
-  const removeDemand = (key: string) => {
-    setDemandSel((prev) => {
-      const next = new Map(prev);
-      next.delete(key);
-      return next;
+  const removeDemand = useCallback((key: string) => {
+    setDemandEntries((prev) => {
+      const m = new Map(prev);
+      m.delete(key);
+      return Array.from(m.entries());
     });
-  };
+  }, [setDemandEntries]);
 
   const selectAllLowStock = () => {
     const next = new Map<string, number>();
     for (const item of items) {
-      const zeroQty = ZERO_KEYS.reduce((sum, k) => sum + (item.quantities?.sph?.[k] || 0), 0);
-      if (zeroQty < demandTarget) next.set(demandKey(item.coating, "sph", "+0.00"), demandTarget - zeroQty);
-      for (const lensType of ["sph", "cyl", "compound"] as LensType[]) {
-        const map = item.quantities?.[lensType] || {};
-        for (const [key, qty] of Object.entries(map)) {
-          if (lensType === "sph" && ZERO_KEYS.includes(key)) continue;
-          if ((qty || 0) < demandTarget) next.set(demandKey(item.coating, lensType, key), demandTarget - (qty || 0));
+      const addIfLow = (lensType: LensType, key: string) => {
+        const qty = getQtyFor(item, lensType, key);
+        if (qty < demandTarget) next.set(demandKey(item.coating, lensType, key), demandTarget - qty);
+      };
+      addIfLow("sph", "+0.00");
+      for (const key of POWER_VALUES) {
+        if (ZERO_KEYS.includes(key)) continue;
+        addIfLow("sph", key);
+        addIfLow("cyl", key);
+      }
+      for (const sph of SPH_INNER) {
+        for (const cyl of CYL_RANGE) {
+          addIfLow("compound", `${sph}|${cyl}`);
         }
       }
     }
-    setDemandSel(next);
+    setDemandEntries(Array.from(next.entries()));
     toast(`Selected all lens powers below ${demandTarget}`, "success");
   };
 
-  const clearDemandSelection = () => setDemandSel(new Map());
+  const clearDemandSelection = () => setDemandEntries([]);
 
   const demandRows = useMemo(() => {
     const rows: Array<{ coating: string; lensType: string; powerKey: string; current: number; target: number; qty: number; price: number }> = [];
@@ -652,7 +667,6 @@ export default function LensStock() {
               <Plus size={14} />
             </button>
           </div>
-          <span className="text-small text-th-muted">— Suggested to fill to target; tap a lens to add 1, tap again for more. Tap the badge to remove.</span>
         </div>
       )}
 
