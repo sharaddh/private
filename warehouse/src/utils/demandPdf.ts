@@ -70,34 +70,28 @@ export function generateDemandPdf(data: DemandPdfData): void {
   doc.setLineWidth(0.4);
   doc.line(margin, 50, pageWidth - margin, 50);
 
-  const fmtMoney = (n: number): string => `₹${(n || 0).toLocaleString("en-IN")}`;
-
   // Table Data
   const rows = data.items.map((it) => [
     it.coating || "—",
     formatPower(it.lensType, it.powerKey),
-    String(it.current ?? 0),
-    String(it.target ?? 0),
     String(it.qty),
-    fmtMoney(it.price ?? 0),
-    fmtMoney((it.qty || 0) * (it.price ?? 0)),
   ]);
 
   autoTable(doc, {
     startY: 56,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Lens (Type & Power)", "Current", "Target", "To Buy", "Rate", "Amount"]],
+    head: [["Coating", "Lens (Type & Power)", "Qty"]],
     body: rows,
     theme: "grid",
     headStyles: {
       fillColor: indigo,
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 9,
+      fontSize: 10,
       cellPadding: 4,
     },
     styles: {
-      fontSize: 9,
+      fontSize: 9.5,
       textColor: dark,
       cellPadding: 4,
       lineColor: border,
@@ -106,25 +100,20 @@ export function generateDemandPdf(data: DemandPdfData): void {
     },
     alternateRowStyles: { fillColor: light },
     columnStyles: {
-      0: { cellWidth: contentWidth * 0.17 },
-      1: { cellWidth: contentWidth * 0.28 },
-      2: { cellWidth: contentWidth * 0.09, halign: "center" },
-      3: { cellWidth: contentWidth * 0.09, halign: "center" },
-      4: { cellWidth: contentWidth * 0.1, halign: "center" },
-      5: { cellWidth: contentWidth * 0.13, halign: "right" },
-      6: { cellWidth: contentWidth * 0.14, halign: "right" },
+      0: { cellWidth: contentWidth * 0.35 },
+      1: { cellWidth: contentWidth * 0.45 },
+      2: { cellWidth: contentWidth * 0.2, halign: "center" },
     },
   });
 
   const tableEnd = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
   const totalNeed = data.items.reduce((s, it) => s + it.qty, 0);
-  const totalAmount = data.items.reduce((s, it) => s + it.qty * (it.price ?? 0), 0);
 
-  // Totals Box
+  // Total Quantity Box
   const y = tableEnd + 12;
-  const totalBoxW = contentWidth * 0.55;
+  const totalBoxW = contentWidth * 0.45;
   const totalBoxX = pageWidth - margin - totalBoxW;
-  const boxH = 20;
+  const boxH = 14;
 
   doc.setFillColor(...light);
   doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, "F");
@@ -134,11 +123,9 @@ export function generateDemandPdf(data: DemandPdfData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...indigo);
-  doc.text(`Total Pieces To Buy:`, totalBoxX + 6, y + 8);
-  doc.text(`Total Amount:`, totalBoxX + 6, y + 16);
+  doc.text(`Total Pieces To Buy:`, totalBoxX + 6, y + 9);
   doc.setFontSize(12);
-  doc.text(String(totalNeed), totalBoxX + totalBoxW - 6, y + 8, { align: "right" });
-  doc.text(fmtMoney(totalAmount), totalBoxX + totalBoxW - 6, y + 16, { align: "right" });
+  doc.text(String(totalNeed), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
 
   // Footer
   const footerY = Math.max(y + boxH + 20, pageHeight - 20);
