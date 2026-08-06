@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { formatLensPower, lensTypeLabel } from "./helpers";
+import { lensTypeLabel } from "./helpers";
 
 export interface DemandPdfItem {
   coating: string;
@@ -18,10 +18,17 @@ export interface DemandPdfData {
   items: DemandPdfItem[];
 }
 
+function normPower(v: string): string {
+  return v === "+0.00" || v === "0.00" || v === "-0.00" ? "0.00" : v;
+}
+
 function formatPower(lensType: string, powerKey: string): string {
-  const type = lensTypeLabel(lensType);
-  const power = formatLensPower(powerKey);
-  return power === "—" ? type : `${type} · ${power}`;
+  if (!powerKey) return "—";
+  if (powerKey.includes("|")) {
+    const [sph, cyl] = powerKey.split("|");
+    return `${normPower(sph)}|${normPower(cyl)}`;
+  }
+  return `${lensTypeLabel(lensType)} ${normPower(powerKey)}`;
 }
 
 export function generateDemandPdf(data: DemandPdfData): void {
@@ -80,7 +87,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
   autoTable(doc, {
     startY: 56,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Lens (Type & Power)", "Qty"]],
+    head: [["Coating", "Power", "Quantity"]],
     body: rows,
     theme: "grid",
     headStyles: {
