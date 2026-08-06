@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, memo } from "react";
 import type { LensStockItem, LensType } from "../types/lensStock";
+import { priceForPower } from "../types/lensStock";
 import api from "../api";
 import { useToast } from "../context";
 import { useCart } from "../context/CartContext";
 import { flyToCart } from "../utils/flyToCart";
-import { Glasses, ChevronDown, ChevronRight, X } from "lucide-react";
+import { generateDemandPdf } from "../utils/demandPdf";
+import { Glasses, ChevronDown, ChevronRight, X, Download, ClipboardList, Minus, Plus } from "lucide-react";
 import { POWER_VALUES } from "../constants";
 
 function getTotalQty(item: LensStockItem): number {
@@ -21,6 +23,26 @@ function getTotalQty(item: LensStockItem): number {
   return total;
 }
 
+const ZERO_KEYS = ["+0.00", "0.00", "-0.00"];
+
+function demandKey(coating: string, lensType: string, powerKey: string): string {
+  return `${coating}::${lensType}::${powerKey}`;
+}
+
+function parseDemandKey(key: string): { coating: string; lensType: string; powerKey: string } | null {
+  const [coating, lensType, powerKey] = key.split("::");
+  if (!coating || !lensType || powerKey === undefined) return null;
+  return { coating, lensType, powerKey };
+}
+
+function getQtyFor(item: LensStockItem, lensType: string, powerKey: string): number {
+  if (lensType === "sph" && ZERO_KEYS.includes(powerKey)) {
+    return ZERO_KEYS.reduce((sum, k) => sum + (item.quantities?.sph?.[k] || 0), 0);
+  }
+  const map = item.quantities?.[lensType as LensType];
+  return map?.[powerKey] || 0;
+}
+
 type TabKey = LensType | "plain";
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -30,7 +52,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "plain", label: "Plain" },
 ];
 
-const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType, powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove }: {
+const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType, powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove, demandMode = false, demandQty = 0, need = 0, onToggleDemand, onRemoveDemand }: {
   coating: string;
   lensType: LensType;
   powerKey: string;
@@ -40,6 +62,11 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
   atMax: boolean;
   onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onRemove: (e: React.MouseEvent) => void;
+  demandMode?: boolean;
+  demandQty?: number;
+  need?: number;
+  onToggleDemand?: () => void;
+  onRemoveDemand?: () => void;
 }) {
   const isNeg = powerKey.startsWith("-");
   const isPos = powerKey.startsWith("+") && powerKey !== "+0.00";
@@ -52,7 +79,11 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
     ? "border-emerald-400/40 bg-emerald-400/10"
     : "border-th-border bg-th-elevated";
 
-  const selectedBorder = inCart
+  const selectedBorder = demandMode
+    ? demandQty > 0
+      ? "border-primary-500/70 bg-primary-500/15 ring-1 ring-primary-500/20"
+      : baseBorder
+    : inCart
     ? atMax
       ? "border-warning/70 bg-warning/10 ring-1 ring-warning/20"
       : "border-primary-500/70 bg-primary-500/15 ring-1 ring-primary-500/20"
@@ -61,30 +92,53 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
   return (
     <div
       data-lens-card
-      className={`relative flex flex-col items-center gap-1.5 py-4 px-3 rounded-lg border transition-all duration-150 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
+      onClick={demandMode ? () => onToggleDemand && onToggleDemand() : undefined}
+      className={`relative flex flex-col items-center gap-1.5 py-4 px-3 rounded-lg border transition-all duration-150 ${selectedBorder} ${demandMode ? "cursor-pointer" : ""} ${inCart && !atMax && !demandMode ? "animate-selected-pulse" : ""} ${atMax && !demandMode ? "opacity-60" : ""}`}
     >
-      {inCart && (
-        <span
-          role="button"
-          onClick={onRemove}
-          className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
-        >
-          <X size={13} className="text-white" strokeWidth={3} />
-        </span>
+      {demandMode ? (
+        demandQty > 0 && (
+          <span
+            role="button"
+            onClick={(e) => { e.stopPropagation(); onRemoveDemand && onRemoveDemand(); }}
+            className="absolute -top-1.5 -right-1.5 min-w-[24px] h-6 px-1 rounded-full bg-primary-500 text-surface-950 flex items-center justify-center cursor-pointer active:scale-90 z-10"
+            title="Remove from demand"
+          >
+            <span className="text-micro font-bold leading-none">{demandQty}</span>
+          </span>
+        )
+      ) : (
+        inCart && (
+          <span
+            role="button"
+            onClick={onRemove}
+            className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
+          >
+            <X size={13} className="text-white" strokeWidth={3} />
+          </span>
+        )
       )}
-      <button
-        onClick={onAdd}
-        disabled={atMax}
-        className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
-      >
-        <span className="text-body-bold text-th-secondary leading-none">{powerLabel}</span>
-        <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
-      </button>
+      {demandMode ? (
+        <div className="flex flex-col items-center gap-1.5 w-full pointer-events-none">
+          <span className="text-body-bold text-th-secondary leading-none">{powerLabel}</span>
+          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {need}</span>}
+          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
+        </div>
+      ) : (
+        <button
+          onClick={onAdd}
+          disabled={atMax}
+          className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
+        >
+          <span className="text-body-bold text-th-secondary leading-none">{powerLabel}</span>
+          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+        </button>
+      )}
     </div>
   );
 });
 
-const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove }: {
+const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart, cartQty: _cartQty, atMax, onAdd, onRemove, demandMode = false, demandQty = 0, need = 0, onToggleDemand, onRemoveDemand }: {
   powerKey: string;
   qty: number;
   inCart: boolean;
@@ -92,6 +146,11 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
   atMax: boolean;
   onAdd: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onRemove: (e: React.MouseEvent) => void;
+  demandMode?: boolean;
+  demandQty?: number;
+  need?: number;
+  onToggleDemand?: () => void;
+  onRemoveDemand?: () => void;
 }) {
   const sph = powerKey.split("|")[0];
   const cyl = powerKey.split("|")[1] || "";
@@ -108,7 +167,11 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
     ? "border-emerald-400/40 bg-emerald-400/5"
     : "border-th-border bg-th-elevated";
 
-  const selectedBorder = inCart
+  const selectedBorder = demandMode
+    ? demandQty > 0
+      ? "border-primary-500/70 bg-primary-500/15 ring-1 ring-primary-500/20"
+      : baseBorder
+    : inCart
     ? atMax
       ? "border-warning/70 bg-warning/10 ring-1 ring-warning/20"
       : "border-primary-500/70 bg-primary-500/15 ring-1 ring-primary-500/20"
@@ -117,47 +180,79 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
   return (
     <div
       data-lens-card
-      className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border transition-all duration-150 ${selectedBorder} ${inCart && !atMax ? "animate-selected-pulse" : ""} ${atMax ? "opacity-60" : ""}`}
+      onClick={demandMode ? () => onToggleDemand && onToggleDemand() : undefined}
+      className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border transition-all duration-150 ${selectedBorder} ${demandMode ? "cursor-pointer" : ""} ${inCart && !atMax && !demandMode ? "animate-selected-pulse" : ""} ${atMax && !demandMode ? "opacity-60" : ""}`}
     >
-      {inCart && (
-        <span
-          role="button"
-          onClick={onRemove}
-          className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
-        >
-          <X size={13} className="text-white" strokeWidth={3} />
-        </span>
+      {demandMode ? (
+        demandQty > 0 && (
+          <span
+            role="button"
+            onClick={(e) => { e.stopPropagation(); onRemoveDemand && onRemoveDemand(); }}
+            className="absolute -top-1.5 -right-1.5 min-w-[24px] h-6 px-1 rounded-full bg-primary-500 text-surface-950 flex items-center justify-center cursor-pointer active:scale-90 z-10"
+            title="Remove from demand"
+          >
+            <span className="text-micro font-bold leading-none">{demandQty}</span>
+          </span>
+        )
+      ) : (
+        inCart && (
+          <span
+            role="button"
+            onClick={onRemove}
+            className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-negative flex items-center justify-center cursor-pointer active:scale-90 z-10"
+          >
+            <X size={13} className="text-white" strokeWidth={3} />
+          </span>
+        )
       )}
-      <button
-        onClick={onAdd}
-        disabled={atMax}
-        className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
-      >
-        <span className="text-body-bold leading-none whitespace-nowrap">
-          <span className={sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
-          <span className="text-th-muted"> | </span>
-          <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
-        </span>
-        <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
-      </button>
+      {demandMode ? (
+        <div className="flex flex-col items-center gap-1.5 w-full pointer-events-none">
+          <span className="text-body-bold leading-none whitespace-nowrap">
+            <span className={sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
+            <span className="text-th-muted"> | </span>
+            <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
+          </span>
+          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {need}</span>}
+          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
+        </div>
+      ) : (
+        <button
+          onClick={onAdd}
+          disabled={atMax}
+          className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
+        >
+          <span className="text-body-bold leading-none whitespace-nowrap">
+            <span className={sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
+            <span className="text-th-muted"> | </span>
+            <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
+          </span>
+          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+        </button>
+      )}
     </div>
   );
 });
 
-const ZERO_KEYS = ["+0.00", "0.00", "-0.00"];
-
-const PlainView = memo(function PlainView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails }: {
+const PlainView = memo(function PlainView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails, demandMode, demandTarget, getDemandQty, onToggleDemand, onRemoveDemand }: {
   quantities: Record<string, number>;
   coating: string;
   addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
+  demandMode?: boolean;
+  demandTarget?: number;
+  getDemandQty?: (key: string) => number;
+  onToggleDemand?: (key: string) => void;
+  onRemoveDemand?: (key: string) => void;
 }) {
   const powerKey = "+0.00";
   const qty = ZERO_KEYS.reduce((sum, k) => sum + (quantities[k] || 0), 0);
   const currentCartQty = getItemQty(coating, "sph", powerKey);
   const atMax = qty > 0 && currentCartQty >= qty;
+  const dKey = demandKey(coating, "sph", powerKey);
+  const need = demandTarget !== undefined ? Math.max(0, demandTarget - qty) : 0;
   return (
     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mt-2">
       <LensCard
@@ -174,6 +269,11 @@ const PlainView = memo(function PlainView({ quantities, coating, addToCart, isIn
           flyToCart(e.currentTarget);
         }}
         onRemove={() => removeByDetails(coating, "sph", powerKey)}
+        demandMode={demandMode}
+        demandQty={demandMode ? getDemandQty?.(dKey) || 0 : 0}
+        need={need}
+        onToggleDemand={demandMode ? () => onToggleDemand?.(dKey) : undefined}
+        onRemoveDemand={demandMode ? () => onRemoveDemand?.(dKey) : undefined}
       />
     </div>
   );
@@ -187,9 +287,14 @@ interface FlatGridProps {
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
+  demandMode?: boolean;
+  demandTarget?: number;
+  getDemandQty?: (key: string) => number;
+  onToggleDemand?: (key: string) => void;
+  onRemoveDemand?: (key: string) => void;
 }
 
-const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQty, removeByDetails }: FlatGridProps) {
+const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCart, isInCart, getItemQty, removeByDetails, demandMode, demandTarget, getDemandQty, onToggleDemand, onRemoveDemand }: FlatGridProps) {
   const [openGroup, setOpenGroup] = useState<string>("Negative");
 
   const negatives = useMemo(() =>
@@ -230,6 +335,8 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
                   const qty = quantities[power] || 0;
                   const currentCartQty = getItemQty(coating, lensType, power);
                   const atMax = qty > 0 && currentCartQty >= qty;
+                  const dKey = demandKey(coating, lensType, power);
+                  const need = demandTarget !== undefined ? Math.max(0, demandTarget - qty) : 0;
                   return (
                     <LensCard
                       key={power}
@@ -248,6 +355,11 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
                         flyToCart(e.currentTarget);
                       }}
                       onRemove={() => removeByDetails(coating, lensType, power)}
+                      demandMode={demandMode}
+                      demandQty={demandMode ? getDemandQty?.(dKey) || 0 : 0}
+                      need={need}
+                      onToggleDemand={demandMode ? () => onToggleDemand?.(dKey) : undefined}
+                      onRemoveDemand={demandMode ? () => onRemoveDemand?.(dKey) : undefined}
                     />
                   );
                 })}
@@ -267,6 +379,11 @@ interface CompoundViewProps {
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
+  demandMode?: boolean;
+  demandTarget?: number;
+  getDemandQty?: (key: string) => number;
+  onToggleDemand?: (key: string) => void;
+  onRemoveDemand?: (key: string) => void;
 }
 
 const CYL_RANGE = POWER_VALUES.filter((p) => {
@@ -283,7 +400,7 @@ const SPH_INNER = POWER_VALUES.filter((p) => {
 const negSphInner = SPH_INNER.filter((p) => p.startsWith("-")).reverse();
 const posSphInner = SPH_INNER.filter((p) => p.startsWith("+") && p !== "+0.00");
 
-const CompoundView = memo(function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails }: CompoundViewProps) {
+const CompoundView = memo(function CompoundView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails, demandMode, demandTarget, getDemandQty, onToggleDemand, onRemoveDemand }: CompoundViewProps) {
   const [openCyl, setOpenCyl] = useState<string>("");
 
   const cylGroups: { label: string; values: string[]; color: string }[] = [
@@ -339,6 +456,8 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
                                 const inCart = isInCart(coating, "compound", key);
                                 const cartQty = getItemQty(coating, "compound", key);
                                 const atMax = qty <= 0 || cartQty >= qty;
+                                const dKey = demandKey(coating, "compound", key);
+                                const need = demandTarget !== undefined ? Math.max(0, demandTarget - qty) : 0;
                                 return (
                                   <CompoundLensCard
                                     key={key}
@@ -355,6 +474,11 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
                                       flyToCart(e.currentTarget);
                                     }}
                                     onRemove={() => removeByDetails(coating, "compound", key)}
+                                    demandMode={demandMode}
+                                    demandQty={demandMode ? getDemandQty?.(dKey) || 0 : 0}
+                                    need={need}
+                                    onToggleDemand={demandMode ? () => onToggleDemand?.(dKey) : undefined}
+                                    onRemoveDemand={demandMode ? () => onRemoveDemand?.(dKey) : undefined}
                                   />
                                 );
                               })}
@@ -379,6 +503,9 @@ export default function LensStock() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lensType, setLensType] = useState<TabKey>("sph");
   const [loading, setLoading] = useState(true);
+  const [demandMode, setDemandMode] = useState(false);
+  const [demandTarget, setDemandTarget] = useState(10);
+  const [demandSel, setDemandSel] = useState<Map<string, number>>(new Map());
   const { toast } = useToast();
   const { addToCart, isInCart, getItemQty, removeByDetails } = useCart();
 
@@ -396,6 +523,73 @@ export default function LensStock() {
     }
     fetchItems();
   }, []);
+
+  const incrementDemand = (key: string) => {
+    setDemandSel((prev) => {
+      const next = new Map(prev);
+      next.set(key, (next.get(key) || 0) + 1);
+      return next;
+    });
+  };
+
+  const removeDemand = (key: string) => {
+    setDemandSel((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  const selectAllLowStock = () => {
+    const next = new Map<string, number>();
+    for (const item of items) {
+      const zeroQty = ZERO_KEYS.reduce((sum, k) => sum + (item.quantities?.sph?.[k] || 0), 0);
+      if (zeroQty < demandTarget) next.set(demandKey(item.coating, "sph", "+0.00"), demandTarget - zeroQty);
+      for (const lensType of ["sph", "cyl", "compound"] as LensType[]) {
+        const map = item.quantities?.[lensType] || {};
+        for (const [key, qty] of Object.entries(map)) {
+          if (lensType === "sph" && ZERO_KEYS.includes(key)) continue;
+          if ((qty || 0) < demandTarget) next.set(demandKey(item.coating, lensType, key), demandTarget - (qty || 0));
+        }
+      }
+    }
+    setDemandSel(next);
+    toast(`Selected all lens powers below ${demandTarget}`, "success");
+  };
+
+  const clearDemandSelection = () => setDemandSel(new Map());
+
+  const demandRows = useMemo(() => {
+    const rows: Array<{ coating: string; lensType: string; powerKey: string; current: number; target: number; qty: number; price: number }> = [];
+    for (const [key, qty] of demandSel) {
+      const parsed = parseDemandKey(key);
+      if (!parsed) continue;
+      const item = items.find((i) => i.coating === parsed.coating);
+      if (!item) continue;
+      const current = getQtyFor(item, parsed.lensType, parsed.powerKey);
+      rows.push({
+        coating: item.coating,
+        lensType: parsed.lensType,
+        powerKey: parsed.powerKey,
+        current,
+        target: demandTarget,
+        qty,
+        price: priceForPower(item, parsed.powerKey) || 0,
+      });
+    }
+    return rows.sort((a, b) => a.coating.localeCompare(b.coating) || a.lensType.localeCompare(b.lensType) || a.powerKey.localeCompare(b.powerKey));
+  }, [demandSel, items, demandTarget]);
+
+  const totalNeed = demandRows.reduce((s, r) => s + r.qty, 0);
+  const totalAmount = demandRows.reduce((s, r) => s + r.qty * r.price, 0);
+
+  const handleDownloadDemand = () => {
+    if (demandRows.length === 0) {
+      toast("Select at least one lens to generate demand", "error");
+      return;
+    }
+    generateDemandPdf({ target: demandTarget, generatedAt: new Date().toISOString(), items: demandRows });
+  };
 
   const selectedItem = useMemo(() => items.find((i) => i._id === selectedId) || null, [items, selectedId]);
   const quantities = useMemo(() => {
@@ -417,7 +611,50 @@ export default function LensStock() {
           <h1 className="text-feature font-bold text-th-text leading-tight">Lens Stock</h1>
           <p className="text-small text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
         </div>
+        <button
+          onClick={() => setDemandMode((m) => !m)}
+          className={`ml-auto flex items-center gap-2 px-4 py-2.5 rounded-pill text-small-bold transition-all active:scale-95 ${
+            demandMode
+              ? "bg-primary-500 text-surface-950 shadow-sm"
+              : "bg-th-elevated text-th-secondary border border-th-border hover:text-th-text"
+          }`}
+          aria-label="Stock Demand"
+        >
+          <ClipboardList size={18} />
+          <span className="hidden sm:inline">Stock Demand</span>
+        </button>
       </div>
+
+      {demandMode && (
+        <div className="flex items-center gap-2 flex-wrap bg-th-surface border border-th-border rounded-xl px-3.5 py-2.5">
+          <span className="text-small-bold text-th-secondary">Fill each power up to</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setDemandTarget((t) => Math.max(1, t - 1))}
+              className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
+              aria-label="Decrease target"
+            >
+              <Minus size={14} />
+            </button>
+            <input
+              type="number"
+              min={1}
+              value={demandTarget}
+              onChange={(e) => setDemandTarget(Math.max(1, Number(e.target.value) || 1))}
+              className="w-16 h-8 text-center text-small-bold bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
+              aria-label="Target stock level"
+            />
+            <button
+              onClick={() => setDemandTarget((t) => t + 1)}
+              className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
+              aria-label="Increase target"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+          <span className="text-small text-th-muted">— Suggested to fill to target; tap a lens to add 1, tap again for more. Tap the badge to remove.</span>
+        </div>
+      )}
 
       {/* Mobile: coating select + lens type tabs */}
       <div className="lg:hidden space-y-2.5">
@@ -533,6 +770,11 @@ export default function LensStock() {
                     isInCart={isInCart}
                     getItemQty={getItemQty}
                     removeByDetails={removeByDetails}
+                    demandMode={demandMode}
+                    demandTarget={demandMode ? demandTarget : undefined}
+                    getDemandQty={demandMode ? (key) => demandSel.get(key) || 0 : undefined}
+                    onToggleDemand={demandMode ? incrementDemand : undefined}
+                    onRemoveDemand={demandMode ? removeDemand : undefined}
                   />
                 ) : lensType === "plain" ? (
                   <PlainView
@@ -542,6 +784,11 @@ export default function LensStock() {
                     isInCart={isInCart}
                     getItemQty={getItemQty}
                     removeByDetails={removeByDetails}
+                    demandMode={demandMode}
+                    demandTarget={demandMode ? demandTarget : undefined}
+                    getDemandQty={demandMode ? (key) => demandSel.get(key) || 0 : undefined}
+                    onToggleDemand={demandMode ? incrementDemand : undefined}
+                    onRemoveDemand={demandMode ? removeDemand : undefined}
                   />
                 ) : (
                   <FlatGrid
@@ -552,6 +799,11 @@ export default function LensStock() {
                     isInCart={isInCart}
                     getItemQty={getItemQty}
                     removeByDetails={removeByDetails}
+                    demandMode={demandMode}
+                    demandTarget={demandMode ? demandTarget : undefined}
+                    getDemandQty={demandMode ? (key) => demandSel.get(key) || 0 : undefined}
+                    onToggleDemand={demandMode ? incrementDemand : undefined}
+                    onRemoveDemand={demandMode ? removeDemand : undefined}
                   />
                 )}
               </div>
@@ -566,6 +818,49 @@ export default function LensStock() {
           )}
         </div>
       </div>
+
+      {demandMode && (
+        <div className="sticky bottom-[72px] lg:bottom-2 z-20">
+          <div className="bg-th-surface border border-th-border rounded-xl px-3.5 py-3 shadow-lifted flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <ClipboardList size={18} className="text-primary-500 shrink-0" />
+              <span className="text-small-bold text-th-text">
+                {demandSel.size} lens{demandSel.size !== 1 ? "es" : ""} selected
+              </span>
+              <span className="text-small text-th-muted hidden md:inline">·</span>
+              <span className="text-small text-th-secondary hidden md:inline">
+                <span className="text-primary-500 font-bold">{totalNeed}</span> pcs to buy
+              </span>
+              <span className="text-small text-th-secondary hidden lg:inline">
+                · <span className="text-primary-500 font-bold">₹{totalAmount.toLocaleString("en-IN")}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={selectAllLowStock}
+                className="px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-th-text text-small-bold border border-th-border"
+              >
+                All low stock
+              </button>
+              <button
+                onClick={clearDemandSelection}
+                disabled={demandSel.size === 0}
+                className="px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-negative text-small-bold border border-th-border disabled:opacity-40"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleDownloadDemand}
+                disabled={demandRows.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-pill bg-primary-500 text-surface-950 text-small-bold shadow-sm hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

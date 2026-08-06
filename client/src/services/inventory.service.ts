@@ -12,8 +12,8 @@ class InventoryService extends ApiService {
     return api.get<PaginatedResponse<InventoryItem>>(`${this.basePath}${qs}`);
   }
 
-  async adjustStock(id: string, data: { quantity: number; note: string }): Promise<ApiResponse<InventoryItem>> {
-    return api.patch<InventoryItem>(`${this.basePath}/${id}/adjust`, data);
+  async adjustStock(id: string, data: { quantity: number; note?: string }): Promise<ApiResponse<InventoryItem>> {
+    return api.put<InventoryItem>(`${this.basePath}/${id}/stock`, { quantity: data.quantity });
   }
 
   async getLowStock(threshold?: number): Promise<ApiResponse<InventoryItem[]>> {
