@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp static.json dist/static.json",
+    "build": "vite build && node -e \"require('fs').copyFileSync('static.json','dist/static.json')\"",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {

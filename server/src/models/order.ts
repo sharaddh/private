@@ -20,6 +20,10 @@ const OrderSchemaObj = new Schema(
     coatingPrice: { type: Number, default: 0 },
     accessories: { type: [String], default: [] },
   quantity: { type: Number, default: 1 },
+  stockItems: {
+    type: [{ sku: { type: String }, quantity: { type: Number, default: 1 } }],
+    default: undefined,
+  },
   forwardedCount: { type: Number, default: 0 },
   deliveryDate: { type: Date },
   actualDeliveryDate: { type: Date },

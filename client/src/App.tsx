@@ -24,6 +24,8 @@ const Workspace = lazy(() => import("./pages/Workspace"));
 const NewVisit = lazy(() => import("./pages/NewVisit"));
 const CustomerNewVisit = lazy(() => import("./pages/CustomerNewVisit"));
 const ItemScan = lazy(() => import("./pages/ItemScan"));
+const Withdraw = lazy(() => import("./pages/Withdraw"));
+const WithdrawHistory = lazy(() => import("./pages/WithdrawHistory"));
 const Login = lazy(() => import("./pages/Login"));
 const StaffLogin = lazy(() => import("./pages/StaffLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -56,6 +58,8 @@ export default function App() {
           <Route path="/payments" element={<RoleGuard path="/payments"><SuspendedPage page="payments"><Payments /></SuspendedPage></RoleGuard>} />
           <Route path="/inventory" element={<RoleGuard path="/inventory"><SuspendedPage page="inventory"><InventoryPage /></SuspendedPage></RoleGuard>} />
           <Route path="/inventory/scan/:code" element={<SuspendedPage page="inventory"><ItemScan /></SuspendedPage>} />
+          <Route path="/inventory/withdraw" element={<SuspendedPage page="inventory"><Withdraw /></SuspendedPage>} />
+          <Route path="/inventory/withdraw/history" element={<SuspendedPage page="inventory"><WithdrawHistory /></SuspendedPage>} />
           <Route path="/delivery" element={<RoleGuard path="/delivery"><SuspendedPage page="delivery"><Delivery /></SuspendedPage></RoleGuard>} />
           <Route path="/pickup" element={<SuspendedPage page="pickup"><Pickup /></SuspendedPage>} />
           <Route path="/announcements" element={<RoleGuard path="/announcements"><SuspendedPage page="announcement"><Announcement /></SuspendedPage></RoleGuard>} />

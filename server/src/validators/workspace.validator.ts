@@ -37,4 +37,8 @@ export const transactionSchema = z.object({
     address: z.string().optional(),
     expectedDeliveryDate: z.string().optional(),
   }).optional(),
+  stockItems: z.array(z.object({
+    sku: z.string().optional(),
+    quantity: z.number().optional(),
+  })).optional(),
 });

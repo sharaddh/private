@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, type User } from "../context/AuthContext";
 import { LogIn, Eye, EyeOff, Package } from "lucide-react";
 import Spinner from "../components/Spinner";
 
@@ -22,7 +22,7 @@ export default function Login() {
     e.preventDefault();
     setError(""); setIsLoading(true);
     try {
-      const res = await api.post("/api/auth/warehouse-login", { username, password });
+      const res = await api.post<{ access: string; refresh: string; user: User }>("/api/auth/warehouse-login", { username, password });
       if (res.success && res.data) {
         api.setRefreshToken(res.data.refresh);
         login(res.data.access, res.data.user);

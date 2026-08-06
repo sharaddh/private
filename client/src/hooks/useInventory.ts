@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { useApi, useApiPost, useApiPut, useApiDelete } from "./useApi";
-import { inventoryService } from "../services";
-import type { InventoryItem, InventoryFormData, PaginatedResponse, PaginationParams } from "../types";
+import { inventoryService, type InventoryListParams } from "../services";
+import type { InventoryItem, InventoryFormData, PaginatedResponse } from "../types";
 
-export function useInventory(params?: PaginationParams & { category?: string; location?: string; brand?: string }) {
+export function useInventory(params?: InventoryListParams) {
   const qs = params
-    ? `?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString()}`
+    ? `?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "").map(([k, v]) => [k, String(v)])).toString()}`
     : "";
 
   const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryItem>>(
@@ -17,6 +17,7 @@ export function useInventory(params?: PaginationParams & { category?: string; lo
   return {
     items: Array.isArray(data) ? data : data?.data ?? [],
     total: data && !Array.isArray(data) ? data.total ?? 0 : 0,
+    page: data && !Array.isArray(data) ? data.page ?? 1 : 1,
     pages: data && !Array.isArray(data) ? data.pages ?? 0 : 0,
     loading,
     error,

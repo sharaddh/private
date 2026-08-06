@@ -674,7 +674,7 @@ export default function Pickup() {
                         ? `${uiT("Deliver & Collect", "डिलीवर करें और एकत्र करें")} ₹${collectAmount}`
                         : uiT("Mark Delivered", "डिलीवर चिन्हित करें")}
                   </button>
-                  <button onClick={() => navigate(`/customers/${selectedCustomer._id}`)}
+                  <button onClick={() => navigate(`/customers/${selectedCustomer!._id}`)}
                     aria-label={uiT("View customer profile", "ग्राहक प्रोफ़ाइल देखें")}
                     className="bg-th-elevated hover:bg-th-hover text-th-text font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-2 px-6 py-3.5 transition-all">
                     <User size={20} aria-hidden="true" /> {uiT("View Profile", "प्रोफ़ाइल देखें")}

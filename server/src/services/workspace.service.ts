@@ -12,7 +12,7 @@ import { AppError } from "../middleware/errorHandler";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
 import { logger } from "../utils/logger";
-import { decrementStockForOrder, assertStockAvailable } from "./inventory.service";
+import { decrementStockForOrder, assertStockAvailable, type OrderStockRef, type StockItemRef } from "./inventory.service";
 
 interface TransactionInput {
   customerId?: string;
@@ -51,6 +51,7 @@ interface TransactionInput {
     address?: string;
     expectedDeliveryDate?: string;
   };
+  stockItems?: StockItemRef[];
 }
 
 export async function executeTransaction(
@@ -60,8 +61,14 @@ export async function executeTransaction(
   return withTransaction(async (session) => {
     const result: Record<string, unknown> = {};
 
-    if (body.order) {
-      await assertStockAvailable(body.order as { frame?: string; lens?: string; accessories?: string[]; quantity?: number }, session);
+    const stockRef: OrderStockRef | undefined = body.order
+      ? (body.order as OrderStockRef)
+      : Array.isArray(body.stockItems) && body.stockItems.length > 0
+        ? { stockItems: body.stockItems }
+        : undefined;
+
+    if (stockRef) {
+      await assertStockAvailable(stockRef, session);
     }
 
     let customer: InstanceType<typeof Customer> | null = null;
@@ -120,6 +127,8 @@ export async function executeTransaction(
       await order.save({ session });
       await decrementStockForOrder(order, session);
       result.order = order;
+    } else if (stockRef) {
+      await decrementStockForOrder(stockRef, session);
     }
 
     if (body.bill) {
@@ -128,6 +137,7 @@ export async function executeTransaction(
         customerId: customer._id,
         visitId: (result.visit as any)?._id,
         items: body.bill.items || [],
+        stockItems: !body.order && Array.isArray(body.stockItems) ? body.stockItems : [],
         subtotal: body.bill.subtotal || 0,
         discount: body.bill.discount || 0,
         totalAmount: body.bill.totalAmount || 0,

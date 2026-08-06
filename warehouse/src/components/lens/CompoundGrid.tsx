@@ -50,10 +50,10 @@ const SphCell = memo(function SphCell({ sph, cyl, qty, onIncrement, onDecrement 
       </span>
       <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
       <div className="flex items-center gap-2">
-        <button onClick={() => onDecrement(sph)} className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all">
+        <button type="button" onClick={() => onDecrement(sph)} className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all">
           <Minus size={22} strokeWidth={2.5} />
         </button>
-        <button onClick={() => onIncrement(sph)} className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all">
+        <button type="button" onClick={() => onIncrement(sph)} className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all">
           <Plus size={22} strokeWidth={2.5} />
         </button>
       </div>
@@ -98,7 +98,7 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
 
                 return (
                   <div key={cyl}>
-                    <button
+                    <button type="button"
                       onClick={() => setOpenCyl((prev) => (prev === cyl ? "" : cyl))}
                       className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
                     >

@@ -74,6 +74,9 @@ export async function addCamera(data: {
     status: "connecting",
   });
 
+  camera.streamPath = `camera_${camera._id}`;
+  await camera.save();
+
   await startRelay(String(camera._id), camera.serialNumber, camera.username, camera.password);
 
   return camera;
@@ -166,7 +169,7 @@ async function startRelay(cameraId: string, serialNumber: string, username: stri
     saveRelayState(state);
     updateMediamtxConfig(state);
 
-    await Camera.findByIdAndUpdate(cameraId, { status: "connecting" });
+    await Camera.findByIdAndUpdate(cameraId, { status: "online" });
 
     console.log(`[camera-relay] Started relay for camera ${cameraId} (SN: ${serialNumber}, port: ${localPort})`);
   } catch (error: any) {

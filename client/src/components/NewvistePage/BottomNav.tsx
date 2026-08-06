@@ -15,6 +15,8 @@ interface Props {
   saveTransaction: () => void;
   saving: boolean;
   countdown: number;
+  canNext?: boolean;
+  nextHint?: string;
 }
 
 export default function BottomNav({
@@ -24,6 +26,8 @@ export default function BottomNav({
   saveTransaction,
   saving,
   countdown,
+  canNext = true,
+  nextHint,
 }: Props) {
   const { uiT } = useTranslate();
   const isFirstStep = currentIdx === 0;
@@ -52,6 +56,12 @@ export default function BottomNav({
           <ChevronLeft size={18} />
           {uiT("Back", "पीछे")}
         </motion.button>
+
+        {!canNext && nextHint && (
+          <p className="text-xs font-semibold text-[#e53935] text-center px-3">
+            {nextHint}
+          </p>
+        )}
 
         {/* Next / Save */}
         {isLastStep ? (
@@ -90,7 +100,8 @@ export default function BottomNav({
           </motion.button>
         ) : (
           <motion.button
-            whileTap={{ scale: 0.95 }}
+            whileTap={canNext ? { scale: 0.95 } : {}}
+            disabled={!canNext}
             onClick={() => setStep(stepKeys[currentIdx + 1])}
             className="
               inline-flex items-center gap-2
@@ -101,6 +112,8 @@ export default function BottomNav({
               font-bold
               uppercase tracking-wider text-xs
               transition-all
+              disabled:opacity-40
+              disabled:cursor-not-allowed
             "
           >
             {uiT("Next", "अगला")}

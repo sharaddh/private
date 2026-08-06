@@ -31,7 +31,7 @@ export default function Modal({ open, onClose, title, children, size = "md" }: M
         {title && (
           <div className="sticky top-0 bg-th-surface z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-th-border">
             <h3 className="text-feature text-th-text">{title}</h3>
-            <button onClick={onClose} className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted transition-colors">
+            <button type="button" onClick={onClose} className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted transition-colors">
               <X size={18} />
             </button>
           </div>

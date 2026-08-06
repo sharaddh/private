@@ -27,8 +27,6 @@ export default function Inventory() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<keyof InventoryItem>("sku");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const [searchParams] = useSearchParams();
   const debouncedSearch = useDebounce(search, 300);
@@ -62,6 +60,8 @@ export default function Inventory() {
       );
     }
     if (locationFilter !== "all") result = result.filter((i) => i.location === locationFilter);
+    const sortBy: keyof InventoryItem = "sku";
+    const sortDir: "asc" | "desc" = "asc";
     result.sort((a, b) => {
       const av = a[sortBy] ?? "";
       const bv = b[sortBy] ?? "";
@@ -69,7 +69,7 @@ export default function Inventory() {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return result;
-  }, [items, debouncedSearch, locationFilter, sortBy, sortDir]);
+  }, [items, debouncedSearch, locationFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = useMemo(() => {
@@ -78,11 +78,6 @@ export default function Inventory() {
   }, [filtered, page]);
 
   useEffect(() => { setPage(1); }, [debouncedSearch, locationFilter]);
-
-  function handleSort(col: keyof InventoryItem) {
-    if (sortBy === col) setSortDir((d) => d === "asc" ? "desc" : "asc");
-    else { setSortBy(col); setSortDir("asc"); }
-  }
 
   function openAdd() { setEditing(null); setShowForm(true); }
   function openEdit(item: InventoryItem) { setEditing(item); setShowForm(true); }

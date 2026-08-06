@@ -38,7 +38,7 @@ interface CustomerData {
 }
 
 interface FrameItem {
-  sku: string; brand: string; model: string; color: string; price: number;
+  sku: string; brand: string; model: string; color: string; price: number; quantity?: number;
 }
 
 interface LensItem {
@@ -50,7 +50,7 @@ interface AccessoryItem {
 }
 
 interface BillItemLocal {
-  description: string; price: number; qty: number;
+  description: string; price: number; qty: number; availableQty?: number;
 }
 
 interface PrescriptionData {
@@ -177,6 +177,7 @@ export default function Workspace() {
           description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ""}`.trim(),
           price: Number(f.price) || 0,
           qty: 1,
+          availableQty: typeof f.quantity === "number" ? f.quantity : undefined,
         });
       }
     });
@@ -209,9 +210,34 @@ export default function Workspace() {
         !p.description.startsWith("Lens:") &&
         !p.description.startsWith("Acc:")
       );
-      return [...autoItems, ...manualItems];
+      const synced = autoItems.map((ai) => {
+        const prevItem = prev.find((p) => p.description === ai.description);
+        return prevItem ? { ...ai, qty: prevItem.qty } : ai;
+      });
+      return [...synced, ...manualItems];
     });
   }, [orderFrames, orderLenses, orderAccessories, selectedCustomer]);
+
+  // Resolve stock for frames added without a quantity (manual SKU entry, last-order autofill, drafts)
+  const frameStockKey = orderFrames.map((f) => `${f.sku}::${typeof f.quantity === "number" ? f.quantity : ""}`).join("|");
+  useEffect(() => {
+    const missing = orderFrames.filter((f) => f.sku && typeof f.quantity !== "number");
+    if (missing.length === 0) return;
+    let cancelled = false;
+    const requests = missing.map(async (f) => {
+      try {
+        const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(f.sku));
+        if (cancelled || !res.success) return;
+        const item = (res.data || []).find((x) => x.sku === f.sku) || (res.data || [])[0];
+        if (item && typeof item.quantity === "number") {
+          setOrderFrames((prev) => prev.map((fr) => fr.sku === f.sku ? { ...fr, quantity: item.quantity } : fr));
+        }
+      } catch {}
+    });
+    Promise.all(requests);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameStockKey]);
 
   function updateFrame(i: number, field: string, value: any) {
     setOrderFrames((prev) => prev.map((f, idx) => idx === i ? { ...f, [field]: value } : f));
@@ -373,6 +399,11 @@ export default function Workspace() {
 
   async function saveTransaction() {
     if (savingRef.current) return;
+    const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
+    if (overStock) {
+      toast.error(uiT("Quantity exceeds available stock. Reduce qty before saving.", "मात्रा उपलब्ध स्टॉक से अधिक है। सेव करने से पहले मात्रा घटाएं।"));
+      return;
+    }
     setSaving(true);
     try {
       const custId = selectedCustomer?._id;
@@ -696,6 +727,7 @@ export default function Workspace() {
   const currentIdx = stepKeys.indexOf(step);
   const discountVal = calcDiscount();
   const finalTotal = Math.max(0, totalAmount - discountVal);
+  const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
   const customerId = selectedCustomer?._id || "";
 
   return (
@@ -838,6 +870,8 @@ export default function Workspace() {
         saveTransaction={saveTransaction}
         saving={saving}
         countdown={countdown}
+        canNext={!overStock}
+        nextHint={overStock ? uiT("Quantity exceeds available stock. Reduce qty to continue.", "मात्रा उपलब्ध स्टॉक से अधिक है। आगे बढ़ने के लिए मात्रा घटाएं।") : undefined}
       />
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
@@ -850,7 +884,7 @@ export default function Workspace() {
                 const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(q));
                 if (res.success && res.data && res.data.length > 0) {
                   const item = res.data[0];
-                  const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+                  const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
                   setOrderFrames((prev) => [...prev, newFrame]);
                   setScanModal(false);
                 }
@@ -869,7 +903,7 @@ export default function Workspace() {
           const res = await api.get<InventoryItem[]>("/api/inventory?q=" + encodeURIComponent(code));
           if (res.success && res.data && res.data.length > 0) {
             const item = res.data[0];
-            const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+            const newFrame: FrameItem = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
             setOrderFrames((prev) => [...prev, newFrame]);
           }
           setCameraActive(false);

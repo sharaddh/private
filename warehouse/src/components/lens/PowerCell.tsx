@@ -17,13 +17,13 @@ export default function PowerCell({ power, quantity, onIncrement, onDecrement }:
         {quantity}
       </span>
       <div className="flex gap-1">
-        <button
+        <button type="button"
           onClick={() => onDecrement(power)}
           className="w-6 h-6 rounded-full bg-negative/20 text-negative flex items-center justify-center text-small-bold hover:bg-negative/30 transition-colors"
         >
           -
         </button>
-        <button
+        <button type="button"
           onClick={() => onIncrement(power)}
           className="w-6 h-6 rounded-full bg-primary-500/20 text-primary-500 flex items-center justify-center text-small-bold hover:bg-primary-500/30 transition-colors"
         >

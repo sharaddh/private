@@ -95,7 +95,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-small font-bold text-th-text uppercase tracking-wider">Coatings</h3>
-        <button
+        <button type="button"
           onClick={() => { setAdding(true); setNewName(""); }}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-500 text-surface-950 text-small font-bold hover:bg-primary-400 active:scale-95 transition-all shadow-sm"
         >
@@ -115,10 +115,10 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
               className="flex-1 min-w-0 px-2.5 py-1.5 text-small bg-transparent text-th-text placeholder:text-th-muted focus:outline-none"
               placeholder="Coating name..."
             />
-            <button onClick={handleAdd} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
+            <button type="button" onClick={handleAdd} className="p-2 rounded-md bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors">
               <Check size={16} strokeWidth={2.5} />
             </button>
-            <button onClick={() => { setAdding(false); setNewPriceNeg(""); setNewPricePos(""); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
+            <button type="button" onClick={() => { setAdding(false); setNewPriceNeg(""); setNewPricePos(""); }} className="p-2 rounded-md bg-th-elevated text-th-muted hover:text-th-text transition-colors">
               <X size={16} strokeWidth={2.5} />
             </button>
           </div>
@@ -179,10 +179,10 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
                       onKeyDown={(e) => { if (e.key === "Enter") handleRename(item._id); if (e.key === "Escape") setEditingId(null); }}
                       className="flex-1 min-w-0 px-2.5 py-1.5 text-small bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
                     />
-                    <button onClick={() => handleRename(item._id)} className="p-2 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors">
+                    <button type="button" onClick={() => handleRename(item._id)} className="p-2 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors">
                       <Check size={16} strokeWidth={2.5} />
                     </button>
-                    <button onClick={() => setEditingId(null)} className="p-2 text-th-muted hover:bg-th-elevated rounded-lg transition-colors">
+                    <button type="button" onClick={() => setEditingId(null)} className="p-2 text-th-muted hover:bg-th-elevated rounded-lg transition-colors">
                       <X size={16} strokeWidth={2.5} />
                     </button>
                   </div>
@@ -224,13 +224,13 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
                   </div>
 
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                    <button
+                    <button type="button"
                       onClick={() => { setEditingId(item._id); setEditName(item.coating); setEditPriceNeg(String(item.priceNeg ?? item.price ?? 0)); setEditPricePos(String(item.pricePos ?? item.price ?? 0)); }}
                       className="p-2 text-th-muted hover:text-th-text hover:bg-th-elevated rounded-lg transition-colors"
                     >
                       <Pencil size={16} />
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => handleDelete(item._id, item.coating)}
                       className="p-2 text-th-muted hover:text-negative hover:bg-negative/10 rounded-lg transition-colors"
                     >
@@ -249,7 +249,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
               <Plus size={20} className="text-th-muted" />
             </div>
             <p className="text-th-muted text-small font-medium mb-1">No coatings yet</p>
-            <button
+            <button type="button"
               onClick={() => { setAdding(true); setNewName(""); }}
               className="text-primary-500 text-small font-semibold hover:underline"
             >

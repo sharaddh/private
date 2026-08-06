@@ -1,26 +1,31 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { lensStockService } from "../../services";
 import { useToast } from "../../context/ToastContext";
 import type { LensStockItem, LensStockScope, LensType } from "../../types";
-import { TABS, type TabKey } from "./powers";
 import PowerRow from "./PowerRow";
 import CompoundGrid from "./CompoundGrid";
 import PlainGrid from "./PlainGrid";
+import type { TabKey } from "./powers";
 
 interface Props {
   item: LensStockItem;
   scope: LensStockScope;
-  onUpdate: (updated: LensStockItem) => void;
+  lensType: TabKey;
+  onUpdate?: (updated: LensStockItem) => void;
+  onAddToCart?: (lensType: LensType, powerKey: string) => void;
+  onRemoveFromCart?: (lensType: LensType, powerKey: string) => void;
+  clickTitle?: string;
+  cartQty?: Record<string, number>;
 }
 
-export default function LensGrid({ item, scope, onUpdate }: Props) {
-  const [lensType, setLensType] = useState<TabKey>("sph");
+export default function LensGrid({ item, scope, lensType, onUpdate, onAddToCart, onRemoveFromCart, clickTitle, cartQty }: Props) {
   const toast = useToast();
 
   const effectiveLensType: LensType = lensType === "plain" ? "sph" : lensType;
   const quantities = item.quantities?.[effectiveLensType] || {};
 
   const persist = useCallback(async (powerKey: string, newQty: number) => {
+    if (!onUpdate) return;
     onUpdate({
       ...item,
       quantities: {
@@ -51,43 +56,62 @@ export default function LensGrid({ item, scope, onUpdate }: Props) {
     persist(powerKey, current - 1);
   }, [quantities, persist]);
 
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setLensType(t.key)}
-            className={`flex-1 px-2 py-2.5 rounded-pill text-small-bold transition-all active:scale-95 ${
-              lensType === t.key
-                ? "bg-primary-500 text-surface-950 shadow-sm"
-                : "text-th-secondary active:bg-th-hover"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+  const handleAddToCart = useCallback(
+    (powerKey: string) => {
+      if (onAddToCart) onAddToCart(effectiveLensType, powerKey);
+    },
+    [onAddToCart, effectiveLensType]
+  );
 
-      {lensType === "compound" ? (
-        <CompoundGrid
-          quantities={quantities}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-        />
-      ) : lensType === "plain" ? (
-        <PlainGrid
-          quantities={quantities}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-        />
-      ) : (
-        <PowerRow
-          quantities={quantities}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-        />
-      )}
-    </div>
+  const handleRemoveFromCart = useCallback(
+    (powerKey: string) => {
+      if (onRemoveFromCart) onRemoveFromCart(effectiveLensType, powerKey);
+    },
+    [onRemoveFromCart, effectiveLensType]
+  );
+
+  const inc = onUpdate ? handleIncrement : undefined;
+  const dec = onUpdate ? handleDecrement : undefined;
+  const clickToAdd = Boolean(onAddToCart) && !onUpdate;
+
+  if (lensType === "compound") {
+    return (
+      <CompoundGrid
+        quantities={quantities}
+        onIncrement={inc}
+        onDecrement={dec}
+        onAddToCart={onAddToCart ? handleAddToCart : undefined}
+        onRemoveFromCart={onRemoveFromCart ? handleRemoveFromCart : undefined}
+        clickToAdd={clickToAdd}
+        clickTitle={clickTitle}
+        cartQty={cartQty}
+      />
+    );
+  }
+  if (lensType === "plain") {
+    return (
+      <PlainGrid
+        quantities={quantities}
+        onIncrement={inc}
+        onDecrement={dec}
+        onAddToCart={onAddToCart ? handleAddToCart : undefined}
+        onRemoveFromCart={onRemoveFromCart ? handleRemoveFromCart : undefined}
+        clickToAdd={clickToAdd}
+        clickTitle={clickTitle}
+        cartQty={cartQty?.["+0.00"]}
+      />
+    );
+  }
+  return (
+    <PowerRow
+      quantities={quantities}
+      onIncrement={inc}
+      onDecrement={dec}
+      onAddToCart={onAddToCart ? handleAddToCart : undefined}
+      onRemoveFromCart={onRemoveFromCart ? handleRemoveFromCart : undefined}
+      clickToAdd={clickToAdd}
+      clickTitle={clickTitle}
+      cartQty={cartQty}
+    />
   );
 }

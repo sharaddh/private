@@ -55,4 +55,13 @@ export const updateInventorySchema = z.object({
 
 export const stockAdjustSchema = z.object({
   quantity: z.number(),
+  note: z.string().optional(),
+});
+
+export const importInventorySchema = z.object({
+  items: z
+    .array(z.record(z.string(), z.unknown()))
+    .min(1, "No items to import")
+    .max(1000, "Max 1000 items per import"),
+  note: z.string().optional(),
 });

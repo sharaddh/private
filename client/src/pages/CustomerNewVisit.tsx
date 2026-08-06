@@ -62,7 +62,7 @@ export default function CustomerNewVisit() {
   const [orderLenses, setOrderLenses] = useState<Array<{ sku: string; brand: string; features: string[]; index: string; price: number; coating: string }>>([]);
   const [orderAccessories, setOrderAccessories] = useState<Array<{ name: string; price: number }>>([]);
 
-  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number }>>([]);
+  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number; sku?: string }>>([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
   const [paymentMode, setPaymentMode] = useState("Cash");
@@ -193,7 +193,7 @@ export default function CustomerNewVisit() {
   useEffect(() => {
     if (loading) return; 
 
-    const autoItems: Array<{ description: string; price: number; qty: number }> = [];
+    const autoItems: Array<{ description: string; price: number; qty: number; sku?: string }> = [];
     
     // Add Frames
     orderFrames.forEach((f) => {
@@ -201,7 +201,8 @@ export default function CustomerNewVisit() {
         autoItems.push({ 
           description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ""}`.trim(), 
           price: Number(f.price) || 0, 
-          qty: 1 
+          qty: 1,
+          sku: f.sku || undefined,
         });
       }
     });
@@ -214,7 +215,8 @@ export default function CustomerNewVisit() {
         autoItems.push({ 
           description: `Lens: ${l.brand} ${featuresStr} ${indexStr}`.replace(/\s+/g, ' ').trim(), 
           price: Number(l.price) || 0, 
-          qty: 1 
+          qty: 1,
+          sku: l.sku || undefined,
         });
       }
     });
@@ -225,7 +227,8 @@ export default function CustomerNewVisit() {
         autoItems.push({ 
           description: `Acc: ${a.name || "Accessory"}`, 
           price: Number(a.price) || 0, 
-          qty: 1 
+          qty: 1,
+          sku: a.name || undefined,
         });
       }
     });
@@ -334,6 +337,16 @@ export default function CustomerNewVisit() {
           delete payload.order.framePrice;
         }
         if (visitType === "contact_lens") delete payload.order.coating;
+      }
+
+      const stockAgg = new Map<string, number>();
+      for (const it of billItems) {
+        if (it.sku) stockAgg.set(it.sku, (stockAgg.get(it.sku) || 0) + (it.qty || 1));
+      }
+      if (stockAgg.size > 0) {
+        const stockList = Array.from(stockAgg, ([sku, quantity]) => ({ sku, quantity }));
+        if (payload.order) payload.order.stockItems = stockList;
+        else payload.stockItems = stockList;
       }
 
       const validItems = billItems.filter((i) => i.description && i.price > 0);

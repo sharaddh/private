@@ -25,7 +25,16 @@ const InventorySchemaObj = new Schema(
     sphLeft: { type: String },
     cylLeft: { type: String },
     axisLeft: { type: String },
-    addPower: { type: String }
+    addPower: { type: String },
+    stockHistory: [
+      {
+        qty: { type: Number, required: true },
+        type: { type: String, enum: ["adjust", "import", "order", "restore", "withdraw"], default: "adjust" },
+        note: { type: String, default: "" },
+        by: { type: String, default: "" },
+        at: { type: Date, default: Date.now },
+      },
+    ]
   },
   { timestamps: true }
 );

@@ -93,7 +93,7 @@ function getInflightKey(method: string, path: string): string | null {
 async function request<T = unknown>(path: string, init: RequestOptions = {}): Promise<ApiResponse<T>> {
   const { timeout = 15000, retries = 1, signal: externalSignal, ...fetchInit } = init;
   const method = (fetchInit.method || "GET").toUpperCase();
-  const isLoginPath = path.includes("/auth/login");
+  const isLoginPath = path.includes("/auth/login") || path.includes("/auth/warehouse-login") || path.includes("/auth/register-owner") || path.includes("/auth/refresh");
 
   const inflightKey = getInflightKey(method, path);
   if (inflightKey && inflightRequests.has(inflightKey)) {
@@ -122,7 +122,7 @@ async function request<T = unknown>(path: string, init: RequestOptions = {}): Pr
           res = await fetch(`${API_URL}${path}`, { ...fetchInit, headers: newHeaders, signal: combinedSignal });
         } else {
           clearTokens();
-          window.location.href = "/#/login";
+          window.location.href = `${import.meta.env.BASE_URL}#/login`;
           return { success: false, message: "Session expired" };
         }
       }

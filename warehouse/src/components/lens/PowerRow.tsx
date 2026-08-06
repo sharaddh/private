@@ -30,13 +30,13 @@ const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement
       <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
       <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
       <div className="flex items-center gap-2">
-        <button
+        <button type="button"
           onClick={() => onDecrement(power)}
           className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
         >
           <Minus size={22} strokeWidth={2.5} />
         </button>
-        <button
+        <button type="button"
           onClick={() => onIncrement(power)}
           className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
         >
@@ -75,7 +75,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
     <div className="space-y-2">
       {negatives.length > 0 && (
         <div>
-          <button
+          <button type="button"
             onClick={() => toggle("Negative")}
             className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >
@@ -95,7 +95,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
 
       {positives.length > 0 && (
         <div>
-          <button
+          <button type="button"
             onClick={() => toggle("Positive")}
             className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >

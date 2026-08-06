@@ -180,15 +180,17 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
     blue: "text-[#3498db]",
   };
   return (
-    <ShineCard className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-3 sm:p-4 active:scale-95 shadow-md hover:shadow-lg ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
-      <div className="flex items-center gap-2.5 sm:gap-3">
-        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconMap[color] || iconMap.blue} flex-shrink-0`} />
+    <ShineCard className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-3 sm:p-4 active:scale-95 shadow-md hover:shadow-lg w-full h-full ${onClick ? "cursor-pointer hover:bg-th-card" : ""}`} onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}>
+      <div className="flex items-center gap-2.5 sm:gap-3 h-full">
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${bgMap[color] || bgMap.blue}`}>
+          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconMap[color] || iconMap.blue}`} />
+        </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-[14px] sm:text-[17px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider`}>{label}</p>
-          <p className={`text-lg sm:text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5`}>{value}</p>
+          <p className={`text-[14px] sm:text-[17px] font-medium ${textMap[color] || textMap.blue} uppercase tracking-wider leading-tight truncate`}>{label}</p>
+          <p className={`text-lg sm:text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5 leading-tight`}>{value}</p>
         </div>
         {action && (
-          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[16px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0`}>
+          <button onClick={(e) => { e.stopPropagation(); action(); }} aria-label={actionLabel || "View"} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[16px] font-bold transition-all active:scale-95 ${textMap[color] || textMap.blue} bg-th-card hover:bg-th-elevated uppercase tracking-wider flex-shrink-0 whitespace-nowrap`}>
             {actionLabel || "View"}
           </button>
         )}
@@ -442,27 +444,37 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Row 2: Sales vs Collection + Daily Orders + Payment Modes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+        {/* Row 2: Sales vs Collection + Payment Modes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {hasSales && hasCollections && (
-            <SalesVsCollectionChart
-              salesData={d.dailySales || []}
-              collectionData={d.dailyCollections || []}
-              dark={dark}
-            />
-          )}
-          {hasOrdersTrend && (
-            <WeeklyOrdersChart data={d.weeklyOrderTrend || []} dark={dark} />
+            <div className={(hasSales && hasCollections && hasPayments) ? "" : "md:col-span-2"}>
+              <SalesVsCollectionChart
+                salesData={d.dailySales || []}
+                collectionData={d.dailyCollections || []}
+                dark={dark}
+              />
+            </div>
           )}
           {hasPayments && (
-            <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
+            <div className={(hasSales && hasCollections && hasPayments) ? "" : "md:col-span-2"}>
+              <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
+            </div>
           )}
         </div>
 
-        {/* Row 3: Inventory Category Breakdown (if exists) */}
-        {hasCategories && (
+        {/* Row 3: Daily Orders + Inventory Category Breakdown */}
+        {(hasOrdersTrend || hasCategories) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-            <CategoryPieChart data={d.categoryBreakdown || []} dark={dark} />
+            {hasOrdersTrend && (
+              <div className={hasCategories ? "" : "md:col-span-2"}>
+                <WeeklyOrdersChart data={d.weeklyOrderTrend || []} dark={dark} />
+              </div>
+            )}
+            {hasCategories && (
+              <div className={hasOrdersTrend ? "" : "md:col-span-2"}>
+                <CategoryPieChart data={d.categoryBreakdown || []} dark={dark} />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -480,9 +492,9 @@ export default function Dashboard() {
     if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
     if (items.length === 0) return null;
     return (
-      <div>
+      <div className="space-y-3 sm:space-y-4">
         <SectionHeader title={uiT("Needs Attention", "ध्यान दें")} count={items.length} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
           {items.map((item) => (
             <AlertCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} action={item.action} actionLabel={item.actionLabel} onClick={item.onClick} />
           ))}
@@ -841,30 +853,7 @@ export default function Dashboard() {
   };
 
   // Recent Customers
-
-  const renderRecentCustomers = () => (
-    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-        <SectionHeader title={uiT("Recent Customers", "हाल के ग्राहक")} count={d.recentCustomers.length} action={() => navigate("/customers")} actionLabel={uiT("View all", "सभी देखें")} />
-      </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
-        {d.recentCustomers.length === 0 ? (
-          <EmptyState icon={Users} title={uiT("No customers yet", "अभी तक कोई ग्राहक नहीं")} description={uiT("Start by adding your first customer.", "अपना पहला ग्राहक जोड़कर शुरू करें।")} actionLabel={uiT("Add Customer", "ग्राहक जोड़ें")} onAction={() => navigate("/customers")} />
-        ) : d.recentCustomers.map((c, idx) => (
-          <div key={c._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${c._id}`)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && navigate(`/customers/${c._id}`)}>
-            <UserAvatar name={c.name || "?"} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{v(c.name)}</p>
-              <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                {c.mobile ? maskPhone(c.mobile) : "—"} · {c.createdAt ? formatTimeAgo(c.createdAt, uiT) : ""} · {c.totalVisits ?? 0} {uiT("visits", "विज़िट")}
-              </p>
-            </div>
-            <p className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap flex-shrink-0">₹{(c.totalSpent || 0).toLocaleString()}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  // (removed)
 
   // Todo
 
@@ -1026,9 +1015,8 @@ export default function Dashboard() {
         {/* Today's Delivered */}
         {renderTodayDelivered()}
 
-        {/* Bottom grid: Recent Customers, Todo, Payments */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-          {renderRecentCustomers()}
+        {/* Bottom grid: Todo, Payments */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
           {renderTodo()}
           {renderPayments()}
         </div>

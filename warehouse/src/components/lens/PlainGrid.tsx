@@ -18,13 +18,13 @@ const PlainGrid = memo(function PlainGrid({ quantities, onIncrement, onDecrement
         <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">0.00</span>
         <span className={`text-lg sm:text-xl font-bold leading-none ${qty > 0 ? "text-th-secondary" : "text-th-muted"}`}>{qty}</span>
         <div className="flex items-center gap-2">
-          <button
+          <button type="button"
             onClick={() => onDecrement("+0.00")}
             className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
           >
             <Minus size={22} strokeWidth={2.5} />
           </button>
-          <button
+          <button type="button"
             onClick={() => onIncrement("+0.00")}
             className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
           >

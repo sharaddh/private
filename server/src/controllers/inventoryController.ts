@@ -1,15 +1,25 @@
 import { Request, Response } from "express";
 import * as inventoryService from "../services/inventory.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { AuthRequest } from "../types";
 
-export async function getStats(_req: Request, res: Response) {
-  const data = await inventoryService.getStats();
+export async function getStats(req: Request, res: Response) {
+  const threshold = req.query.threshold as string | undefined;
+  const data = await inventoryService.getStats(threshold);
   sendSuccess(res, data);
 }
 
 export async function list(req: Request, res: Response) {
-  const { search, q } = req.query;
-  const data = await inventoryService.listInventory({ search: (search || q) as string });
+  const { search, q, category, location, lowStock, threshold, page, limit } = req.query;
+  const data = await inventoryService.listInventory({
+    search: (search || q) as string | undefined,
+    category: category as string | undefined,
+    location: location as string | undefined,
+    lowStock: lowStock === "true" || lowStock === "1",
+    threshold: threshold as string | undefined,
+    page: page as string | undefined,
+    limit: limit as string | undefined,
+  });
   sendSuccess(res, data);
 }
 
@@ -19,7 +29,7 @@ export async function getById(req: Request, res: Response) {
 }
 
 export async function getBySku(req: Request, res: Response) {
-  const data = await inventoryService.getInventoryBySku(req.params.sku);
+  const data = await inventoryService.getInventoryBySku(req.params.code);
   sendSuccess(res, data);
 }
 
@@ -40,9 +50,17 @@ export async function create(req: Request, res: Response) {
   sendCreated(res, data);
 }
 
-export async function adjustStock(req: Request, res: Response) {
-  const { quantity } = req.body;
-  const data = await inventoryService.adjustStock(req.params.id, quantity);
+export async function adjustStock(req: AuthRequest, res: Response) {
+  const { quantity, note } = req.body;
+  const by = req.user?.username || "";
+  const data = await inventoryService.adjustStock(req.params.id, quantity, note, by);
+  sendSuccess(res, data);
+}
+
+export async function bulkImport(req: AuthRequest, res: Response) {
+  const { items, note } = req.body;
+  const by = req.user?.username || "";
+  const data = await inventoryService.importInventory(items || [], { note, by });
   sendSuccess(res, data);
 }
 

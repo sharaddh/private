@@ -18,6 +18,9 @@ export interface BranchModels {
   Delivery: Model<any>;
   Settings: Model<any>;
   Todo: Model<any>;
+  InventoryWithdrawal: Model<any>;
+  ShopCartItem: Model<any>;
+  ShopLensWithdrawal: Model<any>;
 }
 
 export interface WarehouseModels {
@@ -46,6 +49,9 @@ function loadSchemas() {
     Delivery: require("./delivery").DeliverySchema,
     Settings: require("./settings").SettingsSchema,
     Todo: require("./todo").TodoSchema,
+    InventoryWithdrawal: require("./inventoryWithdrawal").InventoryWithdrawalSchema,
+    ShopCartItem: require("./shopLensCart").ShopCartItemSchema,
+    ShopLensWithdrawal: require("./shopLensWithdrawal").ShopLensWithdrawalSchema,
   };
   return schemas;
 }
@@ -82,6 +88,9 @@ function registerModels(conn: mongoose.Connection): BranchModels {
     Delivery: getModel("Delivery", s.Delivery),
     Settings: getModel("Settings", s.Settings),
     Todo: getModel("Todo", s.Todo),
+    InventoryWithdrawal: getModel("InventoryWithdrawal", s.InventoryWithdrawal),
+    ShopCartItem: getModel("ShopCartItem", s.ShopCartItem),
+    ShopLensWithdrawal: getModel("ShopLensWithdrawal", s.ShopLensWithdrawal),
   };
 }
 

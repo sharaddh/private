@@ -23,6 +23,7 @@ import recalculate from "./recalculate";
 import warehouse from "./warehouse";
 import cart from "./cart";
 import fogMarks from "./fogMarks";
+import withdrawals from "./inventoryWithdrawal";
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.use("/bills", branchScope, bills);
 router.use("/payments", branchScope, payments);
 router.use("/delivery", branchScope, delivery);
 router.use("/inventory", branchScope, inventory);
+router.use("/withdrawals", branchScope, withdrawals);
 router.use("/lens-stock", branchScope, lensStock);
 router.use("/visits", branchScope, visits);
 router.use("/prescriptions", branchScope, prescriptions);

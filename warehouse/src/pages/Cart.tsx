@@ -96,7 +96,7 @@ export default function Cart() {
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <button
+            <button type="button"
               onClick={clearCart}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-negative text-small font-bold bg-negative/10 active:scale-95 transition-all"
             >
@@ -167,14 +167,14 @@ export default function Cart() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1 bg-th-elevated rounded-xl p-1">
-                        <button
+                        <button type="button"
                           onClick={() => item.quantity <= 1 ? removeItem(item._id) : updateQty(item._id, item.quantity - 1)}
                           className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                         >
                           <Minus size={18} strokeWidth={2.5} />
                         </button>
                         <span className="w-10 text-center text-body-bold text-th-text">{item.quantity}</span>
-                        <button
+                        <button type="button"
                           onClick={() => { if (!atMax) updateQty(item._id, item.quantity + 1); }}
                           disabled={atMax}
                           className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -182,7 +182,7 @@ export default function Cart() {
                           <Plus size={18} strokeWidth={2.5} />
                         </button>
                       </div>
-                      <button
+                      <button type="button"
                         onClick={() => removeItem(item._id)}
                         className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                       >
@@ -207,7 +207,7 @@ export default function Cart() {
                   <div className="text-feature font-bold text-primary-500">{formatCurrency(totalPrice)}</div>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={handleWithdraw}
                 disabled={withdrawing}
                 className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-primary-500 text-surface-950 text-body font-bold active:scale-95 transition-all disabled:opacity-50 shrink-0"

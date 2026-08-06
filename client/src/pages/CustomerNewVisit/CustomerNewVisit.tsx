@@ -67,11 +67,11 @@ export default function CustomerNewVisit() {
     pd: "", notes: "", problems: "",
   });
 
-  const [orderFrames, setOrderFrames] = useState<Array<{ sku: string; brand: string; model: string; color: string; price: number }>>([]);
+  const [orderFrames, setOrderFrames] = useState<Array<{ sku: string; brand: string; model: string; color: string; price: number; quantity?: number }>>([]);
   const [orderLenses, setOrderLenses] = useState<Array<{ sku: string; brand: string; features: string[]; index: string; price: number; coating: string }>>([]);
   const [orderAccessories, setOrderAccessories] = useState<Array<{ name: string; price: number }>>([]);
 
-  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number }>>([]);
+  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number; availableQty?: number }>>([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
   const [paymentMode, setPaymentMode] = useState("Cash");
@@ -183,7 +183,7 @@ export default function CustomerNewVisit() {
   useEffect(() => {
     if (loading) return; 
 
-    const autoItems: Array<{ description: string; price: number; qty: number }> = [];
+    const autoItems: Array<{ description: string; price: number; qty: number; availableQty?: number }> = [];
     
     // Add Frames
     orderFrames.forEach((f) => {
@@ -191,7 +191,8 @@ export default function CustomerNewVisit() {
         autoItems.push({ 
           description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ""}`.trim(), 
           price: Number(f.price) || 0, 
-          qty: 1 
+          qty: 1,
+          availableQty: typeof f.quantity === "number" ? f.quantity : undefined,
         });
       }
     });
@@ -227,11 +228,38 @@ export default function CustomerNewVisit() {
         !p.description.startsWith("Lens:") && 
         !p.description.startsWith("Acc:")
       );
-      
-      return [...autoItems, ...manualItems];
+
+      // Preserve any qty edits the user made on auto-synced items
+      const synced = autoItems.map((ai) => {
+        const prevItem = prev.find((p) => p.description === ai.description);
+        return prevItem ? { ...ai, qty: prevItem.qty } : ai;
+      });
+
+      return [...synced, ...manualItems];
     });
 
   }, [orderFrames, orderLenses, orderAccessories, loading]);
+
+  // Resolve stock for frames added without a quantity (manual SKU entry, last-order autofill, drafts)
+  const frameStockKey = orderFrames.map((f) => `${f.sku}::${typeof f.quantity === "number" ? f.quantity : ""}`).join("|");
+  useEffect(() => {
+    const missing = orderFrames.filter((f) => f.sku && typeof f.quantity !== "number");
+    if (missing.length === 0) return;
+    let cancelled = false;
+    const requests = missing.map(async (f) => {
+      try {
+        const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(f.sku)}`);
+        if (cancelled || !res.success) return;
+        const item = (res.data || []).find((x) => x.sku === f.sku) || (res.data || [])[0];
+        if (item && typeof item.quantity === "number") {
+          setOrderFrames((prev) => prev.map((fr) => fr.sku === f.sku ? { ...fr, quantity: item.quantity } : fr));
+        }
+      } catch {}
+    });
+    Promise.all(requests);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameStockKey]);
 
   function updateFrame(i: number, field: string, value: any) {
     setOrderFrames((prev) => prev.map((f, idx) => idx === i ? { ...f, [field]: value } : f));
@@ -275,6 +303,11 @@ export default function CustomerNewVisit() {
 
   async function saveTransaction() {
     if (savingRef.current) return;
+    const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
+    if (overStock) {
+      toast.error(uiT("Quantity exceeds available stock. Reduce qty before saving.", "मात्रा उपलब्ध स्टॉक से अधिक है। सेव करने से पहले मात्रा घटाएं।"));
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = { customerId: id };
@@ -419,6 +452,7 @@ export default function CustomerNewVisit() {
   const currentIdx = stepKeys.indexOf(step);
   const discountVal = calcDiscount();
   const finalTotal = Math.max(0, totalAmount - discountVal);
+  const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
 
   return (
     <motion.div
@@ -560,6 +594,8 @@ export default function CustomerNewVisit() {
         saveTransaction={saveTransaction}
         saving={saving}
         countdown={countdown}
+        canNext={!overStock}
+        nextHint={overStock ? uiT("Quantity exceeds available stock. Reduce qty to continue.", "मात्रा उपलब्ध स्टॉक से अधिक है। आगे बढ़ने के लिए मात्रा घटाएं।") : undefined}
       />
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan Frame QR", "फ्रेम QR स्कैन करें")} size="sm">
@@ -572,7 +608,7 @@ export default function CustomerNewVisit() {
                 const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
                 if (res.success && res.data && res.data.length > 0) {
                   const item = res.data[0];
-                  const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+                  const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
                   const next = [...orderFrames, newFrame];
                   setOrderFrames(next);
                   setScanModal(false);
@@ -591,7 +627,7 @@ export default function CustomerNewVisit() {
           const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
           if (res.success && res.data && res.data.length > 0) {
             const item = res.data[0];
-            const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0 };
+            const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
             const next = [...orderFrames, newFrame];
             setOrderFrames(next);
           }

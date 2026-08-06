@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useTranslate } from "../../context/TranslateContext";
 
-interface Frame { sku: string; brand: string; model: string; color: string; price: number }
+interface Frame { sku: string; brand: string; model: string; color: string; price: number; quantity?: number }
 interface Lens { sku: string; brand: string; features: string[]; index: string; price: number; coating: string }
 interface Accessory { name: string; price: number }
 
@@ -125,13 +125,14 @@ function OrderFrames({ orderFrames, updateFrame, removeFrame, onScan, searchInve
                         onMouseDown={() => {
                           updateFrame(i, "sku", s.sku || ""); updateFrame(i, "brand", s.brand || "");
                           updateFrame(i, "model", s.model || ""); updateFrame(i, "color", s.color || "");
-                          updateFrame(i, "price", s.sellingPrice || 0); setSuggestions([]); setSuggestionsFor(null);
+                          updateFrame(i, "price", s.sellingPrice || 0); updateFrame(i, "quantity", typeof s.quantity === "number" ? s.quantity : undefined); setSuggestions([]); setSuggestionsFor(null);
                         }}
                         className="w-full text-left px-4 py-3 text-sm hover:bg-[#1ed760]/10 flex items-center gap-3 border-b border-th-elevated last:border-0 transition-colors"
                       >
                         <Search size={14} className="text-[#1ed760]" />
                         <span className="font-bold text-th-text">{s.sku}</span>
                         <span className="text-th-secondary text-xs">{s.brand} {s.model}</span>
+                        <span className={`text-xs font-semibold ${typeof s.quantity === "number" && s.quantity <= 0 ? "text-[#e53935]" : "text-th-secondary"}`}>{uiT("Stock", "स्टॉक")}: {s.quantity ?? "—"}</span>
                         <span className="text-th-text font-semibold ml-auto">₹{s.sellingPrice || 0}</span>
                       </button>
                     ))}

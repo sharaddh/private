@@ -1,15 +1,21 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, ShoppingCart, X } from "lucide-react";
 import { NEG_CYL, POS_CYL, NEG_SPH_INNER, POS_SPH_INNER, SPH_INNER } from "./powers";
 
 interface Props {
   quantities: Record<string, number>;
-  onIncrement: (powerKey: string) => void;
-  onDecrement: (powerKey: string) => void;
+  onIncrement?: (powerKey: string) => void;
+  onDecrement?: (powerKey: string) => void;
+  onAddToCart?: (powerKey: string) => void;
+  onRemoveFromCart?: (powerKey: string) => void;
+  clickToAdd?: boolean;
+  clickTitle?: string;
+  cartQty?: Record<string, number>;
 }
 
-export default function CompoundGrid({ quantities, onIncrement, onDecrement }: Props) {
+export default function CompoundGrid({ quantities, onIncrement, onDecrement, onAddToCart, onRemoveFromCart, clickToAdd, clickTitle, cartQty }: Props) {
   const [openCyl, setOpenCyl] = useState<string>("");
+  const editable = Boolean(onIncrement || onDecrement);
 
   const cylGroups: { label: string; values: string[]; color: string }[] = [
     { label: "Negative CYL", values: NEG_CYL, color: "text-amber-500" },
@@ -42,7 +48,7 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
 
                 return (
                   <div key={cyl}>
-                    <button
+                    <button type="button"
                       onClick={() => setOpenCyl((prev) => (prev === cyl ? "" : cyl))}
                       className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
                     >
@@ -55,7 +61,7 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
                         {sphInnerGroups.map((sphGroup) => (
                           <div key={sphGroup.label}>
                             <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">{sphGroup.label}</div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                               {sphGroup.values.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;
@@ -70,31 +76,98 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
                                 const bg = isNeg ? "bg-amber-400/5" : isPos ? "bg-emerald-400/5" : "bg-th-elevated";
                                 const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
 
+                                const cardBase = `flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border ${border} ${bg}`;
+                                const labelEl = (
+                                  <span className="text-sm sm:text-base font-bold leading-none whitespace-nowrap">
+                                    <span className={isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
+                                    <span className="text-th-muted"> | </span>
+                                    <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
+                                  </span>
+                                );
+                                const qtyEl = <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>;
+
                                 return (
-                                  <div key={sph} className={`flex flex-col items-center gap-2.5 p-3 rounded-xl border ${border} ${bg}`}>
-                                    <span className="text-sm sm:text-base font-bold leading-none whitespace-nowrap">
-                                      <span className={isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
-                                      <span className="text-th-muted"> | </span>
-                                      <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
-                                    </span>
-                                    <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={() => onDecrement(key)}
-                                        className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
-                                        aria-label={`Decrement ${key}`}
+                                  clickToAdd ? (
+                                    (() => {
+                                      const cq = cartQty?.[key] || 0;
+                                      const maxed = qty <= 0 || cq >= qty;
+                                      return (
+                                        <div
+                                          key={sph}
+                                          role="button"
+                                          tabIndex={maxed ? -1 : 0}
+                                          onClick={maxed ? undefined : () => onAddToCart?.(key)}
+                                          onKeyDown={maxed ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAddToCart?.(key); } }}
+                                          aria-disabled={maxed}
+                                          title={clickTitle || `Add ${key} to cart`}
+                                          className={`${cardBase} relative transition-all ${
+                                            maxed
+                                              ? "opacity-45 cursor-not-allowed"
+                                              : "cursor-pointer hover:border-primary-500/60 hover:ring-1 hover:ring-primary-500/25 active:scale-95 group"
+                                          }`}
+                                        >
+                                          {cq > 0 && (
+                                            <button type="button"
+                                              onClick={(e) => { e.stopPropagation(); onRemoveFromCart?.(key); }}
+                                              className="absolute top-1 right-1 flex items-center px-1.5 py-0.5 rounded-full bg-th-elevated text-th-muted hover:text-negative hover:bg-negative/10 transition-colors"
+                                              aria-label={`Deselect ${key}`}
+                                              title="Deselect"
+                                            >
+                                              <X size={11} strokeWidth={3} />
+                                            </button>
+                                          )}
+                                          {labelEl}
+                                          {qtyEl}
+                                        </div>
+                                      );
+                                    })()
+                                  ) : (
+                                  <div key={sph} className={cardBase}>
+                                    {labelEl}
+                                    {qtyEl}
+                                    {editable ? (
+                                      <div className="flex items-center gap-2">
+                                        {onDecrement && (
+                                          <button type="button"
+                                            onClick={() => onDecrement(key)}
+                                            className="w-10 h-10 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
+                                            aria-label={`Decrement ${key}`}
+                                          >
+                                            <span className="text-lg font-bold leading-none">−</span>
+                                          </button>
+                                        )}
+                                        {onAddToCart && (
+                                          <button type="button"
+                                            onClick={() => onAddToCart(key)}
+                                            className="w-12 h-12 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center active:scale-90 active:bg-primary-500/20 transition-all"
+                                            aria-label={`Add ${key} to cart`}
+                                            title="Add to cart"
+                                          >
+                                            <ShoppingCart size={16} />
+                                          </button>
+                                        )}
+                                        {onIncrement && (
+                                          <button type="button"
+                                            onClick={() => onIncrement(key)}
+                                            className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
+                                            aria-label={`Increment ${key}`}
+                                          >
+                                            <span className="text-lg font-bold leading-none">+</span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    ) : onAddToCart ? (
+                                      <button type="button"
+                                        onClick={() => onAddToCart(key)}
+                                        className="w-12 h-12 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center active:scale-90 active:bg-primary-500/20 transition-all"
+                                        aria-label={`Add ${key} to cart`}
+                                        title="Add to cart"
                                       >
-                                        <span className="text-xl font-bold leading-none">−</span>
+                                        <ShoppingCart size={16} />
                                       </button>
-                                      <button
-                                        onClick={() => onIncrement(key)}
-                                        className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
-                                        aria-label={`Increment ${key}`}
-                                      >
-                                        <span className="text-xl font-bold leading-none">+</span>
-                                      </button>
-                                    </div>
+                                    ) : null}
                                   </div>
+                                  )
                                 );
                               })}
                             </div>

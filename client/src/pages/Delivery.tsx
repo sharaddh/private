@@ -60,7 +60,7 @@ export default function Delivery() {
   const readyKey = "/api/orders?status=Ready&limit=10000";
   const { data: readyData, loading: readyLoading, refetch: refetchReady } = useCachedData<AnyOrder[]>(readyKey,
     async () => {
-      const res = await orderService.listFiltered({ status: "Ready", limit: "10000" });
+      const res = await orderService.listFiltered({ status: "Ready", limit: 10000 });
       return { success: res.success, data: res.data?.data ?? [] };
     },
     []
@@ -69,7 +69,7 @@ export default function Delivery() {
   const allKey = `/api/orders?status=${encodeURIComponent(NON_DELIVERED_STATUSES.join(","))}&limit=10000`;
   const { data: allData, loading: allLoading, refetch: refetchAll } = useCachedData<AnyOrder[]>(allKey,
     async () => {
-      const res = await orderService.listFiltered({ status: NON_DELIVERED_STATUSES.join(","), limit: "10000" });
+      const res = await orderService.listFiltered({ status: NON_DELIVERED_STATUSES.join(","), limit: 10000 });
       return { success: res.success, data: res.data?.data ?? [] };
     },
     []
@@ -83,7 +83,7 @@ export default function Delivery() {
         dateField: "actualDeliveryDate",
         startDate,
         endDate,
-        limit: "10000",
+        limit: 10000,
       });
       return { success: res.success, data: res.data?.data ?? [] };
     },

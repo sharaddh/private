@@ -6,6 +6,7 @@ import { withTransaction } from "../utils/transaction";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
 import { istDateKey } from "../utils/date";
 import { AppError } from "../middleware/errorHandler";
+import { restoreStockForOrder, decrementStockForOrder } from "./inventory.service";
 import type { PaginatedResult } from "../types";
 
 interface BillItemInput {
@@ -51,6 +52,7 @@ interface BillResult {
     unitPrice: number;
     total: number;
   }>;
+  stockItems?: Array<{ sku?: string; quantity?: number }>;
   subtotal: number;
   discount: number;
   tax: number;
@@ -170,6 +172,7 @@ export async function updateBill(
 
     const oldTotal = bill.totalAmount || 0;
     const oldPending = bill.pendingAmount || 0;
+    const oldStatus = bill.status;
 
     const items = updates.items || bill.items.map((it: { description: string; quantity: number; unitPrice: number }) => ({
       description: it.description,
@@ -203,6 +206,18 @@ export async function updateBill(
     bill.subtotal = subtotal;
     bill.totalAmount = totalAmount;
     bill.pendingAmount = pendingAmount;
+
+    if (
+      oldStatus !== bill.status &&
+      Array.isArray(bill.stockItems) &&
+      bill.stockItems.length > 0
+    ) {
+      if (bill.status === "Cancelled") {
+        await restoreStockForOrder({ stockItems: bill.stockItems }, session);
+      } else if (oldStatus === "Cancelled") {
+        await decrementStockForOrder({ stockItems: bill.stockItems }, session);
+      }
+    }
 
     await bill.save({ session });
 
@@ -277,6 +292,10 @@ export async function deleteBill(billId: string): Promise<void> {
     const bill = await Bill.findByIdAndDelete(billId).session(session);
     if (!bill) {
       throw new AppError(404, "Bill not found");
+    }
+
+    if (Array.isArray(bill.stockItems) && bill.stockItems.length > 0) {
+      await restoreStockForOrder({ stockItems: bill.stockItems }, session);
     }
 
     await Customer.findByIdAndUpdate(

@@ -26,8 +26,7 @@
     "server": "npm run dev --prefix server",
     "warehouse": "npm run dev --prefix warehouse",
     "clean": "rm -rf client/dist server/dist warehouse/dist node_modules",
-    "lint": "npm run lint --prefix client && npm run lint --prefix server",
-    "typecheck": "npm run typecheck --prefix client && npm run typecheck --prefix server"
+    "typecheck": "npm run typecheck --prefix client && npm run typecheck --prefix server && npm run typecheck --prefix warehouse"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

@@ -213,13 +213,21 @@ export interface Payment {
 
 // ─── Inventory ───────────────────────────────────────────────────────────────
 
-export type InventoryCategory = "Frame" | "Lens" | "Accessories";
+export type InventoryCategory = "Specs" | "Sunglasses" | "Contact Lens" | "Hearing Aid" | "Solution" | "Kit";
 
 export type InventoryType = "spectacles" | "sunglasses" | "lens" | "bifocal" | "progressive" | "blue-cut" | "photochromic" | "accessory" | "hearing-aid" | "cleaner" | "case" | "other";
 
 export type InventoryLocation = "shop" | "warehouse";
 
 export type InventoryGender = "Male" | "Female" | "Unisex" | "";
+
+export interface StockHistoryEntry {
+  qty: number;
+  type: "adjust" | "import" | "order" | "restore";
+  note?: string;
+  by?: string;
+  at: string;
+}
 
 export interface InventoryItem {
   _id: string;
@@ -246,6 +254,7 @@ export interface InventoryItem {
   cylLeft: string;
   axisLeft: string;
   addPower: string;
+  stockHistory?: StockHistoryEntry[];
   createdAt: string;
   updatedAt?: string;
 }
@@ -276,6 +285,51 @@ export interface InventoryFormData {
   addPower: string;
 }
 
+export interface InventoryStats {
+  totalItems: number;
+  lowStock: number;
+  lowStockThreshold: number;
+  warehouseItems: number;
+  totalValue: number;
+  recentItems: InventoryItem[];
+  categoryCounts: Record<string, number>;
+}
+
+export interface InventoryImportResult {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: Array<{ row: number; message: string }>;
+}
+
+// ─── Withdrawals ─────────────────────────────────────────────────────────────
+
+export interface WithdrawalItem {
+  sku: string;
+  brand: string;
+  model: string;
+  color: string;
+  category: string;
+  qty: number;
+  price: number;
+}
+
+export interface Withdrawal {
+  _id: string;
+  items: WithdrawalItem[];
+  note: string;
+  by: string;
+  totalQty: number;
+  totalPrice: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWithdrawalInput {
+  items: Array<{ sku: string; qty: number; price?: number }>;
+  note?: string;
+}
+
 // ─── Lens Stock ───────────────────────────────────────────────────────────────
 
 export type LensType = "sph" | "cyl" | "compound";
@@ -291,6 +345,67 @@ export interface LensStockItem {
   quantities: Record<LensType, Record<string, number>>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ShopCartItem {
+  _id: string;
+  coating: string;
+  lensType: LensType;
+  powerKey: string;
+  quantity: number;
+  price: number;
+  fogMark?: string;
+  available?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShopLensWithdrawalItem {
+  coating: string;
+  lensType: LensType;
+  powerKey: string;
+  quantity: number;
+  price: number;
+  fogMark?: string;
+  available?: number;
+}
+
+export type ShopLensWithdrawalItemInput = Pick<ShopLensWithdrawalItem, "coating" | "lensType" | "powerKey" | "quantity">;
+
+export interface ShopLensWithdrawal {
+  _id: string;
+  username: string;
+  items: ShopLensWithdrawalItem[];
+  totalQuantity: number;
+  totalPrice: number;
+  note?: string;
+  paid?: boolean;
+  withdrawnAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WithdrawResult {
+  withdrawn: number;
+  errors: string[];
+}
+
+export interface FogMark {
+  _id: string;
+  name: string;
+}
+
+export interface LensCartApi {
+  getItems: () => Promise<ApiResponse<ShopCartItem[]>>;
+  addItem: (coating: string, lensType: LensType, powerKey: string, quantity?: number) => Promise<ApiResponse<ShopCartItem>>;
+  updateItem: (id: string, quantity: number) => Promise<ApiResponse<ShopCartItem>>;
+  updateFogMark?: (id: string, fogMark: string) => Promise<ApiResponse<ShopCartItem>>;
+  removeItem: (id: string) => Promise<ApiResponse<null>>;
+  clear: () => Promise<ApiResponse<null>>;
+  withdraw: (note?: string) => Promise<ApiResponse<WithdrawResult>>;
+  getWithdrawals: () => Promise<ApiResponse<ShopLensWithdrawal[]>>;
+  updateWithdrawal: (id: string, items: ShopLensWithdrawalItemInput[]) => Promise<ApiResponse<ShopLensWithdrawal>>;
+  deleteWithdrawal: (id: string) => Promise<ApiResponse<null>>;
 }
 
 // ─── Delivery ────────────────────────────────────────────────────────────────

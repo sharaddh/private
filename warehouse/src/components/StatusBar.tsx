@@ -1,4 +1,4 @@
-import { AlertTriangle, Package, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   totalItems: number;
@@ -7,7 +7,7 @@ interface Props {
   totalValue: number;
 }
 
-export default function StatusBar({ totalItems, lowStock, warehouseItems, totalValue }: Props) {
+export default function StatusBar({ lowStock }: Props) {
   if (lowStock === 0) return null;
 
   return (

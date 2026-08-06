@@ -95,7 +95,7 @@ async function request<T = unknown>(
   init: RequestOptions = {},
   retries = 2
 ): Promise<ApiResponse<T>> {
-  const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register");
+  const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register") || path.includes("/auth/staff-login");
 
   let res: Response;
   try {

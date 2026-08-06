@@ -126,7 +126,7 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
           {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
         </div>
       ) : (
-        <button
+        <button type="button"
           onClick={onAdd}
           disabled={atMax}
           className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
@@ -218,7 +218,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
           {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
         </div>
       ) : (
-        <button
+        <button type="button"
           onClick={onAdd}
           disabled={atMax}
           className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
@@ -322,7 +322,7 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
         const isOpen = openGroup === group.label;
         return (
           <div key={group.label}>
-            <button
+            <button type="button"
               onClick={() => toggle(group.label)}
               className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg hover:bg-th-elevated transition-colors"
             >
@@ -435,7 +435,7 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
 
                 return (
                   <div key={cyl}>
-                    <button
+                    <button type="button"
                       onClick={() => setOpenCyl((prev) => (prev === cyl ? "" : cyl))}
                       className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg hover:bg-th-elevated transition-colors"
                     >
@@ -626,7 +626,7 @@ export default function LensStock() {
           <h1 className="text-feature font-bold text-th-text leading-tight">Lens Stock</h1>
           <p className="text-small text-th-muted">{items.length} coating{items.length !== 1 ? "s" : ""}</p>
         </div>
-        <button
+        <button type="button"
           onClick={() => setDemandMode((m) => !m)}
           className={`ml-auto flex items-center gap-2 px-4 py-2.5 rounded-pill text-small-bold transition-all active:scale-95 ${
             demandMode
@@ -644,7 +644,7 @@ export default function LensStock() {
         <div className="flex items-center gap-2 flex-wrap bg-th-surface border border-th-border rounded-xl px-3.5 py-2.5">
           <span className="text-small-bold text-th-secondary">Fill each power up to</span>
           <div className="flex items-center gap-1">
-            <button
+            <button type="button"
               onClick={() => setDemandTarget((t) => Math.max(1, t - 1))}
               className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
               aria-label="Decrease target"
@@ -659,7 +659,7 @@ export default function LensStock() {
               className="w-16 h-8 text-center text-small-bold bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
               aria-label="Target stock level"
             />
-            <button
+            <button type="button"
               onClick={() => setDemandTarget((t) => t + 1)}
               className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
               aria-label="Increase target"
@@ -691,7 +691,7 @@ export default function LensStock() {
         </div>
         <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
           {TABS.map((t) => (
-            <button
+            <button type="button"
               key={t.key}
               onClick={() => setLensType(t.key)}
               className={`flex-1 px-2 py-2.5 rounded-pill text-small-bold transition-all ${
@@ -761,7 +761,7 @@ export default function LensStock() {
                 <span className="text-small-bold text-primary-500 shrink-0">−₹{selectedItem.priceNeg ?? 0}/+₹{selectedItem.pricePos ?? 0}</span>
                 <div className="ml-auto hidden lg:flex gap-1 bg-th-elevated rounded-pill p-1">
                   {TABS.map((t) => (
-                    <button
+                    <button type="button"
                       key={t.key}
                       onClick={() => setLensType(t.key)}
                       className={`px-3.5 py-2 rounded-pill text-small-bold transition-all ${
@@ -850,20 +850,20 @@ export default function LensStock() {
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <button
+              <button type="button"
                 onClick={selectAllLowStock}
                 className="px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-th-text text-small-bold border border-th-border"
               >
                 All low stock
               </button>
-              <button
+              <button type="button"
                 onClick={clearDemandSelection}
                 disabled={demandSel.size === 0}
                 className="px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-negative text-small-bold border border-th-border disabled:opacity-40"
               >
                 Clear
               </button>
-              <button
+              <button type="button"
                 onClick={handleDownloadDemand}
                 disabled={demandRows.length === 0}
                 className="flex items-center gap-2 px-4 py-2 rounded-pill bg-primary-500 text-surface-950 text-small-bold shadow-sm hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"

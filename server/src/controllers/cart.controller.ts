@@ -29,7 +29,7 @@ export async function addItem(req: AuthRequest, res: Response) {
 
 export async function updateItem(req: AuthRequest, res: Response) {
   const { quantity, fogMark } = req.body;
-  if (typeof quantity !== "number" || quantity < 1) {
+  if (quantity !== undefined && (typeof quantity !== "number" || quantity < 1)) {
     res.status(400).json({ success: false, message: "quantity must be a positive number" });
     return;
   }
@@ -81,6 +81,11 @@ export async function updateWithdrawal(req: AuthRequest, res: Response) {
   }
   const data = await cartService.updateWithdrawal(req.user!.sub, req.params.id, items);
   sendSuccess(res, data, "Withdrawal updated");
+}
+
+export async function deleteWithdrawal(req: AuthRequest, res: Response) {
+  await cartService.deleteWithdrawal(req.user!.sub, req.params.id);
+  sendSuccess(res, null, "Withdrawal deleted, stock restored");
 }
 
 export async function sendWithdrawalPdf(req: AuthRequest, res: Response) {

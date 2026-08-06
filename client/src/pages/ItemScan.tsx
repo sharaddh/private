@@ -37,34 +37,31 @@ export default function ItemScan() {
 
   async function handlePrint() {
     if (!item) return;
-    const qrUrl = await QRCode.toDataURL(item.sku, { width: 300, margin: 1 });
+    const qrUrl = await QRCode.toDataURL(item.sku, { width: 600, margin: 1 });
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     const category = item.category || "Frame";
     const gender = item.gender ? ` / ${item.gender}` : "";
     const type = item.inventoryType ? `${item.inventoryType}${gender}` : category;
+    const name = `${item.brand || ""} ${item.model || ""}`.trim() || item.sku;
     printWindow.document.write(`
       <html><head><title>Print Label - ${item.sku}</title>
       <style>
-        @page { size: 100mm 50mm; margin: 0; }
-        body { margin: 0; padding: 4mm; width: 100mm; height: 50mm; box-sizing: border-box;
-               font-family: Arial, sans-serif; display: flex; align-items: center; }
-        .label { display: flex; align-items: center; gap: 4mm; width: 100%; }
-        .qr img { width: 40mm; height: 40mm; }
-        .info { flex: 1; font-size: 10pt; line-height: 1.3; }
-        .info .sku { font-size: 12pt; font-weight: bold; }
-        .info .brand { font-size: 11pt; }
-        .info .detail { color: #555; }
+        @page { size: 88mm 12mm; margin: 0; }
+        body { margin: 0; font-family: Arial, sans-serif; }
+        .label { width: 88mm; height: 12mm; box-sizing: border-box; display: flex; align-items: center; gap: 2mm; padding: 1mm 2mm; }
+        .qr img { width: 10mm; height: 10mm; }
+        .info { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0.5mm; min-width: 0; overflow: hidden; }
+        .info .row { display: flex; align-items: baseline; gap: 2mm; }
+        .info .name { font-size: 8pt; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .info .price { font-size: 10pt; font-weight: bold; }
+        .info .sku { font-size: 6pt; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       </style></head><body>
       <div class="label">
         <div class="qr"><img src="${qrUrl}" /></div>
         <div class="info">
-          <div class="sku">${item.sku}</div>
-          <div class="brand">${item.brand || ""} ${item.model || ""}</div>
-          <div class="detail">${type}${item.color ? " / " + item.color : ""}</div>
-          <div class="detail">${item.supplier ? item.supplier : ""} ${item.purchasePrice ? "₹" + item.purchasePrice : ""}</div>
-          <div class="detail">₹${item.sellingPrice || 0}</div>
-          <div class="detail" style="font-size:6pt;color:#999">${new Date().toLocaleDateString("en-IN")}</div>
+          <div class="row"><span class="name">${name}</span><span class="price">₹${item.sellingPrice || 0}</span></div>
+          <div class="sku">${item.sku}${item.color ? " / " + item.color : ""}${type ? " / " + type : ""}</div>
         </div>
       </div>
       <script>window.print(); window.close();</script>
