@@ -80,7 +80,7 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <ShineCard onClick={onClick} aria-label={label} className="h-[70px] sm:h-20 flex flex-col items-center justify-center gap-0.5 sm:gap-1 bg-th-surface rounded-lg p-1.5 sm:p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
+    <ShineCard onClick={onClick} aria-label={label} className="h-[62px] sm:h-[70px] flex flex-col items-center justify-center gap-0.5 sm:gap-1 bg-th-surface rounded-lg p-1.5 sm:p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
         <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: color || "#1ed760" }} />
       </div>
@@ -214,7 +214,7 @@ function AutoGrowTextarea({ value, onChange, className = "", ...rest }: {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [value]);
   return (
     <textarea
@@ -222,7 +222,7 @@ function AutoGrowTextarea({ value, onChange, className = "", ...rest }: {
       value={value}
       rows={1}
       onChange={(e) => onChange(e.target.value)}
-      className={`${className} resize-none overflow-y-auto`}
+      className={`${className} resize-none overflow-y-auto scrollbar-none caret-[#1ed760]`}
       {...rest}
     />
   );
@@ -242,6 +242,7 @@ export default function Dashboard() {
   const [editText, setEditText] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [hasDataOnce, setHasDataOnce] = useState(false);
+  const [deliveriesTab, setDeliveriesTab] = useState<"pending" | "today" | "delivered">("pending");
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [sendingDemand, setSendingDemand] = useState<"buy" | "order" | null>(null);
   const navigate = useNavigate();
@@ -429,7 +430,7 @@ export default function Dashboard() {
   // Hero Section
 
   const renderHero = () => (
-    <div className="bg-th-surface rounded-xl p-4 sm:p-5 md:p-6 shadow-lg border border-th-border">
+    <div className="bg-th-surface rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg border border-th-border">
       <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div>
@@ -597,7 +598,7 @@ export default function Dashboard() {
     return (
       <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
         <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
+    <div className="flex items-center justify-between mb-2 sm:mb-2.5">
             <div className="flex items-center gap-2 sm:gap-3">
               <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
               <span className="text-[13px] sm:text-[16px] font-medium text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
@@ -822,11 +823,11 @@ export default function Dashboard() {
   // Pending Bills
 
   const renderPendingBills = () => (
-    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
+    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg flex flex-col h-full">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
         <SectionHeader title={uiT("Pending Bill Amount", "लंबित बिल राशि")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
+      <div className="divide-y divide-th-card max-h-[380px] overflow-y-auto scrollbar-none flex-1">
         {d.pendingBills.length === 0 ? (
           <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.map((b, idx) => {
@@ -854,133 +855,137 @@ export default function Dashboard() {
     </div>
   );
 
-  // Today's Deliveries
+  // Deliveries (tabbed: Pending / Today / Delivered)
 
-  const renderDeliveries = () => (
-    <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
-      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-        <SectionHeader title={uiT("Today's Deliveries", "आज की डिलीवरी")} count={d.todayDeliveries.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
-      </div>
-      <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
-        {d.todayDeliveries.length === 0 ? (
-          <EmptyState icon={Truck} title={uiT("No deliveries today", "आज कोई डिलीवरी नहीं")} description={uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।")} />
-        ) : d.todayDeliveries.map((dl, idx) => {
-          const custObj = typeof dl.customerId === "object" && dl.customerId ? dl.customerId : null;
-          const cName = custObj?.name ?? "—";
-          const cMobile = custObj?.mobile ?? "";
-          return (
-            <div key={dl._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
-              <div className="relative flex-shrink-0">
-                <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${dl.status === "Delivered" ? "bg-[#1ed760]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#f59e0b]"}`} />
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                {!!(cMobile) && <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <StatusBadge status={dl.status || "—"} />
-                <button onClick={() => navigate(`/delivery?order=${dl._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
-                  className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
-                  <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </button>
-              </div>
+  const renderDeliveries = () => {
+    const pendingList = d.pendingDeliveries || [];
+    const todayList = d.todayDeliveries;
+    const deliveredList = d.todayDeliveredOrders || [];
+    const tab = deliveriesTab;
+    const list = tab === "pending" ? pendingList : tab === "today" ? todayList : deliveredList;
+
+    const emptyState = {
+      pending: {
+        icon: PackageCheck,
+        title: uiT("No pending deliveries", "कोई लंबित डिलीवरी नहीं"),
+        desc: uiT("All orders are delivered or cancelled.", "सभी ऑर्डर डिलीवर या रद्द हो गए हैं।"),
+      },
+      today: {
+        icon: Truck,
+        title: uiT("No deliveries today", "आज कोई डिलीवरी नहीं"),
+        desc: uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।"),
+      },
+      delivered: {
+        icon: PackageCheck,
+        title: uiT("Nothing delivered today", "आज कुछ भी डिलीवर नहीं हुआ"),
+        desc: uiT("Delivered orders will appear here.", "डिलीवर ऑर्डर यहां दिखाई देंगे।"),
+      },
+    }[tab];
+
+    const renderRow = (item: Order, idx: number) => {
+      const custObj = typeof item.customerId === "object" && item.customerId ? item.customerId : null;
+      const cName = custObj?.name ?? "—";
+      const cMobile = custObj?.mobile ?? "";
+
+      if (tab === "delivered") {
+        const o = item;
+        return (
+          <div key={o._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${custObj?._id ?? ""}?visitId=${o.visitId || ""}`)}>
+            <div className="relative flex-shrink-0">
+              <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1ed760]" />
+              </span>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+              <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                {!!(o.frameBrand) ? o.frameBrand : ""}
+                {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
+                {!!(o.lensBrand) ? o.lensBrand : ""}
+                {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <span className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
+              <StatusBadge status="Delivered" />
+            </div>
+          </div>
+        );
+      }
 
-  // All Pending Deliveries
+      const due = tab === "pending" ? item.deliveryDate : undefined;
+      return (
+        <div key={item._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-th-card transition-all">
+          <div className="relative flex-shrink-0">
+            <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+              <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${String(item.status) === "In Transit" ? "bg-[#f59e0b]" : item.status === "Ready" ? "bg-[#3498db]" : item.status === "Delivered" ? "bg-[#1ed760]" : item.status === "Ordered" ? "bg-[#a78bfa]" : "bg-[#e74c3c]"}`} />
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+            <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+              {!!(cMobile) ? maskPhone(cMobile) : ""}
+              {!!(cMobile) && due ? " · " : ""}
+              {due ? uiT("Due", "तिथि") + " " + new Date(due).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <StatusBadge status={item.status || "—"} />
+            <button onClick={() => navigate(`/delivery?order=${item._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
+              className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
+              <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    };
 
-  const renderPendingDeliveries = () => {
-    const pending = d.pendingDeliveries || [];
-    if (pending.length === 0) return null;
+    const tabs = [
+      { label: uiT("Pending", "बाकी"), value: "pending" as const, count: pendingList.length },
+      { label: uiT("Today", "आज"), value: "today" as const, count: todayList.length },
+      { label: uiT("Delivered", "डिलीवर"), value: "delivered" as const, count: deliveredList.length },
+    ];
+
     return (
-      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-th-border">
-        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-          <SectionHeader title={uiT("All Pending Deliveries", "सभी लंबित डिलीवरी")} count={pending.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
+      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-th-border flex flex-col h-full">
+        <div className="px-3 sm:px-5 pt-3 sm:pt-3.5 pb-0 border-b border-th-card">
+          <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5">
+            <h3 className="text-[16px] sm:text-[18px] font-bold text-th-text uppercase tracking-wider flex items-center gap-2">
+              <Truck className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#2dd4bf]" />
+              {uiT("Deliveries", "डिलीवरी")}
+            </h3>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {tabs.map((t) => (
+                <button key={t.value} onClick={() => setDeliveriesTab(t.value)} aria-label={t.label}
+                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-[13px] font-bold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 ${deliveriesTab === t.value
+                    ? "bg-[#1ed760] text-black shadow-sm"
+                    : "bg-th-elevated text-th-secondary hover:text-th-text hover:bg-th-card"}`}>
+                  {t.label}
+                  <span className={`px-1.5 rounded-md text-[10px] sm:text-[11px] ${deliveriesTab === t.value ? "bg-black/20" : "bg-th-card"}`}>{t.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-end pb-2 sm:pb-2.5">
+            <button onClick={() => navigate("/delivery")} aria-label={uiT("View all", "सभी देखें")}
+              className="flex items-center gap-1 text-[12px] sm:text-[13px] font-bold text-[#1ed760] hover:text-[#1ed760] px-2 py-1 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
+              {uiT("View all", "सभी देखें")}
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
-        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
-          {pending.map((dl, idx) => {
-            const custObj = typeof dl.customerId === "object" && dl.customerId ? dl.customerId : null;
-            const cName = custObj?.name ?? "—";
-            const cMobile = custObj?.mobile ?? "";
-            const due = dl.deliveryDate;
-            const orderId = dl._id;
-            return (
-              <div key={dl._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
-                <div className="relative flex-shrink-0">
-                  <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${String(dl.status) === "In Transit" ? "bg-[#f59e0b]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#e74c3c]"}`} />
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                  <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {!!(cMobile) ? maskPhone(cMobile) : ""}
-                    {!!(cMobile) && due ? " · " : ""}
-                    {due ? uiT("Due", "तिथि") + " " + new Date(due).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                  <StatusBadge status={dl.status || "—"} />
-                  <button onClick={() => navigate(`/delivery?order=${orderId}`)} aria-label={uiT("Deliver", "डिलीवर")}
-                    className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
-                    <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
+        <div className="divide-y divide-th-card max-h-[380px] overflow-y-auto scrollbar-none flex-1">
+          {list.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center px-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-th-elevated flex items-center justify-center mb-2">
+                <emptyState.icon className="w-4 h-4 sm:w-5 sm:h-5 text-th-muted" />
               </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  // Today's Delivered
-
-  const renderTodayDelivered = () => {
-    const delivered = d.todayDeliveredOrders || [];
-    if (delivered.length === 0) return null;
-    return (
-      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-[#1ed760]/20">
-        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[#1ed760]/15 bg-gradient-to-r from-[#1ed760]/5 to-transparent">
-          <SectionHeader title={uiT("Today's Delivered", "आज डिलीवर हुए")} count={delivered.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
-        </div>
-        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
-          {delivered.map((o, idx) => {
-            const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
-            const cName = custObj?.name ?? "—";
-            const cMobile = custObj?.mobile ?? "";
-            return (
-              <div key={o._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all cursor-pointer" onClick={() => navigate(`/customers/${custObj?._id ?? ""}?visitId=${o.visitId || ""}`)}>
-                <div className="relative flex-shrink-0">
-                  <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1ed760]" />
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
-                  <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {!!(o.frameBrand) ? o.frameBrand : ""}
-                    {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
-                    {!!(o.lensBrand) ? o.lensBrand : ""}
-                    {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                  <span className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
-                  <StatusBadge status="Delivered" />
-                </div>
-              </div>
-            );
-          })}
+              <p className="text-[14px] sm:text-[16px] font-semibold text-th-text">{emptyState.title}</p>
+              <p className="text-[12px] sm:text-[13px] text-th-secondary mt-0.5 max-w-xs">{emptyState.desc}</p>
+            </div>
+          ) : list.map((item, idx) => renderRow(item, idx))}
         </div>
       </div>
     );
@@ -1011,7 +1016,7 @@ export default function Dashboard() {
           }}
           placeholder={`${uiT("Add a task...", "कार्य जोड़ें...")}\n${uiT("Second line for details (name, phone, notes...)", "दूसरी लाइन में विवरण (नाम, नंबर, नोट्स...)")}`}
           aria-label={uiT("Add a task", "कार्य जोड़ें")}
-          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-card rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
+          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-border rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
         <div className="flex items-center justify-between gap-2 mt-1.5 sm:mt-2">
           <span className="text-[11px] sm:text-[12px] text-th-muted">{uiT("Enter = add · Shift+Enter = new line", "Enter = जोड़ें · Shift+Enter = नई लाइन")}</span>
           <button onClick={addTodo} disabled={!newTodo.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
@@ -1083,7 +1088,7 @@ export default function Dashboard() {
     const todayPayments = d.todayPaymentModeSplit;
     if (!todayPayments?.length) return null;
     return (
-      <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg">
+      <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg flex flex-col h-full">
         <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
             <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1ed760]" />
@@ -1169,7 +1174,7 @@ export default function Dashboard() {
 
   return (
     <div className="bg-th-base min-h-screen" role="main">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 py-3 sm:py-5 md:py-6">
         {renderHeader()}
         {renderHero()}
         {renderQuickActions()}
@@ -1177,29 +1182,28 @@ export default function Dashboard() {
         {renderCharts()}
         {renderNeedsAttention()}
 
-        {/* Bottom grid: Pending Bills, Today's Deliveries */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+        {/* Pending Bills + Deliveries (tabbed) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
           {renderPendingBills()}
           {renderDeliveries()}
         </div>
 
         {/* Lens Demand + Recent Orders side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
           {renderLensDemand()}
           {renderRecentOrders()}
         </div>
 
-        {/* Today's Delivered */}
-        {renderTodayDelivered()}
-
-        {/* All Pending Deliveries */}
-        {renderPendingDeliveries()}
-
-        {/* Bottom grid: Todo, Payments */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-          {renderTodo()}
-          {renderPayments()}
-        </div>
+        {/* Todo + Payments */}
+        {(() => {
+          const payments = renderPayments();
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
+              <div className={payments ? "" : "lg:col-span-2"}>{renderTodo()}</div>
+              {payments}
+            </div>
+          );
+        })()}
 
         {renderSummary()}
       </div>
