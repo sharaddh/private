@@ -909,8 +909,8 @@ export default function Dashboard() {
             const custObj = typeof dl.customerId === "object" && dl.customerId ? dl.customerId : null;
             const cName = custObj?.name ?? "—";
             const cMobile = custObj?.mobile ?? "";
-            const due = dl.expectedDeliveryDate;
-            const orderId = dl.orderId || dl._id;
+            const due = dl.deliveryDate;
+            const orderId = dl._id;
             return (
               <div key={dl._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
                 <div className="relative flex-shrink-0">
