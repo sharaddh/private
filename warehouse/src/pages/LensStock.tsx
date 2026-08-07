@@ -210,7 +210,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
         <div className="flex flex-col items-center gap-1.5 w-full pointer-events-none">
           <span className="text-body-bold leading-none whitespace-nowrap">
             <span className={sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
-            <span className="text-th-muted"> | </span>
+            <span className="text-th-muted">&nbsp;</span>
             <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
           </span>
           <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
@@ -225,7 +225,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
         >
           <span className="text-body-bold leading-none whitespace-nowrap">
             <span className={sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
-            <span className="text-th-muted"> | </span>
+            <span className="text-th-muted">&nbsp;</span>
             <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
           </span>
           <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>

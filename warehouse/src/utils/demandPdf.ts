@@ -22,11 +22,15 @@ function normPower(v: string): string {
   return v === "+0.00" || v === "0.00" || v === "-0.00" ? "0.00" : v;
 }
 
+function pairs(q: number): number {
+  return q / 2;
+}
+
 function formatPower(lensType: string, powerKey: string): string {
   if (!powerKey) return "—";
   if (powerKey.includes("|")) {
     const [sph, cyl] = powerKey.split("|");
-    return `${normPower(sph)}|${normPower(cyl)}`;
+    return `${normPower(sph)} ${normPower(cyl)}`;
   }
   return `${lensTypeLabel(lensType)} ${normPower(powerKey)}`;
 }
@@ -81,13 +85,13 @@ export function generateDemandPdf(data: DemandPdfData): void {
   const rows = data.items.map((it) => [
     it.coating || "—",
     formatPower(it.lensType, it.powerKey),
-    String(it.qty),
+    String(pairs(it.qty)),
   ]);
 
   autoTable(doc, {
     startY: 56,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Power", "Quantity"]],
+    head: [["Coating", "Power", "Pairs"]],
     body: rows,
     theme: "grid",
     headStyles: {
@@ -114,7 +118,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
   });
 
   const tableEnd = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
-  const totalNeed = data.items.reduce((s, it) => s + it.qty, 0);
+  const totalNeed = data.items.reduce((s, it) => s + pairs(it.qty), 0);
 
   // Total Quantity Box
   const y = tableEnd + 12;
@@ -130,7 +134,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...indigo);
-  doc.text(`Total Pieces To Buy:`, totalBoxX + 6, y + 9);
+  doc.text(`Total Pairs To Buy:`, totalBoxX + 6, y + 9);
   doc.setFontSize(12);
   doc.text(String(totalNeed), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
 
