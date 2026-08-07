@@ -162,6 +162,8 @@ export interface Order {
   stockStatus?: StockStatus;
   billInfo?: { totalAmount: number; pendingAmount: number };
   deliveryDate?: string;
+  expectedDeliveryDate?: string;
+  orderId?: string;
   notes?: string;
   createdAt: string;
   updatedAt?: string;
@@ -441,6 +443,7 @@ export interface Todo {
   _id: string;
   task: string;
   done: boolean;
+  notes?: string;
   createdAt: string;
 }
 
@@ -483,6 +486,7 @@ export interface DashboardData {
   recentCustomers: Customer[];
   recentOrders: Order[];
   todayDeliveries: Order[];
+  pendingDeliveries: Order[];
   pendingBills: Bill[];
   incompleteOrders: Order[];
   todayOrders: number;

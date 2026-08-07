@@ -23,6 +23,7 @@ router.put("/lens-stock/:id/quantities", authenticate, asyncHandler(warehouseLen
 
 // Warehouse inventory CRUD
 router.post("/inventory", authenticate, asyncHandler(warehouseInventoryController.create));
+router.get("/inventory/list", authenticate, asyncHandler(warehouseInventoryController.list));
 router.get("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.getById));
 router.put("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.update));
 router.delete("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.remove));

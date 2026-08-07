@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useApi, useDashboard } from "../hooks";
@@ -18,7 +18,7 @@ import {
   Clock, Activity, Plus, Check, Trash2, ArrowUpRight, UserPlus, FileText,
   BarChart3, AlertTriangle, AlertCircle, CreditCard, Smartphone, Building2,
   X, ChevronRight, ShoppingCart, CheckSquare, Send, Eye, MessageSquare,
-  Calendar, LayoutDashboard, Warehouse,
+  Calendar, LayoutDashboard, Warehouse, Pencil, Save,
 } from "lucide-react";
 
 const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
@@ -201,6 +201,33 @@ function AlertCard({ icon: Icon, label, value, action, actionLabel, color, onCli
 
 // Main Dashboard
 
+function AutoGrowTextarea({ value, onChange, className = "", ...rest }: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  autoFocus?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      rows={1}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${className} resize-none overflow-y-auto`}
+      {...rest}
+    />
+  );
+}
+
 export default function Dashboard() {
   const { dashboard, loading, error, refetch } = useDashboard();
   const { data: todosData, refetch: refetchTodos } = useApi<Todo[]>(
@@ -208,8 +235,11 @@ export default function Dashboard() {
     [],
     { cacheKey: "/api/workspace/todos" }
   );
-  const todos = todosData || [];
-  const [newTask, setNewTask] = useState("");
+  const [todos, setTodos] = useState<Todo[]>([]);
+  useEffect(() => { setTodos(todosData || []); }, [todosData]);
+  const [newTodo, setNewTodo] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [hasDataOnce, setHasDataOnce] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
@@ -222,21 +252,77 @@ export default function Dashboard() {
 
   useEffect(() => { if (dashboard) setHasDataOnce(true); }, [dashboard]);
 
+  const splitTodoText = useCallback((text: string) => {
+    const firstLineEnd = text.indexOf("\n");
+    const task = (firstLineEnd === -1 ? text : text.slice(0, firstLineEnd)).trim();
+    const notes = (firstLineEnd === -1 ? "" : text.slice(firstLineEnd + 1)).trim();
+    return { task, notes };
+  }, []);
+
   const addTodo = useCallback(async () => {
-    if (!newTask.trim()) return;
-    const res = await api.post("/api/workspace/todos", { task: newTask.trim() });
-    if (res.success) { setNewTask(""); refetchTodos(); }
-  }, [newTask, refetchTodos]);
+    const { task, notes } = splitTodoText(newTodo);
+    if (!task) return;
+    const temp: Todo = { _id: `tmp-${Date.now()}`, task, notes, done: false, createdAt: new Date().toISOString() };
+    setTodos((prev) => [temp, ...prev]);
+    setNewTodo("");
+    const res = await api.post<Todo>("/api/workspace/todos", { task, notes: notes || undefined });
+    if (res.success && res.data) {
+      setTodos((prev) => prev.map((t) => (t._id === temp._id ? res.data! : t)));
+      refetchTodos();
+    } else {
+      setTodos((prev) => prev.filter((t) => t._id !== temp._id));
+      toast.error(res.message || "Failed to add task");
+    }
+  }, [newTodo, splitTodoText, refetchTodos, toast]);
 
   const toggleTodo = useCallback(async (id: string, done: boolean) => {
-    await api.patch(`/api/workspace/todos/${id}`, { done: !done });
-    refetchTodos();
-  }, [refetchTodos]);
+    const prev = todos.find((t) => t._id === id);
+    if (!prev) return;
+    const nextDone = !done;
+    setTodos((p) => p.map((t) => (t._id === id ? { ...t, done: nextDone } : t)));
+    const res = await api.patch(`/api/workspace/todos/${id}`, { done: nextDone });
+    if (res.success) {
+      refetchTodos();
+    } else {
+      setTodos((p) => p.map((t) => (t._id === id ? prev : t)));
+      toast.error(res.message || "Failed to update task");
+    }
+  }, [todos, refetchTodos, toast]);
 
   const deleteTodo = useCallback(async (id: string) => {
-    await api.del(`/api/workspace/todos/${id}`);
-    refetchTodos();
-  }, [refetchTodos]);
+    const prev = todos.find((t) => t._id === id);
+    if (!prev) return;
+    setTodos((p) => p.filter((t) => t._id !== id));
+    const res = await api.del(`/api/workspace/todos/${id}`);
+    if (res.success) {
+      refetchTodos();
+    } else {
+      setTodos((p) => [prev, ...p]);
+      toast.error(res.message || "Failed to delete task");
+    }
+  }, [todos, refetchTodos, toast]);
+
+  const startEdit = useCallback((t: Todo) => {
+    setEditingId(t._id);
+    setEditText(t.notes ? `${t.task}\n${t.notes}` : t.task);
+  }, []);
+
+  const saveEdit = useCallback(async (id: string) => {
+    const prev = todos.find((t) => t._id === id);
+    setEditingId(null);
+    if (!prev) return;
+    const { task, notes } = splitTodoText(editText);
+    if (!task) { toast.error("Task text is required"); setEditText(prev.notes ? `${prev.task}\n${prev.notes}` : prev.task); return; }
+    const updated: Todo = { ...prev, task, notes };
+    setTodos((p) => p.map((t) => (t._id === id ? updated : t)));
+    const res = await api.patch<Todo>(`/api/workspace/todos/${id}`, { task, notes: notes || undefined });
+    if (res.success) {
+      refetchTodos();
+    } else {
+      setTodos((p) => p.map((t) => (t._id === id ? prev : t)));
+      toast.error(res.message || "Failed to save task");
+    }
+  }, [todos, editText, splitTodoText, refetchTodos, toast]);
 
   const classifyEye = useCallback(async (id: string, eye: "right" | "left", status: string) => {
     const res = await api.patch(`/api/orders/${id}/classify-eye`, { eye, status });
@@ -402,7 +488,7 @@ export default function Dashboard() {
         <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
         <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
         <MetricCard label={uiT("Today's Orders", "आज के ऑर्डर")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "इस सप्ताह")}` : undefined} />
-        <MetricCard label={uiT("Pending Bills", "लंबित बिल")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
+        <MetricCard label={uiT("Pending Bill Amount", "लंबित बिल राशि")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
         <MetricCard label={uiT("Ready for Pickup", "पिकअप के लिए तैयार")} value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle={uiT("awaiting collection", "संग्रह की प्रतीक्षा में")} />
         <MetricCard label={uiT("New Customers", "नए ग्राहक")} value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle={uiT("joined today", "आज जुड़े")} />
         <MetricCard label={uiT("Low Stock Items", "कम स्टॉक आइटम")} value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle={uiT("items need restock", "आइटम को रीस्टॉक की आवश्यकता")} />
@@ -486,7 +572,7 @@ export default function Dashboard() {
   const renderNeedsAttention = () => {
     interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
     const items: AlertItem[] = [];
-    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bills", "लंबित बिल"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: uiT("Collect", "वसूलें"), onClick: () => navigate("/bills") });
+    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bill Amount", "लंबित बिल राशि"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: uiT("Collect", "वसूलें"), onClick: () => navigate("/bills") });
     if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
     if (draftOrders.length > 0) items.push({ icon: FileText, label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
     if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
@@ -738,7 +824,7 @@ export default function Dashboard() {
   const renderPendingBills = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-        <SectionHeader title={uiT("Pending Bills", "लंबित बिल")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
+        <SectionHeader title={uiT("Pending Bill Amount", "लंबित बिल राशि")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
         {d.pendingBills.length === 0 ? (
@@ -808,6 +894,54 @@ export default function Dashboard() {
     </div>
   );
 
+  // All Pending Deliveries
+
+  const renderPendingDeliveries = () => {
+    const pending = d.pendingDeliveries || [];
+    if (pending.length === 0) return null;
+    return (
+      <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg border border-th-border">
+        <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
+          <SectionHeader title={uiT("All Pending Deliveries", "सभी लंबित डिलीवरी")} count={pending.length} action={() => navigate("/delivery")} actionLabel={uiT("View all", "सभी देखें")} />
+        </div>
+        <div className="divide-y divide-th-card max-h-[340px] overflow-y-auto scrollbar-none">
+          {pending.map((dl, idx) => {
+            const custObj = typeof dl.customerId === "object" && dl.customerId ? dl.customerId : null;
+            const cName = custObj?.name ?? "—";
+            const cMobile = custObj?.mobile ?? "";
+            const due = dl.expectedDeliveryDate;
+            const orderId = dl.orderId || dl._id;
+            return (
+              <div key={dl._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
+                <div className="relative flex-shrink-0">
+                  <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-th-surface flex items-center justify-center">
+                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${String(dl.status) === "In Transit" ? "bg-[#f59e0b]" : dl.status === "Ready" ? "bg-[#3498db]" : "bg-[#e74c3c]"}`} />
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
+                  <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {!!(cMobile) ? maskPhone(cMobile) : ""}
+                    {!!(cMobile) && due ? " · " : ""}
+                    {due ? uiT("Due", "तिथि") + " " + new Date(due).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                  <StatusBadge status={dl.status || "—"} />
+                  <button onClick={() => navigate(`/delivery?order=${orderId}`)} aria-label={uiT("Deliver", "डिलीवर")}
+                    className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
+                    <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   // Today's Delivered
 
   const renderTodayDelivered = () => {
@@ -858,7 +992,7 @@ export default function Dashboard() {
   // Todo
 
   const renderTodo = () => (
-    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg">
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-lg flex flex-col">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
@@ -868,32 +1002,75 @@ export default function Dashboard() {
         </div>
         <span className="text-[13px] sm:text-[16px] font-bold text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
-      <div className="flex items-center gap-2 mb-3 sm:mb-4">
-        <input type="text" placeholder={uiT("Add a task...", "कार्य जोड़ें...")} value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTodo()}
+
+      {/* Add area */}
+      <div className="mb-3 sm:mb-4">
+        <AutoGrowTextarea value={newTodo} onChange={setNewTodo} autoFocus={false}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addTodo(); }
+          }}
+          placeholder={`${uiT("Add a task...", "कार्य जोड़ें...")}\n${uiT("Second line for details (name, phone, notes...)", "दूसरी लाइन में विवरण (नाम, नंबर, नोट्स...)")}`}
           aria-label={uiT("Add a task", "कार्य जोड़ें")}
-          className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-card rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all" />
-        <button onClick={addTodo} disabled={!newTask.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
-          className="p-2 sm:p-2.5 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 text-[#1ed760] transition-all active:scale-95">
-          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
+          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-card rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
+        <div className="flex items-center justify-between gap-2 mt-1.5 sm:mt-2">
+          <span className="text-[11px] sm:text-[12px] text-th-muted">{uiT("Enter = add · Shift+Enter = new line", "Enter = जोड़ें · Shift+Enter = नई लाइन")}</span>
+          <button onClick={addTodo} disabled={!newTodo.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 disabled:cursor-not-allowed text-[#1ed760] transition-all active:scale-95 text-[13px] sm:text-[15px] font-bold uppercase tracking-wider">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {uiT("Add", "जोड़ें")}
+          </button>
+        </div>
       </div>
-      <div className="space-y-1 max-h-[260px] overflow-y-auto scrollbar-none pr-1">
+
+      <div className="space-y-1.5 max-h-[260px] overflow-y-auto scrollbar-none pr-1 flex-1">
         {todos.length === 0 ? (
           <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
-            <div key={t._id} className={`flex items-center gap-2.5 sm:gap-3 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
-              <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "अपूर्ण चिह्नित करें") : uiT("Mark complete", "पूर्ण चिह्नित करें")}
-                className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
-                {t.done && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-th-text" />}
-              </button>
-              <span className={`flex-1 text-[15px] sm:text-[18px] truncate ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</span>
-              <button onClick={() => deleteTodo(t._id)} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 p-1 sm:p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
-                <Trash2 className="w-3 sm:w-3.5 sm:h-3.5 h-3" />
-              </button>
-            </div>
+            editingId === t._id ? (
+              <div key={t._id} className="bg-th-elevated border border-[#1ed760]/30 rounded-xl p-2.5 sm:p-3">
+                <AutoGrowTextarea value={editText} onChange={setEditText} autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(t._id); }
+                  }}
+                  aria-label={uiT("Edit task", "कार्य संपादित करें")}
+                  className="w-full px-3 py-2 bg-th-surface border border-th-border rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <button onClick={() => setEditingId(null)} aria-label={uiT("Cancel", "रद्द करें")}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold text-th-secondary bg-th-elevated hover:bg-th-card transition-all active:scale-95 uppercase tracking-wider">
+                    {uiT("Cancel", "रद्द करें")}
+                  </button>
+                  <button onClick={() => saveEdit(t._id)} aria-label={uiT("Save", "सेव करें")}
+                    className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider">
+                    <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    {uiT("Save", "सेव करें")}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={t._id} className={`flex items-start gap-2.5 sm:gap-3 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
+                <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "अपूर्ण चिह्नित करें") : uiT("Mark complete", "पूर्ण चिह्नित करें")}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
+                  {t.done && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-th-text" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[15px] sm:text-[18px] leading-snug break-words ${t.done ? "line-through text-th-muted" : "text-th-secondary"}`}>{t.task}</p>
+                  {t.notes && (
+                    <p className="text-[13px] sm:text-[15px] text-th-muted whitespace-pre-wrap break-words mt-0.5 leading-relaxed">{t.notes}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => startEdit(t)} aria-label={uiT("Edit task", "कार्य संपादित करें")}
+                    className="p-1 sm:p-1.5 rounded-lg hover:bg-[#1ed760]/10 text-th-muted hover:text-[#1ed760] transition-all">
+                    <Pencil className="w-3 sm:w-3.5 sm:h-3.5 h-3" />
+                  </button>
+                  <button onClick={() => deleteTodo(t._id)} aria-label="Delete task"
+                    className="p-1 sm:p-1.5 rounded-lg hover:bg-[#e74c3c]/10 text-th-muted hover:text-[#e74c3c] transition-all">
+                    <Trash2 className="w-3 sm:w-3.5 sm:h-3.5 h-3" />
+                  </button>
+                </div>
+              </div>
+            )
           ))
         )}
       </div>
@@ -960,7 +1137,7 @@ export default function Dashboard() {
       { label: uiT("New Customers Today", "आज नए ग्राहक"), value: d.newCustomersToday ?? 0, color: "#60a5fa" },
       { label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "#f87171" },
       { label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "#fb923c" },
-      { label: uiT("Pending Bills", "बाकी बिल"), value: d.pendingBills.length, color: "#f87171" },
+      { label: uiT("Pending Bill Amount", "लंबित बिल राशि"), value: d.pendingBills.length, color: "#f87171" },
       { label: uiT("Today Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "#2dd4bf" },
     ];
 
@@ -1014,6 +1191,9 @@ export default function Dashboard() {
 
         {/* Today's Delivered */}
         {renderTodayDelivered()}
+
+        {/* All Pending Deliveries */}
+        {renderPendingDeliveries()}
 
         {/* Bottom grid: Todo, Payments */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">

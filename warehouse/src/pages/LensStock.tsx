@@ -514,7 +514,7 @@ export default function LensStock() {
   useEffect(() => {
     async function fetchItems() {
       setLoading(true);
-      const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
+      const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock/list");
       if (res.success && res.data) {
         setItems(res.data);
         if (res.data.length > 0) {

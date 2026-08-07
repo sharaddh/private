@@ -18,7 +18,7 @@ export default function Cart() {
   const [savingMark, setSavingMark] = useState<string | null>(null);
 
   async function loadStock() {
-    const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock");
+    const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock/list");
     if (res.success && Array.isArray(res.data)) {
       const map: Record<string, number> = {};
       const itemsByCoating: Record<string, LensStockItem> = {};
