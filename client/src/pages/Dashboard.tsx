@@ -5,7 +5,7 @@ import { useApi, useDashboard } from "../hooks";
 import PageSkeleton from "../components/PageSkeleton";
 import ShineCard from "../components/ShineCard";
 import CameraScanner from "../components/CameraScanner";
-import { SalesTrendChart, OrderStatusDonut, PaymentModeBarChart, SalesVsCollectionChart, WeeklyOrdersChart, CategoryPieChart } from "../components/DashboardCharts";
+import { SalesTrendChart, OrderStatusDonut, PaymentModeBarChart, SalesVsCollectionChart, WeeklyOrdersChart, CategoryPieChart, TodayPaymentDonut } from "../components/DashboardCharts";
 import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTranslate } from "../context/TranslateContext";
@@ -80,12 +80,14 @@ function MetricCard({ label, value, icon: Icon, color, trend, subtitle }: { labe
 
 function QuickActionCard({ icon: Icon, label, subtitle, onClick, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; subtitle: string; onClick: () => void; color?: string }) {
   return (
-    <ShineCard onClick={onClick} aria-label={label} className="h-[62px] sm:h-[70px] flex flex-col items-center justify-center gap-0.5 sm:gap-1 bg-th-surface rounded-lg p-1.5 sm:p-2 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
-      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center transition-transform duration-200" style={{ backgroundColor: `${color || "#1ed760"}15` }}>
-        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: color || "#1ed760" }} />
+    <ShineCard onClick={onClick} aria-label={label} className="h-[70px] sm:h-[84px] flex items-center gap-2.5 sm:gap-3 bg-th-surface rounded-xl p-2.5 sm:p-3 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer">
+      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105" style={{ backgroundColor: `${color || "#1ed760"}18` }}>
+        <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: color || "#1ed760" }} />
       </div>
-      <span className="text-[13px] sm:text-[15px] font-semibold text-th-text truncate max-w-full leading-tight uppercase tracking-wider">{label}</span>
-      <span className="text-[11px] sm:text-[14px] text-th-secondary truncate max-w-full leading-tight hidden sm:block">{subtitle}</span>
+      <div className="flex-1 min-w-0 text-left">
+        <span className="block text-[13px] sm:text-[15px] font-bold text-th-text truncate leading-tight">{label}</span>
+        <span className="block text-[11px] sm:text-[13px] text-th-secondary truncate leading-tight mt-0.5 hidden sm:block">{subtitle}</span>
+      </div>
     </ShineCard>
   );
 }
@@ -466,7 +468,7 @@ export default function Dashboard() {
   const renderQuickActions = () => (
     <div>
       <SectionHeader title={uiT("Quick Actions", "त्वरित कार्य")} />
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
         <QuickActionCard icon={ShoppingCart} label={uiT("New Sale", "नई बिक्री")} subtitle={uiT("Create a new order", "नया ऑर्डर बनाएं")} onClick={() => navigate("/workspace")} color="#6366f1" />
         <QuickActionCard icon={UserPlus} label={uiT("Customers", "ग्राहक")} subtitle={uiT("Manage your clients", "अपने ग्राहकों का प्रबंधन करें")} onClick={() => navigate("/customers")} color="#10b981" />
         <QuickActionCard icon={Boxes} label={uiT("Inventory", "इन्वेंट्री")} subtitle={uiT("Track stock & lenses", "स्टॉक और लेंस ट्रैक करें")} onClick={() => navigate("/inventory")} color="#f59e0b" />
@@ -507,6 +509,7 @@ export default function Dashboard() {
     const hasCollections = d.dailyCollections && d.dailyCollections.length > 0;
     const hasOrdersTrend = d.weeklyOrderTrend && d.weeklyOrderTrend.length > 0;
     const hasCategories = d.categoryBreakdown && d.categoryBreakdown.length > 0;
+    const hasTodayPayments = d.todayPaymentModeSplit && d.todayPaymentModeSplit.length > 0;
 
     if (!hasSales && !hasOrders && !hasPayments) return null;
 
@@ -531,23 +534,30 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Row 2: Sales vs Collection + Payment Modes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-          {hasSales && hasCollections && (
-            <div className={(hasSales && hasCollections && hasPayments) ? "" : "md:col-span-2"}>
-              <SalesVsCollectionChart
-                salesData={d.dailySales || []}
-                collectionData={d.dailyCollections || []}
-                dark={dark}
-              />
-            </div>
-          )}
-          {hasPayments && (
-            <div className={(hasSales && hasCollections && hasPayments) ? "" : "md:col-span-2"}>
-              <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
-            </div>
-          )}
-        </div>
+        {/* Row 2: Sales vs Collection + Payment Modes + Today's Payments */}
+        {(hasSales || hasPayments || hasTodayPayments) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {hasSales && hasCollections && (
+              <div className={(hasPayments || hasTodayPayments) ? "" : "md:col-span-2"}>
+                <SalesVsCollectionChart
+                  salesData={d.dailySales || []}
+                  collectionData={d.dailyCollections || []}
+                  dark={dark}
+                />
+              </div>
+            )}
+            {hasPayments && (
+              <div className={(hasSales && hasCollections) ? "" : "md:col-span-2"}>
+                <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
+              </div>
+            )}
+            {hasTodayPayments && (
+              <div className={(hasSales && hasCollections) ? "" : "md:col-span-2"}>
+                <TodayPaymentDonut data={d.todayPaymentModeSplit || []} dark={dark} />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Row 3: Daily Orders + Inventory Category Breakdown */}
         {(hasOrdersTrend || hasCategories) && (

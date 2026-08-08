@@ -235,6 +235,46 @@ export function WeeklyOrdersChart({ data, dark }: {
   );
 }
 
+// ─── Today's Payment Modes Donut ─────────────────────────────────────────────
+
+export function TodayPaymentDonut({ data, dark }: { data: { mode: string; total: number; count: number }[]; dark?: boolean }) {
+  if (!data || data.length === 0) return null;
+  void dark;
+  const total = data.reduce((s, d) => s + d.total, 0);
+  return (
+    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div>
+          <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">Today's Payments</h3>
+          <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">₹{total.toLocaleString("en-IN")} collected</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="h-28 w-28 sm:h-40 sm:w-40 flex-shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} dataKey="total" nameKey="mode" cx="50%" cy="50%" innerRadius={20} outerRadius={40} paddingAngle={3}>
+                {data.map((d, i) => <Cell key={d.mode || i} fill={PAYMENT_COLORS[d.mode] || DONUT_COLORS[i % DONUT_COLORS.length]} />)}
+              </Pie>
+              <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Collected"]} contentStyle={tooltipStyle} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex-1 space-y-1.5 sm:space-y-2">
+          {data.map((d, i) => (
+            <div key={`${d.mode}-${i}`} className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: PAYMENT_COLORS[d.mode] || DONUT_COLORS[i % DONUT_COLORS.length] }} />
+              <span className="text-[12px] sm:text-[14px] font-medium text-th-secondary flex-1 truncate">{d.mode}</span>
+              <span className="text-[12px] sm:text-[14px] font-bold text-th-text">₹{d.total.toLocaleString("en-IN")}</span>
+              <span className="text-[10px] sm:text-[12px] text-th-muted">{total > 0 ? Math.round((d.total / total) * 100) : 0}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Inventory Category Pie ──────────────────────────────────────────────────
 
 export function CategoryPieChart({ data, dark }: {
