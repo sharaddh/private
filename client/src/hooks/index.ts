@@ -6,7 +6,7 @@ export { useCustomers, useCustomer, useCreateCustomer, useUpdateCustomer, useDel
 export { useOrders, useOrder, useCreateOrder, useUpdateOrder, useDeleteOrder, useAdvanceOrderStatus } from "./useOrders";
 export { useBills, useBill, useCreateBill, useCancelBill } from "./useBills";
 export { usePayments, useCreatePayment, usePaymentSummary } from "./usePayments";
-export { useInventory, useInventoryItem, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem, useAdjustStock } from "./useInventory";
+export { useInventory, useSkuExists, useInventoryItem, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem, useAdjustStock } from "./useInventory";
 export { useReadyDeliveries, useDeliveredOrders, useMarkDelivered } from "./useDelivery";
 export { useDashboard } from "./useDashboard";
 export { useSettings } from "./useSettings";

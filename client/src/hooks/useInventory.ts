@@ -1,7 +1,39 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useApi, useApiPost, useApiPut, useApiDelete } from "./useApi";
 import { inventoryService, type InventoryListParams } from "../services";
 import type { InventoryItem, InventoryFormData, PaginatedResponse } from "../types";
+
+export function useSkuExists(sku: string, enabled: boolean) {
+  const [result, setResult] = useState<{ exists: boolean; item?: InventoryItem } | null>(null);
+  const [checking, setChecking] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!enabled || !sku.trim()) {
+      setResult(null);
+      setChecking(false);
+      return;
+    }
+    let cancelled = false;
+    setChecking(true);
+    inventoryService
+      .checkSkuExists(sku)
+      .then((res) => {
+        if (cancelled) return;
+        setResult(res.success ? { exists: !!res.data?.exists, item: res.data?.item } : null);
+      })
+      .catch(() => {
+        if (!cancelled) setResult(null);
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sku, enabled]);
+
+  return { exists: result?.exists ?? false, item: result?.item, checking };
+}
 
 export function useInventory(params?: InventoryListParams) {
   const qs = params

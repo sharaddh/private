@@ -18,6 +18,8 @@ router.get("/stats", authenticate, asyncHandler(inventoryController.getStats));
 
 router.get("/", authenticate, cacheRoute(60), asyncHandler(inventoryController.list));
 
+router.get("/exists", authenticate, asyncHandler(inventoryController.checkSkuExists));
+
 router.get("/:id", authenticate, asyncHandler(inventoryController.getById));
 
 router.get("/qr/:code", authenticate, asyncHandler(inventoryController.getBySku));

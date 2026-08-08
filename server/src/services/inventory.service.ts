@@ -64,17 +64,22 @@ function isDuplicateKeyError(err: unknown): boolean {
   return !!(err && typeof err === "object" && (err as { code?: number }).code === 11000);
 }
 
-export async function getStats(thresholdStr?: string) {
+export async function getStats(thresholdStr?: string, location?: string) {
   const threshold = Math.max(parseInt(thresholdStr || "5", 10) || 5, 0);
+  const locationFilter = location && ["shop", "warehouse"].includes(location) ? { location } : {};
   const [totalItems, lowStock, warehouseItems, totalValueResult, recentItems, byCategory] = await Promise.all([
-    Inventory.countDocuments(),
-    Inventory.countDocuments({ quantity: { $lte: threshold } }),
-    Inventory.countDocuments({ location: "warehouse" }),
+    Inventory.countDocuments(locationFilter),
+    Inventory.countDocuments({ ...locationFilter, quantity: { $lte: threshold } }),
+    Inventory.countDocuments({ ...locationFilter, location: "warehouse" }),
     Inventory.aggregate([
+      { $match: locationFilter },
       { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
     ]),
-    Inventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-    Inventory.aggregate([{ $group: { _id: "$category", count: { $sum: 1 } } }]),
+    Inventory.find(locationFilter).sort({ createdAt: -1 }).limit(5).lean(),
+    Inventory.aggregate([
+      { $match: locationFilter },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]),
   ]);
 
   const categoryCounts: Record<string, number> = {};
@@ -147,6 +152,15 @@ export async function getInventoryBySku(code: string) {
   const item = await Inventory.findOne({ sku: code }).lean();
   if (!item) throw new AppError(404, "Inventory item not found");
   return item;
+}
+
+export async function skuExists(code?: string) {
+  const trimmed = (code || "").trim();
+  if (!trimmed) return { exists: false, item: null };
+  const item = await Inventory.findOne({
+    sku: { $regex: new RegExp(`^${escapeRegex(trimmed)}$`, "i") },
+  }).lean();
+  return { exists: !!item, item: item || null };
 }
 
 export async function getQrImage(id: string) {

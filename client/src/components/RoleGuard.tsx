@@ -6,6 +6,7 @@ const staffPrefixes = [
 ];
 
 function isStaffAllowed(path: string): boolean {
+  if (path === "/inventory") return true;
   return staffPrefixes.some((p) => path === p || path.startsWith(p + "/"));
 }
 

@@ -20,17 +20,17 @@ function priceForPower(item: LensStockItem, powerKey: string): number {
   return isNeg ? item.priceNeg ?? item.price ?? 0 : item.pricePos ?? item.price ?? 0;
 }
 
-export default function LensStockPanel({ scope, onScopeChange }: { scope: LensStockScope; onScopeChange: (s: LensStockScope) => void }) {
+export default function LensStockPanel({ scope, onScopeChange, staffMode = false }: { scope: LensStockScope; onScopeChange: (s: LensStockScope) => void; staffMode?: boolean }) {
   const cartApi = scope === "shop" ? shopCartApi : warehouseCartApi;
 
   return (
     <LensCartProvider api={cartApi}>
-      <LensStockPanelInner scope={scope} onScopeChange={onScopeChange} />
+      <LensStockPanelInner scope={scope} onScopeChange={onScopeChange} staffMode={staffMode} />
     </LensCartProvider>
   );
 }
 
-function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; onScopeChange: (s: LensStockScope) => void }) {
+function LensStockPanelInner({ scope, onScopeChange, staffMode }: { scope: LensStockScope; onScopeChange: (s: LensStockScope) => void; staffMode: boolean }) {
   const [items, setItems] = useState<LensStockItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lensType, setLensType] = useState<TabKey>("sph");
@@ -250,7 +250,7 @@ function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; 
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {isShop && (
+          {isShop && !staffMode && (
             <>
               <button type="button"
                 onClick={() => setMode((m) => (m === "update" ? "normal" : "update"))}
@@ -382,7 +382,7 @@ function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; 
                     </button>
                   );
                 })}
-                {isShop && (
+                {isShop && !staffMode && (
                   <button type="button"
                     onClick={() => { setMobileAdding(true); setMobileNewName(""); setMobileNewPriceNeg(""); setMobileNewPricePos(""); }}
                     className="shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-w-[96px] rounded-xl border border-dashed border-th-border hover:border-primary-500/50 bg-th-surface hover:bg-primary-500/5 transition-all"
@@ -402,7 +402,7 @@ function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; 
                 items={items}
                 selectedId={selectedId}
                 scope={scope}
-                readonly={!isShop}
+                readonly={!isShop || staffMode}
                 onSelect={setSelectedId}
                 onAdd={handleAdd}
                 onDelete={handleDelete}
@@ -471,7 +471,7 @@ function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; 
             </div>
           </div>
 
-          {mode === "demand" && isShop && (
+          {mode === "demand" && isShop && !staffMode && (
             <LensDemandBar
               demandSelSize={demandSel.size}
               totalNeed={totalNeed}
@@ -483,7 +483,7 @@ function LensStockPanelInner({ scope, onScopeChange }: { scope: LensStockScope; 
               onDownload={handleDownloadDemand}
             />
           )}
-          {mode === "update" && isShop && (
+          {mode === "update" && isShop && !staffMode && (
             <LensUpdateBar onDone={() => setMode("normal")} />
           )}
         </>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useInventory,
+  useSkuExists,
   useCreateInventoryItem,
   useUpdateInventoryItem,
   useDeleteInventoryItem,
@@ -16,10 +17,11 @@ import PageSkeleton from "../components/PageSkeleton";
 import QRCode from "qrcode";
 import {
   Plus, Minus, Edit2, Trash2, Package, Printer, History, Search, ScanLine,
-  Upload, Download, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, X,
+  Upload, Download, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, X, AlertTriangle,
 } from "lucide-react";
 import { useTranslate } from "../context/TranslateContext";
 import { useToast } from "../context/ToastContext";
+import { useAuth } from "../context/AuthContext";
 import LensStockPanel from "../components/lens/LensStockPanel";
 import { parseCsv, rowsToObjects, downloadCsv } from "../utils/csv";
 import type {
@@ -67,6 +69,7 @@ export default function InventoryPage() {
   const { uiT } = useTranslate();
   const toast = useToast();
   const navigate = useNavigate();
+  const { isStaff } = useAuth();
 
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showAdjust, setShowAdjust] = useState<boolean>(false);
@@ -90,18 +93,39 @@ export default function InventoryPage() {
   const [page, setPage] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<"items" | "lens">("items");
   const [lensScope, setLensScope] = useState<LensStockScope>("shop");
+  const [variantBusy, setVariantBusy] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isStaff) {
+      setLensScope("shop");
+      setLocationFilter("shop");
+    }
+  }, [isStaff]);
+
+  const debouncedSku = useDebounce(form.sku, 350);
+  const skuCheckEnabled =
+    showForm && debouncedSku.trim().length > 0 &&
+    (!editing || debouncedSku.trim().toUpperCase() !== (editing.sku || "").toUpperCase());
+  const { exists: skuExists, item: skuMatch, checking: skuChecking } = useSkuExists(debouncedSku.trim(), skuCheckEnabled);
+  const formSkuUpper = form.sku.trim().toUpperCase();
+  const matchSkuUpper = skuMatch?.sku ? skuMatch.sku.toUpperCase() : "";
+  const skuConflict = !!skuExists && !!skuMatch && skuMatch._id !== editing?._id && formSkuUpper === matchSkuUpper;
 
   const listParams: InventoryListParams = useMemo(() => {
     const p: InventoryListParams = { page, limit: PAGE_SIZE };
     if (debouncedSearch.trim()) p.search = debouncedSearch.trim();
     if (categoryFilter !== "All") p.category = categoryFilter;
-    if (locationFilter !== "all") p.location = locationFilter;
+    if (isStaff) {
+      p.location = "shop";
+    } else if (locationFilter !== "all") {
+      p.location = locationFilter;
+    }
     if (lowStockOnly) {
       p.lowStock = true;
       p.threshold = threshold;
     }
     return p;
-  }, [debouncedSearch, categoryFilter, locationFilter, lowStockOnly, threshold, page]);
+  }, [debouncedSearch, categoryFilter, locationFilter, lowStockOnly, threshold, page, isStaff]);
 
   const { items: pageItems, total, page: currentPage, pages: totalPages, loading, refetch } = useInventory(listParams);
   const [list, setList] = useState<InventoryItem[]>(() => pageItems || []);
@@ -116,9 +140,9 @@ export default function InventoryPage() {
 
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const fetchStats = useCallback(async () => {
-    const res = await inventoryService.getStats(threshold);
+    const res = await inventoryService.getStats(threshold, isStaff ? "shop" : undefined);
     if (res.success && res.data) setStats(res.data);
-  }, [threshold]);
+  }, [threshold, isStaff]);
 
   useEffect(() => {
     fetchStats();
@@ -168,8 +192,60 @@ export default function InventoryPage() {
     setShowAdjust(true);
   }
 
+  async function generateUniqueSku(base: string, color: string, size: string): Promise<string> {
+    const tag = (color || size || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    const candidates: string[] = [];
+    if (tag) {
+      candidates.push(`${base}-${tag}`);
+      for (let i = 2; i <= 20; i++) candidates.push(`${base}-${tag}-${i}`);
+    } else {
+      for (let i = 2; i <= 21; i++) candidates.push(`${base}-${i}`);
+    }
+    for (const candidate of candidates) {
+      const res = await inventoryService.checkSkuExists(candidate);
+      if (res.success && !res.data?.exists) return candidate;
+    }
+    return candidates[candidates.length - 1];
+  }
+
+  async function handleCreateVariant(existing: InventoryItem): Promise<void> {
+    setVariantBusy(true);
+    try {
+      const base = (form.sku || "").trim().toUpperCase();
+      const newSku = await generateUniqueSku(base, form.color, form.size);
+      setForm((prev) => ({
+        ...prev,
+        sku: newSku,
+        category: existing.category || prev.category,
+        inventoryType: existing.inventoryType || prev.inventoryType,
+        brand: existing.brand || prev.brand,
+        model: existing.model || prev.model,
+        supplier: existing.supplier || prev.supplier,
+      }));
+      toast.success(uiT(`Suggested new SKU: ${newSku}`, `सुझाया गया नया SKU: ${newSku}`));
+    } catch (err) {
+      toast.error((err as Error).message || uiT("Failed to create variant", "वेरिएंट बनाना विफल रहा"));
+    } finally {
+      setVariantBusy(false);
+    }
+  }
+
+  function handleAddStockToExisting(existing: InventoryItem): void {
+    setShowForm(false);
+    openAdjust(existing);
+  }
+
+  function handleEditExisting(existing: InventoryItem): void {
+    setShowForm(false);
+    openEdit(existing);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
+    if (skuConflict) {
+      toast.error(uiT("This SKU already exists. Use the actions below or change the SKU.", "यह SKU पहले से मौजूद है। नीचे दिए विकल्पों का उपयोग करें या SKU बदलें।"));
+      return;
+    }
     setIsLoading(true);
     try {
       const res = editing
@@ -472,7 +548,11 @@ export default function InventoryPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="page-title">{uiT("Inventory", "इन्वेंट्री")}</h1>
-          <p className="text-sm text-muted-500 mt-1">{uiT("Manage specs, sunglasses, contact lenses, and more.", "चश्मा, सनग्लास, कॉन्टैक्ट लेंस और अन्य का स्टॉक प्रबंधित करें।")}</p>
+          <p className="text-sm text-muted-500 mt-1">
+            {isStaff
+              ? uiT("View stock and withdraw items.", "स्टॉक देखें और आइटम की निकासी करें।")
+              : uiT("Manage specs, sunglasses, contact lenses, and more.", "चश्मा, सनग्लास, कॉन्टैक्ट लेंस और अन्य का स्टॉक प्रबंधित करें।")}
+          </p>
         </div>
       </div>
 
@@ -493,7 +573,7 @@ export default function InventoryPage() {
         ))}
       </div>
 
-      {activeTab === "lens" && (
+      {!isStaff && activeTab === "lens" && (
         <div className="flex gap-1 bg-th-elevated rounded-pill p-1 w-fit">
           {(["shop", "warehouse"] as LensStockScope[]).map((s) => (
             <button
@@ -513,27 +593,35 @@ export default function InventoryPage() {
 
       {activeTab === "items" && (
         <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2" aria-label={uiT("Import CSV", "CSV आयात करें")}>
-            <Upload size={18} /> <span className="hidden sm:inline">{uiT("Import", "आयात")}</span>
-          </button>
-          <button onClick={handleExport} className="btn-secondary flex items-center gap-2" aria-label={uiT("Export CSV", "CSV निर्यात करें")}>
-            <Download size={18} /> <span className="hidden sm:inline">{uiT("Export", "निर्यात")}</span>
-          </button>
-          <button onClick={() => setShowScanner(true)} className="btn-secondary flex items-center gap-2" aria-label={uiT("Scan", "स्कैन करें")}>
-            <ScanLine size={18} /> <span className="hidden sm:inline">{uiT("Scan", "स्कैन")}</span>
-          </button>
+          {!isStaff && (
+            <>
+              <button onClick={() => setShowImport(true)} className="btn-secondary flex items-center gap-2" aria-label={uiT("Import CSV", "CSV आयात करें")}>
+                <Upload size={18} /> <span className="hidden sm:inline">{uiT("Import", "आयात")}</span>
+              </button>
+              <button onClick={handleExport} className="btn-secondary flex items-center gap-2" aria-label={uiT("Export CSV", "CSV निर्यात करें")}>
+                <Download size={18} /> <span className="hidden sm:inline">{uiT("Export", "निर्यात")}</span>
+              </button>
+              <button onClick={() => setShowScanner(true)} className="btn-secondary flex items-center gap-2" aria-label={uiT("Scan", "स्कैन करें")}>
+                <ScanLine size={18} /> <span className="hidden sm:inline">{uiT("Scan", "स्कैन")}</span>
+              </button>
+            </>
+          )}
           <button onClick={() => navigate("/inventory/withdraw")} className="btn-secondary flex items-center gap-2" aria-label={uiT("Withdraw Stock", "स्टॉक निकासी")}>
             <Package size={18} /> <span className="hidden sm:inline">{uiT("Withdraw", "निकासी")}</span>
           </button>
           <button onClick={() => navigate("/inventory/withdraw/history")} className="btn-secondary flex items-center gap-2" aria-label={uiT("Withdrawal History", "निकासी इतिहास")}>
             <History size={18} /> <span className="hidden sm:inline">{uiT("History", "इतिहास")}</span>
           </button>
-          <button onClick={() => openAdjust()} className="btn-secondary flex items-center gap-2" aria-label={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
-            <Package size={18} /> {uiT("Adjust Stock", "स्टॉक समायोजित करें")}
-          </button>
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2" aria-label={uiT("Add Item", "आइटम जोड़ें")}>
-            <Plus size={18} /> <span className="hidden sm:inline">{uiT("Add Item", "आइटम जोड़ें")}</span>
-          </button>
+          {!isStaff && (
+            <>
+              <button onClick={() => openAdjust()} className="btn-secondary flex items-center gap-2" aria-label={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
+                <Package size={18} /> {uiT("Adjust Stock", "स्टॉक समायोजित करें")}
+              </button>
+              <button onClick={openCreate} className="btn-primary flex items-center gap-2" aria-label={uiT("Add Item", "आइटम जोड़ें")}>
+                <Plus size={18} /> <span className="hidden sm:inline">{uiT("Add Item", "आइटम जोड़ें")}</span>
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -579,16 +667,18 @@ export default function InventoryPage() {
                 />
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <select
-                  className="input-field w-auto"
-                  value={locationFilter}
-                  onChange={(e) => { setLocationFilter(e.target.value); setPage(1); }}
-                  aria-label={uiT("Location", "स्थान")}
-                >
-                  <option value="all">{uiT("All Locations", "सभी स्थान")}</option>
-                  <option value="shop">{uiT("Shop", "दुकान")}</option>
-                  <option value="warehouse">{uiT("Warehouse", "गोदाम")}</option>
-                </select>
+                {!isStaff && (
+                  <select
+                    className="input-field w-auto"
+                    value={locationFilter}
+                    onChange={(e) => { setLocationFilter(e.target.value); setPage(1); }}
+                    aria-label={uiT("Location", "स्थान")}
+                  >
+                    <option value="all">{uiT("All Locations", "सभी स्थान")}</option>
+                    <option value="shop">{uiT("Shop", "दुकान")}</option>
+                    <option value="warehouse">{uiT("Warehouse", "गोदाम")}</option>
+                  </select>
+                )}
                 <button
                   onClick={() => { setLowStockOnly((v) => !v); setPage(1); }}
                   aria-pressed={lowStockOnly}
@@ -659,7 +749,7 @@ export default function InventoryPage() {
                       <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">{uiT("Location", "स्थान")}</th>
                       <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">{uiT("Stock", "स्टॉक")}</th>
                       <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">{uiT("Price", "मूल्य")}</th>
-                      <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">{uiT("Actions", "कार्रवाई")}</th>
+                      {!isStaff && <th className="px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider">{uiT("Actions", "कार्रवाई")}</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-th-border">
@@ -692,50 +782,61 @@ export default function InventoryPage() {
                           </td>
                           <td className="px-4 py-3.5 whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
-                              <button
-                                onClick={() => handleQuickAdjust(row, -1)}
-                                disabled={qty <= 0 || !!adjusting}
-                                className="p-1 rounded-md hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed text-[#e74c3c]"
-                                title={uiT("Reduce stock", "स्टॉक घटाएं")}
-                                aria-label={uiT("Reduce stock", "स्टॉक घटाएं")}
-                              >
-                                <Minus size={15} />
-                              </button>
-                              <span className={`font-medium min-w-[28px] text-center ${qty > (stats?.lowStockThreshold ?? 5) ? "text-[#1ed760]" : qty > 0 ? "text-amber-400" : "text-[#e74c3c]"}`}>
-                                {adjusting ? (adjusting === "up" ? "…" : "…") : qty}
-                              </span>
-                              <button
-                                onClick={() => handleQuickAdjust(row, 1)}
-                                disabled={!!adjusting}
-                                className="p-1 rounded-md hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed text-[#1ed760]"
-                                title={uiT("Add stock", "स्टॉक जोड़ें")}
-                                aria-label={uiT("Add stock", "स्टॉक जोड़ें")}
-                              >
-                                <Plus size={15} />
-                              </button>
+                              {!isStaff && (
+                                <>
+                                  <button
+                                    onClick={() => handleQuickAdjust(row, -1)}
+                                    disabled={qty <= 0 || !!adjusting}
+                                    className="p-1 rounded-md hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed text-[#e74c3c]"
+                                    title={uiT("Reduce stock", "स्टॉक घटाएं")}
+                                    aria-label={uiT("Reduce stock", "स्टॉक घटाएं")}
+                                  >
+                                    <Minus size={15} />
+                                  </button>
+                                  <span className={`font-medium min-w-[28px] text-center ${qty > (stats?.lowStockThreshold ?? 5) ? "text-[#1ed760]" : qty > 0 ? "text-amber-400" : "text-[#e74c3c]"}`}>
+                                    {adjusting ? (adjusting === "up" ? "…" : "…") : qty}
+                                  </span>
+                                  <button
+                                    onClick={() => handleQuickAdjust(row, 1)}
+                                    disabled={!!adjusting}
+                                    className="p-1 rounded-md hover:bg-th-elevated disabled:opacity-30 disabled:cursor-not-allowed text-[#1ed760]"
+                                    title={uiT("Add stock", "स्टॉक जोड़ें")}
+                                    aria-label={uiT("Add stock", "स्टॉक जोड़ें")}
+                                  >
+                                    <Plus size={15} />
+                                  </button>
+                                </>
+                              )}
+                              {isStaff && (
+                                <span className={`font-medium min-w-[28px] text-center ${qty > (stats?.lowStockThreshold ?? 5) ? "text-[#1ed760]" : qty > 0 ? "text-amber-400" : "text-[#e74c3c]"}`}>
+                                  {qty}
+                                </span>
+                              )}
                               {qty <= 0 && <span className="badge badge-red">{uiT("Out", "खत्म")}</span>}
                             </div>
                           </td>
                           <td className="px-4 py-3.5 whitespace-nowrap text-sm text-th-text">₹{(row.sellingPrice || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => setHistoryItem(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("History", "इतिहास")} aria-label={uiT("History", "इतिहास")}>
-                                <History size={15} />
-                              </button>
-                              <button onClick={() => openAdjust(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("Adjust Stock", "स्टॉक समायोजित करें")} aria-label={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
-                                <Package size={15} />
-                              </button>
-                              <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("Print Label", "लेबल प्रिंट करें")} aria-label={uiT("Print Label", "लेबल प्रिंट करें")}>
-                                <Printer size={15} />
-                              </button>
-                              <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760]" aria-label={uiT("Edit Item", "आइटम संपादित करें")}>
-                                <Edit2 size={15} />
-                              </button>
-                              <button onClick={() => setDeleteTarget(row)} className="p-1.5 hover:bg-[#e74c3c]/10 rounded-lg text-[#e74c3c]" aria-label={uiT("Delete Item", "आइटम हटाएं")}>
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </td>
+                          {!isStaff && (
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setHistoryItem(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("History", "इतिहास")} aria-label={uiT("History", "इतिहास")}>
+                                  <History size={15} />
+                                </button>
+                                <button onClick={() => openAdjust(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("Adjust Stock", "स्टॉक समायोजित करें")} aria-label={uiT("Adjust Stock", "स्टॉक समायोजित करें")}>
+                                  <Package size={15} />
+                                </button>
+                                <button onClick={() => handlePrintLabel(row)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" title={uiT("Print Label", "लेबल प्रिंट करें")} aria-label={uiT("Print Label", "लेबल प्रिंट करें")}>
+                                  <Printer size={15} />
+                                </button>
+                                <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760]" aria-label={uiT("Edit Item", "आइटम संपादित करें")}>
+                                  <Edit2 size={15} />
+                                </button>
+                                <button onClick={() => setDeleteTarget(row)} className="p-1.5 hover:bg-[#e74c3c]/10 rounded-lg text-[#e74c3c]" aria-label={uiT("Delete Item", "आइटम हटाएं")}>
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -748,7 +849,7 @@ export default function InventoryPage() {
           </div>
         </>
       ) : (
-        <LensStockPanel scope={lensScope} onScopeChange={setLensScope} />
+        <LensStockPanel scope={lensScope} onScopeChange={setLensScope} staffMode={isStaff} />
       )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? uiT("Edit Item", "आइटम संपादित करें") : uiT("Add Item", "आइटम जोड़ें")} size="lg">
@@ -757,6 +858,41 @@ export default function InventoryPage() {
             <div>
               <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("SKU", "SKU")} *</label>
               <input className="input-field" value={form.sku} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sku: e.target.value.toUpperCase() })} required placeholder="e.g. FRM-001" aria-label={uiT("SKU", "SKU")} />
+              {skuCheckEnabled && (
+                <div className="mt-1.5 space-y-2">
+                  {skuChecking && (
+                    <p className="text-xs text-th-secondary">{uiT("Checking availability...", "उपलब्धता जाँच रहे हैं...")}</p>
+                  )}
+                  {!skuChecking && !skuConflict && (
+                    <p className="text-xs text-[#1ed760]">✓ {uiT("SKU available", "SKU उपलब्ध है")}</p>
+                  )}
+                  {skuConflict && skuMatch && (
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" aria-hidden="true" />
+                        <div className="text-xs">
+                          <p className="font-semibold text-amber-400">{uiT("SKU already exists", "SKU पहले से मौजूद है")}</p>
+                          <p className="text-th-text mt-0.5">
+                            {skuMatch.brand || ""} {skuMatch.model || ""}
+                            {skuMatch.color ? ` / ${skuMatch.color}` : ""} — ₹{(skuMatch.sellingPrice || 0).toFixed(2)}, {uiT("Stock", "स्टॉक")}: {skuMatch.quantity || 0}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => handleAddStockToExisting(skuMatch)} className="btn-secondary px-3 py-1.5 text-xs" aria-label={uiT("Add stock to existing item", "मौजूदा आइटम में स्टॉक जोड़ें")}>
+                          {uiT("Add stock to existing", "मौजूदा में स्टॉक जोड़ें")}
+                        </button>
+                        <button type="button" onClick={() => handleCreateVariant(skuMatch)} disabled={variantBusy} className="btn-primary px-3 py-1.5 text-xs" aria-label={uiT("Create color/size variant with a new SKU", "नए SKU के साथ रंग/आकार वेरिएंट बनाएं")}>
+                          {variantBusy ? uiT("Generating...", "बना रहे हैं...") : uiT("Create color/size variant", "रंग/आकार वेरिएंट बनाएं")}
+                        </button>
+                        <button type="button" onClick={() => handleEditExisting(skuMatch)} className="btn-secondary px-3 py-1.5 text-xs" aria-label={uiT("Edit existing item", "मौजूदा आइटम संपादित करें")}>
+                          {uiT("Edit existing", "मौजूदा संपादित करें")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-th-secondary mb-1.5">{uiT("Category", "श्रेणी")}</label>
@@ -890,7 +1026,7 @@ export default function InventoryPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-th-border">
-            <button type="submit" disabled={isLoading} className="btn-primary" aria-label={isLoading ? uiT("Saving...", "सहेज रहे हैं...") : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}>{isLoading ? uiT("Saving...", "सहेज रहे हैं...") : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}</button>
+            <button type="submit" disabled={isLoading || skuConflict} className="btn-primary" aria-label={isLoading ? uiT("Saving...", "सहेज रहे हैं...") : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}>{isLoading ? uiT("Saving...", "सहेज रहे हैं...") : editing ? uiT("Save", "सहेजें") : uiT("Add Item", "आइटम जोड़ें")}</button>
           </div>
         </form>
       </Modal>

@@ -19,9 +19,16 @@ class InventoryService extends ApiService {
     return api.get<PaginatedResponse<InventoryItem>>(`${this.basePath}${qs}`);
   }
 
-  async getStats(threshold?: number): Promise<ApiResponse<InventoryStats>> {
-    const qs = threshold ? `?threshold=${threshold}` : "";
+  async getStats(threshold?: number, location?: string): Promise<ApiResponse<InventoryStats>> {
+    const params = new URLSearchParams();
+    if (threshold) params.set("threshold", String(threshold));
+    if (location) params.set("location", location);
+    const qs = params.toString() ? `?${params.toString()}` : "";
     return api.get<InventoryStats>(`${this.basePath}/stats${qs}`);
+  }
+
+  async checkSkuExists(sku: string): Promise<ApiResponse<{ exists: boolean; item?: InventoryItem }>> {
+    return api.get<{ exists: boolean; item?: InventoryItem }>(`${this.basePath}/exists?sku=${encodeURIComponent(sku)}`);
   }
 
   async adjustStock(id: string, data: { quantity: number; note?: string }): Promise<ApiResponse<InventoryItem>> {

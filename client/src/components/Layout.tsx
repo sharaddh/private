@@ -33,14 +33,14 @@ const allDesktopMenu = [
   { path: "/customers", label: "Customers", icon: Users, staff: true },
   { path: "/orders", label: "Orders", icon: ShoppingCart, staff: true },
   { path: "/bills", label: "Bills", icon: FileText, staff: true },
-  { path: "/inventory", label: "Inventory", icon: Package, staff: false },
+  { path: "/inventory", label: "Inventory", icon: Package, staff: true },
   { path: "/delivery", label: "Delivery", icon: Truck, staff: false },
   { path: "/pickup", label: "Pickup", icon: Hand, staff: true },
   { path: "/payments", label: "Payments", icon: CreditCard, staff: false },
   { path: "/announcements", label: "Announcements", icon: Megaphone, staff: false },
   { path: "/reports", label: "Reports", icon: BarChart3, staff: false },
-  { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle, staff: true },
-  { path: "/cameras", label: "Cameras", icon: Camera, staff: true },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageCircle, staff: false },
+  { path: "/cameras", label: "Cameras", icon: Camera, staff: false },
   { path: "/settings", label: "Settings", icon: Settings, staff: true },
 ];
 

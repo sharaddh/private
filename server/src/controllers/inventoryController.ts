@@ -5,7 +5,8 @@ import { AuthRequest } from "../types";
 
 export async function getStats(req: Request, res: Response) {
   const threshold = req.query.threshold as string | undefined;
-  const data = await inventoryService.getStats(threshold);
+  const location = req.query.location as string | undefined;
+  const data = await inventoryService.getStats(threshold, location);
   sendSuccess(res, data);
 }
 
@@ -30,6 +31,11 @@ export async function getById(req: Request, res: Response) {
 
 export async function getBySku(req: Request, res: Response) {
   const data = await inventoryService.getInventoryBySku(req.params.code);
+  sendSuccess(res, data);
+}
+
+export async function checkSkuExists(req: Request, res: Response) {
+  const data = await inventoryService.skuExists(req.query.sku as string | undefined);
   sendSuccess(res, data);
 }
 
