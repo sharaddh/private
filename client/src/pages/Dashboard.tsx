@@ -21,7 +21,7 @@ import {
   Calendar, LayoutDashboard, Warehouse, Pencil, Save,
 } from "lucide-react";
 
-const v = <T,>(val: T | null | undefined, fallback: T | string = "ΓÇö"): T | string => val ?? fallback;
+const v = <T,>(val: T | null | undefined, fallback: T | string = "—"): T | string => val ?? fallback;
 
 const maskPhone = (p: string): string => {
   if (!p || p.length < 6) return v(p) as string;
@@ -31,21 +31,21 @@ const maskPhone = (p: string): string => {
 function formatTimeAgo(dateStr: string, t?: (en: string, hi: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return t ? t("Just now", "αñàαñ¡αÑÇ") : "Just now";
-  if (mins < 60) return t ? `${mins}${t("m ago", " αñ«αñ┐αñ¿αñƒ αñ¬αñ╣αñ▓αÑç")}` : `${mins}m ago`;
+  if (mins < 1) return t ? t("Just now", "अभी") : "Just now";
+  if (mins < 60) return t ? `${mins}${t("m ago", " मिनट पहले")}` : `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return t ? `${hrs}${t("h ago", " αñÿαñéαñƒαÑç αñ¬αñ╣αñ▓αÑç")}` : `${hrs}h ago`;
-  return t ? `${Math.floor(hrs / 24)}${t("d ago", " αñªαñ┐αñ¿ αñ¬αñ╣αñ▓αÑç")}` : `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t ? `${hrs}${t("h ago", " घंटे पहले")}` : `${hrs}h ago`;
+  return t ? `${Math.floor(hrs / 24)}${t("d ago", " दिन पहले")}` : `${Math.floor(hrs / 24)}d ago`;
 }
 
 const paymentModeIcon: Record<string, typeof CreditCard> = {
   Cash: IndianRupee, UPI: Smartphone, Card: CreditCard, "Bank Transfer": Building2,
-  "αñ¿αñòαñª": IndianRupee, "αñòαñ╛αñ░αÑìαñí": CreditCard, "αñ¼αÑêαñéαñò": Building2, "αñ¼αÑÇαñ«αñ╛": Building2, Insurance: Building2,
+  "नकद": IndianRupee, "कार्ड": CreditCard, "बैंक": Building2, "बीमा": Building2, Insurance: Building2,
 };
 
 const paymentModeColors: Record<string, string> = {
   Cash: "#10b981", UPI: "#6366f1", Card: "#f59e0b", "Bank Transfer": "#06b6d4",
-  "αñ¿αñòαñª": "#10b981", "αñòαñ╛αñ░αÑìαñí": "#f59e0b", "αñ¼αÑêαñéαñò": "#06b6d4", "αñ¼αÑÇαñ«αñ╛": "#8b5cf6", Insurance: "#8b5cf6",
+  "नकद": "#10b981", "कार्ड": "#f59e0b", "बैंक": "#06b6d4", "बीमा": "#8b5cf6", Insurance: "#8b5cf6",
 };
 
 // Sub-components
@@ -360,7 +360,7 @@ export default function Dashboard() {
       } else if (d.waConnected === false) {
         toast.error("WhatsApp not connected. Scan QR code on WhatsApp page.");
       } else if (d.queued) {
-        toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued ΓÇö will send when connected`);
+        toast.info(`${type === "buy" ? "Purchase" : "Lab Order"} list queued — will send when connected`);
       } else {
         toast.error(`PDF generated but send failed${d.sendError ? `: ${d.sendError}` : ""}`);
       }
@@ -383,7 +383,7 @@ export default function Dashboard() {
 
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? uiT("Good morning", "αñ╢αÑüαñ¡ αñ¬αÑìαñ░αñ¡αñ╛αññ") : hour < 17 ? uiT("Good afternoon", "αñ¿αñ«αñ╕αÑìαññαÑç") : uiT("Good evening", "αñ╢αÑüαñ¡ αñ╕αñéαñºαÑìαñ»αñ╛");
+  const greeting = hour < 12 ? uiT("Good morning", "शुभ प्रभात") : hour < 17 ? uiT("Good afternoon", "नमस्ते") : uiT("Good evening", "शुभ संध्या");
   const dateStr = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
 
@@ -406,21 +406,21 @@ export default function Dashboard() {
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 text-[12px] sm:text-[15px] text-th-secondary">
           <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <span>{dateStr}</span>
-          <span className="text-th-muted">┬╖</span>
+          <span className="text-th-muted">·</span>
           <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <span>{timeStr}</span>
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-        <button onClick={() => navigate("/workspace")} aria-label={uiT("New Sale", "αñ¿αñê αñ¼αñ┐αñòαÑìαñ░αÑÇ")}
+        <button onClick={() => navigate("/workspace")} aria-label={uiT("New Sale", "नई बिक्री")}
           className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:py-2.5 bg-[#1ed760] text-black rounded-lg text-[13px] sm:text-[15px] font-bold transition-all duration-200 active:scale-95 uppercase tracking-wider">
           <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          {uiT("New Sale", "αñ¿αñê αñ¼αñ┐αñòαÑìαñ░αÑÇ")}
+          {uiT("New Sale", "नई बिक्री")}
         </button>
-        <button onClick={() => setShowScanner(true)} aria-label={uiT("Scan", "αñ╕αÑìαñòαÑêαñ¿")}
+        <button onClick={() => setShowScanner(true)} aria-label={uiT("Scan", "स्कैन")}
           className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:py-2.5 bg-th-elevated text-th-text rounded-lg text-[13px] sm:text-[15px] font-bold transition-all duration-200 active:scale-95 hover:bg-th-card uppercase tracking-wider">
           <ScanLine className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          {uiT("Scan", "αñ╕αÑìαñòαÑêαñ¿")}
+          {uiT("Scan", "स्कैन")}
         </button>
         <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold text-[11px] sm:text-xs flex-shrink-0">S</div>
       </div>
@@ -434,28 +434,28 @@ export default function Dashboard() {
       <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "αñåαñ£ αñòαÑÇ αñ¼αñ┐αñòαÑìαñ░αÑÇ")}</p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">Γé╣{(d.todaySales || 0).toLocaleString()}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Today's Sales", "आज की बिक्री")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">₹{(d.todaySales || 0).toLocaleString()}</p>
           </div>
           <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "αñ╕αñéαñùαÑìαñ░αñ╣")}</p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">Γé╣{(d.todayCollection || 0).toLocaleString()}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Collection", "संग्रह")}</p>
+            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">₹{(d.todayCollection || 0).toLocaleString()}</p>
           </div>
           <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "αñæαñ░αÑìαñíαñ░")}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Orders", "ऑर्डर")}</p>
             <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">{d.todayOrders}</p>
           </div>
           <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
           <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "αñ¼αñ╛αñòαÑÇ")}</p>
+            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">{uiT("Pending", "बाकी")}</p>
             <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">{d.pendingBills.length}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 text-[12px] sm:text-[16px] text-th-muted">
           <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1ed760]" />
-          {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "αñ¬αñ┐αñ¢αñ▓αÑç αñ╕αñ¬αÑìαññαñ╛αñ╣")}
+          {d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} {uiT("vs last week", "पिछले सप्ताह")}
         </div>
       </div>
     </div>
@@ -465,17 +465,17 @@ export default function Dashboard() {
 
   const renderQuickActions = () => (
     <div>
-      <SectionHeader title={uiT("Quick Actions", "αññαÑìαñ╡αñ░αñ┐αññ αñòαñ╛αñ░αÑìαñ»")} />
+      <SectionHeader title={uiT("Quick Actions", "त्वरित कार्य")} />
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2">
-        <QuickActionCard icon={ShoppingCart} label={uiT("New Sale", "αñ¿αñê αñ¼αñ┐αñòαÑìαñ░αÑÇ")} subtitle={uiT("Create a new order", "αñ¿αñ»αñ╛ αñæαñ░αÑìαñíαñ░ αñ¼αñ¿αñ╛αñÅαñé")} onClick={() => navigate("/workspace")} color="#6366f1" />
-        <QuickActionCard icon={UserPlus} label={uiT("Customers", "αñùαÑìαñ░αñ╛αñ╣αñò")} subtitle={uiT("Manage your clients", "αñàαñ¬αñ¿αÑç αñùαÑìαñ░αñ╛αñ╣αñòαÑïαñé αñòαñ╛ αñ¬αÑìαñ░αñ¼αñéαñºαñ¿ αñòαñ░αÑçαñé")} onClick={() => navigate("/customers")} color="#10b981" />
-        <QuickActionCard icon={Boxes} label={uiT("Inventory", "αñçαñ¿αÑìαñ╡αÑçαñéαñƒαÑìαñ░αÑÇ")} subtitle={uiT("Track stock & lenses", "αñ╕αÑìαñƒαÑëαñò αñöαñ░ αñ▓αÑçαñéαñ╕ αñƒαÑìαñ░αÑêαñò αñòαñ░αÑçαñé")} onClick={() => navigate("/inventory")} color="#f59e0b" />
-        <QuickActionCard icon={BarChart3} label={uiT("Reports", "αñ░αñ┐αñ¬αÑïαñ░αÑìαñƒ")} subtitle={uiT("View business insights", "αñ╡αÑìαñ»αñ╛αñ¬αñ╛αñ░ αñ£αñ╛αñ¿αñòαñ╛αñ░αÑÇ αñªαÑçαñûαÑçαñé")} onClick={() => navigate("/reports")} color="#8b5cf6" />
-        <QuickActionCard icon={Receipt} label={uiT("Bills", "αñ¼αñ┐αñ▓")} subtitle={uiT("Manage pending payments", "αñ▓αñéαñ¼αñ┐αññ αñ¡αÑüαñùαññαñ╛αñ¿ αñ¬αÑìαñ░αñ¼αñéαñºαñ┐αññ αñòαñ░αÑçαñé")} onClick={() => navigate("/bills")} color="#ef4444" />
-        <QuickActionCard icon={ClipboardList} label={uiT("Orders", "αñæαñ░αÑìαñíαñ░")} subtitle={uiT("View all orders", "αñ╕αñ¡αÑÇ αñæαñ░αÑìαñíαñ░ αñªαÑçαñûαÑçαñé")} onClick={() => navigate("/orders")} color="#06b6d4" />
-        <QuickActionCard icon={ScanLine} label={uiT("Scanner", "αñ╕αÑìαñòαÑêαñ¿αñ░")} subtitle={uiT("Scan product barcodes", "αñëαññαÑìαñ¬αñ╛αñª αñ¼αñ╛αñ░αñòαÑïαñí αñ╕αÑìαñòαÑêαñ¿ αñòαñ░αÑçαñé")} onClick={() => setShowScanner(true)} color="#f97316" />
-        <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle={uiT("Send messages & PDFs", "αñ╕αñéαñªαÑçαñ╢ αñöαñ░ PDF αñ¡αÑçαñ£αÑçαñé")} onClick={() => navigate("/whatsapp")} color="#22c55e" />
-        <QuickActionCard icon={Warehouse} label={uiT("Warehouse", "αñ╡αÑçαñ»αñ░αñ╣αñ╛αñëαñ╕")} subtitle={uiT("Manage central stock", "αñòαÑçαñéαñªαÑìαñ░αÑÇαñ» αñ╕αÑìαñƒαÑëαñò αñ¬αÑìαñ░αñ¼αñéαñºαñ┐αññ αñòαñ░αÑçαñé")} onClick={() => window.open("https://kmj-m9aq.onrender.com/#/", "_blank", "noopener,noreferrer")} color="#0ea5e9" />
+        <QuickActionCard icon={ShoppingCart} label={uiT("New Sale", "नई बिक्री")} subtitle={uiT("Create a new order", "नया ऑर्डर बनाएं")} onClick={() => navigate("/workspace")} color="#6366f1" />
+        <QuickActionCard icon={UserPlus} label={uiT("Customers", "ग्राहक")} subtitle={uiT("Manage your clients", "अपने ग्राहकों का प्रबंधन करें")} onClick={() => navigate("/customers")} color="#10b981" />
+        <QuickActionCard icon={Boxes} label={uiT("Inventory", "इन्वेंट्री")} subtitle={uiT("Track stock & lenses", "स्टॉक और लेंस ट्रैक करें")} onClick={() => navigate("/inventory")} color="#f59e0b" />
+        <QuickActionCard icon={BarChart3} label={uiT("Reports", "रिपोर्ट")} subtitle={uiT("View business insights", "व्यापार जानकारी देखें")} onClick={() => navigate("/reports")} color="#8b5cf6" />
+        <QuickActionCard icon={Receipt} label={uiT("Bills", "बिल")} subtitle={uiT("Manage pending payments", "लंबित भुगतान प्रबंधित करें")} onClick={() => navigate("/bills")} color="#ef4444" />
+        <QuickActionCard icon={ClipboardList} label={uiT("Orders", "ऑर्डर")} subtitle={uiT("View all orders", "सभी ऑर्डर देखें")} onClick={() => navigate("/orders")} color="#06b6d4" />
+        <QuickActionCard icon={ScanLine} label={uiT("Scanner", "स्कैनर")} subtitle={uiT("Scan product barcodes", "उत्पाद बारकोड स्कैन करें")} onClick={() => setShowScanner(true)} color="#f97316" />
+        <QuickActionCard icon={MessageSquare} label="WhatsApp" subtitle={uiT("Send messages & PDFs", "संदेश और PDF भेजें")} onClick={() => navigate("/whatsapp")} color="#22c55e" />
+        <QuickActionCard icon={Warehouse} label={uiT("Warehouse", "वेयरहाउस")} subtitle={uiT("Manage central stock", "केंद्रीय स्टॉक प्रबंधित करें")} onClick={() => window.open("https://kmj-m9aq.onrender.com/#/", "_blank", "noopener,noreferrer")} color="#0ea5e9" />
       </div>
     </div>
   );
@@ -484,16 +484,16 @@ export default function Dashboard() {
 
   const renderKPIs = () => (
     <div>
-      <SectionHeader title={uiT("Key Metrics", "αñ«αÑüαñûαÑìαñ» αñ«αñ╛αñ¬αñªαñéαñí")} />
+      <SectionHeader title={uiT("Key Metrics", "मुख्य मापदंड")} />
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
-        <MetricCard label={uiT("Today's Sales", "αñåαñ£ αñòαÑÇ αñ¼αñ┐αñòαÑìαñ░αÑÇ")} value={`Γé╣${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "αñ¬αñ┐αñ¢αñ▓αÑç αñ╕αñ¬αÑìαññαñ╛αñ╣ αñòαÑÇ αññαÑüαñ▓αñ¿αñ╛ αñ«αÑçαñé")} />
-        <MetricCard label={uiT("Today's Collection", "αñåαñ£ αñòαñ╛ αñ╕αñéαñùαÑìαñ░αñ╣")} value={`Γé╣${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "αñåαñ£")} />
-        <MetricCard label={uiT("Today's Orders", "αñåαñ£ αñòαÑç αñæαñ░αÑìαñíαñ░")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "αñçαñ╕ αñ╕αñ¬αÑìαññαñ╛αñ╣")}` : undefined} />
-        <MetricCard label={uiT("Pending Bill Amount", "αñ▓αñéαñ¼αñ┐αññ αñ¼αñ┐αñ▓ αñ░αñ╛αñ╢αñ┐")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`Γé╣${(d.pendingPayments || 0).toLocaleString()} due`} />
-        <MetricCard label={uiT("Ready for Pickup", "αñ¬αñ┐αñòαñàαñ¬ αñòαÑç αñ▓αñ┐αñÅ αññαÑêαñ»αñ╛αñ░")} value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle={uiT("awaiting collection", "αñ╕αñéαñùαÑìαñ░αñ╣ αñòαÑÇ αñ¬αÑìαñ░αññαÑÇαñòαÑìαñ╖αñ╛ αñ«αÑçαñé")} />
-        <MetricCard label={uiT("New Customers", "αñ¿αñÅ αñùαÑìαñ░αñ╛αñ╣αñò")} value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle={uiT("joined today", "αñåαñ£ αñ£αÑüαñíαñ╝αÑç")} />
-        <MetricCard label={uiT("Low Stock Items", "αñòαñ« αñ╕αÑìαñƒαÑëαñò αñåαñçαñƒαñ«")} value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle={uiT("items need restock", "αñåαñçαñƒαñ« αñòαÑï αñ░αÑÇαñ╕αÑìαñƒαÑëαñò αñòαÑÇ αñåαñ╡αñ╢αÑìαñ»αñòαññαñ╛")} />
-        <MetricCard label={uiT("Total Inventory", "αñòαÑüαñ▓ αñçαñ¿αÑìαñ╡αÑçαñéαñƒαÑìαñ░αÑÇ")} value={d.counts.inventory} icon={Boxes} color="#f472b6" subtitle={uiT("total SKUs", "αñòαÑüαñ▓ SKU")} />
+        <MetricCard label={uiT("Today's Sales", "आज की बिक्री")} value={`₹${(d.todaySales || 0).toLocaleString()}`} icon={IndianRupee} color="#10b981" trend={d.salesTrend === "N/A" ? "NEW" : `${Number(d.salesTrend) >= 0 ? "+" : ""}${d.salesTrend}%`} subtitle={uiT("vs last week", "पिछले सप्ताह की तुलना में")} />
+        <MetricCard label={uiT("Today's Collection", "आज का संग्रह")} value={`₹${(d.todayCollection || 0).toLocaleString()}`} icon={IndianRupee} color="#6366f1" subtitle={uiT("today", "आज")} />
+        <MetricCard label={uiT("Today's Orders", "आज के ऑर्डर")} value={d.todayOrders} icon={ShoppingBag} color="#8b5cf6" subtitle={d.weekOrders ? `${d.weekOrders} ${uiT("this week", "इस सप्ताह")}` : undefined} />
+        <MetricCard label={uiT("Pending Bill Amount", "लंबित बिल राशि")} value={d.pendingBills.length} icon={Receipt} color="#ef4444" subtitle={`₹${(d.pendingPayments || 0).toLocaleString()} due`} />
+        <MetricCard label={uiT("Ready for Pickup", "पिकअप के लिए तैयार")} value={d.readyDeliveries ?? 0} icon={PackageCheck} color="#06b6d4" subtitle={uiT("awaiting collection", "संग्रह की प्रतीक्षा में")} />
+        <MetricCard label={uiT("New Customers", "नए ग्राहक")} value={d.newCustomersToday ?? 0} icon={Users} color="#10b981" subtitle={uiT("joined today", "आज जुड़े")} />
+        <MetricCard label={uiT("Low Stock Items", "कम स्टॉक आइटम")} value={d.lowStock ?? 0} icon={AlertTriangle} color="#f59e0b" subtitle={uiT("items need restock", "आइटम को रीस्टॉक की आवश्यकता")} />
+        <MetricCard label={uiT("Total Inventory", "कुल इन्वेंट्री")} value={d.counts.inventory} icon={Boxes} color="#f472b6" subtitle={uiT("total SKUs", "कुल SKU")} />
       </div>
     </div>
   );
@@ -515,7 +515,7 @@ export default function Dashboard() {
         {/* Row 1: Sales Trend (large) + Order Status Donut */}
         {(hasSales || hasOrders) && (
           <div>
-            <SectionHeader title={uiT("Analytics Overview", "αñ╡αñ┐αñ╢αÑìαñ▓αÑçαñ╖αñú αñàαñ╡αñ▓αÑïαñòαñ¿")} />
+            <SectionHeader title={uiT("Analytics Overview", "विश्लेषण अवलोकन")} />
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
               {hasSales && (
                 <div className="lg:col-span-3">
@@ -573,14 +573,14 @@ export default function Dashboard() {
   const renderNeedsAttention = () => {
     interface AlertItem { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string; action?: () => void; actionLabel?: string; onClick?: () => void }
     const items: AlertItem[] = [];
-    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bill Amount", "αñ▓αñéαñ¼αñ┐αññ αñ¼αñ┐αñ▓ αñ░αñ╛αñ╢αñ┐"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: uiT("Collect", "αñ╡αñ╕αÑéαñ▓αÑçαñé"), onClick: () => navigate("/bills") });
-    if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: uiT("Low Stock Items", "αñòαñ« αñ╕αÑìαñƒαÑëαñò αñåαñçαñƒαñ«"), value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
-    if (draftOrders.length > 0) items.push({ icon: FileText, label: uiT("Draft Orders", "αñíαÑìαñ░αñ╛αñ½αÑìαñƒ αñæαñ░αÑìαñíαñ░"), value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
-    if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "αñåαñ£ αñòαÑÇ αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
+    if (d.pendingBills.length > 0) items.push({ icon: AlertCircle, label: uiT("Pending Bill Amount", "लंबित बिल राशि"), value: d.pendingBills.length, color: "red", action: () => navigate("/bills"), actionLabel: uiT("Collect", "वसूलें"), onClick: () => navigate("/bills") });
+    if ((d.lowStock ?? 0) > 0) items.push({ icon: AlertTriangle, label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "orange", action: () => navigate("/inventory"), actionLabel: "Restock", onClick: () => navigate("/inventory") });
+    if (draftOrders.length > 0) items.push({ icon: FileText, label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "yellow", action: undefined, onClick: undefined });
+    if (d.todayDeliveries.length > 0) items.push({ icon: Truck, label: uiT("Today's Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "blue", action: () => navigate("/delivery"), actionLabel: "Deliver", onClick: () => navigate("/delivery") });
     if (items.length === 0) return null;
     return (
       <div className="space-y-3 sm:space-y-4">
-        <SectionHeader title={uiT("Needs Attention", "αñºαÑìαñ»αñ╛αñ¿ αñªαÑçαñé")} count={items.length} />
+        <SectionHeader title={uiT("Needs Attention", "ध्यान दें")} count={items.length} />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
           {items.map((item) => (
             <AlertCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} action={item.action} actionLabel={item.actionLabel} onClick={item.onClick} />
@@ -600,36 +600,36 @@ export default function Dashboard() {
         <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
     <div className="flex items-center justify-between mb-2 sm:mb-2.5">
             <div className="flex items-center gap-2 sm:gap-3">
-              <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "αñ▓αÑçαñéαñ╕ αñ«αñ╛αñéαñù")}</h3>
+              <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Lens Demand", "लेंस मांग")}</h3>
               <span className="text-[13px] sm:text-[16px] font-medium text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 rounded-lg">{draftOrders.length}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               {selectedOrders.size > 0 && (
-                <span className="text-[13px] sm:text-[16px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "αñÜαñ»αñ¿αñ┐αññ")}</span>
+                <span className="text-[13px] sm:text-[16px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{selectedOrders.size} {uiT("selected", "चयनित")}</span>
               )}
-              <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Buy lenses", "αñ▓αÑçαñéαñ╕ αñûαñ░αÑÇαñªαÑçαñé")}
+              <button onClick={() => sendDemand("buy")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Buy lenses", "लेंस खरीदें")}
                 className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[13px] sm:text-[16px] font-bold text-[#f59e0b] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {sendingDemand === "buy" ? "..." : uiT("Buy", "αñûαñ░αÑÇαñªαÑçαñé")}
+                {sendingDemand === "buy" ? "..." : uiT("Buy", "खरीदें")}
               </button>
-              <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Order lenses", "αñ▓αÑçαñéαñ╕ αñæαñ░αÑìαñíαñ░ αñòαñ░αÑçαñé")}
+              <button onClick={() => sendDemand("order")} disabled={sendingDemand !== null || selectedOrders.size === 0} aria-label={uiT("Order lenses", "लेंस ऑर्डर करें")}
                 className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[13px] sm:text-[16px] font-bold text-[#6366f1] bg-[#6366f1]/10 hover:bg-[#6366f1]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 uppercase tracking-wider">
                 <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {sendingDemand === "order" ? "..." : uiT("Order", "αñæαñ░αÑìαñíαñ░")}
+                {sendingDemand === "order" ? "..." : uiT("Order", "ऑर्डर")}
               </button>
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer text-[13px] sm:text-[16px] font-medium text-th-secondary hover:text-th-text transition-colors">
             <input type="checkbox" checked={selectedOrders.size === draftOrders.length && draftOrders.length > 0}
               onChange={() => toggleAllOrders(allIds)}
-              aria-label={uiT("Select all", "αñ╕αñ¡αÑÇ αñÜαÑüαñ¿αÑçαñé")}
+              aria-label={uiT("Select all", "सभी चुनें")}
               className="w-3.5 h-3.5 rounded accent-[#1ed760]" />
-            {uiT("Select all", "αñ╕αñ¡αÑÇ αñÜαÑüαñ¿αÑçαñé")} ({draftOrders.length})
+            {uiT("Select all", "सभी चुनें")} ({draftOrders.length})
           </label>
         </div>
 
         {draftOrders.length === 0 ? (
-          <EmptyState icon={PackageCheck} title={uiT("All clear!", "αñ╕αñ¼ αñ╕αñ╛αñ½!")} description={uiT("No draft orders pending lens classification.", "αñ▓αÑçαñéαñ╕ αñ╡αñ░αÑìαñùαÑÇαñòαñ░αñú αñòαÑç αñ▓αñ┐αñÅ αñòαÑïαñê αñíαÑìαñ░αñ╛αñ½αÑìαñƒ αñæαñ░αÑìαñíαñ░ αñ▓αñéαñ¼αñ┐αññ αñ¿αñ╣αÑÇαñéαÑñ")} actionLabel={uiT("Create New Order", "αñ¿αñ»αñ╛ αñæαñ░αÑìαñíαñ░ αñ¼αñ¿αñ╛αñÅαñé")} onAction={() => navigate("/workspace")} />
+          <EmptyState icon={PackageCheck} title={uiT("All clear!", "सब साफ!")} description={uiT("No draft orders pending lens classification.", "लेंस वर्गीकरण के लिए कोई ड्राफ्ट ऑर्डर लंबित नहीं।")} actionLabel={uiT("Create New Order", "नया ऑर्डर बनाएं")} onAction={() => navigate("/workspace")} />
         ) : (
           <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-none">
             {draftOrders.map((o) => {
@@ -667,7 +667,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2.5 sm:gap-3">
                     <input type="checkbox" checked={isSelected} onChange={() => toggleOrderSelection(id)}
                       onClick={(e) => e.stopPropagation()}
-                      aria-label={cName || uiT("Select order", "αñæαñ░αÑìαñíαñ░ αñÜαÑüαñ¿αÑçαñé")}
+                      aria-label={cName || uiT("Select order", "ऑर्डर चुनें")}
                       className="w-4 h-4 rounded accent-[#1ed760] cursor-pointer flex-shrink-0" />
                     <div className="relative flex-shrink-0">
                       <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-xs" />
@@ -677,9 +677,9 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 sm:gap-2">
-                        <p className="text-[15px] sm:text-[18px] font-bold text-th-text truncate">{cName || "ΓÇö"}</p>
+                        <p className="text-[15px] sm:text-[18px] font-bold text-th-text truncate">{cName || "—"}</p>
                         {!!(cMobile) && <span className="text-[13px] sm:text-[16px] text-th-muted hidden sm:inline">{maskPhone(cMobile)}</span>}
-                        <span className="text-[13px] sm:text-[16px] text-th-muted hidden sm:inline">┬╖</span>
+                        <span className="text-[13px] sm:text-[16px] text-th-muted hidden sm:inline">·</span>
                         <span className="text-[13px] sm:text-[16px] text-th-muted">{o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}</span>
                       </div>
                       <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5 flex-wrap">
@@ -689,9 +689,9 @@ export default function Dashboard() {
                         {!!(o.lensIndex) && <span className="text-[13px] sm:text-[15px] text-th-muted bg-th-elevated px-1.5 sm:px-2 py-0.5 rounded-md">{o.lensIndex}</span>}
                       </div>
                     </div>
-                    <button onClick={goToCustomer} aria-label={uiT("Open", "αñûαÑïαñ▓αÑçαñé")}
+                    <button onClick={goToCustomer} aria-label={uiT("Open", "खोलें")}
                       className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider flex-shrink-0 opacity-0 group-hover:opacity-100">
-                      {uiT("Open", "αñûαÑïαñ▓αÑçαñé")} <ArrowUpRight className="w-3 h-3" />
+                      {uiT("Open", "खोलें")} <ArrowUpRight className="w-3 h-3" />
                     </button>
                   </div>
 
@@ -703,20 +703,20 @@ export default function Dashboard() {
                       <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">{rRx || uiT("plain", "plain")}</span>
                       {inStock ? (
                         <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
-                          {uiT("In Stock", "αñ╕αÑìαñƒαÑëαñò αñ«αÑçαñé")}
+                          {uiT("In Stock", "स्टॉक में")}
                         </span>
                       ) : (
                         <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
-                          {uiT("Out", "αñ¼αñ╛αñ╣αñ░")}
+                          {uiT("Out", "बाहर")}
                         </span>
                       )}
 
                       <SegmentedControl
                         compact
                         options={[
-                          { label: uiT("Stock", "αñ╕αÑìαñƒαÑëαñò"), value: "stock", color: "bg-[#1ed760] text-black " },
-                          { label: uiT("Buy", "αñûαñ░α│ÇαñªαÑçαñé"), value: "buy", color: "bg-[#f59e0b] text-black" },
-                          { label: uiT("Order", "αñæαñ░αÑìαñíαñ░"), value: "order", color: "bg-[#6366f1] text-white" },
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black " },
+                          { label: uiT("Buy", "खरೀदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
                         ]}
                         value={rStatus}
                         onChange={(s) => classifyEye(id, "right", s)}
@@ -729,27 +729,27 @@ export default function Dashboard() {
                         L
                       </span>
                       <span className="text-[14px] sm:text-[17px] font-mono font-semibold text-th-text min-w-[80px] sm:min-w-[120px] truncate">
-                        {lRx || "ΓÇö"}
+                        {lRx || "—"}
                       </span>
 
                       {/* Right Side: Status Badge and Segmented Control */}
                       {/* Adding 'ml-auto' pushes this element and everything after it to the right */}
                       {inStock ? (
                         <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
-                          {uiT("In Stock", "αñ╕αÑìαñƒαÑëαñò αñ«αÑçαñé")}
+                          {uiT("In Stock", "स्टॉक में")}
                         </span>
                       ) : (
                         <span className="ml-auto text-[11px] sm:text-[14px] font-bold text-[#e74c3c] bg-[#e74c3c]/10 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0">
-                          {uiT("Out", "αñ¼αñ╛αñ╣αñ░")}
+                          {uiT("Out", "बाहर")}
                         </span>
                       )}
 
                       <SegmentedControl
                         compact
                         options={[
-                          { label: uiT("Stock", "αñ╕αÑìαñƒαÑëαñò"), value: "stock", color: "bg-[#1ed760] text-black " },
-                          { label: uiT("Buy", "αñûαñ░α│ÇαñªαÑçαñé"), value: "buy", color: "bg-[#f59e0b] text-black" },
-                          { label: uiT("Order", "αñæαñ░αÑìαñíαñ░"), value: "order", color: "bg-[#6366f1] text-white" },
+                          { label: uiT("Stock", "स्टॉक"), value: "stock", color: "bg-[#1ed760] text-black " },
+                          { label: uiT("Buy", "खरೀदें"), value: "buy", color: "bg-[#f59e0b] text-black" },
+                          { label: uiT("Order", "ऑर्डर"), value: "order", color: "bg-[#6366f1] text-white" },
                         ]}
                         value={lStatus}
                         onChange={(s) => classifyEye(id, "left", s)}
@@ -770,14 +770,14 @@ export default function Dashboard() {
   const renderRecentOrders = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg h-full flex flex-col">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-border">
-        <SectionHeader title={uiT("Today's Orders", "αñåαñ£ αñòαÑç αñæαñ░αÑìαñíαñ░")} count={d.todayOrders} action={() => navigate("/orders")} actionLabel={uiT("View all", "αñ╕αñ¡αÑÇ αñªαÑçαñûαÑçαñé")} />
+        <SectionHeader title={uiT("Today's Orders", "आज के ऑर्डर")} count={d.todayOrders} action={() => navigate("/orders")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-border max-h-[465px] overflow-y-auto scrollbar-none flex-1">
         {d.recentOrders.length === 0 ? (
-          <EmptyState icon={ClipboardList} title={uiT("No orders today", "αñåαñ£ αñòαÑïαñê αñæαñ░αÑìαñíαñ░ αñ¿αñ╣αÑÇαñé")} description={uiT("Today's orders will appear here.", "αñåαñ£ αñòαÑç αñæαñ░αÑìαñíαñ░ αñ»αñ╣αñ╛αñé αñªαñ┐αñûαñ╛αñê αñªαÑçαñéαñùαÑçαÑñ")} actionLabel={uiT("New Order", "αñ¿αñ»αñ╛ αñæαñ░αÑìαñíαñ░")} onAction={() => navigate("/workspace")} />
+          <EmptyState icon={ClipboardList} title={uiT("No orders today", "आज कोई ऑर्डर नहीं")} description={uiT("Today's orders will appear here.", "आज के ऑर्डर यहां दिखाई देंगे।")} actionLabel={uiT("New Order", "नया ऑर्डर")} onAction={() => navigate("/workspace")} />
         ) : d.recentOrders.map((o, idx) => {
           const custObj = typeof o.customerId === "object" && o.customerId ? o.customerId : null;
-          const cName = custObj?.name ?? "ΓÇö";
+          const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
           const rx = (o as any).prescription;
           const rxParts: string[] = [];
@@ -803,16 +803,16 @@ export default function Dashboard() {
                 <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
                 <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                   {o.createdAt ? formatTimeAgo(o.createdAt, uiT) : ""}
-                  {!!(o.frameBrand) ? ` ┬╖ ${o.frameBrand}` : ""}
-                  {!!(o.lensBrand) ? ` ┬╖ ${o.lensBrand}` : ""}
+                  {!!(o.frameBrand) ? ` · ${o.frameBrand}` : ""}
+                  {!!(o.lensBrand) ? ` · ${o.lensBrand}` : ""}
                 </p>
                 {rxParts.length > 0 && (
                   <p className="text-[11px] sm:text-[12px] text-[#1ed760] font-medium mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {rxParts.join(" ┬╖ ")}
+                    {rxParts.join(" · ")}
                   </p>
                 )}
               </div>
-              <StatusBadge status={o.status || "ΓÇö"} />
+              <StatusBadge status={o.status || "—"} />
             </div>
           );
         })}
@@ -825,14 +825,14 @@ export default function Dashboard() {
   const renderPendingBills = () => (
     <div className="bg-th-surface rounded-xl overflow-hidden shadow-lg flex flex-col h-full">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-th-card">
-        <SectionHeader title={uiT("Pending Bill Amount", "αñ▓αñéαñ¼αñ┐αññ αñ¼αñ┐αñ▓ αñ░αñ╛αñ╢αñ┐")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "αñ╕αñ¡αÑÇ αñªαÑçαñûαÑçαñé")} />
+        <SectionHeader title={uiT("Pending Bill Amount", "लंबित बिल राशि")} count={d.pendingBills.length} action={() => navigate("/bills")} actionLabel={uiT("View all", "सभी देखें")} />
       </div>
       <div className="divide-y divide-th-card max-h-[380px] overflow-y-auto scrollbar-none flex-1">
         {d.pendingBills.length === 0 ? (
-          <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "αñ╕αñ¡αÑÇ αñ¼αñ┐αñ▓ αñÜαÑüαñòαññαñ╛")} description={uiT("No pending bills to collect.", "αñòαÑïαñê αñ▓αñéαñ¼αñ┐αññ αñ¼αñ┐αñ▓ αñ¿αñ╣αÑÇαñéαÑñ")} />
+          <EmptyState icon={IndianRupee} title={uiT("All bills cleared", "सभी बिल चुकता")} description={uiT("No pending bills to collect.", "कोई लंबित बिल नहीं।")} />
         ) : d.pendingBills.map((b, idx) => {
           const custObj = typeof b.customerId === "object" && b.customerId ? b.customerId : null;
-          const cName = custObj?.name ?? "ΓÇö";
+          const cName = custObj?.name ?? "—";
           const cMobile = custObj?.mobile ?? "";
           return (
             <div key={b._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 hover:bg-th-card transition-all">
@@ -842,10 +842,10 @@ export default function Dashboard() {
                 {!!(cMobile) && <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{maskPhone(cMobile)}</p>}
               </div>
               <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-                <p className="text-[14px] sm:text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">Γé╣{(b.pendingAmount || 0).toLocaleString()}</p>
-                <button onClick={() => navigate(`/collect?billId=${b._id}`)} aria-label={uiT("Collect payment", "αñ¡αÑüαñùαññαñ╛αñ¿ αñ╡αñ╕αÑéαñ▓αÑçαñé")}
+                <p className="text-[14px] sm:text-[17px] font-bold text-[#e74c3c] whitespace-nowrap">₹{(b.pendingAmount || 0).toLocaleString()}</p>
+                <button onClick={() => navigate(`/collect?billId=${b._id}`)} aria-label={uiT("Collect payment", "भुगतान वसूलें")}
                   className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[12px] sm:text-[14px] font-bold bg-[#e74c3c]/10 text-[#e74c3c] hover:bg-[#e74c3c]/20 transition-all duration-200 active:scale-95 uppercase tracking-wider whitespace-nowrap">
-                  {uiT("Collect", "αñ╡αñ╕αÑéαñ▓αÑçαñé")}
+                  {uiT("Collect", "वसूलें")}
                 </button>
               </div>
             </div>
@@ -867,24 +867,24 @@ export default function Dashboard() {
     const emptyState = {
       pending: {
         icon: PackageCheck,
-        title: uiT("No pending deliveries", "αñòαÑïαñê αñ▓αñéαñ¼αñ┐αññ αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ αñ¿αñ╣αÑÇαñé"),
-        desc: uiT("All orders are delivered or cancelled.", "αñ╕αñ¡αÑÇ αñæαñ░αÑìαñíαñ░ αñíαñ┐αñ▓αÑÇαñ╡αñ░ αñ»αñ╛ αñ░αñªαÑìαñª αñ╣αÑï αñùαñÅ αñ╣αÑêαñéαÑñ"),
+        title: uiT("No pending deliveries", "कोई लंबित डिलीवरी नहीं"),
+        desc: uiT("All orders are delivered or cancelled.", "सभी ऑर्डर डिलीवर या रद्द हो गए हैं।"),
       },
       today: {
         icon: Truck,
-        title: uiT("No deliveries today", "αñåαñ£ αñòαÑïαñê αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ αñ¿αñ╣αÑÇαñé"),
-        desc: uiT("All deliveries for today are completed.", "αñåαñ£ αñòαÑÇ αñ╕αñ¡αÑÇ αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ αñ¬αÑéαñ░αÑìαñú αñ╣αÑï αñùαñê αñ╣αÑêαñéαÑñ"),
+        title: uiT("No deliveries today", "आज कोई डिलीवरी नहीं"),
+        desc: uiT("All deliveries for today are completed.", "आज की सभी डिलीवरी पूर्ण हो गई हैं।"),
       },
       delivered: {
         icon: PackageCheck,
-        title: uiT("Nothing delivered today", "αñåαñ£ αñòαÑüαñ¢ αñ¡αÑÇ αñíαñ┐αñ▓αÑÇαñ╡αñ░ αñ¿αñ╣αÑÇαñé αñ╣αÑüαñå"),
-        desc: uiT("Delivered orders will appear here.", "αñíαñ┐αñ▓αÑÇαñ╡αñ░ αñæαñ░αÑìαñíαñ░ αñ»αñ╣αñ╛αñé αñªαñ┐αñûαñ╛αñê αñªαÑçαñéαñùαÑçαÑñ"),
+        title: uiT("Nothing delivered today", "आज कुछ भी डिलीवर नहीं हुआ"),
+        desc: uiT("Delivered orders will appear here.", "डिलीवर ऑर्डर यहां दिखाई देंगे।"),
       },
     }[tab];
 
     const renderRow = (item: Order, idx: number) => {
       const custObj = typeof item.customerId === "object" && item.customerId ? item.customerId : null;
-      const cName = custObj?.name ?? "ΓÇö";
+      const cName = custObj?.name ?? "—";
       const cMobile = custObj?.mobile ?? "";
 
       if (tab === "delivered") {
@@ -901,13 +901,13 @@ export default function Dashboard() {
               <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
               <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 {!!(o.frameBrand) ? o.frameBrand : ""}
-                {!!(o.frameBrand) && !!(o.lensBrand) ? " ┬╖ " : ""}
+                {!!(o.frameBrand) && !!(o.lensBrand) ? " · " : ""}
                 {!!(o.lensBrand) ? o.lensBrand : ""}
                 {!o.frameBrand && !o.lensBrand ? (o.createdAt ? formatTimeAgo(o.createdAt, uiT) : "") : ""}
               </p>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              <span className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap">Γé╣{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
+              <span className="text-[14px] sm:text-[17px] font-bold text-th-text whitespace-nowrap">₹{(o.billInfo?.totalAmount ?? 0).toLocaleString()}</span>
               <StatusBadge status="Delivered" />
             </div>
           </div>
@@ -927,13 +927,13 @@ export default function Dashboard() {
             <p className="text-[14px] sm:text-[17px] font-semibold text-th-text truncate">{cName}</p>
             <p className="text-[12px] sm:text-[14px] text-th-secondary mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
               {!!(cMobile) ? maskPhone(cMobile) : ""}
-              {!!(cMobile) && due ? " ┬╖ " : ""}
-              {due ? uiT("Due", "αññαñ┐αñÑαñ┐") + " " + new Date(due).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
+              {!!(cMobile) && due ? " · " : ""}
+              {due ? uiT("Due", "तिथि") + " " + new Date(due).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : ""}
             </p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            <StatusBadge status={item.status || "ΓÇö"} />
-            <button onClick={() => navigate(`/delivery?order=${item._id}`)} aria-label={uiT("Deliver", "αñíαñ┐αñ▓αÑÇαñ╡αñ░")}
+            <StatusBadge status={item.status || "—"} />
+            <button onClick={() => navigate(`/delivery?order=${item._id}`)} aria-label={uiT("Deliver", "डिलीवर")}
               className="p-1.5 sm:p-2 rounded-lg text-[14px] sm:text-[16px] font-bold bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-all duration-200 active:scale-95">
               <PackageCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
@@ -943,9 +943,9 @@ export default function Dashboard() {
     };
 
     const tabs = [
-      { label: uiT("Pending", "αñ¼αñ╛αñòαÑÇ"), value: "pending" as const, count: pendingList.length },
-      { label: uiT("Today", "αñåαñ£"), value: "today" as const, count: todayList.length },
-      { label: uiT("Delivered", "αñíαñ┐αñ▓αÑÇαñ╡αñ░"), value: "delivered" as const, count: deliveredList.length },
+      { label: uiT("Pending", "बाकी"), value: "pending" as const, count: pendingList.length },
+      { label: uiT("Today", "आज"), value: "today" as const, count: todayList.length },
+      { label: uiT("Delivered", "डिलीवर"), value: "delivered" as const, count: deliveredList.length },
     ];
 
     return (
@@ -954,7 +954,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5">
             <h3 className="text-[16px] sm:text-[18px] font-bold text-th-text uppercase tracking-wider flex items-center gap-2">
               <Truck className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[#2dd4bf]" />
-              {uiT("Deliveries", "αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ")}
+              {uiT("Deliveries", "डिलीवरी")}
             </h3>
             <div className="flex items-center gap-1 sm:gap-1.5">
               {tabs.map((t) => (
@@ -969,9 +969,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center justify-end pb-2 sm:pb-2.5">
-            <button onClick={() => navigate("/delivery")} aria-label={uiT("View all", "αñ╕αñ¡αÑÇ αñªαÑçαñûαÑçαñé")}
+            <button onClick={() => navigate("/delivery")} aria-label={uiT("View all", "सभी देखें")}
               className="flex items-center gap-1 text-[12px] sm:text-[13px] font-bold text-[#1ed760] hover:text-[#1ed760] px-2 py-1 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95">
-              {uiT("View all", "αñ╕αñ¡αÑÇ αñªαÑçαñûαÑçαñé")}
+              {uiT("View all", "सभी देखें")}
               <ChevronRight className="w-3 h-3" />
             </button>
           </div>
@@ -1003,9 +1003,9 @@ export default function Dashboard() {
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
             <CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "αñòαñ╛αñ░αÑìαñ» αñ╕αÑéαñÜαÑÇ")}</h3>
+          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("To-Do", "कार्य सूची")}</h3>
         </div>
-        <span className="text-[13px] sm:text-[16px] font-bold text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{activeTodos.length} {uiT("pending", "αñ¼αñ╛αñòαÑÇ")}</span>
+        <span className="text-[13px] sm:text-[16px] font-bold text-th-secondary bg-th-elevated px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">{activeTodos.length} {uiT("pending", "बाकी")}</span>
       </div>
 
       {/* Add area */}
@@ -1014,22 +1014,22 @@ export default function Dashboard() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addTodo(); }
           }}
-          placeholder={`${uiT("Add a task...", "αñòαñ╛αñ░αÑìαñ» αñ£αÑïαñíαñ╝αÑçαñé...")}\n${uiT("Second line for details (name, phone, notes...)", "αñªαÑéαñ╕αñ░αÑÇ αñ▓αñ╛αñçαñ¿ αñ«αÑçαñé αñ╡αñ┐αñ╡αñ░αñú (αñ¿αñ╛αñ«, αñ¿αñéαñ¼αñ░, αñ¿αÑïαñƒαÑìαñ╕...)")}`}
-          aria-label={uiT("Add a task", "αñòαñ╛αñ░αÑìαñ» αñ£αÑïαñíαñ╝αÑçαñé")}
+          placeholder={`${uiT("Add a task...", "कार्य जोड़ें...")}\n${uiT("Second line for details (name, phone, notes...)", "दूसरी लाइन में विवरण (नाम, नंबर, नोट्स...)")}`}
+          aria-label={uiT("Add a task", "कार्य जोड़ें")}
           className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-th-elevated border border-th-border rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
         <div className="flex items-center justify-between gap-2 mt-1.5 sm:mt-2">
-          <span className="text-[11px] sm:text-[12px] text-th-muted">{uiT("Enter = add ┬╖ Shift+Enter = new line", "Enter = αñ£αÑïαñíαñ╝αÑçαñé ┬╖ Shift+Enter = αñ¿αñê αñ▓αñ╛αñçαñ¿")}</span>
-          <button onClick={addTodo} disabled={!newTodo.trim()} aria-label={uiT("Add task", "αñòαñ╛αñ░αÑìαñ» αñ£αÑïαñíαñ╝αÑçαñé")}
+          <span className="text-[11px] sm:text-[12px] text-th-muted">{uiT("Enter = add · Shift+Enter = new line", "Enter = जोड़ें · Shift+Enter = नई लाइन")}</span>
+          <button onClick={addTodo} disabled={!newTodo.trim()} aria-label={uiT("Add task", "कार्य जोड़ें")}
             className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-[#1ed760]/10 hover:bg-[#1ed760]/20 disabled:opacity-40 disabled:cursor-not-allowed text-[#1ed760] transition-all active:scale-95 text-[13px] sm:text-[15px] font-bold uppercase tracking-wider">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            {uiT("Add", "αñ£αÑïαñíαñ╝αÑçαñé")}
+            {uiT("Add", "जोड़ें")}
           </button>
         </div>
       </div>
 
       <div className="space-y-1.5 max-h-[260px] overflow-y-auto scrollbar-none pr-1 flex-1">
         {todos.length === 0 ? (
-          <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "αñàαñ¡αÑÇ αññαñò αñòαÑïαñê αñòαñ╛αñ░αÑìαñ» αñ¿αñ╣αÑÇαñé")} description={uiT("Add a task above to get started.", "αñ╢αÑüαñ░αÑé αñòαñ░αñ¿αÑç αñòαÑç αñ▓αñ┐αñÅ αñèαñ¬αñ░ αñÅαñò αñòαñ╛αñ░αÑìαñ» αñ£αÑïαñíαñ╝αÑçαñéαÑñ")} />
+          <EmptyState icon={CheckSquare} title={uiT("No tasks yet", "अभी तक कोई कार्य नहीं")} description={uiT("Add a task above to get started.", "शुरू करने के लिए ऊपर एक कार्य जोड़ें।")} />
         ) : (
           [...activeTodos, ...doneTodos].map((t) => (
             editingId === t._id ? (
@@ -1038,23 +1038,23 @@ export default function Dashboard() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(t._id); }
                   }}
-                  aria-label={uiT("Edit task", "αñòαñ╛αñ░αÑìαñ» αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé")}
+                  aria-label={uiT("Edit task", "कार्य संपादित करें")}
                   className="w-full px-3 py-2 bg-th-surface border border-th-border rounded-lg text-[15px] sm:text-[18px] text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all leading-snug" />
                 <div className="flex items-center justify-end gap-2 mt-2">
-                  <button onClick={() => setEditingId(null)} aria-label={uiT("Cancel", "αñ░αñªαÑìαñª αñòαñ░αÑçαñé")}
+                  <button onClick={() => setEditingId(null)} aria-label={uiT("Cancel", "रद्द करें")}
                     className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold text-th-secondary bg-th-elevated hover:bg-th-card transition-all active:scale-95 uppercase tracking-wider">
-                    {uiT("Cancel", "αñ░αñªαÑìαñª αñòαñ░αÑçαñé")}
+                    {uiT("Cancel", "रद्द करें")}
                   </button>
-                  <button onClick={() => saveEdit(t._id)} aria-label={uiT("Save", "αñ╕αÑçαñ╡ αñòαñ░αÑçαñé")}
+                  <button onClick={() => saveEdit(t._id)} aria-label={uiT("Save", "सेव करें")}
                     className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[13px] sm:text-[15px] font-bold bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-all active:scale-95 uppercase tracking-wider">
                     <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    {uiT("Save", "αñ╕αÑçαñ╡ αñòαñ░αÑçαñé")}
+                    {uiT("Save", "सेव करें")}
                   </button>
                 </div>
               </div>
             ) : (
               <div key={t._id} className={`flex items-start gap-2.5 sm:gap-3 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg hover:bg-th-card group transition-all ${t.done ? "opacity-40" : ""}`}>
-                <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "αñàαñ¬αÑéαñ░αÑìαñú αñÜαñ┐αñ╣αÑìαñ¿αñ┐αññ αñòαñ░αÑçαñé") : uiT("Mark complete", "αñ¬αÑéαñ░αÑìαñú αñÜαñ┐αñ╣αÑìαñ¿αñ┐αññ αñòαñ░αÑçαñé")}
+                <button onClick={() => toggleTodo(t._id, t.done)} aria-label={t.done ? uiT("Mark incomplete", "अपूर्ण चिह्नित करें") : uiT("Mark complete", "पूर्ण चिह्नित करें")}
                   className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${t.done ? "bg-[#1ed760] border-[#1ed760]" : "border-th-muted hover:border-[#1ed760]"}`}>
                   {t.done && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-th-text" />}
                 </button>
@@ -1065,7 +1065,7 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => startEdit(t)} aria-label={uiT("Edit task", "αñòαñ╛αñ░αÑìαñ» αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé")}
+                  <button onClick={() => startEdit(t)} aria-label={uiT("Edit task", "कार्य संपादित करें")}
                     className="p-1 sm:p-1.5 rounded-lg hover:bg-[#1ed760]/10 text-th-muted hover:text-[#1ed760] transition-all">
                     <Pencil className="w-3 sm:w-3.5 sm:h-3.5 h-3" />
                   </button>
@@ -1093,7 +1093,7 @@ export default function Dashboard() {
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760]/10 flex items-center justify-center">
             <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1ed760]" />
           </div>
-          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "αñåαñ£ αñòαñ╛ αñ¡αÑüαñùαññαñ╛αñ¿")}</h3>
+          <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">{uiT("Today's Payments", "आज का भुगतान")}</h3>
         </div>
         <div className="space-y-2 sm:space-y-2.5">
           {todayPayments.map((p, idx) => {
@@ -1107,7 +1107,7 @@ export default function Dashboard() {
                   <p className="text-[14px] sm:text-[18px] font-semibold text-th-text">{p.mode}</p>
                   <p className="text-[12px] sm:text-[16px] text-th-secondary">{p.count} transaction{p.count !== 1 ? "s" : ""}</p>
                 </div>
-                <p className="text-[15px] sm:text-[20px] font-bold text-th-text flex-shrink-0">Γé╣{p.total.toLocaleString()}</p>
+                <p className="text-[15px] sm:text-[20px] font-bold text-th-text flex-shrink-0">₹{p.total.toLocaleString()}</p>
               </div>
             );
           })}
@@ -1120,30 +1120,30 @@ export default function Dashboard() {
 
   const renderSummary = () => {
     const rows: { label: string; value: string | number; color?: string }[] = [
-      { label: uiT("Total Customers", "αñòαÑüαñ▓ αñùαÑìαñ░αñ╛αñ╣αñò"), value: d.counts.customers, color: "#60a5fa" },
-      { label: uiT("Total Orders", "αñòαÑüαñ▓ αñæαñ░αÑìαñíαñ░"), value: d.counts.orders, color: "#a78bfa" },
-      { label: uiT("Total Bills", "αñòαÑüαñ▓ αñ¼αñ┐αñ▓"), value: d.counts.bills, color: "#34d399" },
-      { label: uiT("Total Payments", "αñòαÑüαñ▓ αñ¡αÑüαñùαññαñ╛αñ¿"), value: d.counts.payments, color: "#fbbf24" },
-      { label: uiT("Total Inventory", "αñòαÑüαñ▓ αñçαñ¿αÑìαñ╡αÑçαñéαñƒαÑìαñ░αÑÇ"), value: d.counts.inventory, color: "#f472b6" },
-      { label: uiT("Total Deliveries", "αñòαÑüαñ▓ αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ"), value: d.counts.deliveries, color: "#2dd4bf" },
-      { label: uiT("Total Visits", "αñòαÑüαñ▓ αñ╡αñ┐αñ£αñ╝αñ┐αñƒ"), value: d.counts.visits, color: "#fb923c" },
-      { label: uiT("Today Sales", "αñåαñ£ αñòαÑÇ αñ¼αñ┐αñòαÑìαñ░αÑÇ"), value: `Γé╣${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: uiT("Week Sales", "αñ╕αñ¬αÑìαññαñ╛αñ╣ αñòαÑÇ αñ¼αñ┐αñòαÑìαñ░αÑÇ"), value: `Γé╣${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: uiT("Month Sales", "αñ«αñ╣αÑÇαñ¿αÑç αñòαÑÇ αñ¼αñ┐αñòαÑìαñ░αÑÇ"), value: `Γé╣${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
-      { label: uiT("Today Collection", "αñåαñ£ αñòαñ╛ αñ╕αñéαñùαÑìαñ░αñ╣"), value: `Γé╣${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
-      { label: uiT("Pending Payments", "αñ¼αñ╛αñòαÑÇ αñ¡αÑüαñùαññαñ╛αñ¿"), value: `Γé╣${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
-      { label: uiT("Today Orders", "αñåαñ£ αñòαÑç αñæαñ░αÑìαñíαñ░"), value: d.todayOrders, color: "#a78bfa" },
-      { label: uiT("Week Orders", "αñ╕αñ¬αÑìαññαñ╛αñ╣ αñòαÑç αñæαñ░αÑìαñíαñ░"), value: d.weekOrders, color: "#a78bfa" },
-      { label: uiT("Month Orders", "αñ«αñ╣αÑÇαñ¿αÑç αñòαÑç αñæαñ░αÑìαñíαñ░"), value: d.monthOrders, color: "#a78bfa" },
-      { label: uiT("Today Bills", "αñåαñ£ αñòαÑç αñ¼αñ┐αñ▓"), value: d.todayBills, color: "#34d399" },
-      { label: uiT("Week Bills", "αñ╕αñ¬αÑìαññαñ╛αñ╣ αñòαÑç αñ¼αñ┐αñ▓"), value: d.weekBills, color: "#34d399" },
-      { label: uiT("Month Bills", "αñ«αñ╣αÑÇαñ¿αÑç αñòαÑç αñ¼αñ┐αñ▓"), value: d.monthBills, color: "#34d399" },
-      { label: uiT("Ready for Pickup", "αñ¬αñ┐αñòαñàαñ¬ αñòαÑç αñ▓αñ┐αñÅ αññαÑêαñ»αñ╛αñ░"), value: d.readyDeliveries ?? 0, color: "#2dd4bf" },
-      { label: uiT("New Customers Today", "αñåαñ£ αñ¿αñÅ αñùαÑìαñ░αñ╛αñ╣αñò"), value: d.newCustomersToday ?? 0, color: "#60a5fa" },
-      { label: uiT("Low Stock Items", "αñòαñ« αñ╕αÑìαñƒαÑëαñò αñåαñçαñƒαñ«"), value: d.lowStock ?? 0, color: "#f87171" },
-      { label: uiT("Draft Orders", "αñíαÑìαñ░αñ╛αñ½αÑìαñƒ αñæαñ░αÑìαñíαñ░"), value: draftOrders.length, color: "#fb923c" },
-      { label: uiT("Pending Bill Amount", "αñ▓αñéαñ¼αñ┐αññ αñ¼αñ┐αñ▓ αñ░αñ╛αñ╢αñ┐"), value: d.pendingBills.length, color: "#f87171" },
-      { label: uiT("Today Deliveries", "αñåαñ£ αñòαÑÇ αñíαñ┐αñ▓αÑÇαñ╡αñ░αÑÇ"), value: d.todayDeliveries.length, color: "#2dd4bf" },
+      { label: uiT("Total Customers", "कुल ग्राहक"), value: d.counts.customers, color: "#60a5fa" },
+      { label: uiT("Total Orders", "कुल ऑर्डर"), value: d.counts.orders, color: "#a78bfa" },
+      { label: uiT("Total Bills", "कुल बिल"), value: d.counts.bills, color: "#34d399" },
+      { label: uiT("Total Payments", "कुल भुगतान"), value: d.counts.payments, color: "#fbbf24" },
+      { label: uiT("Total Inventory", "कुल इन्वेंट्री"), value: d.counts.inventory, color: "#f472b6" },
+      { label: uiT("Total Deliveries", "कुल डिलीवरी"), value: d.counts.deliveries, color: "#2dd4bf" },
+      { label: uiT("Total Visits", "कुल विज़िट"), value: d.counts.visits, color: "#fb923c" },
+      { label: uiT("Today Sales", "आज की बिक्री"), value: `₹${(d.todaySales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Week Sales", "सप्ताह की बिक्री"), value: `₹${(d.weekSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Month Sales", "महीने की बिक्री"), value: `₹${(d.monthSales || 0).toLocaleString()}`, color: "#34d399" },
+      { label: uiT("Today Collection", "आज का संग्रह"), value: `₹${(d.todayCollection || 0).toLocaleString()}`, color: "#60a5fa" },
+      { label: uiT("Pending Payments", "बाकी भुगतान"), value: `₹${(d.pendingPayments || 0).toLocaleString()}`, color: "#fbbf24" },
+      { label: uiT("Today Orders", "आज के ऑर्डर"), value: d.todayOrders, color: "#a78bfa" },
+      { label: uiT("Week Orders", "सप्ताह के ऑर्डर"), value: d.weekOrders, color: "#a78bfa" },
+      { label: uiT("Month Orders", "महीने के ऑर्डर"), value: d.monthOrders, color: "#a78bfa" },
+      { label: uiT("Today Bills", "आज के बिल"), value: d.todayBills, color: "#34d399" },
+      { label: uiT("Week Bills", "सप्ताह के बिल"), value: d.weekBills, color: "#34d399" },
+      { label: uiT("Month Bills", "महीने के बिल"), value: d.monthBills, color: "#34d399" },
+      { label: uiT("Ready for Pickup", "पिकअप के लिए तैयार"), value: d.readyDeliveries ?? 0, color: "#2dd4bf" },
+      { label: uiT("New Customers Today", "आज नए ग्राहक"), value: d.newCustomersToday ?? 0, color: "#60a5fa" },
+      { label: uiT("Low Stock Items", "कम स्टॉक आइटम"), value: d.lowStock ?? 0, color: "#f87171" },
+      { label: uiT("Draft Orders", "ड्राफ्ट ऑर्डर"), value: draftOrders.length, color: "#fb923c" },
+      { label: uiT("Pending Bill Amount", "लंबित बिल राशि"), value: d.pendingBills.length, color: "#f87171" },
+      { label: uiT("Today Deliveries", "आज की डिलीवरी"), value: d.todayDeliveries.length, color: "#2dd4bf" },
     ];
 
     return (
@@ -1152,7 +1152,7 @@ export default function Dashboard() {
           <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-th-muted transition-transform duration-300 group-open:rotate-90" />
           <div className="flex items-center gap-1.5 sm:gap-2">
             <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-th-secondary" />
-            <span className="text-[15px] sm:text-[18px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "αñ╕αñ╛αñ░αñ╛αñéαñ╢")}</span>
+            <span className="text-[15px] sm:text-[18px] font-bold text-th-text uppercase tracking-wider">{uiT("Summary", "सारांश")}</span>
           </div>
           <span className="text-[13px] sm:text-[16px] text-th-muted">({rows.length} metrics)</span>
         </summary>
