@@ -141,7 +141,7 @@ export async function getStats() {
     Bill.find({ status: "Active", pendingAmount: { $gt: 0 } }).sort({ createdAt: -1 }).populate("customerId", "name mobile").lean(),
     Customer.find().sort({ createdAt: -1 }).limit(5).select("name mobile totalSpent totalVisits").lean(),
     Order.find({ createdAt: { $gte: dayStart, $lte: dayEnd } }).sort({ createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
-    Delivery.find({ status: { $in: ["Pending", "In Transit"] } }).sort({ expectedDeliveryDate: 1 }).limit(10).populate("customerId", "name mobile").lean(),
+    Order.find({ status: "Ready", deliveryDate: { $gte: dayStart, $lte: dayEnd } }).sort({ deliveryDate: 1, createdAt: -1 }).limit(10).populate("customerId", "name mobile").lean(),
     Order.find({ status: { $nin: ["Delivered", "Cancelled"] } }).sort({ createdAt: -1 }).limit(100).populate("customerId", "name mobile").lean(),
     Bill.aggregate([
       { $match: { createdAt: { $gte: prevDayStart, $lte: prevDayEnd }, status: "Active" } },

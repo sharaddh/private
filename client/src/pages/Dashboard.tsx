@@ -924,7 +924,7 @@ export default function Dashboard() {
         );
       }
 
-      const due = tab === "pending" ? item.deliveryDate : undefined;
+      const due = item.deliveryDate;
       return (
         <div key={item._id || idx} className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-th-card transition-all">
           <div className="relative flex-shrink-0">
