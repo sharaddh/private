@@ -21,6 +21,15 @@ export interface BranchModels {
   InventoryWithdrawal: Model<any>;
   ShopCartItem: Model<any>;
   ShopLensWithdrawal: Model<any>;
+  Brand: Model<any>;
+  InventoryProduct: Model<any>;
+  InventoryVariant: Model<any>;
+  InventoryLot: Model<any>;
+  InventoryMovement: Model<any>;
+  Rack: Model<any>;
+  InventoryCountSession: Model<any>;
+  InventoryCountEntry: Model<any>;
+  InventoryWithdrawalV2: Model<any>;
 }
 
 export interface WarehouseModels {
@@ -52,6 +61,15 @@ function loadSchemas() {
     InventoryWithdrawal: require("./inventoryWithdrawal").InventoryWithdrawalSchema,
     ShopCartItem: require("./shopLensCart").ShopCartItemSchema,
     ShopLensWithdrawal: require("./shopLensWithdrawal").ShopLensWithdrawalSchema,
+    Brand: require("./brand").BrandSchema,
+    InventoryProduct: require("./inventoryProduct").InventoryProductSchema,
+    InventoryVariant: require("./inventoryVariant").InventoryVariantSchema,
+    InventoryLot: require("./inventoryLot").InventoryLotSchema,
+    InventoryMovement: require("./inventoryMovement").InventoryMovementSchema,
+    Rack: require("./rack").RackSchema,
+    InventoryCountSession: require("./inventoryCount").InventoryCountSessionSchema,
+    InventoryCountEntry: require("./inventoryCountEntry").InventoryCountEntrySchema,
+    InventoryWithdrawalV2: require("./inventoryWithdrawalV2").InventoryWithdrawalV2Schema,
   };
   return schemas;
 }
@@ -91,6 +109,15 @@ function registerModels(conn: mongoose.Connection): BranchModels {
     InventoryWithdrawal: getModel("InventoryWithdrawal", s.InventoryWithdrawal),
     ShopCartItem: getModel("ShopCartItem", s.ShopCartItem),
     ShopLensWithdrawal: getModel("ShopLensWithdrawal", s.ShopLensWithdrawal),
+    Brand: getModel("Brand", s.Brand),
+    InventoryProduct: getModel("InventoryProduct", s.InventoryProduct),
+    InventoryVariant: getModel("InventoryVariant", s.InventoryVariant),
+    InventoryLot: getModel("InventoryLot", s.InventoryLot),
+    InventoryMovement: getModel("InventoryMovement", s.InventoryMovement),
+    Rack: getModel("Rack", s.Rack),
+    InventoryCountSession: getModel("InventoryCountSession", s.InventoryCountSession),
+    InventoryCountEntry: getModel("InventoryCountEntry", s.InventoryCountEntry),
+    InventoryWithdrawalV2: getModel("InventoryWithdrawalV2", s.InventoryWithdrawalV2),
   };
 }
 

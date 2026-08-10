@@ -15,4 +15,5 @@ export { whatsappService } from "./whatsapp.service";
 export { reportService } from "./report.service";
 export { workspaceService } from "./workspace.service";
 export { withdrawalService } from "./withdrawal.service";
+export { inventoryV2Service, type AddStockResult, type VariantWithStockResult, type WithdrawResult, type AdjustStockResult, type CreateCountSessionResult, type CompleteCountSessionResult } from "./inventoryV2.service";
 export { ApiService, buildQueryString } from "./base";

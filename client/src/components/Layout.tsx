@@ -12,7 +12,7 @@ import {
   Package, Truck, BarChart3, Settings, MessageCircle,
   Menu, X, Search, Phone, PlusCircle, Camera,
   Megaphone, UserPlus, Hand, ChevronLeft, Building2, Loader2,
-  PanelLeft, Sun, Moon,
+  PanelLeft, Sun, Moon, Boxes,
 } from "lucide-react";
 
 interface DrawerForm {
@@ -34,6 +34,7 @@ const allDesktopMenu = [
   { path: "/orders", label: "Orders", icon: ShoppingCart, staff: true },
   { path: "/bills", label: "Bills", icon: FileText, staff: true },
   { path: "/inventory", label: "Inventory", icon: Package, staff: true },
+  { path: "/inventory-v2", label: "Inventory v2", icon: Boxes, staff: true },
   { path: "/delivery", label: "Delivery", icon: Truck, staff: false },
   { path: "/pickup", label: "Pickup", icon: Hand, staff: true },
   { path: "/payments", label: "Payments", icon: CreditCard, staff: false },
@@ -96,6 +97,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       "Orders": uiT("Orders", "ऑर्डर"),
       "Bills": uiT("Bills", "बिल"),
       "Inventory": uiT("Inventory", "इन्वेंट्री"),
+      "Inventory v2": uiT("Inventory v2", "इन्वेंट्री v2"),
       "Delivery": uiT("Delivery", "डिलीवरी"),
       "Pickup": uiT("Pickup", "पिकअप"),
       "Payments": uiT("Payments", "भुगतान"),

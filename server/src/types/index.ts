@@ -85,3 +85,39 @@ export const VALID_INVENTORY_CATEGORIES = ["Specs", "Sunglasses", "Contact Lens"
 export const VALID_INVENTORY_TYPES = ["spectacles", "sunglasses", "lens", "accessory", "hearing-aid", "cleaner", "case", "other"] as const;
 export const VALID_GENDERS = ["Male", "Female", "Unisex", ""] as const;
 export const VALID_LOCATIONS = ["shop", "warehouse"] as const;
+
+export const VALID_PRODUCT_CATEGORIES = ["Specs", "Sunglasses", "Contact Lens", "Hearing Aid", "Solution", "Kit", "Accessory", "Other"] as const;
+export type ProductCategory = typeof VALID_PRODUCT_CATEGORIES[number];
+
+export const VALID_INVENTORY_MOVEMENT_TYPES = [
+  "OPENING_BALANCE",
+  "PURCHASE",
+  "ORDER",
+  "WITHDRAWAL",
+  "RETURN",
+  "DAMAGE",
+  "ADJUSTMENT",
+  "COUNT_CORRECTION",
+  "TRANSFER_IN",
+  "TRANSFER_OUT",
+  "LOCATION_CHANGE",
+] as const;
+export type InventoryMovementType = typeof VALID_INVENTORY_MOVEMENT_TYPES[number];
+
+export const VALID_WITHDRAWAL_REASONS = [
+  "Demo",
+  "Damaged",
+  "Internal Use",
+  "Sample",
+  "Lost",
+  "Customer Return to Non-Sellable",
+  "Stock Correction",
+  "Other",
+] as const;
+export type WithdrawalReason = typeof VALID_WITHDRAWAL_REASONS[number];
+
+export const VALID_COUNT_STATUSES = ["draft", "completed", "cancelled"] as const;
+export type CountStatus = typeof VALID_COUNT_STATUSES[number];
+
+export const VALID_LOT_SOURCES = ["OPENING_BALANCE", "PURCHASE", "ADJUSTMENT", "RETURN"] as const;
+export const VALID_MOVEMENT_REFERENCES = ["ORDER", "WITHDRAWAL", "COUNT_SESSION", "MANUAL", "IMPORT"] as const;
