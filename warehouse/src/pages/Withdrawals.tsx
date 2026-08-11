@@ -266,7 +266,9 @@ export default function Withdrawals() {
                         {isPaid ? (
                           <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">Paid</span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold shrink-0">Unpaid</span>
+                          <span className="px-2 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold shrink-0">
+                            Due {formatCurrency(rec.totalPrice ?? 0)}
+                          </span>
                         )}
                       </div>
                       <div className="mt-0.5 text-small text-th-muted truncate">
@@ -286,11 +288,11 @@ export default function Withdrawals() {
                       "Saving..."
                     ) : isPaid ? (
                       <>
-                        <Undo2 size={16} /> <span className="hidden sm:inline">Mark Unpaid</span>
+                        <Undo2 size={16} /> <span>Mark Unpaid</span>
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={16} /> <span className="hidden sm:inline">Mark Paid</span>
+                        <CheckCircle2 size={16} /> <span>Mark Paid</span>
                       </>
                     )}
                   </button>

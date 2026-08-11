@@ -75,7 +75,9 @@ function WithdrawalDetail({ rec }: { rec: WithdrawalRecord }) {
             <CheckCircle2 size={14} /> Paid
           </span>
         ) : (
-          <span className="px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">Unpaid</span>
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-pill bg-amber-500/15 text-amber-500 text-small-bold">
+            <Clock size={14} /> Due {formatCurrency(rec.totalPrice ?? 0)}
+          </span>
         )}
       </div>
     </div>
@@ -146,6 +148,14 @@ export default function Users() {
     return map;
   }, [withdrawalsByUser]);
 
+  const userDueAmounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const [userId, recs] of withdrawalsByUser) {
+      map.set(userId, recs.filter((w) => !w.paid).reduce((sum, w) => sum + (w.totalPrice ?? 0), 0));
+    }
+    return map;
+  }, [withdrawalsByUser]);
+
   const totalItemsAll = useMemo(() => filteredWithdrawals.reduce((sum, w) => sum + w.totalQuantity, 0), [filteredWithdrawals]);
   const totalAmountAll = useMemo(() => filteredWithdrawals.reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [filteredWithdrawals]);
   const unpaidTotal = useMemo(() => filteredWithdrawals.filter((w) => !w.paid).reduce((sum, w) => sum + (w.totalPrice ?? 0), 0), [filteredWithdrawals]);
@@ -204,7 +214,7 @@ export default function Users() {
         <StatCard icon={PackageMinus} iconColor="text-blue-500" iconBg="bg-blue-500/10" value={filteredWithdrawals.length} label="Withdrawals" />
         <StatCard icon={Boxes} iconColor="text-amber-500" iconBg="bg-amber-500/10" value={totalItemsAll} label="Items Withdrawn" />
         <StatCard icon={Coins} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={formatCurrency(totalAmountAll)} label="Total Amount" />
-        <StatCard icon={Wallet} iconColor="text-negative" iconBg="bg-negative/10" value={formatCurrency(unpaidTotal)} label="Unpaid Total" />
+        <StatCard icon={Wallet} iconColor="text-negative" iconBg="bg-negative/10" value={formatCurrency(unpaidTotal)} label="Due Total" />
       </div>
 
       {users.length === 0 ? (
@@ -223,12 +233,14 @@ export default function Users() {
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Branch Owner</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Withdrawals</th>
                   <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Total Amount</th>
+                  <th className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider">Due Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => {
                   const userWithdrawals = withdrawalsByUser.get(u.id) || [];
                   const totalItems = userTotals.get(u.id) || 0;
+                  const dueAmount = userDueAmounts.get(u.id) || 0;
                   const isExpanded = expandedUser === u.id;
 
                   return (
@@ -258,6 +270,15 @@ export default function Users() {
                         <td className="px-4 py-3">
                           <span className="text-body-bold text-th-text">{formatCurrency(userAmounts.get(u.id) || 0)}</span>
                         </td>
+                        <td className="px-4 py-3">
+                          {dueAmount > 0 ? (
+                            <span className="flex items-center gap-1.5 text-body-bold text-amber-500">
+                              <Clock size={14} /> {formatCurrency(dueAmount)}
+                            </span>
+                          ) : (
+                            <span className="text-body-bold text-emerald-500">Paid</span>
+                          )}
+                        </td>
                       </tr>
 
                       {isExpanded && userWithdrawals.length > 0 && (
@@ -285,6 +306,7 @@ export default function Users() {
             {users.map((u) => {
               const userWithdrawals = withdrawalsByUser.get(u.id) || [];
               const totalItems = userTotals.get(u.id) || 0;
+              const dueAmount = userDueAmounts.get(u.id) || 0;
               const isExpanded = expandedUser === u.id;
 
               return (
@@ -301,6 +323,16 @@ export default function Users() {
                       <div className="flex items-center justify-between">
                         <span className="text-small font-bold text-th-text uppercase tracking-wider">Total Amount</span>
                         <span className="text-body-bold text-primary-500">{formatCurrency(userAmounts.get(u.id) || 0)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-small font-bold text-th-text uppercase tracking-wider">Due Amount</span>
+                        {dueAmount > 0 ? (
+                          <span className="flex items-center gap-1.5 text-body-bold text-amber-500">
+                            <Clock size={14} /> {formatCurrency(dueAmount)}
+                          </span>
+                        ) : (
+                          <span className="text-body-bold text-emerald-500">Paid</span>
+                        )}
                       </div>
                       <button
                         onClick={() => setExpandedUser((prev) => (prev === u.id ? null : u.id))}
