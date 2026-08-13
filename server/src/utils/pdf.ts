@@ -275,7 +275,7 @@ export function generateWithdrawalPdf(data: {
   const metaLines = [
     `User: ${data.username || "—"}`,
     `Date: ${data.withdrawnAt ? new Date(data.withdrawnAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}`,
-    `Items: ${data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0)}`,
+    `Pairs: ${data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0)}`,
     data.totalPrice != null ? `Total: \u20B9${data.totalPrice.toFixed(2)}` : "",
   ].filter(Boolean);
 
@@ -314,7 +314,7 @@ export function generateWithdrawalPdf(data: {
   const colXs: number[] = [];
   let cx = startX;
   for (const w of colWidths) { colXs.push(cx); cx += w; }
-  const headers = ["Coating", "Type", "Power", "Fog Mark", "Qty", "Amount"];
+  const headers = ["Coating", "Type", "Power", "Fog Mark", "Pairs", "Amount"];
   headers.forEach((header, i) => {
     doc.rect(colXs[i], y, colWidths[i], 10).fillColor("#1e40af").fill();
     doc.text(header, colXs[i] + colWidths[i] / 2, y + 5, { align: "center", width: colWidths[i] });

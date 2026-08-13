@@ -8,6 +8,7 @@ import { useLocalStorage } from "../hooks";
 import { flyToCart } from "../utils/flyToCart";
 import { generateDemandPdf } from "../utils/demandPdf";
 import { Glasses, ChevronDown, ChevronRight, X, Download, ClipboardList, Minus, Plus } from "lucide-react";
+import { fmtPairs } from "../utils/helpers";
 import { POWER_VALUES } from "../constants";
 
 function getTotalQty(item: LensStockItem): number {
@@ -104,7 +105,7 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
             className="absolute -top-1.5 -right-1.5 min-w-[24px] h-6 px-1 rounded-full bg-primary-500 text-surface-950 flex items-center justify-center cursor-pointer active:scale-90 z-10"
             title="Remove from demand"
           >
-            <span className="text-micro font-bold leading-none">{demandQty}</span>
+            <span className="text-micro font-bold leading-none">{fmtPairs(demandQty)}</span>
           </span>
         )
       ) : (
@@ -121,9 +122,9 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
       {demandMode ? (
         <div className="flex flex-col items-center gap-1.5 w-full pointer-events-none">
           <span className="text-body-bold text-th-secondary leading-none">{powerLabel}</span>
-          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
-          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {need}</span>}
-          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
+          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{fmtPairs(qty)}</span>
+          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {fmtPairs(need)}</span>}
+          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{fmtPairs(demandQty)}</span>}
         </div>
       ) : (
         <button type="button"
@@ -132,7 +133,7 @@ const LensCard = memo(function LensCard({ coating: _coating, lensType: _lensType
           className="flex flex-col items-center gap-1.5 w-full disabled:cursor-not-allowed"
         >
           <span className="text-body-bold text-th-secondary leading-none">{powerLabel}</span>
-          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+          <span className={`text-feature leading-none ${isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-muted"}`}>{fmtPairs(qty)}</span>
         </button>
       )}
     </div>
@@ -192,7 +193,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
             className="absolute -top-1.5 -right-1.5 min-w-[24px] h-6 px-1 rounded-full bg-primary-500 text-surface-950 flex items-center justify-center cursor-pointer active:scale-90 z-10"
             title="Remove from demand"
           >
-            <span className="text-micro font-bold leading-none">{demandQty}</span>
+            <span className="text-micro font-bold leading-none">{fmtPairs(demandQty)}</span>
           </span>
         )
       ) : (
@@ -213,9 +214,9 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
             <span className="text-th-muted">&nbsp;</span>
             <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
           </span>
-          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
-          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {need}</span>}
-          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{demandQty}</span>}
+          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{fmtPairs(qty)}</span>
+          {need > 0 && demandQty === 0 && <span className="text-micro font-bold text-warning leading-none">need {fmtPairs(need)}</span>}
+          {demandQty > 0 && <span className="text-micro font-bold text-primary-500 leading-none">+{fmtPairs(demandQty)}</span>}
         </div>
       ) : (
         <button type="button"
@@ -228,7 +229,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
             <span className="text-th-muted">&nbsp;</span>
             <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
           </span>
-          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{qty}</span>
+          <span className={`text-feature leading-none ${sphNeg ? "text-amber-500" : sphPos ? "text-emerald-500" : "text-th-muted"}`}>{fmtPairs(qty)}</span>
         </button>
       )}
     </div>
@@ -238,7 +239,7 @@ const CompoundLensCard = memo(function CompoundLensCard({ powerKey, qty, inCart,
 const PlainView = memo(function PlainView({ quantities, coating, addToCart, isInCart, getItemQty, removeByDetails, demandMode, demandTarget, getDemandQty, onToggleDemand, onRemoveDemand }: {
   quantities: Record<string, number>;
   coating: string;
-  addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
+  addToCart: (coating: string, lensType: string, powerKey: string, quantity?: number) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
@@ -266,7 +267,7 @@ const PlainView = memo(function PlainView({ quantities, coating, addToCart, isIn
         atMax={atMax}
         onAdd={(e) => {
           if (qty <= 0 || currentCartQty >= qty) return;
-          addToCart(coating, "sph", powerKey);
+          addToCart(coating, "sph", powerKey, 0.5);
           flyToCart(e.currentTarget);
         }}
         onRemove={() => removeByDetails(coating, "sph", powerKey)}
@@ -284,7 +285,7 @@ interface FlatGridProps {
   quantities: Record<string, number>;
   coating: string;
   lensType: LensType;
-  addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
+  addToCart: (coating: string, lensType: string, powerKey: string, quantity?: number) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
@@ -352,7 +353,7 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
                         const stockQty = quantities[power] || 0;
                         const currentCartQty = getItemQty(coating, lensType, power);
                         if (stockQty <= 0 || currentCartQty >= stockQty) return;
-                        addToCart(coating, lensType, power);
+                        addToCart(coating, lensType, power, 0.5);
                         flyToCart(e.currentTarget);
                       }}
                       onRemove={() => removeByDetails(coating, lensType, power)}
@@ -376,7 +377,7 @@ const FlatGrid = memo(function FlatGrid({ quantities, coating, lensType, addToCa
 interface CompoundViewProps {
   quantities: Record<string, number>;
   coating: string;
-  addToCart: (coating: string, lensType: string, powerKey: string) => Promise<boolean>;
+  addToCart: (coating: string, lensType: string, powerKey: string, quantity?: number) => Promise<boolean>;
   isInCart: (coating: string, lensType: string, powerKey: string) => boolean;
   getItemQty: (coating: string, lensType: string, powerKey: string) => number;
   removeByDetails: (coating: string, lensType: string, powerKey: string) => void;
@@ -471,7 +472,7 @@ const CompoundView = memo(function CompoundView({ quantities, coating, addToCart
                                       const stockQty = quantities[key] || 0;
                                       const currentCartQty = getItemQty(coating, "compound", key);
                                       if (stockQty <= 0 || currentCartQty >= stockQty) return;
-                                      addToCart(coating, "compound", key);
+                                      addToCart(coating, "compound", key, 0.5);
                                       flyToCart(e.currentTarget);
                                     }}
                                     onRemove={() => removeByDetails(coating, "compound", key)}
@@ -536,7 +537,7 @@ export default function LensStock() {
   const incrementDemand = useCallback((key: string) => {
     setDemandEntries((prev) => {
       const m = new Map(prev);
-      m.set(key, (m.get(key) || 0) + 1);
+      m.set(key, Math.round(((m.get(key) || 0) + 0.5) * 2) / 2);
       return Array.from(m.entries());
     });
   }, [setDemandEntries]);
@@ -569,7 +570,7 @@ export default function LensStock() {
       }
     }
     setDemandEntries(Array.from(next.entries()));
-    toast(`Selected all lens powers below ${demandTarget}`, "success");
+    toast(`Selected all lens powers below ${fmtPairs(demandTarget)}`, "success");
   };
 
   const clearDemandSelection = () => setDemandEntries([]);
@@ -645,7 +646,7 @@ export default function LensStock() {
           <span className="text-small-bold text-th-secondary">Fill each power up to</span>
           <div className="flex items-center gap-1">
             <button type="button"
-              onClick={() => setDemandTarget((t) => Math.max(1, t - 1))}
+              onClick={() => setDemandTarget((t) => Math.max(0.5, Math.round((t - 0.5) * 2) / 2))}
               className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
               aria-label="Decrease target"
             >
@@ -653,14 +654,16 @@ export default function LensStock() {
             </button>
             <input
               type="number"
-              min={1}
+              min={0.5}
+              step={0.5}
               value={demandTarget}
-              onChange={(e) => setDemandTarget(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => setDemandTarget(Math.max(0.5, Math.round((Number(e.target.value) || 0.5) * 2) / 2))}
               className="w-16 h-8 text-center text-small-bold bg-th-input text-th-text border border-th-border rounded-lg focus:outline-none focus:border-primary-500"
               aria-label="Target stock level"
             />
+            <span className="text-small-bold text-th-secondary">p</span>
             <button type="button"
-              onClick={() => setDemandTarget((t) => t + 1)}
+              onClick={() => setDemandTarget((t) => Math.round((t + 0.5) * 2) / 2)}
               className="w-8 h-8 rounded-lg bg-th-elevated text-th-secondary hover:text-th-text flex items-center justify-center"
               aria-label="Increase target"
             >
@@ -682,7 +685,7 @@ export default function LensStock() {
               const total = getTotalQty(item);
               return (
                 <option key={item._id} value={item._id}>
-                  {item.coating} · {total} in stock · −₹{item.priceNeg ?? 0}/+₹{item.pricePos ?? 0}
+                  {item.coating} · {fmtPairs(total)} in stock · −₹{item.priceNeg ?? 0}/+₹{item.pricePos ?? 0}
                 </option>
               );
             })}
@@ -732,14 +735,14 @@ export default function LensStock() {
                       {item.coating}
                     </div>
                     <div className={`text-small mt-0.5 font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
-                      {total > 0 ? `${total} in stock` : "Empty"}
+                      {total > 0 ? `${fmtPairs(total)} in stock` : "Empty"}
                     </div>
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end gap-1">
                     <span className="text-small font-bold text-th-muted">−₹{item.priceNeg ?? 0}/+₹{item.pricePos ?? 0}</span>
                     {total > 0 && (
                       <span className={`px-2 py-0.5 rounded-pill text-micro font-bold ${isSelected ? "bg-primary-500 text-surface-950" : "bg-primary-500/15 text-primary-500"}`}>
-                        {total}
+                        {fmtPairs(total)}
                       </span>
                     )}
                   </div>
@@ -756,7 +759,7 @@ export default function LensStock() {
                 <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0" />
                 <span className="text-body-bold font-bold text-th-text truncate">{selectedItem.coating}</span>
                 <span className="px-2 py-0.5 rounded-pill bg-th-elevated text-th-secondary text-micro font-bold shrink-0">
-                  {getTotalQty(selectedItem)} in stock
+                  {fmtPairs(getTotalQty(selectedItem))} in stock
                 </span>
                 <span className="text-small-bold text-primary-500 shrink-0">−₹{selectedItem.priceNeg ?? 0}/+₹{selectedItem.pricePos ?? 0}</span>
                 <div className="ml-auto hidden lg:flex gap-1 bg-th-elevated rounded-pill p-1">
@@ -843,7 +846,7 @@ export default function LensStock() {
               </span>
               <span className="text-small text-th-muted hidden md:inline">·</span>
               <span className="text-small text-th-secondary hidden md:inline">
-                <span className="text-primary-500 font-bold">{totalNeed}</span> pcs to buy
+                <span className="text-primary-500 font-bold">{fmtPairs(totalNeed)}</span> to buy
               </span>
               <span className="text-small text-th-secondary hidden lg:inline">
                 · <span className="text-primary-500 font-bold">₹{totalAmount.toLocaleString("en-IN")}</span>

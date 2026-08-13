@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Minus, Plus } from "lucide-react";
+import { fmtPairs } from "../../utils/helpers";
 
 interface Props {
   quantities: Record<string, number>;
@@ -16,7 +17,7 @@ const PlainGrid = memo(function PlainGrid({ quantities, onIncrement, onDecrement
     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2">
       <div className="flex flex-col items-center gap-2.5 p-3 rounded-xl border border-th-border bg-th-elevated">
         <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">0.00</span>
-        <span className={`text-lg sm:text-xl font-bold leading-none ${qty > 0 ? "text-th-secondary" : "text-th-muted"}`}>{qty}</span>
+        <span className={`text-lg sm:text-xl font-bold leading-none ${qty > 0 ? "text-th-secondary" : "text-th-muted"}`}>{fmtPairs(qty)}</span>
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => onDecrement("+0.00")}

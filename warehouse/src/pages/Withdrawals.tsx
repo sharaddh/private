@@ -5,7 +5,7 @@ import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
 import { priceForPower } from "../types/lensStock";
 import type { FogMark } from "../types/fogMark";
-import { formatCurrency, formatLensPower, lensTypeLabel, powerTextClass } from "../utils/helpers";
+import { formatCurrency, fmtPairs, formatLensPower, lensTypeLabel, powerTextClass } from "../utils/helpers";
 import { generateWithdrawalPdf } from "../utils/withdrawalPdf";
 import StatCard from "../components/StatCard";
 import {
@@ -108,12 +108,16 @@ export default function Withdrawals() {
     let totalItems = 0;
     let totalAmount = 0;
     let unpaid = 0;
+    let unpaidAmount = 0;
     for (const r of history) {
       totalItems += r.totalQuantity;
       totalAmount += r.totalPrice ?? 0;
-      if (!r.paid) unpaid++;
+      if (!r.paid) {
+        unpaid++;
+        unpaidAmount += r.totalPrice ?? 0;
+      }
     }
-    return { totalItems, totalAmount, unpaid, paid: history.length - unpaid };
+    return { totalItems, totalAmount, unpaid, unpaidAmount, paid: history.length - unpaid };
   }, [history]);
 
   async function togglePaid(rec: WithdrawalRecord) {
@@ -147,7 +151,7 @@ export default function Withdrawals() {
 
   function changeEditQty(idx: number, delta: number) {
     setEditItems((prev) =>
-      prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(1, it.quantity + delta) } : it))
+      prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(0.5, Math.round((it.quantity + delta) * 2) / 2) } : it))
     );
   }
 
@@ -206,8 +210,8 @@ export default function Withdrawals() {
             icon={Glasses}
             iconColor="text-announcement-500"
             iconBg="bg-announcement-500/15"
-            value={stats.totalItems}
-            label="Lenses withdrawn"
+            value={fmtPairs(stats.totalItems)}
+            label="Pairs withdrawn"
           />
           <StatCard
             icon={IndianRupee}
@@ -220,9 +224,9 @@ export default function Withdrawals() {
             icon={Clock}
             iconColor="text-amber-500"
             iconBg="bg-amber-500/15"
-            value={stats.unpaid}
-            label="Unpaid"
-            badge={stats.unpaid > 0 ? { text: "due", variant: "yellow" } : undefined}
+            value={formatCurrency(stats.unpaidAmount)}
+            label="Pending amount"
+            badge={stats.unpaid > 0 ? { text: `${stats.unpaid} due`, variant: "yellow" } : undefined}
           />
         </div>
       )}
@@ -272,7 +276,7 @@ export default function Withdrawals() {
                         )}
                       </div>
                       <div className="mt-0.5 text-small text-th-muted truncate">
-                        {rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}
+                        {fmtPairs(rec.totalQuantity)}
                       </div>
                     </div>
                   </div>
@@ -310,7 +314,7 @@ export default function Withdrawals() {
                           {it.coating}{it.fogMark ? ` · ${it.fogMark}` : ""}
                         </div>
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">×{it.quantity}</span>
+                      <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">×{fmtPairs(it.quantity)}</span>
                     </div>
                   ))}
                 </div>
@@ -320,7 +324,7 @@ export default function Withdrawals() {
                   <div className="min-w-0">
                     <div className="text-badge text-th-muted uppercase tracking-wider">Total</div>
                     <div className="text-body-bold text-th-text">
-                      {rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""} ·{" "}
+                      {fmtPairs(rec.totalQuantity)} ·{" "}
                       <span className="text-primary-500">{formatCurrency(rec.totalPrice ?? 0)}</span>
                     </div>
                   </div>
@@ -389,15 +393,15 @@ export default function Withdrawals() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
-                          onClick={() => changeEditQty(idx, -1)}
-                          disabled={it.quantity <= 1}
+                          onClick={() => changeEditQty(idx, -0.5)}
+                          disabled={it.quantity <= 0.5}
                           className="w-8 h-8 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
                         >
                           <Minus size={14} strokeWidth={2.5} />
                         </button>
-                        <span className="w-8 text-center text-body-bold text-th-text">{it.quantity}</span>
+                        <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(it.quantity)}</span>
                         <button
-                          onClick={() => changeEditQty(idx, 1)}
+                          onClick={() => changeEditQty(idx, 0.5)}
                           disabled={it.quantity >= stock}
                           className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
                         >
@@ -435,7 +439,7 @@ export default function Withdrawals() {
           <div className="shrink-0 border-t border-th-border px-5 py-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-small text-th-muted">
-                {editItems.reduce((s, it) => s + it.quantity, 0)} item{editItems.reduce((s, it) => s + it.quantity, 0) !== 1 ? "s" : ""}
+                {fmtPairs(editItems.reduce((s, it) => s + it.quantity, 0))}
               </span>
               <span className="text-small-bold text-th-text">
                 Total · <span className="text-primary-500">{formatCurrency(editItems.reduce((s, it) => s + (priceForPower(priceMap[it.coating], it.powerKey) || 0) * it.quantity, 0))}</span>

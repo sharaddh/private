@@ -108,7 +108,7 @@ export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
   autoTable(doc, {
     startY: 62,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Lens Details (Type & Power)", "Fog Mark", "Quantity"]],
+    head: [["Coating", "Lens Details (Type & Power)", "Fog Mark", "Pairs"]],
     body: rows,
     theme: "grid",
     headStyles: {
@@ -153,7 +153,7 @@ export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...indigo);
-  doc.text("Total Items Withdrawn:", totalBoxX + 6, y + 9);
+  doc.text("Total Pairs Withdrawn:", totalBoxX + 6, y + 9);
   doc.setFontSize(12);
   doc.text(String(totalQty), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
 

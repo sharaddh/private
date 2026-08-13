@@ -22,10 +22,6 @@ function normPower(v: string): string {
   return v === "+0.00" || v === "0.00" || v === "-0.00" ? "0.00" : v;
 }
 
-function pairs(q: number): number {
-  return q / 2;
-}
-
 function formatPower(lensType: string, powerKey: string): string {
   if (!powerKey) return "—";
   if (powerKey.includes("|")) {
@@ -85,7 +81,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
   const rows = data.items.map((it) => [
     it.coating || "—",
     formatPower(it.lensType, it.powerKey),
-    String(pairs(it.qty)),
+    String(it.qty),
   ]);
 
   autoTable(doc, {
@@ -118,7 +114,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
   });
 
   const tableEnd = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
-  const totalNeed = data.items.reduce((s, it) => s + pairs(it.qty), 0);
+  const totalNeed = data.items.reduce((s, it) => s + it.qty, 0);
 
   // Total Quantity Box
   const y = tableEnd + 12;

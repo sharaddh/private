@@ -5,7 +5,7 @@ import { useToast } from "../context";
 import CoatingList from "../components/lens/CoatingList";
 import LensGrid from "../components/lens/LensGrid";
 import { PageLoader } from "../components";
-import { formatCurrency } from "../utils/helpers";
+import { formatCurrency, fmtPairs } from "../utils/helpers";
 import { PackagePlus, Plus, Check, X, Pencil } from "lucide-react";
 
 function getTotalQty(item: LensStockItem): number {
@@ -214,7 +214,7 @@ export default function UpdateStock() {
                     {item.coating}
                   </span>
                   <span className={`text-small font-medium ${total > 0 ? "text-primary-500" : "text-th-muted"}`}>
-                    {total > 0 ? `${total} in stock` : "Empty"}
+                    {total > 0 ? `${fmtPairs(total)} in stock` : "Empty"}
                   </span>
                   <span className="text-small font-bold text-th-muted">−{formatCurrency(item.priceNeg ?? 0)}/+{formatCurrency(item.pricePos ?? 0)}</span>
                 </button>

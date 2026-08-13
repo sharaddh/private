@@ -10,7 +10,7 @@ import StatCard from "../components/StatCard";
 import SectionHeader from "../components/SectionHeader";
 import QuickAction from "../components/QuickAction";
 import Badge from "../components/Badge";
-import { formatCurrency, formatDate, lensTypeLabel, powerChipClass, formatLensPower } from "../utils/helpers";
+import { formatCurrency, fmtPairs, formatDate, lensTypeLabel, powerChipClass, formatLensPower } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
 
 interface WithdrawalRecord {
@@ -111,7 +111,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 shrink-0">
           <span className="px-3 py-1.5 rounded-pill bg-th-elevated text-small font-bold text-th-secondary hidden sm:inline-flex">
             <span className="inline-flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-emerald-500" /> {stats?.totalLensStock || 0} lenses in stock
+              <TrendingUp size={14} className="text-emerald-500" /> {fmtPairs(stats?.totalLensStock || 0)} in stock
             </span>
           </span>
         </div>
@@ -299,14 +299,14 @@ export default function Dashboard() {
                   <PackageMinus size={14} className="text-emerald-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-body text-th-text truncate">{rec.username} withdrew {rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</p>
+                  <p className="text-body text-th-text truncate">{rec.username} withdrew {fmtPairs(rec.totalQuantity)}</p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {rec.items.slice(0, 4).map((it, idx) => (
                       <span
                         key={idx}
                         className={`px-1.5 py-0.5 rounded text-micro font-medium ${powerChipClass(it.powerKey)}`}
                       >
-                        {it.coating} {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{it.quantity}
+                        {it.coating} {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{fmtPairs(it.quantity)}
                       </span>
                     ))}
                     {rec.items.length > 4 && (

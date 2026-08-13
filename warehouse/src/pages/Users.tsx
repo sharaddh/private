@@ -7,7 +7,7 @@ import {
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import StatCard from "../components/StatCard";
-import { formatDate, formatCurrency, formatLensPower, lensTypeLabel, powerChipClass } from "../utils/helpers";
+import { formatDate, formatCurrency, fmtPairs, formatLensPower, lensTypeLabel, powerChipClass } from "../utils/helpers";
 
 interface WarehouseUser {
   id: string;
@@ -58,12 +58,12 @@ function WithdrawalDetail({ rec }: { rec: WithdrawalRecord }) {
             {new Date(rec.withdrawnAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
-        <span className="text-small font-bold text-th-secondary">{rec.totalQuantity} item{rec.totalQuantity !== 1 ? "s" : ""}</span>
+        <span className="text-small font-bold text-th-secondary">{fmtPairs(rec.totalQuantity)}</span>
       </div>
       <div className="flex flex-wrap gap-1">
         {rec.items.map((it, idx) => (
           <span key={idx} className={`px-2 py-0.5 rounded text-small font-medium ${powerChipClass(it.powerKey)}`}>
-            {it.coating} · {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{it.quantity}
+            {it.coating} · {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{fmtPairs(it.quantity)}
             {it.fogMark ? ` · ${it.fogMark}` : ""}
           </span>
         ))}
@@ -212,7 +212,7 @@ export default function Users() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard icon={UsersIcon} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={users.length} label="Owners" />
         <StatCard icon={PackageMinus} iconColor="text-blue-500" iconBg="bg-blue-500/10" value={filteredWithdrawals.length} label="Withdrawals" />
-        <StatCard icon={Boxes} iconColor="text-amber-500" iconBg="bg-amber-500/10" value={totalItemsAll} label="Items Withdrawn" />
+        <StatCard icon={Boxes} iconColor="text-amber-500" iconBg="bg-amber-500/10" value={fmtPairs(totalItemsAll)} label="Pairs Withdrawn" />
         <StatCard icon={Coins} iconColor="text-primary-500" iconBg="bg-primary-500/10" value={formatCurrency(totalAmountAll)} label="Total Amount" />
         <StatCard icon={Wallet} iconColor="text-negative" iconBg="bg-negative/10" value={formatCurrency(unpaidTotal)} label="Due Total" />
       </div>
@@ -261,7 +261,7 @@ export default function Users() {
                               className="flex items-center gap-1.5 text-body text-primary-500 font-medium hover:underline"
                             >
                               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                              {userWithdrawals.length} withdrawal{userWithdrawals.length !== 1 ? "s" : ""} ({totalItems} items)
+                              {userWithdrawals.length} withdrawal{userWithdrawals.length !== 1 ? "s" : ""} ({fmtPairs(totalItems)})
                             </button>
                           ) : (
                             <span className="text-body text-th-muted">No withdrawals</span>
@@ -342,7 +342,7 @@ export default function Users() {
                         <PackageMinus size={14} className="text-primary-500" />
                         <span className="text-small font-bold text-th-text uppercase tracking-wider">Withdrawals</span>
                         <span className="text-small text-th-muted font-medium ml-auto">
-                          {userWithdrawals.length} ({totalItems} items)
+                          {userWithdrawals.length} ({fmtPairs(totalItems)})
                         </span>
                       </button>
 

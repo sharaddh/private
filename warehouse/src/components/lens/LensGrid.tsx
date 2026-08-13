@@ -29,7 +29,7 @@ export default function LensGrid({ item, onUpdate }: Props) {
 
   const handleIncrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
-    const newQty = current + 1;
+    const newQty = Math.round((current + 0.5) * 2) / 2;
     onUpdate({
       ...item,
       quantities: {
@@ -57,7 +57,7 @@ export default function LensGrid({ item, onUpdate }: Props) {
   const handleDecrement = useCallback(async (powerKey: string) => {
     const current = quantities[powerKey] || 0;
     if (current <= 0) return;
-    const newQty = current - 1;
+    const newQty = Math.round((current - 0.5) * 2) / 2;
     const updated = { ...quantities };
     if (newQty <= 0) {
       delete updated[powerKey];

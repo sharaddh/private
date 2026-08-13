@@ -118,7 +118,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const updateQty = useCallback(async (itemId: string, quantity: number) => {
-    if (quantity < 1) {
+    if (quantity < 0.5) {
       const item = itemsRef.current.find((i) => i._id === itemId);
       if (item) {
         setItems((prev) => {
@@ -225,9 +225,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems([]);
       saveLocal([]);
       if (res.data.errors.length > 0) {
-        toast(`${res.data.withdrawn} withdrawn, ${res.data.errors.length} had errors`, "error");
+        toast(`${res.data.withdrawn}p withdrawn, ${res.data.errors.length} had errors`, "error");
       } else {
-        toast(`${res.data.withdrawn} item${res.data.withdrawn !== 1 ? "s" : ""} withdrawn`, "success");
+        toast(`${res.data.withdrawn}p withdrawn`, "success");
       }
       return res.data;
     }

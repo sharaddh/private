@@ -6,7 +6,7 @@ const CartItemSchemaObj = new Schema(
     coating: { type: String, required: true },
     lensType: { type: String, required: true, enum: ["sph", "cyl", "compound"] },
     powerKey: { type: String, required: true },
-    quantity: { type: Number, required: true, min: 1, default: 1 },
+    quantity: { type: Number, required: true, min: 0.5, default: 1 },
     price: { type: Number, default: 0, min: 0 },
     fogMark: { type: String, default: "" },
   },

@@ -29,8 +29,8 @@ export async function addItem(req: AuthRequest, res: Response) {
 
 export async function updateItem(req: AuthRequest, res: Response) {
   const { quantity, fogMark } = req.body;
-  if (quantity !== undefined && (typeof quantity !== "number" || quantity < 1)) {
-    res.status(400).json({ success: false, message: "quantity must be a positive number" });
+  if (quantity !== undefined && (typeof quantity !== "number" || quantity < 0.5)) {
+    res.status(400).json({ success: false, message: "quantity must be at least 0.5 (pairs)" });
     return;
   }
   const data = await cartService.updateCartItem(

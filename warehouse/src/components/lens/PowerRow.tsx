@@ -1,6 +1,7 @@
 import { useState, useMemo, memo } from "react";
 import { POWER_VALUES } from "../../constants";
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react";
+import { fmtPairs } from "../../utils/helpers";
 
 interface Props {
   quantities: Record<string, number>;
@@ -28,7 +29,7 @@ const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement
   return (
     <div className={`flex flex-col items-center gap-2.5 p-3 rounded-xl border ${border} ${bg}`}>
       <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
-      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
+      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{fmtPairs(qty)}</span>
       <div className="flex items-center gap-2">
         <button type="button"
           onClick={() => onDecrement(power)}

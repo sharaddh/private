@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { LensStockItem } from "../../types/lensStock";
 import api from "../../api";
 import { useToast } from "../../context";
-import { formatCurrency } from "../../utils/helpers";
+import { formatCurrency, fmtPairs } from "../../utils/helpers";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 
 interface Props {
@@ -218,7 +218,7 @@ export default function CoatingList({ items, selectedId, onSelect, onAdd, onDele
                     <div className={`text-small mt-0.5 font-medium ${
                       totalQty > 0 ? "text-primary-500" : "text-th-muted"
                     }`}>
-                      {totalQty > 0 ? `${totalQty} in stock` : "Empty"}
+                      {totalQty > 0 ? `${fmtPairs(totalQty)} in stock` : "Empty"}
                     </div>
                     <div className="text-small mt-0.5 font-bold text-th-muted">−{formatCurrency(item.priceNeg ?? 0)} / +{formatCurrency(item.pricePos ?? 0)}</div>
                   </div>

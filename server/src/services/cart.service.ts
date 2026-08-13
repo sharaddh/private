@@ -11,7 +11,7 @@ function getAvailableStock(stock: any, lensType: string, powerKey: string): numb
 }
 
 function stockError(coating: string, powerKey: string, available: number): string {
-  return `${coating} ${powerKey}: only ${available} in stock`;
+  return `${coating} ${powerKey}: only ${available}p in stock`;
 }
 
 export async function getCartItems(userId: string) {
@@ -40,7 +40,7 @@ export async function addToCart(
   quantity: number = 1,
   fogMark: string = ""
 ) {
-  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
+  const qty = Math.max(0.5, Math.round((Number(quantity) || 1) * 2) / 2);
   const stock = await LensStock.findOne({ coating });
   if (!stock) throw new AppError(400, `${coating}: lens stock not found`);
   const price = getPriceForPower(stock, powerKey);
@@ -62,7 +62,7 @@ export async function addToCart(
 }
 
 export async function updateCartItem(userId: string, itemId: string, quantity?: number, fogMark?: string) {
-  if (quantity !== undefined && quantity < 1) throw new AppError(400, "Quantity must be at least 1");
+  if (quantity !== undefined && quantity < 0.5) throw new AppError(400, "Quantity must be at least 0.5 pair");
   const item = await CartItem.findOne({ _id: itemId, user: userId });
   if (!item) throw new AppError(404, "Cart item not found");
   const stock = await LensStock.findOne({ coating: item.coating });
@@ -70,7 +70,7 @@ export async function updateCartItem(userId: string, itemId: string, quantity?: 
   const available = getAvailableStock(stock, item.lensType, item.powerKey);
   if (quantity !== undefined) {
     if (quantity > available) throw new AppError(400, stockError(item.coating, item.powerKey, available));
-    item.quantity = quantity;
+    item.quantity = Math.round(quantity * 2) / 2;
   }
   if (typeof fogMark === "string") item.fogMark = fogMark;
   await item.save();
@@ -112,7 +112,7 @@ export async function withdrawCart(userId: string, username: string) {
       continue;
     }
     if (item.quantity > current) {
-      errors.push(`${item.coating} ${item.powerKey}: only ${current} in stock`);
+      errors.push(`${item.coating} ${item.powerKey}: only ${current}p in stock`);
       continue;
     }
 
@@ -216,7 +216,7 @@ export async function updateWithdrawal(
   const normalized: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[] = [];
   for (const it of items || []) {
     if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
-    const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
+    const qty = Math.max(0, Math.round((Number(it.quantity) || 0) * 2) / 2);
     if (qty === 0) continue;
     normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, fogMark: it.fogMark || "" });
   }
@@ -341,7 +341,7 @@ export async function sendWithdrawalPdf(userId: string, id: string, phone?: stri
 
   const base64 = pdfBuffer.toString("base64");
   const filename = `Lens_List_${istDateKey(withdrawal.withdrawnAt)}.pdf`;
-  const caption = `Lens list — ${withdrawal.username} · ${withdrawal.totalQuantity} items`;
+  const caption = `Lens list — ${withdrawal.username} · ${withdrawal.totalQuantity} pairs`;
 
   const wa = whatsappManager.getInstance();
   const result = await wa.sendMedia(target, base64, filename, "application/pdf", caption, true);

@@ -2,6 +2,14 @@ export function formatCurrency(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
+export function roundHalf(v: number): number {
+  return Math.round(v * 2) / 2;
+}
+
+export function fmtPairs(v: number): string {
+  return `${roundHalf(v)}p`;
+}
+
 export function formatDate(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-IN", {
     day: "numeric",

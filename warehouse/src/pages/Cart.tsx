@@ -5,7 +5,7 @@ import api from "../api";
 import type { LensStockItem } from "../types/lensStock";
 import { priceForPower } from "../types/lensStock";
 import type { FogMark } from "../types/fogMark";
-import { formatCurrency, formatLensPower, powerTextClass } from "../utils/helpers";
+import { formatCurrency, fmtPairs, formatLensPower, powerTextClass } from "../utils/helpers";
 import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags } from "lucide-react";
 
 export default function Cart() {
@@ -91,7 +91,7 @@ export default function Cart() {
           </div>
           <div>
             <h1 className="text-feature font-bold text-th-text leading-tight">Cart</h1>
-            <p className="text-small text-th-muted">{count} item{count !== 1 ? "s" : ""}</p>
+            <p className="text-small text-th-muted">{fmtPairs(count)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export default function Cart() {
                           <span className={`text-small-bold ${powerTextClass(item.powerKey)}`}>{formatLensPower(item.powerKey)}</span>
                         </div>
                         <div className="mt-1">
-                          <span className="text-small text-th-muted">{formatCurrency(getItemPrice(item))} × {item.quantity}</span>
+                          <span className="text-small text-th-muted">{formatCurrency(getItemPrice(item))} × {fmtPairs(item.quantity)}</span>
                           <span className="text-small-bold text-primary-500 ml-2">{formatCurrency(getItemPrice(item) * item.quantity)}</span>
                         </div>
                       </div>
@@ -168,14 +168,14 @@ export default function Cart() {
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1 bg-th-elevated rounded-xl p-1">
                         <button type="button"
-                          onClick={() => item.quantity <= 1 ? removeItem(item._id) : updateQty(item._id, item.quantity - 1)}
+                          onClick={() => item.quantity <= 0.5 ? removeItem(item._id) : updateQty(item._id, Math.round((item.quantity - 0.5) * 2) / 2)}
                           className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                         >
                           <Minus size={18} strokeWidth={2.5} />
                         </button>
-                        <span className="w-10 text-center text-body-bold text-th-text">{item.quantity}</span>
+                        <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(item.quantity)}</span>
                         <button type="button"
-                          onClick={() => { if (!atMax) updateQty(item._id, item.quantity + 1); }}
+                          onClick={() => { if (!atMax) updateQty(item._id, Math.round((item.quantity + 0.5) * 2) / 2); }}
                           disabled={atMax}
                           className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >
@@ -199,8 +199,8 @@ export default function Cart() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-5">
                 <div>
-                  <div className="text-small text-th-muted">Items</div>
-                  <div className="text-body-bold text-th-text">{count}</div>
+                  <div className="text-small text-th-muted">Pairs</div>
+                  <div className="text-body-bold text-th-text">{fmtPairs(count)}</div>
                 </div>
                 <div>
                   <div className="text-small text-th-muted">Total</div>

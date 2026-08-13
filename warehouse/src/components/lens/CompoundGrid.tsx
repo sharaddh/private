@@ -1,6 +1,7 @@
 import { useState, memo } from "react";
 import { POWER_VALUES } from "../../constants";
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react";
+import { fmtPairs } from "../../utils/helpers";
 
 interface Props {
   quantities: Record<string, number>;
@@ -48,7 +49,7 @@ const SphCell = memo(function SphCell({ sph, cyl, qty, onIncrement, onDecrement 
         <span className="text-th-muted"> | </span>
         <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
       </span>
-      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>
+      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{fmtPairs(qty)}</span>
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => onDecrement(sph)} className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all">
           <Minus size={22} strokeWidth={2.5} />
