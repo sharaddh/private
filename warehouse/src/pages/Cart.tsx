@@ -55,7 +55,7 @@ export default function Cart() {
     return priceForPower(priceMap[item.coating], item.powerKey) || item.price || 0;
   }
 
-  const totalPrice = items.reduce((sum, i) => sum + getItemPrice(i) * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + getItemPrice(i) * (i.quantity / 2), 0);
 
   async function handleWithdraw() {
     if (!confirm("Withdraw all items? This will reduce lens stock and save to your history.")) return;
@@ -139,7 +139,7 @@ export default function Cart() {
                         </div>
                         <div className="mt-1">
                           <span className="text-small text-th-muted">{formatCurrency(getItemPrice(item))} × {fmtPairs(item.quantity)}</span>
-                          <span className="text-small-bold text-primary-500 ml-2">{formatCurrency(getItemPrice(item) * item.quantity)}</span>
+                          <span className="text-small-bold text-primary-500 ml-2">{formatCurrency(getItemPrice(item) * (item.quantity / 2))}</span>
                         </div>
                       </div>
                     </div>
@@ -168,14 +168,14 @@ export default function Cart() {
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1 bg-th-elevated rounded-xl p-1">
                         <button type="button"
-                          onClick={() => item.quantity <= 0.5 ? removeItem(item._id) : updateQty(item._id, Math.round((item.quantity - 0.5) * 2) / 2)}
+                          onClick={() => item.quantity <= 1 ? removeItem(item._id) : updateQty(item._id, item.quantity - 1)}
                           className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                         >
                           <Minus size={18} strokeWidth={2.5} />
                         </button>
                         <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(item.quantity)}</span>
                         <button type="button"
-                          onClick={() => { if (!atMax) updateQty(item._id, Math.round((item.quantity + 0.5) * 2) / 2); }}
+                          onClick={() => { if (!atMax) updateQty(item._id, item.quantity + 1); }}
                           disabled={atMax}
                           className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >

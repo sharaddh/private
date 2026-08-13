@@ -275,7 +275,7 @@ export function generateWithdrawalPdf(data: {
   const metaLines = [
     `User: ${data.username || "—"}`,
     `Date: ${data.withdrawnAt ? new Date(data.withdrawnAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}`,
-    `Pairs: ${data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0)}`,
+    `Pairs: ${(data.totalQuantity ?? data.items.reduce((s, it) => s + it.quantity, 0)) / 2}`,
     data.totalPrice != null ? `Total: \u20B9${data.totalPrice.toFixed(2)}` : "",
   ].filter(Boolean);
 
@@ -297,8 +297,8 @@ export function generateWithdrawalPdf(data: {
     LENS_TYPE_LABEL[it.lensType] || it.lensType || "—",
     formatPower(it.powerKey),
     it.fogMark || "—",
-    String(it.quantity),
-    it.price != null ? `\u20B9${(it.price * it.quantity).toFixed(2)}` : "—",
+    String(it.quantity / 2),
+    it.price != null ? `\u20B9${((it.price * it.quantity) / 2).toFixed(2)}` : "—",
   ]);
 
   doc.fontSize(10).font("Helvetica-Bold").fillColor("white");

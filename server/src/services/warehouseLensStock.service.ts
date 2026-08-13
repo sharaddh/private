@@ -54,7 +54,7 @@ export async function updateQuantity(
 
   const q = (item.quantities as Record<string, Record<string, number>>) || {};
   if (!q[lensType]) q[lensType] = {};
-  q[lensType][powerKey] = Math.max(0, Math.round(quantity * 2) / 2);
+  q[lensType][powerKey] = Math.max(0, Math.floor(quantity));
 
   item.quantities = q;
   item.markModified("quantities");
@@ -74,7 +74,7 @@ export async function bulkUpdateQuantities(
   if (!q[lensType]) q[lensType] = {};
 
   for (const [key, qty] of Object.entries(updates)) {
-    q[lensType][key] = Math.max(0, Math.round(qty * 2) / 2);
+    q[lensType][key] = Math.max(0, Math.floor(qty));
   }
 
   item.quantities = q;

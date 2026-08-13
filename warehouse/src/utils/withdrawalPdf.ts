@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { roundHalf } from "./helpers";
 
 export interface WithdrawalPdfItem {
   coating: string;
@@ -101,7 +102,7 @@ export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
     it.coating || "—",
     formatLensDetails(it.lensType, it.powerKey),
     it.fogMark || "—",
-    String(it.quantity),
+    String(roundHalf(it.quantity / 2)),
   ]);
 
   // 4. AutoTable Configuration
@@ -155,7 +156,7 @@ export function generateWithdrawalPdf(data: WithdrawalPdfData): void {
   doc.setTextColor(...indigo);
   doc.text("Total Pairs Withdrawn:", totalBoxX + 6, y + 9);
   doc.setFontSize(12);
-  doc.text(String(totalQty), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
+  doc.text(String(roundHalf(totalQty / 2)), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
 
   // 6. Footer
   const footerY = Math.max(y + boxH + 20, pageHeight - 20);

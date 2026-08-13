@@ -28,8 +28,8 @@ export default function LensGrid({ item, onUpdate }: Props) {
   const quantities = item.quantities?.[effectiveLensType] || {};
 
   const handleIncrement = useCallback(async (powerKey: string) => {
-    const current = quantities[powerKey] || 0;
-    const newQty = Math.round((current + 0.5) * 2) / 2;
+    const current = Math.floor(quantities[powerKey] || 0);
+    const newQty = current + 1;
     onUpdate({
       ...item,
       quantities: {
@@ -55,9 +55,9 @@ export default function LensGrid({ item, onUpdate }: Props) {
   }, [item, effectiveLensType, quantities, onUpdate, toast]);
 
   const handleDecrement = useCallback(async (powerKey: string) => {
-    const current = quantities[powerKey] || 0;
+    const current = Math.floor(quantities[powerKey] || 0);
     if (current <= 0) return;
-    const newQty = Math.round((current - 0.5) * 2) / 2;
+    const newQty = current - 1;
     const updated = { ...quantities };
     if (newQty <= 0) {
       delete updated[powerKey];

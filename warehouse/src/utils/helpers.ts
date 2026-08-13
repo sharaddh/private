@@ -7,6 +7,10 @@ export function roundHalf(v: number): number {
 }
 
 export function fmtPairs(v: number): string {
+  return `${roundHalf(v / 2)}p`;
+}
+
+export function fmtP(v: number): string {
   return `${roundHalf(v)}p`;
 }
 

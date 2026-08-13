@@ -118,7 +118,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const updateQty = useCallback(async (itemId: string, quantity: number) => {
-    if (quantity < 0.5) {
+    if (quantity < 1) {
       const item = itemsRef.current.find((i) => i._id === itemId);
       if (item) {
         setItems((prev) => {

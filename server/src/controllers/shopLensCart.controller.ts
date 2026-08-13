@@ -31,8 +31,8 @@ export async function addItem(req: AuthRequest, res: Response) {
 
 export async function updateItem(req: AuthRequest, res: Response) {
   const { quantity } = req.body || {};
-  if (typeof quantity !== "number" || quantity < 0.5) {
-    res.status(400).json({ success: false, message: "quantity must be at least 0.5 (pairs)" });
+  if (typeof quantity !== "number" || quantity < 1) {
+    res.status(400).json({ success: false, message: "quantity must be at least 1" });
     return;
   }
   const data = await shopLensCartService.updateCartItem(req.user!.sub, req.params.id, quantity);

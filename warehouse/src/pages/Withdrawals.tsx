@@ -151,7 +151,7 @@ export default function Withdrawals() {
 
   function changeEditQty(idx: number, delta: number) {
     setEditItems((prev) =>
-      prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(0.5, Math.round((it.quantity + delta) * 2) / 2) } : it))
+      prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(1, it.quantity + delta) } : it))
     );
   }
 
@@ -393,15 +393,15 @@ export default function Withdrawals() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
-                          onClick={() => changeEditQty(idx, -0.5)}
-                          disabled={it.quantity <= 0.5}
+                          onClick={() => changeEditQty(idx, -1)}
+                          disabled={it.quantity <= 1}
                           className="w-8 h-8 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
                         >
                           <Minus size={14} strokeWidth={2.5} />
                         </button>
                         <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(it.quantity)}</span>
                         <button
-                          onClick={() => changeEditQty(idx, 0.5)}
+                          onClick={() => changeEditQty(idx, 1)}
                           disabled={it.quantity >= stock}
                           className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
                         >
@@ -442,7 +442,7 @@ export default function Withdrawals() {
                 {fmtPairs(editItems.reduce((s, it) => s + it.quantity, 0))}
               </span>
               <span className="text-small-bold text-th-text">
-                Total · <span className="text-primary-500">{formatCurrency(editItems.reduce((s, it) => s + (priceForPower(priceMap[it.coating], it.powerKey) || 0) * it.quantity, 0))}</span>
+                Total · <span className="text-primary-500">{formatCurrency(editItems.reduce((s, it) => s + (priceForPower(priceMap[it.coating], it.powerKey) || 0) * (it.quantity / 2), 0))}</span>
               </span>
             </div>
             <div className="flex items-center gap-2">

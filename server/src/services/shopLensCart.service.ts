@@ -4,6 +4,10 @@ import { ShopLensWithdrawal } from "../models/shopLensWithdrawal";
 import { AppError } from "../middleware/errorHandler";
 import { getPriceForPower } from "./lensStock.service";
 
+function pairStr(v: number): string {
+  return `${Math.round((v / 2) * 2) / 2}p`;
+}
+
 export async function getCartItems(userId: string) {
   const items = await ShopCartItem.find({ user: userId }).sort({ createdAt: 1 }).lean();
   const coatingToStock = new Map<string, any>();
@@ -33,7 +37,7 @@ export async function addToCart(
   if (!["sph", "cyl", "compound"].includes(lensType)) {
     throw new AppError(400, "lensType must be sph, cyl, or compound");
   }
-  const qty = Math.max(0.5, Math.round((Number(quantity) || 1) * 2) / 2);
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const stock = await LensStock.findOne({ coating });
   if (!stock) throw new AppError(400, `${coating}: lens stock not found`);
   const price = getPriceForPower(stock, powerKey);
@@ -43,27 +47,27 @@ export async function addToCart(
   const existing = await ShopCartItem.findOne({ user: userId, coating, lensType, powerKey });
   if (existing) {
     const total = existing.quantity + qty;
-    if (total > available) throw new AppError(400, `${coating} ${powerKey}: only ${available}p in stock`);
+    if (total > available) throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
     existing.quantity = total;
     existing.price = price;
     await existing.save();
     return { ...existing.toJSON(), available };
   }
-  if (qty > available) throw new AppError(400, `${coating} ${powerKey}: only ${available}p in stock`);
+  if (qty > available) throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
   const item = await ShopCartItem.create({ user: userId, coating, lensType, powerKey, quantity: qty, price });
   return { ...item.toJSON(), available };
 }
 
 export async function updateCartItem(userId: string, itemId: string, quantity: number) {
-  if (quantity < 0.5) throw new AppError(400, "Quantity must be at least 0.5 pair");
+  if (quantity < 1) throw new AppError(400, "Quantity must be at least 1");
   const item = await ShopCartItem.findOne({ _id: itemId, user: userId });
   if (!item) throw new AppError(404, "Cart item not found");
   const stock = await LensStock.findOne({ coating: item.coating });
   if (!stock) throw new AppError(400, `${item.coating}: lens stock not found`);
   const q = (stock.quantities as Record<string, Record<string, number>>) || {};
   const available = q[item.lensType]?.[item.powerKey] || 0;
-  if (quantity > available) throw new AppError(400, `${item.coating} ${item.powerKey}: only ${available}p in stock`);
-  item.quantity = Math.round(quantity * 2) / 2;
+  if (quantity > available) throw new AppError(400, `${item.coating} ${item.powerKey}: only ${pairStr(available)} in stock`);
+  item.quantity = Math.floor(quantity);
   await item.save();
   return { ...item.toJSON(), available };
 }
@@ -100,7 +104,7 @@ export async function withdrawCart(userId: string, username: string, note?: stri
     const newQty = current - item.quantity;
 
     if (newQty < 0) {
-      errors.push(`${item.coating} ${item.powerKey}: only ${current}p available, need ${item.quantity}p`);
+      errors.push(`${item.coating} ${item.powerKey}: only ${pairStr(current)} available, need ${pairStr(item.quantity)}`);
       continue;
     }
 
@@ -114,7 +118,7 @@ export async function withdrawCart(userId: string, username: string, note?: stri
     const price = item.price ?? getPriceForPower(lensStock, item.powerKey);
     withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price });
     totalQuantity += item.quantity;
-    totalPrice += price * item.quantity;
+    totalPrice += price * (item.quantity / 2);
   }
 
   if (withdrawnItems.length > 0) {
@@ -199,7 +203,7 @@ export async function updateWithdrawal(
   const normalized: { coating: string; lensType: string; powerKey: string; quantity: number }[] = [];
   for (const it of items || []) {
     if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
-    const qty = Math.max(0, Math.round((Number(it.quantity) || 0) * 2) / 2);
+    const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
     if (qty === 0) continue;
     normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty });
   }
@@ -249,7 +253,7 @@ export async function updateWithdrawal(
     const q = (lensStock.quantities as Record<string, Record<string, number>>) || {};
     const current = q[lensType]?.[powerKey] || 0;
     if (current + delta < 0) {
-      errors.push(`${coating} ${powerKey}: only ${current}p available`);
+      errors.push(`${coating} ${powerKey}: only ${pairStr(current)} available`);
       continue;
     }
     deltas.push({ stock: lensStock, lensType, powerKey, delta });
@@ -278,7 +282,7 @@ export async function updateWithdrawal(
   }
 
   const totalQuantity = mergedItems.reduce((s, it) => s + it.quantity, 0);
-  const totalPrice = mergedItems.reduce((s, it) => s + it.price * it.quantity, 0);
+  const totalPrice = mergedItems.reduce((s, it) => s + it.price * (it.quantity / 2), 0);
 
   withdrawal.items = mergedItems as typeof withdrawal.items;
   withdrawal.totalQuantity = totalQuantity;

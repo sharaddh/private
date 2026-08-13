@@ -10,8 +10,12 @@ function getAvailableStock(stock: any, lensType: string, powerKey: string): numb
   return q[lensType]?.[powerKey] || 0;
 }
 
+function pairStr(v: number): string {
+  return `${Math.round((v / 2) * 2) / 2}p`;
+}
+
 function stockError(coating: string, powerKey: string, available: number): string {
-  return `${coating} ${powerKey}: only ${available}p in stock`;
+  return `${coating} ${powerKey}: only ${pairStr(available)} in stock`;
 }
 
 export async function getCartItems(userId: string) {
@@ -40,7 +44,7 @@ export async function addToCart(
   quantity: number = 1,
   fogMark: string = ""
 ) {
-  const qty = Math.max(0.5, Math.round((Number(quantity) || 1) * 2) / 2);
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const stock = await LensStock.findOne({ coating });
   if (!stock) throw new AppError(400, `${coating}: lens stock not found`);
   const price = getPriceForPower(stock, powerKey);
@@ -62,7 +66,7 @@ export async function addToCart(
 }
 
 export async function updateCartItem(userId: string, itemId: string, quantity?: number, fogMark?: string) {
-  if (quantity !== undefined && quantity < 0.5) throw new AppError(400, "Quantity must be at least 0.5 pair");
+  if (quantity !== undefined && quantity < 1) throw new AppError(400, "Quantity must be at least 1");
   const item = await CartItem.findOne({ _id: itemId, user: userId });
   if (!item) throw new AppError(404, "Cart item not found");
   const stock = await LensStock.findOne({ coating: item.coating });
@@ -70,7 +74,7 @@ export async function updateCartItem(userId: string, itemId: string, quantity?: 
   const available = getAvailableStock(stock, item.lensType, item.powerKey);
   if (quantity !== undefined) {
     if (quantity > available) throw new AppError(400, stockError(item.coating, item.powerKey, available));
-    item.quantity = Math.round(quantity * 2) / 2;
+    item.quantity = Math.floor(quantity);
   }
   if (typeof fogMark === "string") item.fogMark = fogMark;
   await item.save();
@@ -112,7 +116,7 @@ export async function withdrawCart(userId: string, username: string) {
       continue;
     }
     if (item.quantity > current) {
-      errors.push(`${item.coating} ${item.powerKey}: only ${current}p in stock`);
+      errors.push(`${item.coating} ${item.powerKey}: only ${pairStr(current)} in stock`);
       continue;
     }
 
@@ -126,7 +130,7 @@ export async function withdrawCart(userId: string, username: string) {
     const price = item.price ?? (lensStock.price as number) ?? 0;
     withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price, fogMark: item.fogMark || undefined });
     totalQuantity += item.quantity;
-    totalPrice += price * item.quantity;
+    totalPrice += price * (item.quantity / 2);
   }
 
   if (withdrawnItems.length > 0) {
@@ -216,7 +220,7 @@ export async function updateWithdrawal(
   const normalized: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[] = [];
   for (const it of items || []) {
     if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
-    const qty = Math.max(0, Math.round((Number(it.quantity) || 0) * 2) / 2);
+    const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
     if (qty === 0) continue;
     normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, fogMark: it.fogMark || "" });
   }
@@ -266,7 +270,7 @@ export async function updateWithdrawal(
     const q = (lensStock.quantities as Record<string, Record<string, number>>) || {};
     const current = q[lensType]?.[powerKey] || 0;
     if (current + delta < 0) {
-      errors.push(`${coating} ${powerKey}: only ${current} available`);
+      errors.push(`${coating} ${powerKey}: only ${pairStr(current)} available`);
       continue;
     }
     deltas.push({ stock: lensStock, lensType, powerKey, delta });
@@ -300,7 +304,7 @@ export async function updateWithdrawal(
   }
 
   const totalQuantity = mergedItems.reduce((s, it) => s + it.quantity, 0);
-  const totalPrice = mergedItems.reduce((s, it) => s + it.price * it.quantity, 0);
+  const totalPrice = mergedItems.reduce((s, it) => s + it.price * (it.quantity / 2), 0);
 
   withdrawal.items = mergedItems as typeof withdrawal.items;
   withdrawal.totalQuantity = totalQuantity;
@@ -341,7 +345,7 @@ export async function sendWithdrawalPdf(userId: string, id: string, phone?: stri
 
   const base64 = pdfBuffer.toString("base64");
   const filename = `Lens_List_${istDateKey(withdrawal.withdrawnAt)}.pdf`;
-  const caption = `Lens list — ${withdrawal.username} · ${withdrawal.totalQuantity} pairs`;
+  const caption = `Lens list — ${withdrawal.username} · ${Math.round((withdrawal.totalQuantity / 2) * 2) / 2} pairs`;
 
   const wa = whatsappManager.getInstance();
   const result = await wa.sendMedia(target, base64, filename, "application/pdf", caption, true);
