@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
-import type { InventoryVariant, MovementType } from "../../types/inventoryV2";
+import type { MovementType } from "../../types/inventoryV2";
 
 export function formatDate(iso?: string): string {
   if (!iso) return "—";
@@ -53,7 +53,7 @@ export function StockStatusBadge({ qty, threshold = 5 }: { qty: number; threshol
   );
 }
 
-export function itemLabel(v?: Pick<InventoryVariant, "brandName" | "model" | "color" | "size"> | null): string {
+export function itemLabel(v?: { brandName?: string; model?: string; color?: string; size?: string } | null): string {
   if (!v) return "—";
   return [v.brandName, v.model, v.color, v.size ? `/${v.size}` : ""].filter(Boolean).join(" ").trim() || "—";
 }

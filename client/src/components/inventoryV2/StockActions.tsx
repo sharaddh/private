@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Search, RefreshCw, PackagePlus, Hand, SlidersHorizontal, Pencil, Trash2, X, Layers, Boxes,
+  Search, RefreshCw, PackagePlus, Hand, SlidersHorizontal, Pencil, Trash2, X, Layers, Boxes, Copy, Wand2,
 } from "lucide-react";
 import Modal from "../Modal";
 import ConfirmDialog from "../ConfirmDialog";
@@ -14,6 +14,7 @@ import {
   PRODUCT_CATEGORIES, WITHDRAWAL_REASONS,
   type Gender, type InventoryVariant, type WithdrawalReason,
 } from "../../types/inventoryV2";
+import { inventoryV2Service } from "../../services";
 import {
   Field, AdvancedSection, formatDateTime, formatCurrency,
   stockBadgeClass, stockTextClass, itemLabel, movementLabel, movementTone,
@@ -34,7 +35,8 @@ const EMPTY_ADD = {
 const EMPTY_NEW = {
   sku: "", brandId: "", brandName: "", category: "Specs", model: "", color: "", size: "",
   gender: "", quantity: 1, purchasePrice: 0, sellingPrice: "", rackId: "", supplierName: "",
-  material: "", frameShape: "", batchNumber: "", purchaseDate: "", expiryDate: "", note: "",
+  material: "", frameShape: "", frameType: "", templeSize: "", bridgeSize: "", lensWidth: "",
+  batchNumber: "", purchaseDate: "", expiryDate: "", note: "",
 };
 
 const EMPTY_WITHDRAW = { quantity: "", reason: "Demo" as WithdrawalReason, note: "" };
@@ -378,7 +380,12 @@ export function AdjustModal({ open, variant, onClose, onDone }: {
 
 // ─── New item ────────────────────────────────────────────────────────────────
 
-export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
+export function NewItemModal({ open, variant, onClose, onDone }: {
+  open: boolean;
+  variant?: InventoryVariant;
+  onClose: () => void;
+  onDone: (existing?: InventoryVariant) => void;
+}) {
   const toast = useToast();
   const { brands } = useV2Brands(5);
   const { racks } = useV2Racks();
@@ -386,9 +393,42 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
   const [saving, setSaving] = useState(false);
   const { create } = useCreateVariantWithStock();
 
+  const selectedBrandName = brands.find((b) => b._id === form.brandId)?.name ?? form.brandName;
+
   useEffect(() => {
-    if (open) setForm(EMPTY_NEW);
-  }, [open]);
+    if (!open) return;
+    setForm(variant
+      ? {
+          ...EMPTY_NEW,
+          brandId: variant.brandId || "",
+          brandName: variant.brandName || "",
+          category: variant.category || "Specs",
+          model: variant.model || "",
+          color: variant.color || "",
+          size: variant.size || "",
+          gender: variant.gender || "",
+          material: variant.material || "",
+          frameShape: variant.frameShape || "",
+          frameType: variant.frameType || "",
+          templeSize: variant.templeSize || "",
+          bridgeSize: variant.bridgeSize || "",
+          lensWidth: variant.lensWidth || "",
+          sellingPrice: variant.defaultSellingPrice ? String(variant.defaultSellingPrice) : "",
+          rackId: variant.rackId || "",
+          supplierName: variant.supplierName || "",
+        }
+      : EMPTY_NEW);
+  }, [open, variant]);
+
+  function suggestSku(): string {
+    const parts = [
+      selectedBrandName,
+      form.model,
+      form.color,
+    ].filter((p) => p && p.trim());
+    const base = parts.map((p) => p.replace(/[^A-Za-z0-9]+/g, "").toUpperCase()).join("-");
+    return base.replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
+  }
 
   async function submit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -398,11 +438,10 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
     if (!Number.isFinite(qty) || qty < 1) { toast.error("Quantity must be at least 1"); return; }
     setSaving(true);
     try {
-      const selectedBrand = brands.find((b) => b._id === form.brandId);
       const res = await create({
         sku: form.sku.trim(),
         brandId: form.brandId || undefined,
-        brand: form.brandName.trim() || selectedBrand?.name || undefined,
+        brand: selectedBrandName || undefined,
         category: form.category || undefined,
         model: form.model.trim(),
         gender: form.gender || undefined,
@@ -415,6 +454,10 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
         supplierName: form.supplierName.trim() || undefined,
         material: form.material.trim() || undefined,
         frameShape: form.frameShape.trim() || undefined,
+        frameType: form.frameType.trim() || undefined,
+        templeSize: form.templeSize.trim() || undefined,
+        bridgeSize: form.bridgeSize.trim() || undefined,
+        lensWidth: form.lensWidth.trim() || undefined,
         batchNumber: form.batchNumber.trim() || undefined,
         purchaseDate: form.purchaseDate || undefined,
         expiryDate: form.expiryDate || undefined,
@@ -423,9 +466,20 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
       if (res.success) {
         toast.success(`${form.sku} created with ${qty} in stock`);
         onDone();
-      } else {
-        toast.error(res.message || "Failed to create item");
+        return;
       }
+      const msg = res.message || "Failed to create item";
+      if (/exists|already/i.test(msg)) {
+        try {
+          const existingRes = await inventoryV2Service.getVariantBySku(form.sku.trim());
+          if (existingRes.success && existingRes.data) {
+            toast.success(`${form.sku} already exists — adding stock instead`);
+            onDone(existingRes.data);
+            return;
+          }
+        } catch { /* fall through to generic error */ }
+      }
+      toast.error(msg);
     } catch (err) {
       toast.error((err as Error).message || "Failed to create item");
     } finally {
@@ -434,23 +488,48 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add New Item" size="lg">
+    <Modal open={open} onClose={onClose} title={variant ? `Duplicate — ${variant.sku}` : "Add New Item"} size="lg">
+      {variant && (
+        <p className="text-sm text-th-secondary -mt-2 mb-4">
+          Pre-filled from <span className="font-mono text-th-text">{variant.sku}</span>. Change the SKU / colour / size to add a new variation.
+        </p>
+      )}
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
           <Field label="SKU" required>
-            <input className={inputCls} style={inputStyle} value={form.sku} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))} placeholder="e.g. FRM-002-BLK" autoFocus />
+            <div className="flex gap-1.5">
+              <input className={inputCls} style={inputStyle} value={form.sku} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))} placeholder="e.g. FRM-002-BLK" autoFocus />
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, sku: suggestSku() }))}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-th-border px-3 text-xs font-semibold text-th-secondary hover:bg-th-hover"
+                title="Generate SKU from brand + model + colour"
+                aria-label="Generate SKU"
+              >
+                <Wand2 size={13} /> Auto
+              </button>
+            </div>
           </Field>
           <Field label="Model" required>
             <input className={inputCls} style={inputStyle} value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} placeholder="e.g. GOLD-202" />
           </Field>
           <Field label="Brand">
-            <select className={inputCls} style={inputStyle} value={form.brandId} onChange={(e) => setForm((f) => ({ ...f, brandId: e.target.value }))}>
-              <option value="">— Select —</option>
-              {brands.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
-          </Field>
-          <Field label="Brand name (free text)">
-            <input className={inputCls} style={inputStyle} value={form.brandName} onChange={(e) => setForm((f) => ({ ...f, brandName: e.target.value }))} />
+            <div className="flex gap-1.5">
+              <input
+                className={inputCls} style={inputStyle}
+                list="inventory-brand-options"
+                value={selectedBrandName}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  const match = brands.find((b) => b.name.toLowerCase() === name.toLowerCase());
+                  setForm((f) => ({ ...f, brandName: name, brandId: match?._id ?? "" }));
+                }}
+                placeholder="Type or pick a brand"
+              />
+              <datalist id="inventory-brand-options">
+                {brands.map((b) => <option key={b._id} value={b.name} />)}
+              </datalist>
+            </div>
           </Field>
           <Field label="Category">
             <select className={inputCls} style={inputStyle} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
@@ -459,6 +538,9 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
           </Field>
           <Field label="Colour">
             <input className={inputCls} style={inputStyle} value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} placeholder="e.g. Black" />
+          </Field>
+          <Field label="Size">
+            <input className={inputCls} style={inputStyle} value={form.size} onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))} placeholder="e.g. 52-18-140" />
           </Field>
           <Field label="Quantity" required>
             <input className={inputCls} style={inputStyle} type="number" min={1} value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} />
@@ -476,11 +558,8 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
             </select>
           </Field>
         </div>
-        <AdvancedSection title="More details (size, gender, supplier, batch...)">
+        <AdvancedSection title="More details (gender, supplier, frame specs, batch...)">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4 pt-4">
-            <Field label="Size">
-              <input className={inputCls} style={inputStyle} value={form.size} onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))} placeholder="e.g. 52-18-140" />
-            </Field>
             <Field label="Gender">
               <select className={inputCls} style={inputStyle} value={form.gender} onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}>
                 <option value="">All / Unisex</option>
@@ -493,10 +572,22 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
               <input className={inputCls} style={inputStyle} value={form.supplierName} onChange={(e) => setForm((f) => ({ ...f, supplierName: e.target.value }))} />
             </Field>
             <Field label="Material">
-              <input className={inputCls} style={inputStyle} value={form.material} onChange={(e) => setForm((f) => ({ ...f, material: e.target.value }))} />
+              <input className={inputCls} style={inputStyle} value={form.material} onChange={(e) => setForm((f) => ({ ...f, material: e.target.value }))} placeholder="e.g. Acetate" />
             </Field>
             <Field label="Frame shape">
-              <input className={inputCls} style={inputStyle} value={form.frameShape} onChange={(e) => setForm((f) => ({ ...f, frameShape: e.target.value }))} />
+              <input className={inputCls} style={inputStyle} value={form.frameShape} onChange={(e) => setForm((f) => ({ ...f, frameShape: e.target.value }))} placeholder="e.g. Square" />
+            </Field>
+            <Field label="Frame type">
+              <input className={inputCls} style={inputStyle} value={form.frameType} onChange={(e) => setForm((f) => ({ ...f, frameType: e.target.value }))} placeholder="e.g. Full rim" />
+            </Field>
+            <Field label="Temple size">
+              <input className={inputCls} style={inputStyle} value={form.templeSize} onChange={(e) => setForm((f) => ({ ...f, templeSize: e.target.value }))} placeholder="e.g. 140" />
+            </Field>
+            <Field label="Bridge size">
+              <input className={inputCls} style={inputStyle} value={form.bridgeSize} onChange={(e) => setForm((f) => ({ ...f, bridgeSize: e.target.value }))} placeholder="e.g. 18" />
+            </Field>
+            <Field label="Lens width">
+              <input className={inputCls} style={inputStyle} value={form.lensWidth} onChange={(e) => setForm((f) => ({ ...f, lensWidth: e.target.value }))} placeholder="e.g. 52" />
             </Field>
             <Field label="Batch number">
               <input className={inputCls} style={inputStyle} value={form.batchNumber} onChange={(e) => setForm((f) => ({ ...f, batchNumber: e.target.value }))} />
@@ -517,7 +608,7 @@ export function NewItemModal({ open, onClose, onDone }: { open: boolean; onClose
         <div className="flex gap-3 pt-1">
           <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider border border-th-muted text-th-secondary hover:bg-th-hover">Cancel</button>
           <button type="submit" disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: "#1ed760", color: "#121212" }}>
-            <Boxes size={15} /> {saving ? "Creating..." : "Create Item"}
+            <Boxes size={15} /> {saving ? "Creating..." : variant ? "Create Variation" : "Create Item"}
           </button>
         </div>
       </form>
@@ -664,6 +755,7 @@ export function VariantDetailPanel({
     { label: "Add stock", icon: PackagePlus, tone: "text-[#1ed760] hover:bg-[#1ed760]/10", run: () => onAction({ type: "add", variant }) },
     { label: "Withdraw", icon: Hand, tone: "text-th-secondary hover:bg-th-hover", run: () => onAction({ type: "withdraw", variant }) },
     { label: "Adjust", icon: SlidersHorizontal, tone: "text-th-secondary hover:bg-th-hover", run: () => onAction({ type: "adjust", variant }) },
+    { label: "Duplicate", icon: Copy, tone: "text-th-secondary hover:bg-th-hover", run: () => onAction({ type: "new", variant }) },
     { label: "Edit", icon: Pencil, tone: "text-th-secondary hover:bg-th-hover", run: () => onAction({ type: "edit", variant }) },
     { label: "Remove", icon: Trash2, tone: "text-[#e74c3c] hover:bg-[#e74c3c]/10", run: () => setConfirmRemove(true) },
   ];

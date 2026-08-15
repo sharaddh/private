@@ -51,13 +51,14 @@ export async function getWithdrawal(req: Request, res: Response) {
 }
 
 export async function listMovements(req: Request, res: Response) {
-  const { variantId, sku, type, user, rack, startDate, endDate, page, limit } = req.query;
+  const { variantId, sku, type, user, rack, search, startDate, endDate, page, limit } = req.query;
   const data = await inventoryStockService.listMovements({
     variantId: variantId as string | undefined,
     sku: sku as string | undefined,
     type: type as string | undefined,
     user: user as string | undefined,
     rack: rack as string | undefined,
+    search: search as string | undefined,
     startDate: startDate as string | undefined,
     endDate: endDate as string | undefined,
     page: page as string | undefined,

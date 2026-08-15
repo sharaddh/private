@@ -7,7 +7,7 @@ import { InventoryCountEntry } from "../models/inventoryCountEntry";
 import { paginateQuery, PaginationOptions } from "../utils/pagination";
 import { applyStockCorrections } from "./inventoryStock.service";
 
-export async function createCountSession(rackId: string, by: string = "") {
+export async function createCountSession(rackId: string, by: string = "", note: string = "") {
   const rack = await Rack.findById(rackId).lean();
   if (!rack) throw new AppError(404, "Rack not found");
 
@@ -16,17 +16,23 @@ export async function createCountSession(rackId: string, by: string = "") {
 
   const session = await InventoryCountSession.create({
     rackId,
+    rackLabel: rack.code,
     status: "draft",
     startedBy: by,
     startedAt: new Date(),
     expectedUnits,
-    countedUnits: expectedUnits,
+    countedUnits: 0,
+    note: note || "",
   });
 
   const entries = variants.map((v) => ({
     countSessionId: session._id,
     variantId: v._id,
     sku: v.sku,
+    brandName: v.brandName || "",
+    model: v.model || "",
+    color: v.color || "",
+    size: v.size || "",
     expectedQuantity: v.stockQuantity || 0,
     countedQuantity: v.stockQuantity || 0,
     difference: 0,

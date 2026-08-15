@@ -5,6 +5,7 @@ import { VALID_COUNT_STATUSES } from "../types";
 const InventoryCountSessionSchemaObj = new Schema(
   {
     rackId: { type: Schema.Types.ObjectId, ref: "Rack", index: true },
+    rackLabel: { type: String, default: "" },
     status: { type: String, enum: VALID_COUNT_STATUSES, default: "draft", index: true },
     startedBy: { type: String, default: "" },
     completedBy: { type: String, default: "" },

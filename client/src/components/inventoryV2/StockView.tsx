@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Plus, Search, RefreshCw, PackagePlus, Eye, Hand, SlidersHorizontal, Pencil, MoreHorizontal,
+  Plus, Search, RefreshCw, PackagePlus, Eye, Hand, SlidersHorizontal, Pencil, Copy, MoreHorizontal,
 } from "lucide-react";
 import {
   useV2Variants, useV2Brands, useV2Racks,
@@ -30,6 +30,7 @@ function RowMenu({ variant, onAction, onSelect }: {
     { label: "Add stock", icon: PackagePlus, run: () => onAction({ type: "add", variant }) },
     { label: "Withdraw", icon: Hand, run: () => onAction({ type: "withdraw", variant }) },
     { label: "Adjust", icon: SlidersHorizontal, run: () => onAction({ type: "adjust", variant }) },
+    { label: "Duplicate", icon: Copy, run: () => onAction({ type: "new", variant }) },
     { label: "Edit", icon: Pencil, run: () => onAction({ type: "edit", variant }) },
   ];
   return (

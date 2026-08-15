@@ -13,7 +13,7 @@ import {
   COUNT_STATUS_LABELS,
   type Brand, type CountEntry, type CountStatus,
 } from "../../types/inventoryV2";
-import { Pagination, formatDate, formatDateTime, PageSection, inputCls, inputStyle, Field } from "./shared";
+import { Pagination, formatDate, formatDateTime, PageSection, inputCls, inputStyle, Field, itemLabel } from "./shared";
 
 const inputStyleShared = inputStyle;
 
@@ -318,8 +318,10 @@ function CountsSection({ refreshKey, openCountCreate, onCountCreateHandled }: {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const { sessions, total, pages, loading, refetch } = useV2CountSessions({ page, limit });
+  const { racks } = useV2Racks();
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const rackCode = (id: string): string => racks.find((r) => r._id === id)?.code || "";
 
   useEffect(() => { void refetch(); }, [refetch, page, refreshKey]);
 
@@ -351,7 +353,7 @@ function CountsSection({ refreshKey, openCountCreate, onCountCreateHandled }: {
               onClick={() => setDetailId(s._id)}
               className="w-full bg-th-base rounded-[8px] border border-th-border px-4 py-3 text-left hover:bg-th-hover/40 transition-colors flex flex-wrap items-center gap-x-6 gap-y-1"
             >
-              <span className="text-sm text-th-text">Rack <span className="font-semibold">{s.rackId.slice(-6)}</span></span>
+              <span className="text-sm text-th-text">Rack <span className="font-semibold">{s.rackLabel || rackCode(s.rackId) || s.rackId.slice(-6)}</span></span>
               <span className={`inline-block rounded-full px-2.5 py-1 text-[12px] font-semibold ${STATUS_BADGE[s.status]}`}>{COUNT_STATUS_LABELS[s.status]}</span>
               <span className="text-sm text-th-secondary">by {s.startedBy}</span>
               <span className="text-sm text-th-secondary">Started {formatDate(s.startedAt)}</span>
@@ -419,6 +421,7 @@ function CreateCountModal({ onClose, onCreated }: { onClose: () => void; onCreat
 function CountDetailModal({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const toast = useToast();
   const { detail, loading, refetch } = useV2CountSession(id);
+  const { racks } = useV2Racks();
   const { update, loading: savingEntries } = useUpdateCountEntries();
   const { complete, loading: completing } = useCompleteCountSession();
   const { cancel, loading: cancelling } = useCancelCountSession();
@@ -437,7 +440,7 @@ function CountDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
 
   async function handleSave(): Promise<void> {
     if (!detail) return;
-    const entries = detail.entries.map((e) => ({ variantId: e.variantId, countedQuantity: counts[e.variantId] ?? 0 }));
+    const entries = detail.entries.map((e) => ({ variantId: e.variantId, countedQuantity: counts[e.variantId] ?? e.countedQuantity }));
     const res = await update(detail.session._id, { entries });
     if (res.success) { toast.success("Count entries saved"); void refetch(); }
     else { toast.error(res.message || "Failed to save entries"); }
@@ -470,19 +473,29 @@ function CountDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
 
   const session = detail.session;
   const isDraft = session.status === "draft";
+  const rackCode = racks.find((r) => r._id === session.rackId)?.code || "";
+  const countFor = (e: CountEntry): number => counts[e.variantId] ?? e.countedQuantity;
+  const liveCounted = detail.entries.reduce((s, e) => s + countFor(e), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-3xl rounded-2xl bg-th-surface border border-th-border shadow-xl p-6 space-y-4 max-h-[88vh] flex flex-col">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-th-text">Count Session · Rack <span className="font-mono">{session.rackId.slice(-6)}</span></h3>
+            <h3 className="text-lg font-semibold text-th-text">Count Session · Rack <span className="font-mono">{session.rackLabel || rackCode || session.rackId.slice(-6)}</span></h3>
             <p className="text-sm text-th-secondary mt-1">
               Status <span className={`inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold ${STATUS_BADGE[session.status]}`}>{COUNT_STATUS_LABELS[session.status]}</span>
               {" · "}Started {formatDateTime(session.startedAt)} by {session.startedBy}
               {session.completedAt ? ` · Completed ${formatDateTime(session.completedAt)}` : ""}
             </p>
-            <p className="text-sm text-th-secondary mt-1">Counted <span className="font-semibold text-th-text">{session.countedUnits}</span> / {session.expectedUnits} units</p>
+            <p className="text-sm text-th-secondary mt-1">
+              Counted <span className="font-semibold text-th-text">{isDraft ? liveCounted : session.countedUnits}</span> / {session.expectedUnits} units
+              {isDraft && liveCounted !== session.expectedUnits && (
+                <span className={`ml-2 text-[12px] font-semibold ${liveCounted > session.expectedUnits ? "text-[#1ed760]" : "text-[#e74c3c]"}`}>
+                  ({liveCounted > session.expectedUnits ? `+${liveCounted - session.expectedUnits}` : liveCounted - session.expectedUnits} vs system)
+                </span>
+              )}
+            </p>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-th-hover rounded-lg text-th-secondary" aria-label="Close"><X size={18} /></button>
         </div>
@@ -499,17 +512,20 @@ function CountDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
               </tr>
             </thead>
             <tbody className="divide-y divide-th-border">
-              {detail.entries.map((e: CountEntry) => (
+              {detail.entries.map((e: CountEntry) => {
+                const counted = countFor(e);
+                const diff = counted - e.expectedQuantity;
+                return (
                 <tr key={e.variantId}>
                   <td className="px-3 py-2 font-mono text-sm text-th-text">{e.sku}</td>
-                  <td className="px-3 py-2 text-sm text-th-secondary">{e.lotId ? `Lot ${e.lotId.slice(-6)}` : "—"}</td>
+                  <td className="px-3 py-2 text-sm text-th-secondary max-w-[220px] truncate">{itemLabel(e)}</td>
                   <td className="px-3 py-2 text-right text-sm text-th-text">{e.expectedQuantity}</td>
                   <td className="px-3 py-2 text-right">
                     {isDraft ? (
                       <input
                         type="number"
                         min={0}
-                        value={counts[e.variantId] ?? e.countedQuantity}
+                        value={counted}
                         onChange={(ev) => setCounts((prev) => ({ ...prev, [e.variantId]: Number(ev.target.value) }))}
                         className="w-24 ml-auto px-2 py-1 text-right rounded-lg text-sm bg-th-hover text-th-text focus:outline-none focus:ring-1 focus:ring-[#1ed760]"
                         style={inputStyleShared}
@@ -520,12 +536,13 @@ function CountDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <span className={`text-sm font-semibold ${e.difference > 0 ? "text-[#1ed760]" : e.difference < 0 ? "text-[#e74c3c]" : "text-th-muted"}`}>
-                      {e.difference > 0 ? `+${e.difference}` : e.difference}
+                    <span className={`text-sm font-semibold ${diff > 0 ? "text-[#1ed760]" : diff < 0 ? "text-[#e74c3c]" : "text-th-muted"}`}>
+                      {diff > 0 ? `+${diff}` : diff}
                     </span>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -8,6 +8,7 @@ import {
   AddStockModal, WithdrawModal, AdjustModal, NewItemModal, EditVariantModal,
   type StockActionState,
 } from "../components/inventoryV2/StockActions";
+import type { InventoryVariant } from "../types/inventoryV2";
 
 type SectionKey = "overview" | "stock" | "history" | "manage";
 
@@ -33,8 +34,9 @@ export default function InventoryV2() {
     setOpenCountCreate(true);
   };
 
-  const handleDone = () => {
+  const handleDone = (existing?: InventoryVariant) => {
     closeAction();
+    if (existing) openAction({ type: "add", variant: existing });
     refresh();
   };
 
@@ -82,7 +84,7 @@ export default function InventoryV2() {
       <WithdrawModal open={action?.type === "withdraw"} variant={action?.variant} onClose={closeAction} onDone={handleDone} />
       <AdjustModal open={action?.type === "adjust"} variant={action?.variant} onClose={closeAction} onDone={handleDone} />
       <EditVariantModal open={action?.type === "edit"} variant={action?.variant} onClose={closeAction} onDone={handleDone} />
-      <NewItemModal open={action?.type === "new"} onClose={closeAction} onDone={handleDone} />
+      <NewItemModal open={action?.type === "new"} variant={action?.variant} onClose={closeAction} onDone={handleDone} />
     </div>
   );
 }

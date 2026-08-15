@@ -5,7 +5,7 @@ import { AuthRequest } from "../types";
 
 export async function createCountSession(req: AuthRequest, res: Response) {
   const by = req.user?.username || "";
-  const data = await inventoryCountService.createCountSession(req.body.rackId, by);
+  const data = await inventoryCountService.createCountSession(req.body.rackId, by, req.body.note);
   sendCreated(res, data, "Count session started");
 }
 

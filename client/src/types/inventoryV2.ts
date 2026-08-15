@@ -410,6 +410,7 @@ export interface UpdateRackInput {
 export interface CountSession {
   _id: string;
   rackId: string;
+  rackLabel?: string;
   status: CountStatus;
   startedBy: string;
   completedBy?: string;
@@ -427,6 +428,10 @@ export interface CountEntry {
   countSessionId: string;
   variantId: string;
   sku: string;
+  brandName?: string;
+  model?: string;
+  color?: string;
+  size?: string;
   lotId?: string;
   expectedQuantity: number;
   countedQuantity: number;
@@ -502,6 +507,10 @@ export interface CreateVariantWithStockInput {
   supplierName?: string;
   material?: string;
   frameShape?: string;
+  frameType?: string;
+  templeSize?: string;
+  bridgeSize?: string;
+  lensWidth?: string;
   purchaseDate?: string;
   batchNumber?: string;
   expiryDate?: string;

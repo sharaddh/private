@@ -311,6 +311,10 @@ export interface VariantWithStockInput {
   supplierName?: string;
   material?: string;
   frameShape?: string;
+  frameType?: string;
+  templeSize?: string;
+  bridgeSize?: string;
+  lensWidth?: string;
   purchaseDate?: string | Date;
   batchNumber?: string;
   expiryDate?: string | Date;
@@ -362,6 +366,10 @@ export async function createVariantWithStock(input: VariantWithStockInput, by: s
       size: input.size || "",
       material: input.material || "",
       frameShape: input.frameShape || "",
+      frameType: input.frameType || "",
+      templeSize: input.templeSize || "",
+      bridgeSize: input.bridgeSize || "",
+      lensWidth: input.lensWidth || "",
       stockQuantity: qty,
       defaultSellingPrice: sellingPrice,
       rackId: input.rackId,
@@ -672,6 +680,7 @@ export interface MovementFilters extends PaginationOptions {
   type?: string;
   user?: string;
   rack?: string;
+  search?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -683,6 +692,15 @@ export async function listMovements(options: MovementFilters = {}) {
   if (options.type) filter.type = options.type;
   if (options.user) filter.by = { $regex: escapeRegex(options.user), $options: "i" };
   if (options.rack) filter.rackLabel = { $regex: escapeRegex(options.rack), $options: "i" };
+  if (options.search) {
+    const s = escapeRegex(options.search.trim());
+    filter.$or = [
+      { sku: { $regex: s, $options: "i" } },
+      { note: { $regex: s, $options: "i" } },
+      { by: { $regex: s, $options: "i" } },
+      { referenceType: { $regex: s, $options: "i" } },
+    ];
+  }
   if (options.startDate || options.endDate) {
     const createdAt: Record<string, Date> = {};
     if (options.startDate) createdAt.$gte = new Date(options.startDate);

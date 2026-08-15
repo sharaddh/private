@@ -10,6 +10,13 @@ function fmtDate(iso?: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+const REFERENCE_LABELS: Record<string, string> = {
+  MANUAL: "Manual entry",
+  WITHDRAWAL: "Withdrawal",
+  ORDER: "Order",
+  INVENTORY_COUNT: "Stock count",
+};
+
 export default function HistoryView({ refreshKey }: { refreshKey: number }) {
   const toast = useToast();
   const [mode, setMode] = useState<"movements" | "withdrawals">("movements");
@@ -116,7 +123,7 @@ function MovementsList({ refreshKey }: { refreshKey: number }) {
               <tr className="border-b border-th-hover bg-th-base">
                 <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-th-secondary uppercase">Type</th>
                 <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-th-secondary uppercase">SKU</th>
-                <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-th-secondary uppercase">Item</th>
+                <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-th-secondary uppercase">Source</th>
                 <th className="px-4 py-2.5 text-right text-[12px] font-semibold text-th-secondary uppercase">Change</th>
                 <th className="px-4 py-2.5 text-right text-[12px] font-semibold text-th-secondary uppercase">After</th>
                 <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-th-secondary uppercase">Rack</th>
@@ -130,7 +137,7 @@ function MovementsList({ refreshKey }: { refreshKey: number }) {
                 <tr key={m._id} className="hover:bg-th-hover/30 transition-colors">
                   <td className="px-4 py-2.5"><span className={`inline-block rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap ${movementTone(m.type)}`}>{movementLabel(m.type)}</span></td>
                   <td className="px-4 py-2.5 font-mono text-sm text-th-text">{m.sku}</td>
-                  <td className="px-4 py-2.5 text-sm text-th-secondary">{m.referenceType || "—"}</td>
+                  <td className="px-4 py-2.5 text-sm text-th-secondary">{REFERENCE_LABELS[m.referenceType] ?? (m.referenceType || "—")}</td>
                   <td className="px-4 py-2.5 text-right">
                     <span className={`font-semibold ${m.quantity > 0 ? "text-[#1ed760]" : "text-[#e74c3c]"}`}>
                       {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
