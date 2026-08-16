@@ -1,5 +1,6 @@
-import { Schema, model, Types } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const DeliverySchemaObj = new Schema(
   {
@@ -21,5 +22,4 @@ DeliverySchemaObj.index({ status: 1, expectedDeliveryDate: 1 });
 DeliverySchemaObj.index({ orderId: 1 });
 
 export const DeliverySchema = DeliverySchemaObj;
-const _Delivery = model("Delivery", DeliverySchemaObj);
-export const Delivery = withBranch(_Delivery, "Delivery");
+export const Delivery = scoped(prisma.delivery) as Prisma.DeliveryDelegate;

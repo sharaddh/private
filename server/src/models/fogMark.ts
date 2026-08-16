@@ -1,13 +1,13 @@
-import { Schema, model } from "mongoose";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
 
-const FogMarkSchemaObj = new Schema(
+// Kept for models/db.ts warehouse model registration (legacy scripts)
+const _FogMarkSchemaObj = new Schema(
   {
     name: { type: String, required: true, trim: true, unique: true },
   },
   { timestamps: true }
 );
 
-FogMarkSchemaObj.index({ name: 1 }, { unique: true });
-
-export const FogMarkSchema = FogMarkSchemaObj;
-export const FogMark = model("FogMark", FogMarkSchemaObj);
+export const FogMarkSchema = _FogMarkSchemaObj;
+export const FogMark = prisma.fogMark as Prisma.FogMarkDelegate;
