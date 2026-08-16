@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { connect, connection } from "mongoose";
 import { MONGO_URI } from "../config";
 import { Branch } from "../models/branch";

@@ -1,18 +1,19 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import fs from "fs";
 import path from "path";
 import { connect } from "mongoose";
 import { MONGO_URI } from "../config";
-import { Customer } from "../models/customer";
-import { Visit } from "../models/visit";
-import { Prescription } from "../models/prescription";
+import { getWarehouseModels } from "../models/db";
 
 async function importCustomers(filePath: string) {
+  const { Customer } = getWarehouseModels();
   const raw = fs.readFileSync(filePath, "utf-8");
   const arr = JSON.parse(raw);
   for (const c of arr) {
     const existing = await Customer.findOne({ customerId: c.customerId });
     if (existing) continue;
-    const doc = new Customer({
+    const doc = await Customer.create([{
       customerId: c.customerId,
       name: c.name,
       age: c.age,
@@ -27,13 +28,14 @@ async function importCustomers(filePath: string) {
       pendingAmount: c.pendingAmount || 0,
       createdAt: c.createdAt ? new Date(c.createdAt) : undefined,
       updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined,
-    });
-    await doc.save();
-    console.log(`Imported customer ${doc.customerId} -> ${doc._id}`);
+    }]);
+    const saved = doc[0];
+    console.log(`Imported customer ${saved.customerId} -> ${saved._id}`);
   }
 }
 
 async function importVisits(filePath: string) {
+  const { Customer, Visit } = getWarehouseModels();
   const raw = fs.readFileSync(filePath, "utf-8");
   const arr = JSON.parse(raw);
   for (const v of arr) {
@@ -42,20 +44,20 @@ async function importVisits(filePath: string) {
       console.warn(`Skipping visit for missing customerId ${v.customerId}`);
       continue;
     }
-    const doc = new Visit({
+    const doc = await Visit.create([{
       customerId: cust._id,
       visitDate: v.visitDate ? new Date(v.visitDate) : undefined,
       doctorName: v.doctorName,
       shopId: v.shopId,
       remarks: v.remarks,
       createdAt: v.createdAt ? new Date(v.createdAt) : undefined,
-    });
-    await doc.save();
-    console.log(`Imported visit ${doc._id} for customer ${cust.customerId}`);
+    }]);
+    console.log(`Imported visit ${doc[0]._id} for customer ${cust.customerId}`);
   }
 }
 
 async function importPrescriptions(filePath: string) {
+  const { Customer, Visit, Prescription } = getWarehouseModels();
   const raw = fs.readFileSync(filePath, "utf-8");
   const arr = JSON.parse(raw);
   for (const p of arr) {
@@ -65,7 +67,7 @@ async function importPrescriptions(filePath: string) {
       continue;
     }
     const visit = p.visitId ? await Visit.findOne({ _id: p.visitId }) : null;
-    const doc = new Prescription({
+    const doc = await Prescription.create([{
       customerId: cust._id,
       visitId: visit?._id,
       rightEye: p.rightEye,
@@ -73,9 +75,8 @@ async function importPrescriptions(filePath: string) {
       pd: p.pd,
       notes: p.notes,
       createdAt: p.createdAt ? new Date(p.createdAt) : undefined,
-    } as any);
-    await doc.save();
-    console.log(`Imported prescription ${doc._id} for customer ${cust.customerId}`);
+    } as any]);
+    console.log(`Imported prescription ${doc[0]._id} for customer ${cust.customerId}`);
   }
 }
 

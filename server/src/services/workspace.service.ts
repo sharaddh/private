@@ -81,6 +81,7 @@ export async function executeTransaction(
     customer = await prisma.customer.create({
       data: {
         ...body.customer,
+        name: body.customer.name || body.customer.mobile || "Customer",
         customerId: `CUST-${Date.now()}`,
         branchId: requireBranchId(),
       },

@@ -17,7 +17,7 @@ export async function createCountSession(rackId: string, by: string = "", note: 
   const session = await InventoryCountSession.create({
     data: {
       rackId,
-      rackLabel: rack.label,
+      rackLabel: rack.code,
       status: "draft",
       startedBy: by,
       startedAt: new Date(),
@@ -29,13 +29,17 @@ export async function createCountSession(rackId: string, by: string = "", note: 
   });
 
   const entries = variants.map((v: any) => ({
-    sessionId: session.id,
+    countSessionId: session.id,
+    branchId: requireBranchId(),
     variantId: v.id,
-    sku: v.sku,
-    name: [v.brandName, v.model, v.color, v.size].filter(Boolean).join(" "),
-    expectedQty: v.stockQuantity || 0,
-    countedQty: v.stockQuantity || 0,
-    delta: 0,
+    sku: v.sku || "",
+    brandName: v.brandName || "",
+    model: v.model || "",
+    color: v.color || "",
+    size: v.size || "",
+    expectedQuantity: v.stockQuantity || 0,
+    countedQuantity: v.stockQuantity || 0,
+    difference: 0,
   }));
   if (entries.length > 0) {
     await InventoryCountEntry.createMany({ data: entries });
@@ -57,7 +61,7 @@ export async function getCountSession(id: string) {
   const session = await InventoryCountSession.findUnique({ where: { id } });
   if (!session) throw new AppError(404, "Count session not found");
   const entries = await InventoryCountEntry.findMany({
-    where: { sessionId: id },
+    where: { countSessionId: id },
     orderBy: { sku: "asc" },
   });
   return { session, entries };
@@ -81,19 +85,19 @@ export async function updateCountEntries(
       );
     }
     const entry = await InventoryCountEntry.findFirst({
-      where: { sessionId: id, variantId: input.variantId },
+      where: { countSessionId: id, variantId: input.variantId },
     });
     if (!entry) throw new AppError(404, `Count entry not found for variant ${input.variantId}`);
     await InventoryCountEntry.update({
       where: { id: entry.id },
-      data: { countedQty: qty, delta: qty - entry.expectedQty },
+      data: { countedQuantity: qty, difference: qty - entry.expectedQuantity },
     });
   }
 
-  const allEntries = await InventoryCountEntry.findMany({ where: { sessionId: id } });
+  const allEntries = await InventoryCountEntry.findMany({ where: { countSessionId: id } });
   if (allEntries.length > 0) {
-    const sum = allEntries.reduce((s: number, e: any) => s + (e.countedQty || 0), 0);
-    const expectedSum = allEntries.reduce((s: number, e: any) => s + (e.expectedQty || 0), 0);
+    const sum = allEntries.reduce((s: number, e: any) => s + (e.countedQuantity || 0), 0);
+    const expectedSum = allEntries.reduce((s: number, e: any) => s + (e.expectedQuantity || 0), 0);
     await InventoryCountSession.update({
       where: { id },
       data: { countedUnits: sum, expectedUnits: expectedSum },
@@ -109,12 +113,12 @@ export async function completeCountSession(id: string, by: string = "", note: st
   if (session.status !== "draft")
     throw new AppError(400, "Count session is already completed or cancelled");
 
-  const entries = await InventoryCountEntry.findMany({ where: { sessionId: id } });
+  const entries = await InventoryCountEntry.findMany({ where: { countSessionId: id } });
 
   const corrections = entries.map((e: any) => ({
     variantId: e.variantId,
-    expectedQuantity: e.expectedQty,
-    countedQuantity: e.countedQty,
+    expectedQuantity: e.expectedQuantity,
+    countedQuantity: e.countedQuantity,
   }));
 
   const result = await applyStockCorrections(
@@ -130,8 +134,8 @@ export async function completeCountSession(id: string, by: string = "", note: st
       completedBy: by,
       completedAt: new Date(),
       note: note || session.note || "",
-      countedUnits: entries.reduce((s: number, e: any) => s + (e.countedQty || 0), 0),
-      expectedUnits: entries.reduce((s: number, e: any) => s + (e.expectedQty || 0), 0),
+      countedUnits: entries.reduce((s: number, e: any) => s + (e.countedQuantity || 0), 0),
+      expectedUnits: entries.reduce((s: number, e: any) => s + (e.expectedQuantity || 0), 0),
     },
   });
 

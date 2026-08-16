@@ -1,0 +1,980 @@
+// ---------------------------------------------------------------------------
+// KMJ Optical ERP - PostgreSQL schema (Prisma)
+// Migration target for the MongoDB/Mongoose models.
+//
+// Conventions:
+//   - `id` maps to DB column `_id` (uuid string) so the API contract (_id)
+//     is unchanged. Service layer serializes `id` as `_id`.
+//   - Branch-scoped tables carry a `branchId` column (row-level tenancy).
+//   - Embedded Mongo arrays become child tables; Mixed fields become Json.
+//   - Enum-like fields stay as String to preserve parity (app-layer zod
+//     validators already enforce allowed values).
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================================================
+// GLOBAL MODELS (shared across branches)
+// ===========================================================================
+
+model User {
+  id           String   @id @default(uuid()) @map("_id")
+  username     String   @unique
+  passwordHash String
+  name         String   @default("")
+  mobile       String   @default("")
+  role         String   @default("owner") // owner | staff
+  branches     Branch[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  shopCartItems      ShopCartItem[]
+  shopLensWithdrawal ShopLensWithdrawal[]
+  cartItems          CartItem[]
+  withdrawals        Withdrawal[]
+
+  @@map("users")
+}
+
+model Branch {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  code      String   @unique
+  address   String   @default("")
+  phone     String   @default("")
+  email     String   @default("")
+  dbName    String
+  isActive  Boolean  @default(true)
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  customers              Customer[]
+  visits                 Visit[]
+  prescriptions          Prescription[]
+  orders                 Order[]
+  bills                  Bill[]
+  payments               Payment[]
+  inventory              Inventory[]
+  lensStock              LensStock[]
+  deliveries             Delivery[]
+  settingsRecords        Settings[]
+  todos                  Todo[]
+  inventoryWithdrawals   InventoryWithdrawal[]
+  shopCartItems          ShopCartItem[]
+  shopLensWithdrawals    ShopLensWithdrawal[]
+  brands                 Brand[]
+  inventoryProducts      InventoryProduct[]
+  inventoryVariants      InventoryVariant[]
+  inventoryLots          InventoryLot[]
+  inventoryMovements     InventoryMovement[]
+  racks                  Rack[]
+  inventoryCountSessions InventoryCountSession[]
+  inventoryCountEntries  InventoryCountEntry[]
+  inventoryWithdrawalsV2 InventoryWithdrawalV2[]
+
+  @@map("branches")
+}
+
+model Message {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  phone         String
+  direction     String // outbound | inbound
+  type          String // text | document | image | template
+  content       String   @default("")
+  filename      String   @default("")
+  mimetype      String   @default("")
+  metaMessageId String   @default("")
+  status        String   @default("pending") // pending | sent | delivered | read | failed
+  error         String   @default("")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([branchId, createdAt])
+  @@index([phone])
+  @@index([metaMessageId])
+  @@map("messages")
+}
+
+model Camera {
+  id           String   @id @default(uuid()) @map("_id")
+  name         String
+  serialNumber String   @unique
+  username     String   @default("admin")
+  password     String   @default("")
+  streamPath   String?
+  status       String   @default("connecting") // connecting | online | offline | error
+  lastError    String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("cameras")
+}
+
+// ===========================================================================
+// BRANCH-SCOPED MODELS (row-level tenancy via branchId)
+// ===========================================================================
+
+model Customer {
+  id              String   @id @default(uuid()) @map("_id")
+  branchId        String
+  customerId      String?
+  name            String
+  email           String?
+  age             Int?
+  gender          String?
+  mobile          String?
+  alternateMobile String?
+  address         String?
+  city            String?
+  tags            String[]
+  totalVisits     Int      @default(0)
+  totalSpent      Float    @default(0)
+  pendingAmount   Float    @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  visits        Visit[]
+  prescriptions Prescription[]
+  orders        Order[]
+  bills         Bill[]
+  payments      Payment[]
+  deliveries    Delivery[]
+
+  @@index([branchId, customerId])
+  @@index([branchId, name])
+  @@index([branchId, mobile])
+  @@index([branchId, totalSpent])
+  @@index([branchId, createdAt])
+  @@map("customers")
+}
+
+model Visit {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  customerId String
+  visitDate  DateTime @default(now())
+  visitType  String   @default("new") // new | frame_change | new_lens | contact_lens | service | other
+  doctorName String?
+  shop       String?
+  shopId     String?
+  remarks    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  customer      Customer       @relation(fields: [customerId], references: [id])
+  prescriptions Prescription[]
+  orders        Order[]
+  bills         Bill[]
+
+  @@index([branchId, customerId, visitDate])
+  @@index([branchId, visitDate])
+  @@map("visits")
+}
+
+model Prescription {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  customerId String
+  visitId    String?
+  rightEye   Json     @default("{}")
+  leftEye    Json     @default("{}")
+  pd         String?
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  visit    Visit?   @relation(fields: [visitId], references: [id])
+
+  @@index([branchId, customerId, createdAt])
+  @@index([branchId, visitId])
+  @@map("prescriptions")
+}
+
+model Order {
+  id                 String    @id @default(uuid()) @map("_id")
+  branchId           String
+  customerId         String
+  visitId            String?
+  frame              String?
+  frameBrand         String?
+  frameModel         String?
+  frameColor         String?
+  frameSize          String?
+  framePrice         Float     @default(0)
+  lens               String?
+  lensBrand          String?
+  lensType           String?
+  lensIndex          String?
+  lensPrice          Float     @default(0)
+  coating            String?
+  coatingPrice       Float     @default(0)
+  accessories        String[]
+  quantity           Int       @default(1)
+  forwardedCount     Int       @default(0)
+  deliveryDate       DateTime?
+  actualDeliveryDate DateTime?
+  status             String    @default("Draft") // Draft | Ordered | In Lab | Ready | Delivered | Cancelled
+  labAssigned        String?
+  labExpectedDate    DateTime?
+  labRemarks         String?
+  reviewed           Boolean   @default(false)
+  classification     String    @default("pending") // pending | stock | buy | order
+  rightLensStatus    String    @default("pending")
+  leftLensStatus     String    @default("pending")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  branch     Branch           @relation(fields: [branchId], references: [id])
+  customer   Customer         @relation(fields: [customerId], references: [id])
+  visit      Visit?           @relation(fields: [visitId], references: [id])
+  stockItems OrderStockItem[]
+  deliveries Delivery[]
+  bills      Bill[]
+
+  @@index([branchId, customerId, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([branchId, classification, createdAt])
+  @@index([branchId, createdAt])
+  @@map("orders")
+}
+
+model OrderStockItem {
+  id       String  @id @default(uuid()) @map("_id")
+  orderId  String
+  sku      String?
+  quantity Int     @default(1)
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@map("order_stock_items")
+}
+
+model Bill {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  billNumber    String
+  customerId    String
+  visitId       String?
+  orderId       String?
+  subtotal      Float    @default(0)
+  discount      Float    @default(0)
+  tax           Float    @default(0)
+  advancePaid   Float    @default(0)
+  pendingAmount Float    @default(0)
+  totalAmount   Float    @default(0)
+  status        String   @default("Active") // Active | Cancelled
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch     Branch          @relation(fields: [branchId], references: [id])
+  customer   Customer        @relation(fields: [customerId], references: [id])
+  visit      Visit?          @relation(fields: [visitId], references: [id])
+  order      Order?          @relation(fields: [orderId], references: [id])
+  items      BillItem[]
+  stockItems BillStockItem[]
+  payments   Payment[]
+
+  @@unique([branchId, billNumber])
+  @@index([branchId, customerId, createdAt])
+  @@index([branchId, pendingAmount])
+  @@index([branchId, createdAt])
+  @@map("bills")
+}
+
+model BillItem {
+  id          String @id @default(uuid()) @map("_id")
+  billId      String
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Float  @default(0)
+  total       Float  @default(0)
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@index([billId])
+  @@map("bill_items")
+}
+
+model BillStockItem {
+  id       String  @id @default(uuid()) @map("_id")
+  billId   String
+  sku      String?
+  quantity Int     @default(1)
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@index([billId])
+  @@map("bill_stock_items")
+}
+
+model Payment {
+  id          String   @id @default(uuid()) @map("_id")
+  branchId    String
+  customerId  String
+  billId      String?
+  amount      Float
+  paymentMode String   @default("Cash") // Cash | UPI | Card | Bank Transfer | Insurance
+  paymentDate DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  bill     Bill?    @relation(fields: [billId], references: [id])
+
+  @@index([branchId, customerId, paymentDate])
+  @@index([branchId, paymentDate])
+  @@index([branchId, billId])
+  @@map("payments")
+}
+
+model Inventory {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  sku           String
+  category      String   @default("Specs")
+  inventoryType String   @default("spectacles")
+  brand         String?
+  model         String?
+  color         String?
+  size          String?
+  gender        String   @default("")
+  supplier      String?
+  quantity      Int      @default(0)
+  location      String   @default("shop") // shop | warehouse
+  purchasePrice Float    @default(0)
+  sellingPrice  Float    @default(0)
+  description   String?
+  lensIndex     String?
+  lensCoating   String?
+  sphRight      String?
+  cylRight      String?
+  axisRight     String?
+  sphLeft       String?
+  cylLeft       String?
+  axisLeft      String?
+  addPower      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch    Branch                     @relation(fields: [branchId], references: [id])
+  movements InventoryMovementHistory[]
+
+  @@unique([branchId, sku])
+  @@index([branchId, category])
+  @@map("inventory")
+}
+
+model InventoryMovementHistory {
+  id          String   @id @default(uuid()) @map("_id")
+  inventoryId String
+  qty         Int
+  type        String   @default("adjust") // adjust | import | order | restore | withdraw
+  note        String   @default("")
+  by          String   @default("")
+  at          DateTime @default(now())
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@index([inventoryId])
+  @@map("inventory_movement_history")
+}
+
+model LensStock {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  coating    String
+  price      Float    @default(0)
+  priceNeg   Float    @default(0)
+  pricePos   Float    @default(0)
+  quantities Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@unique([branchId, coating])
+  @@map("lens_stock")
+}
+
+model Delivery {
+  id                   String    @id @default(uuid()) @map("_id")
+  branchId             String
+  customerId           String
+  orderId              String?
+  address              String?
+  expectedDeliveryDate DateTime?
+  actualDeliveryDate   DateTime?
+  status               String    @default("Pending") // Pending | In Transit | Ready | Delivered | Cancelled
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+
+  @@index([branchId, status, expectedDeliveryDate])
+  @@index([branchId, orderId])
+  @@map("deliveries")
+}
+
+model Settings {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String   @unique
+  shopName      String   @default("KMJ Optical")
+  shopAddress   String   @default("")
+  shopPhone     String   @default("")
+  shopEmail     String   @default("")
+  adminWhatsApp String   @default("")
+  logo          String   @default("")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("settings")
+}
+
+model Todo {
+  id        String   @id @default(uuid()) @map("_id")
+  branchId  String
+  task      String
+  done      Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+  @@map("todos")
+}
+
+model InventoryWithdrawal {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  note       String   @default("")
+  by         String   @default("")
+  totalQty   Int
+  totalPrice Float    @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch Branch                    @relation(fields: [branchId], references: [id])
+  items  InventoryWithdrawalItem[]
+
+  @@index([branchId, createdAt])
+  @@map("inventory_withdrawals")
+}
+
+model InventoryWithdrawalItem {
+  id           String @id @default(uuid()) @map("_id")
+  withdrawalId String
+  sku          String
+  brand        String @default("")
+  model        String @default("")
+  color        String @default("")
+  category     String @default("")
+  qty          Int
+  price        Float  @default(0)
+
+  withdrawal InventoryWithdrawal @relation(fields: [withdrawalId], references: [id])
+
+  @@index([withdrawalId])
+  @@map("inventory_withdrawal_items")
+}
+
+model ShopCartItem {
+  id        String   @id @default(uuid()) @map("_id")
+  branchId  String
+  userId    String
+  coating   String
+  lensType  String // sph | cyl | compound
+  powerKey  String
+  quantity  Int
+  price     Float    @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([branchId, userId, coating, lensType, powerKey])
+  @@index([branchId, userId])
+  @@map("shop_cart_items")
+}
+
+model ShopLensWithdrawal {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  userId        String
+  username      String
+  totalQuantity Int
+  totalPrice    Float    @default(0)
+  note          String   @default("")
+  withdrawnAt   DateTime @default(now())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch Branch                   @relation(fields: [branchId], references: [id])
+  user   User                     @relation(fields: [userId], references: [id])
+  items  ShopLensWithdrawalItem[]
+
+  @@index([branchId, userId])
+  @@index([branchId, withdrawnAt])
+  @@map("shop_lens_withdrawals")
+}
+
+model ShopLensWithdrawalItem {
+  id           String @id @default(uuid()) @map("_id")
+  withdrawalId String
+  coating      String
+  lensType     String
+  powerKey     String
+  quantity     Int
+  price        Float  @default(0)
+
+  withdrawal ShopLensWithdrawal @relation(fields: [withdrawalId], references: [id])
+
+  @@index([withdrawalId])
+  @@map("shop_lens_withdrawal_items")
+}
+
+model Brand {
+  id          String   @id @default(uuid()) @map("_id")
+  branchId    String
+  name        String
+  description String   @default("")
+  logo        String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  inventoryProducts InventoryProduct[]
+  inventoryVariants InventoryVariant[]
+
+  @@unique([branchId, name])
+  @@map("brands")
+}
+
+model InventoryProduct {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  brandId       String?
+  brandName     String   @default("")
+  category      String   @default("Specs")
+  inventoryType String   @default("")
+  model         String   @default("")
+  displayName   String   @default("")
+  gender        String   @default("")
+  description   String   @default("")
+  image         String   @default("")
+  sizeOptions   String[]
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch   Branch             @relation(fields: [branchId], references: [id])
+  brand    Brand?             @relation(fields: [brandId], references: [id])
+  variants InventoryVariant[]
+
+  @@index([branchId, brandId, category, model])
+  @@index([branchId, brandId, model])
+  @@map("inventory_products")
+}
+
+model InventoryVariant {
+  id                  String    @id @default(uuid()) @map("_id")
+  branchId            String
+  productId           String?
+  brandId             String?
+  brandName           String    @default("")
+  category            String    @default("")
+  model               String    @default("")
+  gender              String    @default("")
+  sku                 String
+  variantCode         String    @default("")
+  color               String    @default("")
+  size                String    @default("")
+  material            String    @default("")
+  frameShape          String    @default("")
+  frameType           String    @default("")
+  templeSize          String    @default("")
+  bridgeSize          String    @default("")
+  lensWidth           String    @default("")
+  status              String    @default("active")
+  attributes          Json      @default("{}")
+  image               String    @default("")
+  stockQuantity       Int       @default(0)
+  defaultSellingPrice Float     @default(0)
+  rackId              String?
+  rackLabel           String    @default("")
+  supplierId          String?
+  supplierName        String    @default("")
+  lastSoldAt          DateTime?
+  active              Boolean   @default(true)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  branch    Branch              @relation(fields: [branchId], references: [id])
+  product   InventoryProduct?   @relation(fields: [productId], references: [id])
+  brand     Brand?              @relation(fields: [brandId], references: [id])
+  rack      Rack?               @relation(fields: [rackId], references: [id])
+  lots      InventoryLot[]
+  movements InventoryMovement[]
+
+  @@unique([branchId, sku])
+  @@index([branchId, productId, color])
+  @@index([branchId, rackId, active])
+  @@index([branchId, brandName, model])
+  @@index([branchId, active, stockQuantity])
+  @@map("inventory_variants")
+}
+
+model InventoryLot {
+  id              String    @id @default(uuid()) @map("_id")
+  branchId        String
+  variantId       String?
+  lotNumber       String    @default("")
+  initialQuantity Int       @default(0)
+  quantity        Int       @default(0)
+  purchasePrice   Float     @default(0)
+  sellingPrice    Float     @default(0)
+  supplierId      String?
+  supplierName    String    @default("")
+  rackId          String?
+  rackLabel       String    @default("")
+  purchaseDate    DateTime?
+  batchNumber     String    @default("")
+  expiryDate      DateTime?
+  source          String    @default("PURCHASE")
+  note            String    @default("")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  branch    Branch              @relation(fields: [branchId], references: [id])
+  variant   InventoryVariant?   @relation(fields: [variantId], references: [id])
+  movements InventoryMovement[]
+
+  @@index([branchId, variantId, createdAt])
+  @@index([branchId, variantId, expiryDate])
+  @@map("inventory_lots")
+}
+
+model InventoryMovement {
+  id             String   @id @default(uuid()) @map("_id")
+  branchId       String
+  variantId      String?
+  sku            String   @default("")
+  lotId          String?
+  type           String
+  quantity       Int      @default(0)
+  beforeQuantity Int      @default(0)
+  afterQuantity  Int      @default(0)
+  referenceType  String   @default("MANUAL")
+  referenceId    String?
+  note           String   @default("")
+  by             String   @default("")
+  performedBy    String   @default("")
+  rackId         String?
+  rackLabel      String   @default("")
+  oldRackId      String?
+  newRackId      String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  branch  Branch                 @relation(fields: [branchId], references: [id])
+  variant InventoryVariant?      @relation(fields: [variantId], references: [id])
+  lot     InventoryLot?          @relation(fields: [lotId], references: [id])
+  lots    InventoryMovementLot[]
+
+  @@index([branchId, variantId, createdAt])
+  @@index([branchId, type, createdAt])
+  @@index([branchId, referenceId])
+  @@index([branchId, createdAt])
+  @@map("inventory_movements")
+}
+
+model InventoryMovementLot {
+  id         String  @id @default(uuid()) @map("_id")
+  movementId String
+  lotId      String?
+  quantity   Int     @default(0)
+
+  movement InventoryMovement @relation(fields: [movementId], references: [id])
+
+  @@index([movementId])
+  @@map("inventory_movement_lots")
+}
+
+model Rack {
+  id          String   @id @default(uuid()) @map("_id")
+  branchId    String
+  name        String   @default("")
+  code        String
+  section     String   @default("")
+  description String   @default("")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  variants      InventoryVariant[]
+  countSessions InventoryCountSession[]
+
+  @@unique([branchId, code])
+  @@map("racks")
+}
+
+model InventoryCountSession {
+  id            String    @id @default(uuid()) @map("_id")
+  branchId      String
+  rackId        String?
+  rackLabel     String    @default("")
+  status        String    @default("draft")
+  startedBy     String    @default("")
+  completedBy   String    @default("")
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  expectedUnits Int       @default(0)
+  countedUnits  Int       @default(0)
+  note          String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  branch  Branch                @relation(fields: [branchId], references: [id])
+  rack    Rack?                 @relation(fields: [rackId], references: [id])
+  entries InventoryCountEntry[]
+
+  @@index([branchId, rackId])
+  @@index([branchId, status])
+  @@map("inventory_count_sessions")
+}
+
+model InventoryCountEntry {
+  id               String   @id @default(uuid()) @map("_id")
+  branchId         String
+  countSessionId   String
+  variantId        String?
+  sku              String   @default("")
+  brandName        String   @default("")
+  model            String   @default("")
+  color            String   @default("")
+  size             String   @default("")
+  lotId            String?
+  expectedQuantity Int      @default(0)
+  countedQuantity  Int      @default(0)
+  difference       Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  branch  Branch                @relation(fields: [branchId], references: [id])
+  session InventoryCountSession @relation(fields: [countSessionId], references: [id])
+
+  @@index([branchId, countSessionId, variantId])
+  @@map("inventory_count_entries")
+}
+
+model InventoryWithdrawalV2 {
+  id         String    @id @default(uuid()) @map("_id")
+  branchId   String
+  reason     String    @default("Other")
+  note       String    @default("")
+  by         String    @default("")
+  totalQty   Int
+  totalPrice Float     @default(0)
+  reversed   Boolean   @default(false)
+  reversedAt DateTime?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  branch Branch                      @relation(fields: [branchId], references: [id])
+  items  InventoryWithdrawalV2Item[]
+
+  @@index([branchId, createdAt])
+  @@index([branchId, by, createdAt])
+  @@map("inventory_withdrawals_v2")
+}
+
+model InventoryWithdrawalV2Item {
+  id           String  @id @default(uuid()) @map("_id")
+  withdrawalId String
+  variantId    String?
+  sku          String
+  brand        String  @default("")
+  model        String  @default("")
+  color        String  @default("")
+  category     String  @default("")
+  lotId        String?
+  quantity     Int
+  price        Float   @default(0)
+
+  withdrawal InventoryWithdrawalV2          @relation(fields: [withdrawalId], references: [id])
+  lots       InventoryWithdrawalV2ItemLot[]
+
+  @@index([withdrawalId])
+  @@map("inventory_withdrawal_v2_items")
+}
+
+model InventoryWithdrawalV2ItemLot {
+  id       String  @id @default(uuid()) @map("_id")
+  itemId   String
+  lotId    String?
+  quantity Int     @default(0)
+
+  item InventoryWithdrawalV2Item @relation(fields: [itemId], references: [id])
+
+  @@index([itemId])
+  @@map("inventory_withdrawal_v2_item_lots")
+}
+
+// ===========================================================================
+// WAREHOUSE MODELS (separate warehouse dataset)
+// ===========================================================================
+
+model WarehouseInventory {
+  id            String   @id @default(uuid()) @map("_id")
+  sku           String
+  category      String   @default("Specs")
+  inventoryType String   @default("spectacles")
+  brand         String?
+  model         String?
+  color         String?
+  size          String?
+  gender        String   @default("")
+  supplier      String?
+  quantity      Int      @default(0)
+  location      String   @default("shop")
+  purchasePrice Float    @default(0)
+  sellingPrice  Float    @default(0)
+  description   String?
+  lensIndex     String?
+  lensCoating   String?
+  sphRight      String?
+  cylRight      String?
+  axisRight     String?
+  sphLeft       String?
+  cylLeft       String?
+  axisLeft      String?
+  addPower      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  movements WarehouseInventoryMovementHistory[]
+
+  @@unique([sku])
+  @@index([category])
+  @@map("warehouse_inventory")
+}
+
+model WarehouseInventoryMovementHistory {
+  id          String   @id @default(uuid()) @map("_id")
+  inventoryId String
+  qty         Int
+  type        String   @default("adjust")
+  note        String   @default("")
+  by          String   @default("")
+  at          DateTime @default(now())
+
+  inventory WarehouseInventory @relation(fields: [inventoryId], references: [id])
+
+  @@index([inventoryId])
+  @@map("warehouse_inventory_movement_history")
+}
+
+model WarehouseLensStock {
+  id         String   @id @default(uuid()) @map("_id")
+  coating    String
+  price      Float    @default(0)
+  priceNeg   Float    @default(0)
+  pricePos   Float    @default(0)
+  quantities Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([coating])
+  @@map("warehouse_lens_stock")
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @map("_id")
+  userId    String
+  coating   String
+  lensType  String
+  powerKey  String
+  quantity  Int      @default(1)
+  price     Float    @default(0)
+  fogMark   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, coating, lensType, powerKey])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+model Withdrawal {
+  id            String    @id @default(uuid()) @map("_id")
+  userId        String
+  username      String
+  totalQuantity Int
+  totalPrice    Float     @default(0)
+  paid          Boolean   @default(false)
+  paidAt        DateTime?
+  withdrawnAt   DateTime  @default(now())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user  User             @relation(fields: [userId], references: [id])
+  items WithdrawalItem[]
+
+  @@index([withdrawnAt])
+  @@map("withdrawals")
+}
+
+model WithdrawalItem {
+  id           String @id @default(uuid()) @map("_id")
+  withdrawalId String
+  coating      String
+  lensType     String
+  powerKey     String
+  quantity     Int
+  price        Float  @default(0)
+  fogMark      String @default("")
+
+  withdrawal Withdrawal @relation(fields: [withdrawalId], references: [id])
+
+  @@index([withdrawalId])
+  @@map("withdrawal_items")
+}
+
+model FogMark {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("fog_marks")
+}

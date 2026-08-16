@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { connect, disconnect } from "mongoose";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";

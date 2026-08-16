@@ -79,6 +79,8 @@ function calculateBillAmounts(
 
 const billInclude = {
   customer: { select: { id: true, name: true, mobile: true, customerId: true } },
+  items: true,
+  stockItems: true,
 } as const;
 
 export async function generateBillNumber(): Promise<string> {
@@ -153,7 +155,7 @@ export async function createBill(
 }
 
 export async function updateBill(billId: string, updates: UpdateBillData): Promise<BillResult> {
-  const existing = await prisma.bill.findUnique({ where: { id: billId } });
+  const existing = await prisma.bill.findUnique({ where: { id: billId }, include: billInclude });
   if (!existing) {
     throw new AppError(404, "Bill not found");
   }
@@ -164,7 +166,7 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
 
   const items =
     updates.items ||
-    (existing.items as unknown as Array<{ description: string; quantity: number; unitPrice: number }>).map((it) => ({
+    (existing.items as Array<{ description: string; quantity: number; unitPrice: number }>).map((it) => ({
       description: it.description,
       quantity: it.quantity,
       unitPrice: it.unitPrice,
@@ -180,39 +182,40 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
     advancePaid
   );
 
-  const newItems =
-    updates.items
-      ? items.map((it: BillItemInput) => ({
-          description: it.description,
-          quantity: it.quantity || 1,
-          unitPrice: it.unitPrice || 0,
-          total: (it.quantity || 1) * (it.unitPrice || 0),
-        }))
-      : existing.items;
-
   const newStatus = updates.status || existing.status;
 
-  if (oldStatus !== newStatus && Array.isArray(existing.stockItems) && (existing.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
-    const stockItems = existing.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
+  if (oldStatus !== newStatus && existing.stockItems && existing.stockItems.length > 0) {
     if (newStatus === "Cancelled") {
-      await restoreStockForOrder({ stockItems });
+      await restoreStockForOrder({ stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }> });
     } else if (oldStatus === "Cancelled") {
-      await decrementStockForOrder({ stockItems });
+      await decrementStockForOrder({ stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }> });
     }
+  }
+
+  const billData: Record<string, unknown> = {
+    discount,
+    tax,
+    advancePaid,
+    subtotal,
+    totalAmount,
+    pendingAmount,
+    status: newStatus,
+  };
+
+  if (updates.items) {
+    const newItems = items.map((it: BillItemInput) => ({
+      description: it.description,
+      quantity: it.quantity || 1,
+      unitPrice: it.unitPrice || 0,
+      total: (it.quantity || 1) * (it.unitPrice || 0),
+    }));
+    await prisma.billItem.deleteMany({ where: { billId } });
+    await prisma.billItem.createMany({ data: newItems.map((it) => ({ ...it, billId, branchId: existing.branchId })) });
   }
 
   const bill = await prisma.bill.update({
     where: { id: billId },
-    data: {
-      items: newItems,
-      discount,
-      tax,
-      advancePaid,
-      subtotal,
-      totalAmount,
-      pendingAmount,
-      status: newStatus,
-    },
+    data: billData,
     include: billInclude,
   });
 
@@ -328,5 +331,5 @@ export async function listBills(filters: BillFilters): Promise<PaginatedResult<B
     (w) => prisma.bill.count({ where: w }),
     { page: filters.page, limit: filters.limit, cursor: filters.cursor },
     { where, orderBy: { createdAt: "desc" } }
-  ) as Promise<PaginatedResult<BillResult>>;
+  ) as unknown as Promise<PaginatedResult<BillResult>>;
 }

@@ -17,6 +17,7 @@ import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
 import { formatISTDate, formatISTDateTime } from "../utils/date";
 import { VALID_TRANSITIONS } from "../types";
+import { requireBranchId } from "../utils/scope";
 import {
   createOrderSchema,
   updateOrderSchema,
@@ -38,7 +39,7 @@ router.post(
   audit,
   validate(createOrderSchema, "body"),
   asyncHandler(async (req, res) => {
-    const customer = await Customer.findById(req.body.customerId).lean();
+    const customer = await Customer.findUnique({ where: { id: req.body.customerId } });
     if (!customer) throw new AppError(404, "Customer not found");
     await orderController.create(req, res);
     invalidateCache("/api/orders");
@@ -86,7 +87,7 @@ router.patch(
       const { status, collectPayment, paymentMode, advanceQuantity } = statusUpdateSchema.parse(
         req.body
       );
-      const order = await Order.findById(req.params.id);
+      const order = await Order.findUnique({ where: { id: req.params.id } });
       if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
       const allowed = VALID_TRANSITIONS[order.status] || [];
@@ -102,41 +103,46 @@ router.patch(
       const currentForwarded = order.forwardedCount || 0;
       const newForwarded = currentForwarded + advQty;
 
+      const updateData: Record<string, unknown> = {};
       if (newForwarded >= qty) {
-        order.status = status as any;
-        order.forwardedCount = 0;
-        if (status === "Delivered") order.actualDeliveryDate = new Date();
+        updateData.status = status;
+        updateData.forwardedCount = 0;
+        if (status === "Delivered") updateData.actualDeliveryDate = new Date();
       } else {
-        order.forwardedCount = newForwarded;
+        updateData.forwardedCount = newForwarded;
       }
-      await order.save();
+      const updatedOrder = await Order.update({ where: { id: order.id }, data: updateData });
 
       const result: any = {
-        order,
+        order: updatedOrder,
         partial: newForwarded < qty,
         forwardedCount: newForwarded < qty ? newForwarded : 0,
       };
 
-      const delivery = await Delivery.findOne({ orderId: order._id });
+      const delivery = await Delivery.findFirst({ where: { orderId: order.id } });
       if (delivery && newForwarded >= qty) {
+        const deliveryData: Record<string, unknown> = {};
         if (status === "Ready") {
-          delivery.status = "Ready";
-          await delivery.save();
+          deliveryData.status = "Ready";
         } else if (status === "Delivered") {
-          delivery.status = "Delivered";
-          delivery.actualDeliveryDate = new Date();
-          await delivery.save();
+          deliveryData.status = "Delivered";
+          deliveryData.actualDeliveryDate = new Date();
         } else if (status === "Cancelled") {
-          delivery.status = "Cancelled";
-          await delivery.save();
+          deliveryData.status = "Cancelled";
         }
-        result.delivery = delivery;
+        if (Object.keys(deliveryData).length > 0) {
+          await Delivery.update({ where: { id: delivery.id }, data: deliveryData });
+          result.delivery = { ...delivery, ...deliveryData };
+        }
       }
 
       if (status === "Ready" && newForwarded >= qty) {
-        const customer = await Customer.findById(order.customerId).select("name mobile");
+        const customer = await Customer.findUnique({
+          where: { id: order.customerId },
+          select: { name: true, mobile: true },
+        });
         if (customer?.mobile) {
-          const settings = await Settings.findOne().sort({ createdAt: -1 });
+          const settings = await Settings.findFirst({ orderBy: { createdAt: "desc" } });
           const shop = settings?.shopName || "KMJ Optical";
           const items = [order.frame, order.lens, order.coating].filter(Boolean).join(", ");
           const deliveryDate = order.deliveryDate ? formatISTDate(order.deliveryDate) : "soon";
@@ -146,15 +152,18 @@ router.patch(
           setTimeout(async () => {
             const sent = await wa.sendMessage(readyPhone, msg);
             if (!sent.ok)
-              console.error(`WhatsApp: order ${order._id} ready message failed:`, sent.error);
+              console.error(`WhatsApp: order ${order.id} ready message failed:`, sent.error);
           }, readyDelay);
         }
       }
 
       if (status === "Delivered" && newForwarded >= qty) {
-        const customer = await Customer.findById(order.customerId).select("name mobile");
+        const customer = await Customer.findUnique({
+          where: { id: order.customerId },
+          select: { name: true, mobile: true },
+        });
         if (customer?.mobile) {
-          const settings = await Settings.findOne().sort({ createdAt: -1 });
+          const settings = await Settings.findFirst({ orderBy: { createdAt: "desc" } });
           const shop = settings?.shopName || "KMJ Optical";
           const msg = `*${shop}* 🕶\n\nHi ${customer.name},\nYour order has been delivered! 🎉\n\nThank you for choosing ${shop}.\nSee you again! 🙏`;
           const deliveredPhone = normalizePhone(customer.mobile);
@@ -162,34 +171,43 @@ router.patch(
           setTimeout(async () => {
             const sent = await wa.sendMessage(deliveredPhone, msg);
             if (!sent.ok)
-              console.error(`WhatsApp: order ${order._id} delivered message failed:`, sent.error);
+              console.error(`WhatsApp: order ${order.id} delivered message failed:`, sent.error);
           }, deliveredDelay);
         }
       }
 
       if (status === "Delivered" && newForwarded >= qty && collectPayment && collectPayment > 0) {
-        let bill = await Bill.findOne({ visitId: order.visitId || order._id });
+        let bill = await Bill.findFirst({ where: { visitId: order.visitId || order.id } });
         if (!bill) {
-          bill = await Bill.findOne({ customerId: order.customerId }).sort({ createdAt: -1 });
+          bill = await Bill.findFirst({
+            where: { customerId: order.customerId },
+            orderBy: { createdAt: "desc" },
+          });
         }
         if (bill && bill.pendingAmount > 0) {
-          const payment = new Payment({
-            customerId: order.customerId,
-            billId: bill._id,
-            amount: collectPayment,
-            paymentMode: paymentMode || "Cash",
-            paymentDate: new Date(),
-            notes: `Collected on delivery (order ${order._id})`,
+          const payment = await Payment.create({
+            data: {
+              customerId: order.customerId,
+              billId: bill.id,
+              amount: collectPayment,
+              paymentMode: paymentMode || "Cash",
+              paymentDate: new Date(),
+              notes: `Collected on delivery (order ${order.id})`,
+              branchId: requireBranchId(),
+            },
           });
-          await payment.save();
-          bill.advancePaid = (bill.advancePaid || 0) + collectPayment;
-          bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-          await bill.save();
+          const newAdvancePaid = (bill.advancePaid || 0) + collectPayment;
+          const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+          await Bill.update({
+            where: { id: bill.id },
+            data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+          });
           result.payment = payment;
-          result.bill = bill;
+          result.bill = { ...bill, advancePaid: newAdvancePaid, pendingAmount: newPendingAmount };
 
-          await Customer.findByIdAndUpdate(order.customerId, {
-            $inc: { pendingAmount: -collectPayment },
+          await Customer.update({
+            where: { id: order.customerId },
+            data: { pendingAmount: { decrement: collectPayment } },
           });
         }
       }
@@ -212,12 +230,15 @@ router.patch(
         return res.status(400).json({ success: false, message: "Invalid payment amount" });
       }
 
-      const order = await Order.findById(req.params.id);
+      const order = await Order.findUnique({ where: { id: req.params.id } });
       if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-      let bill = await Bill.findOne({ visitId: order.visitId || order._id });
+      let bill = await Bill.findFirst({ where: { visitId: order.visitId || order.id } });
       if (!bill) {
-        bill = await Bill.findOne({ customerId: order.customerId }).sort({ createdAt: -1 });
+        bill = await Bill.findFirst({
+          where: { customerId: order.customerId },
+          orderBy: { createdAt: "desc" },
+        });
       }
       if (!bill) {
         return res.status(404).json({ success: false, message: "No bill found for this order" });
@@ -227,27 +248,33 @@ router.patch(
       }
 
       const actualCollect = Math.min(collectPayment, bill.pendingAmount);
-      const payment = new Payment({
-        customerId: order.customerId,
-        billId: bill._id,
-        amount: actualCollect,
-        paymentMode: paymentMode || "Cash",
-        paymentDate: new Date(),
-        notes: `Collected after delivery (order ${order._id})`,
+      const payment = await Payment.create({
+        data: {
+          customerId: order.customerId,
+          billId: bill.id,
+          amount: actualCollect,
+          paymentMode: paymentMode || "Cash",
+          paymentDate: new Date(),
+          notes: `Collected after delivery (order ${order.id})`,
+          branchId: requireBranchId(),
+        },
       });
-      await payment.save();
-      bill.advancePaid = (bill.advancePaid || 0) + actualCollect;
-      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-      await bill.save();
+      const newAdvancePaid = (bill.advancePaid || 0) + actualCollect;
+      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+      await Bill.update({
+        where: { id: bill.id },
+        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+      });
 
-      await Customer.findByIdAndUpdate(order.customerId, {
-        $inc: { pendingAmount: -actualCollect },
+      await Customer.update({
+        where: { id: order.customerId },
+        data: { pendingAmount: { decrement: actualCollect } },
       });
 
       invalidateCache("/api/orders");
       invalidateCache("/api/dashboard");
 
-      res.json({ success: true, data: { payment, bill } });
+      res.json({ success: true, data: { payment, bill: { ...bill, advancePaid: newAdvancePaid, pendingAmount: newPendingAmount } } });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }
@@ -277,7 +304,7 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
   return new Promise((resolve, reject) => {
     const doc = new PDFKit({ size: "A4", margins: { top: 25, bottom: 25, left: 22, right: 22 } });
     const buffers: Buffer[] = [];
-    doc.on("data", (chunk) => buffers.push(chunk));
+    doc.on("data", (chunk: Buffer) => buffers.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
 
@@ -299,7 +326,7 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
     doc.text(`Items: ${entries.length}`, m + 220, y);
     doc.text(`KMJ Optical`, m + cw - 60, y);
 
-    function checkPage(h: number) {
+    function checkPage(h: number): boolean {
       if (y + h > pageH - 35) {
         doc.addPage();
         y = m;
@@ -329,7 +356,7 @@ function generateDemandPdf(entries: DemandEntry[], type: "buy" | "order"): Promi
     doc.text("Prescription", cols[5].x, y + 4, { width: cols[5].w });
     y += 16;
 
-    entries.forEach((e, idx) => {
+    entries.forEach((e: DemandEntry, idx: number) => {
       const rowH = 18;
       checkPage(rowH);
 
@@ -383,34 +410,40 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
       return res.status(400).json({ success: false, message: 'Type must be "buy" or "order"' });
     }
 
-    const query: Record<string, unknown> = {
-      $or: [{ rightLensStatus: type }, { leftLensStatus: type }, { classification: type }],
+    const where: Record<string, unknown> = {
+      OR: [{ rightLensStatus: type }, { leftLensStatus: type }, { classification: type }],
     };
     if (Array.isArray(orderIds) && orderIds.length > 0) {
-      query._id = { $in: orderIds };
+      where.id = { in: orderIds };
     }
 
-    const orders = await Order.find(query)
-      .populate("customerId", "name mobile")
-      .populate("visitId")
-      .sort({ createdAt: -1 })
-      .lean();
+    const orders = await Order.findMany({
+      where,
+      include: {
+        customer: { select: { name: true, mobile: true } },
+        visit: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     if (orders.length === 0) {
       return res.status(404).json({ success: false, message: `No ${type} items found` });
     }
 
     const visitIds = orders
-      .map((o) => {
-        const vid = (o.visitId as any)?._id || o.visitId;
-        return vid ? vid.toString() : null;
+      .map((o: any) => {
+        const visit = o.visitId as any;
+        return visit?.id || null;
       })
-      .filter(Boolean);
+      .filter(Boolean) as string[];
     const prescriptions =
-      visitIds.length > 0 ? await Prescription.find({ visitId: { $in: visitIds } }).lean() : [];
-    const rxMap = new Map(prescriptions.map((p) => [p.visitId!.toString(), p]));
-    const ordersWithRx = orders.map((o) => {
-      const vid = ((o.visitId as any)?._id || o.visitId)?.toString();
+      visitIds.length > 0
+        ? await Prescription.findMany({ where: { visitId: { in: visitIds } } })
+        : [];
+    const rxMap = new Map(prescriptions.map((p: any) => [p.visitId || "", p]));
+    const ordersWithRx = orders.map((o: any) => {
+      const visit = o.visitId as any;
+      const vid = visit?.id;
       return { ...o, prescription: vid ? rxMap.get(vid) || null : null };
     });
 
@@ -494,7 +527,7 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
         ? "Purchase List - Items to buy from supplier"
         : "Lab Order List - Items to order from lab";
 
-    const settings = await Settings.findOne().sort({ createdAt: -1 });
+    const settings = await Settings.findFirst({ orderBy: { createdAt: "desc" } });
     let phone = settings?.shopPhone?.replace(/\D/g, "");
     if (!phone) {
       return res.status(400).json({ success: false, message: "Shop phone not configured" });
@@ -511,7 +544,7 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
     let sendError: string | null = null;
 
     try {
-      const result = await wa.sendMedia(
+      const sendResult = await wa.sendMedia(
         normalized,
         base64,
         filename,
@@ -519,8 +552,8 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
         caption,
         true
       );
-      sent = result.ok;
-      if (!result.ok && result.error) sendError = result.error;
+      sent = sendResult.ok;
+      if (!sendResult.ok && sendResult.error) sendError = sendResult.error;
     } catch (e: any) {
       sendError = e.message;
       console.error(`Demand PDF sendMedia threw: ${e.message}`);
@@ -530,7 +563,7 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
       console.log("Demand PDF sendMedia returned false, trying text fallback");
       try {
         const items = entries
-          .map((e) => `${e.eye}  ${e.customerName} - ${e.lensLabel} | ${e.coating} | ${e.rxStr}`)
+          .map((e: DemandEntry) => `${e.eye}  ${e.customerName} - ${e.lensLabel} | ${e.coating} | ${e.rxStr}`)
           .join("\n");
         const textMsg = `${title}\n\n${items}\n\nTotal: ${entries.length} items`;
         await wa.sendMessage(normalized, textMsg);

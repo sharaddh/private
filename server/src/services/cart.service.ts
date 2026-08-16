@@ -248,7 +248,7 @@ export async function markWithdrawalPaid(userId: string, id: string, paid: boole
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
   const updated = await Withdrawal.update({
     where: { id },
-    data: { paid: !!paid, paidAt: !!paid ? new Date() : null },
+    data: { paid: Boolean(paid), paidAt: paid ? new Date() : null },
   });
   return updated;
 }

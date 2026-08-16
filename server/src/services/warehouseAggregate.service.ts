@@ -9,12 +9,16 @@ const {
   Withdrawal: WHWithdrawal,
 } = getWarehouseModels();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyAgg = { branchId: string; branchName: string; branchCode: string; [k: string]: any };
+
 interface BranchItem {
   branchId: string;
   branchName: string;
   branchCode: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type AggregatedInventory = BranchItem & {
   id: string;
   sku: string;
@@ -68,7 +72,7 @@ async function getActiveBranches(): Promise<BranchInfo[]> {
 
 export async function getAllBranchInventory(query?: { search?: string }) {
   const branches = await getActiveBranches();
-  const allItems: AggregatedInventory[] = [];
+  const allItems: AnyAgg[] = [];
 
   const filter: Record<string, unknown> = {};
   if (query?.search) {
@@ -94,7 +98,7 @@ export async function getAllBranchInventory(query?: { search?: string }) {
             branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
-          } as AggregatedInventory);
+          } as AnyAgg);
         }
       } catch (err) {
         logger.error(`Failed to fetch inventory from branch ${branch.name}`, {
@@ -108,7 +112,7 @@ export async function getAllBranchInventory(query?: { search?: string }) {
     const mainItems = await WHInventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
     for (const item of mainItems) {
       allItems.push({
-        ...(item as unknown as AggregatedInventory),
+        ...(item as unknown as AnyAgg),
         branchId: "main",
         branchName: "Warehouse",
         branchCode: "WH",
@@ -131,8 +135,8 @@ export async function getAllBranchStats() {
   let totalValue = 0;
   let totalLensCoatings = 0;
   let totalLensStock = 0;
-  const recentItems: AggregatedInventory[] = [];
-  const lowStockItems: AggregatedInventory[] = [];
+  const recentItems: AnyAgg[] = [];
+  const lowStockItems: AnyAgg[] = [];
 
   await Promise.all(
     branches.map(async (branch: BranchInfo) => {
@@ -161,7 +165,7 @@ export async function getAllBranchStats() {
             branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
-          } as AggregatedInventory);
+          } as AnyAgg);
         }
         for (const item of lowItems) {
           lowStockItems.push({
@@ -169,7 +173,7 @@ export async function getAllBranchStats() {
             branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
-          } as AggregatedInventory);
+          } as AnyAgg);
         }
 
         const lensDocs = await models.LensStock.find().lean();
@@ -212,7 +216,7 @@ export async function getAllBranchStats() {
 
     for (const item of mainRecent) {
       recentItems.push({
-        ...(item as unknown as AggregatedInventory),
+        ...(item as unknown as AnyAgg),
         branchId: "main",
         branchName: "Warehouse",
         branchCode: "WH",
@@ -220,7 +224,7 @@ export async function getAllBranchStats() {
     }
     for (const item of mainLowItems) {
       lowStockItems.push({
-        ...(item as unknown as AggregatedInventory),
+        ...(item as unknown as AnyAgg),
         branchId: "main",
         branchName: "Warehouse",
         branchCode: "WH",
@@ -271,7 +275,7 @@ export async function getAllBranchStats() {
 
 export async function getAllBranchLensStock() {
   const branches = await getActiveBranches();
-  const allItems: AggregatedLensStock[] = [];
+  const allItems: AnyAgg[] = [];
 
   await Promise.all(
     branches.map(async (branch: BranchInfo) => {
@@ -284,7 +288,7 @@ export async function getAllBranchLensStock() {
             branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
-          } as AggregatedLensStock);
+          } as AnyAgg);
         }
       } catch (err) {
         logger.error(`Failed to fetch lens stock from branch ${branch.name}`, {
@@ -298,7 +302,7 @@ export async function getAllBranchLensStock() {
     const mainItems = await WHLensStock.find().sort({ coating: 1 }).lean();
     for (const item of mainItems) {
       allItems.push({
-        ...(item as unknown as AggregatedLensStock),
+        ...(item as unknown as AnyAgg),
         branchId: "main",
         branchName: "Warehouse",
         branchCode: "WH",
