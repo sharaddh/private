@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const BrandSchemaObj = new Schema(
   {
@@ -12,5 +13,4 @@ const BrandSchemaObj = new Schema(
 );
 
 export const BrandSchema = BrandSchemaObj;
-const _Brand = model("Brand", BrandSchemaObj);
-export const Brand = withBranch(_Brand, "Brand");
+export const Brand = scoped(prisma.brand) as Prisma.BrandDelegate;
