@@ -1,12 +1,5 @@
-import { Customer } from "../models/customer";
-import { Visit } from "../models/visit";
-import { Prescription } from "../models/prescription";
-import { Order } from "../models/order";
-import { Bill } from "../models/bill";
-import { Payment } from "../models/payment";
-import { Delivery } from "../models/delivery";
-import { Settings } from "../models/settings";
-import { withTransaction } from "../utils/transaction";
+import { prisma } from "../db/prisma";
+import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
@@ -21,7 +14,7 @@ import {
 interface TransactionInput {
   customerId?: string;
   customer?: {
-    _id?: string;
+    id?: string;
     name?: string;
     mobile?: string;
     email?: string;
@@ -62,132 +55,163 @@ export async function executeTransaction(
   body: TransactionInput,
   _branchId?: string
 ): Promise<Record<string, unknown>> {
-  return withTransaction(async (session) => {
-    const result: Record<string, unknown> = {};
+  const result: Record<string, unknown> = {};
 
-    const stockRef: OrderStockRef | undefined = body.order
-      ? (body.order as OrderStockRef)
-      : Array.isArray(body.stockItems) && body.stockItems.length > 0
-        ? { stockItems: body.stockItems }
-        : undefined;
+  const stockRef: OrderStockRef | undefined = body.order
+    ? (body.order as OrderStockRef)
+    : Array.isArray(body.stockItems) && body.stockItems.length > 0
+      ? { stockItems: body.stockItems }
+      : undefined;
 
-    if (stockRef) {
-      await assertStockAvailable(stockRef, session);
-    }
+  if (stockRef) {
+    await assertStockAvailable(stockRef);
+  }
 
-    let customer: InstanceType<typeof Customer> | null = null;
-    if (body.customerId) {
-      customer = await Customer.findById(body.customerId).session(session);
-    }
-    if (!customer && body.customer?._id) {
-      customer = await Customer.findById(body.customer._id).session(session);
-    }
-    if (!customer && body.customer?.mobile) {
-      customer = await Customer.findOne({ mobile: body.customer.mobile }).session(session);
-    }
-    if (!customer && body.customer) {
-      customer = new Customer({
+  let customer: any = null;
+  if (body.customerId) {
+    customer = await prisma.customer.findUnique({ where: { id: body.customerId } });
+  }
+  if (!customer && body.customer?.id) {
+    customer = await prisma.customer.findUnique({ where: { id: body.customer.id } });
+  }
+  if (!customer && body.customer?.mobile) {
+    customer = await prisma.customer.findFirst({ where: { mobile: body.customer.mobile } });
+  }
+  if (!customer && body.customer) {
+    customer = await prisma.customer.create({
+      data: {
         ...body.customer,
         customerId: `CUST-${Date.now()}`,
-      });
-      await customer.save({ session });
-    }
+        branchId: requireBranchId(),
+      },
+    });
+  }
 
-    if (!customer) {
-      throw new AppError(400, "Customer not found or created");
-    }
-    result.customer = customer;
+  if (!customer) {
+    throw new AppError(400, "Customer not found or created");
+  }
+  result.customer = customer;
 
-    if (body.visit) {
-      const visit = new Visit({
-        customerId: customer._id,
+  if (body.visit) {
+    const visit = await prisma.visit.create({
+      data: {
+        customerId: customer.id,
         visitDate: body.visit.visitDate ? new Date(body.visit.visitDate) : new Date(),
-        visitType: body.visit.visitType || "new",
+        visitType: (body.visit.visitType as any) || "new",
         doctorName: body.visit.doctorName,
         shop: body.visit.shop,
         remarks: body.visit.remarks,
-      });
-      await visit.save({ session });
-      result.visit = visit;
-      await Customer.findByIdAndUpdate(customer._id, { $inc: { totalVisits: 1 } }).session(session);
+        branchId: requireBranchId(),
+      },
+    });
+    result.visit = visit;
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { totalVisits: { increment: 1 } },
+    });
 
-      if (body.prescription) {
-        const prescription = new Prescription({
-          customerId: customer._id,
-          visitId: visit._id,
+    if (body.prescription) {
+      const prescription = await prisma.prescription.create({
+        data: {
+          customerId: customer.id,
+          visitId: visit.id,
+          branchId: requireBranchId(),
           ...body.prescription,
-        });
-        await prescription.save({ session });
-        result.prescription = prescription;
-      }
-    }
-
-    if (body.order) {
-      const order = new Order({
-        customerId: customer._id,
-        visitId: (result.visit as any)?._id,
-        ...body.order,
+        },
       });
-      await order.save({ session });
-      await decrementStockForOrder(order, session);
-      result.order = order;
-    } else if (stockRef) {
-      await decrementStockForOrder(stockRef, session);
+      result.prescription = prescription;
     }
+  }
 
-    if (body.bill) {
-      const bill = new Bill({
+  if (body.order) {
+    const order = await prisma.order.create({
+      data: {
+        customerId: customer.id,
+        visitId: (result.visit as any)?.id,
+        branchId: requireBranchId(),
+        ...body.order,
+      },
+    });
+    await decrementStockForOrder(order as any);
+    result.order = order;
+  } else if (stockRef) {
+    await decrementStockForOrder(stockRef);
+  }
+
+  if (body.bill) {
+    const bill = await prisma.bill.create({
+      data: {
         billNumber: `BILL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        customerId: customer._id,
-        visitId: (result.visit as any)?._id,
-        items: body.bill.items || [],
-        stockItems: !body.order && Array.isArray(body.stockItems) ? body.stockItems : [],
+        customerId: customer.id,
+        visitId: (result.visit as any)?.id,
+        branchId: requireBranchId(),
+        items: {
+          create: (body.bill.items || []).map((it: any) => ({
+            description: it.description || "",
+            quantity: it.quantity || 1,
+            unitPrice: it.unitPrice || 0,
+            total: (it.quantity || 1) * (it.unitPrice || 0),
+          })),
+        },
+        stockItems: {
+          create: (Array.isArray(body.stockItems) ? body.stockItems : []).map((it: any) => ({
+            sku: it.sku || "",
+            quantity: it.quantity || 0,
+          })),
+        },
         subtotal: body.bill.subtotal || 0,
         discount: body.bill.discount || 0,
         totalAmount: body.bill.totalAmount || 0,
         advancePaid: body.payment?.amount || 0,
         pendingAmount: Math.max(0, (body.bill.totalAmount || 0) - (body.payment?.amount || 0)),
+      },
+    });
+    result.bill = bill;
+
+    const billTotalAmount = body.bill.totalAmount || 0;
+    const billPendingAmount = Math.max(0, billTotalAmount - (body.payment?.amount || 0));
+    if (billTotalAmount > 0) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: {
+          totalSpent: { increment: billTotalAmount },
+          pendingAmount: { increment: billPendingAmount },
+        },
       });
-      await bill.save({ session });
-      result.bill = bill;
+    }
 
-      const billTotalAmount = body.bill.totalAmount || 0;
-      const billPendingAmount = Math.max(0, billTotalAmount - (body.payment?.amount || 0));
-      if (billTotalAmount > 0) {
-        await Customer.findByIdAndUpdate(customer._id, {
-          $inc: { totalSpent: billTotalAmount, pendingAmount: billPendingAmount },
-        }).session(session);
-      }
-
-      if (body.payment?.amount != null && body.payment.amount > 0) {
-        const payment = new Payment({
-          customerId: customer._id,
-          billId: bill._id,
+    if (body.payment?.amount != null && body.payment.amount > 0) {
+      const payment = await prisma.payment.create({
+        data: {
+          customerId: customer.id,
+          billId: bill.id,
           amount: body.payment.amount,
           paymentMode: body.payment.paymentMode || body.payment.mode || "Cash",
           paymentDate: new Date(),
           notes: body.payment.notes || "Advance payment",
-        });
-        await payment.save({ session });
-        result.payment = payment;
-      }
+          branchId: requireBranchId(),
+        },
+      });
+      result.payment = payment;
     }
+  }
 
-    if (body.delivery) {
-      const delivery = new Delivery({
-        customerId: customer._id,
-        orderId: (result.order as any)?._id,
+  if (body.delivery) {
+    const delivery = await prisma.delivery.create({
+      data: {
+        customerId: customer.id,
+        orderId: (result.order as any)?.id,
         address: body.delivery.address,
         expectedDeliveryDate: body.delivery.expectedDeliveryDate
           ? new Date(body.delivery.expectedDeliveryDate)
           : undefined,
-      });
-      await delivery.save({ session });
-      result.delivery = delivery;
-    }
+        branchId: requireBranchId(),
+      },
+    });
+    result.delivery = delivery;
+  }
 
-    return result;
-  });
+  return result;
 }
 
 export function sendBillWhatsApp(bill: any, customer: any, branchId?: string): void {
@@ -197,7 +221,7 @@ export function sendBillWhatsApp(bill: any, customer: any, branchId?: string): v
     try {
       const { whatsappManager } = await import("./whatsapp");
       const wa = whatsappManager.getInstance(branchId);
-      const settings = await Settings.findOne().sort({ updatedAt: -1 }).lean();
+      const settings = await prisma.settings.findFirst({ orderBy: { updatedAt: "desc" } });
       const pdfBuffer = generateBillPdf(
         {
           billNumber: bill.billNumber,

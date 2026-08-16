@@ -104,3 +104,86 @@ export function buildDateFilter(
   if (end) filter.$lte = end;
   return { [fieldName]: filter };
 }
+
+export interface PrismaRange {
+  gte?: Date;
+  lte?: Date;
+}
+
+export function prismaDateRange(
+  fieldName: string,
+  start?: Date,
+  end?: Date
+): { [key: string]: PrismaRange } | undefined {
+  if (!start && !end) return undefined;
+  const range: PrismaRange = {};
+  if (start) range.gte = start;
+  if (end) range.lte = end;
+  return { [fieldName]: range };
+}
+
+/**
+ * Prisma-native pagination. `findMany`/`count` are the delegate methods (already
+ * branch-scoped where applicable). `baseArgs` may carry `where`, `include`,
+ * `select`, etc.
+ */
+export async function paginateFind<T>(
+  findMany: (args: any) => Promise<T[]>,
+  count: (where: any) => Promise<number>,
+  options: PaginationOptions = {},
+  baseArgs: any = {}
+): Promise<PaginatedResult<T>> {
+  const pageSize = Math.min(
+    Math.max(parseInt(options.limit || String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT, MIN_LIMIT),
+    MAX_LIMIT
+  );
+  const where = baseArgs.where ?? {};
+  const isCursorBased = !!options.cursor;
+
+  if (isCursorBased) {
+    const data = await findMany({
+      ...baseArgs,
+      where: { ...where, id: { lt: options.cursor } },
+      orderBy: { id: "desc" },
+      take: pageSize + 1,
+    });
+    const total = await count(where);
+
+    const hasMore = data.length > pageSize;
+    const sliced = hasMore ? data.slice(0, pageSize) : data;
+    const nextCursor =
+      hasMore && sliced.length > 0 ? String((sliced[sliced.length - 1] as any).id) : null;
+
+    return {
+      data: sliced,
+      total,
+      page: 1,
+      pages: Math.ceil(total / pageSize),
+      hasMore,
+      nextCursor,
+    };
+  }
+
+  const pageNum = Math.max(parseInt(options.page || "1", 10) || 1, 1);
+  const skip = (pageNum - 1) * pageSize;
+
+  const [data, total] = await Promise.all([
+    findMany({
+      ...baseArgs,
+      where,
+      orderBy: baseArgs.orderBy ?? { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    count(where),
+  ]);
+
+  return {
+    data,
+    total,
+    page: pageNum,
+    pages: Math.ceil(total / pageSize),
+    hasMore: pageNum * pageSize < total,
+    nextCursor: null,
+  };
+}

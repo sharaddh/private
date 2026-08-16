@@ -1,5 +1,4 @@
 import { Request } from "express";
-import type { BranchModels } from "../models/db";
 
 export interface JwtPayload {
   sub: string;
@@ -16,7 +15,6 @@ export interface BranchRequest extends AuthRequest {
   branchId?: string;
   branchDb?: string;
   branchName?: string;
-  branchModels?: BranchModels;
 }
 
 export interface PaginatedQuery {

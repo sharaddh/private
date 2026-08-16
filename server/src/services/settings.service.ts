@@ -1,4 +1,5 @@
 import { Settings } from "../models/settings";
+import { requireBranchId } from "../utils/scope";
 
 interface SettingsData {
   shopName?: string;
@@ -28,9 +29,9 @@ const DEFAULT_SETTINGS = {
 };
 
 export async function getSettings() {
-  let settings = await Settings.findOne().lean();
+  let settings = await Settings.findFirst();
   if (!settings) {
-    settings = await Settings.create(DEFAULT_SETTINGS);
+    settings = await Settings.create({ data: { ...DEFAULT_SETTINGS, branchId: requireBranchId() } });
     return settings;
   }
   return settings;
@@ -44,13 +45,10 @@ export async function updateSettings(data: SettingsData) {
     }
   }
 
-  let settings = await Settings.findOne();
-  if (!settings) {
-    settings = await Settings.create({ ...DEFAULT_SETTINGS, ...filtered });
-    return settings;
+  const existing = await Settings.findFirst();
+  if (!existing) {
+    return Settings.create({ data: { ...DEFAULT_SETTINGS, ...filtered, branchId: requireBranchId() } });
   }
 
-  Object.assign(settings, filtered);
-  await settings.save();
-  return settings;
+  return Settings.update({ where: { id: existing.id }, data: filtered });
 }

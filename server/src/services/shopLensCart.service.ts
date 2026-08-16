@@ -1,7 +1,9 @@
+import { prisma } from "../db/prisma";
 import { LensStock } from "../models/lensStock";
 import { ShopCartItem } from "../models/shopLensCart";
 import { ShopLensWithdrawal } from "../models/shopLensWithdrawal";
 import { AppError } from "../middleware/errorHandler";
+import { requireBranchId } from "../utils/scope";
 import { getPriceForPower } from "./lensStock.service";
 
 function pairStr(v: number): string {
@@ -9,11 +11,17 @@ function pairStr(v: number): string {
 }
 
 export async function getCartItems(userId: string) {
-  const items = await ShopCartItem.find({ user: userId }).sort({ createdAt: 1 }).lean();
+  const items = await ShopCartItem.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
   const coatingToStock = new Map<string, any>();
   for (const item of items) {
     if (!coatingToStock.has(item.coating)) {
-      coatingToStock.set(item.coating, await LensStock.findOne({ coating: item.coating }));
+      coatingToStock.set(
+        item.coating,
+        await LensStock.findFirst({ where: { coating: item.coating } })
+      );
     }
   }
   return items.map((item) => {
@@ -24,7 +32,7 @@ export async function getCartItems(userId: string) {
 }
 
 export async function getCartCount(userId: string) {
-  return ShopCartItem.countDocuments({ user: userId });
+  return ShopCartItem.count({ where: { userId } });
 }
 
 export async function addToCart(
@@ -38,40 +46,46 @@ export async function addToCart(
     throw new AppError(400, "lensType must be sph, cyl, or compound");
   }
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
-  const stock = await LensStock.findOne({ coating });
+  const stock = await LensStock.findFirst({ where: { coating } });
   if (!stock) throw new AppError(400, `${coating}: lens stock not found`);
   const price = getPriceForPower(stock, powerKey);
   const q = (stock.quantities as Record<string, Record<string, number>>) || {};
   const available = q[lensType]?.[powerKey] || 0;
 
-  const existing = await ShopCartItem.findOne({ user: userId, coating, lensType, powerKey });
+  const existing = await ShopCartItem.findFirst({
+    where: { userId, coating, lensType, powerKey },
+  });
   if (existing) {
     const total = existing.quantity + qty;
     if (total > available)
       throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
-    existing.quantity = total;
-    existing.price = price;
-    await existing.save();
-    return { ...existing.toJSON(), available };
+    const updated = await ShopCartItem.update({
+      where: { id: existing.id },
+      data: { quantity: total, price },
+    });
+    return { ...updated, available };
   }
   if (qty > available)
     throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
   const item = await ShopCartItem.create({
-    user: userId,
-    coating,
-    lensType,
-    powerKey,
-    quantity: qty,
-    price,
+    data: {
+      userId,
+      coating,
+      lensType,
+      powerKey,
+      quantity: qty,
+      price,
+      branchId: requireBranchId(),
+    },
   });
-  return { ...item.toJSON(), available };
+  return { ...item, available };
 }
 
 export async function updateCartItem(userId: string, itemId: string, quantity: number) {
   if (quantity < 1) throw new AppError(400, "Quantity must be at least 1");
-  const item = await ShopCartItem.findOne({ _id: itemId, user: userId });
+  const item = await ShopCartItem.findFirst({ where: { id: itemId, userId } });
   if (!item) throw new AppError(404, "Cart item not found");
-  const stock = await LensStock.findOne({ coating: item.coating });
+  const stock = await LensStock.findFirst({ where: { coating: item.coating } });
   if (!stock) throw new AppError(400, `${item.coating}: lens stock not found`);
   const q = (stock.quantities as Record<string, Record<string, number>>) || {};
   const available = q[item.lensType]?.[item.powerKey] || 0;
@@ -80,24 +94,29 @@ export async function updateCartItem(userId: string, itemId: string, quantity: n
       400,
       `${item.coating} ${item.powerKey}: only ${pairStr(available)} in stock`
     );
-  item.quantity = Math.floor(quantity);
-  await item.save();
-  return { ...item.toJSON(), available };
+  const updated = await ShopCartItem.update({
+    where: { id: item.id },
+    data: { quantity: Math.floor(quantity) },
+  });
+  return { ...updated, available };
 }
 
 export async function removeCartItem(userId: string, itemId: string) {
-  const item = await ShopCartItem.findOne({ _id: itemId, user: userId });
+  const item = await ShopCartItem.findFirst({ where: { id: itemId, userId } });
   if (!item) throw new AppError(404, "Cart item not found");
-  await item.deleteOne();
-  return item.toJSON();
+  await ShopCartItem.delete({ where: { id: item.id } });
+  return item;
 }
 
 export async function clearCart(userId: string) {
-  await ShopCartItem.deleteMany({ user: userId });
+  await ShopCartItem.deleteMany({ where: { userId } });
 }
 
 export async function withdrawCart(userId: string, username: string, note?: string) {
-  const items = await ShopCartItem.find({ user: userId }).sort({ createdAt: 1 }).lean();
+  const items = await ShopCartItem.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
@@ -112,7 +131,7 @@ export async function withdrawCart(userId: string, username: string, note?: stri
   let totalPrice = 0;
 
   for (const item of items) {
-    const lensStock = await LensStock.findOne({ coating: item.coating });
+    const lensStock = await LensStock.findFirst({ where: { coating: item.coating } });
     if (!lensStock) {
       errors.push(`${item.coating}: lens stock not found`);
       continue;
@@ -132,9 +151,10 @@ export async function withdrawCart(userId: string, username: string, note?: stri
     if (!q[item.lensType]) q[item.lensType] = {};
     q[item.lensType][item.powerKey] = newQty;
 
-    lensStock.quantities = q;
-    lensStock.markModified("quantities");
-    await lensStock.save();
+    await LensStock.update({
+      where: { id: lensStock.id },
+      data: { quantities: q as any },
+    });
 
     const price = item.price ?? getPriceForPower(lensStock, item.powerKey);
     withdrawnItems.push({
@@ -150,32 +170,48 @@ export async function withdrawCart(userId: string, username: string, note?: stri
 
   if (withdrawnItems.length > 0) {
     await ShopLensWithdrawal.create({
-      user: userId,
-      username,
-      items: withdrawnItems,
-      totalQuantity,
-      totalPrice,
-      note: typeof note === "string" ? note : "",
+      data: {
+        userId,
+        username,
+        totalQuantity,
+        totalPrice,
+        note: typeof note === "string" ? note : "",
+        branchId: requireBranchId(),
+        items: {
+          create: withdrawnItems.map((it) => ({
+            coating: it.coating,
+            lensType: it.lensType,
+            powerKey: it.powerKey,
+            quantity: it.quantity,
+            price: it.price,
+          })),
+        },
+      },
     });
   }
 
-  await ShopCartItem.deleteMany({ user: userId });
+  await ShopCartItem.deleteMany({ where: { userId } });
 
   return { withdrawn: withdrawnItems.length, errors };
 }
 
 export async function getWithdrawals(userId: string) {
-  const withdrawals = await ShopLensWithdrawal.find({ user: userId })
-    .sort({ withdrawnAt: -1 })
-    .limit(100)
-    .lean();
+  const withdrawals = await ShopLensWithdrawal.findMany({
+    where: { userId },
+    orderBy: { withdrawnAt: "desc" },
+    take: 100,
+    include: { items: true },
+  });
   return attachAvailable(withdrawals);
 }
 
 export async function getWithdrawalById(userId: string, id: string) {
-  const withdrawal = await ShopLensWithdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await ShopLensWithdrawal.findFirst({
+    where: { id, userId },
+    include: { items: true },
+  });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
-  return (await attachAvailable([withdrawal.toJSON()]))[0];
+  return (await attachAvailable([withdrawal]))[0];
 }
 
 // Attaches the current in-stock quantity to each withdrawal item so the UI can
@@ -184,7 +220,7 @@ async function attachAvailable(withdrawals: any[]) {
   const coatingCache = new Map<string, any>();
   const getStock = async (coating: string) => {
     if (!coatingCache.has(coating)) {
-      coatingCache.set(coating, await LensStock.findOne({ coating }));
+      coatingCache.set(coating, await LensStock.findFirst({ where: { coating } }));
     }
     return coatingCache.get(coating);
   };
@@ -199,27 +235,36 @@ async function attachAvailable(withdrawals: any[]) {
 }
 
 export async function deleteWithdrawal(userId: string, id: string) {
-  const withdrawal = await ShopLensWithdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await ShopLensWithdrawal.findFirst({
+    where: { id, userId },
+    include: { items: true },
+  });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const coatingCache = new Map<string, any>();
   for (const it of withdrawal.items || []) {
     if (!it.coating || !it.lensType || !it.powerKey || it.quantity <= 0) continue;
     if (!coatingCache.has(it.coating)) {
-      coatingCache.set(it.coating, await LensStock.findOne({ coating: it.coating }));
+      coatingCache.set(
+        it.coating,
+        await LensStock.findFirst({ where: { coating: it.coating } })
+      );
     }
     const lensStock = coatingCache.get(it.coating);
     if (!lensStock) continue;
     const q = (lensStock.quantities as Record<string, Record<string, number>>) || {};
     if (!q[it.lensType]) q[it.lensType] = {};
     q[it.lensType][it.powerKey] = (q[it.lensType][it.powerKey] || 0) + it.quantity;
-    lensStock.quantities = q;
-    lensStock.markModified("quantities");
-    await lensStock.save();
+
+    await LensStock.update({
+      where: { id: lensStock.id },
+      data: { quantities: q as any },
+    });
   }
 
-  await withdrawal.deleteOne();
-  return withdrawal.toJSON();
+  await prisma.shopLensWithdrawalItem.deleteMany({ where: { withdrawalId: withdrawal.id } });
+  await ShopLensWithdrawal.delete({ where: { id: withdrawal.id } });
+  return withdrawal;
 }
 
 export async function updateWithdrawal(
@@ -227,7 +272,10 @@ export async function updateWithdrawal(
   id: string,
   items: { coating: string; lensType: string; powerKey: string; quantity: number }[]
 ) {
-  const withdrawal = await ShopLensWithdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await ShopLensWithdrawal.findFirst({
+    where: { id, userId },
+    include: { items: true },
+  });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const normalized: { coating: string; lensType: string; powerKey: string; quantity: number }[] =
@@ -268,7 +316,7 @@ export async function updateWithdrawal(
 
   const getStock = async (coating: string) => {
     if (!lensStockCache.has(coating)) {
-      lensStockCache.set(coating, await LensStock.findOne({ coating }));
+      lensStockCache.set(coating, await LensStock.findFirst({ where: { coating } }));
     }
     return lensStockCache.get(coating);
   };
@@ -301,9 +349,11 @@ export async function updateWithdrawal(
     const q = (stock.quantities as Record<string, Record<string, number>>) || {};
     if (!q[lensType]) q[lensType] = {};
     q[lensType][powerKey] = (q[lensType][powerKey] || 0) + delta;
-    stock.quantities = q;
-    stock.markModified("quantities");
-    await stock.save();
+
+    await LensStock.update({
+      where: { id: stock.id },
+      data: { quantities: q as any },
+    });
   }
 
   const mergedItems: {
@@ -332,10 +382,24 @@ export async function updateWithdrawal(
   const totalQuantity = mergedItems.reduce((s, it) => s + it.quantity, 0);
   const totalPrice = mergedItems.reduce((s, it) => s + it.price * (it.quantity / 2), 0);
 
-  withdrawal.items = mergedItems as typeof withdrawal.items;
-  withdrawal.totalQuantity = totalQuantity;
-  withdrawal.totalPrice = totalPrice;
-  await withdrawal.save();
+  await prisma.shopLensWithdrawalItem.deleteMany({ where: { withdrawalId: withdrawal.id } });
+  if (mergedItems.length > 0) {
+    await prisma.shopLensWithdrawalItem.createMany({
+      data: mergedItems.map((it) => ({
+        withdrawalId: withdrawal.id,
+        coating: it.coating,
+        lensType: it.lensType,
+        powerKey: it.powerKey,
+        quantity: it.quantity,
+        price: it.price,
+      })),
+    });
+  }
 
-  return withdrawal.toJSON();
+  const updated = await ShopLensWithdrawal.update({
+    where: { id: withdrawal.id },
+    data: { totalQuantity, totalPrice },
+  });
+
+  return { ...updated, items: mergedItems };
 }

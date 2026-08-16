@@ -1,6 +1,7 @@
 import { Visit } from "../models/visit";
 import { Customer } from "../models/customer";
 import { AppError } from "../middleware/errorHandler";
+import { requireBranchId } from "../utils/scope";
 
 interface VisitData {
   customerId?: string;
@@ -23,43 +24,51 @@ const UPDATE_WHITELIST = [
 ] as const;
 
 export async function listVisits(customerId?: string, limit = 100) {
-  const filter: Record<string, unknown> = {};
-  if (customerId) filter.customerId = customerId;
-  return Visit.find(filter).sort({ visitDate: -1 }).limit(Math.min(limit, 200)).lean();
+  const where: Record<string, unknown> = {};
+  if (customerId) where.customerId = customerId;
+  return Visit.findMany({
+    where,
+    orderBy: { visitDate: "desc" },
+    take: Math.min(limit, 200),
+  });
 }
 
 export async function getVisitById(id: string) {
-  const visit = await Visit.findById(id).lean();
+  const visit = await Visit.findUnique({ where: { id } });
   if (!visit) throw new AppError(404, "Visit not found");
   return visit;
 }
 
 export async function createVisit(data: VisitData) {
   if (!data.customerId) throw new AppError(400, "Customer ID is required");
-  const visit = await Visit.create(data);
-  await Customer.findByIdAndUpdate(data.customerId, { $inc: { totalVisits: 1 } }).exec();
+  const visit = await Visit.create({ data: { customerId: data.customerId!, visitDate: data.visitDate, visitType: data.visitType, doctorName: data.doctorName, shop: data.shop, shopId: data.shopId, remarks: data.remarks, branchId: requireBranchId() } });
+  await Customer.update({
+    where: { id: data.customerId },
+    data: { totalVisits: { increment: 1 } },
+  });
   return visit;
 }
 
 export async function updateVisit(id: string, data: VisitData) {
+  const existing = await Visit.findUnique({ where: { id } });
+  if (!existing) throw new AppError(404, "Visit not found");
+
   const filtered: Record<string, unknown> = {};
   for (const key of UPDATE_WHITELIST) {
     if (key in data) {
       filtered[key] = (data as Record<string, unknown>)[key];
     }
   }
-  const visit = await Visit.findByIdAndUpdate(
-    id,
-    { $set: filtered },
-    { new: true, runValidators: true }
-  ).lean();
-  if (!visit) throw new AppError(404, "Visit not found");
-  return visit;
+  return Visit.update({ where: { id }, data: filtered });
 }
 
 export async function deleteVisit(id: string) {
-  const visit = await Visit.findByIdAndDelete(id).lean();
+  const visit = await Visit.findUnique({ where: { id } });
   if (!visit) throw new AppError(404, "Visit not found");
-  await Customer.findByIdAndUpdate(visit.customerId, { $inc: { totalVisits: -1 } }).exec();
+  await Visit.delete({ where: { id } });
+  await Customer.update({
+    where: { id: visit.customerId },
+    data: { totalVisits: { decrement: 1 } },
+  });
   return visit;
 }

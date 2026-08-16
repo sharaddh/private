@@ -1,8 +1,6 @@
 import { AsyncLocalStorage } from "async_hooks";
-import type { BranchModels } from "../models/db";
 
 export interface RequestContext {
-  branchModels?: BranchModels;
   branchId?: string;
   branchName?: string;
 }

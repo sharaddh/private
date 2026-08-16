@@ -55,13 +55,15 @@ class WhatsAppService {
 
       if (branchId) {
         await Message.create({
-          branchId,
-          phone: normalized,
-          direction: "outbound",
-          type: "text",
-          content: message,
-          metaMessageId: metaId,
-          status: "sent",
+          data: {
+            branchId,
+            phone: normalized,
+            direction: "outbound",
+            type: "text",
+            content: message,
+            metaMessageId: metaId,
+            status: "sent",
+          },
         }).catch((err) => logger.warn("Failed to save message", { error: err?.message }));
       }
 
@@ -73,13 +75,15 @@ class WhatsAppService {
 
       if (branchId) {
         await Message.create({
-          branchId,
-          phone: normalized,
-          direction: "outbound",
-          type: "text",
-          content: message,
-          status: "failed",
-          error: errMsg,
+          data: {
+            branchId,
+            phone: normalized,
+            direction: "outbound",
+            type: "text",
+            content: message,
+            status: "failed",
+            error: errMsg,
+          },
         }).catch(() => {});
       }
 
@@ -118,15 +122,17 @@ class WhatsAppService {
 
       if (branchId) {
         await Message.create({
-          branchId,
-          phone: normalized,
-          direction: "outbound",
-          type: isImage ? "image" : "document",
-          content: caption || "",
-          filename,
-          mimetype,
-          metaMessageId: metaId,
-          status: "sent",
+          data: {
+            branchId,
+            phone: normalized,
+            direction: "outbound",
+            type: isImage ? "image" : "document",
+            content: caption || "",
+            filename,
+            mimetype,
+            metaMessageId: metaId,
+            status: "sent",
+          },
         }).catch((err) => logger.warn("Failed to save message", { error: err?.message }));
       }
 
@@ -138,15 +144,17 @@ class WhatsAppService {
 
       if (branchId) {
         await Message.create({
-          branchId,
-          phone: normalized,
-          direction: "outbound",
-          type: "document",
-          content: caption || "",
-          filename,
-          mimetype,
-          status: "failed",
-          error: errMsg,
+          data: {
+            branchId,
+            phone: normalized,
+            direction: "outbound",
+            type: "document",
+            content: caption || "",
+            filename,
+            mimetype,
+            status: "failed",
+            error: errMsg,
+          },
         }).catch(() => {});
       }
 
@@ -244,10 +252,10 @@ class WhatsAppService {
             const mappedStatus = statusMap[status.status] || status.status;
 
             try {
-              await Message.updateOne(
-                { metaMessageId: status.id },
-                { $set: { status: mappedStatus } }
-              ).catch(() => undefined);
+              await Message.updateMany({
+                where: { metaMessageId: status.id },
+                data: { status: mappedStatus },
+              }).catch(() => undefined);
             } catch (err) {
               logger.warn("WhatsApp status update failed", { error: (err as Error).message });
             }
@@ -262,10 +270,10 @@ class WhatsAppService {
                 });
 
                 try {
-                  await Message.updateOne(
-                    { metaMessageId: status.id },
-                    { $set: { status: "failed", error: err.message } }
-                  ).catch(() => undefined);
+                  await Message.updateMany({
+                    where: { metaMessageId: status.id },
+                    data: { status: "failed", error: err.message },
+                  }).catch(() => undefined);
                 } catch (err) {
                   logger.warn("WhatsApp failure update failed", { error: (err as Error).message });
                 }

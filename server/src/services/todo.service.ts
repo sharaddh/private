@@ -1,5 +1,6 @@
 import { Todo } from "../models/todo";
 import { AppError } from "../middleware/errorHandler";
+import { requireBranchId } from "../utils/scope";
 
 interface TodoData {
   task?: string;
@@ -8,27 +9,30 @@ interface TodoData {
 }
 
 export async function listTodos() {
-  return Todo.find().sort({ createdAt: -1 }).lean();
+  return Todo.findMany({ orderBy: { createdAt: "desc" } });
 }
 
 export async function createTodo(data: TodoData) {
   if (!data.task?.trim()) throw new AppError(400, "Task is required");
-  return Todo.create({ task: data.task.trim(), notes: data.notes });
+  return Todo.create({ data: { task: data.task.trim(), notes: data.notes, branchId: requireBranchId() } });
 }
 
 export async function updateTodo(id: string, data: TodoData) {
+  const existing = await Todo.findUnique({ where: { id } });
+  if (!existing) throw new AppError(404, "Todo not found");
+
   const updates: Record<string, unknown> = {};
   if (data.task !== undefined) updates.task = data.task;
   if (data.done !== undefined) updates.done = data.done;
   if (data.notes !== undefined) updates.notes = data.notes;
 
-  const todo = await Todo.findByIdAndUpdate(id, { $set: updates }, { new: true }).lean();
-  if (!todo) throw new AppError(404, "Todo not found");
-  return todo;
+  return Todo.update({ where: { id }, data: updates });
 }
 
 export async function deleteTodo(id: string) {
-  const todo = await Todo.findByIdAndDelete(id).lean();
-  if (!todo) throw new AppError(404, "Todo not found");
-  return todo;
+  const existing = await Todo.findUnique({ where: { id } });
+  if (!existing) throw new AppError(404, "Todo not found");
+
+  await Todo.delete({ where: { id } });
+  return existing;
 }

@@ -1,6 +1,5 @@
-import { Branch } from "../models/branch";
+import { prisma } from "../db/prisma";
 import { getBranchModels, getWarehouseModels } from "../models/db";
-import { User } from "../models/user";
 import { escapeRegex } from "../utils/string";
 import { logger } from "../utils/logger";
 
@@ -17,7 +16,7 @@ interface BranchItem {
 }
 
 type AggregatedInventory = BranchItem & {
-  _id: string;
+  id: string;
   sku: string;
   category: string;
   inventoryType: string;
@@ -46,15 +45,25 @@ type AggregatedInventory = BranchItem & {
 };
 
 type AggregatedLensStock = BranchItem & {
-  _id: string;
+  id: string;
   coating: string;
   quantities: Record<string, Record<string, number>>;
   createdAt: Date;
   updatedAt: Date;
 };
 
-async function getActiveBranches() {
-  return Branch.find({ isActive: true }).select("name code dbName").lean();
+interface BranchInfo {
+  id: string;
+  name: string;
+  code: string;
+  dbName: string;
+}
+
+async function getActiveBranches(): Promise<BranchInfo[]> {
+  return prisma.branch.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, code: true, dbName: true },
+  }) as Promise<BranchInfo[]>;
 }
 
 export async function getAllBranchInventory(query?: { search?: string }) {
@@ -75,14 +84,14 @@ export async function getAllBranchInventory(query?: { search?: string }) {
   }
 
   await Promise.all(
-    branches.map(async (branch) => {
+    branches.map(async (branch: BranchInfo) => {
       try {
         const models = getBranchModels(branch.dbName);
         const items = await models.Inventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
         for (const item of items) {
           allItems.push({
             ...item,
-            branchId: String(branch._id),
+            branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
           } as AggregatedInventory);
@@ -126,34 +135,30 @@ export async function getAllBranchStats() {
   const lowStockItems: AggregatedInventory[] = [];
 
   await Promise.all(
-    branches.map(async (branch) => {
+    branches.map(async (branch: BranchInfo) => {
       try {
         const models = getBranchModels(branch.dbName);
-        const [count, low, wh, valResult, recent, lowItems] = await Promise.all([
+        const [count, low, wh, recent, lowItems, allForValue] = await Promise.all([
           models.Inventory.countDocuments(),
           models.Inventory.countDocuments({ quantity: { $lte: 5 } }),
           models.Inventory.countDocuments({ location: "warehouse" }),
-          models.Inventory.aggregate([
-            {
-              $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } },
-            },
-          ]),
           models.Inventory.find().sort({ createdAt: -1 }).limit(5).lean(),
           models.Inventory.find({ quantity: { $lte: 5, $gt: 0 } })
             .sort({ quantity: 1 })
             .limit(10)
             .lean(),
+          models.Inventory.find({}, { quantity: 1, sellingPrice: 1 }).lean(),
         ]);
 
         totalItems += count;
         lowStock += low;
         warehouseItems += wh;
-        totalValue += valResult[0]?.total || 0;
+        totalValue += allForValue.reduce((s: number, i: any) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
 
         for (const item of recent) {
           recentItems.push({
             ...item,
-            branchId: String(branch._id),
+            branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
           } as AggregatedInventory);
@@ -161,7 +166,7 @@ export async function getAllBranchStats() {
         for (const item of lowItems) {
           lowStockItems.push({
             ...item,
-            branchId: String(branch._id),
+            branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
           } as AggregatedInventory);
@@ -186,26 +191,24 @@ export async function getAllBranchStats() {
   );
 
   try {
-    const [mainCount, mainLow, mainWh, mainValResult, mainRecent, mainLowItems] = await Promise.all(
+    const [mainCount, mainLow, mainWh, mainRecent, mainLowItems, mainAllForValue] = await Promise.all(
       [
         WHInventory.countDocuments(),
         WHInventory.countDocuments({ quantity: { $lte: 5 } }),
         WHInventory.countDocuments({ location: "warehouse" }),
-        WHInventory.aggregate([
-          { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
-        ]),
         WHInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
         WHInventory.find({ quantity: { $lte: 5, $gt: 0 } })
           .sort({ quantity: 1 })
           .limit(10)
           .lean(),
+        WHInventory.find({}, { quantity: 1, sellingPrice: 1 }).lean(),
       ]
     );
 
     totalItems += mainCount;
     lowStock += mainLow;
     warehouseItems += mainWh;
-    totalValue += mainValResult[0]?.total || 0;
+    totalValue += mainAllForValue.reduce((s: number, i: any) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
 
     for (const item of mainRecent) {
       recentItems.push({
@@ -241,11 +244,12 @@ export async function getAllBranchStats() {
   recentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   lowStockItems.sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
 
-  const [totalUsers, totalWithdrawals, withdrawalAgg] = await Promise.all([
-    User.countDocuments(),
+  const [totalUsers, totalWithdrawals, allWithdrawals] = await Promise.all([
+    prisma.user.count(),
     WHWithdrawal.countDocuments(),
-    WHWithdrawal.aggregate([{ $group: { _id: null, totalItems: { $sum: "$totalQuantity" } } }]),
+    WHWithdrawal.find({}, { totalQuantity: 1 }).lean(),
   ]);
+  const totalWithdrawnItems = allWithdrawals.reduce((s: number, w: any) => s + (w.totalQuantity || 0), 0);
 
   const recentWithdrawals = await WHWithdrawal.find().sort({ withdrawnAt: -1 }).limit(10).lean();
 
@@ -258,7 +262,7 @@ export async function getAllBranchStats() {
     totalLensStock,
     totalUsers,
     totalWithdrawals,
-    totalWithdrawnItems: withdrawalAgg[0]?.totalItems || 0,
+    totalWithdrawnItems,
     recentItems: recentItems.slice(0, 5),
     lowStockItems: lowStockItems.slice(0, 10),
     recentWithdrawals,
@@ -270,14 +274,14 @@ export async function getAllBranchLensStock() {
   const allItems: AggregatedLensStock[] = [];
 
   await Promise.all(
-    branches.map(async (branch) => {
+    branches.map(async (branch: BranchInfo) => {
       try {
         const models = getBranchModels(branch.dbName);
         const items = await models.LensStock.find().sort({ coating: 1 }).lean();
         for (const item of items) {
           allItems.push({
             ...item,
-            branchId: String(branch._id),
+            branchId: branch.id,
             branchName: branch.name,
             branchCode: branch.code,
           } as AggregatedLensStock);
