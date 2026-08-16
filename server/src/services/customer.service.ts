@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Order } from "../models/order";
@@ -6,8 +5,8 @@ import { Bill } from "../models/bill";
 import { Prescription } from "../models/prescription";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
-import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
-import { escapeRegex } from "../utils/string";
+import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
+import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import type { PaginatedResult } from "../types";
 
@@ -46,7 +45,7 @@ interface UpdateCustomerData {
 }
 
 interface CustomerResult {
-  _id: mongoose.Types.ObjectId;
+  id: string;
   customerId: string;
   name: string;
   email?: string;
@@ -77,22 +76,21 @@ function generateCustomerId(): string {
 export async function listCustomers(
   filters: CustomerFilters
 ): Promise<PaginatedResult<CustomerResult>> {
-  const filter: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {};
 
   if (filters.phone) {
-    filter.mobile = { $regex: filters.phone, $options: "i" };
+    where.mobile = { contains: filters.phone, mode: "insensitive" };
   }
 
   if (filters.search) {
     const s = filters.search.trim();
-    const searchRegex = { $regex: escapeRegex(s), $options: "i" };
-    filter.$or = [
-      { name: searchRegex },
-      { mobile: searchRegex },
-      { customerId: searchRegex },
-      { email: searchRegex },
-      { alternateMobile: searchRegex },
-      { city: searchRegex },
+    where.OR = [
+      { name: { contains: s, mode: "insensitive" } },
+      { mobile: { contains: s, mode: "insensitive" } },
+      { customerId: { contains: s, mode: "insensitive" } },
+      { email: { contains: s, mode: "insensitive" } },
+      { alternateMobile: { contains: s, mode: "insensitive" } },
+      { city: { contains: s, mode: "insensitive" } },
     ];
   }
 
@@ -100,26 +98,29 @@ export async function listCustomers(
     startDate: filters.startDate,
     endDate: filters.endDate,
   });
-  const dateFilter = buildDateFilter("createdAt", start, end);
-  if (dateFilter) {
-    Object.assign(filter, dateFilter);
+  const dateRange = prismaDateRange("createdAt", start, end);
+  if (dateRange) {
+    Object.assign(where, dateRange);
   }
 
-  const query = Customer.find(filter).sort({ createdAt: -1 });
-
-  return paginateQuery(query as never, {
-    page: filters.page,
-    limit: filters.limit,
-    cursor: filters.cursor,
-  }) as unknown as Promise<PaginatedResult<CustomerResult>>;
+  return paginateFind(
+    (args) => Customer.findMany(args),
+    (w) => Customer.count({ where: w }),
+    {
+      page: filters.page,
+      limit: filters.limit,
+      cursor: filters.cursor,
+    },
+    { where, orderBy: { createdAt: "desc" } }
+  ) as Promise<PaginatedResult<CustomerResult>>;
 }
 
 export async function getCustomerById(id: string): Promise<CustomerResult> {
-  const customer = await Customer.findById(id).lean();
+  const customer = await Customer.findUnique({ where: { id } });
   if (!customer) {
     throw new AppError(404, "Customer not found");
   }
-  return customer as unknown as CustomerResult;
+  return customer as CustomerResult;
 }
 
 export async function createCustomer(data: CreateCustomerData): Promise<CustomerResult> {
@@ -131,62 +132,71 @@ export async function createCustomer(data: CreateCustomerData): Promise<Customer
   }
 
   const customer = await Customer.create({
-    ...data,
-    customerId: generateCustomerId(),
-    mobile: data.mobile.trim(),
+    data: {
+      ...data,
+      customerId: generateCustomerId(),
+      mobile: data.mobile.trim(),
+      branchId: requireBranchId(),
+    },
   });
 
-  return customer.toObject() as unknown as CustomerResult;
+  return customer as CustomerResult;
 }
 
 export async function updateCustomer(
   id: string,
   updates: UpdateCustomerData
 ): Promise<CustomerResult> {
-  const customer = await (Customer as mongoose.Model<unknown>)
-    .findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true })
-    .lean();
-  if (!customer) {
+  const existing = await Customer.findUnique({ where: { id } });
+  if (!existing) {
     throw new AppError(404, "Customer not found");
   }
-  return customer as unknown as CustomerResult;
+
+  const customer = await Customer.update({
+    where: { id },
+    data: updates,
+  });
+
+  return customer as CustomerResult;
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
-  const customer = await Customer.findByIdAndDelete(id).lean();
-  if (!customer) {
+  const existing = await Customer.findUnique({ where: { id } });
+  if (!existing) {
     throw new AppError(404, "Customer not found");
   }
 
+  await Customer.delete({ where: { id } });
+
   await Promise.all([
-    Visit.deleteMany({ customerId: id }),
-    Order.deleteMany({ customerId: id }),
-    Bill.deleteMany({ customerId: id }),
-    Prescription.deleteMany({ customerId: id }),
-    Payment.deleteMany({ customerId: id }),
-    Delivery.deleteMany({ customerId: id }),
+    Visit.deleteMany({ where: { customerId: id } }),
+    Order.deleteMany({ where: { customerId: id } }),
+    Bill.deleteMany({ where: { customerId: id } }),
+    Prescription.deleteMany({ where: { customerId: id } }),
+    Payment.deleteMany({ where: { customerId: id } }),
+    Delivery.deleteMany({ where: { customerId: id } }),
   ]);
 }
 
 export async function getCustomerSummary(id: string): Promise<CustomerSummary> {
-  const customer = await Customer.findById(id).lean();
+  const customer = await Customer.findUnique({ where: { id } });
   if (!customer) {
     throw new AppError(404, "Customer not found");
   }
 
-  const [visitCount, orderCount, billTotal] = await Promise.all([
-    Visit.countDocuments({ customerId: id }),
-    Order.countDocuments({ customerId: id }),
-    Bill.aggregate([
-      { $match: { customerId: id } },
-      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
-    ]),
+  const [visitCount, orderCount, billAgg] = await Promise.all([
+    Visit.count({ where: { customerId: id } }),
+    Order.count({ where: { customerId: id } }),
+    Bill.aggregate({
+      where: { customerId: id },
+      _sum: { totalAmount: true },
+    }),
   ]);
 
   return {
-    ...(customer as unknown as CustomerResult),
+    ...(customer as CustomerResult),
     visitCount,
     orderCount,
-    totalBilled: billTotal[0]?.total || 0,
+    totalBilled: billAgg._sum?.totalAmount ?? 0,
   };
 }

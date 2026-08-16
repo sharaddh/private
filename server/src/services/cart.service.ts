@@ -1,9 +1,13 @@
-import { getWarehouseModels } from "../models/db";
+import { prisma } from "../db/prisma";
+import { User } from "../models/user";
 import { AppError } from "../middleware/errorHandler";
 import { getPriceForPower } from "./lensStock.service";
 import { istDateKey } from "../utils/date";
 
-const { CartItem, LensStock, Withdrawal } = getWarehouseModels();
+const CartItem = prisma.cartItem;
+const LensStock = prisma.lensStock;
+const Withdrawal = prisma.withdrawal;
+const WithdrawalItem = prisma.withdrawalItem;
 
 function getAvailableStock(stock: any, lensType: string, powerKey: string): number {
   const q = (stock?.quantities as Record<string, Record<string, number>>) || {};
@@ -19,11 +23,11 @@ function stockError(coating: string, powerKey: string, available: number): strin
 }
 
 export async function getCartItems(userId: string) {
-  const items = await CartItem.find({ user: userId }).sort({ createdAt: 1 }).lean();
+  const items = await CartItem.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
   const coatingToStock = new Map<string, any>();
   for (const item of items) {
     if (!coatingToStock.has(item.coating)) {
-      coatingToStock.set(item.coating, await LensStock.findOne({ coating: item.coating }));
+      coatingToStock.set(item.coating, await LensStock.findFirst({ where: { coating: item.coating } }));
     }
   }
   return items.map((item) => ({
@@ -33,7 +37,7 @@ export async function getCartItems(userId: string) {
 }
 
 export async function getCartCount(userId: string) {
-  return CartItem.countDocuments({ user: userId });
+  return CartItem.count({ where: { userId } });
 }
 
 export async function addToCart(
@@ -45,32 +49,24 @@ export async function addToCart(
   fogMark: string = ""
 ) {
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
-  const stock = await LensStock.findOne({ coating });
+  const stock = await LensStock.findFirst({ where: { coating } });
   if (!stock) throw new AppError(400, `${coating}: lens stock not found`);
   const price = getPriceForPower(stock, powerKey);
   const available = getAvailableStock(stock, lensType, powerKey);
-  const existing = await CartItem.findOne({ user: userId, coating, lensType, powerKey });
+  const existing = await CartItem.findFirst({ where: { userId, coating, lensType, powerKey } });
   if (existing) {
     const total = existing.quantity + qty;
     if (total > available) throw new AppError(400, stockError(coating, powerKey, available));
-    existing.quantity = total;
-    existing.price = price;
-    if (fogMark) existing.fogMark = fogMark;
-    await existing.save();
-    return { ...existing.toJSON(), available };
+    const data: { quantity: number; price: number; fogMark?: string } = { quantity: total, price };
+    if (fogMark) data.fogMark = fogMark;
+    const updated = await CartItem.update({ where: { id: existing.id }, data });
+    return { ...updated, available };
   }
   if (qty > available) throw new AppError(400, stockError(coating, powerKey, available));
-  const item = new CartItem({
-    user: userId,
-    coating,
-    lensType,
-    powerKey,
-    quantity: qty,
-    price,
-    fogMark,
+  const item = await CartItem.create({
+    data: { userId, coating, lensType, powerKey, quantity: qty, price, fogMark },
   });
-  await item.save();
-  return { ...item.toJSON(), available };
+  return { ...item, available };
 }
 
 export async function updateCartItem(
@@ -81,34 +77,38 @@ export async function updateCartItem(
 ) {
   if (quantity !== undefined && quantity < 1)
     throw new AppError(400, "Quantity must be at least 1");
-  const item = await CartItem.findOne({ _id: itemId, user: userId });
+  const item = await CartItem.findFirst({ where: { id: itemId, userId } });
   if (!item) throw new AppError(404, "Cart item not found");
-  const stock = await LensStock.findOne({ coating: item.coating });
+  const stock = await LensStock.findFirst({ where: { coating: item.coating } });
   if (!stock) throw new AppError(400, `${item.coating}: lens stock not found`);
   const available = getAvailableStock(stock, item.lensType, item.powerKey);
   if (quantity !== undefined) {
     if (quantity > available)
       throw new AppError(400, stockError(item.coating, item.powerKey, available));
-    item.quantity = Math.floor(quantity);
   }
-  if (typeof fogMark === "string") item.fogMark = fogMark;
-  await item.save();
-  return { ...item.toJSON(), available };
+  const data: Record<string, any> = {};
+  if (quantity !== undefined) data.quantity = Math.floor(quantity);
+  if (typeof fogMark === "string") data.fogMark = fogMark;
+  if (Object.keys(data).length > 0) {
+    const updated = await CartItem.update({ where: { id: itemId }, data });
+    return { ...updated, available };
+  }
+  return { ...item, available };
 }
 
 export async function removeCartItem(userId: string, itemId: string) {
-  const item = await CartItem.findOne({ _id: itemId, user: userId });
+  const item = await CartItem.findFirst({ where: { id: itemId, userId } });
   if (!item) throw new AppError(404, "Cart item not found");
-  await item.deleteOne();
-  return item.toJSON();
+  await CartItem.delete({ where: { id: itemId } });
+  return item;
 }
 
 export async function clearCart(userId: string) {
-  await CartItem.deleteMany({ user: userId });
+  await CartItem.deleteMany({ where: { userId } });
 }
 
 export async function withdrawCart(userId: string, username: string) {
-  const items = await CartItem.find({ user: userId }).lean();
+  const items = await CartItem.findMany({ where: { userId } });
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
@@ -124,7 +124,7 @@ export async function withdrawCart(userId: string, username: string) {
   let totalPrice = 0;
 
   for (const item of items) {
-    const lensStock = await LensStock.findOne({ coating: item.coating });
+    const lensStock = await LensStock.findFirst({ where: { coating: item.coating } });
     if (!lensStock) {
       errors.push(`${item.coating}: lens stock not found`);
       continue;
@@ -145,9 +145,7 @@ export async function withdrawCart(userId: string, username: string) {
     if (!q[item.lensType]) q[item.lensType] = {};
     q[item.lensType][item.powerKey] = current - item.quantity;
 
-    lensStock.quantities = q;
-    lensStock.markModified("quantities");
-    await lensStock.save();
+    await LensStock.update({ where: { id: lensStock.id }, data: { quantities: q } });
 
     const price = item.price ?? (lensStock.price as number) ?? 0;
     withdrawnItems.push({
@@ -164,36 +162,53 @@ export async function withdrawCart(userId: string, username: string) {
 
   if (withdrawnItems.length > 0) {
     await Withdrawal.create({
-      user: userId,
-      username,
-      items: withdrawnItems,
-      totalQuantity,
-      totalPrice,
+      data: {
+        userId,
+        username,
+        totalQuantity,
+        totalPrice,
+        items: {
+          create: withdrawnItems.map((it) => ({
+            coating: it.coating,
+            lensType: it.lensType,
+            powerKey: it.powerKey,
+            quantity: it.quantity,
+            price: it.price,
+            fogMark: it.fogMark || "",
+          })),
+        },
+      },
     });
   }
 
-  await CartItem.deleteMany({ user: userId });
+  await CartItem.deleteMany({ where: { userId } });
 
   return { withdrawn: withdrawnItems.length, errors };
 }
 
 export async function getWithdrawals(userId: string) {
-  const withdrawals = await Withdrawal.find({ user: userId }).sort({ withdrawnAt: -1 }).lean();
+  const withdrawals = await Withdrawal.findMany({
+    where: { userId },
+    orderBy: { withdrawnAt: "desc" },
+    include: { items: true },
+  });
   return attachAvailable(withdrawals);
 }
 
 export async function getAllWithdrawals() {
-  const withdrawals = await Withdrawal.find({}).sort({ withdrawnAt: -1 }).limit(200).lean();
+  const withdrawals = await Withdrawal.findMany({
+    orderBy: { withdrawnAt: "desc" },
+    take: 200,
+    include: { items: true },
+  });
   return attachAvailable(withdrawals);
 }
 
-// Attaches the current in-stock quantity to each withdrawal item so the UI can
-// cap edits at old qty + available (i.e. you can never push stock below zero).
 async function attachAvailable(withdrawals: any[]) {
   const coatingCache = new Map<string, any>();
   const getStock = async (coating: string) => {
     if (!coatingCache.has(coating)) {
-      coatingCache.set(coating, await LensStock.findOne({ coating }));
+      coatingCache.set(coating, await LensStock.findFirst({ where: { coating } }));
     }
     return coatingCache.get(coating);
   };
@@ -206,36 +221,36 @@ async function attachAvailable(withdrawals: any[]) {
 }
 
 export async function deleteWithdrawal(userId: string, id: string) {
-  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const coatingCache = new Map<string, any>();
   for (const it of withdrawal.items || []) {
     if (!it.coating || !it.lensType || !it.powerKey || it.quantity <= 0) continue;
     if (!coatingCache.has(it.coating)) {
-      coatingCache.set(it.coating, await LensStock.findOne({ coating: it.coating }));
+      coatingCache.set(it.coating, await LensStock.findFirst({ where: { coating: it.coating } }));
     }
     const lensStock = coatingCache.get(it.coating);
     if (!lensStock) continue;
     const q = (lensStock.quantities as Record<string, Record<string, number>>) || {};
     if (!q[it.lensType]) q[it.lensType] = {};
     q[it.lensType][it.powerKey] = (q[it.lensType][it.powerKey] || 0) + it.quantity;
-    lensStock.quantities = q;
-    lensStock.markModified("quantities");
-    await lensStock.save();
+    await LensStock.update({ where: { id: lensStock.id }, data: { quantities: q } });
   }
 
-  await withdrawal.deleteOne();
-  return withdrawal.toJSON();
+  await WithdrawalItem.deleteMany({ where: { withdrawalId: id } });
+  await Withdrawal.delete({ where: { id } });
+  return withdrawal;
 }
 
 export async function markWithdrawalPaid(userId: string, id: string, paid: boolean = true) {
-  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await Withdrawal.findFirst({ where: { id, userId } });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
-  withdrawal.paid = !!paid;
-  withdrawal.paidAt = withdrawal.paid ? new Date() : undefined;
-  await withdrawal.save();
-  return withdrawal.toJSON();
+  const updated = await Withdrawal.update({
+    where: { id },
+    data: { paid: !!paid, paidAt: !!paid ? new Date() : null },
+  });
+  return updated;
 }
 
 export async function updateWithdrawal(
@@ -249,7 +264,7 @@ export async function updateWithdrawal(
     fogMark?: string;
   }[]
 ) {
-  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const normalized: {
@@ -287,16 +302,13 @@ export async function updateWithdrawal(
     newMap.set(key, (newMap.get(key) || 0) + it.quantity);
   }
 
-  // Determine stock deltas. Positive delta = we need to ADD stock back (qty reduced/removed).
-  // Negative delta = we need to DEDUCT stock (qty increased or new line added).
-  // Validate all deltas first, then apply — avoids partial updates on validation failure.
   const allKeys = new Set([...oldMap.keys(), ...newMap.keys()]);
   const errors: string[] = [];
   const lensStockCache = new Map<string, any>();
 
   const getStock = async (coating: string) => {
     if (!lensStockCache.has(coating)) {
-      lensStockCache.set(coating, await LensStock.findOne({ coating }));
+      lensStockCache.set(coating, await LensStock.findFirst({ where: { coating } }));
     }
     return lensStockCache.get(coating);
   };
@@ -310,7 +322,7 @@ export async function updateWithdrawal(
     if (delta === 0) continue;
     const lensStock = await getStock(coating);
     if (!lensStock) {
-      if (delta > 0) continue; // returning stock for a removed coating: nothing to add back
+      if (delta > 0) continue;
       errors.push(`${coating}: lens stock not found`);
       continue;
     }
@@ -329,9 +341,7 @@ export async function updateWithdrawal(
     const q = (stock.quantities as Record<string, Record<string, number>>) || {};
     if (!q[lensType]) q[lensType] = {};
     q[lensType][powerKey] = (q[lensType][powerKey] || 0) + delta;
-    stock.quantities = q;
-    stock.markModified("quantities");
-    await stock.save();
+    await LensStock.update({ where: { id: stock.id }, data: { quantities: q } });
   }
 
   const mergedItems: {
@@ -367,28 +377,42 @@ export async function updateWithdrawal(
   const totalQuantity = mergedItems.reduce((s, it) => s + it.quantity, 0);
   const totalPrice = mergedItems.reduce((s, it) => s + it.price * (it.quantity / 2), 0);
 
-  withdrawal.items = mergedItems as typeof withdrawal.items;
-  withdrawal.totalQuantity = totalQuantity;
-  withdrawal.totalPrice = totalPrice;
-  await withdrawal.save();
+  await WithdrawalItem.deleteMany({ where: { withdrawalId: id } });
+  if (mergedItems.length > 0) {
+    await WithdrawalItem.createMany({
+      data: mergedItems.map((it) => ({
+        withdrawalId: id,
+        coating: it.coating,
+        lensType: it.lensType,
+        powerKey: it.powerKey,
+        quantity: it.quantity,
+        price: it.price,
+        fogMark: it.fogMark,
+      })),
+    });
+  }
+  const updated = await Withdrawal.update({
+    where: { id },
+    data: { totalQuantity, totalPrice },
+    include: { items: true },
+  });
 
-  return withdrawal.toJSON();
+  return updated;
 }
 
 export async function sendWithdrawalPdf(userId: string, id: string, phone?: string) {
-  const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
+  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const { generateWithdrawalPdf } = await import("../utils/pdf");
   const { whatsappManager } = await import("./whatsapp");
   const { normalizePhone, isValidWhatsAppPhone } = await import("../utils/phone");
-  const { User } = await import("../models/user");
 
   let targetPhone: string;
   if (phone) {
     targetPhone = phone;
   } else {
-    const userDoc = await User.findById(withdrawal.user).select("mobile").lean();
+    const userDoc = await User.findUnique({ where: { id: withdrawal.userId }, select: { mobile: true } });
     targetPhone = userDoc?.mobile || "";
   }
   const target = normalizePhone(targetPhone);
