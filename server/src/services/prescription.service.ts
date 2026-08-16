@@ -15,13 +15,17 @@ interface PrescriptionData {
 const UPDATE_WHITELIST = ["customerId", "visitId", "rightEye", "leftEye", "pd", "notes"] as const;
 
 export async function listPrescriptions(customerId?: string, limit = 100) {
-  const filter: Record<string, unknown> = {};
-  if (customerId) filter.customerId = customerId;
-  return Prescription.find(filter).sort({ createdAt: -1 }).limit(Math.min(limit, 200)).lean();
+  const where: Record<string, unknown> = {};
+  if (customerId) where.customerId = customerId;
+  return Prescription.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: Math.min(limit, 200),
+  });
 }
 
 export async function getPrescriptionById(id: string) {
-  const prescription = await Prescription.findById(id).lean();
+  const prescription = await Prescription.findUnique({ where: { id } });
   if (!prescription) throw new AppError(404, "Prescription not found");
   return prescription;
 }
@@ -29,35 +33,33 @@ export async function getPrescriptionById(id: string) {
 export async function createPrescription(data: PrescriptionData) {
   if (!data.customerId) throw new AppError(400, "Customer ID is required");
 
-  const customer = await Customer.findById(data.customerId).lean();
+  const customer = await Customer.findUnique({ where: { id: data.customerId } });
   if (!customer) throw new AppError(404, "Customer not found");
 
   if (data.visitId) {
-    const visit = await Visit.findById(data.visitId).lean();
+    const visit = await Visit.findUnique({ where: { id: data.visitId } });
     if (!visit) throw new AppError(404, "Visit not found");
   }
 
-  return Prescription.create(data);
+  return Prescription.create({ data: data as any });
 }
 
 export async function updatePrescription(id: string, data: PrescriptionData) {
+  const existing = await Prescription.findUnique({ where: { id } });
+  if (!existing) throw new AppError(404, "Prescription not found");
+
   const filtered: Record<string, unknown> = {};
   for (const key of UPDATE_WHITELIST) {
     if (key in data) {
       filtered[key] = (data as Record<string, unknown>)[key];
     }
   }
-  const prescription = await Prescription.findByIdAndUpdate(
-    id,
-    { $set: filtered },
-    { new: true, runValidators: true }
-  ).lean();
-  if (!prescription) throw new AppError(404, "Prescription not found");
-  return prescription;
+  return Prescription.update({ where: { id }, data: filtered });
 }
 
 export async function deletePrescription(id: string) {
-  const prescription = await Prescription.findByIdAndDelete(id).lean();
+  const prescription = await Prescription.findUnique({ where: { id } });
   if (!prescription) throw new AppError(404, "Prescription not found");
+  await Prescription.delete({ where: { id } });
   return prescription;
 }

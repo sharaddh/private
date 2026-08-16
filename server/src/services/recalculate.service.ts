@@ -1,57 +1,57 @@
-import { Customer } from "../models/customer";
-import { Bill } from "../models/bill";
-import { Payment } from "../models/payment";
-import { Visit } from "../models/visit";
+import { prisma } from "../db/prisma";
 
 export async function recalculateCustomerTotals() {
-  const customers = await Customer.find().select("_id").lean();
+  const customers = await prisma.customer.findMany({ select: { id: true } });
   if (customers.length === 0) return { total: 0, updated: 0 };
 
-  const customerIds = customers.map((c) => c._id);
+  const customerIds = customers.map((c) => c.id);
 
   const [visitCounts, billAggs, paymentAggs] = await Promise.all([
-    Visit.aggregate([
-      { $match: { customerId: { $in: customerIds } } },
-      { $group: { _id: "$customerId", count: { $sum: 1 } } },
-    ]),
-    Bill.aggregate([
-      { $match: { customerId: { $in: customerIds }, status: "Active" } },
-      {
-        $group: {
-          _id: "$customerId",
-          totalSpent: { $sum: "$totalAmount" },
-          pendingAmount: { $sum: "$pendingAmount" },
-        },
-      },
-    ]),
-    Payment.aggregate([
-      { $match: { customerId: { $in: customerIds } } },
-      { $group: { _id: "$customerId", paid: { $sum: "$amount" } } },
-    ]),
+    prisma.visit.groupBy({
+      by: ["customerId"],
+      where: { customerId: { in: customerIds } },
+      _count: true,
+    }),
+    prisma.bill.groupBy({
+      by: ["customerId"],
+      where: { customerId: { in: customerIds }, status: "Active" },
+      _sum: { totalAmount: true, pendingAmount: true },
+    }),
+    prisma.payment.groupBy({
+      by: ["customerId"],
+      where: { customerId: { in: customerIds } },
+      _sum: { amount: true },
+    }),
   ]);
 
-  const visitMap = new Map(visitCounts.map((v) => [String(v._id), v.count]));
-  const billMap = new Map(billAggs.map((b) => [String(b._id), b]));
-  const paymentMap = new Map(paymentAggs.map((p) => [String(p._id), p.paid]));
+  const visitMap = new Map(
+    visitCounts.map((v) => [v.customerId, v._count])
+  );
+  const billMap = new Map(
+    billAggs.map((b) => [b.customerId, b])
+  );
+  const paymentMap = new Map(
+    paymentAggs.map((p) => [p.customerId, p._sum.amount || 0])
+  );
 
-  const bulkOps = customers.map((customer) => {
-    const cid = String(customer._id);
+  const updates = customers.map((customer) => {
+    const cid = customer.id;
     const visitCount = visitMap.get(cid) || 0;
     const billAgg = billMap.get(cid);
-    const totalSpent = billAgg?.totalSpent || 0;
-    const billedPending = billAgg?.pendingAmount || 0;
+    const totalSpent = billAgg?._sum.totalAmount || 0;
+    const billedPending = billAgg?._sum.pendingAmount || 0;
     const totalPaid = paymentMap.get(cid) || 0;
     const pendingAmount = Math.max(0, billedPending - totalPaid);
 
     return {
-      updateOne: {
-        filter: { _id: customer._id },
-        update: { $set: { totalVisits: visitCount, totalSpent, pendingAmount } },
-      },
+      id: cid,
+      data: { totalVisits: visitCount, totalSpent, pendingAmount },
     };
   });
 
-  const result = await Customer.bulkWrite(bulkOps);
+  const result = await Promise.all(
+    updates.map(({ id, data }) => prisma.customer.update({ where: { id }, data }))
+  );
 
-  return { total: customers.length, updated: result.modifiedCount };
+  return { total: customers.length, updated: result.length };
 }
