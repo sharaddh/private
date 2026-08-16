@@ -1,61 +1,65 @@
-import mongoose from "mongoose";
 import { AppError } from "../middleware/errorHandler";
 import { Rack } from "../models/rack";
 import { InventoryVariant } from "../models/inventoryVariant";
 import { InventoryCountSession } from "../models/inventoryCount";
 import { InventoryCountEntry } from "../models/inventoryCountEntry";
-import { paginateQuery, PaginationOptions } from "../utils/pagination";
+import { paginateFind, PaginationOptions } from "../utils/pagination";
+import { requireBranchId } from "../utils/scope";
 import { applyStockCorrections } from "./inventoryStock.service";
 
 export async function createCountSession(rackId: string, by: string = "", note: string = "") {
-  const rack = await Rack.findById(rackId).lean();
+  const rack = await Rack.findUnique({ where: { id: rackId } });
   if (!rack) throw new AppError(404, "Rack not found");
 
-  const variants = await InventoryVariant.find({ rackId, active: true }).lean();
-  const expectedUnits = variants.reduce((s, v) => s + (v.stockQuantity || 0), 0);
+  const variants = await InventoryVariant.findMany({ where: { rackId, active: true } });
+  const expectedUnits = variants.reduce((s: number, v: any) => s + (v.stockQuantity || 0), 0);
 
   const session = await InventoryCountSession.create({
-    rackId,
-    rackLabel: rack.code,
-    status: "draft",
-    startedBy: by,
-    startedAt: new Date(),
-    expectedUnits,
-    countedUnits: 0,
-    note: note || "",
+    data: {
+      rackId,
+      rackLabel: rack.label,
+      status: "draft",
+      startedBy: by,
+      startedAt: new Date(),
+      expectedUnits,
+      countedUnits: 0,
+      note: note || "",
+      branchId: requireBranchId(),
+    },
   });
 
-  const entries = variants.map((v) => ({
-    countSessionId: session._id,
-    variantId: v._id,
+  const entries = variants.map((v: any) => ({
+    sessionId: session.id,
+    variantId: v.id,
     sku: v.sku,
-    brandName: v.brandName || "",
-    model: v.model || "",
-    color: v.color || "",
-    size: v.size || "",
-    expectedQuantity: v.stockQuantity || 0,
-    countedQuantity: v.stockQuantity || 0,
-    difference: 0,
+    name: [v.brandName, v.model, v.color, v.size].filter(Boolean).join(" "),
+    expectedQty: v.stockQuantity || 0,
+    countedQty: v.stockQuantity || 0,
+    delta: 0,
   }));
   if (entries.length > 0) {
-    await InventoryCountEntry.insertMany(entries);
+    await InventoryCountEntry.createMany({ data: entries });
   }
 
   return { session, entries };
 }
 
 export async function listCountSessions(options: PaginationOptions = {}) {
-  const baseQuery = InventoryCountSession.find().sort({ createdAt: -1 }) as mongoose.Query<
-    any[],
-    any
-  >;
-  return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
+  return paginateFind(
+    (args) => InventoryCountSession.findMany(args),
+    (where) => InventoryCountSession.count({ where }),
+    { page: options.page, limit: options.limit },
+    { orderBy: { createdAt: "desc" } }
+  );
 }
 
 export async function getCountSession(id: string) {
-  const session = await InventoryCountSession.findById(id).lean();
+  const session = await InventoryCountSession.findUnique({ where: { id } });
   if (!session) throw new AppError(404, "Count session not found");
-  const entries = await InventoryCountEntry.find({ countSessionId: id }).sort({ sku: 1 }).lean();
+  const entries = await InventoryCountEntry.findMany({
+    where: { sessionId: id },
+    orderBy: { sku: "asc" },
+  });
   return { session, entries };
 }
 
@@ -63,7 +67,7 @@ export async function updateCountEntries(
   id: string,
   inputs: Array<{ variantId: string; countedQuantity: number }>
 ) {
-  const session = await InventoryCountSession.findById(id);
+  const session = await InventoryCountSession.findUnique({ where: { id } });
   if (!session) throw new AppError(404, "Count session not found");
   if (session.status !== "draft")
     throw new AppError(400, "Only draft count sessions can be updated");
@@ -76,39 +80,41 @@ export async function updateCountEntries(
         `Counted quantity for ${input.variantId} must be a non-negative number`
       );
     }
-    const entry = await InventoryCountEntry.findOne({
-      countSessionId: id,
-      variantId: input.variantId,
+    const entry = await InventoryCountEntry.findFirst({
+      where: { sessionId: id, variantId: input.variantId },
     });
     if (!entry) throw new AppError(404, `Count entry not found for variant ${input.variantId}`);
-    entry.countedQuantity = qty;
-    entry.difference = qty - entry.expectedQuantity;
-    await entry.save();
+    await InventoryCountEntry.update({
+      where: { id: entry.id },
+      data: { countedQty: qty, delta: qty - entry.expectedQty },
+    });
   }
 
-  const allEntries = await InventoryCountEntry.find({ countSessionId: id }).lean();
+  const allEntries = await InventoryCountEntry.findMany({ where: { sessionId: id } });
   if (allEntries.length > 0) {
-    const sum = allEntries.reduce((s, e) => s + (e.countedQuantity || 0), 0);
-    session.countedUnits = sum;
-    session.expectedUnits = allEntries.reduce((s, e) => s + (e.expectedQuantity || 0), 0);
-    await session.save();
+    const sum = allEntries.reduce((s: number, e: any) => s + (e.countedQty || 0), 0);
+    const expectedSum = allEntries.reduce((s: number, e: any) => s + (e.expectedQty || 0), 0);
+    await InventoryCountSession.update({
+      where: { id },
+      data: { countedUnits: sum, expectedUnits: expectedSum },
+    });
   }
 
   return getCountSession(id);
 }
 
 export async function completeCountSession(id: string, by: string = "", note: string = "") {
-  const session = await InventoryCountSession.findById(id);
+  const session = await InventoryCountSession.findUnique({ where: { id } });
   if (!session) throw new AppError(404, "Count session not found");
   if (session.status !== "draft")
     throw new AppError(400, "Count session is already completed or cancelled");
 
-  const entries = await InventoryCountEntry.find({ countSessionId: id }).lean();
+  const entries = await InventoryCountEntry.findMany({ where: { sessionId: id } });
 
-  const corrections = entries.map((e) => ({
-    variantId: e.variantId!.toString(),
-    expectedQuantity: e.expectedQuantity,
-    countedQuantity: e.countedQuantity,
+  const corrections = entries.map((e: any) => ({
+    variantId: e.variantId,
+    expectedQuantity: e.expectedQty,
+    countedQuantity: e.countedQty,
   }));
 
   const result = await applyStockCorrections(
@@ -117,25 +123,35 @@ export async function completeCountSession(id: string, by: string = "", note: st
     by
   );
 
-  session.status = "completed";
-  session.completedBy = by;
-  session.completedAt = new Date();
-  session.note = note || session.note || "";
-  session.countedUnits = entries.reduce((s, e) => s + (e.countedQuantity || 0), 0);
-  session.expectedUnits = entries.reduce((s, e) => s + (e.expectedQuantity || 0), 0);
-  await session.save();
+  const updated = await InventoryCountSession.update({
+    where: { id },
+    data: {
+      status: "completed",
+      completedBy: by,
+      completedAt: new Date(),
+      note: note || session.note || "",
+      countedUnits: entries.reduce((s: number, e: any) => s + (e.countedQty || 0), 0),
+      expectedUnits: entries.reduce((s: number, e: any) => s + (e.expectedQty || 0), 0),
+    },
+  });
 
-  return { session, corrections: result.count };
+  return { session: updated, corrections: result.count };
 }
 
 export async function cancelCountSession(id: string, by: string = "") {
-  const session = await InventoryCountSession.findById(id);
+  const session = await InventoryCountSession.findUnique({ where: { id } });
   if (!session) throw new AppError(404, "Count session not found");
   if (session.status !== "draft")
     throw new AppError(400, "Count session is already completed or cancelled");
-  session.status = "cancelled";
-  session.completedBy = by;
-  session.completedAt = new Date();
-  await session.save();
-  return session;
+
+  const updated = await InventoryCountSession.update({
+    where: { id },
+    data: {
+      status: "cancelled",
+      completedBy: by,
+      completedAt: new Date(),
+    },
+  });
+
+  return updated;
 }
