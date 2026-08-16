@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const InventorySchemaObj = new Schema(
   {
@@ -65,5 +66,4 @@ const InventorySchemaObj = new Schema(
 );
 
 export const InventorySchema = InventorySchemaObj;
-const _Inventory = model("Inventory", InventorySchemaObj);
-export const Inventory = withBranch(_Inventory, "Inventory");
+export const Inventory = scoped(prisma.inventory) as Prisma.InventoryDelegate;

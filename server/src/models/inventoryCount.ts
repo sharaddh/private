@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 import { VALID_COUNT_STATUSES } from "../types";
 
 const InventoryCountSessionSchemaObj = new Schema(
@@ -19,5 +20,4 @@ const InventoryCountSessionSchemaObj = new Schema(
 );
 
 export const InventoryCountSessionSchema = InventoryCountSessionSchemaObj;
-const _InventoryCountSession = model("InventoryCountSession", InventoryCountSessionSchemaObj);
-export const InventoryCountSession = withBranch(_InventoryCountSession, "InventoryCountSession");
+export const InventoryCountSession = scoped(prisma.inventoryCountSession) as Prisma.InventoryCountSessionDelegate;
