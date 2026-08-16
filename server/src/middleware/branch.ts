@@ -1,6 +1,5 @@
 import { Response, NextFunction } from "express";
-import { Branch } from "../models/branch";
-import { getBranchModels } from "../models/db";
+import { prisma } from "../db/prisma";
 import { ctx, type RequestContext } from "../utils/requestContext";
 import { logger } from "../utils/logger";
 import type { BranchRequest } from "../types";
@@ -16,18 +15,15 @@ export async function branchScope(
 
   if (branchId) {
     try {
-      const branch = await Branch.findById(branchId).lean();
+      const branch = await prisma.branch.findUnique({ where: { id: branchId } });
       if (branch && branch.isActive) {
-        req.branchId = branch._id.toString();
+        req.branchId = branch.id;
         req.branchDb = branch.dbName;
         req.branchName = branch.name;
-        const branchModels = getBranchModels(branch.dbName);
-        req.branchModels = branchModels;
 
         const requestCtx: RequestContext = {
           branchId: req.branchId,
           branchName: req.branchName,
-          branchModels,
         };
 
         ctx.run(requestCtx, () => next());
