@@ -1,11 +1,10 @@
-import mongoose from "mongoose";
 import { Payment } from "../models/payment";
 import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
-import { withTransaction } from "../utils/transaction";
-import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
+import { paginateFind, prismaDateRange, parseDateRange } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
 import type { PaginatedResult } from "../types";
+import type { Prisma } from "@prisma/client";
 
 interface CreatePaymentData {
   customerId: string;
@@ -34,9 +33,9 @@ interface PaymentFilters {
 }
 
 interface PaymentResult {
-  _id: mongoose.Types.ObjectId;
-  customerId: mongoose.Types.ObjectId;
-  billId?: mongoose.Types.ObjectId;
+  id: string;
+  customerId: string;
+  billId?: string;
   amount: number;
   paymentMode: string;
   paymentDate: Date;
@@ -53,142 +52,147 @@ export async function createPayment(data: CreatePaymentData): Promise<PaymentRes
     throw new AppError(400, "Payment amount must be positive");
   }
 
-  const result = await withTransaction(async (session) => {
-    const payment = await Payment.create(
-      [
-        {
-          customerId: data.customerId,
-          billId: data.billId,
-          amount: data.amount,
-          paymentMode: data.paymentMode || "Cash",
-          paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
-          notes: data.notes,
-        },
-      ],
-      { session }
-    );
-
-    if (data.billId) {
-      const bill = await (Bill as any).findById(data.billId).session(session);
-      if (bill) {
-        bill.advancePaid = (bill.advancePaid || 0) + data.amount;
-        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-        await bill.save({ session });
-      }
-    }
-
-    await Customer.findByIdAndUpdate(
-      data.customerId,
-      { $inc: { pendingAmount: -data.amount } },
-      { session }
-    );
-
-    return payment[0];
+  const payment = await Payment.create({
+    data: {
+      customerId: data.customerId,
+      billId: data.billId,
+      amount: data.amount,
+      paymentMode: data.paymentMode || "Cash",
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
+      notes: data.notes,
+    } as Prisma.PaymentUncheckedCreateInput,
   });
 
-  return result as unknown as PaymentResult;
+  if (data.billId) {
+    const bill = await Bill.findUnique({ where: { id: data.billId } });
+    if (bill) {
+      const newAdvancePaid = (bill.advancePaid || 0) + data.amount;
+      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+      await Bill.update({
+        where: { id: bill.id },
+        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+      });
+    }
+  }
+
+  await Customer.update({
+    where: { id: data.customerId },
+    data: { pendingAmount: { decrement: data.amount } },
+  });
+
+  return payment as unknown as PaymentResult;
 }
 
 export async function updatePayment(
   paymentId: string,
   updates: UpdatePaymentData
 ): Promise<PaymentResult> {
-  const result = await withTransaction(async (session) => {
-    const payment = await (Payment as any).findById(paymentId).session(session);
-    if (!payment) {
-      throw new AppError(404, "Payment not found");
-    }
+  const payment = await Payment.findUnique({ where: { id: paymentId } });
+  if (!payment) {
+    throw new AppError(404, "Payment not found");
+  }
 
-    const oldAmount = payment.amount;
-    const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
-    const diff = newAmount - oldAmount;
+  const oldAmount = payment.amount;
+  const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
+  const diff = newAmount - oldAmount;
 
-    if (updates.amount !== undefined) payment.amount = newAmount;
-    if (updates.paymentMode !== undefined) payment.paymentMode = updates.paymentMode;
-    if (updates.paymentDate !== undefined) payment.paymentDate = new Date(updates.paymentDate);
-    if (updates.notes !== undefined) payment.notes = updates.notes;
+  const updateData: Record<string, unknown> = {};
+  if (updates.amount !== undefined) updateData.amount = newAmount;
+  if (updates.paymentMode !== undefined) updateData.paymentMode = updates.paymentMode;
+  if (updates.paymentDate !== undefined) updateData.paymentDate = new Date(updates.paymentDate);
 
-    if (Math.abs(diff) > 0.01) {
-      const changeNote = `Amount changed from ₹${oldAmount.toFixed(0)} to ₹${newAmount.toFixed(0)}`;
-      const existingNotes = payment.notes || "";
-      payment.notes = existingNotes ? `${existingNotes} | ${changeNote}` : changeNote;
-    }
+  let notes = updates.notes !== undefined ? updates.notes : payment.notes;
 
-    await payment.save({ session });
+  if (Math.abs(diff) > 0.01) {
+    const changeNote = `Amount changed from ₹${oldAmount.toFixed(0)} to ₹${newAmount.toFixed(0)}`;
+    const existingNotes = payment.notes || "";
+    notes = existingNotes ? `${existingNotes} | ${changeNote}` : changeNote;
+  }
 
-    if (payment.billId && Math.abs(diff) > 0.01) {
-      const bill = await (Bill as any).findById(payment.billId).session(session);
-      if (bill) {
-        bill.advancePaid = Math.max(0, (bill.advancePaid || 0) + diff);
-        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-        await bill.save({ session });
-      }
+  if (updates.notes !== undefined || Math.abs(diff) > 0.01) {
+    updateData.notes = notes;
+  }
 
-      await Customer.findByIdAndUpdate(
-        payment.customerId,
-        { $inc: { pendingAmount: -diff } },
-        { session }
-      );
-    }
-
-    return payment;
+  const updatedPayment = await Payment.update({
+    where: { id: paymentId },
+    data: updateData,
   });
 
-  return result as unknown as PaymentResult;
+  if (payment.billId && Math.abs(diff) > 0.01) {
+    const bill = await Bill.findUnique({ where: { id: payment.billId } });
+    if (bill) {
+      const newAdvancePaid = Math.max(0, (bill.advancePaid || 0) + diff);
+      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+      await Bill.update({
+        where: { id: bill.id },
+        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+      });
+    }
+
+    await Customer.update({
+      where: { id: payment.customerId },
+      data: { pendingAmount: { decrement: diff } },
+    });
+  }
+
+  return updatedPayment as unknown as PaymentResult;
 }
 
 export async function deletePayment(paymentId: string): Promise<void> {
-  await withTransaction(async (session) => {
-    const payment = await (Payment as any).findByIdAndDelete(paymentId).session(session);
-    if (!payment) {
-      throw new AppError(404, "Payment not found");
-    }
+  const payment = await Payment.findUnique({ where: { id: paymentId } });
+  if (!payment) {
+    throw new AppError(404, "Payment not found");
+  }
 
-    if (payment.billId) {
-      const bill = await (Bill as any).findById(payment.billId).session(session);
-      if (bill) {
-        bill.advancePaid = Math.max(0, (bill.advancePaid || 0) - payment.amount);
-        bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-        await bill.save({ session });
-      }
-    }
+  await Payment.delete({ where: { id: paymentId } });
 
-    await Customer.findByIdAndUpdate(
-      payment.customerId,
-      { $inc: { pendingAmount: payment.amount } },
-      { session }
-    );
+  if (payment.billId) {
+    const bill = await Bill.findUnique({ where: { id: payment.billId } });
+    if (bill) {
+      const newAdvancePaid = Math.max(0, (bill.advancePaid || 0) - payment.amount);
+      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+      await Bill.update({
+        where: { id: bill.id },
+        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+      });
+    }
+  }
+
+  await Customer.update({
+    where: { id: payment.customerId },
+    data: { pendingAmount: { increment: payment.amount } },
   });
 }
 
 export async function listPayments(
   filters: PaymentFilters
 ): Promise<PaginatedResult<PaymentResult>> {
-  const filter: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {};
 
   if (filters.customerId) {
-    filter.customerId = filters.customerId;
+    where.customerId = filters.customerId;
   }
   if (filters.billId) {
-    filter.billId = filters.billId;
+    where.billId = filters.billId;
   }
 
   const { start, end } = parseDateRange({
     startDate: filters.startDate,
     endDate: filters.endDate,
   });
-  const dateFilter = buildDateFilter("paymentDate", start, end);
-  if (dateFilter) {
-    Object.assign(filter, dateFilter);
+  const dateRange = prismaDateRange("paymentDate", start, end);
+  if (dateRange) {
+    Object.assign(where, dateRange);
   }
 
-  const query = Payment.find(filter)
-    .populate("customerId", "name mobile customerId")
-    .sort({ paymentDate: -1 });
-
-  return paginateQuery(query as never, {
-    page: filters.page,
-    limit: filters.limit,
-    cursor: filters.cursor,
-  }) as unknown as Promise<PaginatedResult<PaymentResult>>;
+  return paginateFind(
+    (args) => Payment.findMany(args),
+    (w) => Payment.count({ where: w }),
+    { page: filters.page, limit: filters.limit, cursor: filters.cursor },
+    {
+      where,
+      include: { customer: { select: { name: true, mobile: true, customerId: true } } },
+      orderBy: { paymentDate: "desc" },
+    }
+  ) as Promise<PaginatedResult<PaymentResult>>;
 }

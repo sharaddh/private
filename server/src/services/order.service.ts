@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
 import { Order } from "../models/order";
 import { Customer } from "../models/customer";
 import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
 import { Prescription } from "../models/prescription";
-import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
+import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
+import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import {
   decrementStockForOrder,
@@ -83,31 +83,31 @@ interface OrderFilters {
 }
 
 interface OrderResult {
-  _id: mongoose.Types.ObjectId;
-  customerId: mongoose.Types.ObjectId;
-  visitId?: mongoose.Types.ObjectId;
-  frame?: string;
-  frameBrand?: string;
-  frameModel?: string;
-  frameColor?: string;
-  frameSize?: string;
+  id: string;
+  customerId: string;
+  visitId?: string | null;
+  frame?: string | null;
+  frameBrand?: string | null;
+  frameModel?: string | null;
+  frameColor?: string | null;
+  frameSize?: string | null;
   framePrice: number;
-  lens?: string;
-  lensBrand?: string;
-  lensType?: string;
-  lensIndex?: string;
+  lens?: string | null;
+  lensBrand?: string | null;
+  lensType?: string | null;
+  lensIndex?: string | null;
   lensPrice: number;
-  coating?: string;
+  coating?: string | null;
   coatingPrice: number;
   accessories: string[];
   quantity: number;
   forwardedCount: number;
-  deliveryDate?: Date;
-  actualDeliveryDate?: Date;
+  deliveryDate?: Date | null;
+  actualDeliveryDate?: Date | null;
   status: OrderStatus;
-  labAssigned?: string;
-  labExpectedDate?: Date;
-  labRemarks?: string;
+  labAssigned?: string | null;
+  labExpectedDate?: Date | null;
+  labRemarks?: string | null;
   reviewed: boolean;
   classification: string;
   rightLensStatus: string;
@@ -137,38 +137,40 @@ export async function createOrder(data: CreateOrderData): Promise<OrderResult> {
     throw new AppError(400, "Customer ID is required");
   }
 
-  const customer = await Customer.findById(data.customerId).lean();
+  const customer = await Customer.findUnique({ where: { id: data.customerId } });
   if (!customer) {
     throw new AppError(404, "Customer not found");
   }
 
   await assertStockAvailable(data);
 
-  const order = new Order({
-    customerId: data.customerId,
-    visitId: data.visitId,
-    frame: data.frame,
-    frameBrand: data.frameBrand,
-    frameModel: data.frameModel,
-    frameColor: data.frameColor,
-    frameSize: data.frameSize,
-    framePrice: data.framePrice || 0,
-    lens: data.lens,
-    lensBrand: data.lensBrand,
-    lensType: data.lensType,
-    lensIndex: data.lensIndex,
-    lensPrice: data.lensPrice || 0,
-    coating: data.coating,
-    coatingPrice: data.coatingPrice || 0,
-    accessories: data.accessories || [],
-    quantity: data.quantity || 1,
-    deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : undefined,
-    status: data.status || "Draft",
+  const order = await Order.create({
+    data: {
+      customerId: data.customerId,
+      visitId: data.visitId ?? null,
+      frame: data.frame ?? null,
+      frameBrand: data.frameBrand ?? null,
+      frameModel: data.frameModel ?? null,
+      frameColor: data.frameColor ?? null,
+      frameSize: data.frameSize ?? null,
+      framePrice: data.framePrice || 0,
+      lens: data.lens ?? null,
+      lensBrand: data.lensBrand ?? null,
+      lensType: data.lensType ?? null,
+      lensIndex: data.lensIndex ?? null,
+      lensPrice: data.lensPrice || 0,
+      coating: data.coating ?? null,
+      coatingPrice: data.coatingPrice || 0,
+      accessories: data.accessories || [],
+      quantity: data.quantity || 1,
+      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+      status: (data.status || "Draft") as any,
+      branchId: requireBranchId(),
+    },
   });
 
-  await order.save();
   await decrementStockForOrder(order);
-  return order.toObject() as unknown as OrderResult;
+  return order as unknown as OrderResult;
 }
 
 const UPDATE_WHITELIST = [
@@ -205,29 +207,28 @@ export async function updateOrder(orderId: string, updates: UpdateOrderData): Pr
       filtered[key] = (updates as Record<string, unknown>)[key];
     }
   }
-  const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
-    orderId,
-    { $set: filtered },
-    { new: true, runValidators: true }
-  );
-  if (!order) {
+  const existing = await Order.findUnique({ where: { id: orderId } });
+  if (!existing) {
     throw new AppError(404, "Order not found");
   }
-  return order.toObject() as unknown as OrderResult;
+  const order = await Order.update({ where: { id: orderId }, data: filtered as any });
+  return order as unknown as OrderResult;
 }
 
 export async function deleteOrder(orderId: string): Promise<void> {
-  const order = await Order.findByIdAndDelete(orderId);
+  const order = await Order.findUnique({ where: { id: orderId } });
   if (!order) {
     throw new AppError(404, "Order not found");
   }
   await restoreStockForOrder(order);
+  await Order.delete({ where: { id: orderId } });
 }
 
 export async function getOrderById(orderId: string): Promise<OrderResult> {
-  const order = await Order.findById(orderId)
-    .populate("customerId", "name mobile customerId")
-    .lean();
+  const order = await Order.findUnique({
+    where: { id: orderId },
+    include: { customer: { select: { name: true, mobile: true, customerId: true } } },
+  });
   if (!order) {
     throw new AppError(404, "Order not found");
   }
@@ -235,40 +236,43 @@ export async function getOrderById(orderId: string): Promise<OrderResult> {
 }
 
 export async function listOrders(filters: OrderFilters): Promise<PaginatedResult<OrderResult>> {
-  const filter: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {};
 
   if (filters.customerId) {
-    filter.customerId = filters.customerId;
+    where.customerId = filters.customerId;
   }
   if (filters.status) {
     const statuses = String(filters.status)
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    filter.status = statuses.length > 1 ? { $in: statuses } : statuses[0];
+    where.status = statuses.length > 1 ? { in: statuses as any[] } : { equals: statuses[0] as any };
   }
 
-  const dateField = filters.dateField || "createdAt";
   const { start, end } = parseDateRange({
     startDate: filters.startDate,
     endDate: filters.endDate,
   });
-  const dateFilter = buildDateFilter(dateField, start, end);
-  if (dateFilter) {
-    Object.assign(filter, dateFilter);
+  const dateRange = prismaDateRange(filters.dateField || "createdAt", start, end);
+  if (dateRange) {
+    Object.assign(where, dateRange);
   }
 
-  const query = Order.find(filter).populate("customerId", "name mobile").sort({ createdAt: -1 });
-
-  const result = (await paginateQuery(query as never, {
-    page: filters.page,
-    limit: filters.limit,
-    cursor: filters.cursor,
-  })) as unknown as PaginatedResult<OrderResult>;
+  const result = await paginateFind(
+    (args) =>
+      Order.findMany({
+        ...args,
+        include: { customer: { select: { name: true, mobile: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+    (w) => Order.count({ where: w }),
+    { page: filters.page, limit: filters.limit, cursor: filters.cursor },
+    { where, orderBy: { createdAt: "desc" } },
+  ) as unknown as PaginatedResult<OrderResult>;
 
   const orderVisitIds: { orderId: string; visitId: string }[] = result.data
     .map((o: OrderResult) => {
-      const oId = String((o as any)._id);
+      const oId = String(o.id);
       const vId = o.visitId ? String(o.visitId) : null;
       return vId ? { orderId: oId, visitId: vId } : null;
     })
@@ -278,19 +282,17 @@ export async function listOrders(filters: OrderFilters): Promise<PaginatedResult
     const uniqueVisitIds = [...new Set(orderVisitIds.map((v) => v.visitId))];
 
     // Batch-fetch prescriptions per visit (avoids N+1)
-    const prescriptions = await Prescription.find({
-      visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const prescriptions = await Prescription.findMany({
+      where: { visitId: { in: uniqueVisitIds } },
+      orderBy: { createdAt: "desc" },
+    });
     const rxByVisit = new Map(prescriptions.map((p: any) => [String(p.visitId), p]));
 
     // Batch-fetch bill per order via visitId (avoids N+1)
-    const bills = await Bill.find({
-      visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const bills = await Bill.findMany({
+      where: { visitId: { in: uniqueVisitIds } },
+      orderBy: { createdAt: "desc" },
+    });
     const billByVisit = new Map(bills.map((b: any) => [String(b.visitId), b]));
 
     result.data = result.data.map((o: OrderResult) => {
@@ -308,7 +310,7 @@ export async function updateOrderStatus(
   orderId: string,
   statusData: StatusUpdateData
 ): Promise<StatusUpdateResult> {
-  const order = await (Order as any).findById(orderId);
+  const order = await Order.findUnique({ where: { id: orderId } });
   if (!order) {
     throw new AppError(404, "Order not found");
   }
@@ -327,47 +329,50 @@ export async function updateOrderStatus(
   const newForwarded = currentForwarded + advQty;
 
   const oldStatus = order.status;
+  const updateData: Record<string, unknown> = {};
   if (newForwarded >= qty) {
-    order.status = statusData.status;
-    order.forwardedCount = 0;
+    updateData.status = statusData.status;
+    updateData.forwardedCount = 0;
     if (statusData.status === "Delivered") {
-      order.actualDeliveryDate = new Date();
+      updateData.actualDeliveryDate = new Date();
     }
   } else {
-    order.forwardedCount = newForwarded;
+    updateData.forwardedCount = newForwarded;
   }
-  await order.save();
+  const updatedOrder = await Order.update({ where: { id: orderId }, data: updateData as any });
 
   if (newForwarded >= qty) {
     if (statusData.status === "Cancelled" && oldStatus !== "Cancelled") {
-      await restoreStockForOrder(order);
+      await restoreStockForOrder(updatedOrder);
     } else if (oldStatus === "Cancelled" && statusData.status !== "Cancelled") {
-      await decrementStockForOrder(order);
+      await decrementStockForOrder(updatedOrder);
     }
   }
 
   const result: StatusUpdateResult = {
-    order: order.toObject() as unknown as OrderResult,
+    order: updatedOrder as unknown as OrderResult,
     partial: newForwarded < qty,
     forwardedCount: newForwarded < qty ? newForwarded : 0,
   };
 
   // Auto-update delivery (only on full transition)
   if (newForwarded >= qty) {
-    const delivery = await (Delivery as any).findOne({ orderId: order._id });
+    const delivery = await Delivery.findFirst({ where: { orderId: order.id } });
     if (delivery) {
+      const deliveryUpdate: Record<string, unknown> = {};
       if (statusData.status === "Ready") {
-        delivery.status = "Ready";
-        await delivery.save();
+        deliveryUpdate.status = "Ready";
       } else if (statusData.status === "Delivered") {
-        delivery.status = "Delivered";
-        delivery.actualDeliveryDate = new Date();
-        await delivery.save();
+        deliveryUpdate.status = "Delivered";
+        deliveryUpdate.actualDeliveryDate = new Date();
       } else if (statusData.status === "Cancelled") {
-        delivery.status = "Cancelled";
-        await delivery.save();
+        deliveryUpdate.status = "Cancelled";
       }
-      result.delivery = delivery.toObject();
+      const updatedDelivery = await Delivery.update({
+        where: { id: delivery.id },
+        data: deliveryUpdate,
+      });
+      result.delivery = updatedDelivery;
     }
   }
 
@@ -378,32 +383,40 @@ export async function updateOrderStatus(
     statusData.collectPayment &&
     statusData.collectPayment > 0
   ) {
-    let bill = await (Bill as any).findOne({ visitId: order.visitId || order._id });
+    let bill = await Bill.findFirst({ where: { visitId: order.visitId || order.id } });
     if (!bill) {
-      bill = await (Bill as any).findOne({ customerId: order.customerId }).sort({
-        createdAt: -1,
+      bill = await Bill.findFirst({
+        where: { customerId: order.customerId },
+        orderBy: { createdAt: "desc" },
       });
     }
     if (bill && bill.pendingAmount > 0) {
       const payment = await Payment.create({
-        customerId: order.customerId,
-        billId: bill._id,
-        amount: statusData.collectPayment,
-        paymentMode: statusData.paymentMode || "Cash",
-        paymentDate: new Date(),
-        notes: `Collected on delivery (order ${order._id})`,
+        data: {
+          customerId: order.customerId,
+          billId: bill.id,
+          amount: statusData.collectPayment,
+          paymentMode: (statusData.paymentMode || "Cash") as any,
+          paymentDate: new Date(),
+          notes: `Collected on delivery (order ${order.id})`,
+          branchId: requireBranchId(),
+        },
       });
 
-      bill.advancePaid = (bill.advancePaid || 0) + statusData.collectPayment;
-      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-      await bill.save();
-
-      await Customer.findByIdAndUpdate(order.customerId, {
-        $inc: { pendingAmount: -statusData.collectPayment },
+      const newAdvancePaid = (bill.advancePaid || 0) + statusData.collectPayment;
+      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
+      const updatedBill = await Bill.update({
+        where: { id: bill.id },
+        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
       });
 
-      result.payment = payment.toObject();
-      result.bill = bill.toObject();
+      await Customer.update({
+        where: { id: order.customerId },
+        data: { pendingAmount: { decrement: statusData.collectPayment } },
+      });
+
+      result.payment = payment;
+      result.bill = updatedBill;
     }
   }
 
@@ -418,15 +431,12 @@ export async function setClassification(
     throw new AppError(400, "Invalid classification");
   }
 
-  const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
-    orderId,
-    { $set: { classification } },
-    { new: true }
-  );
-  if (!order) {
+  const existing = await Order.findUnique({ where: { id: orderId } });
+  if (!existing) {
     throw new AppError(404, "Order not found");
   }
-  return order.toObject() as unknown as OrderResult;
+  const order = await Order.update({ where: { id: orderId }, data: { classification } as any });
+  return order as unknown as OrderResult;
 }
 
 export async function setEyeClassification(
@@ -441,26 +451,23 @@ export async function setEyeClassification(
     throw new AppError(400, "Invalid status");
   }
 
-  const field = eye === "right" ? "rightLensStatus" : "leftLensStatus";
-  const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
-    orderId,
-    { $set: { [field]: status } },
-    { new: true }
-  );
-  if (!order) {
+  const existing = await Order.findUnique({ where: { id: orderId } });
+  if (!existing) {
     throw new AppError(404, "Order not found");
   }
-  return order.toObject() as unknown as OrderResult;
+  const field = eye === "right" ? "rightLensStatus" : "leftLensStatus";
+  const order = await Order.update({
+    where: { id: orderId },
+    data: { [field]: status } as any,
+  });
+  return order as unknown as OrderResult;
 }
 
 export async function setReviewed(orderId: string, reviewed: boolean): Promise<OrderResult> {
-  const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
-    orderId,
-    { $set: { reviewed } },
-    { new: true }
-  );
-  if (!order) {
+  const existing = await Order.findUnique({ where: { id: orderId } });
+  if (!existing) {
     throw new AppError(404, "Order not found");
   }
-  return order.toObject() as unknown as OrderResult;
+  const order = await Order.update({ where: { id: orderId }, data: { reviewed } });
+  return order as unknown as OrderResult;
 }
