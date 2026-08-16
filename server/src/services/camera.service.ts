@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "child_process";
 import path from "path";
 import fs from "fs";
-import { Camera } from "../models/camera";
+import { prisma } from "../db/prisma";
 
 const RELAY_DIR = path.resolve(__dirname, "../../../relay-server");
 const STATE_DIR = path.join(RELAY_DIR, ".state");
@@ -52,11 +52,11 @@ function updateMediamtxConfig(cameras: Record<string, any>) {
 }
 
 export async function listCameras() {
-  return Camera.find().sort({ createdAt: -1 }).lean();
+  return prisma.camera.findMany({ orderBy: { createdAt: "desc" } });
 }
 
 export async function getCamera(id: string) {
-  return Camera.findById(id).lean();
+  return prisma.camera.findUnique({ where: { id } });
 }
 
 export async function addCamera(data: {
@@ -65,23 +65,27 @@ export async function addCamera(data: {
   username?: string;
   password?: string;
 }) {
-  const existing = await Camera.findOne({ serialNumber: data.serialNumber });
+  const existing = await prisma.camera.findFirst({ where: { serialNumber: data.serialNumber } });
   if (existing) throw new Error("Camera with this serial number already exists");
 
-  const camera = await Camera.create({
-    name: data.name,
-    serialNumber: data.serialNumber,
-    username: data.username || "admin",
-    password: data.password || "",
-    status: "connecting",
+  const camera = await prisma.camera.create({
+    data: {
+      name: data.name,
+      serialNumber: data.serialNumber,
+      username: data.username || "admin",
+      password: data.password || "",
+      status: "connecting",
+    },
   });
 
-  camera.streamPath = `camera_${camera._id}`;
-  await camera.save();
+  const updated = await prisma.camera.update({
+    where: { id: camera.id },
+    data: { streamPath: `camera_${camera.id}` },
+  });
 
-  await startRelay(String(camera._id), camera.serialNumber, camera.username, camera.password);
+  await startRelay(camera.id, updated.serialNumber, updated.username, updated.password);
 
-  return camera;
+  return updated;
 }
 
 export async function updateCamera(
@@ -92,24 +96,28 @@ export async function updateCamera(
     password?: string;
   }
 ) {
-  const camera = await Camera.findById(id);
+  const camera = await prisma.camera.findUnique({ where: { id } });
   if (!camera) throw new Error("Camera not found");
 
-  if (data.name) camera.name = data.name;
-  if (data.username) camera.username = data.username;
-  if (data.password !== undefined) camera.password = data.password;
-  await camera.save();
+  const updated = await prisma.camera.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.username !== undefined && { username: data.username }),
+      ...(data.password !== undefined && { password: data.password }),
+    },
+  });
 
-  return camera;
+  return updated;
 }
 
 export async function removeCamera(id: string) {
   await stopRelay(id);
-  await Camera.findByIdAndDelete(id);
+  await prisma.camera.delete({ where: { id } });
 }
 
 export async function getCameraStatus(id: string) {
-  const camera = await Camera.findById(id).lean();
+  const camera = await prisma.camera.findUnique({ where: { id } });
   if (!camera) throw new Error("Camera not found");
 
   const state = loadRelayState();
@@ -142,9 +150,9 @@ async function startRelay(
       });
     } else {
       console.log(`[camera-relay] dh-p2p not found at ${dhP2pPath}, skipping relay start`);
-      await Camera.findByIdAndUpdate(cameraId, {
-        status: "offline",
-        lastError: "dh-p2p binary not found",
+      await prisma.camera.update({
+        where: { id: cameraId },
+        data: { status: "offline", lastError: "dh-p2p binary not found" },
       });
       return;
     }
@@ -159,9 +167,12 @@ async function startRelay(
     proc.on("exit", async (code) => {
       console.log(`[dh-p2p:${cameraId}] Exited with code ${code}`);
       runningProcesses.delete(cameraId);
-      await Camera.findByIdAndUpdate(cameraId, {
-        status: code === 0 ? "offline" : "error",
-        lastError: code === 0 ? "" : `Process exited with code ${code}`,
+      await prisma.camera.update({
+        where: { id: cameraId },
+        data: {
+          status: code === 0 ? "offline" : "error",
+          lastError: code === 0 ? "" : `Process exited with code ${code}`,
+        },
       }).catch(() => {});
     });
 
@@ -179,16 +190,16 @@ async function startRelay(
     saveRelayState(state);
     updateMediamtxConfig(state);
 
-    await Camera.findByIdAndUpdate(cameraId, { status: "online" });
+    await prisma.camera.update({ where: { id: cameraId }, data: { status: "online" } });
 
     console.log(
       `[camera-relay] Started relay for camera ${cameraId} (SN: ${serialNumber}, port: ${localPort})`
     );
   } catch (error: any) {
     console.error(`[camera-relay] Failed to start relay for ${cameraId}:`, error.message);
-    await Camera.findByIdAndUpdate(cameraId, {
-      status: "error",
-      lastError: error.message,
+    await prisma.camera.update({
+      where: { id: cameraId },
+      data: { status: "error", lastError: error.message },
     }).catch(() => {});
   }
 }
@@ -209,8 +220,8 @@ async function stopRelay(cameraId: string) {
 }
 
 export async function restartAllRelays() {
-  const cameras = await Camera.find().lean();
+  const cameras = await prisma.camera.findMany();
   for (const cam of cameras) {
-    await startRelay(String(cam._id), cam.serialNumber, cam.username, cam.password);
+    await startRelay(cam.id, cam.serialNumber, cam.username, cam.password);
   }
 }

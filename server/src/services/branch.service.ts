@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
+import { prisma } from "../db/prisma";
 import { Branch } from "../models/branch";
 import { User } from "../models/user";
-import { clearBranchCache, getBranchModels } from "../models/db";
+import { clearBranchCache } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
 
 interface BranchData {
@@ -24,22 +24,27 @@ interface BranchData {
 
 async function syncBranchShopSettings(branch: any) {
   try {
-    const s = branch.settings || {};
-    const models = getBranchModels(branch.dbName);
-    await models.Settings.findOneAndUpdate(
-      {},
-      {
-        $set: {
-          shopName: s.shopName || branch.name || "",
-          shopAddress: s.shopAddress || branch.address || "",
-          shopPhone: s.shopPhone || branch.phone || "",
-          shopEmail: s.shopEmail || branch.email || "",
-          adminWhatsApp: s.ownerPhone || "",
-          logo: s.logo || "",
-        },
+    const s = (branch.settings || {}) as Record<string, string>;
+    await prisma.settings.upsert({
+      where: { branchId: branch.id },
+      create: {
+        branchId: branch.id,
+        shopName: s.shopName || branch.name || "",
+        shopAddress: s.shopAddress || branch.address || "",
+        shopPhone: s.shopPhone || branch.phone || "",
+        shopEmail: s.shopEmail || branch.email || "",
+        adminWhatsApp: s.ownerPhone || "",
+        logo: s.logo || "",
       },
-      { upsert: true }
-    );
+      update: {
+        shopName: s.shopName || branch.name || "",
+        shopAddress: s.shopAddress || branch.address || "",
+        shopPhone: s.shopPhone || branch.phone || "",
+        shopEmail: s.shopEmail || branch.email || "",
+        adminWhatsApp: s.ownerPhone || "",
+        logo: s.logo || "",
+      },
+    });
   } catch (e: any) {
     console.warn("Could not sync branch shop settings", e?.message);
   }
@@ -57,18 +62,19 @@ const UPDATE_WHITELIST = [
 ] as const;
 
 export async function listActiveBranches() {
-  return Branch.find({ isActive: true })
-    .select("name code address phone email isActive")
-    .sort({ name: 1 })
-    .lean();
+  return Branch.findMany({
+    where: { isActive: true },
+    select: { name: true, code: true, address: true, phone: true, email: true, isActive: true },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function listAllBranches() {
-  return Branch.find().sort({ name: 1 }).lean();
+  return Branch.findMany({ orderBy: { name: "asc" } });
 }
 
 export async function getBranchById(id: string) {
-  const branch = await Branch.findById(id).lean();
+  const branch = await Branch.findUnique({ where: { id } });
   if (!branch) throw new AppError(404, "Branch not found");
   return branch;
 }
@@ -80,33 +86,35 @@ export async function createBranch(data: BranchData) {
   if (!data.ownerUsername?.trim()) throw new AppError(400, "Owner username is required");
   if (!data.ownerPassword?.trim()) throw new AppError(400, "Owner password is required");
 
-  const existing = await Branch.findOne({
-    $or: [{ code: data.code }, { dbName: data.dbName }],
-  }).lean();
+  const existing = await Branch.findFirst({
+    where: { OR: [{ code: data.code }, { dbName: data.dbName }] },
+  });
   if (existing) {
     if (existing.code === data.code) throw new AppError(409, "Branch code already exists");
     if (existing.dbName === data.dbName) throw new AppError(409, "Database name already exists");
   }
 
-  const existingUser = await User.findOne({ username: data.ownerUsername }).lean();
+  const existingUser = await User.findFirst({ where: { username: data.ownerUsername } });
   if (existingUser) throw new AppError(409, "Owner username already exists");
 
   const branch = await Branch.create({
-    name: data.name,
-    code: data.code,
-    dbName: data.dbName,
-    address: data.address || "",
-    phone: data.phone || "",
-    email: data.email || "",
-    settings: {
-      shopName: data.name || "",
-      shopAddress: data.address || "",
-      shopPhone: data.phone || "",
-      shopEmail: data.email || "",
-      logo: data.logo || "",
-      ownerName: data.ownerName || "",
-      ownerPhone: data.ownerPhone || "",
-      ownerEmail: data.ownerEmail || "",
+    data: {
+      name: data.name!,
+      code: data.code!,
+      dbName: data.dbName!,
+      address: data.address || "",
+      phone: data.phone || "",
+      email: data.email || "",
+      settings: {
+        shopName: data.name || "",
+        shopAddress: data.address || "",
+        shopPhone: data.phone || "",
+        shopEmail: data.email || "",
+        logo: data.logo || "",
+        ownerName: data.ownerName || "",
+        ownerPhone: data.ownerPhone || "",
+        ownerEmail: data.ownerEmail || "",
+      },
     },
   });
 
@@ -114,30 +122,30 @@ export async function createBranch(data: BranchData) {
 
   const passwordHash = await bcrypt.hash(data.ownerPassword, 10);
   const newOwner = await User.create({
-    username: data.ownerUsername,
-    passwordHash,
-    name: data.ownerName || "",
-    mobile: data.ownerPhone || "",
-    role: "owner",
-    branches: [branch._id],
+    data: {
+      username: data.ownerUsername,
+      passwordHash,
+      name: data.ownerName || "",
+      mobile: data.ownerPhone || "",
+      role: "owner",
+      branches: { connect: [{ id: branch.id }] },
+    },
   });
 
   const otherBranchIds = (
-    await Branch.find({ _id: { $ne: branch._id } })
-      .select("_id")
-      .lean()
-  ).map((b) => b._id);
+    await Branch.findMany({ where: { id: { not: branch.id } }, select: { id: true } })
+  ).map((b) => b.id);
   if (otherBranchIds.length > 0) {
-    await User.updateOne(
-      { _id: newOwner._id },
-      { $addToSet: { branches: { $each: otherBranchIds } } }
-    );
+    await User.update({
+      where: { id: newOwner.id },
+      data: { branches: { connect: otherBranchIds.map((id) => ({ id })) } },
+    });
   }
 
-  await User.updateMany(
-    { role: "owner", _id: { $ne: newOwner._id } },
-    { $addToSet: { branches: branch._id } }
-  );
+  const otherOwners = await prisma.user.findMany({ where: { role: "owner", id: { not: newOwner.id } } });
+  for (const owner of otherOwners) {
+    await prisma.user.update({ where: { id: owner.id }, data: { branches: { connect: { id: branch.id } } } });
+  }
 
   clearBranchCache();
   return branch;
@@ -154,7 +162,7 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
     data.phone ||
     data.email
   ) {
-    const existing = await Branch.findById(id).select("settings").lean();
+    const existing = await Branch.findUnique({ where: { id }, select: { settings: true } });
     const settings = { ...((existing?.settings as Record<string, string>) || {}) };
     if (data.name) settings.shopName = data.name as string;
     if (data.address) settings.shopAddress = data.address as string;
@@ -174,49 +182,40 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
   }
 
   if (filtered.code) {
-    const existing = await Branch.findOne({ code: filtered.code, _id: { $ne: id } }).lean();
+    const existing = await Branch.findFirst({ where: { code: filtered.code as string, id: { not: id } } });
     if (existing) throw new AppError(409, "Branch code already exists");
   }
   if (filtered.dbName) {
-    const existing = await Branch.findOne({ dbName: filtered.dbName, _id: { $ne: id } }).lean();
+    const existing = await Branch.findFirst({ where: { dbName: filtered.dbName as string, id: { not: id } } });
     if (existing) throw new AppError(409, "Database name already exists");
   }
 
-  const branch = await Branch.findByIdAndUpdate(
-    id,
-    { $set: filtered },
-    { new: true, runValidators: true }
-  ).lean();
+  const branch = await Branch.update({ where: { id }, data: filtered as any });
   if (!branch) throw new AppError(404, "Branch not found");
 
   await syncBranchShopSettings(branch);
 
   if (data.ownerUsername) {
-    const branchOwner = await User.findOne({
-      role: "owner",
-      "branches.0": new mongoose.Types.ObjectId(id),
-    })
-      .select("_id")
-      .lean();
+    const branchOwner = await User.findFirst({
+      where: { role: "owner", branches: { some: { id } } },
+      select: { id: true },
+    });
     if (branchOwner) {
-      const existing = await User.findOne({
-        username: data.ownerUsername,
-        _id: { $ne: branchOwner._id },
-      }).lean();
+      const existing = await User.findFirst({
+        where: { username: data.ownerUsername as string, id: { not: branchOwner.id } },
+      });
       if (existing) throw new AppError(409, "Owner username already exists");
-      await User.updateOne({ _id: branchOwner._id }, { $set: { username: data.ownerUsername } });
+      await User.update({ where: { id: branchOwner.id }, data: { username: data.ownerUsername as string } });
     }
   }
   if (data.ownerPassword) {
-    const branchOwner = await User.findOne({
-      role: "owner",
-      "branches.0": new mongoose.Types.ObjectId(id),
-    })
-      .select("_id")
-      .lean();
+    const branchOwner = await User.findFirst({
+      where: { role: "owner", branches: { some: { id } } },
+      select: { id: true },
+    });
     if (branchOwner) {
       const hash = await bcrypt.hash(data.ownerPassword as string, 10);
-      await User.updateOne({ _id: branchOwner._id }, { $set: { passwordHash: hash } });
+      await User.update({ where: { id: branchOwner.id }, data: { passwordHash: hash } });
     }
   }
 
@@ -225,11 +224,7 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
 }
 
 export async function deleteBranch(id: string) {
-  const branch = await Branch.findByIdAndUpdate(
-    id,
-    { $set: { isActive: false } },
-    { new: true }
-  ).lean();
+  const branch = await Branch.update({ where: { id }, data: { isActive: false } });
   if (!branch) throw new AppError(404, "Branch not found");
   clearBranchCache();
   return branch;
