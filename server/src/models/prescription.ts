@@ -1,5 +1,6 @@
-import { Schema, model, Types } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const EyeSchema = new Schema({
   sph: { type: Number },
@@ -24,5 +25,4 @@ PrescriptionSchemaObj.index({ customerId: 1, createdAt: -1 });
 PrescriptionSchemaObj.index({ visitId: 1 });
 
 export const PrescriptionSchema = PrescriptionSchemaObj;
-const _Prescription = model("Prescription", PrescriptionSchemaObj);
-export const Prescription = withBranch(_Prescription, "Prescription");
+export const Prescription = scoped(prisma.prescription) as Prisma.PrescriptionDelegate;

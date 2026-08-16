@@ -1,5 +1,6 @@
-import { Schema, model, Types } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const PaymentSchemaObj = new Schema(
   {
@@ -22,5 +23,4 @@ PaymentSchemaObj.index({ paymentDate: -1 });
 PaymentSchemaObj.index({ billId: 1 });
 
 export const PaymentSchema = PaymentSchemaObj;
-const _Payment = model("Payment", PaymentSchemaObj);
-export const Payment = withBranch(_Payment, "Payment");
+export const Payment = scoped(prisma.payment) as Prisma.PaymentDelegate;
