@@ -1,5 +1,6 @@
 import { LensStock } from "../models/lensStock";
 import { AppError } from "../middleware/errorHandler";
+import { requireBranchId } from "../utils/scope";
 
 export function getPriceForPower(
   item: { price?: number; priceNeg?: number; pricePos?: number } | null | undefined,
@@ -13,11 +14,11 @@ export function getPriceForPower(
 }
 
 export async function listLensStock() {
-  return LensStock.find().sort({ coating: 1 }).lean();
+  return LensStock.findMany({ orderBy: { coating: "asc" } });
 }
 
 export async function getLensStockById(id: string) {
-  const item = await LensStock.findById(id).lean();
+  const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
   return item;
 }
@@ -28,14 +29,17 @@ export async function createLensStock(
   priceNeg?: number,
   pricePos?: number
 ) {
-  const existing = await LensStock.findOne({ coating });
+  const existing = await LensStock.findFirst({ where: { coating } });
   if (existing) throw new AppError(409, `Coating "${coating}" already exists`);
   return LensStock.create({
-    coating,
-    price,
-    priceNeg: priceNeg ?? price,
-    pricePos: pricePos ?? price,
-    quantities: { sph: {}, cyl: {}, compound: {} },
+    data: {
+      coating,
+      price,
+      priceNeg: priceNeg ?? price,
+      pricePos: pricePos ?? price,
+      quantities: { sph: {}, cyl: {}, compound: {} },
+      branchId: requireBranchId(),
+    },
   });
 }
 
@@ -46,24 +50,23 @@ export async function renameLensStock(
   priceNeg?: number,
   pricePos?: number
 ) {
-  const existing = await LensStock.findOne({ coating, _id: { $ne: id } });
+  const existing = await LensStock.findFirst({
+    where: { coating, id: { not: id } },
+  });
   if (existing) throw new AppError(409, `Coating "${coating}" already exists`);
   const update: Record<string, unknown> = { coating };
   if (price !== undefined) update.price = price;
   if (priceNeg !== undefined) update.priceNeg = priceNeg;
   if (pricePos !== undefined) update.pricePos = pricePos;
-  const item = await LensStock.findByIdAndUpdate(
-    id,
-    { $set: update },
-    { new: true, runValidators: true }
-  ).lean();
+  const item = await LensStock.update({ where: { id }, data: update });
   if (!item) throw new AppError(404, "Lens stock not found");
   return item;
 }
 
 export async function deleteLensStock(id: string) {
-  const item = await LensStock.findByIdAndDelete(id).lean();
+  const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
+  await LensStock.delete({ where: { id } });
   return item;
 }
 
@@ -73,17 +76,15 @@ export async function updateQuantity(
   powerKey: string,
   quantity: number
 ) {
-  const item = await LensStock.findById(id);
+  const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
 
   const q = (item.quantities as Record<string, Record<string, number>>) || {};
   if (!q[lensType]) q[lensType] = {};
   q[lensType][powerKey] = Math.max(0, Math.floor(quantity));
 
-  item.quantities = q;
-  item.markModified("quantities");
-  await item.save();
-  return item.toObject();
+  await LensStock.update({ where: { id }, data: { quantities: q } });
+  return LensStock.findUnique({ where: { id } });
 }
 
 export async function bulkUpdateQuantities(
@@ -91,7 +92,7 @@ export async function bulkUpdateQuantities(
   lensType: "sph" | "cyl" | "compound",
   updates: Record<string, number>
 ) {
-  const item = await LensStock.findById(id);
+  const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
 
   const q = (item.quantities as Record<string, Record<string, number>>) || {};
@@ -101,8 +102,6 @@ export async function bulkUpdateQuantities(
     q[lensType][key] = Math.max(0, Math.floor(qty));
   }
 
-  item.quantities = q;
-  item.markModified("quantities");
-  await item.save();
-  return item.toObject();
+  await LensStock.update({ where: { id }, data: { quantities: q } });
+  return LensStock.findUnique({ where: { id } });
 }

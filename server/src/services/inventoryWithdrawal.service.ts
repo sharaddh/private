@@ -1,10 +1,9 @@
-import mongoose from "mongoose";
 import { Inventory } from "../models/inventory";
 import { InventoryWithdrawal } from "../models/inventoryWithdrawal";
+import { prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
-import { paginateQuery, PaginationOptions } from "../utils/pagination";
-
-const HISTORY_CAP = 100;
+import { requireBranchId } from "../utils/scope";
+import { paginateFind, PaginationOptions } from "../utils/pagination";
 
 export interface WithdrawalItemInput {
   sku: string;
@@ -44,9 +43,17 @@ export async function createInventoryWithdrawal(input: CreateWithdrawalInput) {
   const note = input.note || "";
   const at = new Date();
 
-  const docItems: Array<Record<string, unknown>> = [];
+  const docItems: Array<{
+    sku: string;
+    brand: string;
+    model: string;
+    color: string;
+    category: string;
+    qty: number;
+    price: number;
+  }> = [];
   for (const it of items) {
-    const item = await Inventory.findOne({ sku: it.sku }).lean();
+    const item = await Inventory.findFirst({ where: { sku: it.sku } });
     if (!item) throw new AppError(404, `Inventory item "${it.sku}" not found`);
     if ((item.quantity || 0) < it.qty) {
       const name = item.brand || item.model || item.sku;
@@ -67,39 +74,71 @@ export async function createInventoryWithdrawal(input: CreateWithdrawalInput) {
   }
 
   for (const it of items) {
-    const entry = { qty: -it.qty, type: "withdraw", note, by, at };
-    const res = await Inventory.findOneAndUpdate(
-      { sku: it.sku, quantity: { $gte: it.qty } },
-      {
-        $inc: { quantity: -it.qty },
-        $push: { stockHistory: { $each: [entry], $slice: -HISTORY_CAP } },
-      },
-      { new: true }
-    ).lean();
-    if (!res) {
+    const inv = await Inventory.findFirst({
+      where: { sku: it.sku, quantity: { gte: it.qty } },
+    });
+    if (!inv) {
       throw new AppError(
         400,
         `Insufficient stock for "${it.sku}". Stock changed while withdrawing; please review and retry.`
       );
     }
+    await Inventory.update({
+      where: { id: inv.id },
+      data: { quantity: { decrement: it.qty } },
+    });
+    await prisma.inventoryMovementHistory.create({
+      data: {
+        inventoryId: inv.id,
+        qty: -it.qty,
+        type: "withdraw",
+        note,
+        by,
+        at,
+      },
+    });
   }
 
   const totalQty = items.reduce((s, it) => s + it.qty, 0);
   const totalPrice = items.reduce((s, it) => s + it.qty * it.price, 0);
 
-  return InventoryWithdrawal.create({ items: docItems, note, by, totalQty, totalPrice });
-}
-
-export async function listInventoryWithdrawals(options: PaginationOptions = {}) {
-  const baseQuery = InventoryWithdrawal.find() as mongoose.Query<any[], any>;
-  return paginateQuery(baseQuery, {
-    page: options.page,
-    limit: options.limit,
+  return InventoryWithdrawal.create({
+    data: {
+      branchId: requireBranchId(),
+      note,
+      by,
+      totalQty,
+      totalPrice,
+      items: {
+        create: docItems.map((di) => ({
+          sku: di.sku,
+          brand: di.brand,
+          model: di.model,
+          color: di.color,
+          category: di.category,
+          qty: di.qty,
+          price: di.price,
+        })),
+      },
+    },
+    include: { items: true },
   });
 }
 
+export async function listInventoryWithdrawals(options: PaginationOptions = {}) {
+  return paginateFind(
+    (args) => InventoryWithdrawal.findMany({ ...args }),
+    (where) => InventoryWithdrawal.count({ where }),
+    { page: options.page, limit: options.limit },
+    { orderBy: { createdAt: "desc" } }
+  );
+}
+
 export async function getInventoryWithdrawalById(id: string) {
-  const doc = await InventoryWithdrawal.findById(id).lean();
+  const doc = await InventoryWithdrawal.findUnique({
+    where: { id },
+    include: { items: true },
+  });
   if (!doc) throw new AppError(404, "Withdrawal not found");
   return doc;
 }
