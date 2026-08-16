@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const ShopCartItemSchemaObj = new Schema(
   {
@@ -16,5 +17,4 @@ const ShopCartItemSchemaObj = new Schema(
 ShopCartItemSchemaObj.index({ user: 1, coating: 1, lensType: 1, powerKey: 1 }, { unique: true });
 
 export const ShopCartItemSchema = ShopCartItemSchemaObj;
-const _ShopCartItem = model("ShopCartItem", ShopCartItemSchemaObj);
-export const ShopCartItem = withBranch(_ShopCartItem, "ShopCartItem");
+export const ShopCartItem = scoped(prisma.shopCartItem) as Prisma.ShopCartItemDelegate;

@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const ShopLensWithdrawalItemSchemaObj = new Schema(
   {
@@ -26,5 +27,4 @@ const ShopLensWithdrawalSchemaObj = new Schema(
 );
 
 export const ShopLensWithdrawalSchema = ShopLensWithdrawalSchemaObj;
-const _ShopLensWithdrawal = model("ShopLensWithdrawal", ShopLensWithdrawalSchemaObj);
-export const ShopLensWithdrawal = withBranch(_ShopLensWithdrawal, "ShopLensWithdrawal");
+export const ShopLensWithdrawal = scoped(prisma.shopLensWithdrawal) as Prisma.ShopLensWithdrawalDelegate;
