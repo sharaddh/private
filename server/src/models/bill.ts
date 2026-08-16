@@ -1,5 +1,6 @@
-import { Schema, model, Types } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const BillItemSchema = new Schema({
   description: { type: String, required: true },
@@ -36,5 +37,4 @@ BillSchemaObj.index({ pendingAmount: 1 });
 BillSchemaObj.index({ createdAt: -1 });
 
 export const BillSchema = BillSchemaObj;
-const _Bill = model("Bill", BillSchemaObj);
-export const Bill = withBranch(_Bill, "Bill");
+export const Bill = scoped(prisma.bill) as Prisma.BillDelegate;
