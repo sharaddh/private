@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint .",
+    "lint": "eslint .", 
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -22,10 +22,12 @@
     "migrate:inventory": "ts-node src/migrations/migrate-inventory.ts",
     "migrate:halve-lens": "ts-node src/scripts/halve-lens-stock.ts",
     "migrate:double-lens": "ts-node src/scripts/double-lens-stock.ts",
+    "etl": "ts-node src/scripts/etl-mongo-to-postgres.ts",
     "recalculate": "ts-node src/scripts/recalculate-customers.ts",
     "postinstall": "node -e \"console.log('no postinstall needed')\""
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "@types/qrcode": "^1.5.6",
     "bcrypt": "^5.1.0",
     "compression": "^1.8.1",
@@ -40,6 +42,7 @@
     "pdfkit": "^0.19.1",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0",
+    "prisma": "^6.19.3",
     "qrcode": "^1.5.4",
     "rate-limit-redis": "^4.3.1",
     "zod": "^4.4.3"
