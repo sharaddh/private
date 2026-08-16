@@ -1,41 +1,43 @@
-import mongoose from "mongoose";
+import { prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
-import { withTransaction } from "../utils/transaction";
-import { Brand } from "../models/brand";
-import { Rack } from "../models/rack";
-import { InventoryProduct } from "../models/inventoryProduct";
-import { InventoryVariant } from "../models/inventoryVariant";
-import { InventoryLot } from "../models/inventoryLot";
-import { InventoryMovement } from "../models/inventoryMovement";
-import { escapeRegex, normalizeSku } from "../utils/string";
-import { paginateQuery, PaginationOptions } from "../utils/pagination";
+import { requireCtx } from "../utils/requestContext"; // used inside getBranchId
+import { normalizeSku } from "../utils/string";
+import { paginateFind, PaginationOptions } from "../utils/pagination";
 import { VALID_PRODUCT_CATEGORIES, VALID_GENDERS } from "../types";
 
 function cleanBrandName(name: string): string {
   return String(name || "").trim();
 }
 
+function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
+function getBranchId(): string {
+  const branchId = getBranchId();
+  if (!branchId) throw new AppError(400, "Branch context is required");
+  return branchId;
+}
+
 export async function ensureBrand(
-  nameOrId: string,
-  session?: mongoose.ClientSession | null
-): Promise<{ _id: mongoose.Types.ObjectId; name: string } | null> {
+  nameOrId: string
+): Promise<{ id: string; name: string } | null> {
   const raw = cleanBrandName(nameOrId);
   if (!raw) return null;
 
-  if (mongoose.Types.ObjectId.isValid(raw)) {
-    const existing = await Brand.findById(raw, null, session ? { session } : {}).lean();
-    if (existing) return { _id: existing._id, name: existing.name };
+  if (isValidUUID(raw)) {
+    const existing = await prisma.brand.findUnique({ where: { id: raw } });
+    if (existing) return { id: existing.id, name: existing.name };
   }
 
-  const existing = await Brand.findOne(
-    { name: { $regex: new RegExp(`^${escapeRegex(raw)}$`, "i") } },
-    null,
-    session ? { session } : {}
-  ).lean();
-  if (existing) return { _id: existing._id, name: existing.name };
+  const existing = await prisma.brand.findFirst({
+    where: { name: { equals: raw, mode: "insensitive" } },
+  });
+  if (existing) return { id: existing.id, name: existing.name };
 
-  const created = await Brand.create([{ name: raw }], session ? { session } : {});
-  return { _id: created[0]._id, name: created[0].name };
+  const branchId = getBranchId();
+  const created = await prisma.brand.create({ data: { name: raw, branchId } });
+  return { id: created.id, name: created.name };
 }
 
 export async function findOrCreateProduct(
@@ -47,42 +49,40 @@ export async function findOrCreateProduct(
     model: string;
     gender?: string;
     description?: string;
-  },
-  session?: mongoose.ClientSession | null
+  }
 ) {
   const model = String(input.model || "").trim();
   if (!model) throw new AppError(400, "Model is required");
-  const brandId = input.brandId || undefined;
   const category =
     input.category && VALID_PRODUCT_CATEGORIES.includes(input.category as any)
       ? input.category
       : "Specs";
 
-  const existing = await InventoryProduct.findOne(
-    { brandId, model: { $regex: new RegExp(`^${escapeRegex(model)}$`, "i") } },
-    null,
-    session ? { session } : {}
-  ).lean();
+  const where: any = {
+    model: { equals: model, mode: "insensitive" as const },
+  };
+  if (input.brandId) where.brandId = input.brandId;
+
+  const existing = await prisma.inventoryProduct.findFirst({ where });
   if (existing) return existing;
 
   const gender =
     input.gender && (VALID_GENDERS as readonly string[]).includes(input.gender) ? input.gender : "";
-  const created = await InventoryProduct.create(
-    [
-      {
-        brandId,
-        brandName: input.brandName,
-        category,
-        inventoryType: input.inventoryType || "",
-        model,
-        displayName: `${input.brandName ? `${input.brandName} ` : ""}${model}`,
-        gender,
-        description: input.description || "",
-      },
-    ],
-    session ? { session } : {}
-  );
-  return created[0];
+  const branchId = getBranchId();
+  const created = await prisma.inventoryProduct.create({
+    data: {
+      brandId: input.brandId || null,
+      brandName: input.brandName,
+      category,
+      inventoryType: input.inventoryType || "",
+      model,
+      displayName: `${input.brandName ? `${input.brandName} ` : ""}${model}`,
+      gender,
+      description: input.description || "",
+      branchId,
+    },
+  });
+  return created;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,33 +90,30 @@ export async function findOrCreateProduct(
 // ---------------------------------------------------------------------------
 
 export async function listBrands(threshold: number = 5) {
-  const brands = await Brand.find({ active: true }).sort({ name: 1 }).lean();
+  const brands = await prisma.brand.findMany({
+    where: { active: true },
+    orderBy: { name: "asc" },
+  });
 
-  const summary = await InventoryVariant.aggregate([
-    { $match: { active: true, brandId: { $exists: true, $ne: null } } },
-    {
-      $group: {
-        _id: "$brandId",
-        variants: { $sum: 1 },
-        units: { $sum: "$stockQuantity" },
-        lowStock: {
-          $sum: {
-            $cond: [
-              { $and: [{ $lte: ["$stockQuantity", threshold] }, { $gt: ["$stockQuantity", 0] }] },
-              1,
-              0,
-            ],
-          },
-        },
-      },
-    },
-  ]);
+  const variants = await prisma.inventoryVariant.findMany({
+    where: { active: true, brandId: { not: null } },
+    select: { brandId: true, stockQuantity: true },
+  });
 
-  const summaryMap = new Map(summary.map((s) => [s._id.toString(), s]));
+  const summaryMap = new Map<string, { variants: number; units: number; lowStock: number }>();
+  for (const v of variants) {
+    if (!v.brandId) continue;
+    const s = summaryMap.get(v.brandId) || { variants: 0, units: 0, lowStock: 0 };
+    s.variants += 1;
+    s.units += v.stockQuantity || 0;
+    if ((v.stockQuantity || 0) > 0 && (v.stockQuantity || 0) <= threshold) s.lowStock += 1;
+    summaryMap.set(v.brandId, s);
+  }
+
   return brands.map((b) => {
-    const s = summaryMap.get(b._id.toString());
+    const s = summaryMap.get(b.id);
     return {
-      _id: b._id,
+      id: b.id,
       name: b.name,
       variants: s?.variants || 0,
       units: s?.units || 0,
@@ -126,64 +123,72 @@ export async function listBrands(threshold: number = 5) {
 }
 
 export async function getBrandSummary(brandId: string) {
-  const brand = await Brand.findById(brandId).lean();
+  const brand = await prisma.brand.findUnique({ where: { id: brandId } });
   if (!brand) throw new AppError(404, "Brand not found");
 
-  const [productSummary, variantCount, units] = await Promise.all([
-    InventoryProduct.aggregate([
-      { $match: { brandId: brand._id, active: true } },
-      { $group: { _id: "$category", products: { $sum: 1 } } },
-    ]),
-    InventoryVariant.countDocuments({ brandId: brand._id, active: true }),
-    InventoryVariant.aggregate([
-      { $match: { brandId: brand._id, active: true } },
-      { $group: { _id: null, units: { $sum: "$stockQuantity" } } },
-    ]),
+  const [products, variantCount, unitsResult] = await Promise.all([
+    prisma.inventoryProduct.findMany({
+      where: { brandId: brand.id, active: true },
+      select: { category: true },
+    }),
+    prisma.inventoryVariant.count({ where: { brandId: brand.id, active: true } }),
+    prisma.inventoryVariant.aggregate({
+      where: { brandId: brand.id, active: true },
+      _sum: { stockQuantity: true },
+    }),
   ]);
 
   const categories: Record<string, number> = {};
-  for (const c of productSummary) if (c._id) categories[c._id] = c.products;
+  for (const p of products) if (p.category) categories[p.category] = (categories[p.category] || 0) + 1;
 
   return {
     brand,
     categoryCounts: categories,
     variants: variantCount,
-    units: units[0]?.units || 0,
+    units: unitsResult._sum.stockQuantity || 0,
   };
 }
 
 export async function createBrand(input: { name: string; description?: string; logo?: string }) {
   const name = cleanBrandName(input.name);
   if (!name) throw new AppError(400, "Brand name is required");
-  const existing = await Brand.findOne({
-    name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
-  }).lean();
+  const existing = await prisma.brand.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
   if (existing) throw new AppError(409, `Brand "${name}" already exists`);
-  return Brand.create({ name, description: input.description || "", logo: input.logo || "" });
+  const branchId = getBranchId();
+  return prisma.brand.create({
+    data: { name, description: input.description || "", logo: input.logo || "", branchId },
+  });
 }
 
 export async function updateBrand(
   id: string,
   input: { name?: string; description?: string; logo?: string; active?: boolean }
 ) {
-  const brand = await Brand.findById(id);
+  const brand = await prisma.brand.findUnique({ where: { id } });
   if (!brand) throw new AppError(404, "Brand not found");
+
+  const updateData: Record<string, unknown> = {};
+
   if (input.name !== undefined && input.name.trim()) {
     const name = cleanBrandName(input.name);
-    const dup = await Brand.findOne({
-      name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
-      _id: { $ne: id },
-    }).lean();
+    const dup = await prisma.brand.findFirst({
+      where: {
+        name: { equals: name, mode: "insensitive" },
+        id: { not: id },
+      },
+    });
     if (dup) throw new AppError(409, `Brand "${name}" already exists`);
-    brand.name = name;
-    await InventoryVariant.updateMany({ brandId: id }, { $set: { brandName: name } });
-    await InventoryProduct.updateMany({ brandId: id }, { $set: { brandName: name } });
+    updateData.name = name;
+    await prisma.inventoryVariant.updateMany({ where: { brandId: id }, data: { brandName: name } });
+    await prisma.inventoryProduct.updateMany({ where: { brandId: id }, data: { brandName: name } });
   }
-  if (input.description !== undefined) brand.description = input.description;
-  if (input.logo !== undefined) brand.logo = input.logo;
-  if (input.active !== undefined) brand.active = input.active;
-  await brand.save();
-  return brand;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.logo !== undefined) updateData.logo = input.logo;
+  if (input.active !== undefined) updateData.active = input.active;
+
+  return prisma.brand.update({ where: { id }, data: updateData });
 }
 
 // ---------------------------------------------------------------------------
@@ -198,33 +203,35 @@ export interface ProductFilters extends PaginationOptions {
 }
 
 export async function listProducts(options: ProductFilters = {}) {
-  const filter: Record<string, unknown> = { active: true };
+  const filter: any = { active: true };
   if (options.brandId) filter.brandId = options.brandId;
   if (options.category) filter.category = options.category;
   if (options.gender) filter.gender = options.gender;
   if (options.search) {
-    const s = escapeRegex(options.search.trim());
-    filter.$or = [
-      { model: { $regex: s, $options: "i" } },
-      { brandName: { $regex: s, $options: "i" } },
-      { displayName: { $regex: s, $options: "i" } },
+    const s = options.search.trim();
+    filter.OR = [
+      { model: { contains: s, mode: "insensitive" } },
+      { brandName: { contains: s, mode: "insensitive" } },
+      { displayName: { contains: s, mode: "insensitive" } },
     ];
   }
 
-  const baseQuery = InventoryProduct.find(filter).sort({
-    brandName: 1,
-    model: 1,
-  }) as mongoose.Query<any[], any>;
-  return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
+  return paginateFind(
+    (args) => prisma.inventoryProduct.findMany(args),
+    (where) => prisma.inventoryProduct.count({ where }),
+    { page: options.page, limit: options.limit },
+    { where: filter, orderBy: { brandName: "asc", model: "asc" } }
+  );
 }
 
 export async function getProductById(id: string) {
-  const product = await InventoryProduct.findById(id).lean();
+  const product = await prisma.inventoryProduct.findUnique({ where: { id } });
   if (!product) throw new AppError(404, "Product not found");
 
-  const variants = await InventoryVariant.find({ productId: id, active: true })
-    .sort({ color: 1 })
-    .lean();
+  const variants = await prisma.inventoryVariant.findMany({
+    where: { productId: id, active: true },
+    orderBy: { color: "asc" },
+  });
   return { ...product, variants };
 }
 
@@ -236,9 +243,9 @@ export async function createProduct(input: {
   gender?: string;
   description?: string;
 }) {
-  const brand = await ensureBrand(input.brandId || input.brandName || "", null);
+  const brand = await ensureBrand(input.brandId || input.brandName || "");
   const product = await findOrCreateProduct({
-    brandId: brand?._id?.toString() || "",
+    brandId: brand?.id || "",
     brandName: brand?.name || input.brandName || "",
     category: input.category,
     model: input.model,
@@ -249,8 +256,9 @@ export async function createProduct(input: {
 }
 
 export async function updateProduct(id: string, input: Record<string, unknown>) {
-  const product = await InventoryProduct.findById(id);
+  const product = await prisma.inventoryProduct.findUnique({ where: { id } });
   if (!product) throw new AppError(404, "Product not found");
+
   const allowed = [
     "category",
     "inventoryType",
@@ -261,35 +269,31 @@ export async function updateProduct(id: string, input: Record<string, unknown>) 
     "active",
     "sizeOptions",
   ];
-  const target = product as unknown as Record<string, unknown>;
+  const updateData: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (key in input) target[key] = input[key];
+    if (key in input) updateData[key] = input[key];
   }
   if (input.model !== undefined) {
-    await InventoryVariant.updateMany({ productId: id }, { $set: { model: String(input.model) } });
+    await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { model: String(input.model) } });
   }
   if (input.category !== undefined) {
-    await InventoryVariant.updateMany(
-      { productId: id },
-      { $set: { category: String(input.category) } }
-    );
+    await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { category: String(input.category) } });
   }
-  await product.save();
-  return product;
+  return prisma.inventoryProduct.update({ where: { id }, data: updateData });
 }
 
 export async function archiveProduct(id: string) {
-  const product = await InventoryProduct.findById(id);
+  const product = await prisma.inventoryProduct.findUnique({ where: { id } });
   if (!product) throw new AppError(404, "Product not found");
-  const hasMovements = await InventoryVariant.exists({ productId: id });
-  if (hasMovements) {
-    product.active = false;
-    await product.save();
-    await InventoryVariant.updateMany({ productId: id }, { $set: { active: false } });
-    return product;
+
+  const hasVariants = await prisma.inventoryVariant.findFirst({ where: { productId: id }, select: { id: true } });
+  if (hasVariants) {
+    await prisma.inventoryProduct.update({ where: { id }, data: { active: false } });
+    await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { active: false } });
+    return { ...product, active: false };
   }
-  await InventoryProduct.findByIdAndDelete(id);
-  await InventoryVariant.deleteMany({ productId: id });
+  await prisma.inventoryProduct.delete({ where: { id } });
+  await prisma.inventoryVariant.deleteMany({ where: { productId: id } });
   return { deleted: true };
 }
 
@@ -310,75 +314,76 @@ export interface VariantFilters extends PaginationOptions {
 }
 
 export async function listVariants(options: VariantFilters = {}) {
-  const filter: Record<string, unknown> = { active: true };
+  const filter: any = { active: true };
   if (options.productId) filter.productId = options.productId;
   if (options.brandId) filter.brandId = options.brandId;
   if (options.category) filter.category = options.category;
-  if (options.color) filter.color = { $regex: escapeRegex(options.color), $options: "i" };
+  if (options.color) filter.color = { contains: options.color, mode: "insensitive" };
   if (options.rackId) filter.rackId = options.rackId;
   if (options.gender) filter.gender = options.gender;
 
   if (options.stock && options.stock !== "all") {
     const t = Math.max(parseInt(options.threshold || "5", 10) || 5, 0);
-    if (options.stock === "in") filter.stockQuantity = { $gt: 0 };
+    if (options.stock === "in") filter.stockQuantity = { gt: 0 };
     if (options.stock === "out") filter.stockQuantity = 0;
-    if (options.stock === "low") filter.stockQuantity = { $gt: 0, $lte: t };
+    if (options.stock === "low") filter.stockQuantity = { gt: 0, lte: t };
   }
 
   if (options.search) {
-    const s = escapeRegex(options.search.trim());
-    filter.$or = [
-      { sku: { $regex: s, $options: "i" } },
-      { model: { $regex: s, $options: "i" } },
-      { brandName: { $regex: s, $options: "i" } },
-      { color: { $regex: s, $options: "i" } },
-      { rackLabel: { $regex: s, $options: "i" } },
-      { category: { $regex: s, $options: "i" } },
+    const s = options.search.trim();
+    filter.OR = [
+      { sku: { contains: s, mode: "insensitive" } },
+      { model: { contains: s, mode: "insensitive" } },
+      { brandName: { contains: s, mode: "insensitive" } },
+      { color: { contains: s, mode: "insensitive" } },
+      { rackLabel: { contains: s, mode: "insensitive" } },
+      { category: { contains: s, mode: "insensitive" } },
     ];
   }
 
-  const baseQuery = InventoryVariant.find(filter).sort({
-    brandName: 1,
-    model: 1,
-    color: 1,
-  }) as mongoose.Query<any[], any>;
-  return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
+  return paginateFind(
+    (args) => prisma.inventoryVariant.findMany(args),
+    (where) => prisma.inventoryVariant.count({ where }),
+    { page: options.page, limit: options.limit },
+    { where: filter, orderBy: { brandName: "asc", model: "asc", color: "asc" } }
+  );
 }
 
 export async function searchVariants(query: string, limit: number = 20) {
-  const s = escapeRegex((query || "").trim());
+  const s = (query || "").trim();
   if (!s) return [];
-  return InventoryVariant.find({
-    active: true,
-    $or: [
-      { sku: { $regex: s, $options: "i" } },
-      { model: { $regex: s, $options: "i" } },
-      { brandName: { $regex: s, $options: "i" } },
-      { color: { $regex: s, $options: "i" } },
-      { rackLabel: { $regex: s, $options: "i" } },
-    ],
-  })
-    .sort({ brandName: 1, model: 1, color: 1 })
-    .limit(Math.min(Math.max(limit, 1), 100))
-    .lean();
+  return prisma.inventoryVariant.findMany({
+    where: {
+      active: true,
+      OR: [
+        { sku: { contains: s, mode: "insensitive" } },
+        { model: { contains: s, mode: "insensitive" } },
+        { brandName: { contains: s, mode: "insensitive" } },
+        { color: { contains: s, mode: "insensitive" } },
+        { rackLabel: { contains: s, mode: "insensitive" } },
+      ],
+    },
+    orderBy: { brandName: "asc", model: "asc", color: "asc" },
+    take: Math.min(Math.max(limit, 1), 100),
+  });
 }
 
 export async function getVariantById(id: string) {
-  const variant = await InventoryVariant.findById(id).lean();
+  const variant = await prisma.inventoryVariant.findUnique({ where: { id } });
   if (!variant) throw new AppError(404, "Variant not found");
 
   const [product, lots, rack, recentMovements] = await Promise.all([
-    variant.productId ? InventoryProduct.findById(variant.productId).lean() : null,
-    InventoryLot.find({ variantId: id }).sort({ createdAt: 1 }).lean(),
-    variant.rackId ? Rack.findById(variant.rackId).select("code name").lean() : null,
-    InventoryMovement.find({ variantId: id }).sort({ createdAt: -1 }).limit(20).lean(),
+    variant.productId ? prisma.inventoryProduct.findUnique({ where: { id: variant.productId } }) : null,
+    prisma.inventoryLot.findMany({ where: { variantId: id }, orderBy: { createdAt: "asc" } }),
+    variant.rackId ? prisma.rack.findUnique({ where: { id: variant.rackId }, select: { code: true, name: true } }) : null,
+    prisma.inventoryMovement.findMany({ where: { variantId: id }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
 
   return { variant, product, rack, lots, recentMovements };
 }
 
 export async function getVariantBySku(sku: string) {
-  const variant = await InventoryVariant.findOne({ sku: normalizeSku(sku) }).lean();
+  const variant = await prisma.inventoryVariant.findFirst({ where: { sku: normalizeSku(sku) } });
   if (!variant) throw new AppError(404, "Variant not found");
   return variant;
 }
@@ -386,12 +391,12 @@ export async function getVariantBySku(sku: string) {
 export async function createVariant(input: Record<string, unknown>) {
   const sku = normalizeSku(String(input.sku || ""));
   if (!sku) throw new AppError(400, "SKU is required");
-  const existing = await InventoryVariant.findOne({ sku }).lean();
+  const existing = await prisma.inventoryVariant.findFirst({ where: { sku } });
   if (existing) throw new AppError(409, `SKU ${sku} already exists`);
 
-  const brand = await ensureBrand(String(input.brandId || input.brandName || ""), null);
+  const brand = await ensureBrand(String(input.brandId || input.brandName || ""));
   const product = await findOrCreateProduct({
-    brandId: brand?._id?.toString() || "",
+    brandId: brand?.id || "",
     brandName: brand?.name || String(input.brandName || ""),
     category: String(input.category || "Specs"),
     model: String(input.model || ""),
@@ -399,119 +404,122 @@ export async function createVariant(input: Record<string, unknown>) {
   });
 
   const rackLabel = input.rackId
-    ? (await Rack.findById(input.rackId).select("code").lean())?.code || ""
+    ? (await prisma.rack.findUnique({ where: { id: String(input.rackId) }, select: { code: true } }))?.code || ""
     : "";
-  const variant = await InventoryVariant.create({
-    productId: product._id,
-    brandId: brand?._id || undefined,
-    brandName: brand?.name || String(input.brandName || ""),
-    category: product.category,
-    model: product.model,
-    gender: input.gender || product.gender || "",
-    sku,
-    variantCode: String(input.color || ""),
-    color: String(input.color || ""),
-    size: String(input.size || ""),
-    material: String(input.material || ""),
-    frameShape: String(input.frameShape || ""),
-    frameType: String(input.frameType || ""),
-    templeSize: String(input.templeSize || ""),
-    bridgeSize: String(input.bridgeSize || ""),
-    lensWidth: String(input.lensWidth || ""),
-    defaultSellingPrice: Math.max(Number(input.defaultSellingPrice) || 0, 0),
-    rackId: input.rackId,
-    rackLabel,
-    supplierId: input.supplierId,
-    supplierName: String(input.supplierName || ""),
-    attributes: (input.attributes as Record<string, unknown>) || {},
+
+  const branchId = getBranchId();
+
+  const variant = await prisma.inventoryVariant.create({
+    data: {
+      productId: product.id,
+      branchId,
+      brandId: brand?.id || null,
+      brandName: brand?.name || String(input.brandName || ""),
+      category: product.category,
+      model: product.model,
+      gender: String(input.gender || product.gender || ""),
+      sku,
+      variantCode: String(input.color || ""),
+      color: String(input.color || ""),
+      size: String(input.size || ""),
+      material: String(input.material || ""),
+      frameShape: String(input.frameShape || ""),
+      frameType: String(input.frameType || ""),
+      templeSize: String(input.templeSize || ""),
+      bridgeSize: String(input.bridgeSize || ""),
+      lensWidth: String(input.lensWidth || ""),
+      defaultSellingPrice: Math.max(Number(input.defaultSellingPrice) || 0, 0),
+      rackId: (input.rackId as string) || null,
+      rackLabel,
+      supplierId: (input.supplierId as string) || null,
+      supplierName: String(input.supplierName || ""),
+      attributes: (input.attributes as any) || {},
+    },
   });
   return variant;
 }
 
 export async function updateVariant(id: string, input: Record<string, unknown>) {
-  return withTransaction(async (session) => {
-    const variant = await InventoryVariant.findById(id, null, session ? { session } : {});
-    if (!variant) throw new AppError(404, "Variant not found");
+  const variant = await prisma.inventoryVariant.findUnique({ where: { id } });
+  if (!variant) throw new AppError(404, "Variant not found");
 
-    const allowed = [
-      "color",
-      "size",
-      "gender",
-      "material",
-      "frameShape",
-      "frameType",
-      "templeSize",
-      "bridgeSize",
-      "lensWidth",
-      "status",
-      "attributes",
-      "image",
-      "defaultSellingPrice",
-      "supplierId",
-      "supplierName",
-      "active",
-    ];
-    const target = variant as unknown as Record<string, unknown>;
-    for (const key of allowed) {
-      if (key in input) {
-        if (key === "defaultSellingPrice") {
-          target[key] = Math.max(Number(input[key]) || 0, 0);
-        } else {
-          target[key] = input[key];
-        }
+  const allowed = [
+    "color",
+    "size",
+    "gender",
+    "material",
+    "frameShape",
+    "frameType",
+    "templeSize",
+    "bridgeSize",
+    "lensWidth",
+    "status",
+    "attributes",
+    "image",
+    "defaultSellingPrice",
+    "supplierId",
+    "supplierName",
+    "active",
+  ];
+  const updateData: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in input) {
+      if (key === "defaultSellingPrice") {
+        updateData[key] = Math.max(Number(input[key]) || 0, 0);
+      } else {
+        updateData[key] = input[key];
       }
     }
+  }
 
-    if (input.rackId !== undefined) {
-      const newRackId = input.rackId as string;
-      if (newRackId && variant.rackId?.toString() !== newRackId) {
-        const oldRackId = variant.rackId?.toString();
-        const oldRackLabel = variant.rackLabel;
-        const newRack = await Rack.findById(newRackId).select("code").lean();
-        const newRackLabel = newRack?.code || "";
-        variant.rackId = newRackId as any;
-        variant.rackLabel = newRackLabel;
-        await InventoryMovement.create(
-          [
-            {
-              variantId: id,
-              sku: variant.sku,
-              type: "LOCATION_CHANGE",
-              quantity: 0,
-              beforeQuantity: variant.stockQuantity || 0,
-              afterQuantity: variant.stockQuantity || 0,
-              oldRackId,
-              newRackId,
-              rackId: newRackId,
-              rackLabel: newRackLabel,
-              referenceType: "MANUAL",
-              note: `Moved from ${oldRackLabel || "unknown"} to ${newRackLabel}`,
-            },
-          ],
-          session ? { session } : {}
-        );
-      } else if (!newRackId) {
-        variant.rackId = undefined as any;
-        variant.rackLabel = "";
-      }
+  if (input.rackId !== undefined) {
+    const newRackId = input.rackId as string;
+    if (newRackId && variant.rackId !== newRackId) {
+      const oldRackId = variant.rackId;
+      const oldRackLabel = variant.rackLabel;
+      const newRack = await prisma.rack.findUnique({ where: { id: newRackId }, select: { code: true } });
+      const newRackLabel = newRack?.code || "";
+      updateData.rackId = newRackId;
+      updateData.rackLabel = newRackLabel;
+
+      const branchId = getBranchId();
+      await prisma.inventoryMovement.create({
+        data: {
+          variantId: id,
+          branchId,
+          sku: variant.sku,
+          type: "LOCATION_CHANGE",
+          quantity: 0,
+          beforeQuantity: variant.stockQuantity || 0,
+          afterQuantity: variant.stockQuantity || 0,
+          oldRackId,
+          newRackId,
+          rackId: newRackId,
+          rackLabel: newRackLabel,
+          referenceType: "MANUAL",
+          note: `Moved from ${oldRackLabel || "unknown"} to ${newRackLabel}`,
+        },
+      });
+    } else if (!newRackId) {
+      updateData.rackId = null;
+      updateData.rackLabel = "";
     }
+  }
 
-    await variant.save(session ? { session } : {});
-    return variant;
-  });
+  return prisma.inventoryVariant.update({ where: { id }, data: updateData });
 }
 
 export async function archiveVariant(id: string) {
-  const variant = await InventoryVariant.findById(id);
+  const variant = await prisma.inventoryVariant.findUnique({ where: { id } });
   if (!variant) throw new AppError(404, "Variant not found");
-  const hasMovements = await InventoryMovement.exists({ variantId: id });
+
+  const hasMovements = await prisma.inventoryMovement.findFirst({ where: { variantId: id }, select: { id: true } });
   if (hasMovements) {
-    variant.active = false;
-    await variant.save();
-    return variant;
+    await prisma.inventoryVariant.update({ where: { id }, data: { active: false } });
+    return { ...variant, active: false };
   }
-  await InventoryVariant.findByIdAndDelete(id);
-  await InventoryLot.deleteMany({ variantId: id });
+  await prisma.inventoryVariant.delete({ where: { id } });
+  await prisma.inventoryLot.deleteMany({ where: { variantId: id } });
   return { deleted: true };
 }
 
@@ -520,22 +528,33 @@ export async function archiveVariant(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function listRacks() {
-  const racks = await Rack.find({ active: true })
-    .sort({ section: 1, sortOrder: 1, code: 1 })
-    .lean();
-  const summary = await InventoryVariant.aggregate([
-    { $match: { active: true, rackId: { $exists: true, $ne: null } } },
-    { $group: { _id: "$rackId", variants: { $sum: 1 }, units: { $sum: "$stockQuantity" } } },
-  ]);
-  const summaryMap = new Map(summary.map((s) => [s._id.toString(), s]));
+  const racks = await prisma.rack.findMany({
+    where: { active: true },
+    orderBy: { section: "asc" },
+  });
+
+  const variants = await prisma.inventoryVariant.findMany({
+    where: { active: true, rackId: { not: null } },
+    select: { rackId: true, stockQuantity: true },
+  });
+
+  const summaryMap = new Map<string, { variants: number; units: number }>();
+  for (const v of variants) {
+    if (!v.rackId) continue;
+    const s = summaryMap.get(v.rackId) || { variants: 0, units: 0 };
+    s.variants += 1;
+    s.units += v.stockQuantity || 0;
+    summaryMap.set(v.rackId, s);
+  }
+
   return racks.map((r) => ({
-    _id: r._id,
+    id: r.id,
     name: r.name,
     code: r.code,
     section: r.section,
     sortOrder: r.sortOrder,
-    variants: summaryMap.get(r._id.toString())?.variants || 0,
-    units: summaryMap.get(r._id.toString())?.units || 0,
+    variants: summaryMap.get(r.id)?.variants || 0,
+    units: summaryMap.get(r.id)?.units || 0,
   }));
 }
 
@@ -550,16 +569,20 @@ export async function createRack(input: {
     .trim()
     .toUpperCase();
   if (!code) throw new AppError(400, "Rack code is required");
-  const existing = await Rack.findOne({
-    code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") },
-  }).lean();
+  const existing = await prisma.rack.findFirst({
+    where: { code: { equals: code, mode: "insensitive" } },
+  });
   if (existing) throw new AppError(409, `Rack ${code} already exists`);
-  return Rack.create({
-    name: input.name || code,
-    code,
-    section: input.section || "",
-    description: input.description || "",
-    sortOrder: Number(input.sortOrder) || 0,
+  const branchId = getBranchId();
+  return prisma.rack.create({
+    data: {
+      name: input.name || code,
+      code,
+      section: input.section || "",
+      description: input.description || "",
+      sortOrder: Number(input.sortOrder) || 0,
+      branchId,
+    },
   });
 }
 
@@ -574,34 +597,39 @@ export async function updateRack(
     active?: boolean;
   }
 ) {
-  const rack = await Rack.findById(id);
+  const rack = await prisma.rack.findUnique({ where: { id } });
   if (!rack) throw new AppError(404, "Rack not found");
-  if (input.name !== undefined) rack.name = input.name;
+
+  const updateData: Record<string, unknown> = {};
+  if (input.name !== undefined) updateData.name = input.name;
   if (input.code !== undefined) {
     const code = String(input.code).trim().toUpperCase();
     if (!code) throw new AppError(400, "Rack code is required");
-    const dup = await Rack.findOne({
-      code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") },
-      _id: { $ne: id },
-    }).lean();
+    const dup = await prisma.rack.findFirst({
+      where: {
+        code: { equals: code, mode: "insensitive" },
+        id: { not: id },
+      },
+    });
     if (dup) throw new AppError(409, `Rack ${code} already exists`);
-    rack.code = code;
-    await InventoryVariant.updateMany({ rackId: id }, { $set: { rackLabel: code } });
+    updateData.code = code;
+    await prisma.inventoryVariant.updateMany({ where: { rackId: id }, data: { rackLabel: code } });
   }
-  if (input.section !== undefined) rack.section = input.section;
-  if (input.description !== undefined) rack.description = input.description;
-  if (input.sortOrder !== undefined) rack.sortOrder = Number(input.sortOrder) || 0;
-  if (input.active !== undefined) rack.active = input.active;
-  await rack.save();
-  return rack;
+  if (input.section !== undefined) updateData.section = input.section;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.sortOrder !== undefined) updateData.sortOrder = Number(input.sortOrder) || 0;
+  if (input.active !== undefined) updateData.active = input.active;
+
+  return prisma.rack.update({ where: { id }, data: updateData });
 }
 
 export async function getRackItems(rackId: string) {
-  const rack = await Rack.findById(rackId).lean();
+  const rack = await prisma.rack.findUnique({ where: { id: rackId } });
   if (!rack) throw new AppError(404, "Rack not found");
-  const items = await InventoryVariant.find({ rackId, active: true })
-    .sort({ brandName: 1, model: 1, color: 1 })
-    .lean();
+  const items = await prisma.inventoryVariant.findMany({
+    where: { rackId, active: true },
+    orderBy: { brandName: "asc", model: "asc", color: "asc" },
+  });
   return { rack, items };
 }
 
@@ -611,50 +639,48 @@ export async function getRackItems(rackId: string) {
 
 export async function getDashboard(threshold: number = 5) {
   const t = Math.max(threshold, 0);
+
   const [
+    products,
+    variants,
+    stockAgg,
+    lowStock,
+    outOfStock,
+    brands,
+    recentMovements,
+  ] = await Promise.all([
+    prisma.inventoryProduct.count({ where: { active: true } }),
+    prisma.inventoryVariant.count({ where: { active: true } }),
+    prisma.inventoryVariant.aggregate({ where: { active: true }, _sum: { stockQuantity: true } }),
+    prisma.inventoryVariant.count({ where: { active: true, stockQuantity: { gt: 0, lte: t } } }),
+    prisma.inventoryVariant.count({ where: { active: true, stockQuantity: 0 } }),
+    prisma.brand.count({ where: { active: true } }),
+    prisma.inventoryMovement.findMany({ orderBy: { createdAt: "desc" }, take: 15 }),
+  ]);
+
+  const stockUnits = stockAgg._sum.stockQuantity || 0;
+
+  const lots = await prisma.inventoryLot.findMany({ select: { quantity: true, purchasePrice: true } });
+  const inventoryCost = lots.reduce((sum, l) => sum + l.quantity * l.purchasePrice, 0);
+
+  const activeVariants = await prisma.inventoryVariant.findMany({
+    where: { active: true },
+    select: { stockQuantity: true, defaultSellingPrice: true },
+  });
+  const inventoryValue = activeVariants.reduce(
+    (sum, v) => sum + (v.stockQuantity || 0) * (v.defaultSellingPrice || 0),
+    0
+  );
+
+  return {
     products,
     variants,
     stockUnits,
     lowStock,
     outOfStock,
     brands,
-    costValueResult,
-    retailValueResult,
-    recentMovements,
-  ] = await Promise.all([
-    InventoryProduct.countDocuments({ active: true }),
-    InventoryVariant.countDocuments({ active: true }),
-    InventoryVariant.aggregate([
-      { $match: { active: true } },
-      { $group: { _id: null, total: { $sum: "$stockQuantity" } } },
-    ]),
-    InventoryVariant.countDocuments({ active: true, stockQuantity: { $gt: 0, $lte: t } }),
-    InventoryVariant.countDocuments({ active: true, stockQuantity: 0 }),
-    Brand.countDocuments({ active: true }),
-    InventoryLot.aggregate([
-      { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$purchasePrice"] } } } },
-    ]),
-    InventoryVariant.aggregate([
-      { $match: { active: true } },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: { $multiply: ["$stockQuantity", "$defaultSellingPrice"] } },
-        },
-      },
-    ]),
-    InventoryMovement.find().sort({ createdAt: -1 }).limit(15).lean(),
-  ]);
-
-  return {
-    products,
-    variants,
-    stockUnits: stockUnits[0]?.total || 0,
-    lowStock: lowStock,
-    outOfStock,
-    brands,
-    inventoryCost: costValueResult[0]?.total || 0,
-    inventoryValue: retailValueResult[0]?.total || 0,
+    inventoryCost,
+    inventoryValue,
     lowStockThreshold: t,
     recentActivity: recentMovements,
   };
