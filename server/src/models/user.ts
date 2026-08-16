@@ -1,15 +1,3 @@
-import { Schema, model, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
 
-const UserSchema = new Schema(
-  {
-    username: { type: String, required: true, unique: true },
-    passwordHash: { type: String, required: true },
-    name: { type: String, default: "" },
-    mobile: { type: String, default: "" },
-    role: { type: String, enum: ["owner", "staff"], default: "owner" },
-    branches: [{ type: Types.ObjectId, ref: "Branch" }],
-  },
-  { timestamps: true }
-);
-
-export const User = model("User", UserSchema);
+export const User = prisma.user as Prisma.UserDelegate;

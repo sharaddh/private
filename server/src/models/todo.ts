@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const TodoSchemaObj = new Schema(
   {
@@ -11,5 +12,4 @@ const TodoSchemaObj = new Schema(
 );
 
 export const TodoSchema = TodoSchemaObj;
-const _Todo = model("Todo", TodoSchemaObj);
-export const Todo = withBranch(_Todo, "Todo");
+export const Todo = scoped(prisma.todo) as Prisma.TodoDelegate;
