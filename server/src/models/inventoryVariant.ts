@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 import { VALID_GENDERS } from "../types";
 
 const InventoryVariantSchemaObj = new Schema(
@@ -41,5 +42,4 @@ InventoryVariantSchemaObj.index({ brandName: 1, model: 1 });
 InventoryVariantSchemaObj.index({ active: 1, stockQuantity: 1 });
 
 export const InventoryVariantSchema = InventoryVariantSchemaObj;
-const _InventoryVariant = model("InventoryVariant", InventoryVariantSchemaObj);
-export const InventoryVariant = withBranch(_InventoryVariant, "InventoryVariant");
+export const InventoryVariant = scoped(prisma.inventoryVariant) as Prisma.InventoryVariantDelegate;
