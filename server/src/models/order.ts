@@ -1,5 +1,6 @@
-import { Schema, model, Types } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema, Types } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const OrderSchemaObj = new Schema(
   {
@@ -61,5 +62,4 @@ OrderSchemaObj.index({ classification: 1, createdAt: -1 });
 OrderSchemaObj.index({ createdAt: -1 });
 
 export const OrderSchema = OrderSchemaObj;
-const _Order = model("Order", OrderSchemaObj);
-export const Order = withBranch(_Order, "Order");
+export const Order = scoped(prisma.order) as Prisma.OrderDelegate;
