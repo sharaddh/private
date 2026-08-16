@@ -1,4 +1,5 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
 
 const WithdrawalItemSchemaObj = new Schema(
   {
@@ -14,7 +15,7 @@ const WithdrawalItemSchemaObj = new Schema(
 
 const WithdrawalSchemaObj = new Schema(
   {
-    user: { type: Types.ObjectId, ref: "User", required: true, index: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     username: { type: String, required: true },
     items: { type: [WithdrawalItemSchemaObj], required: true },
     totalQuantity: { type: Number, required: true },
@@ -27,4 +28,4 @@ const WithdrawalSchemaObj = new Schema(
 );
 
 export const WithdrawalSchema = WithdrawalSchemaObj;
-export const Withdrawal = model("Withdrawal", WithdrawalSchemaObj);
+export const Withdrawal = prisma.withdrawal as Prisma.WithdrawalDelegate;
