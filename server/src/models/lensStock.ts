@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const LensStockSchemaObj = new Schema(
   {
@@ -18,5 +19,4 @@ const LensStockSchemaObj = new Schema(
 LensStockSchemaObj.index({ coating: 1 }, { unique: true });
 
 export const LensStockSchema = LensStockSchemaObj;
-const _LensStock = model("LensStock", LensStockSchemaObj);
-export const LensStock = withBranch(_LensStock, "LensStock");
+export const LensStock = scoped(prisma.lensStock) as Prisma.LensStockDelegate;

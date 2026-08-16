@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 import { VALID_WITHDRAWAL_REASONS } from "../types";
 
 const InventoryWithdrawalV2ItemSchemaObj = new Schema(
@@ -41,5 +42,4 @@ InventoryWithdrawalV2SchemaObj.index({ createdAt: -1 });
 InventoryWithdrawalV2SchemaObj.index({ by: 1, createdAt: -1 });
 
 export const InventoryWithdrawalV2Schema = InventoryWithdrawalV2SchemaObj;
-const _InventoryWithdrawalV2 = model("InventoryWithdrawalV2", InventoryWithdrawalV2SchemaObj);
-export const InventoryWithdrawalV2 = withBranch(_InventoryWithdrawalV2, "InventoryWithdrawalV2");
+export const InventoryWithdrawalV2 = scoped(prisma.inventoryWithdrawalV2) as Prisma.InventoryWithdrawalV2Delegate;
