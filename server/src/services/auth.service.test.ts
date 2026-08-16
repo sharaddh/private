@@ -15,24 +15,24 @@ vi.mock("bcrypt", () => ({
 
 vi.mock("../models/user", () => ({
   User: {
-    findOne: vi.fn(),
-    findById: vi.fn(),
-    findByIdAndUpdate: vi.fn(),
-    find: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
     create: vi.fn(),
-    countDocuments: vi.fn(),
+    count: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 vi.mock("../models/branch", () => ({
   Branch: {
-    find: vi.fn(),
-    findById: vi.fn(),
+    findMany: vi.fn(),
   },
 }));
 
 const ownerUser = {
-  _id: { toString: () => "user-1" },
+  id: "user-1",
   username: "admin",
   passwordHash: "hashed",
   name: "Admin",
@@ -42,10 +42,6 @@ const ownerUser = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-
-function queryResult(value: unknown) {
-  return { lean: vi.fn().mockResolvedValue(value) };
-}
 
 describe("auth.service", () => {
   beforeEach(() => {
@@ -64,14 +60,14 @@ describe("auth.service", () => {
   });
 
   it("loginUser rejects staff accounts", async () => {
-    vi.mocked(User.findOne).mockReturnValue(queryResult({ ...ownerUser, role: "staff" }) as never);
+    vi.mocked(User.findFirst).mockResolvedValue({ ...ownerUser, role: "staff" } as never);
     await expect(loginUser({ username: "staff", password: "x" })).rejects.toThrow(
       "Staff must use the staff login page"
     );
   });
 
   it("loginUser rejects invalid credentials", async () => {
-    vi.mocked(User.findOne).mockReturnValue(queryResult(ownerUser) as never);
+    vi.mocked(User.findFirst).mockResolvedValue(ownerUser as never);
     vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
     await expect(loginUser({ username: "admin", password: "wrong" })).rejects.toThrow(
       "Invalid credentials"
@@ -79,7 +75,7 @@ describe("auth.service", () => {
   });
 
   it("loginUser returns user, access and refresh tokens", async () => {
-    vi.mocked(User.findOne).mockReturnValue(queryResult(ownerUser) as never);
+    vi.mocked(User.findFirst).mockResolvedValue(ownerUser as never);
     const result = await loginUser({ username: "admin", password: "correct" });
     expect(result.user.id).toBe("user-1");
     expect(result.user.role).toBe("owner");
@@ -88,8 +84,8 @@ describe("auth.service", () => {
   });
 
   it("staffLogin requires a branch assignment", async () => {
-    vi.mocked(User.findOne).mockReturnValue(
-      queryResult({ ...ownerUser, role: "staff", branches: [] }) as never
+    vi.mocked(User.findFirst).mockResolvedValue(
+      { ...ownerUser, role: "staff", branches: [] } as never
     );
     await expect(staffLogin({ username: "staff", password: "x" })).rejects.toThrow(
       "has not been assigned to any branch"
@@ -97,21 +93,21 @@ describe("auth.service", () => {
   });
 
   it("warehouseLogin only allows owners", async () => {
-    vi.mocked(User.findOne).mockReturnValue(queryResult({ ...ownerUser, role: "staff" }) as never);
+    vi.mocked(User.findFirst).mockResolvedValue({ ...ownerUser, role: "staff" } as never);
     await expect(warehouseLogin({ username: "staff", password: "x" })).rejects.toThrow(
       "Only owners can access the warehouse"
     );
   });
 
   it("refreshToken mints a new access token for an existing user", async () => {
-    vi.mocked(User.findById).mockReturnValue(queryResult(ownerUser) as never);
+    vi.mocked(User.findUnique).mockResolvedValue(ownerUser as never);
     const refresh = signRefresh({ sub: "user-1" });
     const { access } = await refreshToken(refresh);
     expect(access).toBeTruthy();
   });
 
   it("refreshToken throws for unknown users", async () => {
-    vi.mocked(User.findById).mockReturnValue(queryResult(null) as never);
+    vi.mocked(User.findUnique).mockResolvedValue(null as never);
     const refresh = signRefresh({ sub: "missing" });
     await expect(refreshToken(refresh)).rejects.toMatchObject({ statusCode: 404 });
   });
@@ -123,7 +119,7 @@ describe("auth.service", () => {
   });
 
   it("registerUser rejects duplicate usernames", async () => {
-    vi.mocked(User.findOne).mockReturnValue(queryResult({ _id: "existing" }) as never);
+    vi.mocked(User.findFirst).mockResolvedValue({ id: "existing" } as never);
     await expect(registerUser({ username: "dup", password: "p" }, "owner")).rejects.toMatchObject({
       statusCode: 409,
     });

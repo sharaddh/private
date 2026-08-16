@@ -1,7 +1,8 @@
 import { Router } from "express";
-import mongoose from "mongoose";
 import { branchScope } from "../middleware/branch";
 import { isConnected as redisConnected } from "../services/cache";
+import { prisma } from "../db/prisma";
+import { logger } from "../utils/logger";
 import customers from "./customers";
 import auth from "./auth";
 import orders from "./orders";
@@ -34,8 +35,14 @@ router.get("/health", (_req, res) => {
   res.json({ success: true, status: "ok", timestamp: new Date().toISOString() });
 });
 
-router.get("/ready", (_req, res) => {
-  const dbReady = mongoose.connection.readyState === 1;
+router.get("/ready", async (_req, res) => {
+  let dbReady = false;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbReady = true;
+  } catch (err) {
+    logger.error("Postgres readiness check failed", { error: (err as Error).message });
+  }
   const redis = redisConnected();
   const ready = dbReady;
   if (ready) {
