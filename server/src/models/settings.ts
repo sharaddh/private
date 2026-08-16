@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const SettingsSchemaObj = new Schema(
   {
@@ -14,5 +15,4 @@ const SettingsSchemaObj = new Schema(
 );
 
 export const SettingsSchema = SettingsSchemaObj;
-const _Settings = model("Settings", SettingsSchemaObj);
-export const Settings = withBranch(_Settings, "Settings");
+export const Settings = scoped(prisma.settings) as Prisma.SettingsDelegate;

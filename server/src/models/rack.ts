@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const RackSchemaObj = new Schema(
   {
@@ -14,5 +15,4 @@ const RackSchemaObj = new Schema(
 );
 
 export const RackSchema = RackSchemaObj;
-const _Rack = model("Rack", RackSchemaObj);
-export const Rack = withBranch(_Rack, "Rack");
+export const Rack = scoped(prisma.rack) as Prisma.RackDelegate;
