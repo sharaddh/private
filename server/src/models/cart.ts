@@ -1,8 +1,9 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
 
 const CartItemSchemaObj = new Schema(
   {
-    user: { type: Types.ObjectId, ref: "User", required: true, index: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     coating: { type: String, required: true },
     lensType: { type: String, required: true, enum: ["sph", "cyl", "compound"] },
     powerKey: { type: String, required: true },
@@ -16,4 +17,4 @@ const CartItemSchemaObj = new Schema(
 CartItemSchemaObj.index({ user: 1, coating: 1, lensType: 1, powerKey: 1 }, { unique: true });
 
 export const CartItemSchema = CartItemSchemaObj;
-export const CartItem = model("CartItem", CartItemSchemaObj);
+export const CartItem = prisma.cartItem as Prisma.CartItemDelegate;

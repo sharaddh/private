@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const CustomerSchemaObj = new Schema(
   {
@@ -25,5 +26,4 @@ CustomerSchemaObj.index({ createdAt: -1 });
 CustomerSchemaObj.index({ name: "text", mobile: "text" });
 
 export const CustomerSchema = CustomerSchemaObj;
-const _Customer = model("Customer", CustomerSchemaObj);
-export const Customer = withBranch(_Customer, "Customer");
+export const Customer = scoped(prisma.customer) as Prisma.CustomerDelegate;
