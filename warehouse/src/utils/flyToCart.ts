@@ -1,7 +1,7 @@
 export function flyToCart(sourceEl: HTMLElement) {
   const source = sourceEl.getBoundingClientRect();
 
-  const candidates = document.querySelectorAll("[data-cart-icon]");
+  const candidates = document.querySelectorAll('[data-cart-icon]');
   let cartEl: Element | null = null;
 
   for (const el of candidates) {
@@ -15,7 +15,7 @@ export function flyToCart(sourceEl: HTMLElement) {
   if (!cartEl) return;
   const target = cartEl.getBoundingClientRect();
 
-  const ghost = document.createElement("div");
+  const ghost = document.createElement('div');
   ghost.style.cssText = `
     position: fixed;
     z-index: 9999;
@@ -41,14 +41,14 @@ export function flyToCart(sourceEl: HTMLElement) {
   requestAnimationFrame(() => {
     ghost.style.left = `${target.left + target.width / 2 - 18}px`;
     ghost.style.top = `${target.top + target.height / 2 - 18}px`;
-    ghost.style.transform = "scale(0.2)";
-    ghost.style.opacity = "0.4";
+    ghost.style.transform = 'scale(0.2)';
+    ghost.style.opacity = '0.4';
   });
 
   setTimeout(() => {
     ghost.remove();
-    const cartParent = cartEl!.closest("a") || cartEl!;
-    cartParent.classList.add("animate-cart-bump");
-    setTimeout(() => cartParent.classList.remove("animate-cart-bump"), 400);
+    const cartParent = cartEl!.closest('a') || cartEl!;
+    cartParent.classList.add('animate-cart-bump');
+    setTimeout(() => cartParent.classList.remove('animate-cart-bump'), 400);
   }, 650);
 }

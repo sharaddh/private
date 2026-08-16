@@ -1,13 +1,19 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const staffPrefixes = [
-  "/", "/customers", "/orders", "/bills", "/pickup", "/whatsapp", "/workspace",
+  '/',
+  '/customers',
+  '/orders',
+  '/bills',
+  '/pickup',
+  '/whatsapp',
+  '/workspace',
 ];
 
 function isStaffAllowed(path: string): boolean {
-  if (path === "/inventory") return true;
-  return staffPrefixes.some((p) => path === p || path.startsWith(p + "/"));
+  if (path === '/inventory') return true;
+  return staffPrefixes.some((p) => path === p || path.startsWith(p + '/'));
 }
 
 export default function RoleGuard({ children, path }: { children: React.ReactNode; path: string }) {

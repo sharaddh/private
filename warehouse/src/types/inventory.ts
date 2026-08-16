@@ -32,15 +32,25 @@ export interface InventoryForm {
   gender: string;
   supplier: string;
   quantity: number;
-  location: "warehouse" | "shop";
+  location: 'warehouse' | 'shop';
   purchasePrice: number;
   sellingPrice: number;
   description: string;
 }
 
 export const EMPTY_FORM: InventoryForm = {
-  sku: "", category: "Lens", inventoryType: "lens",
-  brand: "", model: "", color: "", size: "", gender: "",
-  supplier: "", quantity: 0, location: "warehouse",
-  purchasePrice: 0, sellingPrice: 0, description: "",
+  sku: '',
+  category: 'Lens',
+  inventoryType: 'lens',
+  brand: '',
+  model: '',
+  color: '',
+  size: '',
+  gender: '',
+  supplier: '',
+  quantity: 0,
+  location: 'warehouse',
+  purchasePrice: 0,
+  sellingPrice: 0,
+  description: '',
 };

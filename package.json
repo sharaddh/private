@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "KMJ Optical ERP System",
   "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "warehouse"
+  ],
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
@@ -17,16 +22,21 @@
     "point-of-sale"
   ],
   "scripts": {
-    "install-all": "npm install && npm install --prefix client && npm install --prefix server && npm install --prefix warehouse",
-    "dev": "concurrently -n server,client,warehouse -c blue,green,yellow \"npm run dev --prefix server\" \"npm run dev --prefix client\" \"npm run dev --prefix warehouse\"",
-    "build": "npm install --prefix client && npm install --prefix server && npm install --prefix warehouse && npm run build --prefix client && npm run build --prefix server && npm run build --prefix warehouse",
-    "start": "npm start --prefix server",
-    "start:prod": "npm run build --prefix client && npm run build --prefix warehouse && npm run build --prefix server && npm start --prefix server",
-    "client": "npm run dev --prefix client",
-    "server": "npm run dev --prefix server",
-    "warehouse": "npm run dev --prefix warehouse",
-    "clean": "rm -rf client/dist server/dist warehouse/dist node_modules",
-    "typecheck": "npm run typecheck --prefix client && npm run typecheck --prefix server && npm run typecheck --prefix warehouse"
+    "install-all": "npm install",
+    "dev": "concurrently -n server,client,warehouse -c blue,green,yellow \"npm run dev -w server\" \"npm run dev -w client\" \"npm run dev -w warehouse\"",
+    "build": "npm run build -w client && npm run build -w server && npm run build -w warehouse",
+    "start": "npm start -w server",
+    "start:prod": "npm run build -w client && npm run build -w warehouse && npm run build -w server && npm start -w server",
+    "client": "npm run dev -w client",
+    "server": "npm run dev -w server",
+    "warehouse": "npm run dev -w warehouse",
+    "lint": "npm run lint -w client && npm run lint -w server && npm run lint -w warehouse",
+    "lint:fix": "npm run lint:fix -w client && npm run lint:fix -w server && npm run lint:fix -w warehouse",
+    "format": "npm run format -w client && npm run format -w server && npm run format -w warehouse",
+    "format:check": "npm run format:check -w client && npm run format:check -w server && npm run format:check -w warehouse",
+    "test": "npm run test -w server",
+    "typecheck": "npm run typecheck -w client && npm run typecheck -w server && npm run typecheck -w warehouse",
+    "clean": "rm -rf client/dist server/dist warehouse/dist node_modules"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

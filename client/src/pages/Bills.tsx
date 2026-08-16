@@ -1,17 +1,17 @@
-import { useState, useCallback, useEffect } from "react";
-import api from "../api";
-import Table from "../components/Table";
-import PageSkeleton from "../components/PageSkeleton";
-import { useToast } from "../context/ToastContext";
-import { useAuth } from "../context/AuthContext";
-import { useTranslate } from "../context/TranslateContext";
-import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from "lucide-react";
-import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from "../utils/pdf";
-import DateRangePicker from "../components/DateRangePicker";
-import { todayStr } from "../utils/date";
-import { billService, settingsService, whatsappService } from "../services";
-import { normalizeWhatsAppPhone } from "../utils/whatsapp";
-import type { Bill, ShopSettings } from "../types";
+import { useState, useCallback, useEffect } from 'react';
+import api from '../api';
+import Table from '../components/Table';
+import PageSkeleton from '../components/PageSkeleton';
+import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { useTranslate } from '../context/TranslateContext';
+import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from 'lucide-react';
+import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from '../utils/pdf';
+import DateRangePicker from '../components/DateRangePicker';
+import { todayStr } from '../utils/date';
+import { billService, settingsService, whatsappService } from '../services';
+import { normalizeWhatsAppPhone } from '../utils/whatsapp';
+import type { Bill, ShopSettings } from '../types';
 
 type ResolvedCustomer = { name?: string; mobile?: string; address?: string } | null;
 
@@ -27,14 +27,18 @@ export default function Bills() {
 
   const fetchBills = useCallback(() => {
     setLoading(true);
-    billService.listFiltered({ startDate, endDate })
-      .then((d) => { if (d.success) setList(d.data?.data || []); })
+    billService
+      .listFiltered({ startDate, endDate })
+      .then((d) => {
+        if (d.success) setList(d.data?.data || []);
+      })
       .finally(() => setLoading(false));
   }, [startDate, endDate]);
 
   const fetchSettings = useCallback(() => {
-    settingsService.get()
-      .then((d) => { if (d.success) setSettings(d.data || null); });
+    settingsService.get().then((d) => {
+      if (d.success) setSettings(d.data || null);
+    });
   }, []);
 
   useEffect(() => {
@@ -43,19 +47,19 @@ export default function Bills() {
   }, [fetchBills, fetchSettings]);
 
   function resolveCustomer(bill: Bill): ResolvedCustomer {
-    if (typeof bill.customerId === "object" && bill.customerId) return bill.customerId;
+    if (typeof bill.customerId === 'object' && bill.customerId) return bill.customerId;
     return null;
   }
 
   function handlePrint(bill: Bill) {
-    const w = window.open("", "_blank");
+    const w = window.open('', '_blank');
     if (!w) return;
 
-    const shop = settings?.shopName || "KMJ Optical";
-    const address = settings?.shopAddress || "";
-    const phone = settings?.shopPhone || "";
-    const email = settings?.shopEmail || "";
-    const logo = settings?.logo || "";
+    const shop = settings?.shopName || 'KMJ Optical';
+    const address = settings?.shopAddress || '';
+    const phone = settings?.shopPhone || '';
+    const email = settings?.shopEmail || '';
+    const logo = settings?.logo || '';
     const customer = resolveCustomer(bill);
 
     const subtotal = (bill.subtotal || 0).toFixed(2);
@@ -64,27 +68,33 @@ export default function Bills() {
     const totalAmount = (bill.totalAmount || 0).toFixed(2);
     const advancePaid = bill.advancePaid ? bill.advancePaid.toFixed(2) : null;
     const pendingAmount = bill.pendingAmount || 0;
-    const billDate = new Date(bill.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-    const isCancelled = bill.status === "Cancelled";
+    const billDate = new Date(bill.createdAt).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const isCancelled = bill.status === 'Cancelled';
 
-    const items = (bill.items || []).map((it, idx) => {
-      const qty = it.quantity || 1;
-      const unitPrice = it.unitPrice || 0;
-      return `
+    const items = (bill.items || [])
+      .map((it, idx) => {
+        const qty = it.quantity || 1;
+        const unitPrice = it.unitPrice || 0;
+        return `
       <tr>
         <td class="center">${idx + 1}</td>
-        <td>${it.description || "—"}</td>
+        <td>${it.description || '—'}</td>
         <td class="center">${qty}</td>
         <td class="right">₹${unitPrice.toFixed(2)}</td>
         <td class="right bold">₹${(qty * unitPrice).toFixed(2)}</td>
       </tr>`;
-    }).join("");
+      })
+      .join('');
 
     w.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Invoice ${bill.billNumber || ""}</title>
+<title>Invoice ${bill.billNumber || ''}</title>
 <style>
   :root { --brand: #1e3a8a; --text: #1f2937; --muted: #6b7280; --border: #e5e7eb; --bg: #f9fafb; }
   @media print {
@@ -150,25 +160,25 @@ export default function Bills() {
 
   <div class="header">
     <div class="company-info">
-      ${logo ? `<img src="${logo}" class="logo" alt="Logo" />` : ""}
+      ${logo ? `<img src="${logo}" class="logo" alt="Logo" />` : ''}
       <div class="company-details">
         <h1>${shop}</h1>
-        ${address ? `<p>${address}</p>` : ""}
-        ${phone || email ? `<p>${[phone, email].filter(Boolean).join(" | ")}</p>` : ""}
+        ${address ? `<p>${address}</p>` : ''}
+        ${phone || email ? `<p>${[phone, email].filter(Boolean).join(' | ')}</p>` : ''}
       </div>
     </div>
     <div class="invoice-meta">
       <h2>${isCancelled ? 'CANCELLED' : 'TAX INVOICE'}</h2>
-      <p><span class="label">Invoice No:</span> <span class="value">${bill.billNumber || "—"}</span></p>
+      <p><span class="label">Invoice No:</span> <span class="value">${bill.billNumber || '—'}</span></p>
       <p><span class="label">Date:</span> <span class="value">${billDate}</span></p>
     </div>
   </div>
 
   <div class="bill-to">
     <h3>Billed To</h3>
-    <p class="customer-name">${customer?.name || "Cash Customer"}</p>
-    ${customer?.mobile ? `<p>Phone: ${customer.mobile}</p>` : ""}
-    ${customer?.address ? `<p>${customer.address}</p>` : ""}
+    <p class="customer-name">${customer?.name || 'Cash Customer'}</p>
+    ${customer?.mobile ? `<p>Phone: ${customer.mobile}</p>` : ''}
+    ${customer?.address ? `<p>${customer.address}</p>` : ''}
   </div>
 
   <table>
@@ -188,7 +198,7 @@ export default function Bills() {
 
   <div class="summary-container">
     <div class="amount-words">
-      ${bill.totalAmount ? `Amount in words:<br/><strong>${numberToWords(Math.round(bill.totalAmount))}</strong>` : ""}
+      ${bill.totalAmount ? `Amount in words:<br/><strong>${numberToWords(Math.round(bill.totalAmount))}</strong>` : ''}
     </div>
 
     <div class="totals-box">
@@ -196,15 +206,15 @@ export default function Bills() {
         <span>Subtotal</span>
         <span class="val">₹{subtotal}</span>
       </div>
-      ${discount ? `<div class="totals-row discount"><span>Discount</span><span class="val">-₹${discount}</span></div>` : ""}
-      ${tax ? `<div class="totals-row tax"><span>Tax (GST)</span><span class="val">+₹${tax}</span></div>` : ""}
+      ${discount ? `<div class="totals-row discount"><span>Discount</span><span class="val">-₹${discount}</span></div>` : ''}
+      ${tax ? `<div class="totals-row tax"><span>Tax (GST)</span><span class="val">+₹${tax}</span></div>` : ''}
 
       <div class="totals-row grand-total">
         <span>Total Amount</span>
         <span class="val">₹{totalAmount}</span>
       </div>
 
-      ${advancePaid ? `<div class="totals-row"><span>Amount Paid</span><span class="val">₹${advancePaid}</span></div>` : ""}
+      ${advancePaid ? `<div class="totals-row"><span>Amount Paid</span><span class="val">₹${advancePaid}</span></div>` : ''}
 
       <div class="totals-row balance-due">
         <span>Balance Due</span>
@@ -238,7 +248,7 @@ export default function Bills() {
   function handleThermalPrint(bill: Bill) {
     const customer = resolveCustomer(bill) || {};
     const receipt = generateThermalReceipt(bill, customer, settings || {});
-    const w = window.open("", "_blank");
+    const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(`<!DOCTYPE html>
 <html><head><title>Thermal Receipt - ${bill.billNumber}</title>
@@ -248,31 +258,63 @@ export default function Bills() {
          margin: 0; padding: 4mm; width: 72mm; color: #000; background: #fff;
          white-space: pre-wrap; }
   @media print { body { margin: 0; padding: 2mm; } }
-</style></head><body>${receipt.replace(/\n/g, "<br>")}
+</style></head><body>${receipt.replace(/\n/g, '<br>')}
 <script>window.onload = function() { window.print(); }</script>
 </body></html>`);
     w.document.close();
   }
 
   function numberToWords(n: number): string {
-    if (n === 0) return "Zero";
-    const ones = ["", "One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
-    const tens = ["", "", "Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    if (n === 0) return 'Zero';
+    const ones = [
+      '',
+      'One',
+      'Two',
+      'Three',
+      'Four',
+      'Five',
+      'Six',
+      'Seven',
+      'Eight',
+      'Nine',
+      'Ten',
+      'Eleven',
+      'Twelve',
+      'Thirteen',
+      'Fourteen',
+      'Fifteen',
+      'Sixteen',
+      'Seventeen',
+      'Eighteen',
+      'Nineteen',
+    ];
+    const tens = [
+      '',
+      '',
+      'Twenty',
+      'Thirty',
+      'Forty',
+      'Fifty',
+      'Sixty',
+      'Seventy',
+      'Eighty',
+      'Ninety',
+    ];
     const c = (num: number): string => {
-      if (num === 0) return "";
+      if (num === 0) return '';
       if (num < 20) return ones[num];
-      if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? " " + ones[num % 10] : "");
-      return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 ? " and " + c(num % 100) : "");
+      if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+      return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' and ' + c(num % 100) : '');
     };
     const lakh = Math.floor(n / 100000);
     const rem = n % 100000;
-    let r = "";
-    if (lakh > 0) r += c(lakh) + " Lakh ";
+    let r = '';
+    if (lakh > 0) r += c(lakh) + ' Lakh ';
     const th = Math.floor(rem / 1000);
     const rest = rem % 1000;
-    if (th > 0) r += c(th) + " Thousand ";
+    if (th > 0) r += c(th) + ' Thousand ';
     if (rest > 0) r += c(rest);
-    return r.trim() + " Rupees Only";
+    return r.trim() + ' Rupees Only';
   }
 
   function handleDownloadPdf(bill: Bill) {
@@ -281,59 +323,77 @@ export default function Bills() {
   }
 
   async function handleDelete(bill: Bill) {
-    if (!confirm("Delete this bill permanently?")) return;
+    if (!confirm('Delete this bill permanently?')) return;
     const res = await billService.remove(bill._id);
     if (res.success) {
       setList((prev) => prev.filter((b) => b._id !== bill._id));
-      toast.success("Bill deleted");
+      toast.success('Bill deleted');
     } else {
-      toast.error(res.message || "Failed to delete");
+      toast.error(res.message || 'Failed to delete');
     }
   }
 
   async function sendWhatsApp(bill: Bill) {
     const customer = resolveCustomer(bill);
     const num = customer?.mobile?.toString();
-    const fullNum = normalizeWhatsAppPhone(num || "");
-    if (!fullNum) { toast.error("Customer has no mobile number"); return; }
-    toast.info("Sending WhatsApp...");
-    const shop = settings?.shopName || "KMJ Optical";
+    const fullNum = normalizeWhatsAppPhone(num || '');
+    if (!fullNum) {
+      toast.error('Customer has no mobile number');
+      return;
+    }
+    toast.info('Sending WhatsApp...');
+    const shop = settings?.shopName || 'KMJ Optical';
 
     try {
       const doc = generateBillPdf(bill, customer || {}, settings || {});
-      const base64 = doc.output("datauristring").split(",")[1];
+      const base64 = doc.output('datauristring').split(',')[1];
       const caption = t(
-        `*${shop}*\n\nHi ${customer?.name || ""},\nPlease find your bill attached.\n\nThank you!`,
-        `*${shop}*\n\nनमस्ते ${customer?.name || ""},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
+        `*${shop}*\n\nHi ${customer?.name || ''},\nPlease find your bill attached.\n\nThank you!`,
+        `*${shop}*\n\nनमस्ते ${customer?.name || ''},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
       );
-      const mediaRes = await whatsappService.sendMedia({ phone: fullNum, base64, filename: `Bill-${bill.billNumber || "invoice"}.pdf`, caption, mimetype: "application/pdf" });
-      if (mediaRes.success && mediaRes.data?.sent) { toast.success("Bill sent on WhatsApp"); return; }
-      if (mediaRes.data?.queued) { toast.info("WhatsApp not ready — will send when connected"); return; }
+      const mediaRes = await whatsappService.sendMedia({
+        phone: fullNum,
+        base64,
+        filename: `Bill-${bill.billNumber || 'invoice'}.pdf`,
+        caption,
+        mimetype: 'application/pdf',
+      });
+      if (mediaRes.success && mediaRes.data?.sent) {
+        toast.success('Bill sent on WhatsApp');
+        return;
+      }
+      if (mediaRes.data?.queued) {
+        toast.info('WhatsApp not ready — will send when connected');
+        return;
+      }
     } catch {
       // fallback to text
     }
 
-    const items = (bill.items || []).map((i) =>
-      `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-    ).join("\n");
+    const items = (bill.items || [])
+      .map(
+        (i) =>
+          `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
+      )
+      .join('\n');
 
-    const billLabel = t("Bill", "बिल");
-    const dateLabel = t("Date", "तारीख");
-    const customerLabel = t("Customer", "ग्राहक");
-    const mobileLabel = t("Mobile", "मोबाइल");
-    const itemsLabel = t("Items", "आइटम");
-    const subtotalLabel = t("Subtotal", "उप-कुल");
-    const discountLabel = t("Discount", "छूट");
-    const taxLabel = t("Tax", "कर");
-    const totalLabel = t("Total", "कुल");
-    const paidLabel = t("Paid", "भुगतान");
-    const pendingLabel = t("Pending", "बाकी");
-    const thankYou = t("Thank you!", "धन्यवाद!");
-    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ""}\n*${dateLabel}:* ${new Date().toLocaleDateString("en-IN")}\n\n*${customerLabel}:* ${customer?.name || ""}\n*${mobileLabel}:* ${customer?.mobile || ""}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ""}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ""}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
+    const billLabel = t('Bill', 'बिल');
+    const dateLabel = t('Date', 'तारीख');
+    const customerLabel = t('Customer', 'ग्राहक');
+    const mobileLabel = t('Mobile', 'मोबाइल');
+    const itemsLabel = t('Items', 'आइटम');
+    const subtotalLabel = t('Subtotal', 'उप-कुल');
+    const discountLabel = t('Discount', 'छूट');
+    const taxLabel = t('Tax', 'कर');
+    const totalLabel = t('Total', 'कुल');
+    const paidLabel = t('Paid', 'भुगतान');
+    const pendingLabel = t('Pending', 'बाकी');
+    const thankYou = t('Thank you!', 'धन्यवाद!');
+    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ''}\n*${dateLabel}:* ${new Date().toLocaleDateString('en-IN')}\n\n*${customerLabel}:* ${customer?.name || ''}\n*${mobileLabel}:* ${customer?.mobile || ''}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ''}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ''}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
     const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg });
-    if (textRes.data?.queued) toast.info("WhatsApp not ready — will send when connected");
-    else if (textRes.success && textRes.data?.sent) toast.success("Bill sent on WhatsApp");
-    else toast.error(textRes.message || "WhatsApp send failed — check Settings > WhatsApp");
+    if (textRes.data?.queued) toast.info('WhatsApp not ready — will send when connected');
+    else if (textRes.success && textRes.data?.sent) toast.success('Bill sent on WhatsApp');
+    else toast.error(textRes.message || 'WhatsApp send failed — check Settings > WhatsApp');
   }
 
   if (loading) return <PageSkeleton page="bills" />;
@@ -341,40 +401,89 @@ export default function Bills() {
   return (
     <div className="page-container">
       <div>
-        <h1 className="page-title">{uiT("Bills", "बिल")}</h1>
+        <h1 className="page-title">{uiT('Bills', 'बिल')}</h1>
         <p className="page-subtitle">View and manage invoices created through visits and orders.</p>
       </div>
 
-      <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s, e) => { setStartDate(s); setEndDate(e); }} count={list.length} label="bill" />
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onChange={(s, e) => {
+          setStartDate(s);
+          setEndDate(e);
+        }}
+        count={list.length}
+        label="bill"
+      />
 
       <Table
         columns={[
-          { key: "billNumber", label: uiT("Bill #", "बिल #") },
-          { key: "customerId", label: uiT("Customer", "ग्राहक"), render: (v: unknown, row: Bill) => {
-            const c = resolveCustomer(row);
-            return c ? c.name : typeof v === "string" ? v.slice(-6) : "—";
-          }},
-          { key: "subtotal", label: uiT("Subtotal", "उप-कुल"), render: (v) => `₹${((v as number) || 0).toFixed(2)}` },
-          { key: "totalAmount", label: uiT("Total", "कुल"), render: (v) => <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span> },
-          { key: "pendingAmount", label: uiT("Pending", "बाकी"), render: (v) => (
-            <span className={(v as number) > 0 ? "text-[#e8115b] font-medium" : "text-[#1ed760]"}>{(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : uiT("Paid", "भुगतान")}</span>
-          )},
+          { key: 'billNumber', label: uiT('Bill #', 'बिल #') },
+          {
+            key: 'customerId',
+            label: uiT('Customer', 'ग्राहक'),
+            render: (v: unknown, row: Bill) => {
+              const c = resolveCustomer(row);
+              return c ? c.name : typeof v === 'string' ? v.slice(-6) : '—';
+            },
+          },
+          {
+            key: 'subtotal',
+            label: uiT('Subtotal', 'उप-कुल'),
+            render: (v) => `₹${((v as number) || 0).toFixed(2)}`,
+          },
+          {
+            key: 'totalAmount',
+            label: uiT('Total', 'कुल'),
+            render: (v) => (
+              <span className="font-semibold">₹{((v as number) || 0).toFixed(2)}</span>
+            ),
+          },
+          {
+            key: 'pendingAmount',
+            label: uiT('Pending', 'बाकी'),
+            render: (v) => (
+              <span className={(v as number) > 0 ? 'text-[#e8115b] font-medium' : 'text-[#1ed760]'}>
+                {(v as number) > 0 ? `₹${(v as number).toFixed(2)}` : uiT('Paid', 'भुगतान')}
+              </span>
+            ),
+          },
         ]}
         data={list}
-        searchPlaceholder={uiT("Search bills...", "बिल खोजें...")}
+        searchPlaceholder={uiT('Search bills...', 'बिल खोजें...')}
         actions={(row: Bill) => (
           <div className="flex items-center gap-1">
-            <button onClick={() => sendWhatsApp(row)} className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760] active:scale-95 transition-transform duration-100" title={uiT("WhatsApp", "WhatsApp")} aria-label="Send WhatsApp">
+            <button
+              onClick={() => sendWhatsApp(row)}
+              className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760] active:scale-95 transition-transform duration-100"
+              title={uiT('WhatsApp', 'WhatsApp')}
+              aria-label="Send WhatsApp"
+            >
               <MessageCircle size={15} />
             </button>
-            <button onClick={() => handleDownloadPdf(row)} className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100" title={uiT("Download PDF", "PDF डाउनलोड करें")} aria-label="Download PDF">
+            <button
+              onClick={() => handleDownloadPdf(row)}
+              className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100"
+              title={uiT('Download PDF', 'PDF डाउनलोड करें')}
+              aria-label="Download PDF"
+            >
               <PdfIcon size={15} />
             </button>
-            <button onClick={() => handleThermalPrint(row)} className="p-1.5 hover:bg-th-elevated rounded-lg text-th-secondary active:scale-95 transition-transform duration-100" title={uiT("Thermal Receipt (80mm)", "थर्मल रसीद (80mm)")} aria-label="Thermal print">
+            <button
+              onClick={() => handleThermalPrint(row)}
+              className="p-1.5 hover:bg-th-elevated rounded-lg text-th-secondary active:scale-95 transition-transform duration-100"
+              title={uiT('Thermal Receipt (80mm)', 'थर्मल रसीद (80mm)')}
+              aria-label="Thermal print"
+            >
               <Printer size={15} />
             </button>
             {!isStaff && (
-              <button onClick={() => handleDelete(row)} className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100" title={uiT("Delete", "हटाएं")} aria-label="Delete bill">
+              <button
+                onClick={() => handleDelete(row)}
+                className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100"
+                title={uiT('Delete', 'हटाएं')}
+                aria-label="Delete bill"
+              >
                 <Trash2 size={15} />
               </button>
             )}

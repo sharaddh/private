@@ -1,23 +1,25 @@
-export type TabKey = "sph" | "cyl" | "compound" | "plain";
+export type TabKey = 'sph' | 'cyl' | 'compound' | 'plain';
 
 export const TABS: { key: TabKey; label: string }[] = [
-  { key: "sph", label: "SPH" },
-  { key: "cyl", label: "CYL" },
-  { key: "compound", label: "Compound" },
-  { key: "plain", label: "Plain" },
+  { key: 'sph', label: 'SPH' },
+  { key: 'cyl', label: 'CYL' },
+  { key: 'compound', label: 'Compound' },
+  { key: 'plain', label: 'Plain' },
 ];
 
-export const ZERO_KEYS = ["+0.00", "0.00", "-0.00"];
+export const ZERO_KEYS = ['+0.00', '0.00', '-0.00'];
 
-export function getTotalQty(item: { quantities?: Record<string, Record<string, number>> } | null | undefined): number {
+export function getTotalQty(
+  item: { quantities?: Record<string, Record<string, number>> } | null | undefined
+): number {
   if (!item) return 0;
-  const q = item.quantities as Record<string, Record<string, number>> | undefined || {};
+  const q = (item.quantities as Record<string, Record<string, number>> | undefined) || {};
   let total = 0;
-  for (const lensType of ["sph", "cyl", "compound"]) {
+  for (const lensType of ['sph', 'cyl', 'compound']) {
     const map = q[lensType];
     if (map) {
       for (const v of Object.values(map)) {
-        total += (v as number);
+        total += v as number;
       }
     }
   }
@@ -37,19 +39,21 @@ function generatePowerValues(): string[] {
 
 export const POWER_VALUES = generatePowerValues();
 
-export const NEGATIVE_POWERS = POWER_VALUES.filter((p) => p.startsWith("-") && p !== "-0.00").reverse();
-export const POSITIVE_POWERS = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
+export const NEGATIVE_POWERS = POWER_VALUES.filter(
+  (p) => p.startsWith('-') && p !== '-0.00'
+).reverse();
+export const POSITIVE_POWERS = POWER_VALUES.filter((p) => p.startsWith('+') && p !== '+0.00');
 
 export const CYL_RANGE = POWER_VALUES.filter((p) => {
   const n = parseFloat(p);
   return n >= -2 && n <= 2;
 });
-export const NEG_CYL = CYL_RANGE.filter((p) => p.startsWith("-")).reverse();
-export const POS_CYL = CYL_RANGE.filter((p) => p.startsWith("+") && p !== "+0.00");
+export const NEG_CYL = CYL_RANGE.filter((p) => p.startsWith('-')).reverse();
+export const POS_CYL = CYL_RANGE.filter((p) => p.startsWith('+') && p !== '+0.00');
 
 export const SPH_INNER = POWER_VALUES.filter((p) => {
   const n = parseFloat(p);
   return (n >= -6 && n <= -0.25) || (n >= 0.25 && n <= 6);
 });
-export const NEG_SPH_INNER = SPH_INNER.filter((p) => p.startsWith("-")).reverse();
-export const POS_SPH_INNER = SPH_INNER.filter((p) => p.startsWith("+") && p !== "+0.00");
+export const NEG_SPH_INNER = SPH_INNER.filter((p) => p.startsWith('-')).reverse();
+export const POS_SPH_INNER = SPH_INNER.filter((p) => p.startsWith('+') && p !== '+0.00');

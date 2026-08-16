@@ -1,10 +1,10 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse, DashboardData } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse, DashboardData } from '../types';
 
 class DashboardService extends ApiService {
   constructor() {
-    super("/api/dashboard");
+    super('/api/dashboard');
   }
 
   async getData(): Promise<ApiResponse<DashboardData>> {

@@ -8,55 +8,60 @@ This document defines logging standards for the KMJ Optical ERP, including struc
 
 ### Current Implementation
 
-The KMJ ERP uses `console.log`, `console.warn`, and `console.error` for logging. There is no structured logging library (e.g., Winston, Pino) currently in use.
+The KMJ ERP uses **Pino** for structured, JSON-based logging (`server/src/utils/logger.ts`). Pino provides high-throughput structured logs, automatic level filtering, and first-class request logging via `pino-http`. In development, logs are prettified with `pino-pretty`; in production they are emitted as JSON lines to stdout (suitable for aggregation by Render/Railway/logplex, etc.).
+
+The logger wrapper exposes the same API used across the codebase:
+
+```typescript
+import logger from "../utils/logger";
+
+logger.debug("debug detail");
+logger.info("Server started", { port });
+logger.warn("Redis unavailable, caching disabled");
+logger.error("Unhandled error", { error: err.message });
+logger.audit({ method, path, user, ip }); // audit trail entries
+logger.child({ branchId });                // contextual child logger
+```
+
+`pino-http` request logging is mounted in `app.ts`. It logs every request with an `x-request-id` correlation ID and skips liveness/readiness probes (`/api/health`, `/api/ready`) and test environments to avoid noise.
 
 ### Log Levels
 
 | Level | Usage | Example |
 |-------|-------|---------|
-| `console.log` | Informational messages | Startup messages, audit entries |
-| `console.warn` | Warnings (recoverable) | Missing config, seed failures |
-| `console.error` | Errors (needs attention) | Unhandled errors, connection failures |
+| `debug` | Verbose detail, enabled via `LOG_LEVEL=debug` | Query shapes, internal state |
+| `info` | Normal operational events | Startup, request summaries, job runs |
+| `warn` | Recoverable problems | Missing config, Redis down, seed failures |
+| `error` | Failures that need attention | Unhandled errors, connection failures |
+| `audit` | Security/audit trail entries | Logins, mutations (via `logger.audit`) |
 
-## Console Logging
+The level is controlled by `LOG_LEVEL` (default `info`).
 
 ### Startup Messages
 
 ```typescript
 // server/src/index.ts
-console.log(`\n  KMJ Optical ERP Server [${NODE_ENV}]`);
-console.log(`  API:        http://localhost:${PORT}/api`);
-console.log(`  Client:     http://localhost:${PORT}`);
-console.log(`  Warehouse:  http://localhost:${PORT}/warehouse\n`);
+logger.info(`KMJ Optical ERP Server [${NODE_ENV}]`);
+logger.info(`API: http://localhost:${PORT}/api`);
+logger.info(`Client: http://localhost:${PORT}`);
+logger.info(`Warehouse: http://localhost:${PORT}/warehouse`);
 ```
 
-### User Seeding
+### Request Logging (pino-http)
 
-```typescript
-console.log("  Default users created:");
-console.log("    Owner:     admin / ********");
-console.log("    Warehouse: warehouse / ********");
+Every HTTP request is logged as a structured JSON line:
+
+```json
+{
+  "level": 30,
+  "time": 1705312800000,
+  "req": { "id": "req-1", "method": "POST", "url": "/api/orders", "remoteAddress": "1.2.3.4" },
+  "res": { "statusCode": 201 },
+  "responseTime": 24.3
+}
 ```
 
-### Branch Seeding
-
-```typescript
-console.log(`  Default branch created: ${branch.name} (${branch.code})`);
-console.log(`    Migrated ${docs.length} documents from ${collName}`);
-```
-
-### Redis Status
-
-```typescript
-client.on("ready", () => { console.log("Redis ready for cache operations"); });
-```
-
-### WhatsApp Status
-
-```typescript
-console.log(`WhatsApp: initializing for ${branchKeys.length} branch(es)...`);
-console.log(`WhatsApp: order ready message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
-```
+Slow requests (over `SLOW_REQUEST_MS`, default 5000ms) are additionally logged at `warn` with `{ slow: true }`.
 
 ## Audit Logging
 
@@ -76,10 +81,7 @@ export function audit(req: Request, res: Response, next: NextFunction) {
     ip: req.ip,
   };
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("AUDIT:", JSON.stringify(entry));
-  }
-
+  logger.audit(entry);
   next();
 }
 ```
@@ -105,7 +107,7 @@ export function audit(req: Request, res: Response, next: NextFunction) {
 5. **Never include request body** (may contain sensitive data)
 6. **Never include response body**
 7. **Disable in test environment**
-8. **Only log in non-production** (current implementation)
+8. **Use `logger.audit`** for audit entries so they are separable from app logs
 
 ### Audit Middleware Usage
 
@@ -124,33 +126,23 @@ router.delete("/:id", authenticate, audit, asyncHandler(handler));
 ### Unhandled Errors
 
 ```typescript
-// In error handler middleware
-console.error("Unhandled error:", err);
+// In error handler middleware (server/src/middleware/errorHandler.ts)
+logger.error("Unhandled error", { error: err.message, stack: err.stack, path: req.originalUrl });
 ```
 
 ### Startup Errors
 
 ```typescript
-console.error("MongoDB connection failed:", err);
-console.error("MONGO_URI not set");
-console.error("Failed to start server:", err);
+logger.error("MongoDB connection failed", { error: err.message });
+logger.error("Failed to start server", { error: err.message });
 ```
 
 ### Warning Logs
 
 ```typescript
-console.warn("Could not seed users:", e?.message);
-console.warn("Could not seed branch:", e?.message);
-console.warn("Could not check/drop indexes:", e?.message);
-console.warn("Redis:", err.message);
-```
-
-### WhatsApp Errors
-
-```typescript
-console.error("WhatsApp init failed:", e);
-console.error("WhatsApp: auth decryption failed, clearing stale sessions:", msg);
-console.error(`Demand PDF sendMedia threw: ${e.message}`);
+logger.warn("Could not seed users", { error: e?.message });
+logger.warn("Could not check/drop indexes", { error: e?.message });
+logger.warn("Redis unavailable, using in-memory cache", { error: err.message });
 ```
 
 ## Sensitive Data Handling
@@ -159,67 +151,55 @@ console.error(`Demand PDF sendMedia threw: ${e.message}`);
 
 ```typescript
 // NEVER log passwords
-console.log("Password:", password); // NEVER!
+logger.info({ password }, "user create"); // NEVER!
 
 // NEVER log tokens
-console.log("Access token:", accessToken); // NEVER!
+logger.info({ accessToken }, "login"); // NEVER!
 
 // NEVER log full request bodies
-console.log("Request body:", req.body); // May contain passwords, PII
+logger.info({ body: req.body }, "request"); // May contain passwords, PII
 
 // NEVER log customer PII in production
-console.log("Customer:", customer.mobile); // May be sensitive
+logger.info({ mobile: customer.mobile }, "customer"); // May be sensitive
 ```
 
 ### What TO Log
 
 ```typescript
 // Safe: User ID (not PII)
-console.log("AUDIT:", JSON.stringify({ user: { id: user._id } }));
+logger.audit({ user: { id: user._id } });
 
 // Safe: Non-sensitive operation info
-console.log(`Migrated ${docs.length} documents from ${collName}`);
+logger.info(`Migrated ${docs.length} documents from ${collName}`);
 
 // Safe: Status messages
-console.log("WhatsApp: order ready message queued");
+logger.info("WhatsApp: order ready message queued");
 
 // Safe: Error messages (no sensitive data)
-console.error("Unhandled error:", err.message);
+logger.error("Unhandled error", { error: err.message });
 ```
 
 ### Data Masking
 
 ```typescript
 // Mask phone numbers in logs
-console.log(`WhatsApp: message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+logger.info(`WhatsApp: message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
 // Output: "WhatsApp: message queued for 10"
-
-// Mask bill numbers
-console.log(`Bill ${bill.billNumber} created`);
-// Output: "Bill BILL-1705312800000 created" (billNumber is not PII)
 ```
 
 ## Structured Logging
 
 ### Current Format
 
-```
-AUDIT: {"time":1705312800000,"method":"POST","path":"/api/orders","user":{"id":"...","username":"admin"},"ip":"127.0.0.1"}
-```
-
-### Desired Format (Future)
+Pino emits JSON lines to stdout in production (level is a number, timestamp in ms):
 
 ```json
 {
-  "level": "info",
-  "timestamp": "2024-01-15T10:00:00.000Z",
-  "message": "Order created",
-  "context": {
-    "userId": "64f1a2b3c4d5e6f7a8b9c0d1",
-    "username": "admin",
-    "orderId": "64f1a2b3c4d5e6f7a8b9c0d2",
-    "customerId": "64f1a2b3c4d5e6f7a8b9c0d3"
-  }
+  "level": 30,
+  "time": 1705312800000,
+  "msg": "Order created",
+  "userId": "64f1a2b3c4d5e6f7a8b9c0d1",
+  "orderId": "64f1a2b3c4d5e6f7a8b9c0d2"
 }
 ```
 
@@ -227,150 +207,103 @@ AUDIT: {"time":1705312800000,"method":"POST","path":"/api/orders","user":{"id":"
 
 1. **Always use JSON format** for machine-readable logs
 2. **Always include timestamp** in ISO 8601 format
-3. **Always include log level** (info, warn, error)
+3. **Always include log level** (debug, info, warn, error)
 4. **Always include message** describing the event
-5. **Always include context** (user, resource IDs)
+5. **Always include context** (user, resource IDs) as named fields
 6. **Never include sensitive data** in context
+7. **Never string-concatenate** sensitive or structured values into the message; pass them as fields
 
 ## Log Rotation
 
 ### Current State
 
-No log rotation is implemented. Console output goes to stdout/stderr.
-
-### Recommended Setup
-
-```typescript
-// Future: Use Winston or Pino with rotation
-import winston from "winston";
-import DailyRotateFile from "winston-daily-rotate-file";
-
-const transport = new DailyRotateFile({
-  filename: "logs/application-%DATE%.log",
-  datePattern: "YYYY-MM-DD",
-  maxSize: "20m",
-  maxFiles: "14d",
-});
-
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [transport],
-});
-```
-
-### Rotation Rules
-
-1. **Rotate daily** for production
-2. **Keep 14 days** of logs
-3. **Limit file size** to 20MB
-4. **Compress old logs** (gzip)
-5. **Store logs outside** web root
-6. **Never store logs** in database
+Logs go to stdout/stderr (JSON in production, prettified in development). The platform (Render) captures stdout, so no file rotation is required. If self-hosting with file output, use a process supervisor or `pino-roll` for rotation.
 
 ## Environment-Specific Logging
 
 ### Development
 
 ```typescript
-// Verbose logging in development
-if (process.env.NODE_ENV !== "production") {
-  console.log("AUDIT:", JSON.stringify(entry));
-}
+// Pretty-printed, human-readable output
+transport: pino.transport({ target: "pino-pretty", options: { colorize: true } })
 ```
 
 ### Production
 
 ```typescript
-// Minimal logging in production
-if (process.env.NODE_ENV === "test") return next(); // Skip in test
-// Only log errors in production
+// Raw JSON lines to stdout
+transport: undefined // plain JSON output
 ```
 
 ### Test
 
 ```typescript
-// Suppress logging in tests
-if (process.env.NODE_ENV === "test") return next();
+// Logging is suppressed in vitest (LOG_LEVEL from test env); pino-http is disabled in test
 ```
 
 ## Logging Best Practices
 
 ### Do
 
-1. **Log at appropriate levels** (info, warn, error)
-2. **Include context** (user, resource IDs)
+1. **Log at appropriate levels** (debug, info, warn, error, audit)
+2. **Include context** (user, resource IDs) as structured fields
 3. **Use consistent format** across the application
 4. **Log errors with stack traces** (in development)
-5. **Log security events** (auth failures, unauthorized access)
+5. **Log security events** (auth failures, unauthorized access) via `logger.audit`
+6. **Include request IDs** (`x-request-id`) for request correlation
 
 ### Don't
 
 1. **Never log passwords** or authentication tokens
 2. **Never log PII** (personally identifiable information) in production
 3. **Never log request/response bodies** (may contain sensitive data)
-4. **Never use console.log** for errors (use console.error)
+4. **Never use console.log** for application logging (use the pino logger)
 5. **Never log in loops** (performance impact)
+6. **Never interpolate** sensitive values into message strings
 
 ## Bad Examples
 
 ```typescript
 // BAD: Logging sensitive data
-console.log("Login:", { username, password });
-console.log("Token:", accessToken);
-console.log("Request body:", req.body);
+logger.info(`login ${username} ${password}`);
 
-// BAD: Logging in production
-console.log("AUDIT:", JSON.stringify(entry)); // Only in dev
-
-// BAD: Using console.log for errors
-console.log("Error occurred:", err); // Should be console.error
+// BAD: Using console.log for application logs
+console.log("Order created");
 
 // BAD: No context in logs
-console.error("Error"); // No useful information
+logger.error("Error"); // No useful information
 
 // BAD: Logging PII
-console.log("Customer mobile:", customer.mobile);
+logger.info(`Customer mobile: ${customer.mobile}`);
+
+// BAD: Interpolating structured values into the message
+logger.info(`order ${orderId} user ${userId}`); // Use fields instead
 ```
 
 ## Good Examples
 
 ```typescript
-// GOOD: Structured audit log
-const entry = {
-  time: Date.now(),
-  method: req.method,
-  path: req.originalUrl,
-  user: authReq.user ? { id: authReq.user.sub, username: authReq.user.username } : null,
-  ip: req.ip,
-};
-console.log("AUDIT:", JSON.stringify(entry));
+// GOOD: Structured log with context fields
+logger.info("Order created", { orderId, userId });
 
 // GOOD: Masked phone numbers
-console.log(`WhatsApp: message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
+logger.info(`WhatsApp: message queued for ${customer.mobile?.slice(-2) || "unknown"}`);
 
 // GOOD: Appropriate log levels
-console.log("Server started on port 4000");
-console.warn("Redis not available, caching disabled");
-console.error("Unhandled error:", err);
-
-// GOOD: Conditional logging
-if (process.env.NODE_ENV !== "production") {
-  console.log("AUDIT:", JSON.stringify(entry));
-}
+logger.info("Server started", { port: 4000 });
+logger.warn("Redis not available, caching disabled");
+logger.error("Unhandled error", { error: err.message });
 ```
 
 ## Tradeoffs
 
 | Decision | Benefit | Cost |
 |----------|---------|------|
-| Console logging | Simple, no dependencies | No rotation, no structure |
-| No structured logging | Less code | Harder to query/analyze |
-| Conditional audit logging | Less noise in prod | Missing audit trail in prod |
-| No log rotation | Simpler setup | Disk space issues |
+| Pino structured logging | Machine-readable, queryable, fast | Requires field-based logging discipline |
+| JSON in prod, pretty in dev | Best of both | Slight config complexity |
+| stdout logging | Zero setup, platform-native | No on-box rotation (platform handles) |
+| pino-http request logging | Request correlation via request IDs | Extra log volume |
+| Audit via logger.audit | Separable audit trail | Extra log volume |
 | Masked PII | Privacy protection | Less debugging info |
 
 ## Cross-References
@@ -378,15 +311,16 @@ if (process.env.NODE_ENV !== "production") {
 - **Error handling**: See `docs/19-error-handling.md`
 - **Security**: See `docs/22-security.md`
 - **Backend patterns**: See `docs/07-backend.md`
+- **Observability**: See `docs/38-observability.md`
 
 ## AI Instructions
 
 When working on logging code:
-1. Always use appropriate log levels (log, warn, error)
-2. Always include context (user, resource IDs)
-3. Never log sensitive data (passwords, tokens, PII)
-4. Always mask phone numbers in logs
-5. Always disable audit logging in test environment
-6. Always use console.error for errors
+1. Always use the pino logger from `server/src/utils/logger.ts` (never `console.log`)
+2. Always use appropriate log levels (debug, info, warn, error, audit)
+3. Always include context (user, resource IDs) as structured fields
+4. Never log sensitive data (passwords, tokens, PII)
+5. Always mask phone numbers in logs
+6. Always disable audit logging in test environment
 7. Never log in loops
 8. Always run linting after changes

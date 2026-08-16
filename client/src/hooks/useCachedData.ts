@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { getCacheSnapshot, setCache, invalidateCache } from "./useCache";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getCacheSnapshot, setCache, invalidateCache } from './useCache';
 
 interface CachedDataResult<T> {
   data: T | null;
@@ -19,20 +19,24 @@ export function useCachedData<T>(
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
 
-  const doFetch = useCallback(async (isBackground = false) => {
-    if (!isBackground) setLoading(true);
-    try {
-      const res = await fetcherRef.current();
-      if (!mountedRef.current) return;
-      if (res.success && res.data !== undefined) {
-        setData(res.data);
-        setCache(cacheKey, res.data);
+  const doFetch = useCallback(
+    async (isBackground = false) => {
+      if (!isBackground) setLoading(true);
+      try {
+        const res = await fetcherRef.current();
+        if (!mountedRef.current) return;
+        if (res.success && res.data !== undefined) {
+          setData(res.data);
+          setCache(cacheKey, res.data);
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        if (mountedRef.current) setLoading(false);
       }
-    } catch { /* ignore */ }
-    finally {
-      if (mountedRef.current) setLoading(false);
-    }
-  }, [cacheKey]);
+    },
+    [cacheKey]
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -44,13 +48,18 @@ export function useCachedData<T>(
     } else {
       doFetch();
     }
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, deps);
 
-  const refetch = useCallback((invalidate = false) => {
-    if (invalidate) invalidateCache(cacheKey);
-    doFetch();
-  }, [cacheKey, doFetch]);
+  const refetch = useCallback(
+    (invalidate = false) => {
+      if (invalidate) invalidateCache(cacheKey);
+      doFetch();
+    },
+    [cacheKey, doFetch]
+  );
 
   return { data, loading, refetch };
 }

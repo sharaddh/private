@@ -10,16 +10,20 @@ const eyeSchema = z.object({
 export const createPrescriptionSchema = z.object({
   customerId: z.string().min(1),
   visitId: z.string().optional(),
-  rightEye: z.object({
-    dv: eyeSchema.optional(),
-    nv: eyeSchema.optional(),
-    pc: eyeSchema.optional(),
-  }).optional(),
-  leftEye: z.object({
-    dv: eyeSchema.optional(),
-    nv: eyeSchema.optional(),
-    pc: eyeSchema.optional(),
-  }).optional(),
+  rightEye: z
+    .object({
+      dv: eyeSchema.optional(),
+      nv: eyeSchema.optional(),
+      pc: eyeSchema.optional(),
+    })
+    .optional(),
+  leftEye: z
+    .object({
+      dv: eyeSchema.optional(),
+      nv: eyeSchema.optional(),
+      pc: eyeSchema.optional(),
+    })
+    .optional(),
   pd: z.string().optional(),
   notes: z.string().optional(),
 });

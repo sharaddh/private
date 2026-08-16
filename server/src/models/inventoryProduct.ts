@@ -20,7 +20,10 @@ const InventoryProductSchemaObj = new Schema(
 );
 
 InventoryProductSchemaObj.index({ brandId: 1, category: 1, model: 1 });
-InventoryProductSchemaObj.index({ brandId: 1, model: 1 }, { unique: true, partialFilterExpression: { model: { $type: "string", $ne: "" } } });
+InventoryProductSchemaObj.index(
+  { brandId: 1, model: 1 },
+  { unique: true, partialFilterExpression: { model: { $type: "string", $ne: "" } } }
+);
 
 export const InventoryProductSchema = InventoryProductSchemaObj;
 const _InventoryProduct = model("InventoryProduct", InventoryProductSchemaObj);

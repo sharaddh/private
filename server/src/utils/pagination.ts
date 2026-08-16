@@ -37,7 +37,10 @@ export async function paginateQuery<T extends Document>(
     cursorQuery.where("_id").lt(options.cursor as unknown as number);
 
     const [data, total] = await Promise.all([
-      cursorQuery.sort({ _id: -1 }).limit(pageSize + 1).lean(),
+      cursorQuery
+        .sort({ _id: -1 })
+        .limit(pageSize + 1)
+        .lean(),
       baseQuery.model.countDocuments(baseQuery.getFilter()),
     ]);
 

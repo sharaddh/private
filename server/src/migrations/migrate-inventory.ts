@@ -5,7 +5,10 @@ import { InventorySchema } from "../models/inventory";
 import { getBranchModels } from "../models/db";
 
 function normalizeSku(sku: unknown): string {
-  return String(sku || "").trim().toUpperCase().replace(/\s+/g, "");
+  return String(sku || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
 }
 
 function cleanText(value: unknown): string {
@@ -16,10 +19,15 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-async function findOrCreateBrand(models: ReturnType<typeof getBranchModels>, name: string): Promise<any | null> {
+async function findOrCreateBrand(
+  models: ReturnType<typeof getBranchModels>,
+  name: string
+): Promise<any | null> {
   const clean = cleanText(name);
   if (!clean) return null;
-  let brand = await models.Brand.findOne({ name: { $regex: `^${escapeRegex(clean)}$`, $options: "i" } }).lean() as any | null;
+  let brand = (await models.Brand.findOne({
+    name: { $regex: `^${escapeRegex(clean)}$`, $options: "i" },
+  }).lean()) as any | null;
   if (!brand) {
     const created = await models.Brand.create({ name: clean });
     brand = created.toObject();
@@ -27,23 +35,26 @@ async function findOrCreateBrand(models: ReturnType<typeof getBranchModels>, nam
   return brand;
 }
 
-async function findOrCreateProduct(models: ReturnType<typeof getBranchModels>, data: {
-  brandId?: string | null;
-  brandName: string;
-  category: string;
-  inventoryType: string;
-  model: string;
-  gender: string;
-  description: string;
-}): Promise<any | null> {
+async function findOrCreateProduct(
+  models: ReturnType<typeof getBranchModels>,
+  data: {
+    brandId?: string | null;
+    brandName: string;
+    category: string;
+    inventoryType: string;
+    model: string;
+    gender: string;
+    description: string;
+  }
+): Promise<any | null> {
   const modelKey = cleanText(data.model);
   if (!modelKey) {
     return null;
   }
-  let product = await models.InventoryProduct.findOne({
+  let product = (await models.InventoryProduct.findOne({
     ...(data.brandId ? { brandId: data.brandId } : {}),
     model: { $regex: `^${escapeRegex(modelKey)}$`, $options: "i" },
-  }).lean() as any | null;
+  }).lean()) as any | null;
   if (!product) {
     const created = await models.InventoryProduct.create({
       brandId: data.brandId || undefined,
@@ -66,7 +77,9 @@ async function migrateBranch(branch: { dbName: string; code?: string; name: stri
   const models = getBranchModels(branch.dbName);
 
   const legacyItems = (await LegacyInventory.find({}).lean()) as any[];
-  console.log(`[${branch.code || branch.name}] migrating ${legacyItems.length} legacy inventory items`);
+  console.log(
+    `[${branch.code || branch.name}] migrating ${legacyItems.length} legacy inventory items`
+  );
 
   let created = 0;
   let skipped = 0;
@@ -75,7 +88,9 @@ async function migrateBranch(branch: { dbName: string; code?: string; name: stri
     const sku = normalizeSku(item.sku);
     if (!sku) {
       skipped += 1;
-      console.warn(`[${branch.code || branch.name}] skipped item with missing SKU (_id=${item._id})`);
+      console.warn(
+        `[${branch.code || branch.name}] skipped item with missing SKU (_id=${item._id})`
+      );
       continue;
     }
 
@@ -85,7 +100,16 @@ async function migrateBranch(branch: { dbName: string; code?: string; name: stri
       continue;
     }
 
-    const category = ["Specs", "Sunglasses", "Contact Lens", "Hearing Aid", "Solution", "Kit", "Accessory", "Other"].includes(item.category)
+    const category = [
+      "Specs",
+      "Sunglasses",
+      "Contact Lens",
+      "Hearing Aid",
+      "Solution",
+      "Kit",
+      "Accessory",
+      "Other",
+    ].includes(item.category)
       ? item.category
       : "Specs";
     const brandName = cleanText(item.brand);

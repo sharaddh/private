@@ -143,11 +143,9 @@ export async function updateCustomer(
   id: string,
   updates: UpdateCustomerData
 ): Promise<CustomerResult> {
-  const customer = await (Customer as mongoose.Model<unknown>).findByIdAndUpdate(
-    id,
-    { $set: updates },
-    { new: true, runValidators: true }
-  ).lean();
+  const customer = await (Customer as mongoose.Model<unknown>)
+    .findByIdAndUpdate(id, { $set: updates }, { new: true, runValidators: true })
+    .lean();
   if (!customer) {
     throw new AppError(404, "Customer not found");
   }

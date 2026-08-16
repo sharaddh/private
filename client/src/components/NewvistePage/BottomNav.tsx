@@ -1,11 +1,6 @@
-import { motion } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  MessageCircle,
-} from "lucide-react";
-import { useTranslate } from "../../context/TranslateContext";
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Save, MessageCircle } from 'lucide-react';
+import { useTranslate } from '../../context/TranslateContext';
 
 interface Props {
   currentIdx: number;
@@ -54,13 +49,11 @@ export default function BottomNav({
           "
         >
           <ChevronLeft size={18} />
-          {uiT("Back", "पीछे")}
+          {uiT('Back', 'पीछे')}
         </motion.button>
 
         {!canNext && nextHint && (
-          <p className="text-xs font-semibold text-[#e53935] text-center px-3">
-            {nextHint}
-          </p>
+          <p className="text-xs font-semibold text-[#e53935] text-center px-3">{nextHint}</p>
         )}
 
         {/* Next / Save */}
@@ -84,7 +77,7 @@ export default function BottomNav({
             {saving ? (
               <>
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                {uiT("Saving...", "सेव हो रहा है...")}
+                {uiT('Saving...', 'सेव हो रहा है...')}
               </>
             ) : countdown > 0 ? (
               <>
@@ -94,7 +87,7 @@ export default function BottomNav({
             ) : (
               <>
                 <Save size={18} />
-                {uiT("Save Visit", "यात्रा सेव करें")}
+                {uiT('Save Visit', 'यात्रा सेव करें')}
               </>
             )}
           </motion.button>
@@ -116,7 +109,7 @@ export default function BottomNav({
               disabled:cursor-not-allowed
             "
           >
-            {uiT("Next", "अगला")}
+            {uiT('Next', 'अगला')}
             <ChevronRight size={18} />
           </motion.button>
         )}

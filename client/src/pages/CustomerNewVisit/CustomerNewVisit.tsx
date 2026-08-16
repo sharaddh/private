@@ -1,29 +1,39 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import api from "../../api";
-import { useToast } from "../../context/ToastContext";
-import { useTranslate } from "../../context/TranslateContext";
-import PageSkeleton from "../../components/PageSkeleton";
-import Modal from "../../components/Modal";
-import CameraScanner from "../../components/CameraScanner";
-import { cleanEyeSet } from "../../utils/rx";
-import { todayStr } from "../../utils/date";
-import { normalizeWhatsAppPhone } from "../../utils/whatsapp";
-import { whatsappService } from "../../services";
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import api from '../../api';
+import { useToast } from '../../context/ToastContext';
+import { useTranslate } from '../../context/TranslateContext';
+import PageSkeleton from '../../components/PageSkeleton';
+import Modal from '../../components/Modal';
+import CameraScanner from '../../components/CameraScanner';
+import { cleanEyeSet } from '../../utils/rx';
+import { todayStr } from '../../utils/date';
+import { normalizeWhatsAppPhone } from '../../utils/whatsapp';
+import { whatsappService } from '../../services';
 import {
-  ScanLine, Eye, RefreshCw, Maximize2, Circle, Wrench, Grid3X3,
-  Activity, ShoppingCart, CreditCard, Percent, CheckCircle,
-} from "lucide-react";
-import PageHeader from "../../components/NewvistePage/PageHeader";
-import VisitStepper from "../../components/NewvistePage/VisitStepper";
-import VisitTypeSection from "../../components/NewvistePage/VisitTypeSection";
-import PrescriptionPanel from "../../components/NewvistePage/PrescriptionPanel";
-import OrderItems from "../../components/NewvistePage/OrderItems";
-import BillingPanel from "../../components/NewvistePage/BillingPanel";
-import PaymentPanel from "../../components/NewvistePage/PaymentPanel";
-import ConfirmationDashboard from "../../components/NewvistePage/ConfirmationDashboard";
-import BottomNav from "../../components/NewvistePage/BottomNav";
+  ScanLine,
+  Eye,
+  RefreshCw,
+  Maximize2,
+  Circle,
+  Wrench,
+  Grid3X3,
+  Activity,
+  ShoppingCart,
+  CreditCard,
+  Percent,
+  CheckCircle,
+} from 'lucide-react';
+import PageHeader from '../../components/NewvistePage/PageHeader';
+import VisitStepper from '../../components/NewvistePage/VisitStepper';
+import VisitTypeSection from '../../components/NewvistePage/VisitTypeSection';
+import PrescriptionPanel from '../../components/NewvistePage/PrescriptionPanel';
+import OrderItems from '../../components/NewvistePage/OrderItems';
+import BillingPanel from '../../components/NewvistePage/BillingPanel';
+import PaymentPanel from '../../components/NewvistePage/PaymentPanel';
+import ConfirmationDashboard from '../../components/NewvistePage/ConfirmationDashboard';
+import BottomNav from '../../components/NewvistePage/BottomNav';
 
 export default function CustomerNewVisit() {
   const { id } = useParams();
@@ -32,57 +42,111 @@ export default function CustomerNewVisit() {
   const { t, uiT } = useTranslate();
 
   const VISIT_TYPES = [
-    { value: "new", label: uiT("New Glasses", "नए चश्मे"), icon: Eye },
-    { value: "frame_change", label: uiT("Frame Change", "फ्रेम बदलें"), icon: RefreshCw },
-    { value: "new_lens", label: uiT("New Lens", "नया लेंस"), icon: Maximize2 },
-    { value: "contact_lens", label: uiT("Contact Lens", "कॉन्टैक्ट लेंस"), icon: Circle },
-    { value: "service", label: uiT("Service", "सेवा"), icon: Wrench },
-    { value: "other", label: uiT("Other", "अन्य"), icon: Grid3X3 },
+    { value: 'new', label: uiT('New Glasses', 'नए चश्मे'), icon: Eye },
+    { value: 'frame_change', label: uiT('Frame Change', 'फ्रेम बदलें'), icon: RefreshCw },
+    { value: 'new_lens', label: uiT('New Lens', 'नया लेंस'), icon: Maximize2 },
+    { value: 'contact_lens', label: uiT('Contact Lens', 'कॉन्टैक्ट लेंस'), icon: Circle },
+    { value: 'service', label: uiT('Service', 'सेवा'), icon: Wrench },
+    { value: 'other', label: uiT('Other', 'अन्य'), icon: Grid3X3 },
   ];
 
   const steps = [
-    { key: "service", label: uiT("Service", "सेवा"), icon: Activity, desc: uiT("Visit type", "विज़िट प्रकार") },
-    { key: "prescription", label: uiT("Examination", "जांच"), icon: Eye, desc: uiT("Vision test", "दृष्टि परीक्षण") },
-    { key: "order", label: uiT("Order", "ऑर्डर"), icon: ShoppingCart, desc: uiT("Frame & lens", "फ्रेम और लेंस") },
-    { key: "billing", label: uiT("Billing", "बिलिंग"), icon: CreditCard, desc: uiT("Items & pricing", "आइटम और मूल्य") },
-    { key: "payment", label: uiT("Payment", "भुगतान"), icon: Percent, desc: uiT("Collect & confirm", "संग्रह और पुष्टि") },
-    { key: "confirmation", label: uiT("Confirm", "पुष्टि"), icon: CheckCircle, desc: uiT("Review & save", "समीक्षा और सहेजें") },
+    {
+      key: 'service',
+      label: uiT('Service', 'सेवा'),
+      icon: Activity,
+      desc: uiT('Visit type', 'विज़िट प्रकार'),
+    },
+    {
+      key: 'prescription',
+      label: uiT('Examination', 'जांच'),
+      icon: Eye,
+      desc: uiT('Vision test', 'दृष्टि परीक्षण'),
+    },
+    {
+      key: 'order',
+      label: uiT('Order', 'ऑर्डर'),
+      icon: ShoppingCart,
+      desc: uiT('Frame & lens', 'फ्रेम और लेंस'),
+    },
+    {
+      key: 'billing',
+      label: uiT('Billing', 'बिलिंग'),
+      icon: CreditCard,
+      desc: uiT('Items & pricing', 'आइटम और मूल्य'),
+    },
+    {
+      key: 'payment',
+      label: uiT('Payment', 'भुगतान'),
+      icon: Percent,
+      desc: uiT('Collect & confirm', 'संग्रह और पुष्टि'),
+    },
+    {
+      key: 'confirmation',
+      label: uiT('Confirm', 'पुष्टि'),
+      icon: CheckCircle,
+      desc: uiT('Review & save', 'समीक्षा और सहेजें'),
+    },
   ];
 
   const [customer, setCustomer] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState("service");
+  const [step, setStep] = useState('service');
 
-  const [visitType, setVisitType] = useState("new");
+  const [visitType, setVisitType] = useState('new');
   const [visitDate, setVisitDate] = useState(todayStr());
-  const [visitDoctor, setVisitDoctor] = useState("");
-  const [visitRemarks, setVisitRemarks] = useState("");
+  const [visitDoctor, setVisitDoctor] = useState('');
+  const [visitRemarks, setVisitRemarks] = useState('');
 
   const [usePrescription, setUsePrescription] = useState(false);
   const [prescription, setPrescription] = useState({
     rightEye: { dv: {}, nv: {}, pc: {} },
     leftEye: { dv: {}, nv: {}, pc: {} },
-    pd: "", notes: "", problems: "",
+    pd: '',
+    notes: '',
+    problems: '',
   });
 
-  const [orderFrames, setOrderFrames] = useState<Array<{ sku: string; brand: string; model: string; color: string; price: number; quantity?: number }>>([]);
-  const [orderLenses, setOrderLenses] = useState<Array<{ sku: string; brand: string; features: string[]; index: string; price: number; coating: string }>>([]);
-  const [orderAccessories, setOrderAccessories] = useState<Array<{ name: string; price: number }>>([]);
+  const [orderFrames, setOrderFrames] = useState<
+    Array<{
+      sku: string;
+      brand: string;
+      model: string;
+      color: string;
+      price: number;
+      quantity?: number;
+    }>
+  >([]);
+  const [orderLenses, setOrderLenses] = useState<
+    Array<{
+      sku: string;
+      brand: string;
+      features: string[];
+      index: string;
+      price: number;
+      coating: string;
+    }>
+  >([]);
+  const [orderAccessories, setOrderAccessories] = useState<Array<{ name: string; price: number }>>(
+    []
+  );
 
-  const [billItems, setBillItems] = useState<Array<{ description: string; price: number; qty: number; availableQty?: number }>>([]);
+  const [billItems, setBillItems] = useState<
+    Array<{ description: string; price: number; qty: number; availableQty?: number }>
+  >([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
-  const [paymentMode, setPaymentMode] = useState("Cash");
+  const [paymentMode, setPaymentMode] = useState('Cash');
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState("");
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [suggestionsFor, setSuggestionsFor] = useState<{ type: "frame"; idx: number } | null>(null);
+  const [suggestionsFor, setSuggestionsFor] = useState<{ type: 'frame'; idx: number } | null>(null);
   const [searchTimer, setSearchTimer] = useState<any>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [scanModal, setScanModal] = useState(false);
@@ -93,7 +157,9 @@ export default function CustomerNewVisit() {
   const greetingSent = useRef(false);
 
   useEffect(() => {
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -104,31 +170,52 @@ export default function CustomerNewVisit() {
         api.get<any[]>(`/api/visits?customerId=${id}`),
         api.get<any[]>(`/api/prescriptions?customerId=${id}`),
         api.get<any[]>(`/api/orders?customerId=${id}`),
-        api.get("/api/settings"),
+        api.get('/api/settings'),
       ]);
       if (custRes.success) {
         setCustomer(custRes.data);
         if (visitsRes.success && visitsRes.data && visitsRes.data.length > 0) {
           const last = visitsRes.data[0];
-          setVisitDoctor(last.doctorName || "");
+          setVisitDoctor(last.doctorName || '');
         }
         if (prescRes.success && prescRes.data && prescRes.data.length > 0) {
           const prev = prescRes.data[0];
           setPrescription({
             rightEye: prev.rightEye || { dv: {}, nv: {}, pc: {} },
             leftEye: prev.leftEye || { dv: {}, nv: {}, pc: {} },
-            pd: prev.pd || "", notes: prev.notes || "", problems: prev.problems || "",
+            pd: prev.pd || '',
+            notes: prev.notes || '',
+            problems: prev.problems || '',
           });
           setUsePrescription(true);
         }
-        const ordersList = ((ordersRes.data as any)?.data || (Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[]);
+        const ordersList =
+          (ordersRes.data as any)?.data ||
+          ((Array.isArray(ordersRes.data) ? ordersRes.data : []) as any[]);
         if (ordersRes.success && ordersList.length > 0) {
           const last = ordersList[0];
           if (last.frame) {
-            setOrderFrames([{ sku: last.frame || "", brand: last.frameBrand || "", model: last.frameModel || "", color: last.frameColor || "", price: last.framePrice || 0 }]);
+            setOrderFrames([
+              {
+                sku: last.frame || '',
+                brand: last.frameBrand || '',
+                model: last.frameModel || '',
+                color: last.frameColor || '',
+                price: last.framePrice || 0,
+              },
+            ]);
           }
           if (last.lens) {
-            setOrderLenses([{ sku: last.lens || "", brand: last.lensBrand || "", features: last.lensType ? last.lensType.split(", ") : [], index: last.lensIndex || "", price: last.lensPrice || 0, coating: last.coating || "" }]);
+            setOrderLenses([
+              {
+                sku: last.lens || '',
+                brand: last.lensBrand || '',
+                features: last.lensType ? last.lensType.split(', ') : [],
+                index: last.lensIndex || '',
+                price: last.lensPrice || 0,
+                coating: last.coating || '',
+              },
+            ]);
           }
           if (last.accessories?.length > 0) {
             setOrderAccessories(last.accessories.map((n: string) => ({ name: n, price: 0 })));
@@ -174,25 +261,70 @@ export default function CustomerNewVisit() {
   // Backup draft
   useEffect(() => {
     if (!id || loading) return;
-    const data = { step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate };
+    const data = {
+      step,
+      visitType,
+      visitDate,
+      visitDoctor,
+      visitRemarks,
+      usePrescription,
+      prescription,
+      orderFrames,
+      orderLenses,
+      orderAccessories,
+      billItems,
+      advancePaid,
+      paymentMode,
+      discountPercent,
+      discountAmount,
+      discountType,
+      deliveryAddress,
+      deliveryDate,
+    };
     sessionStorage.setItem(`visitDraft_${id}`, JSON.stringify(data));
-  }, [id, loading, step, visitType, visitDate, visitDoctor, visitRemarks, usePrescription, prescription, orderFrames, orderLenses, orderAccessories, billItems, advancePaid, paymentMode, discountPercent, discountAmount, discountType, deliveryAddress, deliveryDate]);
+  }, [
+    id,
+    loading,
+    step,
+    visitType,
+    visitDate,
+    visitDoctor,
+    visitRemarks,
+    usePrescription,
+    prescription,
+    orderFrames,
+    orderLenses,
+    orderAccessories,
+    billItems,
+    advancePaid,
+    paymentMode,
+    discountPercent,
+    discountAmount,
+    discountType,
+    deliveryAddress,
+    deliveryDate,
+  ]);
 
   // 🌟 REAL-TIME AUTOMATIC SYNC 🌟
   // This watches your cart and updates the bill silently in the background
   useEffect(() => {
-    if (loading) return; 
+    if (loading) return;
 
-    const autoItems: Array<{ description: string; price: number; qty: number; availableQty?: number }> = [];
-    
+    const autoItems: Array<{
+      description: string;
+      price: number;
+      qty: number;
+      availableQty?: number;
+    }> = [];
+
     // Add Frames
     orderFrames.forEach((f) => {
       if (f.brand || f.model || f.price > 0 || f.sku) {
-        autoItems.push({ 
-          description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ""}`.trim(), 
-          price: Number(f.price) || 0, 
+        autoItems.push({
+          description: `Frame: ${f.brand} ${f.model} ${f.color ? `(${f.color})` : ''}`.trim(),
+          price: Number(f.price) || 0,
           qty: 1,
-          availableQty: typeof f.quantity === "number" ? f.quantity : undefined,
+          availableQty: typeof f.quantity === 'number' ? f.quantity : undefined,
         });
       }
     });
@@ -200,12 +332,12 @@ export default function CustomerNewVisit() {
     // Add Lenses
     orderLenses.forEach((l) => {
       if (l.brand || l.features.length > 0 || l.price > 0 || l.sku) {
-        const featuresStr = l.features.length > 0 ? l.features.join(" + ") : "Standard";
-        const indexStr = l.index ? `(Index: ${l.index})` : "";
-        autoItems.push({ 
-          description: `Lens: ${l.brand} ${featuresStr} ${indexStr}`.replace(/\s+/g, ' ').trim(), 
-          price: Number(l.price) || 0, 
-          qty: 1 
+        const featuresStr = l.features.length > 0 ? l.features.join(' + ') : 'Standard';
+        const indexStr = l.index ? `(Index: ${l.index})` : '';
+        autoItems.push({
+          description: `Lens: ${l.brand} ${featuresStr} ${indexStr}`.replace(/\s+/g, ' ').trim(),
+          price: Number(l.price) || 0,
+          qty: 1,
         });
       }
     });
@@ -213,20 +345,21 @@ export default function CustomerNewVisit() {
     // Add Accessories
     orderAccessories.forEach((a) => {
       if (a.name || a.price > 0) {
-        autoItems.push({ 
-          description: `Acc: ${a.name || "Accessory"}`, 
-          price: Number(a.price) || 0, 
-          qty: 1 
+        autoItems.push({
+          description: `Acc: ${a.name || 'Accessory'}`,
+          price: Number(a.price) || 0,
+          qty: 1,
         });
       }
     });
 
     setBillItems((prev) => {
       // Keep any manual items the user added themselves (doesn't start with Frame:, Lens:, or Acc:)
-      const manualItems = prev.filter(p => 
-        !p.description.startsWith("Frame:") && 
-        !p.description.startsWith("Lens:") && 
-        !p.description.startsWith("Acc:")
+      const manualItems = prev.filter(
+        (p) =>
+          !p.description.startsWith('Frame:') &&
+          !p.description.startsWith('Lens:') &&
+          !p.description.startsWith('Acc:')
       );
 
       // Preserve any qty edits the user made on auto-synced items
@@ -237,13 +370,14 @@ export default function CustomerNewVisit() {
 
       return [...synced, ...manualItems];
     });
-
   }, [orderFrames, orderLenses, orderAccessories, loading]);
 
   // Resolve stock for frames added without a quantity (manual SKU entry, last-order autofill, drafts)
-  const frameStockKey = orderFrames.map((f) => `${f.sku}::${typeof f.quantity === "number" ? f.quantity : ""}`).join("|");
+  const frameStockKey = orderFrames
+    .map((f) => `${f.sku}::${typeof f.quantity === 'number' ? f.quantity : ''}`)
+    .join('|');
   useEffect(() => {
-    const missing = orderFrames.filter((f) => f.sku && typeof f.quantity !== "number");
+    const missing = orderFrames.filter((f) => f.sku && typeof f.quantity !== 'number');
     if (missing.length === 0) return;
     let cancelled = false;
     const requests = missing.map(async (f) => {
@@ -251,18 +385,22 @@ export default function CustomerNewVisit() {
         const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(f.sku)}`);
         if (cancelled || !res.success) return;
         const item = (res.data || []).find((x) => x.sku === f.sku) || (res.data || [])[0];
-        if (item && typeof item.quantity === "number") {
-          setOrderFrames((prev) => prev.map((fr) => fr.sku === f.sku ? { ...fr, quantity: item.quantity } : fr));
+        if (item && typeof item.quantity === 'number') {
+          setOrderFrames((prev) =>
+            prev.map((fr) => (fr.sku === f.sku ? { ...fr, quantity: item.quantity } : fr))
+          );
         }
       } catch {}
     });
     Promise.all(requests);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameStockKey]);
 
   function updateFrame(i: number, field: string, value: any) {
-    setOrderFrames((prev) => prev.map((f, idx) => idx === i ? { ...f, [field]: value } : f));
+    setOrderFrames((prev) => prev.map((f, idx) => (idx === i ? { ...f, [field]: value } : f)));
   }
 
   function removeFrame(i: number) {
@@ -270,7 +408,7 @@ export default function CustomerNewVisit() {
   }
 
   function updateLens(i: number, field: string, value: any) {
-    setOrderLenses((prev) => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+    setOrderLenses((prev) => prev.map((l, idx) => (idx === i ? { ...l, [field]: value } : l)));
   }
 
   function removeLens(i: number) {
@@ -278,7 +416,7 @@ export default function CustomerNewVisit() {
   }
 
   function updateAccessory(i: number, field: string, value: any) {
-    setOrderAccessories((prev) => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a));
+    setOrderAccessories((prev) => prev.map((a, idx) => (idx === i ? { ...a, [field]: value } : a)));
   }
 
   function removeAccessory(i: number) {
@@ -289,7 +427,9 @@ export default function CustomerNewVisit() {
   function syncBillFromOrder() {}
 
   function updateBillItem(i: number, field: string, value: any) {
-    setBillItems((prev) => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+    setBillItems((prev) =>
+      prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item))
+    );
   }
 
   function removeBillItem(i: number) {
@@ -297,7 +437,7 @@ export default function CustomerNewVisit() {
   }
 
   function calcDiscount() {
-    if (discountType === "percent") return (totalAmount * discountPercent) / 100;
+    if (discountType === 'percent') return (totalAmount * discountPercent) / 100;
     return discountAmount;
   }
 
@@ -305,7 +445,12 @@ export default function CustomerNewVisit() {
     if (savingRef.current) return;
     const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
     if (overStock) {
-      toast.error(uiT("Quantity exceeds available stock. Reduce qty before saving.", "मात्रा उपलब्ध स्टॉक से अधिक है। सेव करने से पहले मात्रा घटाएं।"));
+      toast.error(
+        uiT(
+          'Quantity exceeds available stock. Reduce qty before saving.',
+          'मात्रा उपलब्ध स्टॉक से अधिक है। सेव करने से पहले मात्रा घटाएं।'
+        )
+      );
       return;
     }
     setSaving(true);
@@ -329,40 +474,60 @@ export default function CustomerNewVisit() {
         };
       }
 
-      if (visitType !== "service" && visitType !== "other") {
-        const firstFrame = orderFrames[0] || { sku: "", brand: "", model: "", color: "", price: 0 };
-        const firstLens = orderLenses[0] || { sku: "", brand: "", features: [], index: "", price: 0, coating: "" };
-        const frameBillItem = billItems.find((b) => b.description.trim().startsWith("Frame:"));
+      if (visitType !== 'service' && visitType !== 'other') {
+        const firstFrame = orderFrames[0] || { sku: '', brand: '', model: '', color: '', price: 0 };
+        const firstLens = orderLenses[0] || {
+          sku: '',
+          brand: '',
+          features: [],
+          index: '',
+          price: 0,
+          coating: '',
+        };
+        const frameBillItem = billItems.find((b) => b.description.trim().startsWith('Frame:'));
         payload.order = {
-          frame: firstFrame.sku || undefined, frameBrand: firstFrame.brand || undefined,
-          frameModel: firstFrame.model || undefined, frameColor: firstFrame.color || undefined,
+          frame: firstFrame.sku || undefined,
+          frameBrand: firstFrame.brand || undefined,
+          frameModel: firstFrame.model || undefined,
+          frameColor: firstFrame.color || undefined,
           framePrice: firstFrame.price || 0,
-          lens: firstLens.sku || undefined, lensBrand: firstLens.brand || undefined,
-          lensType: firstLens.features.join(", ") || undefined, lensIndex: firstLens.index || undefined,
+          lens: firstLens.sku || undefined,
+          lensBrand: firstLens.brand || undefined,
+          lensType: firstLens.features.join(', ') || undefined,
+          lensIndex: firstLens.index || undefined,
           lensPrice: firstLens.price || 0,
           coating: firstLens.coating || undefined,
           accessories: orderAccessories.map((a) => a.name).filter(Boolean),
           quantity: frameBillItem?.qty || 1,
           deliveryDate: deliveryDate || undefined,
         };
-        if (visitType === "frame_change") {
-          delete payload.order.lens; delete payload.order.lensBrand;
-          delete payload.order.lensType; delete payload.order.lensIndex; delete payload.order.lensPrice;
+        if (visitType === 'frame_change') {
+          delete payload.order.lens;
+          delete payload.order.lensBrand;
+          delete payload.order.lensType;
+          delete payload.order.lensIndex;
+          delete payload.order.lensPrice;
           delete payload.order.coating;
         }
-        if (visitType === "new_lens" || visitType === "contact_lens") {
-          delete payload.order.frame; delete payload.order.frameBrand;
-          delete payload.order.frameModel; delete payload.order.frameColor;
+        if (visitType === 'new_lens' || visitType === 'contact_lens') {
+          delete payload.order.frame;
+          delete payload.order.frameBrand;
+          delete payload.order.frameModel;
+          delete payload.order.frameColor;
           delete payload.order.framePrice;
         }
-        if (visitType === "contact_lens") delete payload.order.coating;
+        if (visitType === 'contact_lens') delete payload.order.coating;
       }
 
       const validItems = billItems.filter((i) => i.description && i.price > 0);
       const discount = calcDiscount();
       if (validItems.length > 0) {
         payload.bill = {
-          items: validItems.map((i) => ({ description: i.description, quantity: i.qty || 1, unitPrice: i.price })),
+          items: validItems.map((i) => ({
+            description: i.description,
+            quantity: i.qty || 1,
+            unitPrice: i.price,
+          })),
           subtotal: totalAmount,
           discount,
           totalAmount: Math.max(0, totalAmount - discount),
@@ -372,14 +537,18 @@ export default function CustomerNewVisit() {
         payload.payment = { amount: advancePaid, mode: paymentMode };
       }
 
-      if (deliveryAddress) payload.delivery = { address: deliveryAddress, expectedDeliveryDate: deliveryDate || undefined };
+      if (deliveryAddress)
+        payload.delivery = {
+          address: deliveryAddress,
+          expectedDeliveryDate: deliveryDate || undefined,
+        };
 
-      const res = await api.post("/api/workspace/transaction", payload);
+      const res = await api.post('/api/workspace/transaction', payload);
       if (res.success) {
-        toast.success(uiT("Visit created successfully!", "विज़िट सफलतापूर्वक बनाई गई!"));
+        toast.success(uiT('Visit created successfully!', 'विज़िट सफलतापूर्वक बनाई गई!'));
         sessionStorage.removeItem(`visitDraft_${id}`);
 
-        const customerMobile = customer?.mobile || "";
+        const customerMobile = customer?.mobile || '';
         const resData = res.data as any;
         if (customerMobile && resData?.bill) {
           greetingSent.current = false;
@@ -397,14 +566,14 @@ export default function CustomerNewVisit() {
           }, 1000);
         } else {
           savingRef.current = false;
-          navigate(`/customers/${id}?visitId=${resData?.visit?._id || ""}`);
+          navigate(`/customers/${id}?visitId=${resData?.visit?._id || ''}`);
         }
       } else {
-        toast.error(res.message || uiT("Failed to save", "सहेजने में विफल"));
+        toast.error(res.message || uiT('Failed to save', 'सहेजने में विफल'));
         setSaving(false);
       }
     } catch (e: any) {
-      toast.error(e.message || uiT("Something went wrong", "कुछ गड़बड़ हो गई"));
+      toast.error(e.message || uiT('Something went wrong', 'कुछ गड़बड़ हो गई'));
       setSaving(false);
     }
   }
@@ -413,9 +582,9 @@ export default function CustomerNewVisit() {
     if (greetingSent.current) return;
     greetingSent.current = true;
     try {
-      const customerMobile = cust?.mobile || "";
-      const shopName = settings?.shopName || "KMJ Optical";
-      const customerName = cust?.name || "";
+      const customerMobile = cust?.mobile || '';
+      const shopName = settings?.shopName || 'KMJ Optical';
+      const customerName = cust?.name || '';
       const fullNum = normalizeWhatsAppPhone(customerMobile);
       if (!fullNum) return;
       const msg = t(
@@ -424,17 +593,26 @@ export default function CustomerNewVisit() {
       );
       const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
       if (!res.success || (res.data && !res.data.sent && !res.data.queued)) {
-        toast.info(uiT("Greeting message could not be sent: " + (res.message || "WhatsApp not connected"), "अभिवादन संदेश नहीं भेजा जा सका: " + (res.message || "WhatsApp कनेक्ट नहीं है")));
+        toast.info(
+          uiT(
+            'Greeting message could not be sent: ' + (res.message || 'WhatsApp not connected'),
+            'अभिवादन संदेश नहीं भेजा जा सका: ' + (res.message || 'WhatsApp कनेक्ट नहीं है')
+          )
+        );
       }
     } catch (e: any) {
-      toast.info(uiT("Greeting message skipped", "अभिवादन संदेश छोड़ दिया गया"));
+      toast.info(uiT('Greeting message skipped', 'अभिवादन संदेश छोड़ दिया गया'));
     }
-    navigate(`/customers/${id}?visitId=${data?.visit?._id || ""}`);
+    navigate(`/customers/${id}?visitId=${data?.visit?._id || ''}`);
   }
 
-  function searchInventory(q: string, type: "frame", idx: number) {
+  function searchInventory(q: string, type: 'frame', idx: number) {
     if (searchTimer) clearTimeout(searchTimer);
-    if (q.length < 2) { setSuggestions([]); setSuggestionsFor(null); return; }
+    if (q.length < 2) {
+      setSuggestions([]);
+      setSuggestionsFor(null);
+      return;
+    }
     const t = setTimeout(async () => {
       const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
       if (res.success) {
@@ -446,9 +624,14 @@ export default function CustomerNewVisit() {
   }
 
   if (loading) return <PageSkeleton page="customerdetail" />;
-  if (!customer) return <div className="min-h-screen bg-th-base flex items-center justify-center"><p className="text-sm text-th-secondary">{uiT("Customer not found", "ग्राहक नहीं मिला")}</p></div>;
+  if (!customer)
+    return (
+      <div className="min-h-screen bg-th-base flex items-center justify-center">
+        <p className="text-sm text-th-secondary">{uiT('Customer not found', 'ग्राहक नहीं मिला')}</p>
+      </div>
+    );
 
-  const stepKeys = steps.map(s => s.key);
+  const stepKeys = steps.map((s) => s.key);
   const currentIdx = stepKeys.indexOf(step);
   const discountVal = calcDiscount();
   const finalTotal = Math.max(0, totalAmount - discountVal);
@@ -470,14 +653,10 @@ export default function CustomerNewVisit() {
       />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <VisitStepper
-          steps={steps}
-          currentIdx={currentIdx}
-          setStep={setStep}
-        />
+        <VisitStepper steps={steps} currentIdx={currentIdx} setStep={setStep} />
 
         <AnimatePresence mode="wait">
-          {step === "service" && (
+          {step === 'service' && (
             <VisitTypeSection
               key="service"
               visitType={visitType}
@@ -491,7 +670,7 @@ export default function CustomerNewVisit() {
             />
           )}
 
-          {step === "prescription" && (
+          {step === 'prescription' && (
             <PrescriptionPanel
               key="prescription"
               usePrescription={usePrescription}
@@ -501,7 +680,7 @@ export default function CustomerNewVisit() {
             />
           )}
 
-          {step === "order" && (
+          {step === 'order' && (
             <OrderItems
               key="order"
               orderFrames={orderFrames}
@@ -528,7 +707,7 @@ export default function CustomerNewVisit() {
             />
           )}
 
-          {step === "billing" && (
+          {step === 'billing' && (
             <BillingPanel
               key="billing"
               billItems={billItems}
@@ -539,7 +718,7 @@ export default function CustomerNewVisit() {
             />
           )}
 
-          {step === "payment" && (
+          {step === 'payment' && (
             <PaymentPanel
               key="payment"
               discountType={discountType}
@@ -562,7 +741,7 @@ export default function CustomerNewVisit() {
             />
           )}
 
-          {step === "confirmation" && (
+          {step === 'confirmation' && (
             <ConfirmationDashboard
               key="confirmation"
               visitType={visitType}
@@ -595,44 +774,87 @@ export default function CustomerNewVisit() {
         saving={saving}
         countdown={countdown}
         canNext={!overStock}
-        nextHint={overStock ? uiT("Quantity exceeds available stock. Reduce qty to continue.", "मात्रा उपलब्ध स्टॉक से अधिक है। आगे बढ़ने के लिए मात्रा घटाएं।") : undefined}
+        nextHint={
+          overStock
+            ? uiT(
+                'Quantity exceeds available stock. Reduce qty to continue.',
+                'मात्रा उपलब्ध स्टॉक से अधिक है। आगे बढ़ने के लिए मात्रा घटाएं।'
+              )
+            : undefined
+        }
       />
 
-      <Modal open={scanModal} onClose={() => setScanModal(false)} title={uiT("Scan Frame QR", "फ्रेम QR स्कैन करें")} size="sm">
+      <Modal
+        open={scanModal}
+        onClose={() => setScanModal(false)}
+        title={uiT('Scan Frame QR', 'फ्रेम QR स्कैन करें')}
+        size="sm"
+      >
         <div className="space-y-3">
-          <p className="text-xs text-th-secondary">{uiT("Enter SKU or barcode to auto-fill frame details.", "फ्रेम विवरण स्वतः भरने के लिए SKU या बारकोड दर्ज करें।")}</p>
-          <input className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" placeholder={uiT("SKU or barcode", "SKU या बारकोड")} autoFocus
+          <p className="text-xs text-th-secondary">
+            {uiT(
+              'Enter SKU or barcode to auto-fill frame details.',
+              'फ्रेम विवरण स्वतः भरने के लिए SKU या बारकोड दर्ज करें।'
+            )}
+          </p>
+          <input
+            className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+            placeholder={uiT('SKU or barcode', 'SKU या बारकोड')}
+            autoFocus
             onChange={async (e) => {
               const q = e.target.value.trim();
               if (q.length > 2) {
                 const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(q)}`);
                 if (res.success && res.data && res.data.length > 0) {
                   const item = res.data[0];
-                  const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
+                  const newFrame = {
+                    sku: item.sku || '',
+                    brand: item.brand || '',
+                    model: item.model || '',
+                    color: item.color || '',
+                    price: item.sellingPrice || 0,
+                    quantity: typeof item.quantity === 'number' ? item.quantity : undefined,
+                  };
                   const next = [...orderFrames, newFrame];
                   setOrderFrames(next);
                   setScanModal(false);
                 }
               }
-            }} />
-          <button onClick={() => { setScanModal(false); setCameraActive(true); }}
-            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5">
-            <ScanLine size={14} /> {uiT("Use Camera", "कैमरा उपयोग करें")}
+            }}
+          />
+          <button
+            onClick={() => {
+              setScanModal(false);
+              setCameraActive(true);
+            }}
+            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5"
+          >
+            <ScanLine size={14} /> {uiT('Use Camera', 'कैमरा उपयोग करें')}
           </button>
         </div>
       </Modal>
 
       {cameraActive && (
-        <CameraScanner onScan={async (code) => {
-          const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
-          if (res.success && res.data && res.data.length > 0) {
-            const item = res.data[0];
-            const newFrame = { sku: item.sku || "", brand: item.brand || "", model: item.model || "", color: item.color || "", price: item.sellingPrice || 0, quantity: typeof item.quantity === "number" ? item.quantity : undefined };
-            const next = [...orderFrames, newFrame];
-            setOrderFrames(next);
-          }
-          setCameraActive(false);
-        }} onClose={() => setCameraActive(false)} />
+        <CameraScanner
+          onScan={async (code) => {
+            const res = await api.get<any[]>(`/api/inventory?q=${encodeURIComponent(code)}`);
+            if (res.success && res.data && res.data.length > 0) {
+              const item = res.data[0];
+              const newFrame = {
+                sku: item.sku || '',
+                brand: item.brand || '',
+                model: item.model || '',
+                color: item.color || '',
+                price: item.sellingPrice || 0,
+                quantity: typeof item.quantity === 'number' ? item.quantity : undefined,
+              };
+              const next = [...orderFrames, newFrame];
+              setOrderFrames(next);
+            }
+            setCameraActive(false);
+          }}
+          onClose={() => setCameraActive(false)}
+        />
       )}
     </motion.div>
   );

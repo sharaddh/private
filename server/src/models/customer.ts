@@ -15,7 +15,7 @@ const CustomerSchemaObj = new Schema(
     tags: { type: [String], default: [] },
     totalVisits: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
-    pendingAmount: { type: Number, default: 0 }
+    pendingAmount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -1,10 +1,10 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse, ShopSettings } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse, ShopSettings } from '../types';
 
 class SettingsService extends ApiService {
   constructor() {
-    super("/api/settings");
+    super('/api/settings');
   }
 
   async get(): Promise<ApiResponse<ShopSettings>> {

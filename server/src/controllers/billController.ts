@@ -20,7 +20,11 @@ export async function remove(req: Request, res: Response) {
 
 export async function collectPayment(req: Request, res: Response) {
   const { amount, paymentMode } = req.body;
-  const data = await billService.collectBillPayment(req.params.id, Number(amount), paymentMode || "Cash");
+  const data = await billService.collectBillPayment(
+    req.params.id,
+    Number(amount),
+    paymentMode || "Cash"
+  );
   sendSuccess(res, data);
 }
 

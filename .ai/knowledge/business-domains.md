@@ -960,7 +960,7 @@ Login:
 2. Find user by username
 3. Validate role (staff must use staff-login)
 4. Compare password with bcrypt hash
-5. Generate access token (24h) + refresh token (7d)
+5. Generate access token (7d) + refresh token (7d)
 6. Return user data + tokens + selected branchId
 
 Staff Login:
@@ -980,8 +980,8 @@ Refresh:
 
 | Rule | Description | Implementation |
 |------|-------------|----------------|
-| BR-AUTH01 | Access token expires in 24 hours | `config.ts:8` |
-| BR-AUTH02 | Refresh token expires in 7 days | `config.ts:9` |
+| BR-AUTH01 | Access token expires in 7 days | `config.ts` (`JWT_ACCESS_EXPIRY`) |
+| BR-AUTH02 | Refresh token expires in 7 days | `config.ts` (`JWT_REFRESH_EXPIRY`) |
 | BR-AUTH03 | Only owner can create new users | `authController.ts:31-33` |
 | BR-AUTH04 | Staff cannot use admin login endpoint | `authController.ts:103-105` |
 | BR-AUTH05 | Admins cannot use staff login endpoint | `authController.ts:128-130` |
@@ -990,7 +990,7 @@ Refresh:
 | BR-AUTH08 | Cannot delete yourself | `authController.ts:238` |
 | BR-AUTH09 | Warehouse users can only delete warehouse accounts | `authController.ts:234-235` |
 | BR-AUTH10 | Default users seeded: admin/admin123, warehouse/admin123 | `index.ts:78-89` |
-| BR-AUTH11 | Rate limiting: 200 requests/minute | `app.ts:30-37` |
+| BR-AUTH11 | Rate limiting: 1000 requests/minute (per user / per IP) | `app.ts` |
 | BR-AUTH12 | bcrypt salt rounds: 10 | `authController.ts:43` |
 
 ### 11.5 Role-Based Page Access

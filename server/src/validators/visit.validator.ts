@@ -10,10 +10,12 @@ export const createVisitSchema = z.object({
   remarks: z.string().optional(),
 });
 
-export const updateVisitSchema = z.object({
-  visitDate: z.string().optional(),
-  visitType: z.enum(VALID_VISIT_TYPES).optional(),
-  doctorName: z.string().optional(),
-  shopId: z.string().optional(),
-  remarks: z.string().optional(),
-}).strict();
+export const updateVisitSchema = z
+  .object({
+    visitDate: z.string().optional(),
+    visitType: z.enum(VALID_VISIT_TYPES).optional(),
+    doctorName: z.string().optional(),
+    shopId: z.string().optional(),
+    remarks: z.string().optional(),
+  })
+  .strict();

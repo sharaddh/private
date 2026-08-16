@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useMemo } from 'react';
+import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -23,13 +23,13 @@ export default function Table({
   data,
   actions,
   searchable = true,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   pageSize = 10,
   onRowClick,
 }: TableProps) {
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<string>("");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<string>('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
@@ -46,10 +46,10 @@ export default function Table({
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
     return [...filtered].sort((a, b) => {
-      const av = a[sortKey] ?? "";
-      const bv = b[sortKey] ?? "";
-      const cmp = typeof av === "number" ? av - Number(bv) : String(av).localeCompare(String(bv));
-      return sortDir === "asc" ? cmp : -cmp;
+      const av = a[sortKey] ?? '';
+      const bv = b[sortKey] ?? '';
+      const cmp = typeof av === 'number' ? av - Number(bv) : String(av).localeCompare(String(bv));
+      return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [filtered, sortKey, sortDir]);
 
@@ -58,10 +58,10 @@ export default function Table({
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
-      setSortDir("asc");
+      setSortDir('asc');
     }
   };
 
@@ -69,14 +69,20 @@ export default function Table({
     <div className="space-y-4">
       {searchable && (
         <div className="relative">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
+          <Search
+            size={18}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary"
+          />
           <input
             type="text"
             placeholder={searchPlaceholder}
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-[#1ed760] transition-all duration-200 bg-th-elevated text-th-text placeholder-th-muted text-[18px]"
-            style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
+            style={{ border: 'rgb(124,124,124) 0px 0px 0px 1px inset' }}
           />
         </div>
       )}
@@ -90,14 +96,13 @@ export default function Table({
                   key={col.key}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                   className={`px-4 py-3.5 text-left text-[15px] font-semibold text-th-secondary uppercase tracking-wider ${
-                    col.sortable !== false ? "cursor-pointer hover:text-th-text select-none" : ""
+                    col.sortable !== false ? 'cursor-pointer hover:text-th-text select-none' : ''
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
                     {col.label}
-                    {sortKey === col.key && (
-                      sortDir === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-                    )}
+                    {sortKey === col.key &&
+                      (sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                   </div>
                 </th>
               ))}
@@ -113,7 +118,7 @@ export default function Table({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                    className="px-4 py-16 text-center text-th-secondary"
+                  className="px-4 py-16 text-center text-th-secondary"
                 >
                   <div className="flex flex-col items-center gap-3">
                     <Search size={28} className="text-[#535353]" />
@@ -127,18 +132,19 @@ export default function Table({
                   key={row._id || idx}
                   onClick={() => onRowClick?.(row)}
                   className={`hover:bg-th-card transition-colors ${
-                    onRowClick ? "cursor-pointer" : ""
+                    onRowClick ? 'cursor-pointer' : ''
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5 text-[20px] text-th-text whitespace-nowrap">
-                      {col.render ? col.render(row[col.key], row) : row[col.key] ?? "—"}
+                    <td
+                      key={col.key}
+                      className="px-4 py-3.5 text-[20px] text-th-text whitespace-nowrap"
+                    >
+                      {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-3.5 text-sm whitespace-nowrap">
-                      {actions(row)}
-                    </td>
+                    <td className="px-4 py-3.5 text-sm whitespace-nowrap">{actions(row)}</td>
                   )}
                 </tr>
               ))
@@ -150,7 +156,8 @@ export default function Table({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-[18px] text-th-secondary">
-            Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
+            Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of{' '}
+            {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -169,8 +176,8 @@ export default function Table({
                   onClick={() => setPage(pg)}
                   className={`w-8 h-8 rounded-[9999px] text-[18px] font-medium transition-colors ${
                     pg === page
-                      ? "bg-[#1ed760] text-black"
-                      : "hover:bg-th-elevated text-th-secondary"
+                      ? 'bg-[#1ed760] text-black'
+                      : 'hover:bg-th-elevated text-th-secondary'
                   }`}
                 >
                   {pg + 1}

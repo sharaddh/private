@@ -1,6 +1,6 @@
-import { type ReactNode } from "react";
-import { motion } from "framer-motion";
-import ShineCard from "../../components/ShineCard";
+import { type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import ShineCard from '../../components/ShineCard';
 
 interface SectionCardProps {
   icon?: ReactNode;
@@ -11,7 +11,14 @@ interface SectionCardProps {
   id?: string;
 }
 
-export default function SectionCard({ icon, title, subtitle, children, className = "", id }: SectionCardProps) {
+export default function SectionCard({
+  icon,
+  title,
+  subtitle,
+  children,
+  className = '',
+  id,
+}: SectionCardProps) {
   return (
     <motion.div
       id={id}
@@ -19,7 +26,9 @@ export default function SectionCard({ icon, title, subtitle, children, className
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
-      <ShineCard className={`group/card bg-th-surface rounded-lg p-6 shadow-lg hover:bg-th-hover ${className}`}>
+      <ShineCard
+        className={`group/card bg-th-surface rounded-lg p-6 shadow-lg hover:bg-th-hover ${className}`}
+      >
         {(icon || title) && (
           <div className="flex items-center gap-3 mb-6">
             {icon && (

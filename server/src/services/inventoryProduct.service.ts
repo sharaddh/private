@@ -15,7 +15,10 @@ function cleanBrandName(name: string): string {
   return String(name || "").trim();
 }
 
-export async function ensureBrand(nameOrId: string, session?: mongoose.ClientSession | null): Promise<{ _id: mongoose.Types.ObjectId; name: string } | null> {
+export async function ensureBrand(
+  nameOrId: string,
+  session?: mongoose.ClientSession | null
+): Promise<{ _id: mongoose.Types.ObjectId; name: string } | null> {
   const raw = cleanBrandName(nameOrId);
   if (!raw) return null;
 
@@ -36,13 +39,24 @@ export async function ensureBrand(nameOrId: string, session?: mongoose.ClientSes
 }
 
 export async function findOrCreateProduct(
-  input: { brandId: string; brandName: string; category?: string; inventoryType?: string; model: string; gender?: string; description?: string },
+  input: {
+    brandId: string;
+    brandName: string;
+    category?: string;
+    inventoryType?: string;
+    model: string;
+    gender?: string;
+    description?: string;
+  },
   session?: mongoose.ClientSession | null
 ) {
   const model = String(input.model || "").trim();
   if (!model) throw new AppError(400, "Model is required");
   const brandId = input.brandId || undefined;
-  const category = input.category && VALID_PRODUCT_CATEGORIES.includes(input.category as any) ? input.category : "Specs";
+  const category =
+    input.category && VALID_PRODUCT_CATEGORIES.includes(input.category as any)
+      ? input.category
+      : "Specs";
 
   const existing = await InventoryProduct.findOne(
     { brandId, model: { $regex: new RegExp(`^${escapeRegex(model)}$`, "i") } },
@@ -51,18 +65,21 @@ export async function findOrCreateProduct(
   ).lean();
   if (existing) return existing;
 
-  const gender = input.gender && (VALID_GENDERS as readonly string[]).includes(input.gender) ? input.gender : "";
+  const gender =
+    input.gender && (VALID_GENDERS as readonly string[]).includes(input.gender) ? input.gender : "";
   const created = await InventoryProduct.create(
-    [{
-      brandId,
-      brandName: input.brandName,
-      category,
-      inventoryType: input.inventoryType || "",
-      model,
-      displayName: `${input.brandName ? `${input.brandName} ` : ""}${model}`,
-      gender,
-      description: input.description || "",
-    }],
+    [
+      {
+        brandId,
+        brandName: input.brandName,
+        category,
+        inventoryType: input.inventoryType || "",
+        model,
+        displayName: `${input.brandName ? `${input.brandName} ` : ""}${model}`,
+        gender,
+        description: input.description || "",
+      },
+    ],
     session ? { session } : {}
   );
   return created[0];
@@ -84,7 +101,11 @@ export async function listBrands(threshold: number = 5) {
         units: { $sum: "$stockQuantity" },
         lowStock: {
           $sum: {
-            $cond: [{ $and: [{ $lte: ["$stockQuantity", threshold] }, { $gt: ["$stockQuantity", 0] }] }, 1, 0],
+            $cond: [
+              { $and: [{ $lte: ["$stockQuantity", threshold] }, { $gt: ["$stockQuantity", 0] }] },
+              1,
+              0,
+            ],
           },
         },
       },
@@ -134,17 +155,25 @@ export async function getBrandSummary(brandId: string) {
 export async function createBrand(input: { name: string; description?: string; logo?: string }) {
   const name = cleanBrandName(input.name);
   if (!name) throw new AppError(400, "Brand name is required");
-  const existing = await Brand.findOne({ name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") } }).lean();
+  const existing = await Brand.findOne({
+    name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
+  }).lean();
   if (existing) throw new AppError(409, `Brand "${name}" already exists`);
   return Brand.create({ name, description: input.description || "", logo: input.logo || "" });
 }
 
-export async function updateBrand(id: string, input: { name?: string; description?: string; logo?: string; active?: boolean }) {
+export async function updateBrand(
+  id: string,
+  input: { name?: string; description?: string; logo?: string; active?: boolean }
+) {
   const brand = await Brand.findById(id);
   if (!brand) throw new AppError(404, "Brand not found");
   if (input.name !== undefined && input.name.trim()) {
     const name = cleanBrandName(input.name);
-    const dup = await Brand.findOne({ name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") }, _id: { $ne: id } }).lean();
+    const dup = await Brand.findOne({
+      name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
+      _id: { $ne: id },
+    }).lean();
     if (dup) throw new AppError(409, `Brand "${name}" already exists`);
     brand.name = name;
     await InventoryVariant.updateMany({ brandId: id }, { $set: { brandName: name } });
@@ -182,7 +211,10 @@ export async function listProducts(options: ProductFilters = {}) {
     ];
   }
 
-  const baseQuery = InventoryProduct.find(filter).sort({ brandName: 1, model: 1 }) as mongoose.Query<any[], any>;
+  const baseQuery = InventoryProduct.find(filter).sort({
+    brandName: 1,
+    model: 1,
+  }) as mongoose.Query<any[], any>;
   return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
 }
 
@@ -190,11 +222,20 @@ export async function getProductById(id: string) {
   const product = await InventoryProduct.findById(id).lean();
   if (!product) throw new AppError(404, "Product not found");
 
-  const variants = await InventoryVariant.find({ productId: id, active: true }).sort({ color: 1 }).lean();
+  const variants = await InventoryVariant.find({ productId: id, active: true })
+    .sort({ color: 1 })
+    .lean();
   return { ...product, variants };
 }
 
-export async function createProduct(input: { brandId?: string; brandName?: string; category?: string; model: string; gender?: string; description?: string }) {
+export async function createProduct(input: {
+  brandId?: string;
+  brandName?: string;
+  category?: string;
+  model: string;
+  gender?: string;
+  description?: string;
+}) {
   const brand = await ensureBrand(input.brandId || input.brandName || "", null);
   const product = await findOrCreateProduct({
     brandId: brand?._id?.toString() || "",
@@ -210,7 +251,16 @@ export async function createProduct(input: { brandId?: string; brandName?: strin
 export async function updateProduct(id: string, input: Record<string, unknown>) {
   const product = await InventoryProduct.findById(id);
   if (!product) throw new AppError(404, "Product not found");
-  const allowed = ["category", "inventoryType", "model", "gender", "description", "image", "active", "sizeOptions"];
+  const allowed = [
+    "category",
+    "inventoryType",
+    "model",
+    "gender",
+    "description",
+    "image",
+    "active",
+    "sizeOptions",
+  ];
   const target = product as unknown as Record<string, unknown>;
   for (const key of allowed) {
     if (key in input) target[key] = input[key];
@@ -219,7 +269,10 @@ export async function updateProduct(id: string, input: Record<string, unknown>) 
     await InventoryVariant.updateMany({ productId: id }, { $set: { model: String(input.model) } });
   }
   if (input.category !== undefined) {
-    await InventoryVariant.updateMany({ productId: id }, { $set: { category: String(input.category) } });
+    await InventoryVariant.updateMany(
+      { productId: id },
+      { $set: { category: String(input.category) } }
+    );
   }
   await product.save();
   return product;
@@ -284,7 +337,11 @@ export async function listVariants(options: VariantFilters = {}) {
     ];
   }
 
-  const baseQuery = InventoryVariant.find(filter).sort({ brandName: 1, model: 1, color: 1 }) as mongoose.Query<any[], any>;
+  const baseQuery = InventoryVariant.find(filter).sort({
+    brandName: 1,
+    model: 1,
+    color: 1,
+  }) as mongoose.Query<any[], any>;
   return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
 }
 
@@ -341,7 +398,9 @@ export async function createVariant(input: Record<string, unknown>) {
     gender: String(input.gender || ""),
   });
 
-  const rackLabel = input.rackId ? (await Rack.findById(input.rackId).select("code").lean())?.code || "" : "";
+  const rackLabel = input.rackId
+    ? (await Rack.findById(input.rackId).select("code").lean())?.code || ""
+    : "";
   const variant = await InventoryVariant.create({
     productId: product._id,
     brandId: brand?._id || undefined,
@@ -375,9 +434,22 @@ export async function updateVariant(id: string, input: Record<string, unknown>) 
     if (!variant) throw new AppError(404, "Variant not found");
 
     const allowed = [
-      "color", "size", "gender", "material", "frameShape", "frameType", "templeSize",
-      "bridgeSize", "lensWidth", "status", "attributes", "image", "defaultSellingPrice",
-      "supplierId", "supplierName", "active",
+      "color",
+      "size",
+      "gender",
+      "material",
+      "frameShape",
+      "frameType",
+      "templeSize",
+      "bridgeSize",
+      "lensWidth",
+      "status",
+      "attributes",
+      "image",
+      "defaultSellingPrice",
+      "supplierId",
+      "supplierName",
+      "active",
     ];
     const target = variant as unknown as Record<string, unknown>;
     for (const key of allowed) {
@@ -400,20 +472,22 @@ export async function updateVariant(id: string, input: Record<string, unknown>) 
         variant.rackId = newRackId as any;
         variant.rackLabel = newRackLabel;
         await InventoryMovement.create(
-          [{
-            variantId: id,
-            sku: variant.sku,
-            type: "LOCATION_CHANGE",
-            quantity: 0,
-            beforeQuantity: variant.stockQuantity || 0,
-            afterQuantity: variant.stockQuantity || 0,
-            oldRackId,
-            newRackId,
-            rackId: newRackId,
-            rackLabel: newRackLabel,
-            referenceType: "MANUAL",
-            note: `Moved from ${oldRackLabel || "unknown"} to ${newRackLabel}`,
-          }],
+          [
+            {
+              variantId: id,
+              sku: variant.sku,
+              type: "LOCATION_CHANGE",
+              quantity: 0,
+              beforeQuantity: variant.stockQuantity || 0,
+              afterQuantity: variant.stockQuantity || 0,
+              oldRackId,
+              newRackId,
+              rackId: newRackId,
+              rackLabel: newRackLabel,
+              referenceType: "MANUAL",
+              note: `Moved from ${oldRackLabel || "unknown"} to ${newRackLabel}`,
+            },
+          ],
           session ? { session } : {}
         );
       } else if (!newRackId) {
@@ -446,7 +520,9 @@ export async function archiveVariant(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function listRacks() {
-  const racks = await Rack.find({ active: true }).sort({ section: 1, sortOrder: 1, code: 1 }).lean();
+  const racks = await Rack.find({ active: true })
+    .sort({ section: 1, sortOrder: 1, code: 1 })
+    .lean();
   const summary = await InventoryVariant.aggregate([
     { $match: { active: true, rackId: { $exists: true, $ne: null } } },
     { $group: { _id: "$rackId", variants: { $sum: 1 }, units: { $sum: "$stockQuantity" } } },
@@ -463,10 +539,20 @@ export async function listRacks() {
   }));
 }
 
-export async function createRack(input: { name?: string; code: string; section?: string; description?: string; sortOrder?: number }) {
-  const code = String(input.code || "").trim().toUpperCase();
+export async function createRack(input: {
+  name?: string;
+  code: string;
+  section?: string;
+  description?: string;
+  sortOrder?: number;
+}) {
+  const code = String(input.code || "")
+    .trim()
+    .toUpperCase();
   if (!code) throw new AppError(400, "Rack code is required");
-  const existing = await Rack.findOne({ code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") } }).lean();
+  const existing = await Rack.findOne({
+    code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") },
+  }).lean();
   if (existing) throw new AppError(409, `Rack ${code} already exists`);
   return Rack.create({
     name: input.name || code,
@@ -477,14 +563,27 @@ export async function createRack(input: { name?: string; code: string; section?:
   });
 }
 
-export async function updateRack(id: string, input: { name?: string; code?: string; section?: string; description?: string; sortOrder?: number; active?: boolean }) {
+export async function updateRack(
+  id: string,
+  input: {
+    name?: string;
+    code?: string;
+    section?: string;
+    description?: string;
+    sortOrder?: number;
+    active?: boolean;
+  }
+) {
   const rack = await Rack.findById(id);
   if (!rack) throw new AppError(404, "Rack not found");
   if (input.name !== undefined) rack.name = input.name;
   if (input.code !== undefined) {
     const code = String(input.code).trim().toUpperCase();
     if (!code) throw new AppError(400, "Rack code is required");
-    const dup = await Rack.findOne({ code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") }, _id: { $ne: id } }).lean();
+    const dup = await Rack.findOne({
+      code: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") },
+      _id: { $ne: id },
+    }).lean();
     if (dup) throw new AppError(409, `Rack ${code} already exists`);
     rack.code = code;
     await InventoryVariant.updateMany({ rackId: id }, { $set: { rackLabel: code } });
@@ -500,7 +599,9 @@ export async function updateRack(id: string, input: { name?: string; code?: stri
 export async function getRackItems(rackId: string) {
   const rack = await Rack.findById(rackId).lean();
   if (!rack) throw new AppError(404, "Rack not found");
-  const items = await InventoryVariant.find({ rackId, active: true }).sort({ brandName: 1, model: 1, color: 1 }).lean();
+  const items = await InventoryVariant.find({ rackId, active: true })
+    .sort({ brandName: 1, model: 1, color: 1 })
+    .lean();
   return { rack, items };
 }
 
@@ -510,15 +611,38 @@ export async function getRackItems(rackId: string) {
 
 export async function getDashboard(threshold: number = 5) {
   const t = Math.max(threshold, 0);
-  const [products, variants, stockUnits, lowStock, outOfStock, brands, costValueResult, retailValueResult, recentMovements] = await Promise.all([
+  const [
+    products,
+    variants,
+    stockUnits,
+    lowStock,
+    outOfStock,
+    brands,
+    costValueResult,
+    retailValueResult,
+    recentMovements,
+  ] = await Promise.all([
     InventoryProduct.countDocuments({ active: true }),
     InventoryVariant.countDocuments({ active: true }),
-    InventoryVariant.aggregate([{ $match: { active: true } }, { $group: { _id: null, total: { $sum: "$stockQuantity" } } }]),
+    InventoryVariant.aggregate([
+      { $match: { active: true } },
+      { $group: { _id: null, total: { $sum: "$stockQuantity" } } },
+    ]),
     InventoryVariant.countDocuments({ active: true, stockQuantity: { $gt: 0, $lte: t } }),
     InventoryVariant.countDocuments({ active: true, stockQuantity: 0 }),
     Brand.countDocuments({ active: true }),
-    InventoryLot.aggregate([{ $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$purchasePrice"] } } } }]),
-    InventoryVariant.aggregate([{ $match: { active: true } }, { $group: { _id: null, total: { $sum: { $multiply: ["$stockQuantity", "$defaultSellingPrice"] } } } }]),
+    InventoryLot.aggregate([
+      { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$purchasePrice"] } } } },
+    ]),
+    InventoryVariant.aggregate([
+      { $match: { active: true } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $multiply: ["$stockQuantity", "$defaultSellingPrice"] } },
+        },
+      },
+    ]),
     InventoryMovement.find().sort({ createdAt: -1 }).limit(15).lean(),
   ]);
 

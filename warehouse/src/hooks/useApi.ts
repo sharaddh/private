@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import api from "../api";
-import type { ApiResponse } from "../api";
+import { useState, useEffect, useCallback } from 'react';
+import api from '../api';
+import type { ApiResponse } from '../api';
 
 interface UseApiResult<T> {
   data: T | null;
@@ -22,16 +22,18 @@ export function useApi<T>(path: string, deps: unknown[] = []): UseApiResult<T> {
       if (res.success && res.data !== undefined) {
         setData(res.data);
       } else {
-        setError(res.message || "Failed to load data");
+        setError(res.message || 'Failed to load data');
       }
     } catch {
-      setError("Network error");
+      setError('Network error');
     } finally {
       setLoading(false);
     }
   }, [path]);
 
-  useEffect(() => { fetch(); }, [fetch, ...deps]);
+  useEffect(() => {
+    fetch();
+  }, [fetch, ...deps]);
 
   return { data, loading, error, refetch: fetch };
 }

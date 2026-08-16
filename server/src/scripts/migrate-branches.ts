@@ -52,7 +52,18 @@ async function migrate() {
 
   // 3. Copy existing collections to the branch database
   const branchDb = mongoose.connection.useDb(branch.dbName);
-  const collections = ["customers", "visits", "prescriptions", "orders", "bills", "payments", "inventory", "deliveries", "settings", "todos"];
+  const collections = [
+    "customers",
+    "visits",
+    "prescriptions",
+    "orders",
+    "bills",
+    "payments",
+    "inventory",
+    "deliveries",
+    "settings",
+    "todos",
+  ];
 
   for (const collName of collections) {
     const sourceColl = db.collection(collName);
@@ -79,10 +90,7 @@ async function migrate() {
   }
 
   // 4. Update admin user to have access to the Govindpuri branch
-  await db.collection("users").updateMany(
-    { role: "owner" },
-    { $set: { branches: [branch._id] } }
-  );
+  await db.collection("users").updateMany({ role: "owner" }, { $set: { branches: [branch._id] } });
   console.log("  users: updated admin user with branch access");
 
   console.log("\nMigration complete!");

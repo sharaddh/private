@@ -7,11 +7,12 @@ import { Delivery } from "../models/delivery";
 import { Prescription } from "../models/prescription";
 import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
-import { decrementStockForOrder, restoreStockForOrder, assertStockAvailable } from "./inventory.service";
 import {
-  VALID_TRANSITIONS,
-  VALID_CLASSIFICATIONS,
-} from "../types";
+  decrementStockForOrder,
+  restoreStockForOrder,
+  assertStockAvailable,
+} from "./inventory.service";
+import { VALID_TRANSITIONS, VALID_CLASSIFICATIONS } from "../types";
 import type { PaginatedResult, OrderStatus } from "../types";
 
 interface CreateOrderData {
@@ -111,9 +112,9 @@ interface OrderResult {
   classification: string;
   rightLensStatus: string;
   leftLensStatus: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   prescription?: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   billInfo?: Record<string, any> | null;
   createdAt: Date;
   updatedAt: Date;
@@ -123,11 +124,11 @@ interface StatusUpdateResult {
   order: OrderResult;
   partial: boolean;
   forwardedCount: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   delivery?: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   payment?: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   bill?: Record<string, any> | null;
 }
 
@@ -197,10 +198,7 @@ const UPDATE_WHITELIST = [
   "forwardedCount",
 ] as const;
 
-export async function updateOrder(
-  orderId: string,
-  updates: UpdateOrderData
-): Promise<OrderResult> {
+export async function updateOrder(orderId: string, updates: UpdateOrderData): Promise<OrderResult> {
   const filtered: Record<string, unknown> = {};
   for (const key of UPDATE_WHITELIST) {
     if (key in updates) {
@@ -236,16 +234,17 @@ export async function getOrderById(orderId: string): Promise<OrderResult> {
   return order as unknown as OrderResult;
 }
 
-export async function listOrders(
-  filters: OrderFilters
-): Promise<PaginatedResult<OrderResult>> {
+export async function listOrders(filters: OrderFilters): Promise<PaginatedResult<OrderResult>> {
   const filter: Record<string, unknown> = {};
 
   if (filters.customerId) {
     filter.customerId = filters.customerId;
   }
   if (filters.status) {
-    const statuses = String(filters.status).split(",").map((s) => s.trim()).filter(Boolean);
+    const statuses = String(filters.status)
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     filter.status = statuses.length > 1 ? { $in: statuses } : statuses[0];
   }
 
@@ -259,15 +258,13 @@ export async function listOrders(
     Object.assign(filter, dateFilter);
   }
 
-  const query = Order.find(filter)
-    .populate("customerId", "name mobile")
-    .sort({ createdAt: -1 });
+  const query = Order.find(filter).populate("customerId", "name mobile").sort({ createdAt: -1 });
 
-  const result = await paginateQuery(query as never, {
+  const result = (await paginateQuery(query as never, {
     page: filters.page,
     limit: filters.limit,
     cursor: filters.cursor,
-  }) as unknown as PaginatedResult<OrderResult>;
+  })) as unknown as PaginatedResult<OrderResult>;
 
   const orderVisitIds: { orderId: string; visitId: string }[] = result.data
     .map((o: OrderResult) => {
@@ -283,18 +280,18 @@ export async function listOrders(
     // Batch-fetch prescriptions per visit (avoids N+1)
     const prescriptions = await Prescription.find({
       visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
-    }).sort({ createdAt: -1 }).lean();
-    const rxByVisit = new Map(
-      prescriptions.map((p: any) => [String(p.visitId), p])
-    );
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    const rxByVisit = new Map(prescriptions.map((p: any) => [String(p.visitId), p]));
 
     // Batch-fetch bill per order via visitId (avoids N+1)
     const bills = await Bill.find({
       visitId: { $in: uniqueVisitIds.map((id) => new mongoose.Types.ObjectId(id)) },
-    }).sort({ createdAt: -1 }).lean();
-    const billByVisit = new Map(
-      bills.map((b: any) => [String(b.visitId), b])
-    );
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    const billByVisit = new Map(bills.map((b: any) => [String(b.visitId), b]));
 
     result.data = result.data.map((o: OrderResult) => {
       const vId = o.visitId ? String(o.visitId) : null;
@@ -311,7 +308,6 @@ export async function updateOrderStatus(
   orderId: string,
   statusData: StatusUpdateData
 ): Promise<StatusUpdateResult> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const order = await (Order as any).findById(orderId);
   if (!order) {
     throw new AppError(404, "Order not found");
@@ -358,7 +354,6 @@ export async function updateOrderStatus(
 
   // Auto-update delivery (only on full transition)
   if (newForwarded >= qty) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const delivery = await (Delivery as any).findOne({ orderId: order._id });
     if (delivery) {
       if (statusData.status === "Ready") {
@@ -383,10 +378,8 @@ export async function updateOrderStatus(
     statusData.collectPayment &&
     statusData.collectPayment > 0
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let bill = await (Bill as any).findOne({ visitId: order.visitId || order._id });
     if (!bill) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bill = await (Bill as any).findOne({ customerId: order.customerId }).sort({
         createdAt: -1,
       });
@@ -402,10 +395,7 @@ export async function updateOrderStatus(
       });
 
       bill.advancePaid = (bill.advancePaid || 0) + statusData.collectPayment;
-      bill.pendingAmount = Math.max(
-        0,
-        (bill.totalAmount || 0) - bill.advancePaid
-      );
+      bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
       await bill.save();
 
       await Customer.findByIdAndUpdate(order.customerId, {
@@ -463,10 +453,7 @@ export async function setEyeClassification(
   return order.toObject() as unknown as OrderResult;
 }
 
-export async function setReviewed(
-  orderId: string,
-  reviewed: boolean
-): Promise<OrderResult> {
+export async function setReviewed(orderId: string, reviewed: boolean): Promise<OrderResult> {
   const order = await (Order as mongoose.Model<unknown>).findByIdAndUpdate(
     orderId,
     { $set: { reviewed } },

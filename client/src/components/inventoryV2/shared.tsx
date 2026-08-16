@@ -1,115 +1,127 @@
-import type { ReactNode } from "react";
-import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
-import type { MovementType } from "../../types/inventoryV2";
+import type { ReactNode } from 'react';
+import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react';
+import type { MovementType } from '../../types/inventoryV2';
 
 export function formatDate(iso?: string): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export function formatDateTime(iso?: string): string {
-  if (!iso) return "—";
+  if (!iso) return '—';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export function formatCurrency(n: number): string {
-  return `₹${(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₹${(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function stockBadgeClass(qty: number, threshold = 5): string {
-  if (qty <= 0) return "badge badge-red";
-  if (qty <= threshold) return "badge badge-yellow";
-  return "badge badge-green";
+  if (qty <= 0) return 'badge badge-red';
+  if (qty <= threshold) return 'badge badge-yellow';
+  return 'badge badge-green';
 }
 
 export function stockTextClass(qty: number, threshold = 5): string {
-  if (qty <= 0) return "text-[#e74c3c]";
-  if (qty <= threshold) return "text-amber-400";
-  return "text-[#1ed760]";
+  if (qty <= 0) return 'text-[#e74c3c]';
+  if (qty <= threshold) return 'text-amber-400';
+  return 'text-[#1ed760]';
 }
 
-export function stockLevel(qty: number, threshold = 5): "out" | "low" | "ok" {
-  if (qty <= 0) return "out";
-  if (qty <= threshold) return "low";
-  return "ok";
+export function stockLevel(qty: number, threshold = 5): 'out' | 'low' | 'ok' {
+  if (qty <= 0) return 'out';
+  if (qty <= threshold) return 'low';
+  return 'ok';
 }
 
-const STOCK_LEVEL_LABEL: Record<"out" | "low" | "ok", string> = {
-  out: "Out of stock",
-  low: "Low stock",
-  ok: "In stock",
+const STOCK_LEVEL_LABEL: Record<'out' | 'low' | 'ok', string> = {
+  out: 'Out of stock',
+  low: 'Low stock',
+  ok: 'In stock',
 };
 
 export function StockStatusBadge({ qty, threshold = 5 }: { qty: number; threshold?: number }) {
   const level = stockLevel(qty, threshold);
   return (
     <span className={`badge ${stockBadgeClass(qty, threshold)}`} title={STOCK_LEVEL_LABEL[level]}>
-      {level === "ok" ? "In stock" : level === "low" ? "Low" : "Out"}
+      {level === 'ok' ? 'In stock' : level === 'low' ? 'Low' : 'Out'}
     </span>
   );
 }
 
-export function itemLabel(v?: { brandName?: string; model?: string; color?: string; size?: string } | null): string {
-  if (!v) return "—";
-  return [v.brandName, v.model, v.color, v.size ? `/${v.size}` : ""].filter(Boolean).join(" ").trim() || "—";
+export function itemLabel(
+  v?: { brandName?: string; model?: string; color?: string; size?: string } | null
+): string {
+  if (!v) return '—';
+  return (
+    [v.brandName, v.model, v.color, v.size ? `/${v.size}` : ''].filter(Boolean).join(' ').trim() ||
+    '—'
+  );
 }
 
 export const MOVEMENT_LABELS: Record<string, string> = {
-  OPENING_BALANCE: "Opening balance",
-  PURCHASE: "Purchase",
-  ORDER: "Sold on order",
-  WITHDRAWAL: "Withdrawal",
-  RETURN: "Return",
-  DAMAGE: "Damage",
-  ADJUSTMENT: "Manual adjustment",
-  COUNT_CORRECTION: "Stock count correction",
-  TRANSFER_IN: "Transferred in",
-  TRANSFER_OUT: "Transferred out",
-  LOCATION_CHANGE: "Moved to another rack",
-  STOCK_IN: "Stock added",
-  STOCK_OUT: "Stock removed",
-  CREATED: "Item created",
-  WITHDRAWAL_REVERSED: "Withdrawal reversed",
-  DAMAGED: "Marked damaged",
+  OPENING_BALANCE: 'Opening balance',
+  PURCHASE: 'Purchase',
+  ORDER: 'Sold on order',
+  WITHDRAWAL: 'Withdrawal',
+  RETURN: 'Return',
+  DAMAGE: 'Damage',
+  ADJUSTMENT: 'Manual adjustment',
+  COUNT_CORRECTION: 'Stock count correction',
+  TRANSFER_IN: 'Transferred in',
+  TRANSFER_OUT: 'Transferred out',
+  LOCATION_CHANGE: 'Moved to another rack',
+  STOCK_IN: 'Stock added',
+  STOCK_OUT: 'Stock removed',
+  CREATED: 'Item created',
+  WITHDRAWAL_REVERSED: 'Withdrawal reversed',
+  DAMAGED: 'Marked damaged',
 };
 
 export function movementLabel(type: string): string {
-  return MOVEMENT_LABELS[type] ?? (type || "Activity");
+  return MOVEMENT_LABELS[type] ?? (type || 'Activity');
 }
 
 export function movementTone(type: string): string {
   switch (type) {
-    case "OPENING_BALANCE":
-    case "PURCHASE":
-    case "RETURN":
-    case "TRANSFER_IN":
-    case "STOCK_IN":
-    case "CREATED":
-    case "WITHDRAWAL_REVERSED":
-      return "bg-[#1ed760]/10 text-[#1ed760]";
-    case "WITHDRAWAL":
-    case "ORDER":
-    case "TRANSFER_OUT":
-    case "STOCK_OUT":
-    case "DAMAGE":
-    case "DAMAGED":
-      return "bg-[#e74c3c]/10 text-[#e74c3c]";
-    case "COUNT_CORRECTION":
-    case "ADJUSTMENT":
-    case "LOCATION_CHANGE":
-      return "bg-amber-500/10 text-amber-400";
+    case 'OPENING_BALANCE':
+    case 'PURCHASE':
+    case 'RETURN':
+    case 'TRANSFER_IN':
+    case 'STOCK_IN':
+    case 'CREATED':
+    case 'WITHDRAWAL_REVERSED':
+      return 'bg-[#1ed760]/10 text-[#1ed760]';
+    case 'WITHDRAWAL':
+    case 'ORDER':
+    case 'TRANSFER_OUT':
+    case 'STOCK_OUT':
+    case 'DAMAGE':
+    case 'DAMAGED':
+      return 'bg-[#e74c3c]/10 text-[#e74c3c]';
+    case 'COUNT_CORRECTION':
+    case 'ADJUSTMENT':
+    case 'LOCATION_CHANGE':
+      return 'bg-amber-500/10 text-amber-400';
     default:
-      return "bg-th-hover text-th-secondary";
+      return 'bg-th-hover text-th-secondary';
   }
 }
 
 export function MovementTypeBadge({ type }: { type: MovementType | string }) {
   return (
-    <span className={`inline-block rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap ${movementTone(type)}`}>
+    <span
+      className={`inline-block rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap ${movementTone(type)}`}
+    >
       {movementLabel(type)}
     </span>
   );
@@ -121,7 +133,7 @@ export function PageSection({
   subtitle,
   actions,
   children,
-  className = "",
+  className = '',
 }: {
   icon: LucideIcon;
   title: string;
@@ -151,20 +163,20 @@ export function QuickActionButton({
   icon: Icon,
   label,
   hint,
-  tone = "green",
+  tone = 'green',
   onClick,
 }: {
   icon: LucideIcon;
   label: string;
   hint?: string;
-  tone?: "green" | "neutral" | "red" | "amber";
+  tone?: 'green' | 'neutral' | 'red' | 'amber';
   onClick: () => void;
 }) {
   const tones: Record<string, string> = {
-    green: "hover:bg-[#1ed760]/10 hover:border-[#1ed760]/30 text-[#1ed760]",
-    neutral: "hover:bg-th-hover text-th-text",
-    red: "hover:bg-[#e74c3c]/10 hover:border-[#e74c3c]/30 text-[#e74c3c]",
-    amber: "hover:bg-amber-500/10 hover:border-amber-500/30 text-amber-400",
+    green: 'hover:bg-[#1ed760]/10 hover:border-[#1ed760]/30 text-[#1ed760]',
+    neutral: 'hover:bg-th-hover text-th-text',
+    red: 'hover:bg-[#e74c3c]/10 hover:border-[#e74c3c]/30 text-[#e74c3c]',
+    amber: 'hover:bg-amber-500/10 hover:border-amber-500/30 text-amber-400',
   };
   return (
     <button
@@ -183,7 +195,15 @@ export function QuickActionButton({
   );
 }
 
-export function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+export function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-th-secondary mb-1.5">
@@ -195,8 +215,8 @@ export function Field({ label, required, children }: { label: string; required?:
 }
 
 export const inputCls =
-  "w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover";
-export const inputStyle = { border: "1px solid rgb(124,124,124)" } as const;
+  'w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover';
+export const inputStyle = { border: '1px solid rgb(124,124,124)' } as const;
 
 export function AdvancedSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -244,7 +264,7 @@ export function Pagination({ page, pages, total, pageSize = 20, onPage }: Pagina
             key={pg}
             onClick={() => onPage(pg)}
             className={`w-8 h-8 rounded-[9999px] text-sm font-medium transition-colors ${
-              pg === page ? "bg-[#1ed760] text-black" : "hover:bg-th-elevated text-th-secondary"
+              pg === page ? 'bg-[#1ed760] text-black' : 'hover:bg-th-elevated text-th-secondary'
             }`}
           >
             {pg}

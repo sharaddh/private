@@ -47,14 +47,23 @@ export async function addToCart(
   const existing = await ShopCartItem.findOne({ user: userId, coating, lensType, powerKey });
   if (existing) {
     const total = existing.quantity + qty;
-    if (total > available) throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
+    if (total > available)
+      throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
     existing.quantity = total;
     existing.price = price;
     await existing.save();
     return { ...existing.toJSON(), available };
   }
-  if (qty > available) throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
-  const item = await ShopCartItem.create({ user: userId, coating, lensType, powerKey, quantity: qty, price });
+  if (qty > available)
+    throw new AppError(400, `${coating} ${powerKey}: only ${pairStr(available)} in stock`);
+  const item = await ShopCartItem.create({
+    user: userId,
+    coating,
+    lensType,
+    powerKey,
+    quantity: qty,
+    price,
+  });
   return { ...item.toJSON(), available };
 }
 
@@ -66,7 +75,11 @@ export async function updateCartItem(userId: string, itemId: string, quantity: n
   if (!stock) throw new AppError(400, `${item.coating}: lens stock not found`);
   const q = (stock.quantities as Record<string, Record<string, number>>) || {};
   const available = q[item.lensType]?.[item.powerKey] || 0;
-  if (quantity > available) throw new AppError(400, `${item.coating} ${item.powerKey}: only ${pairStr(available)} in stock`);
+  if (quantity > available)
+    throw new AppError(
+      400,
+      `${item.coating} ${item.powerKey}: only ${pairStr(available)} in stock`
+    );
   item.quantity = Math.floor(quantity);
   await item.save();
   return { ...item.toJSON(), available };
@@ -88,7 +101,13 @@ export async function withdrawCart(userId: string, username: string, note?: stri
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
-  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number }[] = [];
+  const withdrawnItems: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    price: number;
+  }[] = [];
   let totalQuantity = 0;
   let totalPrice = 0;
 
@@ -104,7 +123,9 @@ export async function withdrawCart(userId: string, username: string, note?: stri
     const newQty = current - item.quantity;
 
     if (newQty < 0) {
-      errors.push(`${item.coating} ${item.powerKey}: only ${pairStr(current)} available, need ${pairStr(item.quantity)}`);
+      errors.push(
+        `${item.coating} ${item.powerKey}: only ${pairStr(current)} available, need ${pairStr(item.quantity)}`
+      );
       continue;
     }
 
@@ -116,7 +137,13 @@ export async function withdrawCart(userId: string, username: string, note?: stri
     await lensStock.save();
 
     const price = item.price ?? getPriceForPower(lensStock, item.powerKey);
-    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price });
+    withdrawnItems.push({
+      coating: item.coating,
+      lensType: item.lensType,
+      powerKey: item.powerKey,
+      quantity: item.quantity,
+      price,
+    });
     totalQuantity += item.quantity;
     totalPrice += price * (item.quantity / 2);
   }
@@ -138,7 +165,10 @@ export async function withdrawCart(userId: string, username: string, note?: stri
 }
 
 export async function getWithdrawals(userId: string) {
-  const withdrawals = await ShopLensWithdrawal.find({ user: userId }).sort({ withdrawnAt: -1 }).limit(100).lean();
+  const withdrawals = await ShopLensWithdrawal.find({ user: userId })
+    .sort({ withdrawnAt: -1 })
+    .limit(100)
+    .lean();
   return attachAvailable(withdrawals);
 }
 
@@ -200,12 +230,18 @@ export async function updateWithdrawal(
   const withdrawal = await ShopLensWithdrawal.findOne({ _id: id, user: userId });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
-  const normalized: { coating: string; lensType: string; powerKey: string; quantity: number }[] = [];
+  const normalized: { coating: string; lensType: string; powerKey: string; quantity: number }[] =
+    [];
   for (const it of items || []) {
     if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
     const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
     if (qty === 0) continue;
-    normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty });
+    normalized.push({
+      coating: it.coating,
+      lensType: it.lensType,
+      powerKey: it.powerKey,
+      quantity: qty,
+    });
   }
 
   if (normalized.length === 0) {
@@ -270,14 +306,26 @@ export async function updateWithdrawal(
     await stock.save();
   }
 
-  const mergedItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number }[] = [];
+  const mergedItems: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    price: number;
+  }[] = [];
   for (const it of normalized) {
     const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
     if (newMap.get(key) === undefined) continue;
     const qty = newMap.get(key)!;
     const lensStock = await getStock(it.coating);
     const price = getPriceForPower(lensStock, it.powerKey);
-    mergedItems.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, price });
+    mergedItems.push({
+      coating: it.coating,
+      lensType: it.lensType,
+      powerKey: it.powerKey,
+      quantity: qty,
+      price,
+    });
     newMap.delete(key);
   }
 

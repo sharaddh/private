@@ -1,12 +1,22 @@
-import { useCallback } from "react";
-import { useApi, useApiPost, useApiDelete } from "./useApi";
-import { billService } from "../services";
-import type { Bill, BillItem, PaginatedResponse, PaginationParams, DateRangeParams } from "../types";
+import { useCallback } from 'react';
+import { useApi, useApiPost, useApiDelete } from './useApi';
+import { billService } from '../services';
+import type {
+  Bill,
+  BillItem,
+  PaginatedResponse,
+  PaginationParams,
+  DateRangeParams,
+} from '../types';
 
 export function useBills(params?: PaginationParams & DateRangeParams & { status?: string }) {
   const qs = params
-    ? `?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString()}`
-    : "";
+    ? `?${new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v != null)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()}`
+    : '';
 
   const { data, loading, error, refetch } = useApi<PaginatedResponse<Bill>>(
     () => billService.listFiltered(params ?? {}),
@@ -14,7 +24,14 @@ export function useBills(params?: PaginationParams & DateRangeParams & { status?
     { cacheKey: `/api/bills${qs}` }
   );
 
-  return { bills: data?.data ?? [], total: data?.total ?? 0, pages: data?.pages ?? 0, loading, error, refetch };
+  return {
+    bills: data?.data ?? [],
+    total: data?.total ?? 0,
+    pages: data?.pages ?? 0,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useBill(id: string) {
@@ -28,25 +45,31 @@ export function useBill(id: string) {
 }
 
 export function useCreateBill() {
-  const { execute, loading, error, reset } = useApiPost<Bill, {
-    customerId: string;
-    items: BillItem[];
-    discount?: number;
-    tax?: number;
-    advancePaid?: number;
-    notes?: string;
-  }>();
+  const { execute, loading, error, reset } = useApiPost<
+    Bill,
+    {
+      customerId: string;
+      items: BillItem[];
+      discount?: number;
+      tax?: number;
+      advancePaid?: number;
+      notes?: string;
+    }
+  >();
 
-  const create = useCallback(async (data: {
-    customerId: string;
-    items: BillItem[];
-    discount?: number;
-    tax?: number;
-    advancePaid?: number;
-    notes?: string;
-  }) => {
-    return billService.createWithItems(data);
-  }, []);
+  const create = useCallback(
+    async (data: {
+      customerId: string;
+      items: BillItem[];
+      discount?: number;
+      tax?: number;
+      advancePaid?: number;
+      notes?: string;
+    }) => {
+      return billService.createWithItems(data);
+    },
+    []
+  );
 
   return { create, loading, error, reset };
 }

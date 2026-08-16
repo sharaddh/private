@@ -10,7 +10,7 @@ This document defines the JWT authentication system for the KMJ Optical ERP. It 
 
 | Token | Purpose | Expiry | Storage |
 |-------|---------|--------|---------|
-| Access Token | API authorization | 24h (configurable) | localStorage |
+| Access Token | API authorization | 7d (configurable) | localStorage |
 | Refresh Token | Token renewal | 7d (configurable) | localStorage |
 
 ### Login Endpoints
@@ -74,7 +74,7 @@ interface JwtPayload {
 ```typescript
 // server/src/config.ts
 export const JWT_SECRET = process.env.JWT_SECRET || "";
-export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "24h";
+export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "7d";
 export const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
 ```
 
@@ -618,7 +618,7 @@ if (refreshPromise) return refreshPromise;
 | localStorage for tokens | Works with SPA | XSS vulnerability |
 | No account lockout | Simpler implementation | Brute force vulnerability |
 | bcrypt cost 10 | Good security/speed balance | Slower than lower cost |
-| 24h access token | Longer sessions | Larger window for token theft |
+| 7d access token | Longer sessions | Larger window for token theft |
 | Role checks in controllers | Flexible per-endpoint logic | Scattered authorization logic |
 
 ## Cross-References

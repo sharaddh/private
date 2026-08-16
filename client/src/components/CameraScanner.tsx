@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import jsQR from "jsqr";
-import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle, Clock } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import jsQR from 'jsqr';
+import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle, Clock } from 'lucide-react';
 
 interface CameraScannerProps {
   onScan: (code: string) => void;
@@ -19,12 +19,14 @@ function playBeep() {
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.stop(ctx.currentTime + 0.15);
-  } catch (e) { /* audio beep is best-effort */ }
+  } catch (e) {
+    /* audio beep is best-effort */
+  }
 }
 
 export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
-  const [error, setError] = useState("");
-  const [scanInput, setScanInput] = useState("");
+  const [error, setError] = useState('');
+  const [scanInput, setScanInput] = useState('');
   const [useCamera, setUseCamera] = useState(true);
   const [starting, setStarting] = useState(true);
   const [scanTimer, setScanTimer] = useState(0);
@@ -53,42 +55,58 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     async function startCamera() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const cameras = devices.filter((d) => d.kind === "videoinput");
+        const cameras = devices.filter((d) => d.kind === 'videoinput');
         const backCamera = cameras.find(
-          (c) => c.label.toLowerCase().includes("back") || c.label.toLowerCase().includes("rear") || c.label.toLowerCase().includes("environment")
-        ) || cameras[cameras.length - 1] || { deviceId: undefined };
+          (c) =>
+            c.label.toLowerCase().includes('back') ||
+            c.label.toLowerCase().includes('rear') ||
+            c.label.toLowerCase().includes('environment')
+        ) ||
+          cameras[cameras.length - 1] || { deviceId: undefined };
 
         const constraints: MediaStreamConstraints = {
           video: backCamera?.deviceId
-            ? { deviceId: { exact: backCamera.deviceId }, width: { ideal: 640 }, height: { ideal: 480 } }
-            : { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+            ? {
+                deviceId: { exact: backCamera.deviceId },
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+              }
+            : { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false,
         };
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (!mountedRef.current) { stopStream(stream); return; }
+        if (!mountedRef.current) {
+          stopStream(stream);
+          return;
+        }
 
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-        if (!mountedRef.current) { stopStream(stream); return; }
+        if (!mountedRef.current) {
+          stopStream(stream);
+          return;
+        }
 
         setStarting(false);
         scanFrame();
       } catch (err: unknown) {
         if (!mountedRef.current) return;
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn("Camera error:", msg);
+        console.warn('Camera error:', msg);
 
-        if (msg.includes("NotAllowed") || msg.includes("Permission") || msg.includes("denied")) {
+        if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
           setStarting(false);
-          setError("Camera access denied. Please allow camera permissions in your browser settings.");
+          setError(
+            'Camera access denied. Please allow camera permissions in your browser settings.'
+          );
           setUseCamera(false);
-        } else if (msg.includes("NotFound") || msg.includes("No camera")) {
+        } else if (msg.includes('NotFound') || msg.includes('No camera')) {
           setStarting(false);
-          setError("No camera found on this device.");
+          setError('No camera found on this device.');
           setUseCamera(false);
         } else if (retryCount < 1) {
           retryCount++;
@@ -97,7 +115,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
           return startCamera();
         } else {
           setStarting(false);
-          setError("Camera not available. Use manual entry below.");
+          setError('Camera not available. Use manual entry below.');
           setUseCamera(false);
         }
       }
@@ -137,7 +155,7 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
       return;
     }
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) {
       animRef.current = requestAnimationFrame(scanFrame);
       return;
@@ -148,14 +166,18 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
 
     if (code && mountedRef.current) {
       scannedRef.current = true;
       setScanSuccess(true);
       stopStream(streamRef.current);
       playBeep();
-      try { navigator.vibrate?.(200); } catch {}
+      try {
+        navigator.vibrate?.(200);
+      } catch {}
       setTimeout(() => onScan(code.data), 300);
       return;
     }
@@ -169,33 +191,54 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   }, [scanInput, onScan]);
 
   function retryCamera() {
-    setError("");
+    setError('');
     setStarting(true);
     setScanTimer(0);
     setUseCamera(true);
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="overflow-hidden max-w-sm w-full bg-th-surface rounded-[8px]" onClick={(e) => e.stopPropagation()} style={{ boxShadow: "var(--shadow-elevated)" }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="overflow-hidden max-w-sm w-full bg-th-surface rounded-[8px]"
+        onClick={(e) => e.stopPropagation()}
+        style={{ boxShadow: 'var(--shadow-elevated)' }}
+      >
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
-            {useCamera ? <Camera size={18} className="text-[#1ed760]" /> : <Search size={18} className="text-[#1ed760]" />}
+            {useCamera ? (
+              <Camera size={18} className="text-[#1ed760]" />
+            ) : (
+              <Search size={18} className="text-[#1ed760]" />
+            )}
             <h3 className="text-[20px] font-bold text-th-text">Scan QR Code</h3>
           </div>
-          <button onClick={onClose} title="Close (Esc)" aria-label="Close scanner" className="p-1.5 hover:bg-th-elevated rounded-[9999px] text-th-secondary">
+          <button
+            onClick={onClose}
+            title="Close (Esc)"
+            aria-label="Close scanner"
+            className="p-1.5 hover:bg-th-elevated rounded-[9999px] text-th-secondary"
+          >
             <X size={18} />
           </button>
         </div>
         <div className="px-5 pb-2">
           <p className="text-[18px] text-th-secondary">
-            {useCamera ? "Point the QR code toward the camera." : "Enter the SKU manually below."}
+            {useCamera ? 'Point the QR code toward the camera.' : 'Enter the SKU manually below.'}
           </p>
         </div>
 
         {useCamera && (
           <div className="w-full aspect-[4/3] bg-[#000000] relative overflow-hidden">
-            <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
+            <video
+              ref={videoRef}
+              className="absolute inset-0 w-full h-full object-cover"
+              playsInline
+              muted
+            />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-3/4 aspect-square border-2 border-[#1ed760]/50 rounded-[8px] animate-pulse" />
@@ -230,20 +273,30 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             <div className="flex gap-2">
               <input
                 className="flex-1 text-[20px] tracking-wider font-mono px-4 py-2.5 rounded-lg bg-th-elevated text-th-text placeholder-th-muted focus:outline-none focus:border-[#1ed760] transition-all duration-200"
-                style={{ border: "rgb(124,124,124) 0px 0px 0px 1px inset" }}
+                style={{ border: 'rgb(124,124,124) 0px 0px 0px 1px inset' }}
                 placeholder="Type or scan SKU..."
                 value={scanInput}
                 onChange={(e) => setScanInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleManualSubmit(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleManualSubmit();
+                }}
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
               />
-              <button type="button" onClick={handleManualSubmit} className="flex items-center gap-1.5 px-4 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold rounded-lg uppercase tracking-wider text-[18px] transition-all duration-200">
+              <button
+                type="button"
+                onClick={handleManualSubmit}
+                className="flex items-center gap-1.5 px-4 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold rounded-lg uppercase tracking-wider text-[18px] transition-all duration-200"
+              >
                 <Search size={16} /> Lookup
               </button>
             </div>
-            <button type="button" onClick={retryCamera} className="flex items-center gap-1.5 text-[18px] text-[#1ed760] hover:underline">
+            <button
+              type="button"
+              onClick={retryCamera}
+              className="flex items-center gap-1.5 text-[18px] text-[#1ed760] hover:underline"
+            >
               <RefreshCw size={14} /> Try camera again
             </button>
           </div>
@@ -253,7 +306,11 @@ export default function CameraScanner({ onScan, onClose }: CameraScannerProps) {
           <>
             <div className="flex items-center justify-center gap-2 px-5 py-3 text-[16px] text-th-secondary border-t border-th-border">
               <CameraOff size={13} />
-              {scanTimer > 8 && <span className="text-amber-500 font-medium">Still scanning... try bringing the QR closer.</span>}
+              {scanTimer > 8 && (
+                <span className="text-amber-500 font-medium">
+                  Still scanning... try bringing the QR closer.
+                </span>
+              )}
               {scanTimer <= 8 && <span>Press Esc or click outside to cancel</span>}
             </div>
           </>

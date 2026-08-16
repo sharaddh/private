@@ -1,33 +1,59 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: ReactNode;
-  color?: "primary" | "emerald" | "blue" | "amber" | "red" | "purple" | "cyan";
+  color?: 'primary' | 'emerald' | 'blue' | 'amber' | 'red' | 'purple' | 'cyan';
   subtitle?: string;
   onClick?: () => void;
 }
 
 const colorClasses = {
-  primary: { bg: "bg-[#1ed760]/10 ring-[#1ed760]/30", text: "text-[#1ed760]", icon: "text-[#1ed760]" },
-  emerald: { bg: "bg-[#1ed760]/10 ring-[#1ed760]/30", text: "text-[#1ed760]", icon: "text-[#1ed760]" },
-  blue: { bg: "bg-[#509bf5]/10 ring-[#509bf5]/30", text: "text-[#509bf5]", icon: "text-[#509bf5]" },
-  amber: { bg: "bg-[#f59e0b]/10 ring-[#f59e0b]/30", text: "text-[#f59e0b]", icon: "text-[#f59e0b]" },
-  red: { bg: "bg-[#e91429]/10 ring-[#e91429]/30", text: "text-[#e91429]", icon: "text-[#e91429]" },
-  purple: { bg: "bg-[#af2896]/10 ring-[#af2896]/30", text: "text-[#af2896]", icon: "text-[#af2896]" },
-  cyan: { bg: "bg-[#509bf5]/10 ring-[#509bf5]/30", text: "text-[#509bf5]", icon: "text-[#509bf5]" },
+  primary: {
+    bg: 'bg-[#1ed760]/10 ring-[#1ed760]/30',
+    text: 'text-[#1ed760]',
+    icon: 'text-[#1ed760]',
+  },
+  emerald: {
+    bg: 'bg-[#1ed760]/10 ring-[#1ed760]/30',
+    text: 'text-[#1ed760]',
+    icon: 'text-[#1ed760]',
+  },
+  blue: { bg: 'bg-[#509bf5]/10 ring-[#509bf5]/30', text: 'text-[#509bf5]', icon: 'text-[#509bf5]' },
+  amber: {
+    bg: 'bg-[#f59e0b]/10 ring-[#f59e0b]/30',
+    text: 'text-[#f59e0b]',
+    icon: 'text-[#f59e0b]',
+  },
+  red: { bg: 'bg-[#e91429]/10 ring-[#e91429]/30', text: 'text-[#e91429]', icon: 'text-[#e91429]' },
+  purple: {
+    bg: 'bg-[#af2896]/10 ring-[#af2896]/30',
+    text: 'text-[#af2896]',
+    icon: 'text-[#af2896]',
+  },
+  cyan: { bg: 'bg-[#509bf5]/10 ring-[#509bf5]/30', text: 'text-[#509bf5]', icon: 'text-[#509bf5]' },
 };
 
-export default function StatCard({ title, value, icon, color = "primary", subtitle, onClick }: StatCardProps) {
+export default function StatCard({
+  title,
+  value,
+  icon,
+  color = 'primary',
+  subtitle,
+  onClick,
+}: StatCardProps) {
   const cc = colorClasses[color];
 
   return (
-    <div onClick={onClick}
-      className={`rounded-[14px] border border-th-border/70 bg-gradient-to-br from-th-surface to-th-elevated p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#1ed760]/30 hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${onClick ? "cursor-pointer active:scale-[0.98]" : ""}`}
+    <div
+      onClick={onClick}
+      className={`rounded-[14px] border border-th-border/70 bg-gradient-to-br from-th-surface to-th-elevated p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#1ed760]/30 hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-11 h-11 ${cc.bg} rounded-[10px] flex items-center justify-center ${cc.icon} ring-1 flex-shrink-0`}>
+        <div
+          className={`w-11 h-11 ${cc.bg} rounded-[10px] flex items-center justify-center ${cc.icon} ring-1 flex-shrink-0`}
+        >
           {icon}
         </div>
         <div className="min-w-0">

@@ -1,7 +1,10 @@
 import { getCtx } from "./requestContext";
 import type { BranchModels } from "../models/db";
 
-export function withBranch<T extends Record<string, any>>(defaultModel: T, key: keyof BranchModels): T {
+export function withBranch<T extends Record<string, any>>(
+  defaultModel: T,
+  key: keyof BranchModels
+): T {
   return new Proxy(defaultModel, {
     get(_target, prop) {
       const ctx = getCtx();

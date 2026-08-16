@@ -1,6 +1,6 @@
-import * as React from "react";
-import { Drawer as DrawerPrimitive } from "vaul";
-import { classNames } from "../../utils/helpers";
+import * as React from 'react';
+import { Drawer as DrawerPrimitive } from 'vaul';
+import { classNames } from '../../utils/helpers';
 
 const Drawer = ({
   shouldScaleBackground = false,
@@ -8,7 +8,7 @@ const Drawer = ({
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
 );
-Drawer.displayName = "Drawer";
+Drawer.displayName = 'Drawer';
 
 const DrawerTrigger = DrawerPrimitive.Trigger;
 
@@ -22,7 +22,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Overlay
     ref={ref}
-    className={classNames("fixed inset-0 z-50 bg-black/60 backdrop-blur-sm", className)}
+    className={classNames('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', className)}
     {...props}
   />
 ));
@@ -37,7 +37,7 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={classNames(
-        "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-lg flex-col rounded-t-2xl border-t border-th-border bg-th-surface shadow-2xl",
+        'fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-lg flex-col rounded-t-2xl border-t border-th-border bg-th-surface shadow-2xl',
         className
       )}
       {...props}
@@ -54,12 +54,12 @@ const DrawerHandle = React.forwardRef<
 >(({ className, style, ...props }, ref) => (
   <DrawerPrimitive.Handle
     ref={ref}
-    className={classNames("mx-auto mt-2.5 mb-1 shrink-0", className)}
+    className={classNames('mx-auto mt-2.5 mb-1 shrink-0', className)}
     style={{
       height: 6,
       width: 40,
       borderRadius: 9999,
-      backgroundColor: "var(--text-muted)",
+      backgroundColor: 'var(--text-muted)',
       opacity: 0.4,
       ...style,
     }}
@@ -74,7 +74,7 @@ const DrawerTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Title
     ref={ref}
-    className={classNames("text-lg font-semibold leading-none tracking-tight", className)}
+    className={classNames('text-lg font-semibold leading-none tracking-tight', className)}
     {...props}
   />
 ));
@@ -86,7 +86,7 @@ const DrawerDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DrawerPrimitive.Description
     ref={ref}
-    className={classNames("text-sm text-th-muted", className)}
+    className={classNames('text-sm text-th-muted', className)}
     {...props}
   />
 ));

@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Package } from "lucide-react";
+import type { LucideIcon } from 'lucide-react';
+import { Package } from 'lucide-react';
 
 interface Props {
   icon?: LucideIcon;
@@ -8,7 +8,12 @@ interface Props {
   action?: { label: string; onClick: () => void };
 }
 
-export default function EmptyState({ icon: Icon = Package, title = "No items found", message, action }: Props) {
+export default function EmptyState({
+  icon: Icon = Package,
+  title = 'No items found',
+  message,
+  action,
+}: Props) {
   return (
     <div className="card p-6 sm:p-12 text-center">
       <Icon size={40} className="mx-auto text-th-muted mb-3" />

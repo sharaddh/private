@@ -1,5 +1,5 @@
-import { Component, type ReactNode, type ErrorInfo } from "react";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Component, type ReactNode, type ErrorInfo } from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[ErrorBoundary]", error, info.componentStack);
+    console.error('[ErrorBoundary]', error, info.componentStack);
     this.props.onError?.(error, info);
   }
 
@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = () => {
-    window.location.hash = "#/";
+    window.location.hash = '#/';
     this.handleReset();
   };
 
@@ -50,7 +50,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           </div>
           <h2 className="text-[28px] font-bold text-th-text mb-2">Something went wrong</h2>
           <p className="text-[20px] text-th-secondary mb-2 max-w-md">
-            {this.state.error?.message || "An unexpected error occurred"}
+            {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           {import.meta.env.DEV && this.state.error?.stack && (
             <pre className="text-[16px] text-th-secondary/60 max-w-lg mb-6 overflow-auto text-left whitespace-pre-wrap bg-th-hover/50 p-3 rounded-lg">

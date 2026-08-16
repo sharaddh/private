@@ -1,5 +1,3 @@
 {
-  "routes": [
-    { "type": "rewrite", "source": "^(?!.*\\.\\w+$)", "destination": "/index.html" }
-  ]
+  "routes": [{ "type": "rewrite", "source": "^(?!.*\\.\\w+$)", "destination": "/index.html" }]
 }

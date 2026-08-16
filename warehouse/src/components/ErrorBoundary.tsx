@@ -1,5 +1,5 @@
-import { Component, type ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
+import { Component, type ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
             <h3 className="text-feature text-th-text mb-2">Something went wrong</h3>
             <p className="text-caption text-th-secondary mb-4">
-              {this.state.error?.message || "An unexpected error occurred"}
+              {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button onClick={this.handleReset} className="btn-primary btn-sm">
               Try Again

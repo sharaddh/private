@@ -1,10 +1,8 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { User } from "../models/user";
 import { Branch } from "../models/branch";
-import { signAccess, signRefresh } from "../utils/jwt";
-import { JWT_SECRET } from "../config";
+import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
 import { AppError } from "../middleware/errorHandler";
 
 interface RegisterData {
@@ -76,19 +74,6 @@ interface LoginResult {
   branchId?: string;
 }
 
-interface LeanUser {
-  _id: mongoose.Types.ObjectId;
-  username: string;
-  passwordHash: string;
-  name: string;
-  mobile: string;
-  role: string;
-  branches: mongoose.Types.ObjectId[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function formatUserWithBranches(user: any): Promise<FormattedUser> {
   const role = user.role as string;
   const branches = user.branches as mongoose.Types.ObjectId[] | undefined;
@@ -304,14 +289,12 @@ export async function registerOwner(
   return formatUserWithBranches(user);
 }
 
-export async function refreshToken(
-  refreshTokenStr: string
-): Promise<{ access: string }> {
+export async function refreshToken(refreshTokenStr: string): Promise<{ access: string }> {
   if (!refreshTokenStr) {
     throw new AppError(400, "Refresh token required");
   }
 
-  const payload = jwt.verify(refreshTokenStr, JWT_SECRET) as { sub: string };
+  const payload = verifyToken<{ sub: string }>(refreshTokenStr);
   const user = await User.findById(payload.sub).lean();
   if (!user) {
     throw new AppError(404, "User not found");
@@ -382,24 +365,26 @@ export async function updateUser(
   return formatUserWithBranches(user);
 }
 
-export async function listUsers(
-  requestorRole: string
-): Promise<FormattedUser[]> {
+export async function listUsers(requestorRole: string): Promise<FormattedUser[]> {
   if (requestorRole !== "owner") {
     throw new AppError(403, "Only admin can list users");
   }
 
-  const users = await User.find()
-    .select("-passwordHash")
-    .sort({ createdAt: -1 })
-    .lean();
+  const users = await User.find().select("-passwordHash").sort({ createdAt: -1 }).lean();
 
   return Promise.all(users.map((u) => formatUserWithBranches(u)));
 }
 
-export async function listWarehouseUsers(
-  requestorRole: string
-): Promise<Array<{ id: string; username: string; name: string; mobile: string; role: string; createdAt: Date }>> {
+export async function listWarehouseUsers(requestorRole: string): Promise<
+  Array<{
+    id: string;
+    username: string;
+    name: string;
+    mobile: string;
+    role: string;
+    createdAt: Date;
+  }>
+> {
   if (requestorRole !== "owner") {
     throw new AppError(403, "Access denied");
   }

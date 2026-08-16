@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { useApiPost, useApiPut, useApiDelete } from "./useApi";
-import { inventoryV2Service } from "../services";
+import { useCallback } from 'react';
+import { useApiPost, useApiPut, useApiDelete } from './useApi';
+import { inventoryV2Service } from '../services';
 import type {
   AdjustStockResult,
   AddStockResult,
@@ -8,7 +8,7 @@ import type {
   CreateCountSessionResult,
   VariantWithStockResult,
   WithdrawResult,
-} from "../services/inventoryV2.service";
+} from '../services/inventoryV2.service';
 import type {
   AddStockInput,
   AdjustStockInput,
@@ -32,7 +32,7 @@ import type {
   UpdateVariantInput,
   WithdrawalV2,
   WithdrawStockInput,
-} from "../types/inventoryV2";
+} from '../types/inventoryV2';
 
 export function useCreateBrand() {
   const { loading, error, reset } = useApiPost<Brand, CreateBrandInput>();
@@ -42,19 +42,28 @@ export function useCreateBrand() {
 
 export function useUpdateBrand() {
   const { loading, error, reset } = useApiPost<Brand, UpdateBrandInput>();
-  const update = useCallback((id: string, data: UpdateBrandInput) => inventoryV2Service.updateBrand(id, data), []);
+  const update = useCallback(
+    (id: string, data: UpdateBrandInput) => inventoryV2Service.updateBrand(id, data),
+    []
+  );
   return { update, loading, error, reset };
 }
 
 export function useCreateProduct() {
   const { loading, error, reset } = useApiPost<InventoryProduct, CreateProductInput>();
-  const create = useCallback((data: CreateProductInput) => inventoryV2Service.createProduct(data), []);
+  const create = useCallback(
+    (data: CreateProductInput) => inventoryV2Service.createProduct(data),
+    []
+  );
   return { create, loading, error, reset };
 }
 
 export function useUpdateProduct() {
   const { loading, error, reset } = useApiPost<InventoryProduct, UpdateProductInput>();
-  const update = useCallback((id: string, data: UpdateProductInput) => inventoryV2Service.updateProduct(id, data), []);
+  const update = useCallback(
+    (id: string, data: UpdateProductInput) => inventoryV2Service.updateProduct(id, data),
+    []
+  );
   return { update, loading, error, reset };
 }
 
@@ -66,13 +75,19 @@ export function useDeleteProduct() {
 
 export function useCreateVariant() {
   const { loading, error, reset } = useApiPost<InventoryVariant, CreateVariantInput>();
-  const create = useCallback((data: CreateVariantInput) => inventoryV2Service.createVariant(data), []);
+  const create = useCallback(
+    (data: CreateVariantInput) => inventoryV2Service.createVariant(data),
+    []
+  );
   return { create, loading, error, reset };
 }
 
 export function useUpdateVariant() {
   const { loading, error, reset } = useApiPost<InventoryVariant, UpdateVariantInput>();
-  const update = useCallback((id: string, data: UpdateVariantInput) => inventoryV2Service.updateVariant(id, data), []);
+  const update = useCallback(
+    (id: string, data: UpdateVariantInput) => inventoryV2Service.updateVariant(id, data),
+    []
+  );
   return { update, loading, error, reset };
 }
 
@@ -83,8 +98,14 @@ export function useDeleteVariant() {
 }
 
 export function useCreateVariantWithStock() {
-  const { loading, error, reset } = useApiPost<VariantWithStockResult, CreateVariantWithStockInput>();
-  const create = useCallback((data: CreateVariantWithStockInput) => inventoryV2Service.createVariantWithStock(data), []);
+  const { loading, error, reset } = useApiPost<
+    VariantWithStockResult,
+    CreateVariantWithStockInput
+  >();
+  const create = useCallback(
+    (data: CreateVariantWithStockInput) => inventoryV2Service.createVariantWithStock(data),
+    []
+  );
   return { create, loading, error, reset };
 }
 
@@ -96,7 +117,10 @@ export function useAddStock() {
 
 export function useAdjustStockV2() {
   const { loading, error, reset } = useApiPut<AdjustStockResult, AdjustStockInput>();
-  const adjust = useCallback((id: string, data: AdjustStockInput) => inventoryV2Service.adjustStock(id, data), []);
+  const adjust = useCallback(
+    (id: string, data: AdjustStockInput) => inventoryV2Service.adjustStock(id, data),
+    []
+  );
   return { adjust, loading, error, reset };
 }
 
@@ -120,25 +144,41 @@ export function useCreateRack() {
 
 export function useUpdateRack() {
   const { loading, error, reset } = useApiPost<Rack, UpdateRackInput>();
-  const update = useCallback((id: string, data: UpdateRackInput) => inventoryV2Service.updateRack(id, data), []);
+  const update = useCallback(
+    (id: string, data: UpdateRackInput) => inventoryV2Service.updateRack(id, data),
+    []
+  );
   return { update, loading, error, reset };
 }
 
 export function useCreateCountSession() {
   const { loading, error, reset } = useApiPost<CreateCountSessionResult, CreateCountSessionInput>();
-  const create = useCallback((data: CreateCountSessionInput) => inventoryV2Service.createCountSession(data), []);
+  const create = useCallback(
+    (data: CreateCountSessionInput) => inventoryV2Service.createCountSession(data),
+    []
+  );
   return { create, loading, error, reset };
 }
 
 export function useUpdateCountEntries() {
   const { loading, error, reset } = useApiPost<CountSessionDetail, UpdateCountEntriesInput>();
-  const update = useCallback((id: string, data: UpdateCountEntriesInput) => inventoryV2Service.updateCountEntries(id, data), []);
+  const update = useCallback(
+    (id: string, data: UpdateCountEntriesInput) => inventoryV2Service.updateCountEntries(id, data),
+    []
+  );
   return { update, loading, error, reset };
 }
 
 export function useCompleteCountSession() {
-  const { loading, error, reset } = useApiPost<CompleteCountSessionResult, CompleteCountSessionInput>();
-  const complete = useCallback((id: string, data: CompleteCountSessionInput) => inventoryV2Service.completeCountSession(id, data), []);
+  const { loading, error, reset } = useApiPost<
+    CompleteCountSessionResult,
+    CompleteCountSessionInput
+  >();
+  const complete = useCallback(
+    (id: string, data: CompleteCountSessionInput) =>
+      inventoryV2Service.completeCountSession(id, data),
+    []
+  );
   return { complete, loading, error, reset };
 }
 

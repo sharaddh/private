@@ -68,10 +68,7 @@ async function doubleWithdrawals(collection: mongoose.Collection) {
     if (changed) {
       // totalPrice is left unchanged: it already equals pairs x price
       // (money), while quantity is now the whole lens count.
-      await collection.updateOne(
-        { _id: doc._id },
-        { $set: { items: nextItems, totalQuantity } }
-      );
+      await collection.updateOne({ _id: doc._id }, { $set: { items: nextItems, totalQuantity } });
       updated++;
     }
   }
@@ -114,9 +111,7 @@ async function run() {
   report.push(
     `warehouse lensstocks: ${await doubleQuantities(wh.collection("lensstocks"))} updated`
   );
-  report.push(
-    `warehouse cartitems: ${await doubleCartItems(wh.collection("cartitems"))} updated`
-  );
+  report.push(`warehouse cartitems: ${await doubleCartItems(wh.collection("cartitems"))} updated`);
   report.push(
     `warehouse withdrawals: ${await doubleWithdrawals(wh.collection("withdrawals"))} updated`
   );

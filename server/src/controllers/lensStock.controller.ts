@@ -30,7 +30,12 @@ export async function create(req: Request, res: Response) {
   if (parsedPriceNeg === null) return;
   const parsedPricePos = parseOptionalPrice(pricePos, res);
   if (parsedPricePos === null) return;
-  const data = await lensStockService.createLensStock(coating.trim(), parsedPrice, parsedPriceNeg, parsedPricePos);
+  const data = await lensStockService.createLensStock(
+    coating.trim(),
+    parsedPrice,
+    parsedPriceNeg,
+    parsedPricePos
+  );
   sendCreated(res, data);
 }
 
@@ -52,7 +57,13 @@ export async function rename(req: Request, res: Response) {
   if (parsedPriceNeg === null) return;
   const parsedPricePos = parseOptionalPrice(pricePos, res);
   if (parsedPricePos === null) return;
-  const data = await lensStockService.renameLensStock(req.params.id, coating.trim(), parsedPrice, parsedPriceNeg, parsedPricePos);
+  const data = await lensStockService.renameLensStock(
+    req.params.id,
+    coating.trim(),
+    parsedPrice,
+    parsedPriceNeg,
+    parsedPricePos
+  );
   sendSuccess(res, data);
 }
 
@@ -74,7 +85,9 @@ export async function remove(req: Request, res: Response) {
 export async function updateQuantity(req: Request, res: Response) {
   const { lensType, powerKey, quantity } = req.body;
   if (!lensType || !powerKey || typeof quantity !== "number") {
-    res.status(400).json({ success: false, message: "lensType, powerKey, and quantity are required" });
+    res
+      .status(400)
+      .json({ success: false, message: "lensType, powerKey, and quantity are required" });
     return;
   }
   if (!["sph", "cyl", "compound"].includes(lensType)) {

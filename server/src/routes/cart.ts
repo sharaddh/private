@@ -17,6 +17,10 @@ router.get("/withdrawals/all", authenticate, asyncHandler(cartController.getAllW
 router.put("/withdrawals/:id/pay", authenticate, asyncHandler(cartController.markWithdrawalPaid));
 router.put("/withdrawals/:id", authenticate, asyncHandler(cartController.updateWithdrawal));
 router.delete("/withdrawals/:id", authenticate, asyncHandler(cartController.deleteWithdrawal));
-router.post("/withdrawals/:id/send-pdf", authenticate, asyncHandler(cartController.sendWithdrawalPdf));
+router.post(
+  "/withdrawals/:id/send-pdf",
+  authenticate,
+  asyncHandler(cartController.sendWithdrawalPdf)
+);
 
 export default router;

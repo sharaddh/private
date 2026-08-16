@@ -1,20 +1,34 @@
-import React from "react";
+import React from 'react';
 
-export function Skeleton({ className, delay = 0, ...props }: React.HTMLAttributes<HTMLDivElement> & { delay?: number }) {
+export function Skeleton({
+  className,
+  delay = 0,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { delay?: number }) {
   return (
     <div
-      className={`relative rounded-[8px] bg-th-hover overflow-hidden animate-skeleton-wave animate-skeleton-stagger ${className || ""}`}
+      className={`relative rounded-[8px] bg-th-hover overflow-hidden animate-skeleton-wave animate-skeleton-stagger ${className || ''}`}
       style={{ animationDelay: delay ? `${delay}ms` : undefined }}
       {...props}
     />
   );
 }
 
-export function SkeletonText({ lines = 3, className = "" }: { lines?: number; className?: string }) {
+export function SkeletonText({
+  lines = 3,
+  className = '',
+}: {
+  lines?: number;
+  className?: string;
+}) {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton key={i} delay={i * 60} className={`h-3.5 ${i === lines - 1 ? "w-3/5" : "w-full"}`} />
+        <Skeleton
+          key={i}
+          delay={i * 60}
+          className={`h-3.5 ${i === lines - 1 ? 'w-3/5' : 'w-full'}`}
+        />
       ))}
     </div>
   );
@@ -22,7 +36,10 @@ export function SkeletonText({ lines = 3, className = "" }: { lines?: number; cl
 
 export function SkeletonCard() {
   return (
-    <div className="bg-th-surface rounded-lg overflow-hidden animate-skeleton-stagger" style={{ animationDelay: "0ms" }}>
+    <div
+      className="bg-th-surface rounded-lg overflow-hidden animate-skeleton-stagger"
+      style={{ animationDelay: '0ms' }}
+    >
       <div className="p-5 pb-3">
         <div className="flex items-center gap-3 mb-3">
           <Skeleton className="w-10 h-10 rounded-full shrink-0" delay={50} />
@@ -61,7 +78,11 @@ export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
       {Array.from({ length: rows }).map((_, r) => (
         <div key={r} className="flex items-center gap-4 px-4 py-3">
           {Array.from({ length: cols }).map((_, c) => (
-            <Skeleton key={c} className={`h-3.5 ${c === 0 ? "w-1/3" : "flex-1"}`} delay={(r * cols + c) * 30 + 100} />
+            <Skeleton
+              key={c}
+              className={`h-3.5 ${c === 0 ? 'w-1/3' : 'flex-1'}`}
+              delay={(r * cols + c) * 30 + 100}
+            />
           ))}
         </div>
       ))}
@@ -71,9 +92,15 @@ export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
 
 export function SkeletonStats({ count = 4 }: { count?: number }) {
   return (
-    <div className={`grid gap-3 ${count <= 4 ? "grid-cols-2 md:grid-cols-4" : count <= 6 ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6"}`}>
+    <div
+      className={`grid gap-3 ${count <= 4 ? 'grid-cols-2 md:grid-cols-4' : count <= 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6'}`}
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-th-surface rounded-lg p-4 animate-skeleton-stagger" style={{ animationDelay: `${i * 50}ms` }}>
+        <div
+          key={i}
+          className="bg-th-surface rounded-lg p-4 animate-skeleton-stagger"
+          style={{ animationDelay: `${i * 50}ms` }}
+        >
           <div className="flex items-center gap-3 mb-2">
             <Skeleton className="w-9 h-9 rounded-lg shrink-0" delay={i * 50} />
             <div className="flex-1 space-y-1.5">
@@ -92,7 +119,11 @@ export function SkeletonStatCards({ count = 5 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-th-surface rounded-lg p-4 animate-skeleton-stagger" style={{ animationDelay: `${i * 60}ms` }}>
+        <div
+          key={i}
+          className="bg-th-surface rounded-lg p-4 animate-skeleton-stagger"
+          style={{ animationDelay: `${i * 60}ms` }}
+        >
           <div className="flex items-center gap-3 mb-2">
             <Skeleton className="w-9 h-9 rounded-lg shrink-0" delay={i * 60} />
             <div className="flex-1 space-y-1.5">
@@ -111,7 +142,11 @@ export function SkeletonList({ items = 5 }: { items?: number }) {
   return (
     <div className="space-y-1">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 py-2.5 px-3 rounded-lg animate-skeleton-stagger" style={{ animationDelay: `${i * 40}ms` }}>
+        <div
+          key={i}
+          className="flex items-center gap-3 py-2.5 px-3 rounded-lg animate-skeleton-stagger"
+          style={{ animationDelay: `${i * 40}ms` }}
+        >
           <Skeleton className="w-8 h-8 rounded-full shrink-0" delay={i * 40} />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-3.5 w-3/5" delay={i * 40 + 20} />
@@ -124,18 +159,22 @@ export function SkeletonList({ items = 5 }: { items?: number }) {
   );
 }
 
-export function SkeletonLine({ width = "100%" }: { width?: string }) {
+export function SkeletonLine({ width = '100%' }: { width?: string }) {
   return <Skeleton className="h-4" style={{ width: width as string }} />;
 }
 
-export function SkeletonChart({ height = "h-56" }: { height?: string }) {
+export function SkeletonChart({ height = 'h-56' }: { height?: string }) {
   return (
     <div className={`bg-th-surface rounded-lg p-5 ${height} animate-skeleton-stagger`}>
       <Skeleton className="h-4 w-28 mb-4" delay={0} />
       <div className="flex items-end gap-2 h-[calc(100%-2rem)]">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex-1 flex flex-col justify-end gap-1">
-            <Skeleton className="w-full" delay={i * 40 + 100} style={{ height: `${30 + Math.random() * 60}%` }} />
+            <Skeleton
+              className="w-full"
+              delay={i * 40 + 100}
+              style={{ height: `${30 + Math.random() * 60}%` }}
+            />
           </div>
         ))}
       </div>
@@ -155,7 +194,11 @@ export function SkeletonForm({ fields = 4 }: { fields?: number }) {
   return (
     <div className="bg-th-surface rounded-lg p-6 space-y-5">
       {Array.from({ length: fields }).map((_, i) => (
-        <div key={i} className="space-y-1.5 animate-skeleton-stagger" style={{ animationDelay: `${i * 60}ms` }}>
+        <div
+          key={i}
+          className="space-y-1.5 animate-skeleton-stagger"
+          style={{ animationDelay: `${i * 60}ms` }}
+        >
           <Skeleton className="h-3 w-20" delay={i * 60} />
           <Skeleton className="h-10 w-full" delay={i * 60 + 30} />
         </div>
@@ -166,9 +209,7 @@ export function SkeletonForm({ fields = 4 }: { fields?: number }) {
 }
 
 export function SkeletonSearchBar() {
-  return (
-    <Skeleton className="h-12 w-full" delay={0} />
-  );
+  return <Skeleton className="h-12 w-full" delay={0} />;
 }
 
 export function SkeletonFilterPills({ count = 6 }: { count?: number }) {

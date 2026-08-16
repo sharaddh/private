@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { useApi, useApiPost, useApiPut, useApiDelete } from "./useApi";
-import { inventoryService, type InventoryListParams } from "../services";
-import type { InventoryItem, InventoryFormData, PaginatedResponse } from "../types";
+import { useCallback, useEffect, useState } from 'react';
+import { useApi, useApiPost, useApiPut, useApiDelete } from './useApi';
+import { inventoryService, type InventoryListParams } from '../services';
+import type { InventoryItem, InventoryFormData, PaginatedResponse } from '../types';
 
 export function useSkuExists(sku: string, enabled: boolean) {
   const [result, setResult] = useState<{ exists: boolean; item?: InventoryItem } | null>(null);
@@ -37,8 +37,12 @@ export function useSkuExists(sku: string, enabled: boolean) {
 
 export function useInventory(params?: InventoryListParams) {
   const qs = params
-    ? `?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "").map(([k, v]) => [k, String(v)])).toString()}`
-    : "";
+    ? `?${new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v != null && v !== '')
+          .map(([k, v]) => [k, String(v)])
+      ).toString()}`
+    : '';
 
   const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryItem>>(
     () => inventoryService.listFiltered(params ?? {}),
@@ -47,10 +51,10 @@ export function useInventory(params?: InventoryListParams) {
   );
 
   return {
-    items: Array.isArray(data) ? data : data?.data ?? [],
-    total: data && !Array.isArray(data) ? data.total ?? 0 : 0,
-    page: data && !Array.isArray(data) ? data.page ?? 1 : 1,
-    pages: data && !Array.isArray(data) ? data.pages ?? 0 : 0,
+    items: Array.isArray(data) ? data : (data?.data ?? []),
+    total: data && !Array.isArray(data) ? (data.total ?? 0) : 0,
+    page: data && !Array.isArray(data) ? (data.page ?? 1) : 1,
+    pages: data && !Array.isArray(data) ? (data.pages ?? 0) : 0,
     loading,
     error,
     refetch,

@@ -1,14 +1,14 @@
-import api from "../api";
-import { ApiService, buildQueryString } from "./base";
-import type { ApiResponse, Todo, PaginationParams } from "../types";
+import api from '../api';
+import { ApiService, buildQueryString } from './base';
+import type { ApiResponse, Todo, PaginationParams } from '../types';
 
 class TodoService extends ApiService {
   constructor() {
-    super("/api/todos");
+    super('/api/todos');
   }
 
   async listAll(params?: PaginationParams): Promise<ApiResponse<Todo[]>> {
-    const qs = params ? buildQueryString(params) : "";
+    const qs = params ? buildQueryString(params) : '';
     return api.get<Todo[]>(`${this.basePath}${qs}`);
   }
 

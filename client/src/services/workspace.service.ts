@@ -1,10 +1,10 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse, Visit, Order, Bill } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse, Visit, Order, Bill } from '../types';
 
 class WorkspaceService extends ApiService {
   constructor() {
-    super("/api/workspace");
+    super('/api/workspace');
   }
 
   async getTodos(): Promise<ApiResponse<{ _id: string; task: string; done: boolean }[]>> {
@@ -23,11 +23,13 @@ class WorkspaceService extends ApiService {
     return api.del(`${this.basePath}/todos/${id}`);
   }
 
-  async getQuickStats(): Promise<ApiResponse<{
-    todayVisits: Visit[];
-    pendingOrders: Order[];
-    recentBills: Bill[];
-  }>> {
+  async getQuickStats(): Promise<
+    ApiResponse<{
+      todayVisits: Visit[];
+      pendingOrders: Order[];
+      recentBills: Bill[];
+    }>
+  > {
     return api.get(`${this.basePath}/quick-stats`);
   }
 }

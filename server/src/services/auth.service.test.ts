@@ -1,0 +1,131 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import bcrypt from "bcrypt";
+import { User } from "../models/user";
+import { signRefresh } from "../utils/jwt";
+import { loginUser, staffLogin, warehouseLogin, refreshToken, registerUser } from "./auth.service";
+
+vi.mock("bcrypt", () => ({
+  default: {
+    hash: vi.fn(),
+    compare: vi.fn(),
+  },
+  hash: vi.fn(),
+  compare: vi.fn(),
+}));
+
+vi.mock("../models/user", () => ({
+  User: {
+    findOne: vi.fn(),
+    findById: vi.fn(),
+    findByIdAndUpdate: vi.fn(),
+    find: vi.fn(),
+    create: vi.fn(),
+    countDocuments: vi.fn(),
+  },
+}));
+
+vi.mock("../models/branch", () => ({
+  Branch: {
+    find: vi.fn(),
+    findById: vi.fn(),
+  },
+}));
+
+const ownerUser = {
+  _id: { toString: () => "user-1" },
+  username: "admin",
+  passwordHash: "hashed",
+  name: "Admin",
+  mobile: "123",
+  role: "owner",
+  branches: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+function queryResult(value: unknown) {
+  return { lean: vi.fn().mockResolvedValue(value) };
+}
+
+describe("auth.service", () => {
+  beforeEach(() => {
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(bcrypt.hash).mockResolvedValue("hashed" as never);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("loginUser requires username and password", async () => {
+    await expect(loginUser({ username: "", password: "" })).rejects.toMatchObject({
+      statusCode: 400,
+    });
+  });
+
+  it("loginUser rejects staff accounts", async () => {
+    vi.mocked(User.findOne).mockReturnValue(queryResult({ ...ownerUser, role: "staff" }) as never);
+    await expect(loginUser({ username: "staff", password: "x" })).rejects.toThrow(
+      "Staff must use the staff login page"
+    );
+  });
+
+  it("loginUser rejects invalid credentials", async () => {
+    vi.mocked(User.findOne).mockReturnValue(queryResult(ownerUser) as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+    await expect(loginUser({ username: "admin", password: "wrong" })).rejects.toThrow(
+      "Invalid credentials"
+    );
+  });
+
+  it("loginUser returns user, access and refresh tokens", async () => {
+    vi.mocked(User.findOne).mockReturnValue(queryResult(ownerUser) as never);
+    const result = await loginUser({ username: "admin", password: "correct" });
+    expect(result.user.id).toBe("user-1");
+    expect(result.user.role).toBe("owner");
+    expect(result.access).toBeTruthy();
+    expect(result.refresh).toBeTruthy();
+  });
+
+  it("staffLogin requires a branch assignment", async () => {
+    vi.mocked(User.findOne).mockReturnValue(
+      queryResult({ ...ownerUser, role: "staff", branches: [] }) as never
+    );
+    await expect(staffLogin({ username: "staff", password: "x" })).rejects.toThrow(
+      "has not been assigned to any branch"
+    );
+  });
+
+  it("warehouseLogin only allows owners", async () => {
+    vi.mocked(User.findOne).mockReturnValue(queryResult({ ...ownerUser, role: "staff" }) as never);
+    await expect(warehouseLogin({ username: "staff", password: "x" })).rejects.toThrow(
+      "Only owners can access the warehouse"
+    );
+  });
+
+  it("refreshToken mints a new access token for an existing user", async () => {
+    vi.mocked(User.findById).mockReturnValue(queryResult(ownerUser) as never);
+    const refresh = signRefresh({ sub: "user-1" });
+    const { access } = await refreshToken(refresh);
+    expect(access).toBeTruthy();
+  });
+
+  it("refreshToken throws for unknown users", async () => {
+    vi.mocked(User.findById).mockReturnValue(queryResult(null) as never);
+    const refresh = signRefresh({ sub: "missing" });
+    await expect(refreshToken(refresh)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("registerUser requires owner role", async () => {
+    await expect(registerUser({ username: "u", password: "p" }, "staff")).rejects.toMatchObject({
+      statusCode: 403,
+    });
+  });
+
+  it("registerUser rejects duplicate usernames", async () => {
+    vi.mocked(User.findOne).mockReturnValue(queryResult({ _id: "existing" }) as never);
+    await expect(registerUser({ username: "dup", password: "p" }, "owner")).rejects.toMatchObject({
+      statusCode: 409,
+    });
+  });
+});

@@ -87,7 +87,7 @@ export async function getInventoryBySku(code: string) {
 }
 
 export async function getQrImage(id: string) {
-  const item = await Inventory.findById(id).select("sku").lean() as { sku: string } | null;
+  const item = (await Inventory.findById(id).select("sku").lean()) as { sku: string } | null;
   if (!item) throw new AppError(404, "Inventory item not found");
   return { sku: item.sku };
 }
@@ -113,7 +113,11 @@ export async function updateInventory(id: string, updates: Record<string, unknow
       filtered[key] = updates[key];
     }
   }
-  const item = await Inventory.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
+  const item = await Inventory.findByIdAndUpdate(
+    id,
+    { $set: filtered },
+    { new: true, runValidators: true }
+  ).lean();
   if (!item) throw new AppError(404, "Inventory item not found");
   return item;
 }

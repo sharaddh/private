@@ -1,13 +1,42 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Plus, ScanLine, Search, Tag, Grid3X3, Eye,
-  Barcode, Palette, Box, Maximize2, Sparkles, Building2, Layers
-} from "lucide-react";
-import { useTranslate } from "../../context/TranslateContext";
+  X,
+  Plus,
+  ScanLine,
+  Search,
+  Tag,
+  Grid3X3,
+  Eye,
+  Barcode,
+  Palette,
+  Box,
+  Maximize2,
+  Sparkles,
+  Building2,
+  Layers,
+} from 'lucide-react';
+import { useTranslate } from '../../context/TranslateContext';
 
-interface Frame { sku: string; brand: string; model: string; color: string; price: number; quantity?: number }
-interface Lens { sku: string; brand: string; features: string[]; index: string; price: number; coating: string }
-interface Accessory { name: string; price: number }
+interface Frame {
+  sku: string;
+  brand: string;
+  model: string;
+  color: string;
+  price: number;
+  quantity?: number;
+}
+interface Lens {
+  sku: string;
+  brand: string;
+  features: string[];
+  index: string;
+  price: number;
+  coating: string;
+}
+interface Accessory {
+  name: string;
+  price: number;
+}
 
 interface SectionCardProps {
   icon: React.ReactNode;
@@ -33,7 +62,9 @@ function SectionCard({ icon, title, count, onAdd, onScan, children, emptyText }:
           </div>
           <div>
             <h2 className="text-base font-bold text-th-text">{title}</h2>
-            <span className="text-[15px] font-medium text-th-secondary">{count} item{count !== 1 ? "s" : ""}</span>
+            <span className="text-[15px] font-medium text-th-secondary">
+              {count} item{count !== 1 ? 's' : ''}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -75,9 +106,9 @@ interface OrderFramesProps {
   updateFrame: (i: number, field: string, value: any) => void;
   removeFrame: (i: number) => void;
   onScan: () => void;
-  searchInventory: (q: string, type: "frame", idx: number) => void;
+  searchInventory: (q: string, type: 'frame', idx: number) => void;
   suggestions: any[];
-  suggestionsFor: { type: "frame"; idx: number } | null;
+  suggestionsFor: { type: 'frame'; idx: number } | null;
   setSuggestions: (s: any[]) => void;
   setSuggestionsFor: (s: any) => void;
   isFocused: boolean;
@@ -85,17 +116,35 @@ interface OrderFramesProps {
   setOrderFrames: (f: Frame[] | ((prev: Frame[]) => Frame[])) => void;
 }
 
-function OrderFrames({ orderFrames, updateFrame, removeFrame, onScan, searchInventory, suggestions, suggestionsFor, setSuggestions, setSuggestionsFor, isFocused, setIsFocused, setOrderFrames }: OrderFramesProps) {
+function OrderFrames({
+  orderFrames,
+  updateFrame,
+  removeFrame,
+  onScan,
+  searchInventory,
+  suggestions,
+  suggestionsFor,
+  setSuggestions,
+  setSuggestionsFor,
+  isFocused,
+  setIsFocused,
+  setOrderFrames,
+}: OrderFramesProps) {
   const { uiT } = useTranslate();
 
   return (
     <SectionCard
       icon={<Eye size={20} className="text-[#1ed760]" />}
-      title={uiT("Frames", "फ्रेम")}
+      title={uiT('Frames', 'फ्रेम')}
       count={orderFrames.length}
-      onAdd={() => setOrderFrames((prev) => [...prev, { sku: "", brand: "", model: "", color: "", price: 0 }])}
+      onAdd={() =>
+        setOrderFrames((prev) => [...prev, { sku: '', brand: '', model: '', color: '', price: 0 }])
+      }
       onScan={onScan}
-      emptyText={uiT("No frames added. Click Add or Scan.", "कोई फ्रेम नहीं जोड़ा गया। Add या Scan पर क्लिक करें।")}
+      emptyText={uiT(
+        'No frames added. Click Add or Scan.',
+        'कोई फ्रेम नहीं जोड़ा गया। Add या Scan पर क्लिक करें।'
+      )}
     >
       <AnimatePresence>
         {orderFrames.map((f, i) => (
@@ -108,53 +157,114 @@ function OrderFrames({ orderFrames, updateFrame, removeFrame, onScan, searchInve
           >
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="relative col-span-1 sm:col-span-2">
-                <Barcode size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
+                <Barcode
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                />
                 <input
                   placeholder="SKU / Barcode"
                   value={f.sku}
-                  onChange={(e) => { updateFrame(i, "sku", e.target.value); searchInventory(e.target.value, "frame", i); }}
+                  onChange={(e) => {
+                    updateFrame(i, 'sku', e.target.value);
+                    searchInventory(e.target.value, 'frame', i);
+                  }}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                   className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
                 />
 
-                {suggestionsFor?.type === "frame" && suggestionsFor.idx === i && isFocused && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 bg-th-card rounded-md max-h-48 overflow-y-auto z-30 shadow-lg">
-                    {suggestions.map((s: any, si: number) => (
-                      <button key={si} type="button"
-                        onMouseDown={() => {
-                          updateFrame(i, "sku", s.sku || ""); updateFrame(i, "brand", s.brand || "");
-                          updateFrame(i, "model", s.model || ""); updateFrame(i, "color", s.color || "");
-                          updateFrame(i, "price", s.sellingPrice || 0); updateFrame(i, "quantity", typeof s.quantity === "number" ? s.quantity : undefined); setSuggestions([]); setSuggestionsFor(null);
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm hover:bg-[#1ed760]/10 flex items-center gap-3 border-b border-th-elevated last:border-0 transition-colors"
-                      >
-                        <Search size={14} className="text-[#1ed760]" />
-                        <span className="font-bold text-th-text">{s.sku}</span>
-                        <span className="text-th-secondary text-xs">{s.brand} {s.model}</span>
-                        <span className={`text-xs font-semibold ${typeof s.quantity === "number" && s.quantity <= 0 ? "text-[#e53935]" : "text-th-secondary"}`}>{uiT("Stock", "स्टॉक")}: {s.quantity ?? "—"}</span>
-                        <span className="text-th-text font-semibold ml-auto">₹{s.sellingPrice || 0}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {suggestionsFor?.type === 'frame' &&
+                  suggestionsFor.idx === i &&
+                  isFocused &&
+                  suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-th-card rounded-md max-h-48 overflow-y-auto z-30 shadow-lg">
+                      {suggestions.map((s: any, si: number) => (
+                        <button
+                          key={si}
+                          type="button"
+                          onMouseDown={() => {
+                            updateFrame(i, 'sku', s.sku || '');
+                            updateFrame(i, 'brand', s.brand || '');
+                            updateFrame(i, 'model', s.model || '');
+                            updateFrame(i, 'color', s.color || '');
+                            updateFrame(i, 'price', s.sellingPrice || 0);
+                            updateFrame(
+                              i,
+                              'quantity',
+                              typeof s.quantity === 'number' ? s.quantity : undefined
+                            );
+                            setSuggestions([]);
+                            setSuggestionsFor(null);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm hover:bg-[#1ed760]/10 flex items-center gap-3 border-b border-th-elevated last:border-0 transition-colors"
+                        >
+                          <Search size={14} className="text-[#1ed760]" />
+                          <span className="font-bold text-th-text">{s.sku}</span>
+                          <span className="text-th-secondary text-xs">
+                            {s.brand} {s.model}
+                          </span>
+                          <span
+                            className={`text-xs font-semibold ${typeof s.quantity === 'number' && s.quantity <= 0 ? 'text-[#e53935]' : 'text-th-secondary'}`}
+                          >
+                            {uiT('Stock', 'स्टॉक')}: {s.quantity ?? '—'}
+                          </span>
+                          <span className="text-th-text font-semibold ml-auto">
+                            ₹{s.sellingPrice || 0}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               <div className="relative">
-                <Building2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-                <input placeholder={uiT("Brand", "ब्रांड")} value={f.brand} onChange={(e) => updateFrame(i, "brand", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Building2
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                />
+                <input
+                  placeholder={uiT('Brand', 'ब्रांड')}
+                  value={f.brand}
+                  onChange={(e) => updateFrame(i, 'brand', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
               <div className="relative">
-                <Box size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-                <input placeholder={uiT("Model", "मॉडल")} value={f.model} onChange={(e) => updateFrame(i, "model", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Box
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                />
+                <input
+                  placeholder={uiT('Model', 'मॉडल')}
+                  value={f.model}
+                  onChange={(e) => updateFrame(i, 'model', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
               <div className="relative">
-                <Palette size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-                <input placeholder={uiT("Color", "रंग")} value={f.color} onChange={(e) => updateFrame(i, "color", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Palette
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                />
+                <input
+                  placeholder={uiT('Color', 'रंग')}
+                  value={f.color}
+                  onChange={(e) => updateFrame(i, 'color', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-th-secondary">₹</span>
-                <input type="number" placeholder={uiT("Price", "मूल्य")} value={f.price || ""} onChange={(e) => updateFrame(i, "price", Number(e.target.value))} onWheel={(e) => (e.target as HTMLElement).blur()} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-th-secondary">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  placeholder={uiT('Price', 'मूल्य')}
+                  value={f.price || ''}
+                  onChange={(e) => updateFrame(i, 'price', Number(e.target.value))}
+                  onWheel={(e) => (e.target as HTMLElement).blur()}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
             </div>
 
@@ -183,21 +293,26 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
   const { uiT } = useTranslate();
 
   const LENS_FEATURES = [
-    uiT("Single Vision", "सिंगल विज़न"),
-    uiT("Bifocal", "बाइफोकल"),
-    uiT("Progressive", "प्रोग्रेसिव"),
-    uiT("Bluecut", "ब्लूकट"),
-    uiT("Photochromic", "फोटोक्रोमिक"),
-    uiT("Anti-Glare", "एंटी-ग्लेयर"),
+    uiT('Single Vision', 'सिंगल विज़न'),
+    uiT('Bifocal', 'बाइफोकल'),
+    uiT('Progressive', 'प्रोग्रेसिव'),
+    uiT('Bluecut', 'ब्लूकट'),
+    uiT('Photochromic', 'फोटोक्रोमिक'),
+    uiT('Anti-Glare', 'एंटी-ग्लेयर'),
   ];
 
   return (
     <SectionCard
       icon={<Layers size={20} className="text-[#1ed760]" />}
-      title={uiT("Lenses", "लेंस")}
+      title={uiT('Lenses', 'लेंस')}
       count={orderLenses.length}
-      onAdd={() => setOrderLenses((prev) => [...prev, { sku: "", brand: "", features: [], index: "", price: 0, coating: "" }])}
-      emptyText={uiT("No lenses added. Click Add.", "कोई लेंस नहीं जोड़ा गया। Add पर क्लिक करें।")}
+      onAdd={() =>
+        setOrderLenses((prev) => [
+          ...prev,
+          { sku: '', brand: '', features: [], index: '', price: 0, coating: '' },
+        ])
+      }
+      emptyText={uiT('No lenses added. Click Add.', 'कोई लेंस नहीं जोड़ा गया। Add पर क्लिक करें।')}
     >
       <AnimatePresence>
         {orderLenses.map((l, i) => (
@@ -209,17 +324,26 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
             className="flex gap-3 bg-th-elevated rounded-md p-3"
           >
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-
               <div className="relative col-span-1 sm:col-span-2">
-                <Barcode size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-                <input placeholder="SKU" value={l.sku} onChange={(e) => updateLens(i, "sku", e.target.value)} className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Barcode
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                />
+                <input
+                  placeholder="SKU"
+                  value={l.sku}
+                  onChange={(e) => updateLens(i, 'sku', e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
 
               {/* Multi-Select Chips for Features */}
               <div className="col-span-1 sm:col-span-2 bg-th-elevated p-2.5 rounded-md">
                 <div className="flex items-center gap-1.5 mb-2 px-1">
                   <Layers size={12} className="text-th-secondary" />
-                  <span className="text-[14px] font-bold text-th-secondary uppercase tracking-wider">{uiT("Lens Types & Features", "लेंस प्रकार और विशेषताएँ")}</span>
+                  <span className="text-[14px] font-bold text-th-secondary uppercase tracking-wider">
+                    {uiT('Lens Types & Features', 'लेंस प्रकार और विशेषताएँ')}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {LENS_FEATURES.map((feature) => {
@@ -232,12 +356,12 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                           const newFeatures = isSelected
                             ? l.features.filter((f) => f !== feature)
                             : [...l.features, feature];
-                          updateLens(i, "features", newFeatures);
+                          updateLens(i, 'features', newFeatures);
                         }}
                         className={`px-3 py-1.5 rounded-lg text-[15px] font-semibold transition-all ${
                           isSelected
-                            ? "bg-[#1ed760] text-black"
-                            : "bg-th-elevated text-th-secondary hover:bg-th-card"
+                            ? 'bg-[#1ed760] text-black'
+                            : 'bg-th-elevated text-th-secondary hover:bg-th-card'
                         }`}
                       >
                         {feature}
@@ -248,23 +372,56 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
               </div>
 
               <div className="relative">
-                <Building2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none" />
-                <input placeholder={uiT("Brand", "ब्रांड")} value={l.brand} onChange={(e) => updateLens(i, "brand", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Building2
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none"
+                />
+                <input
+                  placeholder={uiT('Brand', 'ब्रांड')}
+                  value={l.brand}
+                  onChange={(e) => updateLens(i, 'brand', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
 
               <div className="relative">
-                <Maximize2 size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none" />
-                <input placeholder={uiT("Index (e.g. 1.61)", "इंडेक्स (जैसे 1.61)")} value={l.index} onChange={(e) => updateLens(i, "index", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Maximize2
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none"
+                />
+                <input
+                  placeholder={uiT('Index (e.g. 1.61)', 'इंडेक्स (जैसे 1.61)')}
+                  value={l.index}
+                  onChange={(e) => updateLens(i, 'index', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
 
               <div className="relative">
-                <Sparkles size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none" />
-                <input placeholder={uiT("Coating", "कोटिंग")} value={l.coating} onChange={(e) => updateLens(i, "coating", e.target.value)} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <Sparkles
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none"
+                />
+                <input
+                  placeholder={uiT('Coating', 'कोटिंग')}
+                  value={l.coating}
+                  onChange={(e) => updateLens(i, 'coating', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
 
               <div className="relative col-span-1 sm:col-span-2">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-th-secondary">₹</span>
-                <input type="number" placeholder={uiT("Price", "मूल्य")} value={l.price || ""} onChange={(e) => updateLens(i, "price", Number(e.target.value))} onWheel={(e) => (e.target as HTMLElement).blur()} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-th-secondary">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  placeholder={uiT('Price', 'मूल्य')}
+                  value={l.price || ''}
+                  onChange={(e) => updateLens(i, 'price', Number(e.target.value))}
+                  onWheel={(e) => (e.target as HTMLElement).blur()}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                />
               </div>
             </div>
 
@@ -289,17 +446,22 @@ interface OrderAccessoriesProps {
   setOrderAccessories: (a: Accessory[] | ((prev: Accessory[]) => Accessory[])) => void;
 }
 
-function OrderAccessories({ orderAccessories, updateAccessory, removeAccessory, setOrderAccessories }: OrderAccessoriesProps) {
+function OrderAccessories({
+  orderAccessories,
+  updateAccessory,
+  removeAccessory,
+  setOrderAccessories,
+}: OrderAccessoriesProps) {
   const { uiT } = useTranslate();
 
   return (
     <div className="w-full">
       <SectionCard
         icon={<Grid3X3 size={20} className="text-[#1ed760]" />}
-        title={uiT("Accessories", "एक्सेसरीज़")}
+        title={uiT('Accessories', 'एक्सेसरीज़')}
         count={orderAccessories.length}
-        onAdd={() => setOrderAccessories((prev) => [...prev, { name: "", price: 0 }])}
-        emptyText={uiT("No accessories added yet.", "अभी तक कोई एक्सेसरी नहीं जोड़ी गई।")}
+        onAdd={() => setOrderAccessories((prev) => [...prev, { name: '', price: 0 }])}
+        emptyText={uiT('No accessories added yet.', 'अभी तक कोई एक्सेसरी नहीं जोड़ी गई।')}
       >
         <AnimatePresence>
           {orderAccessories.map((a, i) => (
@@ -312,12 +474,29 @@ function OrderAccessories({ orderAccessories, updateAccessory, removeAccessory, 
             >
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Box size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary" />
-                  <input placeholder={uiT("Accessory Name", "एक्सेसरी का नाम")} value={a.name} onChange={(e) => updateAccessory(i, "name", e.target.value)} className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                  <Box
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
+                  />
+                  <input
+                    placeholder={uiT('Accessory Name', 'एक्सेसरी का नाम')}
+                    value={a.name}
+                    onChange={(e) => updateAccessory(i, 'name', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-th-secondary">₹</span>
-                  <input type="number" placeholder={uiT("Price", "मूल्य")} value={a.price || ""} onChange={(e) => updateAccessory(i, "price", Number(e.target.value))} onWheel={(e) => (e.target as HTMLElement).blur()} className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-th-secondary">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    placeholder={uiT('Price', 'मूल्य')}
+                    value={a.price || ''}
+                    onChange={(e) => updateAccessory(i, 'price', Number(e.target.value))}
+                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                    className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  />
                 </div>
               </div>
               <motion.button
@@ -336,17 +515,27 @@ function OrderAccessories({ orderAccessories, updateAccessory, removeAccessory, 
 }
 
 interface Props {
-  orderFrames: Frame[]; setOrderFrames: (f: Frame[] | ((prev: Frame[]) => Frame[])) => void;
-  updateFrame: (i: number, field: string, value: any) => void; removeFrame: (i: number) => void;
-  orderLenses: Lens[]; setOrderLenses: (l: Lens[] | ((prev: Lens[]) => Lens[])) => void;
-  updateLens: (i: number, field: string, value: any) => void; removeLens: (i: number) => void;
-  orderAccessories: Accessory[]; setOrderAccessories: (a: Accessory[] | ((prev: Accessory[]) => Accessory[])) => void;
-  updateAccessory: (i: number, field: string, value: any) => void; removeAccessory: (i: number) => void;
+  orderFrames: Frame[];
+  setOrderFrames: (f: Frame[] | ((prev: Frame[]) => Frame[])) => void;
+  updateFrame: (i: number, field: string, value: any) => void;
+  removeFrame: (i: number) => void;
+  orderLenses: Lens[];
+  setOrderLenses: (l: Lens[] | ((prev: Lens[]) => Lens[])) => void;
+  updateLens: (i: number, field: string, value: any) => void;
+  removeLens: (i: number) => void;
+  orderAccessories: Accessory[];
+  setOrderAccessories: (a: Accessory[] | ((prev: Accessory[]) => Accessory[])) => void;
+  updateAccessory: (i: number, field: string, value: any) => void;
+  removeAccessory: (i: number) => void;
   setStep: (s: string) => void;
-  onScan: () => void; searchInventory: (q: string, type: "frame", idx: number) => void;
-  suggestions: any[]; suggestionsFor: { type: "frame"; idx: number } | null;
-  setSuggestions: (s: any[]) => void; setSuggestionsFor: (s: any) => void;
-  isFocused: boolean; setIsFocused: (v: boolean) => void;
+  onScan: () => void;
+  searchInventory: (q: string, type: 'frame', idx: number) => void;
+  suggestions: any[];
+  suggestionsFor: { type: 'frame'; idx: number } | null;
+  setSuggestions: (s: any[]) => void;
+  setSuggestionsFor: (s: any) => void;
+  isFocused: boolean;
+  setIsFocused: (v: boolean) => void;
 }
 
 export default function OrderItems(props: Props) {

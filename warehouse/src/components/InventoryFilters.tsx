@@ -1,6 +1,6 @@
-import SearchInput from "./SearchInput";
-import FilterSelect from "./FilterSelect";
-import { LOCATIONS } from "../constants";
+import SearchInput from './SearchInput';
+import FilterSelect from './FilterSelect';
+import { LOCATIONS } from '../constants';
 
 interface Props {
   search: string;
@@ -11,7 +11,14 @@ interface Props {
   filteredCount: number;
 }
 
-export default function InventoryFilters({ search, onSearchChange, locationFilter, onLocationChange, totalCount, filteredCount }: Props) {
+export default function InventoryFilters({
+  search,
+  onSearchChange,
+  locationFilter,
+  onLocationChange,
+  totalCount,
+  filteredCount,
+}: Props) {
   return (
     <>
       <div className="flex flex-wrap gap-3">
@@ -25,7 +32,7 @@ export default function InventoryFilters({ search, onSearchChange, locationFilte
           value={locationFilter}
           onChange={onLocationChange}
           options={[
-            { value: "all", label: "All Locations" },
+            { value: 'all', label: 'All Locations' },
             ...LOCATIONS.map((l) => ({ value: l, label: l.charAt(0).toUpperCase() + l.slice(1) })),
           ]}
         />

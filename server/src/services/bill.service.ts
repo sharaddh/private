@@ -159,12 +159,8 @@ export async function createBill(
   return result as unknown as BillResult;
 }
 
-export async function updateBill(
-  billId: string,
-  updates: UpdateBillData
-): Promise<BillResult> {
+export async function updateBill(billId: string, updates: UpdateBillData): Promise<BillResult> {
   const result = await withTransaction(async (session) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bill = await (Bill as any).findById(billId).session(session);
     if (!bill) {
       throw new AppError(404, "Bill not found");
@@ -174,11 +170,13 @@ export async function updateBill(
     const oldPending = bill.pendingAmount || 0;
     const oldStatus = bill.status;
 
-    const items = updates.items || bill.items.map((it: { description: string; quantity: number; unitPrice: number }) => ({
-      description: it.description,
-      quantity: it.quantity,
-      unitPrice: it.unitPrice,
-    }));
+    const items =
+      updates.items ||
+      bill.items.map((it: { description: string; quantity: number; unitPrice: number }) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+      }));
     const discount = updates.discount !== undefined ? updates.discount : bill.discount;
     const tax = updates.tax !== undefined ? updates.tax : bill.tax;
     const advancePaid = updates.advancePaid !== undefined ? updates.advancePaid : bill.advancePaid;
@@ -207,11 +205,7 @@ export async function updateBill(
     bill.totalAmount = totalAmount;
     bill.pendingAmount = pendingAmount;
 
-    if (
-      oldStatus !== bill.status &&
-      Array.isArray(bill.stockItems) &&
-      bill.stockItems.length > 0
-    ) {
+    if (oldStatus !== bill.status && Array.isArray(bill.stockItems) && bill.stockItems.length > 0) {
       if (bill.status === "Cancelled") {
         await restoreStockForOrder({ stockItems: bill.stockItems }, session);
       } else if (oldStatus === "Cancelled") {
@@ -246,7 +240,6 @@ export async function collectBillPayment(
   paymentMode: string
 ): Promise<{ payment: unknown; bill: unknown }> {
   const result = await withTransaction(async (session) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bill = await (Bill as any).findById(billId).session(session);
     if (!bill) {
       throw new AppError(404, "Bill not found");
@@ -256,7 +249,7 @@ export async function collectBillPayment(
     }
 
     const actualCollect = Math.min(amount, bill.pendingAmount);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const payment = await (Payment as any).create(
       [
         {
@@ -312,18 +305,14 @@ export async function deleteBill(billId: string): Promise<void> {
 }
 
 export async function getBillById(billId: string): Promise<BillResult> {
-  const bill = await Bill.findById(billId)
-    .populate("customerId", "name mobile customerId")
-    .lean();
+  const bill = await Bill.findById(billId).populate("customerId", "name mobile customerId").lean();
   if (!bill) {
     throw new AppError(404, "Bill not found");
   }
   return bill as unknown as BillResult;
 }
 
-export async function listBills(
-  filters: BillFilters
-): Promise<PaginatedResult<BillResult>> {
+export async function listBills(filters: BillFilters): Promise<PaginatedResult<BillResult>> {
   const filter: Record<string, unknown> = {};
 
   if (filters.customerId) {

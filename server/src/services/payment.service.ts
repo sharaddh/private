@@ -69,7 +69,6 @@ export async function createPayment(data: CreatePaymentData): Promise<PaymentRes
     );
 
     if (data.billId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bill = await (Bill as any).findById(data.billId).session(session);
       if (bill) {
         bill.advancePaid = (bill.advancePaid || 0) + data.amount;
@@ -95,7 +94,6 @@ export async function updatePayment(
   updates: UpdatePaymentData
 ): Promise<PaymentResult> {
   const result = await withTransaction(async (session) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payment = await (Payment as any).findById(paymentId).session(session);
     if (!payment) {
       throw new AppError(404, "Payment not found");
@@ -119,7 +117,6 @@ export async function updatePayment(
     await payment.save({ session });
 
     if (payment.billId && Math.abs(diff) > 0.01) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bill = await (Bill as any).findById(payment.billId).session(session);
       if (bill) {
         bill.advancePaid = Math.max(0, (bill.advancePaid || 0) + diff);
@@ -142,14 +139,12 @@ export async function updatePayment(
 
 export async function deletePayment(paymentId: string): Promise<void> {
   await withTransaction(async (session) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payment = await (Payment as any).findByIdAndDelete(paymentId).session(session);
     if (!payment) {
       throw new AppError(404, "Payment not found");
     }
 
     if (payment.billId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bill = await (Bill as any).findById(payment.billId).session(session);
       if (bill) {
         bill.advancePaid = Math.max(0, (bill.advancePaid || 0) - payment.amount);

@@ -5,12 +5,12 @@ const BillItemSchema = new Schema({
   description: { type: String, required: true },
   quantity: { type: Number, default: 1 },
   unitPrice: { type: Number, default: 0 },
-  total: { type: Number, default: 0 }
+  total: { type: Number, default: 0 },
 });
 
 const StockItemSchema = new Schema({
   sku: { type: String },
-  quantity: { type: Number, default: 1 }
+  quantity: { type: Number, default: 1 },
 });
 
 const BillSchemaObj = new Schema(
@@ -26,7 +26,7 @@ const BillSchemaObj = new Schema(
     advancePaid: { type: Number, default: 0 },
     pendingAmount: { type: Number, default: 0 },
     totalAmount: { type: Number, default: 0 },
-    status: { type: String, enum: ["Active","Cancelled"], default: "Active" }
+    status: { type: String, enum: ["Active", "Cancelled"], default: "Active" },
   },
   { timestamps: true }
 );

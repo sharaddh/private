@@ -3,13 +3,16 @@ import { Branch } from "../models/branch";
 import { getBranchModels } from "../models/db";
 import { ctx, type RequestContext } from "../utils/requestContext";
 import { logger } from "../utils/logger";
-import type { AuthRequest, BranchRequest } from "../types";
-import type { BranchModels } from "../models/db";
+import type { BranchRequest } from "../types";
 
 export type { BranchRequest } from "../types";
 
-export async function branchScope(req: BranchRequest, _res: Response, next: NextFunction): Promise<void> {
-  const branchId = req.headers["x-branch-id"] as string || req.query._branch as string;
+export async function branchScope(
+  req: BranchRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  const branchId = (req.headers["x-branch-id"] as string) || (req.query._branch as string);
 
   if (branchId) {
     try {

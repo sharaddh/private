@@ -62,14 +62,15 @@
 | `cors` | `^2.8.5` | Cross-Origin Resource Sharing middleware | Security |
 | `dotenv` | `^16.3.1` | Environment variable loading from .env files | Configuration |
 | `express` | `^4.18.2` | Web framework for Node.js | Core |
-| `express-rate-limit` | `^6.11.0` | Rate limiting middleware (200 req/min) | Security |
+| `express-rate-limit` | `^6.11.0` | Rate limiting middleware (1000 req/min, per-user for authenticated) | Security |
 | `helmet` | `^7.0.0` | Security headers middleware | Security |
 | `ioredis` | `^5.11.1` | Redis client for caching | Performance |
 | `jsonwebtoken` | `^9.0.0` | JWT token creation and verification | Security |
 | `mongoose` | `^7.5.0` | MongoDB ODM (Object Document Mapper) | Database |
-| `morgan` | `^1.10.0` | HTTP request logger middleware | Logging |
-| `nodemon` | `^3.1.14` | Auto-restart server on file changes | Development |
 | `pdfkit` | `^0.19.1` | PDF generation library (bills, demand lists) | Document Generation |
+| `pino` | `^9.14.0` | Structured JSON logging | Logging |
+| `pino-http` | `^10.5.0` | Request logging middleware with `x-request-id` | Logging |
+| `rate-limit-redis` | `^4.3.1` | Redis-backed rate limit store | Security |
 | `qrcode` | `^1.5.4` | QR code generation (inventory QR, WhatsApp QR) | Document Generation |
 | `zod` | `^4.4.3` | Request body validation schema library | Validation |
 
@@ -82,9 +83,14 @@
 | `@types/cors` | `^2.8.18` | TypeScript type definitions for cors | Types |
 | `@types/express` | `^4.17.21` | TypeScript type definitions for express | Types |
 | `@types/jsonwebtoken` | `^9.0.2` | TypeScript type definitions for jsonwebtoken | Types |
-| `@types/morgan` | `^1.9.4` | TypeScript type definitions for morgan | Types |
 | `@types/pdfkit` | `^0.17.6` | TypeScript type definitions for pdfkit | Types |
 | `@types/qrcode` | `^1.5.6` | TypeScript type definitions for qrcode | Types |
+| `eslint` | `^10.8.1` | Linting | Quality |
+| `typescript-eslint` | `^8.67.0` | TypeScript ESLint config | Quality |
+| `eslint-config-prettier` | `^10.1.8` | Disables conflicting ESLint rules | Quality |
+| `prettier` | `^3.9.6` | Code formatter | Quality |
+| `pino-pretty` | `^11.3.0` | Pretty-print pino logs in development | Development |
+| `vitest` | `^2.1.9` | Unit testing framework | Testing |
 | `ts-node-dev` | `^2.0.0` | TypeScript execution with auto-reload | Development |
 | `typescript` | `5.2.2` | TypeScript compiler (pinned version) | Build |
 
@@ -313,7 +319,7 @@ Business Event → WhatsApp Service → Baileys Socket → WhatsApp Servers
 
 | Service | Rate Limit | Implementation |
 |---------|------------|----------------|
-| Express API | 200 req/min per IP | `express-rate-limit` |
+| Express API | 1000 req/min per user / per IP (anonymous) | `express-rate-limit` |
 | WhatsApp Broadcast | Anti-ban throttling | `delayMin: 2000ms`, `delayMax: 5000ms`, `batchSize: 20`, `pause: 15000ms + jitter` |
 
 ---
@@ -492,10 +498,19 @@ constants.ts → API URLs, configuration
 | `PORT` | No | `4000` | Server listen port |
 | `MONGO_URI` | Yes | `""` | MongoDB connection string |
 | `JWT_SECRET` | Yes (prod) | `""` (dev warns) | JWT signing secret |
-| `JWT_ACCESS_EXPIRY` | No | `24h` | Access token expiration |
+| `JWT_ACCESS_EXPIRY` | No | `7d` | Access token expiration |
 | `JWT_REFRESH_EXPIRY` | No | `7d` | Refresh token expiration |
-| `REDIS_URL` | No | `""` | Redis connection string (optional) |
+| `REDIS_URL` | No | `""` | Redis connection string (optional; enables Redis-backed rate limits) |
 | `NODE_ENV` | No | `development` | Environment mode |
+| `CORS_ORIGINS` | No | `""` | Comma-separated allowed origins (empty = reflect request origin) |
+| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Global rate limit window |
+| `RATE_LIMIT_MAX` | No | `1000` | Global rate limit max requests per window |
+| `AUTH_RATE_LIMIT_MAX` | No | `30` | Auth endpoint rate limit max per window per IP |
+| `LOG_LEVEL` | No | `info` | Pino log level (debug/info/warn/error) |
+| `ENABLE_CLUSTER` | No | `false` | Run server across all CPUs (cluster mode) |
+| `CLUSTER_WORKERS` | No | `0` | Cluster worker count (`0` = auto = CPU count) |
+| `WAREHOUSE_DB_NAME` | No | `kmj_warehouse` | Warehouse MongoDB database name |
+| `TZ` | No | `Asia/Kolkata` | Application timezone |
 
 ### 7.2 Client Environment
 
@@ -529,7 +544,7 @@ constants.ts → API URLs, configuration
 ### 8.2 Dependency Overlap Analysis
 
 **Server-only packages** (not used by client/warehouse):
-- `@whiskeysockets/baileys`, `bcrypt`, `compression`, `cors`, `dotenv`, `express`, `express-rate-limit`, `helmet`, `ioredis`, `jsonwebtoken`, `mongoose`, `morgan`, `nodemon`, `pdfkit`, `zod`
+- `bcrypt`, `compression`, `cors`, `dotenv`, `express`, `express-rate-limit`, `helmet`, `ioredis`, `jsonwebtoken`, `mongoose`, `pdfkit`, `pino`, `pino-http`, `rate-limit-redis`, `zod`
 
 **Client-only packages** (not used by server/warehouse):
 - `framer-motion`, `html5-qrcode`, `jspdf`, `jspdf-autotable`, `jsqr`, `recharts`

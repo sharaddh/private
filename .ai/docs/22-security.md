@@ -91,16 +91,27 @@ app.use(cors({
 ```typescript
 app.use(rateLimit({
   windowMs: 60 * 1000,  // 1 minute
-  max: 200,              // 200 requests per minute
+  max: 1000,            // 1000 requests per minute
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // authenticated requests get their own per-user quota
+    const auth = req.headers.authorization;
+    if (auth?.startsWith("Bearer ")) {
+      try {
+        const payload = verifyToken<{ sub?: string }>(auth.slice(7));
+        if (payload?.sub) return `user:${payload.sub}`;
+      } catch { /* fall through to IP */ }
+    }
+    return req.ip || "unknown";
+  },
 }));
 ```
 
 ### Rate Limiting Rules
 
 1. **Global rate limit** on all `/api` routes
-2. **200 requests per minute** per IP
+2. **1000 requests per minute** per authenticated user / per IP (anonymous)
 3. **Return 429** when exceeded
 4. **Use standard headers** for client awareness
 5. **Consider stricter limits** for auth endpoints (future)
@@ -146,7 +157,7 @@ export function verifyToken<T = Record<string, unknown>>(token: string): T {
 ### JWT Rules
 
 1. **Always use strong JWT_SECRET** (random, 32+ chars)
-2. **Always set appropriate expiry** (24h for access, 7d for refresh)
+2. **Always set appropriate expiry** (7d for access, 7d for refresh)
 3. **Never expose JWT_SECRET** in code or logs
 4. **Always verify tokens** before processing
 5. **Never store tokens** in cookies (use localStorage for SPA)

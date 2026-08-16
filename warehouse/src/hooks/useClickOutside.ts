@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, type RefObject } from 'react';
 
 export function useClickOutside(ref: RefObject<HTMLElement>, handler: () => void) {
   useEffect(() => {
@@ -6,11 +6,11 @@ export function useClickOutside(ref: RefObject<HTMLElement>, handler: () => void
       if (!ref.current || ref.current.contains(e.target as Node)) return;
       handler();
     };
-    document.addEventListener("mousedown", listener);
-    document.addEventListener("touchstart", listener);
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
     return () => {
-      document.removeEventListener("mousedown", listener);
-      document.removeEventListener("touchstart", listener);
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
     };
   }, [ref, handler]);
 }

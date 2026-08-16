@@ -10,8 +10,18 @@ const router = Router();
 router.get("/active", asyncHandler(branchController.listActive));
 router.get("/", authenticate, asyncHandler(branchController.listAll));
 router.get("/:id", authenticate, asyncHandler(branchController.getById));
-router.post("/", authenticate, validate(createBranchSchema, "body"), asyncHandler(branchController.create));
-router.put("/:id", authenticate, validate(updateBranchSchema, "body"), asyncHandler(branchController.update));
+router.post(
+  "/",
+  authenticate,
+  validate(createBranchSchema, "body"),
+  asyncHandler(branchController.create)
+);
+router.put(
+  "/:id",
+  authenticate,
+  validate(updateBranchSchema, "body"),
+  asyncHandler(branchController.update)
+);
 router.delete("/:id", authenticate, asyncHandler(branchController.remove));
 
 export default router;

@@ -5,7 +5,7 @@ const EyeSchema = new Schema({
   sph: { type: Number },
   cyl: { type: Number },
   axis: { type: Number },
-  va: { type: String }
+  va: { type: String },
 });
 
 const PrescriptionSchemaObj = new Schema(
@@ -15,7 +15,7 @@ const PrescriptionSchemaObj = new Schema(
     rightEye: { dv: EyeSchema, nv: EyeSchema, pc: EyeSchema },
     leftEye: { dv: EyeSchema, nv: EyeSchema, pc: EyeSchema },
     pd: { type: String },
-    notes: { type: String }
+    notes: { type: String },
   },
   { timestamps: true }
 );

@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Visit } from "../models/visit";
 import { Customer } from "../models/customer";
 import { AppError } from "../middleware/errorHandler";
@@ -13,7 +12,15 @@ interface VisitData {
   remarks?: string;
 }
 
-const UPDATE_WHITELIST = ["customerId", "visitDate", "visitType", "doctorName", "shop", "shopId", "remarks"] as const;
+const UPDATE_WHITELIST = [
+  "customerId",
+  "visitDate",
+  "visitType",
+  "doctorName",
+  "shop",
+  "shopId",
+  "remarks",
+] as const;
 
 export async function listVisits(customerId?: string, limit = 100) {
   const filter: Record<string, unknown> = {};
@@ -41,7 +48,11 @@ export async function updateVisit(id: string, data: VisitData) {
       filtered[key] = (data as Record<string, unknown>)[key];
     }
   }
-  const visit = await Visit.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
+  const visit = await Visit.findByIdAndUpdate(
+    id,
+    { $set: filtered },
+    { new: true, runValidators: true }
+  ).lean();
   if (!visit) throw new AppError(404, "Visit not found");
   return visit;
 }

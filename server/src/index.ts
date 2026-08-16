@@ -1,30 +1,46 @@
+import os from "os";
+import cluster from "cluster";
 import mongoose, { connect, disconnect } from "mongoose";
-import { PORT, MONGO_URI, REDIS_URL, NODE_ENV, WAREHOUSE_DB_NAME } from "./config";
+import {
+  PORT,
+  MONGO_URI,
+  REDIS_URL,
+  NODE_ENV,
+  WAREHOUSE_DB_NAME,
+  ENABLE_CLUSTER,
+  CLUSTER_WORKERS,
+  isProduction,
+} from "./config";
 import app from "./app";
 import { initCache, destroyCache } from "./services/cache";
 import { logger } from "./utils/logger";
 
+const MONGO_OPTIONS = {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+};
+
 let server: ReturnType<typeof app.listen> | null = null;
 
-async function start() {
+async function connectMongo(): Promise<void> {
   if (!MONGO_URI) {
     logger.error("MONGO_URI not set");
     process.exit(1);
   }
-
   try {
-    await connect(MONGO_URI, {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
+    await connect(MONGO_URI, MONGO_OPTIONS);
   } catch (err) {
     logger.error("MongoDB connection failed", { error: (err as Error).message });
     process.exit(1);
   }
+}
 
+// One-time startup migrations. Run in the cluster primary only so workers never
+// race on index drops or data seeding.
+async function runMigrations(): Promise<void> {
   try {
-    const customers = mongoose.connection.db.collection("customers");
+    const customers = mongoose.connection.db!.collection("customers");
     const indexes = await customers.indexes();
     for (const idx of indexes) {
       if ((idx.key?.customerId || idx.key?.mobile) && idx.unique) {
@@ -32,9 +48,10 @@ async function start() {
         logger.info(`Dropped stale unique index: ${idx.name}`);
       }
     }
-  } catch (e: any) {
-    if (!e?.message?.includes?.("index not found")) {
-      logger.warn("Could not check/drop indexes", { error: e?.message });
+  } catch (e: unknown) {
+    const msg = (e as Error)?.message;
+    if (!msg?.includes?.("index not found")) {
+      logger.warn("Could not check/drop indexes", { error: msg });
     }
   }
 
@@ -42,7 +59,7 @@ async function start() {
     const whConn = mongoose.connection.useDb(WAREHOUSE_DB_NAME);
     const whCollections = ["inventory", "lensstocks", "cartitems", "withdrawals"];
     for (const collName of whCollections) {
-      const sourceColl = mongoose.connection.db.collection(collName);
+      const sourceColl = mongoose.connection.db!.collection(collName);
       const targetColl = whConn.collection(collName);
       const sourceCount = await sourceColl.countDocuments();
       const targetCount = await targetColl.countDocuments();
@@ -54,8 +71,8 @@ async function start() {
         }
       }
     }
-  } catch (e: any) {
-    logger.warn("Could not migrate warehouse data", { error: e?.message });
+  } catch (e: unknown) {
+    logger.warn("Could not migrate warehouse data", { error: (e as Error).message });
   }
 
   try {
@@ -71,18 +88,24 @@ async function start() {
       await fogMarkColl.insertMany(defaults);
       logger.info("Seeded default fog marks");
     }
-  } catch (e: any) {
-    logger.warn("Could not seed fog marks", { error: e?.message });
+  } catch (e: unknown) {
+    logger.warn("Could not seed fog marks", { error: (e as Error).message });
   }
+}
 
-  if (REDIS_URL) {
-    try {
-      const redis = initCache(REDIS_URL);
-      await redis.connect();
-    } catch (err) {
-      logger.warn("Redis connection failed, caching disabled", { error: (err as Error).message });
-    }
+async function initCacheIfConfigured(): Promise<void> {
+  if (!REDIS_URL) return;
+  try {
+    const redis = initCache(REDIS_URL);
+    await redis.connect();
+  } catch (err) {
+    logger.warn("Redis connection failed, caching disabled", { error: (err as Error).message });
   }
+}
+
+async function startWorker(): Promise<void> {
+  await connectMongo();
+  await initCacheIfConfigured();
 
   server = app.listen(PORT, () => {
     logger.info(`KMJ Optical ERP Server [${NODE_ENV}] started`, {
@@ -90,19 +113,44 @@ async function start() {
       api: `http://localhost:${PORT}/api`,
       client: `http://localhost:${PORT}`,
       warehouse: `http://localhost:${PORT}/warehouse`,
+      pid: process.pid,
+      workerId: cluster.isWorker ? cluster.worker?.id : undefined,
     });
   });
 
-  if (NODE_ENV === "production") {
-    setInterval(() => {
-      fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
-    }, 10 * 60 * 1000);
+  if (isProduction) {
+    setInterval(
+      () => {
+        fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
+      },
+      10 * 60 * 1000
+    );
   }
 }
 
-async function gracefulShutdown(signal: string) {
-  logger.info(`Received ${signal}. Starting graceful shutdown...`);
-  server?.close();
+async function runPrimary(): Promise<void> {
+  await connectMongo();
+  await runMigrations();
+  await disconnect().catch(() => {});
+
+  const workerCount = CLUSTER_WORKERS || os.cpus().length;
+  logger.info(`Starting cluster with ${workerCount} workers`);
+  for (let i = 0; i < workerCount; i++) {
+    cluster.fork();
+  }
+
+  cluster.on("exit", (worker, code, signal) => {
+    logger.warn(`Worker ${worker.process.pid} exited`, { code, signal });
+    cluster.fork();
+  });
+}
+
+async function gracefulShutdown(signal: string): Promise<void> {
+  logger.info(`Received ${signal}. Starting graceful shutdown...`, { pid: process.pid });
+  if (server) {
+    server.close();
+    server = null;
+  }
   await destroyCache().catch(() => {});
   await disconnect().catch(() => {});
   process.exit(0);
@@ -111,7 +159,15 @@ async function gracefulShutdown(signal: string) {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-start().catch((err) => {
+async function main(): Promise<void> {
+  if (ENABLE_CLUSTER && cluster.isPrimary) {
+    await runPrimary();
+  } else {
+    await startWorker();
+  }
+}
+
+main().catch((err) => {
   logger.error("Failed to start server", { error: err.message, stack: err.stack });
   process.exit(1);
 });

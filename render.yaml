@@ -2,13 +2,15 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
-    healthCheckPath: /api/health
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/ready
     envVars:
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: NODE_VERSION
         value: 20.19.0
@@ -16,6 +18,22 @@ services:
         value: production
       - key: TZ
         value: Asia/Kolkata
+      - key: JWT_ACCESS_EXPIRY
+        value: 7d
+      - key: JWT_REFRESH_EXPIRY
+        value: 7d
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "1000"
+      - key: AUTH_RATE_LIMIT_MAX
+        value: "30"
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_CLUSTER
+        value: "false"
+      - key: CLUSTER_WORKERS
+        value: "0"
     autoDeploy: true
     plan: starter
     disk:

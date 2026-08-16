@@ -71,7 +71,19 @@ export async function archiveProduct(req: Request, res: Response) {
 
 // Variants
 export async function listVariants(req: Request, res: Response) {
-  const { productId, brandId, category, color, rackId, gender, stock, threshold, search, page, limit } = req.query;
+  const {
+    productId,
+    brandId,
+    category,
+    color,
+    rackId,
+    gender,
+    stock,
+    threshold,
+    search,
+    page,
+    limit,
+  } = req.query;
   const data = await inventoryProductService.listVariants({
     productId: productId as string | undefined,
     brandId: brandId as string | undefined,
@@ -91,7 +103,10 @@ export async function listVariants(req: Request, res: Response) {
 export async function searchVariants(req: Request, res: Response) {
   const query = (req.query.q as string) || "";
   const limit = parseInt(req.query.limit as string, 10);
-  const data = await inventoryProductService.searchVariants(query, Number.isFinite(limit) ? limit : 20);
+  const data = await inventoryProductService.searchVariants(
+    query,
+    Number.isFinite(limit) ? limit : 20
+  );
   sendSuccess(res, data);
 }
 

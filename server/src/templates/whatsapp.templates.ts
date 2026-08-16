@@ -58,7 +58,9 @@ export function buildPaymentReminderMessage(data: {
   if (data.shopName) lines.push(`*${data.shopName}*`);
   lines.push("");
   lines.push(`Hi ${data.customerName},`);
-  lines.push(`This is a friendly reminder about your pending balance of *₹${data.balance.toFixed(2)}* for Invoice #${data.billNumber}.`);
+  lines.push(
+    `This is a friendly reminder about your pending balance of *₹${data.balance.toFixed(2)}* for Invoice #${data.billNumber}.`
+  );
   lines.push("");
   lines.push("Please make the payment at your earliest convenience.");
   lines.push("Thank you!");

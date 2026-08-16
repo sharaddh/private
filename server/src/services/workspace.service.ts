@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
@@ -12,7 +11,12 @@ import { AppError } from "../middleware/errorHandler";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
 import { logger } from "../utils/logger";
-import { decrementStockForOrder, assertStockAvailable, type OrderStockRef, type StockItemRef } from "./inventory.service";
+import {
+  decrementStockForOrder,
+  assertStockAvailable,
+  type OrderStockRef,
+  type StockItemRef,
+} from "./inventory.service";
 
 interface TransactionInput {
   customerId?: string;
@@ -56,7 +60,7 @@ interface TransactionInput {
 
 export async function executeTransaction(
   body: TransactionInput,
-  branchId?: string
+  _branchId?: string
 ): Promise<Record<string, unknown>> {
   return withTransaction(async (session) => {
     const result: Record<string, unknown> = {};
@@ -186,11 +190,7 @@ export async function executeTransaction(
   });
 }
 
-export function sendBillWhatsApp(
-  bill: any,
-  customer: any,
-  branchId?: string
-): void {
+export function sendBillWhatsApp(bill: any, customer: any, branchId?: string): void {
   if (!branchId || !customer?.mobile) return;
 
   (async () => {
@@ -200,14 +200,22 @@ export function sendBillWhatsApp(
       const settings = await Settings.findOne().sort({ updatedAt: -1 }).lean();
       const pdfBuffer = generateBillPdf(
         {
-          billNumber: bill.billNumber, createdAt: bill.createdAt, items: bill.items,
-          subtotal: bill.subtotal, discount: bill.discount, tax: (bill as any).tax,
-          advancePaid: bill.advancePaid, pendingAmount: bill.pendingAmount,
-          totalAmount: bill.totalAmount, status: bill.status,
+          billNumber: bill.billNumber,
+          createdAt: bill.createdAt,
+          items: bill.items,
+          subtotal: bill.subtotal,
+          discount: bill.discount,
+          tax: (bill as any).tax,
+          advancePaid: bill.advancePaid,
+          pendingAmount: bill.pendingAmount,
+          totalAmount: bill.totalAmount,
+          status: bill.status,
         },
         {
-          name: customer.name, mobile: customer.mobile,
-          address: customer.address, customerId: customer.customerId,
+          name: customer.name,
+          mobile: customer.mobile,
+          address: customer.address,
+          customerId: customer.customerId,
         },
         {
           shopName: (settings as any)?.shopName || "KMJ Optical",
@@ -223,12 +231,23 @@ export function sendBillWhatsApp(
 
       const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${(bill.totalAmount || 0).toFixed(2)}.`;
       const phone = normalizePhone(customer.mobile);
-      logger.info(`WhatsApp [workspace]: sending to ***${phone.slice(-4)} for bill ${bill.billNumber} (delayed ${Math.round(randomDelay)}ms)`);
-      const sent = await wa.sendMedia(phone, pdfBuffer.toString("base64"), `${bill.billNumber}.pdf`, "application/pdf", message);
-      if (!sent.ok) logger.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed: ${sent.error}`);
+      logger.info(
+        `WhatsApp [workspace]: sending to ***${phone.slice(-4)} for bill ${bill.billNumber} (delayed ${Math.round(randomDelay)}ms)`
+      );
+      const sent = await wa.sendMedia(
+        phone,
+        pdfBuffer.toString("base64"),
+        `${bill.billNumber}.pdf`,
+        "application/pdf",
+        message
+      );
+      if (!sent.ok)
+        logger.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed: ${sent.error}`);
       else logger.info(`WhatsApp [workspace]: ${bill.billNumber} sent successfully`);
     } catch (err: any) {
-      logger.error(`WhatsApp [workspace]: bill ${bill.billNumber} fire-and-forget error: ${err?.message || err}`);
+      logger.error(
+        `WhatsApp [workspace]: bill ${bill.billNumber} fire-and-forget error: ${err?.message || err}`
+      );
     }
   })();
 }

@@ -1,10 +1,10 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse, Announcement } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse, Announcement } from '../types';
 
 class AnnouncementService extends ApiService {
   constructor() {
-    super("/api/announcements");
+    super('/api/announcements');
   }
 
   async getActive(): Promise<ApiResponse<Announcement[]>> {

@@ -1,6 +1,4 @@
 import PDFKit from "pdfkit";
-import fs from "fs";
-import path from "path";
 import { formatISTDate } from "./date";
 
 interface PdfBillItem {
@@ -38,7 +36,11 @@ interface PdfSettings {
   logo?: string;
 }
 
-export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings): Buffer {
+export function generateBillPdf(
+  bill: PdfBill,
+  customer: PdfCustomer,
+  settings: PdfSettings
+): Buffer {
   const doc = new PDFKit({ size: "A4", margin: 20 });
   const buffers: Buffer[] = [];
 
@@ -75,14 +77,22 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   });
 
   // Invoice badge
-  doc.fillColor("#1e40af").roundedRect(pageWidth - margin - 55, y, 55, 22, 3).fill();
+  doc
+    .fillColor("#1e40af")
+    .roundedRect(pageWidth - margin - 55, y, 55, 22, 3)
+    .fill();
   doc.fontSize(14).font("Helvetica-Bold").fillColor("white");
   doc.text("INVOICE", pageWidth - margin - 27.5, y + 14, { align: "center" });
 
   y += 36;
 
   // Divider
-  doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+  doc
+    .strokeColor("#e5e7eb")
+    .lineWidth(1)
+    .moveTo(margin, y)
+    .lineTo(pageWidth - margin, y)
+    .stroke();
   y += 8;
 
   // Bill meta + Customer info in two columns
@@ -106,7 +116,11 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   doc.fontSize(11);
   doc.text(customer.name || "—", rightX, y + 5);
   doc.fontSize(9).fillColor("#6b7280");
-  const custLines = [customer.mobile && `Mobile: ${customer.mobile}`, customer.customerId && `ID: ${customer.customerId}`, customer.address].filter(Boolean);
+  const custLines = [
+    customer.mobile && `Mobile: ${customer.mobile}`,
+    customer.customerId && `ID: ${customer.customerId}`,
+    customer.address,
+  ].filter(Boolean);
   custLines.forEach((line, i) => {
     doc.text(line!, rightX, y + 12 + i * 5);
   });
@@ -124,8 +138,18 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   // Table headers
   doc.fontSize(10).font("Helvetica-Bold").fillColor("white");
   const startX = margin;
-  const colWidths = [contentWidth * 0.5, contentWidth * 0.12, contentWidth * 0.18, contentWidth * 0.2];
-  const colXs = [startX, startX + colWidths[0], startX + colWidths[0] + colWidths[1], startX + colWidths[0] + colWidths[1] + colWidths[2]];
+  const colWidths = [
+    contentWidth * 0.5,
+    contentWidth * 0.12,
+    contentWidth * 0.18,
+    contentWidth * 0.2,
+  ];
+  const colXs = [
+    startX,
+    startX + colWidths[0],
+    startX + colWidths[0] + colWidths[1],
+    startX + colWidths[0] + colWidths[1] + colWidths[2],
+  ];
   const headers = ["Description", "Qty", "Unit Price", "Total"];
   headers.forEach((header, i) => {
     doc.rect(colXs[i], y, colWidths[i], 10).fillColor("#1e40af").fill();
@@ -154,7 +178,11 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
     { label: "Subtotal", value: `₹${(bill.subtotal || 0).toFixed(2)}` },
   ];
   if (bill.discount) {
-    totalItems.push({ label: "Discount", value: `-₹${bill.discount.toFixed(2)}`, color: "#dc2626" });
+    totalItems.push({
+      label: "Discount",
+      value: `-₹${bill.discount.toFixed(2)}`,
+      color: "#dc2626",
+    });
   }
   if (bill.tax) {
     totalItems.push({ label: "Tax (GST)", value: `+₹${bill.tax.toFixed(2)}`, color: "#059669" });
@@ -164,7 +192,12 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
     totalItems.push({ label: "Paid", value: `₹${bill.advancePaid.toFixed(2)}`, color: "#059669" });
   }
   if (bill.pendingAmount && bill.pendingAmount > 0) {
-    totalItems.push({ label: "Pending", value: `₹${bill.pendingAmount.toFixed(2)}`, color: "#d97706", bold: true });
+    totalItems.push({
+      label: "Pending",
+      value: `₹${bill.pendingAmount.toFixed(2)}`,
+      color: "#d97706",
+      bold: true,
+    });
   }
 
   // Totals background
@@ -192,7 +225,12 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
     doc.text(item.value, totalX + totalW - 10, ty, { align: "right" });
 
     if (i === totalItems.length - 2 && item.bold) {
-      doc.strokeColor("#1e40af").lineWidth(1).moveTo(totalX + 10, ty + 3).lineTo(totalX + totalW - 10, ty + 3).stroke();
+      doc
+        .strokeColor("#1e40af")
+        .lineWidth(1)
+        .moveTo(totalX + 10, ty + 3)
+        .lineTo(totalX + totalW - 10, ty + 3)
+        .stroke();
     }
 
     ty += totalRowH + totalPadding;
@@ -202,7 +240,12 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
 
   // Footer
   const footerY = 280;
-  doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(margin, footerY).lineTo(pageWidth - margin, footerY).stroke();
+  doc
+    .strokeColor("#e5e7eb")
+    .lineWidth(1)
+    .moveTo(margin, footerY)
+    .lineTo(pageWidth - margin, footerY)
+    .stroke();
   doc.font("Helvetica").fontSize(9).fillColor("#9ca3af");
   doc.text("Thank you for your visit! 🙏", pageWidth / 2, footerY + 10, { align: "center" });
   doc.fontSize(8);
@@ -213,7 +256,11 @@ export function generateBillPdf(bill: PdfBill, customer: PdfCustomer, settings: 
   return Buffer.concat(buffers);
 }
 
-export function downloadBillPdf(bill: PdfBill, customer: PdfCustomer, settings: PdfSettings): Buffer {
+export function downloadBillPdf(
+  bill: PdfBill,
+  customer: PdfCustomer,
+  settings: PdfSettings
+): Buffer {
   return generateBillPdf(bill, customer, settings);
 }
 
@@ -287,7 +334,12 @@ export function generateWithdrawalPdf(data: {
   y += 36;
 
   // Divider
-  doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+  doc
+    .strokeColor("#e5e7eb")
+    .lineWidth(1)
+    .moveTo(margin, y)
+    .lineTo(pageWidth - margin, y)
+    .stroke();
   y += 8;
 
   // Table
@@ -313,7 +365,10 @@ export function generateWithdrawalPdf(data: {
   ];
   const colXs: number[] = [];
   let cx = startX;
-  for (const w of colWidths) { colXs.push(cx); cx += w; }
+  for (const w of colWidths) {
+    colXs.push(cx);
+    cx += w;
+  }
   const headers = ["Coating", "Type", "Power", "Fog Mark", "Pairs", "Amount"];
   headers.forEach((header, i) => {
     doc.rect(colXs[i], y, colWidths[i], 10).fillColor("#1e40af").fill();
@@ -335,7 +390,12 @@ export function generateWithdrawalPdf(data: {
 
   // Footer
   const footerY = Math.max(y + 10, 280);
-  doc.strokeColor("#e5e7eb").lineWidth(1).moveTo(margin, footerY).lineTo(pageWidth - margin, footerY).stroke();
+  doc
+    .strokeColor("#e5e7eb")
+    .lineWidth(1)
+    .moveTo(margin, footerY)
+    .lineTo(pageWidth - margin, footerY)
+    .stroke();
   doc.font("Helvetica").fontSize(9).fillColor("#9ca3af");
   doc.text("Generated by KMJ Optical Warehouse", pageWidth / 2, footerY + 10, { align: "center" });
 

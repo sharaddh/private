@@ -107,9 +107,7 @@ async function run() {
   report.push(
     `warehouse lensstocks: ${await halveQuantities(wh.collection("lensstocks"))} updated`
   );
-  report.push(
-    `warehouse cartitems: ${await halveCartItems(wh.collection("cartitems"))} updated`
-  );
+  report.push(`warehouse cartitems: ${await halveCartItems(wh.collection("cartitems"))} updated`);
   report.push(
     `warehouse withdrawals: ${await halveWithdrawals(wh.collection("withdrawals"))} updated`
   );

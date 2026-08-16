@@ -10,7 +10,11 @@ const MessageSchema = new Schema(
     filename: { type: String, default: "" },
     mimetype: { type: String, default: "" },
     metaMessageId: { type: String, default: "", index: true },
-    status: { type: String, enum: ["pending", "sent", "delivered", "read", "failed"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "sent", "delivered", "read", "failed"],
+      default: "pending",
+    },
     error: { type: String, default: "" },
   },
   { timestamps: true }

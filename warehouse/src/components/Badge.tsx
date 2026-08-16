@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-type BadgeVariant = "green" | "blue" | "yellow" | "red" | "gray" | "purple";
+type BadgeVariant = 'green' | 'blue' | 'yellow' | 'red' | 'gray' | 'purple';
 
 interface Props {
   variant?: BadgeVariant;
@@ -9,14 +9,14 @@ interface Props {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  green: "badge-green",
-  blue: "badge-blue",
-  yellow: "badge-yellow",
-  red: "badge-red",
-  gray: "badge-gray",
-  purple: "badge-purple",
+  green: 'badge-green',
+  blue: 'badge-blue',
+  yellow: 'badge-yellow',
+  red: 'badge-red',
+  gray: 'badge-gray',
+  purple: 'badge-purple',
 };
 
-export default function Badge({ variant = "gray", children, className = "" }: Props) {
+export default function Badge({ variant = 'gray', children, className = '' }: Props) {
   return <span className={`${variantClasses[variant]} ${className}`}>{children}</span>;
 }

@@ -1,37 +1,41 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
-import { useAuth, type User } from "../context/AuthContext";
-import { LogIn, Eye, EyeOff, Package } from "lucide-react";
-import Spinner from "../components/Spinner";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
+import { useAuth, type User } from '../context/AuthContext';
+import { LogIn, Eye, EyeOff, Package } from 'lucide-react';
+import Spinner from '../components/Spinner';
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/", { replace: true });
+    if (isAuthenticated) navigate('/', { replace: true });
   }, [isAuthenticated, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(""); setIsLoading(true);
+    setError('');
+    setIsLoading(true);
     try {
-      const res = await api.post<{ access: string; refresh: string; user: User }>("/api/auth/warehouse-login", { username, password });
+      const res = await api.post<{ access: string; refresh: string; user: User }>(
+        '/api/auth/warehouse-login',
+        { username, password }
+      );
       if (res.success && res.data) {
         api.setRefreshToken(res.data.refresh);
         login(res.data.access, res.data.user);
-        navigate("/", { replace: true });
+        navigate('/', { replace: true });
       } else {
-        setError(res.message || "Login failed");
+        setError(res.message || 'Login failed');
       }
     } catch {
-      setError("Connection error. Try again.");
+      setError('Connection error. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -45,35 +49,68 @@ export default function Login() {
             <Package className="text-surface-950" size={24} />
           </div>
           <h1 className="text-section text-th-text">Lens Warehouse</h1>
-          <p className="text-caption text-th-secondary mt-1">KMJ Optical — Branch owners: use your same KMJ credentials</p>
+          <p className="text-caption text-th-secondary mt-1">
+            KMJ Optical — Branch owners: use your same KMJ credentials
+          </p>
         </div>
 
         <div className="glass-card p-6">
           {error && (
-            <div className="bg-negative/10 border border-negative/30 text-negative px-4 py-3 rounded-pill text-sm mb-4">{error}</div>
+            <div className="bg-negative/10 border border-negative/30 text-negative px-4 py-3 rounded-pill text-sm mb-4">
+              {error}
+            </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-caption-bold text-th-secondary mb-1.5 uppercase tracking-wider">Username</label>
-              <input type="text" placeholder="Enter username" value={username}
-                onChange={(e) => setUsername(e.target.value)} required className="input-field" autoFocus />
+              <label className="block text-caption-bold text-th-secondary mb-1.5 uppercase tracking-wider">
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="input-field"
+                autoFocus
+              />
             </div>
             <div>
-              <label className="block text-caption-bold text-th-secondary mb-1.5 uppercase tracking-wider">Password</label>
+              <label className="block text-caption-bold text-th-secondary mb-1.5 uppercase tracking-wider">
+                Password
+              </label>
               <div className="relative">
-                <input type={showPassword ? "text" : "password"} placeholder="Enter password" value={password}
-                  onChange={(e) => setPassword(e.target.value)} required className="input-field pr-10" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-muted hover:text-th-text transition-colors">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="input-field pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-muted hover:text-th-text transition-colors"
+                >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={isLoading}
-              className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full py-3 flex items-center justify-center gap-2 mt-2"
+            >
               {isLoading ? (
-                <><Spinner size={16} className="border-white border-t-transparent" /> Signing in...</>
-              ) : <><LogIn size={18} /> Sign in</>}
+                <>
+                  <Spinner size={16} className="border-white border-t-transparent" /> Signing in...
+                </>
+              ) : (
+                <>
+                  <LogIn size={18} /> Sign in
+                </>
+              )}
             </button>
           </form>
         </div>

@@ -1,9 +1,9 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse } from '../types';
 
 export interface WhatsAppStatus {
-  status: "connected" | "error" | "disconnected";
+  status: 'connected' | 'error' | 'disconnected';
   error?: string;
   connectedPhone?: string | null;
   queueLength?: number;
@@ -20,19 +20,29 @@ export interface WhatsAppSendResult {
 export interface WhatsAppBroadcastResult {
   sent: number;
   failed: number;
-  results: { phone: string; status: "sent" | "failed" }[];
+  results: { phone: string; status: 'sent' | 'failed' }[];
 }
 
 class WhatsAppService extends ApiService {
   constructor() {
-    super("/api/whatsapp");
+    super('/api/whatsapp');
   }
 
-  async sendMessage(data: { phone: string; message: string; template?: string }): Promise<ApiResponse<WhatsAppSendResult>> {
+  async sendMessage(data: {
+    phone: string;
+    message: string;
+    template?: string;
+  }): Promise<ApiResponse<WhatsAppSendResult>> {
     return api.post<WhatsAppSendResult>(`${this.basePath}/send`, data);
   }
 
-  async sendMedia(data: { phone: string; base64: string; filename: string; caption?: string; mimetype?: string }): Promise<ApiResponse<WhatsAppSendResult>> {
+  async sendMedia(data: {
+    phone: string;
+    base64: string;
+    filename: string;
+    caption?: string;
+    mimetype?: string;
+  }): Promise<ApiResponse<WhatsAppSendResult>> {
     return api.post<WhatsAppSendResult>(`${this.basePath}/send-media`, data);
   }
 
@@ -40,7 +50,12 @@ class WhatsAppService extends ApiService {
     return api.get<WhatsAppStatus>(`${this.basePath}/status`);
   }
 
-  async broadcast(data: { numbers: string[]; message?: string; antiban?: { delayMin?: number; delayMax?: number; batchSize?: number; pause?: number }; media?: { base64: string; filename: string; mimetype: string } }): Promise<ApiResponse<WhatsAppBroadcastResult>> {
+  async broadcast(data: {
+    numbers: string[];
+    message?: string;
+    antiban?: { delayMin?: number; delayMax?: number; batchSize?: number; pause?: number };
+    media?: { base64: string; filename: string; mimetype: string };
+  }): Promise<ApiResponse<WhatsAppBroadcastResult>> {
     return api.post<WhatsAppBroadcastResult>(`${this.basePath}/broadcast`, data);
   }
 

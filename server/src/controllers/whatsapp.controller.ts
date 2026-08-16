@@ -35,9 +35,9 @@ export async function broadcast(req: Request, res: Response): Promise<void> {
   const branchReq = req as BranchRequest;
   const { numbers, message, antiban, media } = req.body;
 
-  whatsappService.broadcast(numbers, message, branchReq.branchId, antiban, media).then((result) => {
-    // Fire-and-forget; client can poll or we could emit via SSE
-  });
+  whatsappService
+    .broadcast(numbers, message, branchReq.branchId, antiban, media)
+    .catch(() => undefined);
 
   res.json({ success: true, message: "Broadcast started" });
 }

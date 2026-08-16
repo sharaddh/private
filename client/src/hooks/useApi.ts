@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import api from "../api";
-import { useCache, getCacheSnapshot } from "./useCache";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../api';
+import { useCache, getCacheSnapshot } from './useCache';
 
 interface UseApiOptions {
   cacheKey?: string;
@@ -38,10 +38,10 @@ export function useApi<T = unknown>(
         setData(res.data);
         if (cacheKey) cache.set(res.data);
       } else {
-        setError(res.message || "Request failed");
+        setError(res.message || 'Request failed');
       }
     } catch (err) {
-      if (mountedRef.current) setError((err as Error).message || "Network error");
+      if (mountedRef.current) setError((err as Error).message || 'Network error');
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -61,13 +61,15 @@ export function useApi<T = unknown>(
     } else {
       doFetch();
     }
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [doFetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refetch = useCallback(() => {
     if (cacheKey) cache.invalidate();
     doFetch();
-  }, [doFetch, cacheKey, cache]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [doFetch, cacheKey, cache]);
 
   return { data, loading, error, refetch };
 }
@@ -79,11 +81,7 @@ export function useApiGet<T = unknown>(
   deps: unknown[] = [],
   options: UseApiOptions = {}
 ): UseApiResult<T> {
-  return useApi<T>(
-    () => api.get(path),
-    [path, ...deps],
-    { cacheKey: path, ...options }
-  );
+  return useApi<T>(() => api.get(path), [path, ...deps], { cacheKey: path, ...options });
 }
 
 export function useApiPost<T = unknown, B = unknown>(): {
@@ -98,7 +96,9 @@ export function useApiPost<T = unknown, B = unknown>(): {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const execute = useCallback(async (path: string, body: B) => {
@@ -106,10 +106,10 @@ export function useApiPost<T = unknown, B = unknown>(): {
     setError(null);
     try {
       const res = await api.post<T>(path, body);
-      if (!res.success) setError(res.message || "Request failed");
+      if (!res.success) setError(res.message || 'Request failed');
       return res;
     } catch (err) {
-      const msg = (err as Error).message || "Network error";
+      const msg = (err as Error).message || 'Network error';
       if (mountedRef.current) setError(msg);
       return { success: false, message: msg };
     } finally {
@@ -137,7 +137,9 @@ export function useApiPut<T = unknown, B = unknown>(): {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const execute = useCallback(async (path: string, body: B) => {
@@ -145,10 +147,10 @@ export function useApiPut<T = unknown, B = unknown>(): {
     setError(null);
     try {
       const res = await api.put<T>(path, body);
-      if (!res.success) setError(res.message || "Request failed");
+      if (!res.success) setError(res.message || 'Request failed');
       return res;
     } catch (err) {
-      const msg = (err as Error).message || "Network error";
+      const msg = (err as Error).message || 'Network error';
       if (mountedRef.current) setError(msg);
       return { success: false, message: msg };
     } finally {
@@ -176,7 +178,9 @@ export function useApiDelete<T = unknown>(): {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const execute = useCallback(async (path: string) => {
@@ -184,10 +188,10 @@ export function useApiDelete<T = unknown>(): {
     setError(null);
     try {
       const res = await api.del<T>(path);
-      if (!res.success) setError(res.message || "Request failed");
+      if (!res.success) setError(res.message || 'Request failed');
       return res;
     } catch (err) {
-      const msg = (err as Error).message || "Network error";
+      const msg = (err as Error).message || 'Network error';
       if (mountedRef.current) setError(msg);
       return { success: false, message: msg };
     } finally {

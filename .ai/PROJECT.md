@@ -525,7 +525,7 @@ Valid transitions:
 
 ### JWT Token System
 
-- **Access Token**: Expires in 24h (configurable via `JWT_ACCESS_EXPIRY`)
+- **Access Token**: Expires in 7d (configurable via `JWT_ACCESS_EXPIRY`)
 - **Refresh Token**: Expires in 7d (configurable via `JWT_REFRESH_EXPIRY`)
 - **Signing**: Both use same `JWT_SECRET`
 

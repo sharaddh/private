@@ -8,7 +8,11 @@ const DeliverySchemaObj = new Schema(
     address: { type: String },
     expectedDeliveryDate: { type: Date },
     actualDeliveryDate: { type: Date },
-    status: { type: String, enum: ["Pending", "In Transit", "Ready", "Delivered", "Cancelled"], default: "Pending" }
+    status: {
+      type: String,
+      enum: ["Pending", "In Transit", "Ready", "Delivered", "Cancelled"],
+      default: "Pending",
+    },
   },
   { timestamps: true }
 );

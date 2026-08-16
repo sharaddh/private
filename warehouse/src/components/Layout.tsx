@@ -1,28 +1,42 @@
-import { useState, memo } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
-import { useCartCount } from "../context/CartContext";
+import { useState, memo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { useCartCount } from '../context/CartContext';
 import {
-  LayoutDashboard, Package, Users, LogOut, Menu, X, ChevronLeft, Sun, Moon, UserCog, Glasses, PackagePlus, ShoppingCart, Tags, History,
-} from "lucide-react";
+  LayoutDashboard,
+  Package,
+  Users,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
+  Sun,
+  Moon,
+  UserCog,
+  Glasses,
+  PackagePlus,
+  ShoppingCart,
+  Tags,
+  History,
+} from 'lucide-react';
 
 const sidebarMenu = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/lens-stock", label: "Lens Stock", icon: Glasses },
-  { path: "/update-stock", label: "Update Stock", icon: PackagePlus },
-  { path: "/cart", label: "Cart", icon: ShoppingCart },
-  { path: "/withdrawals", label: "Withdrawals", icon: History },
-  { path: "/fog-marks", label: "Fog Marks", icon: Tags },
-  { path: "/users", label: "Users", icon: Users },
+  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/lens-stock', label: 'Lens Stock', icon: Glasses },
+  { path: '/update-stock', label: 'Update Stock', icon: PackagePlus },
+  { path: '/cart', label: 'Cart', icon: ShoppingCart },
+  { path: '/withdrawals', label: 'Withdrawals', icon: History },
+  { path: '/fog-marks', label: 'Fog Marks', icon: Tags },
+  { path: '/users', label: 'Users', icon: Users },
 ];
 
 const mobileNav = [
-  { path: "/", label: "Home", icon: LayoutDashboard },
-  { path: "/lens-stock", label: "Stock", icon: Glasses },
-  { path: "/cart", label: "Cart", icon: ShoppingCart },
-  { path: "/withdrawals", label: "History", icon: History },
-  { path: "/users", label: "User", icon: UserCog },
+  { path: '/', label: 'Home', icon: LayoutDashboard },
+  { path: '/lens-stock', label: 'Stock', icon: Glasses },
+  { path: '/cart', label: 'Cart', icon: ShoppingCart },
+  { path: '/withdrawals', label: 'History', icon: History },
+  { path: '/users', label: 'User', icon: UserCog },
 ];
 
 const CartBadge = memo(function CartBadge() {
@@ -30,7 +44,7 @@ const CartBadge = memo(function CartBadge() {
   if (count <= 0) return null;
   return (
     <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary-500 text-surface-950 text-micro font-bold leading-none">
-      {count > 99 ? "99+" : count}
+      {count > 99 ? '99+' : count}
     </span>
   );
 });
@@ -40,7 +54,7 @@ const MobileCartBadge = memo(function MobileCartBadge() {
   if (count <= 0) return null;
   return (
     <span className="absolute -top-1.5 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
-      {count > 99 ? "99+" : count}
+      {count > 99 ? '99+' : count}
     </span>
   );
 });
@@ -53,25 +67,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
 
-  const isAuthPage = location.pathname === "/login";
+  const isAuthPage = location.pathname === '/login';
   if (isAuthPage) return <>{children}</>;
 
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   function handleLogout() {
     logout();
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   }
 
   return (
     <div className="flex h-screen bg-th-base overflow-hidden">
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? "w-60" : "w-[72px]"} bg-th-surface border-r border-th-border flex flex-col transition-all duration-300 fixed lg:relative z-30 h-full ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+      <aside
+        className={`${sidebarOpen ? 'w-60' : 'w-[72px]'} bg-th-surface border-r border-th-border flex flex-col transition-all duration-300 fixed lg:relative z-30 h-full ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-th-border">
           <div className="flex items-center gap-3 min-w-0">
@@ -80,20 +99,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-th-text leading-tight truncate">Lens Warehouse</h1>
+                <h1 className="text-sm font-bold text-th-text leading-tight truncate">
+                  Lens Warehouse
+                </h1>
                 <p className="text-micro text-th-muted font-medium">KMJ Optical</p>
               </div>
             )}
           </div>
-          <button onClick={() => { setSidebarOpen(false); setMobileOpen(false); }}
-            className={`p-1.5 hover:bg-th-hover rounded-lg text-th-muted ${sidebarOpen ? "hidden lg:block" : "hidden"}`}>
+          <button
+            onClick={() => {
+              setSidebarOpen(false);
+              setMobileOpen(false);
+            }}
+            className={`p-1.5 hover:bg-th-hover rounded-lg text-th-muted ${sidebarOpen ? 'hidden lg:block' : 'hidden'}`}
+          >
             <ChevronLeft size={16} />
           </button>
-          <button onClick={() => setSidebarOpen(true)}
-            className={`p-1.5 hover:bg-th-hover rounded-lg text-th-muted ${sidebarOpen ? "hidden" : "hidden lg:block"}`}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className={`p-1.5 hover:bg-th-hover rounded-lg text-th-muted ${sidebarOpen ? 'hidden' : 'hidden lg:block'}`}
+          >
             <Menu size={16} />
           </button>
-          <button onClick={() => setMobileOpen(false)} className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted lg:hidden">
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted lg:hidden"
+          >
             <X size={16} />
           </button>
         </div>
@@ -104,19 +135,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
-              <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-pill transition-all duration-200 group text-nav ${
                   active
-                    ? "bg-th-hover text-th-text font-bold"
-                    : "text-th-secondary hover:text-th-text hover:bg-th-hover"
-                }`}>
-                {item.path === "/cart" ? (
-                  <span data-cart-icon><Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} /></span>
+                    ? 'bg-th-hover text-th-text font-bold'
+                    : 'text-th-secondary hover:text-th-text hover:bg-th-hover'
+                }`}
+              >
+                {item.path === '/cart' ? (
+                  <span data-cart-icon>
+                    <Icon
+                      size={18}
+                      className={
+                        active ? 'text-primary-500' : 'text-th-muted group-hover:text-th-secondary'
+                      }
+                    />
+                  </span>
                 ) : (
-                  <Icon size={18} className={active ? "text-primary-500" : "text-th-muted group-hover:text-th-secondary"} />
+                  <Icon
+                    size={18}
+                    className={
+                      active ? 'text-primary-500' : 'text-th-muted group-hover:text-th-secondary'
+                    }
+                  />
                 )}
                 {sidebarOpen && <span>{item.label}</span>}
-                {item.path === "/cart" && <CartBadge />}
+                {item.path === '/cart' && <CartBadge />}
               </Link>
             );
           })}
@@ -125,25 +172,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Bottom actions */}
         <div className="p-2.5 border-t border-th-border space-y-0.5">
           {user && (
-            <div className={`flex items-center gap-3 px-3 py-2.5 ${sidebarOpen ? "" : "justify-center"}`}>
+            <div
+              className={`flex items-center gap-3 px-3 py-2.5 ${sidebarOpen ? '' : 'justify-center'}`}
+            >
               <div className="w-8 h-8 rounded-full bg-primary-500/15 flex items-center justify-center shrink-0">
-                <span className="text-small-bold text-primary-500">{(user.name || user.username || "U").charAt(0).toUpperCase()}</span>
+                <span className="text-small-bold text-primary-500">
+                  {(user.name || user.username || 'U').charAt(0).toUpperCase()}
+                </span>
               </div>
               {sidebarOpen && (
                 <div className="min-w-0">
-                  <p className="text-small-bold text-th-text truncate">{user.name || user.username}</p>
+                  <p className="text-small-bold text-th-text truncate">
+                    {user.name || user.username}
+                  </p>
                   <p className="text-micro text-th-muted truncate">@{user.username}</p>
                 </div>
               )}
             </div>
           )}
-          <button onClick={toggle}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-pill text-th-secondary hover:text-th-text hover:bg-th-hover w-full transition-all text-nav">
+          <button
+            onClick={toggle}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-pill text-th-secondary hover:text-th-text hover:bg-th-hover w-full transition-all text-nav"
+          >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
-            {sidebarOpen && <span>{dark ? "Light Mode" : "Dark Mode"}</span>}
+            {sidebarOpen && <span>{dark ? 'Light Mode' : 'Dark Mode'}</span>}
           </button>
-          <button onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-pill text-th-secondary hover:text-negative hover:bg-negative/10 w-full transition-all text-nav">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-pill text-th-secondary hover:text-negative hover:bg-negative/10 w-full transition-all text-nav"
+          >
             <LogOut size={18} />
             {sidebarOpen && <span>Logout</span>}
           </button>
@@ -153,16 +210,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10" style={{ background: "color-mix(in srgb, var(--bg-surface) 95%, var(--bg-base))" }}>
+        <header
+          className="h-16 border-b border-th-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10"
+          style={{ background: 'color-mix(in srgb, var(--bg-surface) 95%, var(--bg-base))' }}
+        >
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-th-hover rounded-lg lg:hidden">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="p-2 hover:bg-th-hover rounded-lg lg:hidden"
+            >
               <Menu size={20} className="text-th-text" />
             </button>
-            <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-th-hover rounded-lg hidden lg:flex">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 hover:bg-th-hover rounded-lg hidden lg:flex"
+            >
               <Menu size={18} className="text-th-text" />
             </button>
             <h2 className="text-body-bold text-th-text">
-              {sidebarMenu.find((m) => isActive(m.path))?.label || "Lens Warehouse"}
+              {sidebarMenu.find((m) => isActive(m.path))?.label || 'Lens Warehouse'}
             </h2>
           </div>
         </header>
@@ -173,17 +239,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 h-[72px] border-t border-th-border flex items-center justify-around z-10 px-1" style={{ background: "color-mix(in srgb, var(--bg-base) 95%, var(--bg-surface))" }}>
+        <nav
+          className="lg:hidden fixed bottom-0 inset-x-0 h-[72px] border-t border-th-border flex items-center justify-around z-10 px-1"
+          style={{ background: 'color-mix(in srgb, var(--bg-base) 95%, var(--bg-surface))' }}
+        >
           {mobileNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             return (
-              <Link key={item.path} to={item.path} className={`nav-link ${active ? "active" : ""}`}>
-                <div className="nav-link-icon relative" {...(item.path === "/cart" ? { "data-cart-icon": "" } : {})}>
-                  <Icon size={24} className={active ? "text-primary-500 drop-shadow-[0_0_6px_rgba(var(--primary-500-rgb,59,130,246),0.5)]" : "text-th-muted"} />
-                  {item.path === "/cart" && <MobileCartBadge />}
+              <Link key={item.path} to={item.path} className={`nav-link ${active ? 'active' : ''}`}>
+                <div
+                  className="nav-link-icon relative"
+                  {...(item.path === '/cart' ? { 'data-cart-icon': '' } : {})}
+                >
+                  <Icon
+                    size={24}
+                    className={
+                      active
+                        ? 'text-primary-500 drop-shadow-[0_0_6px_rgba(var(--primary-500-rgb,59,130,246),0.5)]'
+                        : 'text-th-muted'
+                    }
+                  />
+                  {item.path === '/cart' && <MobileCartBadge />}
                 </div>
-                <span className={`nav-link-label ${active ? "text-primary-500" : "text-th-muted"}`}>
+                <span className={`nav-link-label ${active ? 'text-primary-500' : 'text-th-muted'}`}>
                   {item.label}
                 </span>
               </Link>

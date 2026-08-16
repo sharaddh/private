@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import api from "../api";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import api from '../api';
 
 export interface User {
   _id: string;
@@ -22,43 +22,64 @@ interface AuthContextValue extends AuthState {
   logout: () => void;
 }
 
-const STORAGE_KEY = "wh_accessToken";
+const STORAGE_KEY = 'wh_accessToken';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => ({
-    token: (() => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; } })(),
+    token: (() => {
+      try {
+        return localStorage.getItem(STORAGE_KEY);
+      } catch {
+        return null;
+      }
+    })(),
     user: null,
     loading: true,
   }));
 
   useEffect(() => {
     if (state.token && !state.user) {
-      api.get<User>("/api/auth/me").then((d) => {
-        if (d.success && d.data) setState((s) => ({ ...s, user: d.data!, loading: false }));
-        else { logout(); setState((s) => ({ ...s, loading: false })); }
-      }).catch(() => { logout(); setState((s) => ({ ...s, loading: false })); });
+      api
+        .get<User>('/api/auth/me')
+        .then((d) => {
+          if (d.success && d.data) setState((s) => ({ ...s, user: d.data!, loading: false }));
+          else {
+            logout();
+            setState((s) => ({ ...s, loading: false }));
+          }
+        })
+        .catch(() => {
+          logout();
+          setState((s) => ({ ...s, loading: false }));
+        });
     } else {
       setState((s) => ({ ...s, loading: false }));
     }
   }, [state.token, state.user]);
 
   const login = useCallback((token: string, user?: User) => {
-    try { localStorage.setItem(STORAGE_KEY, token); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY, token);
+    } catch {}
     setState({ token, user: user || null, loading: false });
   }, []);
 
   const logout = useCallback(() => {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
     api.clearToken();
     setState({ token: null, user: null, loading: false });
   }, []);
 
-  const isOwner = state.user?.role === "owner";
+  const isOwner = state.user?.role === 'owner';
 
   return (
-    <AuthContext.Provider value={{ ...state, isAuthenticated: !!state.token, isOwner, login, logout }}>
+    <AuthContext.Provider
+      value={{ ...state, isAuthenticated: !!state.token, isOwner, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -66,6 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

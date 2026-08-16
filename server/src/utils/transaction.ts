@@ -4,7 +4,9 @@ let supportsTransactions: boolean | null = null;
 
 function isTransactionUnsupportedError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /transaction numbers are only allowed|transactions are not supported|replica set|mongos/i.test(message);
+  return /transaction numbers are only allowed|transactions are not supported|replica set|mongos/i.test(
+    message
+  );
 }
 
 async function checkTransactionSupport(): Promise<boolean> {
@@ -25,8 +27,8 @@ async function checkTransactionSupport(): Promise<boolean> {
     supportsTransactions = false;
   } finally {
     if (session) {
-      try { await session.abortTransaction(); } catch {}
-      try { await session.endSession(); } catch {}
+      await session.abortTransaction().catch(() => undefined);
+      await session.endSession().catch(() => undefined);
     }
   }
 

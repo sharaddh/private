@@ -5,6 +5,11 @@ import * as recalculateController from "../controllers/recalculateController";
 
 const router = Router();
 
-router.post("/customer-totals", authenticate, requireRole("owner"), asyncHandler(recalculateController.recalculate));
+router.post(
+  "/customer-totals",
+  authenticate,
+  requireRole("owner"),
+  asyncHandler(recalculateController.recalculate)
+);
 
 export default router;

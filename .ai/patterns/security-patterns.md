@@ -488,7 +488,7 @@ access tokens.
 ```ts
 // server/src/config.ts
 export const JWT_SECRET = process.env.JWT_SECRET || "";
-export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "24h";
+export const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "7d";
 export const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
 ```
 
@@ -618,7 +618,7 @@ localStorage.setItem("currentBranchId", branchId);
 
 ```ts
 // WRONG — same token for access and refresh
-const token = jwt.sign({ sub: user._id }, SECRET, { expiresIn: "24h" });
+const token = jwt.sign({ sub: user._id }, SECRET, { expiresIn: "7d" });
 // No refresh mechanism
 
 // WRONG — no token expiry
@@ -630,7 +630,7 @@ res.cookie("token", jwt.sign(...), { httpOnly: false }); // Accessible via JS
 
 ### Tradeoffs
 
-- 24h access token + 7d refresh token is appropriate for a small-team ERP.
+- 7d access token + 7d refresh token is appropriate for a small-team ERP.
 - Both tokens use the same secret — simpler but less secure than separate secrets.
 - Refresh flow deduplicates concurrent attempts via `refreshPromise` — prevents
   multiple simultaneous refresh requests.
@@ -659,7 +659,7 @@ import rateLimit from "express-rate-limit";
 app.use(
   rateLimit({
     windowMs: 60 * 1000,  // 1-minute window
-    max: 200,             // 200 requests per window per IP
+    max: 1000,            // 1000 requests per window per IP
     standardHeaders: true, // Return rate limit info in RateLimit-* headers
     legacyHeaders: false,  // Disable X-RateLimit-* headers
   })
@@ -694,17 +694,20 @@ app.use(rateLimit({ windowMs: 60000, max: 5 })); // 5 requests per minute
 
 // WRONG — rate limiting login endpoint same as other routes
 // Login should have stricter limits
-app.use("/api/auth/login", rateLimit({ windowMs: 60000, max: 200 })); // Same as API
+app.use("/api/auth/login", rateLimit({ windowMs: 60000, max: 30 })); // Stricter than API
 ```
 
 ### Tradeoffs
 
-- 200 requests/minute is generous enough for normal ERP usage (browsing, searching,
+- 1000 requests/minute is generous enough for normal ERP usage (browsing, searching,
   creating records).
 - `standardHeaders: true` provides rate limit info in response headers for monitoring.
-- No per-route rate limits — the global limit is sufficient for a single-tenant ERP.
-- Login endpoint could benefit from stricter limits (e.g., 10/minute) but is not
-  currently implemented separately.
+- The global limit (1000/min, configured via `RATE_LIMIT_MAX`) applies per IP, and is
+  per-user for authenticated requests (`user:${sub}` keys).
+- The `/api/auth` routes have a stricter limit (`AUTH_RATE_LIMIT_MAX`, default 30/min
+  per IP) to slow credential stuffing.
+- With `REDIS_URL` set, limits are enforced via Redis (`rate-limit-redis`) so they
+  survive process restarts and are shared across cluster workers.
 
 ### Related Patterns
 
@@ -1112,11 +1115,18 @@ await wa.sendMessage(customer.mobile, msg); // May fail with formatting characte
 # server/.env.example
 MONGO_URI=mongodb+srv://...
 JWT_SECRET=your-secret-key-here
-JWT_ACCESS_EXPIRY=24h
+JWT_ACCESS_EXPIRY=7d
 JWT_REFRESH_EXPIRY=7d
 REDIS_URL=redis://...
 NODE_ENV=production
 PORT=4000
+CORS_ORIGINS=https://app.kmj.com,https://warehouse.kmj.com
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=1000
+AUTH_RATE_LIMIT_MAX=30
+LOG_LEVEL=info
+ENABLE_CLUSTER=false
+CLUSTER_WORKERS=0
 ```
 
 ### Production Checks
@@ -1124,12 +1134,8 @@ PORT=4000
 ```ts
 // server/src/config.ts
 if (!JWT_SECRET && NODE_ENV === "production") {
-  console.error("JWT_SECRET must be set in production");
-  process.exit(1);
-}
-
-if (!JWT_SECRET && NODE_ENV !== "production") {
-  console.warn("JWT_SECRET is not set — using empty string. Tokens will be insecure.");
+  // config.ts fails fast via zod validation (throws before server start)
+  throw new Error("JWT_SECRET must be set in production");
 }
 ```
 

@@ -7,7 +7,12 @@ import * as workspaceController from "../controllers/workspaceController";
 
 const router = Router();
 
-router.post("/transaction", authenticate, validate(transactionSchema, "body"), asyncHandler(workspaceController.transaction));
+router.post(
+  "/transaction",
+  authenticate,
+  validate(transactionSchema, "body"),
+  asyncHandler(workspaceController.transaction)
+);
 
 router.get("/todos", authenticate, asyncHandler(workspaceController.listTodos));
 router.post("/todos", authenticate, asyncHandler(workspaceController.createTodo));

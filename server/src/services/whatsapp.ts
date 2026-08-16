@@ -6,7 +6,14 @@ class WhatsAppCompat {
     return { ok: res.success, error: res.message };
   }
 
-  async sendMedia(phone: string, base64: string, filename: string, mimetype: string, caption?: string, _throwOnError?: boolean) {
+  async sendMedia(
+    phone: string,
+    base64: string,
+    filename: string,
+    mimetype: string,
+    caption?: string,
+    _throwOnError?: boolean
+  ) {
     const res = await whatsappService.sendMedia(phone, base64, filename, mimetype, caption);
     return { ok: res.success, error: res.message };
   }

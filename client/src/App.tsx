@@ -1,42 +1,40 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/Layout";
-import ErrorBoundary from "./components/errors/ErrorBoundary";
-import PageSkeleton from "./components/PageSkeleton";
-import RoleGuard from "./components/RoleGuard";
+import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import ErrorBoundary from './components/errors/ErrorBoundary';
+import PageSkeleton from './components/PageSkeleton';
+import RoleGuard from './components/RoleGuard';
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Customers = lazy(() => import("./pages/Customers"));
-const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
-const Orders = lazy(() => import("./pages/Orders"));
-const Bills = lazy(() => import("./pages/Bills"));
-const Payments = lazy(() => import("./pages/Payments"));
-const CollectPayment = lazy(() => import("./pages/CollectPayment"));
-const InventoryPage = lazy(() => import("./pages/InventoryPage"));
-const InventoryV2 = lazy(() => import("./pages/InventoryV2"));
-const Delivery = lazy(() => import("./pages/Delivery"));
-const Pickup = lazy(() => import("./pages/Pickup"));
-const Announcement = lazy(() => import("./pages/Announcement"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Settings = lazy(() => import("./pages/Settings"));
-const WhatsAppPage = lazy(() => import("./pages/WhatsApp"));
-const Cameras = lazy(() => import("./pages/Cameras"));
-const Workspace = lazy(() => import("./pages/Workspace"));
-const NewVisit = lazy(() => import("./pages/NewVisit"));
-const CustomerNewVisit = lazy(() => import("./pages/CustomerNewVisit"));
-const ItemScan = lazy(() => import("./pages/ItemScan"));
-const Withdraw = lazy(() => import("./pages/Withdraw"));
-const WithdrawHistory = lazy(() => import("./pages/WithdrawHistory"));
-const Login = lazy(() => import("./pages/Login"));
-const StaffLogin = lazy(() => import("./pages/StaffLogin"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Customers = lazy(() => import('./pages/Customers'));
+const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Bills = lazy(() => import('./pages/Bills'));
+const Payments = lazy(() => import('./pages/Payments'));
+const CollectPayment = lazy(() => import('./pages/CollectPayment'));
+const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const InventoryV2 = lazy(() => import('./pages/InventoryV2'));
+const Delivery = lazy(() => import('./pages/Delivery'));
+const Pickup = lazy(() => import('./pages/Pickup'));
+const Announcement = lazy(() => import('./pages/Announcement'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const WhatsAppPage = lazy(() => import('./pages/WhatsApp'));
+const Cameras = lazy(() => import('./pages/Cameras'));
+const Workspace = lazy(() => import('./pages/Workspace'));
+const NewVisit = lazy(() => import('./pages/NewVisit'));
+const CustomerNewVisit = lazy(() => import('./pages/CustomerNewVisit'));
+const ItemScan = lazy(() => import('./pages/ItemScan'));
+const Withdraw = lazy(() => import('./pages/Withdraw'));
+const WithdrawHistory = lazy(() => import('./pages/WithdrawHistory'));
+const Login = lazy(() => import('./pages/Login'));
+const StaffLogin = lazy(() => import('./pages/StaffLogin'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
   return (
     <Suspense fallback={<PageSkeleton page={page} />}>
-      <ErrorBoundary>
-        {children}
-      </ErrorBoundary>
+      <ErrorBoundary>{children}</ErrorBoundary>
     </Suspense>
   );
 }
@@ -46,33 +44,220 @@ export default function App() {
     <Layout>
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<SuspendedPage page="dashboard"><Dashboard /></SuspendedPage>} />
-          <Route path="/customers" element={<SuspendedPage page="customers"><Customers /></SuspendedPage>} />
-          <Route path="/customers/:id" element={<SuspendedPage page="customerdetail"><CustomerDetail /></SuspendedPage>} />
-          <Route path="/customers/:id/create-visit" element={<SuspendedPage page="customerdetail"><CustomerNewVisit /></SuspendedPage>} />
-          <Route path="/customers/:id/new-visit" element={<SuspendedPage page="newvisit"><NewVisit /></SuspendedPage>} />
+          <Route
+            path="/"
+            element={
+              <SuspendedPage page="dashboard">
+                <Dashboard />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <SuspendedPage page="customers">
+                <Customers />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/customers/:id"
+            element={
+              <SuspendedPage page="customerdetail">
+                <CustomerDetail />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/customers/:id/create-visit"
+            element={
+              <SuspendedPage page="customerdetail">
+                <CustomerNewVisit />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/customers/:id/new-visit"
+            element={
+              <SuspendedPage page="newvisit">
+                <NewVisit />
+              </SuspendedPage>
+            }
+          />
           <Route path="/visits" element={<Navigate to="/customers" replace />} />
           <Route path="/prescriptions" element={<Navigate to="/customers" replace />} />
-          <Route path="/orders" element={<SuspendedPage page="orders"><Orders /></SuspendedPage>} />
-          <Route path="/bills" element={<SuspendedPage page="bills"><Bills /></SuspendedPage>} />
-          <Route path="/collect" element={<SuspendedPage page="bills"><CollectPayment /></SuspendedPage>} />
-          <Route path="/payments" element={<RoleGuard path="/payments"><SuspendedPage page="payments"><Payments /></SuspendedPage></RoleGuard>} />
-          <Route path="/inventory" element={<RoleGuard path="/inventory"><SuspendedPage page="inventory"><InventoryPage /></SuspendedPage></RoleGuard>} />
-          <Route path="/inventory/scan/:code" element={<SuspendedPage page="inventory"><ItemScan /></SuspendedPage>} />
-          <Route path="/inventory/withdraw" element={<SuspendedPage page="inventory"><Withdraw /></SuspendedPage>} />
-          <Route path="/inventory/withdraw/history" element={<SuspendedPage page="inventory"><WithdrawHistory /></SuspendedPage>} />
-          <Route path="/inventory-v2" element={<RoleGuard path="/inventory-v2"><SuspendedPage page="inventory"><InventoryV2 /></SuspendedPage></RoleGuard>} />
-          <Route path="/delivery" element={<RoleGuard path="/delivery"><SuspendedPage page="delivery"><Delivery /></SuspendedPage></RoleGuard>} />
-          <Route path="/pickup" element={<SuspendedPage page="pickup"><Pickup /></SuspendedPage>} />
-          <Route path="/announcements" element={<RoleGuard path="/announcements"><SuspendedPage page="announcement"><Announcement /></SuspendedPage></RoleGuard>} />
-          <Route path="/workspace" element={<SuspendedPage page="workspace"><Workspace /></SuspendedPage>} />
-          <Route path="/reports" element={<RoleGuard path="/reports"><SuspendedPage page="reports"><Reports /></SuspendedPage></RoleGuard>} />
-          <Route path="/settings" element={<SuspendedPage page="settings"><Settings /></SuspendedPage>} />
-          <Route path="/whatsapp" element={<SuspendedPage page="settings"><WhatsAppPage /></SuspendedPage>} />
-          <Route path="/cameras" element={<SuspendedPage page="cameras"><Cameras /></SuspendedPage>} />
-          <Route path="/login" element={<SuspendedPage page="login"><Login /></SuspendedPage>} />
-          <Route path="/staff-login" element={<SuspendedPage page="login"><StaffLogin /></SuspendedPage>} />
-          <Route path="*" element={<SuspendedPage page="dashboard"><NotFound /></SuspendedPage>} />
+          <Route
+            path="/orders"
+            element={
+              <SuspendedPage page="orders">
+                <Orders />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/bills"
+            element={
+              <SuspendedPage page="bills">
+                <Bills />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/collect"
+            element={
+              <SuspendedPage page="bills">
+                <CollectPayment />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/payments"
+            element={
+              <RoleGuard path="/payments">
+                <SuspendedPage page="payments">
+                  <Payments />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <RoleGuard path="/inventory">
+                <SuspendedPage page="inventory">
+                  <InventoryPage />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/inventory/scan/:code"
+            element={
+              <SuspendedPage page="inventory">
+                <ItemScan />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/inventory/withdraw"
+            element={
+              <SuspendedPage page="inventory">
+                <Withdraw />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/inventory/withdraw/history"
+            element={
+              <SuspendedPage page="inventory">
+                <WithdrawHistory />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/inventory-v2"
+            element={
+              <RoleGuard path="/inventory-v2">
+                <SuspendedPage page="inventory">
+                  <InventoryV2 />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/delivery"
+            element={
+              <RoleGuard path="/delivery">
+                <SuspendedPage page="delivery">
+                  <Delivery />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/pickup"
+            element={
+              <SuspendedPage page="pickup">
+                <Pickup />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/announcements"
+            element={
+              <RoleGuard path="/announcements">
+                <SuspendedPage page="announcement">
+                  <Announcement />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/workspace"
+            element={
+              <SuspendedPage page="workspace">
+                <Workspace />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <RoleGuard path="/reports">
+                <SuspendedPage page="reports">
+                  <Reports />
+                </SuspendedPage>
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <SuspendedPage page="settings">
+                <Settings />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/whatsapp"
+            element={
+              <SuspendedPage page="settings">
+                <WhatsAppPage />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/cameras"
+            element={
+              <SuspendedPage page="cameras">
+                <Cameras />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <SuspendedPage page="login">
+                <Login />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/staff-login"
+            element={
+              <SuspendedPage page="login">
+                <StaffLogin />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <SuspendedPage page="dashboard">
+                <NotFound />
+              </SuspendedPage>
+            }
+          />
         </Routes>
       </ErrorBoundary>
     </Layout>

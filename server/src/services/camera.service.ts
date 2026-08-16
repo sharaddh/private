@@ -15,7 +15,9 @@ function loadRelayState(): Record<string, any> {
     if (fs.existsSync(PROCESSES_FILE)) {
       return JSON.parse(fs.readFileSync(PROCESSES_FILE, "utf-8"));
     }
-  } catch {}
+  } catch {
+    return {};
+  }
   return {};
 }
 
@@ -82,11 +84,14 @@ export async function addCamera(data: {
   return camera;
 }
 
-export async function updateCamera(id: string, data: {
-  name?: string;
-  username?: string;
-  password?: string;
-}) {
+export async function updateCamera(
+  id: string,
+  data: {
+    name?: string;
+    username?: string;
+    password?: string;
+  }
+) {
   const camera = await Camera.findById(id);
   if (!camera) throw new Error("Camera not found");
 
@@ -117,7 +122,12 @@ export async function getCameraStatus(id: string) {
   };
 }
 
-async function startRelay(cameraId: string, serialNumber: string, username: string, password: string) {
+async function startRelay(
+  cameraId: string,
+  serialNumber: string,
+  username: string,
+  password: string
+) {
   try {
     const state = loadRelayState();
     const existingIndex = Object.keys(state).length;
@@ -127,15 +137,15 @@ async function startRelay(cameraId: string, serialNumber: string, username: stri
 
     let proc: ChildProcess;
     if (fs.existsSync(dhP2pPath) || fs.existsSync(dhP2pPath + ".exe")) {
-      proc = spawn(dhP2pPath, [
-        serialNumber,
-        "-p", `127.0.0.1:${localPort}:554`,
-      ], {
+      proc = spawn(dhP2pPath, [serialNumber, "-p", `127.0.0.1:${localPort}:554`], {
         stdio: ["ignore", "pipe", "pipe"],
       });
     } else {
       console.log(`[camera-relay] dh-p2p not found at ${dhP2pPath}, skipping relay start`);
-      await Camera.findByIdAndUpdate(cameraId, { status: "offline", lastError: "dh-p2p binary not found" });
+      await Camera.findByIdAndUpdate(cameraId, {
+        status: "offline",
+        lastError: "dh-p2p binary not found",
+      });
       return;
     }
 
@@ -171,7 +181,9 @@ async function startRelay(cameraId: string, serialNumber: string, username: stri
 
     await Camera.findByIdAndUpdate(cameraId, { status: "online" });
 
-    console.log(`[camera-relay] Started relay for camera ${cameraId} (SN: ${serialNumber}, port: ${localPort})`);
+    console.log(
+      `[camera-relay] Started relay for camera ${cameraId} (SN: ${serialNumber}, port: ${localPort})`
+    );
   } catch (error: any) {
     console.error(`[camera-relay] Failed to start relay for ${cameraId}:`, error.message);
     await Camera.findByIdAndUpdate(cameraId, {

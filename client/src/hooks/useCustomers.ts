@@ -1,12 +1,16 @@
-import { useCallback } from "react";
-import { useApi, useApiPost, useApiPut, useApiDelete } from "./useApi";
-import { customerService } from "../services";
-import type { Customer, CustomerFormData, PaginatedResponse, PaginationParams } from "../types";
+import { useCallback } from 'react';
+import { useApi, useApiPost, useApiPut, useApiDelete } from './useApi';
+import { customerService } from '../services';
+import type { Customer, CustomerFormData, PaginatedResponse, PaginationParams } from '../types';
 
 export function useCustomers(params?: PaginationParams) {
   const path = params
-    ? `/api/customers?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString()}`
-    : "/api/customers";
+    ? `/api/customers?${new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v != null)
+          .map(([k, v]) => [k, String(v)])
+      ).toString()}`
+    : '/api/customers';
 
   const { data, loading, error, refetch } = useApi<PaginatedResponse<Customer>>(
     () => customerService.list<PaginatedResponse<Customer>>(params),

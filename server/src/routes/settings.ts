@@ -8,6 +8,11 @@ import * as settingsController from "../controllers/settingsController";
 const router = Router();
 
 router.get("/", authenticate, asyncHandler(settingsController.get));
-router.put("/", authenticate, validate(updateSettingsSchema, "body"), asyncHandler(settingsController.update));
+router.put(
+  "/",
+  authenticate,
+  validate(updateSettingsSchema, "body"),
+  asyncHandler(settingsController.update)
+);
 
 export default router;

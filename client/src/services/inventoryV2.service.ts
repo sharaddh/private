@@ -1,6 +1,6 @@
-import api from "../api";
-import type { ApiResponse, PaginatedResponse } from "../types";
-import { buildQueryString } from "./base";
+import api from '../api';
+import type { ApiResponse, PaginatedResponse } from '../types';
+import { buildQueryString } from './base';
 import type {
   AddStockInput,
   AdjustStockInput,
@@ -36,7 +36,7 @@ import type {
   WithdrawStockInput,
   InventoryMovement,
   InventoryLot,
-} from "../types/inventoryV2";
+} from '../types/inventoryV2';
 
 export interface AddStockResult {
   variant: InventoryVariant;
@@ -62,7 +62,14 @@ export interface AdjustStockResult {
 
 export interface CreateCountSessionResult {
   session: CountSession;
-  entries: Array<{ _id: string; variantId: string; sku: string; expectedQuantity: number; countedQuantity: number; difference: number }>;
+  entries: Array<{
+    _id: string;
+    variantId: string;
+    sku: string;
+    expectedQuantity: number;
+    countedQuantity: number;
+    difference: number;
+  }>;
 }
 
 export interface CompleteCountSessionResult {
@@ -71,17 +78,17 @@ export interface CompleteCountSessionResult {
 }
 
 class InventoryV2Service {
-  private base = "/api/inventory";
+  private base = '/api/inventory';
 
   // Dashboard
   getDashboard(threshold?: number): Promise<ApiResponse<InventoryDashboard>> {
-    const qs = threshold !== undefined ? `?threshold=${threshold}` : "";
+    const qs = threshold !== undefined ? `?threshold=${threshold}` : '';
     return api.get<InventoryDashboard>(`${this.base}/dashboard${qs}`);
   }
 
   // Brands
   listBrands(threshold?: number): Promise<ApiResponse<BrandSummary[]>> {
-    const qs = threshold !== undefined ? `?threshold=${threshold}` : "";
+    const qs = threshold !== undefined ? `?threshold=${threshold}` : '';
     return api.get<BrandSummary[]>(`${this.base}/brands${qs}`);
   }
 
@@ -98,8 +105,10 @@ class InventoryV2Service {
   }
 
   // Products
-  listProducts(params?: ProductListParams): Promise<ApiResponse<PaginatedResponse<InventoryProduct>>> {
-    const qs = params ? buildQueryString(params) : "";
+  listProducts(
+    params?: ProductListParams
+  ): Promise<ApiResponse<PaginatedResponse<InventoryProduct>>> {
+    const qs = params ? buildQueryString(params) : '';
     return api.get<PaginatedResponse<InventoryProduct>>(`${this.base}/products${qs}`);
   }
 
@@ -131,8 +140,10 @@ class InventoryV2Service {
     return api.get<InventoryVariant>(`${this.base}/variants/by-sku/${encodeURIComponent(sku)}`);
   }
 
-  listVariants(params?: VariantListParams): Promise<ApiResponse<PaginatedResponse<InventoryVariant>>> {
-    const qs = params ? buildQueryString(params) : "";
+  listVariants(
+    params?: VariantListParams
+  ): Promise<ApiResponse<PaginatedResponse<InventoryVariant>>> {
+    const qs = params ? buildQueryString(params) : '';
     return api.get<PaginatedResponse<InventoryVariant>>(`${this.base}/variants${qs}`);
   }
 
@@ -152,7 +163,9 @@ class InventoryV2Service {
     return api.del<InventoryVariant | { deleted: boolean }>(`${this.base}/variants/${id}`);
   }
 
-  createVariantWithStock(data: CreateVariantWithStockInput): Promise<ApiResponse<VariantWithStockResult>> {
+  createVariantWithStock(
+    data: CreateVariantWithStockInput
+  ): Promise<ApiResponse<VariantWithStockResult>> {
     return api.post<VariantWithStockResult>(`${this.base}/variants/with-stock`, data);
   }
 
@@ -170,8 +183,10 @@ class InventoryV2Service {
     return api.post<WithdrawResult>(`${this.base}/withdraw`, data);
   }
 
-  listWithdrawals(params?: WithdrawalListParams): Promise<ApiResponse<PaginatedResponse<WithdrawalV2>>> {
-    const qs = params ? buildQueryString(params) : "";
+  listWithdrawals(
+    params?: WithdrawalListParams
+  ): Promise<ApiResponse<PaginatedResponse<WithdrawalV2>>> {
+    const qs = params ? buildQueryString(params) : '';
     return api.get<PaginatedResponse<WithdrawalV2>>(`${this.base}/withdrawals${qs}`);
   }
 
@@ -184,8 +199,10 @@ class InventoryV2Service {
   }
 
   // Movements
-  listMovements(params?: MovementListParams): Promise<ApiResponse<PaginatedResponse<InventoryMovement>>> {
-    const qs = params ? buildQueryString(params) : "";
+  listMovements(
+    params?: MovementListParams
+  ): Promise<ApiResponse<PaginatedResponse<InventoryMovement>>> {
+    const qs = params ? buildQueryString(params) : '';
     return api.get<PaginatedResponse<InventoryMovement>>(`${this.base}/movements${qs}`);
   }
 
@@ -207,8 +224,11 @@ class InventoryV2Service {
   }
 
   // Count sessions
-  listCountSessions(params?: { page?: number; limit?: number }): Promise<ApiResponse<PaginatedResponse<CountSession>>> {
-    const qs = params ? buildQueryString(params) : "";
+  listCountSessions(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginatedResponse<CountSession>>> {
+    const qs = params ? buildQueryString(params) : '';
     return api.get<PaginatedResponse<CountSession>>(`${this.base}/count-sessions${qs}`);
   }
 
@@ -216,15 +236,23 @@ class InventoryV2Service {
     return api.get<CountSessionDetail>(`${this.base}/count-sessions/${id}`);
   }
 
-  createCountSession(data: CreateCountSessionInput): Promise<ApiResponse<CreateCountSessionResult>> {
+  createCountSession(
+    data: CreateCountSessionInput
+  ): Promise<ApiResponse<CreateCountSessionResult>> {
     return api.post<CreateCountSessionResult>(`${this.base}/count-sessions`, data);
   }
 
-  updateCountEntries(id: string, data: UpdateCountEntriesInput): Promise<ApiResponse<CountSessionDetail>> {
+  updateCountEntries(
+    id: string,
+    data: UpdateCountEntriesInput
+  ): Promise<ApiResponse<CountSessionDetail>> {
     return api.post<CountSessionDetail>(`${this.base}/count-sessions/${id}/entries`, data);
   }
 
-  completeCountSession(id: string, data: CompleteCountSessionInput): Promise<ApiResponse<CompleteCountSessionResult>> {
+  completeCountSession(
+    id: string,
+    data: CompleteCountSessionInput
+  ): Promise<ApiResponse<CompleteCountSessionResult>> {
     return api.post<CompleteCountSessionResult>(`${this.base}/count-sessions/${id}/complete`, data);
   }
 

@@ -1,4 +1,4 @@
-export type LensType = "sph" | "cyl" | "compound";
+export type LensType = 'sph' | 'cyl' | 'compound';
 
 export interface LensStockItem {
   _id: string;
@@ -14,10 +14,13 @@ export interface LensStockItem {
   updatedAt: string;
 }
 
-export function priceForPower(item: { price?: number; priceNeg?: number; pricePos?: number } | null | undefined, powerKey: string): number {
+export function priceForPower(
+  item: { price?: number; priceNeg?: number; pricePos?: number } | null | undefined,
+  powerKey: string
+): number {
   if (!item) return 0;
-  const sph = String(powerKey || "").split("|")[0];
-  const isNeg = sph.startsWith("-") && sph !== "-0.00";
+  const sph = String(powerKey || '').split('|')[0];
+  const isNeg = sph.startsWith('-') && sph !== '-0.00';
   if (isNeg) return item.priceNeg ?? item.price ?? 0;
   return item.pricePos ?? item.price ?? 0;
 }

@@ -16,7 +16,10 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function sessionOpts<T extends Record<string, unknown>>(session: mongoose.ClientSession | null, extra: T = {} as T) {
+function sessionOpts<T extends Record<string, unknown>>(
+  session: mongoose.ClientSession | null,
+  extra: T = {} as T
+) {
   return session ? { ...extra, session } : extra;
 }
 
@@ -26,7 +29,10 @@ async function getRackLabel(rackId?: string): Promise<string> {
   return rack?.code || "";
 }
 
-async function nextLotNumber(variantId: string, session: mongoose.ClientSession | null): Promise<string> {
+async function nextLotNumber(
+  variantId: string,
+  session: mongoose.ClientSession | null
+): Promise<string> {
   const count = await InventoryLot.countDocuments({ variantId }, session ? { session } : {});
   return `LOT-${String(count + 1).padStart(3, "0")}`;
 }
@@ -52,24 +58,26 @@ interface MovementInput {
 
 async function createMovement(input: MovementInput, session: mongoose.ClientSession | null) {
   await InventoryMovement.create(
-    [{
-      variantId: input.variantId,
-      sku: input.sku,
-      type: input.type,
-      quantity: input.quantity,
-      beforeQuantity: input.beforeQuantity,
-      afterQuantity: input.afterQuantity,
-      lotId: input.lotId,
-      lotBreakdown: input.lotBreakdown || [],
-      referenceType: input.referenceType || "MANUAL",
-      referenceId: input.referenceId,
-      note: input.note || "",
-      by: input.by || "",
-      rackId: input.rackId,
-      rackLabel: input.rackLabel,
-      oldRackId: input.oldRackId,
-      newRackId: input.newRackId,
-    }],
+    [
+      {
+        variantId: input.variantId,
+        sku: input.sku,
+        type: input.type,
+        quantity: input.quantity,
+        beforeQuantity: input.beforeQuantity,
+        afterQuantity: input.afterQuantity,
+        lotId: input.lotId,
+        lotBreakdown: input.lotBreakdown || [],
+        referenceType: input.referenceType || "MANUAL",
+        referenceId: input.referenceId,
+        note: input.note || "",
+        by: input.by || "",
+        rackId: input.rackId,
+        rackLabel: input.rackLabel,
+        oldRackId: input.oldRackId,
+        newRackId: input.newRackId,
+      },
+    ],
     session ? { session } : {}
   );
 }
@@ -96,12 +104,20 @@ async function deductLots(
     return [{ lotId, quantity }];
   }
 
-  let lots = await InventoryLot.find({ variantId, quantity: { $gt: 0 } }, null, session ? { session } : {}).lean();
+  let lots = await InventoryLot.find(
+    { variantId, quantity: { $gt: 0 } },
+    null,
+    session ? { session } : {}
+  ).lean();
   if (FEFO_CATEGORIES.includes(category)) {
     lots = lots
       .filter((l) => !!l.expiryDate)
       .sort((a, b) => (a.expiryDate as Date).getTime() - (b.expiryDate as Date).getTime())
-      .concat(lots.filter((l) => !l.expiryDate).sort((a, b) => (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime()));
+      .concat(
+        lots
+          .filter((l) => !l.expiryDate)
+          .sort((a, b) => (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime())
+      );
   } else {
     lots = lots.sort((a, b) => (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime());
   }
@@ -138,8 +154,17 @@ interface DeductResult {
   price: number;
 }
 
-async function deductStock(variantId: string, quantity: number, session: mongoose.ClientSession | null, lotId?: string): Promise<DeductResult> {
-  const variant = await InventoryVariant.findById(variantId, null, session ? { session } : {}).lean();
+async function deductStock(
+  variantId: string,
+  quantity: number,
+  session: mongoose.ClientSession | null,
+  lotId?: string
+): Promise<DeductResult> {
+  const variant = await InventoryVariant.findById(
+    variantId,
+    null,
+    session ? { session } : {}
+  ).lean();
   if (!variant) throw new AppError(404, "Variant not found");
   const before = variant.stockQuantity || 0;
   if (before < quantity) {
@@ -159,7 +184,11 @@ async function deductStock(variantId: string, quantity: number, session: mongoos
     const price = await weightedLotPrice(variantId, breakdown, variant.defaultSellingPrice);
     return { before, after, breakdown, price };
   } catch (err) {
-    await InventoryVariant.updateOne({ _id: variantId }, { $inc: { stockQuantity: quantity } }, session ? { session } : {});
+    await InventoryVariant.updateOne(
+      { _id: variantId },
+      { $inc: { stockQuantity: quantity } },
+      session ? { session } : {}
+    );
     throw err;
   }
 }
@@ -179,8 +208,17 @@ async function weightedLotPrice(
   return qty > 0 ? round2(total / qty) : 0;
 }
 
-async function restoreStock(variantId: string, quantity: number, session: mongoose.ClientSession | null, lotBreakdown?: Array<{ lotId: string; quantity: number }>): Promise<void> {
-  const variant = await InventoryVariant.findById(variantId, null, session ? { session } : {}).lean();
+async function restoreStock(
+  variantId: string,
+  quantity: number,
+  session: mongoose.ClientSession | null,
+  lotBreakdown?: Array<{ lotId: string; quantity: number }>
+): Promise<void> {
+  const variant = await InventoryVariant.findById(
+    variantId,
+    null,
+    session ? { session } : {}
+  ).lean();
   if (!variant) throw new AppError(404, "Variant not found");
 
   if (Array.isArray(lotBreakdown) && lotBreakdown.length > 0) {
@@ -192,14 +230,32 @@ async function restoreStock(variantId: string, quantity: number, session: mongoo
       ).lean();
       if (!res) {
         await InventoryLot.create(
-          [{ variantId, lotNumber: await nextLotNumber(variantId, session), initialQuantity: b.quantity, quantity: b.quantity, source: "RETURN", purchasePrice: 0 }],
+          [
+            {
+              variantId,
+              lotNumber: await nextLotNumber(variantId, session),
+              initialQuantity: b.quantity,
+              quantity: b.quantity,
+              source: "RETURN",
+              purchasePrice: 0,
+            },
+          ],
           session ? { session } : {}
         );
       }
     }
   } else {
     await InventoryLot.create(
-      [{ variantId, lotNumber: await nextLotNumber(variantId, session), initialQuantity: quantity, quantity, source: "RETURN", purchasePrice: 0 }],
+      [
+        {
+          variantId,
+          lotNumber: await nextLotNumber(variantId, session),
+          initialQuantity: quantity,
+          quantity,
+          source: "RETURN",
+          purchasePrice: 0,
+        },
+      ],
       session ? { session } : {}
     );
   }
@@ -229,33 +285,40 @@ export async function addStock(input: AddStockInput, by: string = "") {
   const qty = Math.floor(Number(input.quantity));
   if (!Number.isFinite(qty) || qty < 1) throw new AppError(400, "Quantity must be at least 1");
   const purchasePrice = Math.max(Number(input.purchasePrice) || 0, 0);
-  const sellingPrice = input.sellingPrice !== undefined ? Math.max(Number(input.sellingPrice) || 0, 0) : undefined;
+  const sellingPrice =
+    input.sellingPrice !== undefined ? Math.max(Number(input.sellingPrice) || 0, 0) : undefined;
 
   return withTransaction(async (session) => {
-    const variant = await InventoryVariant.findById(input.variantId, null, session ? { session } : {});
+    const variant = await InventoryVariant.findById(
+      input.variantId,
+      null,
+      session ? { session } : {}
+    );
     if (!variant) throw new AppError(404, "Variant not found");
     const before = variant.stockQuantity || 0;
 
     const rackLabel = await getRackLabel(input.rackId);
     const lot = (
       await InventoryLot.create(
-        [{
-          variantId: input.variantId,
-          lotNumber: await nextLotNumber(input.variantId, session),
-          initialQuantity: qty,
-          quantity: qty,
-          purchasePrice,
-          sellingPrice: sellingPrice ?? variant.defaultSellingPrice ?? 0,
-          supplierId: input.supplierId,
-          supplierName: input.supplierName || "",
-          rackId: input.rackId,
-          rackLabel: rackLabel || variant.rackLabel,
-          purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : undefined,
-          batchNumber: input.batchNumber || "",
-          expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
-          source: "PURCHASE",
-          note: input.note || "",
-        }],
+        [
+          {
+            variantId: input.variantId,
+            lotNumber: await nextLotNumber(input.variantId, session),
+            initialQuantity: qty,
+            quantity: qty,
+            purchasePrice,
+            sellingPrice: sellingPrice ?? variant.defaultSellingPrice ?? 0,
+            supplierId: input.supplierId,
+            supplierName: input.supplierName || "",
+            rackId: input.rackId,
+            rackLabel: rackLabel || variant.rackLabel,
+            purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : undefined,
+            batchNumber: input.batchNumber || "",
+            expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
+            source: "PURCHASE",
+            note: input.note || "",
+          },
+        ],
         session ? { session } : {}
       )
     )[0];
@@ -270,24 +333,31 @@ export async function addStock(input: AddStockInput, by: string = "") {
     if (input.supplierName) set.supplierName = input.supplierName;
     if (Object.keys(set).length > 0) update.$set = set;
 
-    const updated = await InventoryVariant.findByIdAndUpdate(input.variantId, update, sessionOpts(session, { new: true }));
+    const updated = await InventoryVariant.findByIdAndUpdate(
+      input.variantId,
+      update,
+      sessionOpts(session, { new: true })
+    );
     const after = updated ? updated.stockQuantity || 0 : before + qty;
 
-    await createMovement({
-      variantId: input.variantId,
-      sku: variant.sku,
-      type: "PURCHASE",
-      quantity: qty,
-      beforeQuantity: before,
-      afterQuantity: after,
-      lotId: lot._id.toString(),
-      lotBreakdown: [{ lotId: lot._id.toString(), quantity: qty }],
-      referenceType: "MANUAL",
-      note: input.note || "",
-      by,
-      rackId: input.rackId,
-      rackLabel: rackLabel || variant.rackLabel,
-    }, session);
+    await createMovement(
+      {
+        variantId: input.variantId,
+        sku: variant.sku,
+        type: "PURCHASE",
+        quantity: qty,
+        beforeQuantity: before,
+        afterQuantity: after,
+        lotId: lot._id.toString(),
+        lotBreakdown: [{ lotId: lot._id.toString(), quantity: qty }],
+        referenceType: "MANUAL",
+        note: input.note || "",
+        by,
+        rackId: input.rackId,
+        rackLabel: rackLabel || variant.rackLabel,
+      },
+      session
+    );
 
     return { variant: updated, lot };
   });
@@ -328,10 +398,15 @@ export async function createVariantWithStock(input: VariantWithStockInput, by: s
   const sku = normalizeSku(input.sku || "");
   if (!sku) throw new AppError(400, "SKU is required");
   const purchasePrice = Math.max(Number(input.purchasePrice) || 0, 0);
-  const sellingPrice = input.sellingPrice !== undefined ? Math.max(Number(input.sellingPrice) || 0, 0) : 0;
+  const sellingPrice =
+    input.sellingPrice !== undefined ? Math.max(Number(input.sellingPrice) || 0, 0) : 0;
 
   return withTransaction(async (session) => {
-    const existing = await InventoryVariant.findOne({ sku }, null, session ? { session } : {}).lean();
+    const existing = await InventoryVariant.findOne(
+      { sku },
+      null,
+      session ? { session } : {}
+    ).lean();
     if (existing) {
       throw new AppError(
         409,
@@ -384,42 +459,47 @@ export async function createVariantWithStock(input: VariantWithStockInput, by: s
 
     const lot = (
       await InventoryLot.create(
-        [{
-          variantId: v._id.toString(),
-          lotNumber: "LOT-001",
-          initialQuantity: qty,
-          quantity: qty,
-          purchasePrice,
-          sellingPrice,
-          supplierId: input.supplierId,
-          supplierName: input.supplierName || "",
-          rackId: input.rackId,
-          rackLabel: rackLabel || "",
-          purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : undefined,
-          batchNumber: input.batchNumber || "",
-          expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
-          source: "PURCHASE",
-          note: input.note || "",
-        }],
+        [
+          {
+            variantId: v._id.toString(),
+            lotNumber: "LOT-001",
+            initialQuantity: qty,
+            quantity: qty,
+            purchasePrice,
+            sellingPrice,
+            supplierId: input.supplierId,
+            supplierName: input.supplierName || "",
+            rackId: input.rackId,
+            rackLabel: rackLabel || "",
+            purchaseDate: input.purchaseDate ? new Date(input.purchaseDate) : undefined,
+            batchNumber: input.batchNumber || "",
+            expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
+            source: "PURCHASE",
+            note: input.note || "",
+          },
+        ],
         session ? { session } : {}
       )
     )[0];
 
-    await createMovement({
-      variantId: v._id.toString(),
-      sku,
-      type: "PURCHASE",
-      quantity: qty,
-      beforeQuantity: 0,
-      afterQuantity: qty,
-      lotId: lot._id.toString(),
-      lotBreakdown: [{ lotId: lot._id.toString(), quantity: qty }],
-      referenceType: "MANUAL",
-      note: input.note || "",
-      by,
-      rackId: input.rackId,
-      rackLabel: rackLabel || "",
-    }, session);
+    await createMovement(
+      {
+        variantId: v._id.toString(),
+        sku,
+        type: "PURCHASE",
+        quantity: qty,
+        beforeQuantity: 0,
+        afterQuantity: qty,
+        lotId: lot._id.toString(),
+        lotBreakdown: [{ lotId: lot._id.toString(), quantity: qty }],
+        referenceType: "MANUAL",
+        note: input.note || "",
+        by,
+        rackId: input.rackId,
+        rackLabel: rackLabel || "",
+      },
+      session
+    );
 
     return { variant: v, lot, product, brand };
   });
@@ -436,7 +516,8 @@ export async function withdrawStock(input: WithdrawStockInput, by: string = "") 
   for (const raw of input.items || []) {
     if (!raw || !raw.variantId) throw new AppError(400, "Each withdrawal item needs a variantId");
     const qty = Math.floor(Number(raw.quantity));
-    if (!Number.isFinite(qty) || qty < 1) throw new AppError(400, "Withdrawal quantity must be at least 1");
+    if (!Number.isFinite(qty) || qty < 1)
+      throw new AppError(400, "Withdrawal quantity must be at least 1");
     const key = raw.variantId.toString();
     const merged = items.get(key);
     if (merged) {
@@ -451,7 +532,14 @@ export async function withdrawStock(input: WithdrawStockInput, by: string = "") 
   const note = input.note || "";
 
   return withTransaction(async (session) => {
-    const withdrawal = new InventoryWithdrawalV2({ items: [], reason, note, by, totalQty: 0, totalPrice: 0 });
+    const withdrawal = new InventoryWithdrawalV2({
+      items: [],
+      reason,
+      note,
+      by,
+      totalQty: 0,
+      totalPrice: 0,
+    });
     await withdrawal.save(session ? { session } : {});
 
     const withdrawalItems: Array<Record<string, unknown>> = [];
@@ -460,7 +548,11 @@ export async function withdrawStock(input: WithdrawStockInput, by: string = "") 
     let totalPrice = 0;
 
     for (const item of items.values()) {
-      const variant = await InventoryVariant.findById(item.variantId, null, session ? { session } : {}).lean();
+      const variant = await InventoryVariant.findById(
+        item.variantId,
+        null,
+        session ? { session } : {}
+      ).lean();
       if (!variant) throw new AppError(404, `Variant not found: ${item.variantId}`);
 
       const result = await deductStock(item.variantId, item.quantity, session, item.lotId);
@@ -516,8 +608,13 @@ export async function reverseWithdrawal(id: string, by: string = "") {
 
     const movements: Array<Record<string, unknown>> = [];
     for (const item of withdrawal.items || []) {
-      if (!item.variantId) throw new AppError(400, `Withdrawal item is missing variant for ${item.sku}`);
-      const variant = await InventoryVariant.findById(item.variantId, null, session ? { session } : {}).lean();
+      if (!item.variantId)
+        throw new AppError(400, `Withdrawal item is missing variant for ${item.sku}`);
+      const variant = await InventoryVariant.findById(
+        item.variantId,
+        null,
+        session ? { session } : {}
+      ).lean();
       if (!variant) throw new AppError(404, `Variant not found for ${item.sku}`);
 
       const before = variant.stockQuantity || 0;
@@ -554,9 +651,15 @@ export async function reverseWithdrawal(id: string, by: string = "") {
   });
 }
 
-export async function adjustStock(variantId: string, delta: number, note: string = "", by: string = "") {
+export async function adjustStock(
+  variantId: string,
+  delta: number,
+  note: string = "",
+  by: string = ""
+) {
   const qty = Math.floor(Number(delta));
-  if (!Number.isFinite(qty) || qty === 0) throw new AppError(400, "Adjustment quantity must be a non-zero number");
+  if (!Number.isFinite(qty) || qty === 0)
+    throw new AppError(400, "Adjustment quantity must be a non-zero number");
 
   return withTransaction(async (session) => {
     return applyAdjustmentInTxn(variantId, qty, note, by, "ADJUSTMENT", session);
@@ -571,60 +674,76 @@ async function applyAdjustmentInTxn(
   type: string,
   session: mongoose.ClientSession | null
 ) {
-  const variant = await InventoryVariant.findById(variantId, null, session ? { session } : {}).lean();
+  const variant = await InventoryVariant.findById(
+    variantId,
+    null,
+    session ? { session } : {}
+  ).lean();
   if (!variant) throw new AppError(404, "Variant not found");
   const before = variant.stockQuantity || 0;
 
   let lotId: string | undefined;
-  let breakdown: Array<{ lotId: string; quantity: number }> = [];
+  let breakdown: Array<{ lotId: string; quantity: number }>;
 
   if (qty > 0) {
     const lot = (
       await InventoryLot.create(
-        [{
-          variantId,
-          lotNumber: await nextLotNumber(variantId, session),
-          initialQuantity: qty,
-          quantity: qty,
-          purchasePrice: 0,
-          sellingPrice: variant.defaultSellingPrice || 0,
-          rackId: variant.rackId,
-          rackLabel: variant.rackLabel,
-          source: "ADJUSTMENT",
-          note: note || "",
-        }],
+        [
+          {
+            variantId,
+            lotNumber: await nextLotNumber(variantId, session),
+            initialQuantity: qty,
+            quantity: qty,
+            purchasePrice: 0,
+            sellingPrice: variant.defaultSellingPrice || 0,
+            rackId: variant.rackId,
+            rackLabel: variant.rackLabel,
+            source: "ADJUSTMENT",
+            note: note || "",
+          },
+        ],
         session ? { session } : {}
       )
     )[0];
     lotId = lot._id.toString();
     breakdown = [{ lotId: lotId, quantity: qty }];
-    await InventoryVariant.updateOne({ _id: variantId }, { $inc: { stockQuantity: qty } }, session ? { session } : {});
+    await InventoryVariant.updateOne(
+      { _id: variantId },
+      { $inc: { stockQuantity: qty } },
+      session ? { session } : {}
+    );
   } else {
     const result = await deductStock(variantId, -qty, session);
     lotId = result.breakdown[0]?.lotId;
     breakdown = result.breakdown;
   }
 
-  const updated = await InventoryVariant.findById(variantId, null, session ? { session } : {}).lean();
+  const updated = await InventoryVariant.findById(
+    variantId,
+    null,
+    session ? { session } : {}
+  ).lean();
   const after = updated ? updated.stockQuantity || 0 : before + qty;
 
   const movement = (
     await InventoryMovement.create(
-      [{
-        variantId,
-        sku: variant.sku,
-        type,
-        quantity: qty,
-        beforeQuantity: before,
-        afterQuantity: after,
-        lotId,
-        lotBreakdown: breakdown,
-        referenceType: "MANUAL",
-        note: note || "",
-        by,
-        rackId: variant.rackId,
-        rackLabel: variant.rackLabel,
-      }],
+      [
+        {
+          variantId,
+          sku: variant.sku,
+          type,
+          quantity: qty,
+          beforeQuantity: before,
+          afterQuantity: after,
+          lotId,
+          lotBreakdown: breakdown,
+          referenceType: "MANUAL",
+          note: note || "",
+          by,
+          rackId: variant.rackId,
+          rackLabel: variant.rackLabel,
+        },
+      ],
       session ? { session } : {}
     )
   )[0];
@@ -637,21 +756,32 @@ export async function applyStockCorrections(
   note: string = "",
   by: string = ""
 ) {
-  const normalized = entries.filter((e) => Math.floor(Number(e.countedQuantity)) !== Math.floor(Number(e.expectedQuantity)));
+  const normalized = entries.filter(
+    (e) => Math.floor(Number(e.countedQuantity)) !== Math.floor(Number(e.expectedQuantity))
+  );
   if (normalized.length === 0) return { movements: [], count: 0 };
 
   return withTransaction(async (session) => {
     const movements: any[] = [];
     for (const e of normalized) {
       const delta = Math.floor(Number(e.countedQuantity)) - Math.floor(Number(e.expectedQuantity));
-      const result = await applyAdjustmentInTxn(e.variantId, delta, note, by, "COUNT_CORRECTION", session);
+      const result = await applyAdjustmentInTxn(
+        e.variantId,
+        delta,
+        note,
+        by,
+        "COUNT_CORRECTION",
+        session
+      );
       movements.push(result.movement);
     }
     return { movements, count: normalized.length };
   });
 }
 
-export async function listWithdrawals(options: { page?: string; limit?: string; reason?: string; by?: string; search?: string } = {}) {
+export async function listWithdrawals(
+  options: { page?: string; limit?: string; reason?: string; by?: string; search?: string } = {}
+) {
   const filter: Record<string, unknown> = {};
   if (options.reason) filter.reason = options.reason;
   if (options.by) filter.by = { $regex: escapeRegex(options.by), $options: "i" };
@@ -664,7 +794,10 @@ export async function listWithdrawals(options: { page?: string; limit?: string; 
     ];
   }
 
-  const baseQuery = InventoryWithdrawalV2.find(filter).sort({ createdAt: -1 }) as mongoose.Query<any[], any>;
+  const baseQuery = InventoryWithdrawalV2.find(filter).sort({ createdAt: -1 }) as mongoose.Query<
+    any[],
+    any
+  >;
   return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
 }
 
@@ -708,6 +841,9 @@ export async function listMovements(options: MovementFilters = {}) {
     filter.createdAt = createdAt;
   }
 
-  const baseQuery = InventoryMovement.find(filter).sort({ createdAt: -1 }) as mongoose.Query<any[], any>;
+  const baseQuery = InventoryMovement.find(filter).sort({ createdAt: -1 }) as mongoose.Query<
+    any[],
+    any
+  >;
   return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
 }

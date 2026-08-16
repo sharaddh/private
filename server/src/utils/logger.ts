@@ -1,68 +1,60 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+import pino from "pino";
+import { LOG_LEVEL, isProduction } from "../config";
 
-const LEVEL_PRIORITY: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
+const base = pino({
+  level: LOG_LEVEL,
+  base: { service: "kmj-erp-server" },
+  timestamp: pino.stdTimeFunctions.isoTime,
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+  ...(isProduction
+    ? {}
+    : {
+        transport: {
+          target: "pino-pretty",
+          options: { colorize: true, translateTime: "SYS:standard", ignore: "pid,hostname" },
+        },
+      }),
+});
 
-const LEVEL_COLORS: Record<LogLevel, string> = {
-  debug: "\x1b[36m",
-  info: "\x1b[32m",
-  warn: "\x1b[33m",
-  error: "\x1b[31m",
-};
+export const pinoLogger = base;
 
-const RESET = "\x1b[0m";
-
-const MIN_LEVEL: LogLevel = (process.env.LOG_LEVEL as LogLevel) || "info";
-
-function shouldLog(level: LogLevel): boolean {
-  return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[MIN_LEVEL];
-}
-
-function formatTimestamp(): string {
-  return new Date().toISOString();
-}
-
-function formatMessage(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
-  const color = process.env.NODE_ENV !== "production" ? LEVEL_COLORS[level] : "";
-  const reset = color ? RESET : "";
-  const base = `${color}[${formatTimestamp()}] [${level.toUpperCase()}]${reset} ${message}`;
-  if (meta && Object.keys(meta).length > 0) {
-    return `${base} ${JSON.stringify(meta)}`;
-  }
-  return base;
+export interface AuditEntry {
+  method: string;
+  path: string;
+  userId?: string;
+  username?: string;
+  ip?: string;
+  requestId?: string;
 }
 
 export const logger = {
   debug(message: string, meta?: Record<string, unknown>): void {
-    if (shouldLog("debug")) console.debug(formatMessage("debug", message, meta));
+    if (meta) base.debug(meta, message);
+    else base.debug(message);
   },
 
   info(message: string, meta?: Record<string, unknown>): void {
-    if (shouldLog("info")) console.log(formatMessage("info", message, meta));
+    if (meta) base.info(meta, message);
+    else base.info(message);
   },
 
   warn(message: string, meta?: Record<string, unknown>): void {
-    if (shouldLog("warn")) console.warn(formatMessage("warn", message, meta));
+    if (meta) base.warn(meta, message);
+    else base.warn(message);
   },
 
   error(message: string, meta?: Record<string, unknown>): void {
-    if (shouldLog("error")) console.error(formatMessage("error", message, meta));
+    if (meta) base.error(meta, message);
+    else base.error(message);
   },
 
-  audit(entry: {
-    method: string;
-    path: string;
-    userId?: string;
-    username?: string;
-    ip?: string;
-    requestId?: string;
-  }): void {
-    if (shouldLog("info")) {
-      console.log(formatMessage("info", "AUDIT", entry as unknown as Record<string, unknown>));
-    }
+  audit(entry: AuditEntry): void {
+    base.info({ event: "audit", ...entry }, "AUDIT");
+  },
+
+  child(bindings: Record<string, unknown>) {
+    return base.child(bindings);
   },
 };

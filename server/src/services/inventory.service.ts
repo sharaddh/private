@@ -3,7 +3,12 @@ import { Inventory } from "../models/inventory";
 import { escapeRegex } from "../utils/string";
 import { AppError } from "../middleware/errorHandler";
 import { paginateQuery, PaginationOptions } from "../utils/pagination";
-import { VALID_INVENTORY_CATEGORIES, VALID_INVENTORY_TYPES, VALID_GENDERS, VALID_LOCATIONS } from "../types";
+import {
+  VALID_INVENTORY_CATEGORIES,
+  VALID_INVENTORY_TYPES,
+  VALID_GENDERS,
+  VALID_LOCATIONS,
+} from "../types";
 import { z } from "zod";
 
 interface InventoryData {
@@ -67,20 +72,21 @@ function isDuplicateKeyError(err: unknown): boolean {
 export async function getStats(thresholdStr?: string, location?: string) {
   const threshold = Math.max(parseInt(thresholdStr || "5", 10) || 5, 0);
   const locationFilter = location && ["shop", "warehouse"].includes(location) ? { location } : {};
-  const [totalItems, lowStock, warehouseItems, totalValueResult, recentItems, byCategory] = await Promise.all([
-    Inventory.countDocuments(locationFilter),
-    Inventory.countDocuments({ ...locationFilter, quantity: { $lte: threshold } }),
-    Inventory.countDocuments({ ...locationFilter, location: "warehouse" }),
-    Inventory.aggregate([
-      { $match: locationFilter },
-      { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
-    ]),
-    Inventory.find(locationFilter).sort({ createdAt: -1 }).limit(5).lean(),
-    Inventory.aggregate([
-      { $match: locationFilter },
-      { $group: { _id: "$category", count: { $sum: 1 } } },
-    ]),
-  ]);
+  const [totalItems, lowStock, warehouseItems, totalValueResult, recentItems, byCategory] =
+    await Promise.all([
+      Inventory.countDocuments(locationFilter),
+      Inventory.countDocuments({ ...locationFilter, quantity: { $lte: threshold } }),
+      Inventory.countDocuments({ ...locationFilter, location: "warehouse" }),
+      Inventory.aggregate([
+        { $match: locationFilter },
+        { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
+      ]),
+      Inventory.find(locationFilter).sort({ createdAt: -1 }).limit(5).lean(),
+      Inventory.aggregate([
+        { $match: locationFilter },
+        { $group: { _id: "$category", count: { $sum: 1 } } },
+      ]),
+    ]);
 
   const categoryCounts: Record<string, number> = {};
   for (const c of byCategory) {
@@ -235,29 +241,27 @@ async function applyStockDelta(
   const opts = { session: session || undefined, new: true };
   if (amount < 0) {
     const dec = -amount;
-    const pipeline = [
-      { $set: { quantity: { $max: [{ $subtract: ["$quantity", dec] }, 0] } } },
-    ];
-    let res = await Inventory.findOneAndUpdate(
+    const pipeline = [{ $set: { quantity: { $max: [{ $subtract: ["$quantity", dec] }, 0] } } }];
+    const updated = await Inventory.findOneAndUpdate(
       { sku: code, quantity: { $gt: 0 } },
       pipeline,
       opts
     ).lean();
-    if (!res) {
-      res = await Inventory.findOneAndUpdate(
+    if (!updated) {
+      await Inventory.findOneAndUpdate(
         { model: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") }, quantity: { $gt: 0 } },
         pipeline,
         opts
       ).lean();
     }
   } else {
-    let res = await Inventory.findOneAndUpdate(
+    const updated = await Inventory.findOneAndUpdate(
       { sku: code },
       { $inc: { quantity: amount } },
       opts
     ).lean();
-    if (!res) {
-      res = await Inventory.findOneAndUpdate(
+    if (!updated) {
+      await Inventory.findOneAndUpdate(
         { model: { $regex: new RegExp(`^${escapeRegex(code)}$`, "i") } },
         { $inc: { quantity: amount } },
         opts
@@ -316,7 +320,11 @@ export async function updateInventory(id: string, updates: Record<string, unknow
     }
   }
   try {
-    const item = await Inventory.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
+    const item = await Inventory.findByIdAndUpdate(
+      id,
+      { $set: filtered },
+      { new: true, runValidators: true }
+    ).lean();
     if (!item) throw new AppError(404, "Inventory item not found");
     return item;
   } catch (err) {
@@ -403,7 +411,9 @@ export async function importInventory(
     return { created: 0, updated: 0, skipped: errors.length, errors };
   }
 
-  const result = await Inventory.bulkWrite(ops as mongoose.AnyBulkWriteOperation[], { ordered: false });
+  const result = await Inventory.bulkWrite(ops as mongoose.AnyBulkWriteOperation[], {
+    ordered: false,
+  });
   return {
     created: result.upsertedCount || 0,
     updated: result.modifiedCount || 0,

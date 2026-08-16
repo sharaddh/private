@@ -1,17 +1,21 @@
-import api from "../api";
-import { ApiService } from "./base";
-import type { ApiResponse, User, AuthTokens, BranchInfo } from "../types";
+import api from '../api';
+import { ApiService } from './base';
+import type { ApiResponse, User, AuthTokens, BranchInfo } from '../types';
 
 class AuthService extends ApiService {
   constructor() {
-    super("/api/auth");
+    super('/api/auth');
   }
 
   async login(username: string, password: string): Promise<ApiResponse<AuthTokens>> {
     return api.post<AuthTokens>(`${this.basePath}/login`, { username, password });
   }
 
-  async register(data: { username: string; password: string; role?: string }): Promise<ApiResponse<AuthTokens>> {
+  async register(data: {
+    username: string;
+    password: string;
+    role?: string;
+  }): Promise<ApiResponse<AuthTokens>> {
     return api.post<AuthTokens>(`${this.basePath}/register`, data);
   }
 

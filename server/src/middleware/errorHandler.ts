@@ -84,7 +84,11 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   }
 
   if (err.name === "ValidationError") {
-    logger.warn("Mongoose validation error", { message: err.message, path: req.originalUrl, requestId });
+    logger.warn("Mongoose validation error", {
+      message: err.message,
+      path: req.originalUrl,
+      requestId,
+    });
     res.status(400).json({ success: false, message: err.message });
     return;
   }

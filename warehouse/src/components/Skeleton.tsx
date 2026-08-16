@@ -1,4 +1,4 @@
-export function SkeletonLine({ className = "" }: { className?: string }) {
+export function SkeletonLine({ className = '' }: { className?: string }) {
   return <div className={`bg-th-hover rounded animate-pulse ${className}`} />;
 }
 

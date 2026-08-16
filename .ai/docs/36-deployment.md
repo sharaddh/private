@@ -25,45 +25,62 @@ services:
     name: kmj-backend
     runtime: node
     plan: starter
-    buildCommand: cd server && npm install && npm run build
-    startCommand: cd server && npm start
-    healthCheckPath: /api/health
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/ready
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MONGODB_URI
+      - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
         sync: false
       - key: REDIS_URL
         sync: false
+      - key: JWT_ACCESS_EXPIRY
+        value: 7d
+      - key: JWT_REFRESH_EXPIRY
+        value: 7d
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX
+        value: 1000
+      - key: AUTH_RATE_LIMIT_MAX
+        value: 30
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_CLUSTER
+        value: false
+      - key: CLUSTER_WORKERS
+        value: 0
 ```
+
+> The repo is an **npm workspaces monorepo** (`client`, `server`, `warehouse`) with a
+> single root `package-lock.json`. `npm ci` installs all three apps; `npm run build`
+> builds each. `npm start` runs `node server/dist/index.js`, which serves both SPAs
+> (client + warehouse) and the API from one process.
 
 #### Deployment Steps
 
 ```
-1. Push to main branch
-2. Render detects changes
-3. Render builds the application
-4. Render runs health checks
-5. Render switches traffic to new version
-6. Render shuts down old version
+1. Push to main branch (CI runs first)
+2. GitHub Actions CI verifies: typecheck, lint, format, tests, build
+3. Render detects changes
+4. Render runs `npm ci && npm run build`
+5. Render runs health checks against /api/ready
+6. Render switches traffic to new version
+7. Render shuts down old version
 ```
 
 #### Build Process
 
 ```bash
-# Server build
-cd server
-npm install
-npm run build  # TypeScript compilation
-npm test       # Run tests (if configured)
-
-# Client build
-cd client
-npm install
-npm run build  # Vite production build
-npm run preview  # Verify build works
+# Root monorepo build (installs client + server + warehouse)
+npm ci
+npm run build   # tsc for server, vite for client + warehouse
+npm run typecheck
+npm run lint
+npm run test
 ```
 
 ### Environment Variables
@@ -74,19 +91,25 @@ npm run preview  # Verify build works
 |----------|-------------|---------|
 | `NODE_ENV` | Environment mode | `production` |
 | `PORT` | Server port | `4000` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://...` |
-| `JWT_SECRET` | JWT signing secret | `your-secret-key` |
-| `REDIS_URL` | Redis connection string | `redis://...` |
-| `CORS_ORIGIN` | Allowed origins | `https://app.kmj.com` |
+| `MONGO_URI` | MongoDB connection string | `mongodb+srv://...` |
+| `JWT_SECRET` | JWT signing secret (fail-fast if missing in prod) | `your-secret-key` |
+| `REDIS_URL` | Redis connection string (optional; enables Redis rate limits) | `redis://...` |
+| `CORS_ORIGINS` | Comma-separated allowed origins (empty = reflect request origin) | `https://app.kmj.com,https://warehouse.kmj.com` |
+| `WAREHOUSE_DB_NAME` | Warehouse MongoDB database name | `kmj_warehouse` |
 
 #### Optional Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window | `60000` |
-| `RATE_LIMIT_MAX_REQUESTS` | Max requests per window | `200` |
-| `CACHE_TTL_SECONDS` | Default cache TTL | `60` |
-| `LOG_LEVEL` | Logging level | `info` |
+| `RATE_LIMIT_MAX` | Max requests per window (per IP / per user) | `1000` |
+| `AUTH_RATE_LIMIT_MAX` | Max auth requests per window per IP | `30` |
+| `JWT_ACCESS_EXPIRY` | Access token expiry | `7d` |
+| `JWT_REFRESH_EXPIRY` | Refresh token expiry | `7d` |
+| `LOG_LEVEL` | Pino log level | `info` |
+| `ENABLE_CLUSTER` | Run across all CPUs | `false` |
+| `CLUSTER_WORKERS` | Worker count (`0` = auto = CPU count) | `0` |
+| `TZ` | Application timezone | `Asia/Kolkata` |
 
 #### Security Rules
 
@@ -99,11 +122,11 @@ npm run preview  # Verify build works
 
 ```bash
 # GOOD: Environment variables in Render dashboard
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/kmj
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/kmj
 JWT_SECRET=super-secret-key-that-is-long-and-random
 
 # BAD: Environment variables in code
-const MONGODB_URI = 'mongodb+srv://user:pass@cluster.mongodb.net/kmj';
+const MONGO_URI = 'mongodb+srv://user:pass@cluster.mongodb.net/kmj';
 const JWT_SECRET = 'super-secret-key';
 ```
 
@@ -111,46 +134,31 @@ const JWT_SECRET = 'super-secret-key';
 
 #### Health Endpoint
 
+Two endpoints exist:
+
+- `/api/health` — liveness; reports uptime and memory.
+- `/api/ready` — readiness; pings MongoDB and returns `{ success: true }` when the
+  database is reachable. Used by Render's `healthCheckPath` (503 otherwise).
+
 ```typescript
-// server/src/routes/health.ts
-import { Router } from 'express';
-import mongoose from 'mongoose';
-
-const router = Router();
-
-router.get('/health', async (req, res) => {
-  const checks = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    database: 'unknown',
-    memory: {
-      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-    },
-  };
-
-  // Check database connection
-  try {
-    await mongoose.connection.db.admin().ping();
-    checks.database = 'connected';
-  } catch (error) {
-    checks.database = 'disconnected';
-    checks.status = 'unhealthy';
+// server/src/routes/health.ts (abridged)
+router.get('/ready', asyncHandler(async (req, res) => {
+  const dbConnected = await isDatabaseConnected(); // pings MongoDB
+  if (!dbConnected) {
+    res.status(503).json({ success: false, message: 'Database not ready' });
+    return;
   }
-
-  const statusCode = checks.status === 'healthy' ? 200 : 503;
-  res.status(statusCode).json(checks);
-});
-
-export default router;
+  res.status(200).json({ success: true });
+}));
 ```
+
+Request logging (`pino-http`) ignores `/api/health` and `/api/ready` to avoid noise.
 
 #### Health Check Rules
 
-1. **Check database** connectivity
-2. **Check memory** usage
-3. **Check uptime**
+1. **Check database** connectivity (readiness)
+2. **Check memory** usage (liveness)
+3. **Check uptime** (liveness)
 4. **Return appropriate** HTTP status codes
 5. **Include timestamp** for monitoring
 6. **Never expose** sensitive information
@@ -172,7 +180,7 @@ git push origin main
 # 4. Render auto-deploys the revert
 
 # 5. Verify rollback
-curl https://app.kmj.com/api/health
+curl https://app.kmj.com/api/ready
 ```
 
 #### Manual Rollback (Render Dashboard)
@@ -292,8 +300,58 @@ git push origin feat/new-feature
 # Watch Render dashboard
 
 # 10. Verify deployment
-curl https://app.kmj.com/api/health
+curl https://app.kmj.com/api/ready
 ```
+
+### Docker
+
+A root `Dockerfile` builds the monorepo in a single multi-stage image:
+
+- **Build stage**: `node:20-slim`, `npm ci && npm run build` (server `tsc`, client +
+  warehouse `vite`).
+- **Runtime stage**: `node:20-slim` (glibc — required for `bcrypt` native module).
+  Copies `package.json`, `package-lock.json`, `node_modules`, and the three `dist`
+  folders. `npm ci` runs with install scripts enabled (never `--ignore-scripts`,
+  or `bcrypt` will fail).
+- Runs `CMD ["node", "server/dist/index.js"]`, `EXPOSE 4000`.
+
+```bash
+docker build -t kmj-erp .
+docker run -p 4000:4000 \
+  -e MONGO_URI=mongodb+srv://... -e JWT_SECRET=... -e NODE_ENV=production \
+  kmj-erp
+```
+
+The `relay-server/` directory (mediamtx camera relay) is excluded via `.dockerignore`
+— it is a separate project and not part of the ERP image.
+
+### CI/CD
+
+`.github/workflows/ci.yml` runs on push to `main` and pull requests, on a matrix of
+Node 18 and 20:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4          # node-version: [18.x, 20.x]
+    with: { cache: npm }
+  - run: npm ci
+  - run: npm run typecheck
+  - run: npm run lint
+  - run: npm run format:check
+  - run: npm test
+  - run: npm run build
+```
+
+CI is the pre-deploy gate: a red build blocks the deploy to Render.
+
+### Cluster Mode
+
+The server can run across all CPUs:
+
+- Set `ENABLE_CLUSTER=true` (and optionally `CLUSTER_WORKERS=N`; `0` = auto).
+- The primary process runs MongoDB index migrations once; workers serve requests.
+- Requires a shared Redis store (`REDIS_URL`) for cross-process rate limiting.
 
 ## Tradeoffs
 

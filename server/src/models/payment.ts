@@ -6,9 +6,13 @@ const PaymentSchemaObj = new Schema(
     customerId: { type: Types.ObjectId, ref: "Customer", required: true },
     billId: { type: Types.ObjectId, ref: "Bill" },
     amount: { type: Number, required: true, min: [0.01, "Amount must be positive"] },
-    paymentMode: { type: String, enum: ["Cash","UPI","Card","Bank Transfer","Insurance"], default: "Cash" },
+    paymentMode: {
+      type: String,
+      enum: ["Cash", "UPI", "Card", "Bank Transfer", "Insurance"],
+      default: "Cash",
+    },
     paymentDate: { type: Date, default: Date.now },
-    notes: { type: String }
+    notes: { type: String },
   },
   { timestamps: true }
 );

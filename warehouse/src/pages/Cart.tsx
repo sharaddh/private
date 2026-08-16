@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
-import api from "../api";
-import type { LensStockItem } from "../types/lensStock";
-import { priceForPower } from "../types/lensStock";
-import type { FogMark } from "../types/fogMark";
-import { formatCurrency, fmtPairs, formatLensPower, powerTextClass } from "../utils/helpers";
-import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import api from '../api';
+import type { LensStockItem } from '../types/lensStock';
+import { priceForPower } from '../types/lensStock';
+import type { FogMark } from '../types/fogMark';
+import { formatCurrency, fmtPairs, formatLensPower, powerTextClass } from '../utils/helpers';
+import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags } from 'lucide-react';
 
 export default function Cart() {
   const { items, count, updateQty, removeItem, clearCart, withdraw, setFogMark } = useCart();
@@ -18,7 +18,7 @@ export default function Cart() {
   const [savingMark, setSavingMark] = useState<string | null>(null);
 
   async function loadStock() {
-    const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock/list");
+    const res = await api.get<LensStockItem[]>('/api/warehouse/lens-stock/list');
     if (res.success && Array.isArray(res.data)) {
       const map: Record<string, number> = {};
       const itemsByCoating: Record<string, LensStockItem> = {};
@@ -42,7 +42,7 @@ export default function Cart() {
   }, []);
 
   useEffect(() => {
-    api.get<FogMark[]>("/api/fog-marks").then((res) => {
+    api.get<FogMark[]>('/api/fog-marks').then((res) => {
       if (res.success && Array.isArray(res.data)) setFogMarks(res.data);
     });
   }, []);
@@ -58,7 +58,8 @@ export default function Cart() {
   const totalPrice = items.reduce((sum, i) => sum + getItemPrice(i) * (i.quantity / 2), 0);
 
   async function handleWithdraw() {
-    if (!confirm("Withdraw all items? This will reduce lens stock and save to your history.")) return;
+    if (!confirm('Withdraw all items? This will reduce lens stock and save to your history.'))
+      return;
     setWithdrawing(true);
     await withdraw();
     setWithdrawing(false);
@@ -75,11 +76,17 @@ export default function Cart() {
       <div className="flex items-center justify-between gap-3 rounded-xl border border-th-border bg-th-surface px-4 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-full bg-primary-500/15 flex items-center justify-center shrink-0">
-            <span className="text-body-bold text-primary-500">{(user?.name || user?.username || "U").charAt(0).toUpperCase()}</span>
+            <span className="text-body-bold text-primary-500">
+              {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
+            </span>
           </div>
           <div className="min-w-0">
-            <p className="text-body-bold text-th-text truncate">{user?.name || user?.username || "User"}</p>
-            <p className="text-small text-th-muted truncate">@{user?.username || "—"} · {user?.role === "owner" ? "Owner" : user?.role || "User"}</p>
+            <p className="text-body-bold text-th-text truncate">
+              {user?.name || user?.username || 'User'}
+            </p>
+            <p className="text-small text-th-muted truncate">
+              @{user?.username || '—'} · {user?.role === 'owner' ? 'Owner' : user?.role || 'User'}
+            </p>
           </div>
         </div>
       </div>
@@ -96,7 +103,8 @@ export default function Cart() {
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <button type="button"
+            <button
+              type="button"
               onClick={clearCart}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-negative text-small font-bold bg-negative/10 active:scale-95 transition-all"
             >
@@ -120,12 +128,17 @@ export default function Cart() {
         <>
           <div className="flex-1 overflow-auto space-y-3">
             {items.map((item, idx) => {
-              const lensLabel = item.lensType === "compound" ? "Compound" : item.lensType.toUpperCase();
+              const lensLabel =
+                item.lensType === 'compound' ? 'Compound' : item.lensType.toUpperCase();
               const stock = getStockQty(item.coating, item.lensType, item.powerKey);
               const atMax = stock > 0 && item.quantity >= stock;
 
               return (
-                <div key={item._id} style={{ animationDelay: `${Math.min(idx, 10) * 35}ms` }} className="card p-3 sm:p-4 animate-fade-up">
+                <div
+                  key={item._id}
+                  style={{ animationDelay: `${Math.min(idx, 10) * 35}ms` }}
+                  className="card p-3 sm:p-4 animate-fade-up"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center shrink-0">
@@ -133,13 +146,23 @@ export default function Cart() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-body-bold text-th-text truncate">{item.coating}</span>
-                          <span className="px-2 py-0.5 rounded text-small font-bold bg-th-elevated text-th-secondary">{lensLabel}</span>
-                          <span className={`text-small-bold ${powerTextClass(item.powerKey)}`}>{formatLensPower(item.powerKey)}</span>
+                          <span className="text-body-bold text-th-text truncate">
+                            {item.coating}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-small font-bold bg-th-elevated text-th-secondary">
+                            {lensLabel}
+                          </span>
+                          <span className={`text-small-bold ${powerTextClass(item.powerKey)}`}>
+                            {formatLensPower(item.powerKey)}
+                          </span>
                         </div>
                         <div className="mt-1">
-                          <span className="text-small text-th-muted">{formatCurrency(getItemPrice(item))} × {fmtPairs(item.quantity)}</span>
-                          <span className="text-small-bold text-primary-500 ml-2">{formatCurrency(getItemPrice(item) * (item.quantity / 2))}</span>
+                          <span className="text-small text-th-muted">
+                            {formatCurrency(getItemPrice(item))} × {fmtPairs(item.quantity)}
+                          </span>
+                          <span className="text-small-bold text-primary-500 ml-2">
+                            {formatCurrency(getItemPrice(item) * (item.quantity / 2))}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -149,40 +172,53 @@ export default function Cart() {
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       <Tags size={14} className="text-th-muted shrink-0" />
                       <select
-                        value={item.fogMark || ""}
+                        value={item.fogMark || ''}
                         disabled={savingMark === item._id}
                         onChange={(e) => handleFogMark(item._id, e.target.value)}
                         className={`flex-1 min-w-0 px-2.5 py-1.5 rounded-lg text-small font-medium border bg-th-base outline-none focus:ring-2 focus:ring-primary-500/40 disabled:opacity-50 ${
                           item.fogMark
-                            ? "border-primary-500/40 text-primary-500"
-                            : "border-th-border text-th-muted"
+                            ? 'border-primary-500/40 text-primary-500'
+                            : 'border-th-border text-th-muted'
                         }`}
                       >
                         <option value="">No mark</option>
                         {fogMarks.map((m) => (
-                          <option key={m._id} value={m.name}>{m.name}</option>
+                          <option key={m._id} value={m.name}>
+                            {m.name}
+                          </option>
                         ))}
                       </select>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1 bg-th-elevated rounded-xl p-1">
-                        <button type="button"
-                          onClick={() => item.quantity <= 1 ? removeItem(item._id) : updateQty(item._id, item.quantity - 1)}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            item.quantity <= 1
+                              ? removeItem(item._id)
+                              : updateQty(item._id, item.quantity - 1)
+                          }
                           className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                         >
                           <Minus size={18} strokeWidth={2.5} />
                         </button>
-                        <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(item.quantity)}</span>
-                        <button type="button"
-                          onClick={() => { if (!atMax) updateQty(item._id, item.quantity + 1); }}
+                        <span className="w-10 text-center text-body-bold text-th-text">
+                          {fmtPairs(item.quantity)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!atMax) updateQty(item._id, item.quantity + 1);
+                          }}
                           disabled={atMax}
                           className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           <Plus size={18} strokeWidth={2.5} />
                         </button>
                       </div>
-                      <button type="button"
+                      <button
+                        type="button"
                         onClick={() => removeItem(item._id)}
                         className="w-10 h-10 rounded-lg bg-negative/10 text-negative flex items-center justify-center active:scale-90 transition-all"
                       >
@@ -204,16 +240,19 @@ export default function Cart() {
                 </div>
                 <div>
                   <div className="text-small text-th-muted">Total</div>
-                  <div className="text-feature font-bold text-primary-500">{formatCurrency(totalPrice)}</div>
+                  <div className="text-feature font-bold text-primary-500">
+                    {formatCurrency(totalPrice)}
+                  </div>
                 </div>
               </div>
-              <button type="button"
+              <button
+                type="button"
                 onClick={handleWithdraw}
                 disabled={withdrawing}
                 className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-primary-500 text-surface-950 text-body font-bold active:scale-95 transition-all disabled:opacity-50 shrink-0"
               >
                 <PackageMinus size={20} />
-                {withdrawing ? "Withdrawing..." : "Withdraw"}
+                {withdrawing ? 'Withdrawing...' : 'Withdraw'}
               </button>
             </div>
           </div>

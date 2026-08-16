@@ -3,12 +3,7 @@ import { Payment } from "../models/payment";
 import { Customer } from "../models/customer";
 import { Inventory } from "../models/inventory";
 import { Delivery } from "../models/delivery";
-import {
-  BUSINESS_TIMEZONE,
-  istStartOfDay,
-  istEndOfDay,
-  istStartOfToday,
-} from "../utils/date";
+import { BUSINESS_TIMEZONE, istStartOfDay, istEndOfDay, istStartOfToday } from "../utils/date";
 
 export async function getRevenueReport(start?: string, end?: string) {
   const match: Record<string, unknown> = {};
@@ -47,7 +42,12 @@ export async function getRevenueReport(start?: string, end?: string) {
     ]),
   ]);
 
-  const bill = billAgg[0] || { totalRevenue: 0, totalCollection: 0, totalDiscount: 0, billCount: 0 };
+  const bill = billAgg[0] || {
+    totalRevenue: 0,
+    totalCollection: 0,
+    totalDiscount: 0,
+    billCount: 0,
+  };
   const pay = paymentAgg[0] || { totalCollection: 0, paymentCount: 0 };
 
   return {
@@ -64,10 +64,14 @@ export async function getMonthlyReport() {
   const year = now.getFullYear();
 
   const monthlyRevenue = await Bill.aggregate([
-    { $match: { status: "Active", createdAt: { $gte: istStartOfDay(`${year}-01-01`), $lte: now } } },
+    {
+      $match: { status: "Active", createdAt: { $gte: istStartOfDay(`${year}-01-01`), $lte: now } },
+    },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: BUSINESS_TIMEZONE } },
+        _id: {
+          $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: BUSINESS_TIMEZONE },
+        },
         revenue: { $sum: "$totalAmount" },
         collected: { $sum: "$advancePaid" },
         pending: { $sum: "$pendingAmount" },
@@ -81,7 +85,9 @@ export async function getMonthlyReport() {
     { $match: { paymentDate: { $gte: istStartOfDay(`${year}-01-01`), $lte: now } } },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m", date: "$paymentDate", timezone: BUSINESS_TIMEZONE } },
+        _id: {
+          $dateToString: { format: "%Y-%m", date: "$paymentDate", timezone: BUSINESS_TIMEZONE },
+        },
         total: { $sum: "$amount" },
         count: { $sum: 1 },
       },
@@ -92,7 +98,11 @@ export async function getMonthlyReport() {
   return { monthlyRevenue, monthlyCollection };
 }
 
-export async function getCustomerReport(filters?: { city?: string; startDate?: string; endDate?: string }) {
+export async function getCustomerReport(filters?: {
+  city?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   const match: Record<string, unknown> = {};
   if (filters?.city) match.city = filters.city;
   if (filters?.startDate || filters?.endDate) {
@@ -103,8 +113,14 @@ export async function getCustomerReport(filters?: { city?: string; startDate?: s
   }
 
   const [topCustomers, newCustomers, totalCustomers, cityBreakdown] = await Promise.all([
-    Customer.find(match).sort({ totalSpent: -1 }).limit(10).select("name mobile totalSpent totalVisits city").lean(),
-    Customer.countDocuments(filters?.startDate || filters?.endDate ? match : { createdAt: { $gte: istStartOfToday() } }),
+    Customer.find(match)
+      .sort({ totalSpent: -1 })
+      .limit(10)
+      .select("name mobile totalSpent totalVisits city")
+      .lean(),
+    Customer.countDocuments(
+      filters?.startDate || filters?.endDate ? match : { createdAt: { $gte: istStartOfToday() } }
+    ),
     Customer.countDocuments(match),
     Customer.aggregate([
       { $match: match },
@@ -145,10 +161,19 @@ export async function getInventoryReport(category?: string) {
       },
       { $sort: { totalValue: -1 } },
     ]),
-    Inventory.find({ quantity: { $lte: 5 }, ...match }).sort({ quantity: 1 }).limit(20).lean(),
+    Inventory.find({ quantity: { $lte: 5 }, ...match })
+      .sort({ quantity: 1 })
+      .limit(20)
+      .lean(),
     Inventory.aggregate([
       { $match: match },
-      { $group: { _id: "$location", totalValue: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } }, count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: "$location",
+          totalValue: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } },
+          count: { $sum: 1 },
+        },
+      },
     ]),
   ]);
 
@@ -176,7 +201,9 @@ export async function getDeliveryReport() {
       .limit(20)
       .lean(),
     Delivery.aggregate([
-      { $match: { actualDeliveryDate: { $exists: true }, expectedDeliveryDate: { $exists: true } } },
+      {
+        $match: { actualDeliveryDate: { $exists: true }, expectedDeliveryDate: { $exists: true } },
+      },
       {
         $project: {
           diff: { $subtract: ["$actualDeliveryDate", "$expectedDeliveryDate"] },
@@ -190,7 +217,7 @@ export async function getDeliveryReport() {
     statusCounts,
     overdueDeliveries,
     avgDeliveryDays: avgDeliveryTime[0]?.avgDiff
-      ? Math.round(avgDeliveryTime[0].avgDiff / (1000 * 60 * 60 * 24) * 10) / 10
+      ? Math.round((avgDeliveryTime[0].avgDiff / (1000 * 60 * 60 * 24)) * 10) / 10
       : 0,
   };
 }

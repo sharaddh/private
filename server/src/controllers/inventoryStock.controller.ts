@@ -29,7 +29,12 @@ export async function reverseWithdrawal(req: AuthRequest, res: Response) {
 
 export async function adjustStock(req: AuthRequest, res: Response) {
   const by = req.user?.username || "";
-  const data = await inventoryStockService.adjustStock(req.params.id, req.body.quantity, req.body.note, by);
+  const data = await inventoryStockService.adjustStock(
+    req.params.id,
+    req.body.quantity,
+    req.body.note,
+    by
+  );
   sendSuccess(res, data, "Stock adjusted");
 }
 

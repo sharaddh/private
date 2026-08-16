@@ -1,14 +1,14 @@
-import { motion } from "framer-motion";
-import { Eye, Ruler, AlertTriangle, FileText } from "lucide-react";
-import { useTranslate } from "../../context/TranslateContext";
+import { motion } from 'framer-motion';
+import { Eye, Ruler, AlertTriangle, FileText } from 'lucide-react';
+import { useTranslate } from '../../context/TranslateContext';
 
-const FIELDS = ["sph", "cyl", "axis", "va"];
+const FIELDS = ['sph', 'cyl', 'axis', 'va'];
 
 function EyeRow({
   label,
   data,
   onChange,
-  onEdit
+  onEdit,
 }: {
   label: string;
   data: any;
@@ -33,8 +33,11 @@ function EyeRow({
             </span>
             <input
               placeholder="-"
-              value={data?.[f] || ""}
-              onChange={(e) => { onEdit?.(); onChange({ ...data, [f]: e.target.value }); }}
+              value={data?.[f] || ''}
+              onChange={(e) => {
+                onEdit?.();
+                onChange({ ...data, [f]: e.target.value });
+              }}
               className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
@@ -50,7 +53,10 @@ function EyeTableHeader() {
       <div className="w-[100px] shrink-0"></div>
       <div className="grid grid-cols-4 gap-2 w-full flex-1">
         {FIELDS.map((f) => (
-          <div key={f} className="text-center text-[14px] font-bold text-th-secondary uppercase tracking-wider">
+          <div
+            key={f}
+            className="text-center text-[14px] font-bold text-th-secondary uppercase tracking-wider"
+          >
             {f}
           </div>
         ))}
@@ -74,7 +80,12 @@ interface Props {
   setUsePrescription?: (v: boolean | ((prev: boolean) => boolean)) => void;
 }
 
-export default function PrescriptionPanel({ prescription, setPrescription, usePrescription, setUsePrescription }: Props) {
+export default function PrescriptionPanel({
+  prescription,
+  setPrescription,
+  usePrescription,
+  setUsePrescription,
+}: Props) {
   const { uiT } = useTranslate();
 
   function autoEnable() {
@@ -89,9 +100,9 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
   }
 
   const ROW_KEYS = [
-    { key: "dv", label: uiT("Dist Vision", "दूर दृष्टि") },
-    { key: "nv", label: uiT("Near / ADD", "निकट / ADD") },
-    { key: "pc", label: uiT("Prog Corridor", "प्रोग कॉरिडोर") },
+    { key: 'dv', label: uiT('Dist Vision', 'दूर दृष्टि') },
+    { key: 'nv', label: uiT('Near / ADD', 'निकट / ADD') },
+    { key: 'pc', label: uiT('Prog Corridor', 'प्रोग कॉरिडोर') },
   ] as const;
 
   return (
@@ -101,7 +112,6 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
       className="space-y-5"
     >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-
         {/* Right Eye (OD) Panel */}
         <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
@@ -109,7 +119,9 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
               <Eye size={18} className="text-[#1ed760]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-th-text">{uiT("Right Eye (O.D.)", "दायाँ आँख (O.D.)")}</h3>
+              <h3 className="text-sm font-bold text-th-text">
+                {uiT('Right Eye (O.D.)', 'दायाँ आँख (O.D.)')}
+              </h3>
               <p className="text-[15px] text-th-secondary">Oculus Dexter</p>
             </div>
           </div>
@@ -136,7 +148,9 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
               <Eye size={18} className="text-[#1ed760]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-th-text">{uiT("Left Eye (O.S.)", "बायाँ आँख (O.S.)")}</h3>
+              <h3 className="text-sm font-bold text-th-text">
+                {uiT('Left Eye (O.S.)', 'बायाँ आँख (O.S.)')}
+              </h3>
               <p className="text-[15px] text-th-secondary">Oculus Sinister</p>
             </div>
           </div>
@@ -155,36 +169,53 @@ export default function PrescriptionPanel({ prescription, setPrescription, usePr
             ))}
           </div>
         </div>
-
       </div>
 
       {/* Additional Details Panel */}
       <div className="bg-th-surface rounded-lg shadow-lg p-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="relative">
-            <Ruler size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
+            <Ruler
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary"
+            />
             <input
-              placeholder={uiT("Pupillary Distance (mm)", "प्यूपिलरी दूरी (mm)")}
+              placeholder={uiT('Pupillary Distance (mm)', 'प्यूपिलरी दूरी (mm)')}
               value={prescription.pd}
-              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, pd: e.target.value })); }}
+              onChange={(e) => {
+                autoEnable();
+                setPrescription((p) => ({ ...p, pd: e.target.value }));
+              }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div className="relative">
-            <AlertTriangle size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
+            <AlertTriangle
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary"
+            />
             <input
-              placeholder={uiT("Problems (e.g. headaches)", "समस्याएँ (जैसे सिरदर्द)")}
+              placeholder={uiT('Problems (e.g. headaches)', 'समस्याएँ (जैसे सिरदर्द)')}
               value={prescription.problems}
-              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, problems: e.target.value })); }}
+              onChange={(e) => {
+                autoEnable();
+                setPrescription((p) => ({ ...p, problems: e.target.value }));
+              }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div className="relative">
-            <FileText size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary" />
+            <FileText
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary"
+            />
             <input
-              placeholder={uiT("Additional notes", "अतिरिक्त नोट्स")}
+              placeholder={uiT('Additional notes', 'अतिरिक्त नोट्स')}
               value={prescription.notes}
-              onChange={(e) => { autoEnable(); setPrescription((p) => ({ ...p, notes: e.target.value })); }}
+              onChange={(e) => {
+                autoEnable();
+                setPrescription((p) => ({ ...p, notes: e.target.value }));
+              }}
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>

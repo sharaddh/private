@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from 'react';
 
 interface CacheEntry<T> {
   data: T;
@@ -13,7 +13,10 @@ function isExpired(entry: CacheEntry<unknown>, customTtl?: number): boolean {
   return Date.now() - entry.timestamp > (customTtl ?? DEFAULT_TTL);
 }
 
-export function getCacheSnapshot<T>(key: string, customTtl?: number): { data: T | null; exists: boolean; expired: boolean } {
+export function getCacheSnapshot<T>(
+  key: string,
+  customTtl?: number
+): { data: T | null; exists: boolean; expired: boolean } {
   const entry = store.get(key) as CacheEntry<T> | undefined;
   if (!entry) return { data: null, exists: false, expired: false };
   return { data: entry.data, exists: true, expired: isExpired(entry, customTtl) };
@@ -73,13 +76,15 @@ export function getCachedPromise<T>(key: string, fetcher: () => Promise<T>): Pro
   if (existing?.promise) return existing.promise;
   if (existing && !isExpired(existing)) return Promise.resolve(existing.data);
 
-  const promise = fetcher().then((data) => {
-    store.set(key, { data, timestamp: Date.now(), promise: null });
-    return data;
-  }).catch((err) => {
-    store.delete(key);
-    throw err;
-  });
+  const promise = fetcher()
+    .then((data) => {
+      store.set(key, { data, timestamp: Date.now(), promise: null });
+      return data;
+    })
+    .catch((err) => {
+      store.delete(key);
+      throw err;
+    });
 
   store.set(key, { data: null as unknown as T, timestamp: 0, promise });
   return promise;

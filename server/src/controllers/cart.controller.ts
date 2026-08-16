@@ -16,14 +16,23 @@ export async function getCount(req: AuthRequest, res: Response) {
 export async function addItem(req: AuthRequest, res: Response) {
   const { coating, lensType, powerKey, quantity, fogMark } = req.body;
   if (!coating || !lensType || !powerKey) {
-    res.status(400).json({ success: false, message: "coating, lensType, and powerKey are required" });
+    res
+      .status(400)
+      .json({ success: false, message: "coating, lensType, and powerKey are required" });
     return;
   }
   if (!["sph", "cyl", "compound"].includes(lensType)) {
     res.status(400).json({ success: false, message: "lensType must be sph, cyl, or compound" });
     return;
   }
-  const data = await cartService.addToCart(req.user!.sub, coating, lensType, powerKey, quantity || 1, typeof fogMark === "string" ? fogMark : "");
+  const data = await cartService.addToCart(
+    req.user!.sub,
+    coating,
+    lensType,
+    powerKey,
+    quantity || 1,
+    typeof fogMark === "string" ? fogMark : ""
+  );
   sendCreated(res, data);
 }
 

@@ -6,8 +6,6 @@ import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { Prescription } from "../models/prescription";
 
-type Options = { dataDir: string };
-
 async function importCustomers(filePath: string) {
   const raw = fs.readFileSync(filePath, "utf-8");
   const arr = JSON.parse(raw);
@@ -28,7 +26,7 @@ async function importCustomers(filePath: string) {
       totalSpent: c.totalSpent || 0,
       pendingAmount: c.pendingAmount || 0,
       createdAt: c.createdAt ? new Date(c.createdAt) : undefined,
-      updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
+      updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined,
     });
     await doc.save();
     console.log(`Imported customer ${doc.customerId} -> ${doc._id}`);
@@ -50,7 +48,7 @@ async function importVisits(filePath: string) {
       doctorName: v.doctorName,
       shopId: v.shopId,
       remarks: v.remarks,
-      createdAt: v.createdAt ? new Date(v.createdAt) : undefined
+      createdAt: v.createdAt ? new Date(v.createdAt) : undefined,
     });
     await doc.save();
     console.log(`Imported visit ${doc._id} for customer ${cust.customerId}`);
@@ -74,7 +72,7 @@ async function importPrescriptions(filePath: string) {
       leftEye: p.leftEye,
       pd: p.pd,
       notes: p.notes,
-      createdAt: p.createdAt ? new Date(p.createdAt) : undefined
+      createdAt: p.createdAt ? new Date(p.createdAt) : undefined,
     } as any);
     await doc.save();
     console.log(`Imported prescription ${doc._id} for customer ${cust.customerId}`);
@@ -84,7 +82,9 @@ async function importPrescriptions(filePath: string) {
 async function main() {
   const args = process.argv.slice(2);
   const dataDirArg = args.find((a) => a.startsWith("--dataDir="));
-  const dataDir = dataDirArg ? dataDirArg.split("=")[1] : path.join(__dirname, "../migrations/data");
+  const dataDir = dataDirArg
+    ? dataDirArg.split("=")[1]
+    : path.join(__dirname, "../migrations/data");
 
   if (!MONGO_URI) {
     console.error("MONGO_URI not set in environment");
@@ -111,4 +111,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

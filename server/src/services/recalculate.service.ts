@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Customer } from "../models/customer";
 import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
@@ -17,7 +16,13 @@ export async function recalculateCustomerTotals() {
     ]),
     Bill.aggregate([
       { $match: { customerId: { $in: customerIds }, status: "Active" } },
-      { $group: { _id: "$customerId", totalSpent: { $sum: "$totalAmount" }, pendingAmount: { $sum: "$pendingAmount" } } },
+      {
+        $group: {
+          _id: "$customerId",
+          totalSpent: { $sum: "$totalAmount" },
+          pendingAmount: { $sum: "$pendingAmount" },
+        },
+      },
     ]),
     Payment.aggregate([
       { $match: { customerId: { $in: customerIds } } },

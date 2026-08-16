@@ -4,7 +4,8 @@ import { Visit } from "../models/visit";
 import { Bill } from "../models/bill";
 
 async function main() {
-  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/kmj";
+  const mongoUri =
+    process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/kmj";
   console.log(`Connecting to ${mongoUri}...`);
   await connect(mongoUri);
   console.log("Connected.\n");
@@ -19,7 +20,13 @@ async function main() {
       Visit.countDocuments({ customerId: c._id }),
       Bill.aggregate([
         { $match: { customerId: c._id } },
-        { $group: { _id: null, totalSpent: { $sum: "$totalAmount" }, totalPending: { $sum: "$pendingAmount" } } },
+        {
+          $group: {
+            _id: null,
+            totalSpent: { $sum: "$totalAmount" },
+            totalPending: { $sum: "$pendingAmount" },
+          },
+        },
       ]),
     ]);
 
@@ -30,12 +37,16 @@ async function main() {
     const oldSpent = c.totalSpent || 0;
     const oldPending = c.pendingAmount || 0;
 
-    if (oldVisits !== visitCount || Math.abs(oldSpent - totalSpent) > 0.01 || Math.abs(oldPending - totalPending) > 0.01) {
+    if (
+      oldVisits !== visitCount ||
+      Math.abs(oldSpent - totalSpent) > 0.01 ||
+      Math.abs(oldPending - totalPending) > 0.01
+    ) {
       console.log(
         `[${c.customerId || "—"}] ${c.name || "?"}  ${c.mobile || ""}\n` +
-        `  Visits: ${oldVisits} -> ${visitCount}\n` +
-        `  Spent:  ₹${oldSpent} -> ₹${totalSpent}\n` +
-        `  Pending: ₹${oldPending} -> ₹${totalPending}\n`
+          `  Visits: ${oldVisits} -> ${visitCount}\n` +
+          `  Spent:  ₹${oldSpent} -> ₹${totalSpent}\n` +
+          `  Pending: ₹${oldPending} -> ₹${totalPending}\n`
       );
 
       await Customer.findByIdAndUpdate(c._id, {

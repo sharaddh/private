@@ -13,14 +13,16 @@ export const createBranchSchema = z.object({
   logo: z.string().optional(),
   ownerUsername: z.string().min(1, "Owner username is required"),
   ownerPassword: z.string().min(4, "Owner password must be at least 4 characters"),
-  settings: z.object({
-    shopName: z.string().optional(),
-    shopAddress: z.string().optional(),
-    shopPhone: z.string().optional(),
-    shopEmail: z.string().optional(),
-    adminWhatsApp: z.string().optional(),
-    logo: z.string().optional(),
-  }).optional(),
+  settings: z
+    .object({
+      shopName: z.string().optional(),
+      shopAddress: z.string().optional(),
+      shopPhone: z.string().optional(),
+      shopEmail: z.string().optional(),
+      adminWhatsApp: z.string().optional(),
+      logo: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const updateBranchSchema = z.object({
@@ -36,12 +38,14 @@ export const updateBranchSchema = z.object({
   logo: z.string().optional(),
   ownerUsername: z.string().optional(),
   ownerPassword: z.string().optional(),
-  settings: z.object({
-    shopName: z.string().optional(),
-    shopAddress: z.string().optional(),
-    shopPhone: z.string().optional(),
-    shopEmail: z.string().optional(),
-    adminWhatsApp: z.string().optional(),
-    logo: z.string().optional(),
-  }).optional(),
+  settings: z
+    .object({
+      shopName: z.string().optional(),
+      shopAddress: z.string().optional(),
+      shopPhone: z.string().optional(),
+      shopEmail: z.string().optional(),
+      adminWhatsApp: z.string().optional(),
+      logo: z.string().optional(),
+    })
+    .optional(),
 });

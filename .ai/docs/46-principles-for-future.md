@@ -70,7 +70,7 @@ const customer = await Customer.findById(id).read('secondary');
 // GOOD: Rate limiting per branch
 const rateLimit = {
   windowMs: 60 * 1000, // 1 minute
-  max: 200, // 200 requests per minute
+  max: 1000, // 1000 requests per minute
   keyGenerator: (req) => `${req.branchId}:${req.ip}`,
 };
 ```

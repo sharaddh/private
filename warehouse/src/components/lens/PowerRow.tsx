@@ -1,7 +1,7 @@
-import { useState, useMemo, memo } from "react";
-import { POWER_VALUES } from "../../constants";
-import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react";
-import { fmtPairs } from "../../utils/helpers";
+import { useState, useMemo, memo } from 'react';
+import { POWER_VALUES } from '../../constants';
+import { ChevronDown, ChevronRight, Minus, Plus } from 'lucide-react';
+import { fmtPairs } from '../../utils/helpers';
 
 interface Props {
   quantities: Record<string, number>;
@@ -9,35 +9,54 @@ interface Props {
   onDecrement: (powerKey: string) => void;
 }
 
-const negatives = POWER_VALUES.filter((p) => p.startsWith("-") && p !== "-0.00").reverse();
-const positives = POWER_VALUES.filter((p) => p.startsWith("+") && p !== "+0.00");
+const negatives = POWER_VALUES.filter((p) => p.startsWith('-') && p !== '-0.00').reverse();
+const positives = POWER_VALUES.filter((p) => p.startsWith('+') && p !== '+0.00');
 
-const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement }: {
+const PowerCell = memo(function PowerCell({
+  power,
+  qty,
+  onIncrement,
+  onDecrement,
+}: {
   power: string;
   qty: number;
   onIncrement: (p: string) => void;
   onDecrement: (p: string) => void;
 }) {
-  const isNeg = power.startsWith("-");
-  const isPos = power.startsWith("+") && power !== "+0.00";
-  const isZero = power === "+0.00" || power === "0.00";
+  const isNeg = power.startsWith('-');
+  const isPos = power.startsWith('+') && power !== '+0.00';
+  const isZero = power === '+0.00' || power === '0.00';
 
-  const border = isNeg ? "border-amber-400/40" : isPos ? "border-emerald-400/40" : "border-th-border";
-  const bg = isNeg ? "bg-amber-400/5" : isPos ? "bg-emerald-400/5" : "bg-th-elevated";
-  const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
+  const border = isNeg
+    ? 'border-amber-400/40'
+    : isPos
+      ? 'border-emerald-400/40'
+      : 'border-th-border';
+  const bg = isNeg ? 'bg-amber-400/5' : isPos ? 'bg-emerald-400/5' : 'bg-th-elevated';
+  const qtyClr = isNeg
+    ? 'text-amber-500'
+    : isPos
+      ? 'text-emerald-500'
+      : qty > 0
+        ? 'text-th-secondary'
+        : 'text-th-muted';
 
   return (
     <div className={`flex flex-col items-center gap-2.5 p-3 rounded-xl border ${border} ${bg}`}>
-      <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">{isZero ? "0.00" : power}</span>
+      <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">
+        {isZero ? '0.00' : power}
+      </span>
       <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{fmtPairs(qty)}</span>
       <div className="flex items-center gap-2">
-        <button type="button"
+        <button
+          type="button"
           onClick={() => onDecrement(power)}
           className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
         >
           <Minus size={22} strokeWidth={2.5} />
         </button>
-        <button type="button"
+        <button
+          type="button"
           onClick={() => onIncrement(power)}
           className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
         >
@@ -48,7 +67,12 @@ const PowerCell = memo(function PowerCell({ power, qty, onIncrement, onDecrement
   );
 });
 
-const MemoizedPowerCell = memo(function MemoizedPowerCell({ power, qty, onIncrement, onDecrement }: {
+const MemoizedPowerCell = memo(function MemoizedPowerCell({
+  power,
+  qty,
+  onIncrement,
+  onDecrement,
+}: {
   power: string;
   qty: number;
   onIncrement: (p: string) => void;
@@ -58,36 +82,51 @@ const MemoizedPowerCell = memo(function MemoizedPowerCell({ power, qty, onIncrem
 });
 
 export default function PowerRow({ quantities, onIncrement, onDecrement }: Props) {
-  const [openGroup, setOpenGroup] = useState<string>("Negative");
+  const [openGroup, setOpenGroup] = useState<string>('Negative');
 
-  const negativeEntries = useMemo(() =>
-    negatives.filter((p) => (quantities[p] || 0) > 0),
-  [quantities]);
+  const negativeEntries = useMemo(
+    () => negatives.filter((p) => (quantities[p] || 0) > 0),
+    [quantities]
+  );
 
-  const positiveEntries = useMemo(() =>
-    positives.filter((p) => (quantities[p] || 0) > 0),
-  [quantities]);
+  const positiveEntries = useMemo(
+    () => positives.filter((p) => (quantities[p] || 0) > 0),
+    [quantities]
+  );
 
   function toggle(label: string) {
-    setOpenGroup((prev) => (prev === label ? "" : label));
+    setOpenGroup((prev) => (prev === label ? '' : label));
   }
 
   return (
     <div className="space-y-2">
       {negatives.length > 0 && (
         <div>
-          <button type="button"
-            onClick={() => toggle("Negative")}
+          <button
+            type="button"
+            onClick={() => toggle('Negative')}
             className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >
-            {openGroup === "Negative" ? <ChevronDown size={20} className="text-amber-500" /> : <ChevronRight size={20} className="text-amber-500" />}
-            <span className="px-2.5 py-0.5 rounded-pill bg-amber-500/10 text-amber-500 text-body font-bold">NEGATIVE</span>
+            {openGroup === 'Negative' ? (
+              <ChevronDown size={20} className="text-amber-500" />
+            ) : (
+              <ChevronRight size={20} className="text-amber-500" />
+            )}
+            <span className="px-2.5 py-0.5 rounded-pill bg-amber-500/10 text-amber-500 text-body font-bold">
+              NEGATIVE
+            </span>
             <span className="text-body text-th-muted">({negativeEntries.length})</span>
           </button>
-          {openGroup === "Negative" && (
+          {openGroup === 'Negative' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
               {negatives.map((p) => (
-                <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
+                <MemoizedPowerCell
+                  key={p}
+                  power={p}
+                  qty={quantities[p] || 0}
+                  onIncrement={onIncrement}
+                  onDecrement={onDecrement}
+                />
               ))}
             </div>
           )}
@@ -96,18 +135,31 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
 
       {positives.length > 0 && (
         <div>
-          <button type="button"
-            onClick={() => toggle("Positive")}
+          <button
+            type="button"
+            onClick={() => toggle('Positive')}
             className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
           >
-            {openGroup === "Positive" ? <ChevronDown size={20} className="text-emerald-500" /> : <ChevronRight size={20} className="text-emerald-500" />}
-            <span className="px-2.5 py-0.5 rounded-pill bg-emerald-500/10 text-emerald-500 text-body font-bold">POSITIVE</span>
+            {openGroup === 'Positive' ? (
+              <ChevronDown size={20} className="text-emerald-500" />
+            ) : (
+              <ChevronRight size={20} className="text-emerald-500" />
+            )}
+            <span className="px-2.5 py-0.5 rounded-pill bg-emerald-500/10 text-emerald-500 text-body font-bold">
+              POSITIVE
+            </span>
             <span className="text-body text-th-muted">({positiveEntries.length})</span>
           </button>
-          {openGroup === "Positive" && (
+          {openGroup === 'Positive' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
               {positives.map((p) => (
-                <MemoizedPowerCell key={p} power={p} qty={quantities[p] || 0} onIncrement={onIncrement} onDecrement={onDecrement} />
+                <MemoizedPowerCell
+                  key={p}
+                  power={p}
+                  qty={quantities[p] || 0}
+                  onIncrement={onIncrement}
+                  onDecrement={onDecrement}
+                />
               ))}
             </div>
           )}

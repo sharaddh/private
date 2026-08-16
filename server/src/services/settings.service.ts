@@ -1,5 +1,4 @@
 import { Settings } from "../models/settings";
-import { AppError } from "../middleware/errorHandler";
 
 interface SettingsData {
   shopName?: string;

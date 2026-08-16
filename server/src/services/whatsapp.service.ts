@@ -12,12 +12,24 @@ import type {
 
 class WhatsAppService {
   private broadcastAborted = false;
-  private messageQueue: Array<{ phone: string; message?: string; base64?: string; filename?: string; mimetype?: string; caption?: string; branchId: string }> = [];
+  private messageQueue: Array<{
+    phone: string;
+    message?: string;
+    base64?: string;
+    filename?: string;
+    mimetype?: string;
+    caption?: string;
+    branchId: string;
+  }> = [];
   private draining = false;
 
-  getStatus(branchId?: string): WhatsAppStatusResponse {
+  getStatus(_branchId?: string): WhatsAppStatusResponse {
     if (!isWhatsAppConfigured()) {
-      return { status: "error", error: "WhatsApp Cloud API not configured", queueLength: this.messageQueue.length };
+      return {
+        status: "error",
+        error: "WhatsApp Cloud API not configured",
+        queueLength: this.messageQueue.length,
+      };
     }
     const cfg = getWhatsAppConfig();
     return {
@@ -166,7 +178,14 @@ class WhatsAppService {
 
       if (media) {
         const caption = media.mimetype.startsWith("image/") && message.trim() ? message : undefined;
-        result = await this.sendMedia(numbers[i], media.base64, media.filename, media.mimetype, caption, branchId);
+        result = await this.sendMedia(
+          numbers[i],
+          media.base64,
+          media.filename,
+          media.mimetype,
+          caption,
+          branchId
+        );
 
         if (result.sent && !media.mimetype.startsWith("image/") && message.trim()) {
           await new Promise((r) => setTimeout(r, 500));
@@ -228,8 +247,10 @@ class WhatsAppService {
               await Message.updateOne(
                 { metaMessageId: status.id },
                 { $set: { status: mappedStatus } }
-              );
-            } catch {}
+              ).catch(() => undefined);
+            } catch (err) {
+              logger.warn("WhatsApp status update failed", { error: (err as Error).message });
+            }
 
             if (status.errors && status.errors.length > 0) {
               for (const err of status.errors) {
@@ -244,8 +265,10 @@ class WhatsAppService {
                   await Message.updateOne(
                     { metaMessageId: status.id },
                     { $set: { status: "failed", error: err.message } }
-                  );
-                } catch {}
+                  ).catch(() => undefined);
+                } catch (err) {
+                  logger.warn("WhatsApp failure update failed", { error: (err as Error).message });
+                }
               }
             }
           }

@@ -1,65 +1,74 @@
-import type { PaginationParams } from "./index";
+import type { PaginationParams } from './index';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const PRODUCT_CATEGORIES = ["Specs", "Sunglasses", "Contact Lens", "Hearing Aid", "Solution", "Kit", "Accessory", "Other"] as const;
-export type ProductCategory = typeof PRODUCT_CATEGORIES[number];
+export const PRODUCT_CATEGORIES = [
+  'Specs',
+  'Sunglasses',
+  'Contact Lens',
+  'Hearing Aid',
+  'Solution',
+  'Kit',
+  'Accessory',
+  'Other',
+] as const;
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
-export const GENDERS = ["Male", "Female", "Unisex", ""] as const;
-export type Gender = typeof GENDERS[number];
+export const GENDERS = ['Male', 'Female', 'Unisex', ''] as const;
+export type Gender = (typeof GENDERS)[number];
 
 export const MOVEMENT_TYPES = [
-  "OPENING_BALANCE",
-  "PURCHASE",
-  "ORDER",
-  "WITHDRAWAL",
-  "RETURN",
-  "DAMAGE",
-  "ADJUSTMENT",
-  "COUNT_CORRECTION",
-  "TRANSFER_IN",
-  "TRANSFER_OUT",
-  "LOCATION_CHANGE",
+  'OPENING_BALANCE',
+  'PURCHASE',
+  'ORDER',
+  'WITHDRAWAL',
+  'RETURN',
+  'DAMAGE',
+  'ADJUSTMENT',
+  'COUNT_CORRECTION',
+  'TRANSFER_IN',
+  'TRANSFER_OUT',
+  'LOCATION_CHANGE',
 ] as const;
-export type MovementType = typeof MOVEMENT_TYPES[number];
+export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
 export const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
-  OPENING_BALANCE: "Opening Balance",
-  PURCHASE: "Purchase",
-  ORDER: "Order",
-  WITHDRAWAL: "Withdrawal",
-  RETURN: "Return",
-  DAMAGE: "Damage",
-  ADJUSTMENT: "Adjustment",
-  COUNT_CORRECTION: "Count Correction",
-  TRANSFER_IN: "Transfer In",
-  TRANSFER_OUT: "Transfer Out",
-  LOCATION_CHANGE: "Location Change",
+  OPENING_BALANCE: 'Opening Balance',
+  PURCHASE: 'Purchase',
+  ORDER: 'Order',
+  WITHDRAWAL: 'Withdrawal',
+  RETURN: 'Return',
+  DAMAGE: 'Damage',
+  ADJUSTMENT: 'Adjustment',
+  COUNT_CORRECTION: 'Count Correction',
+  TRANSFER_IN: 'Transfer In',
+  TRANSFER_OUT: 'Transfer Out',
+  LOCATION_CHANGE: 'Location Change',
 };
 
 export const WITHDRAWAL_REASONS = [
-  "Demo",
-  "Damaged",
-  "Internal Use",
-  "Sample",
-  "Lost",
-  "Customer Return to Non-Sellable",
-  "Stock Correction",
-  "Other",
+  'Demo',
+  'Damaged',
+  'Internal Use',
+  'Sample',
+  'Lost',
+  'Customer Return to Non-Sellable',
+  'Stock Correction',
+  'Other',
 ] as const;
-export type WithdrawalReason = typeof WITHDRAWAL_REASONS[number];
+export type WithdrawalReason = (typeof WITHDRAWAL_REASONS)[number];
 
-export const COUNT_STATUSES = ["draft", "completed", "cancelled"] as const;
-export type CountStatus = typeof COUNT_STATUSES[number];
+export const COUNT_STATUSES = ['draft', 'completed', 'cancelled'] as const;
+export type CountStatus = (typeof COUNT_STATUSES)[number];
 
 export const COUNT_STATUS_LABELS: Record<CountStatus, string> = {
-  draft: "Draft",
-  completed: "Completed",
-  cancelled: "Cancelled",
+  draft: 'Draft',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
-export const LOT_SOURCES = ["OPENING_BALANCE", "PURCHASE", "ADJUSTMENT", "RETURN"] as const;
-export type LotSource = typeof LOT_SOURCES[number];
+export const LOT_SOURCES = ['OPENING_BALANCE', 'PURCHASE', 'ADJUSTMENT', 'RETURN'] as const;
+export type LotSource = (typeof LOT_SOURCES)[number];
 
 // ─── Brand ───────────────────────────────────────────────────────────────────
 
@@ -260,7 +269,7 @@ export interface VariantListParams extends PaginationParams {
   color?: string;
   rackId?: string;
   gender?: string;
-  stock?: "all" | "in" | "low" | "out";
+  stock?: 'all' | 'in' | 'low' | 'out';
   threshold?: number;
 }
 

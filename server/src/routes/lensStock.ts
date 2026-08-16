@@ -15,7 +15,11 @@ router.delete("/cart", authenticate, asyncHandler(shopLensCartController.clearCa
 router.post("/cart/withdraw", authenticate, asyncHandler(shopLensCartController.withdraw));
 router.get("/withdrawals", authenticate, asyncHandler(shopLensCartController.getWithdrawals));
 router.put("/withdrawals/:id", authenticate, asyncHandler(shopLensCartController.updateWithdrawal));
-router.delete("/withdrawals/:id", authenticate, asyncHandler(shopLensCartController.deleteWithdrawal));
+router.delete(
+  "/withdrawals/:id",
+  authenticate,
+  asyncHandler(shopLensCartController.deleteWithdrawal)
+);
 
 router.get("/", authenticate, asyncHandler(lensStockController.list));
 router.get("/:id", authenticate, asyncHandler(lensStockController.getById));

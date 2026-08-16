@@ -14,7 +14,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
-import morgan from 'morgan';
+import { pinoHttp } from 'pino-http';
 import rateLimit from 'express-rate-limit';
 
 import { audit } from './middleware/audit';
@@ -42,7 +42,7 @@ app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: '25mb' }));
 
 // Logging
-app.use(morgan('dev', { skip: () => process.env.NODE_ENV === 'test' }));
+app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url?.startsWith('/api/health') || req.url?.startsWith('/api/ready') } }));
 
 // Audit logging
 app.use(audit);
@@ -50,7 +50,7 @@ app.use(audit);
 // Rate limiting
 app.use(rateLimit({
   windowMs: 60 * 1000,
-  max: 200,
+  max: 1000,
   standardHeaders: true
 }));
 
@@ -480,7 +480,7 @@ import rateLimit from 'express-rate-limit';
 
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 200, // limit each IP to 200 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests' }

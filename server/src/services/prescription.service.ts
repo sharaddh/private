@@ -47,7 +47,11 @@ export async function updatePrescription(id: string, data: PrescriptionData) {
       filtered[key] = (data as Record<string, unknown>)[key];
     }
   }
-  const prescription = await Prescription.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
+  const prescription = await Prescription.findByIdAndUpdate(
+    id,
+    { $set: filtered },
+    { new: true, runValidators: true }
+  ).lean();
   if (!prescription) throw new AppError(404, "Prescription not found");
   return prescription;
 }

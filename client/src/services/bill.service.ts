@@ -1,13 +1,22 @@
-import api from "../api";
-import { ApiService, buildQueryString } from "./base";
-import type { ApiResponse, PaginatedResponse, Bill, BillItem, PaginationParams, DateRangeParams } from "../types";
+import api from '../api';
+import { ApiService, buildQueryString } from './base';
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  Bill,
+  BillItem,
+  PaginationParams,
+  DateRangeParams,
+} from '../types';
 
 class BillService extends ApiService {
   constructor() {
-    super("/api/bills");
+    super('/api/bills');
   }
 
-  async listFiltered(params: PaginationParams & DateRangeParams & { status?: string }): Promise<ApiResponse<PaginatedResponse<Bill>>> {
+  async listFiltered(
+    params: PaginationParams & DateRangeParams & { status?: string }
+  ): Promise<ApiResponse<PaginatedResponse<Bill>>> {
     const qs = buildQueryString(params);
     return api.get<PaginatedResponse<Bill>>(`${this.basePath}${qs}`);
   }
@@ -28,10 +37,10 @@ class BillService extends ApiService {
   }
 
   async generatePdf(id: string): Promise<Blob> {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ""}${this.basePath}/${id}/pdf`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${this.basePath}/${id}/pdf`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`,
-        "x-branch-id": localStorage.getItem("currentBranchId") || "",
+        Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
+        'x-branch-id': localStorage.getItem('currentBranchId') || '',
       },
     });
     return res.blob();

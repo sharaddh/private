@@ -80,7 +80,9 @@ export async function createBranch(data: BranchData) {
   if (!data.ownerUsername?.trim()) throw new AppError(400, "Owner username is required");
   if (!data.ownerPassword?.trim()) throw new AppError(400, "Owner password is required");
 
-  const existing = await Branch.findOne({ $or: [{ code: data.code }, { dbName: data.dbName }] }).lean();
+  const existing = await Branch.findOne({
+    $or: [{ code: data.code }, { dbName: data.dbName }],
+  }).lean();
   if (existing) {
     if (existing.code === data.code) throw new AppError(409, "Branch code already exists");
     if (existing.dbName === data.dbName) throw new AppError(409, "Database name already exists");
@@ -120,7 +122,11 @@ export async function createBranch(data: BranchData) {
     branches: [branch._id],
   });
 
-  const otherBranchIds = (await Branch.find({ _id: { $ne: branch._id } }).select("_id").lean()).map((b) => b._id);
+  const otherBranchIds = (
+    await Branch.find({ _id: { $ne: branch._id } })
+      .select("_id")
+      .lean()
+  ).map((b) => b._id);
   if (otherBranchIds.length > 0) {
     await User.updateOne(
       { _id: newOwner._id },
@@ -138,7 +144,16 @@ export async function createBranch(data: BranchData) {
 }
 
 export async function updateBranch(id: string, data: Record<string, unknown>) {
-  if (data.ownerName || data.ownerPhone || data.ownerEmail || data.logo || data.name || data.address || data.phone || data.email) {
+  if (
+    data.ownerName ||
+    data.ownerPhone ||
+    data.ownerEmail ||
+    data.logo ||
+    data.name ||
+    data.address ||
+    data.phone ||
+    data.email
+  ) {
     const existing = await Branch.findById(id).select("settings").lean();
     const settings = { ...((existing?.settings as Record<string, string>) || {}) };
     if (data.name) settings.shopName = data.name as string;
@@ -167,21 +182,38 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
     if (existing) throw new AppError(409, "Database name already exists");
   }
 
-  const branch = await Branch.findByIdAndUpdate(id, { $set: filtered }, { new: true, runValidators: true }).lean();
+  const branch = await Branch.findByIdAndUpdate(
+    id,
+    { $set: filtered },
+    { new: true, runValidators: true }
+  ).lean();
   if (!branch) throw new AppError(404, "Branch not found");
 
   await syncBranchShopSettings(branch);
 
   if (data.ownerUsername) {
-    const branchOwner = await User.findOne({ role: "owner", "branches.0": new mongoose.Types.ObjectId(id) }).select("_id").lean();
+    const branchOwner = await User.findOne({
+      role: "owner",
+      "branches.0": new mongoose.Types.ObjectId(id),
+    })
+      .select("_id")
+      .lean();
     if (branchOwner) {
-      const existing = await User.findOne({ username: data.ownerUsername, _id: { $ne: branchOwner._id } }).lean();
+      const existing = await User.findOne({
+        username: data.ownerUsername,
+        _id: { $ne: branchOwner._id },
+      }).lean();
       if (existing) throw new AppError(409, "Owner username already exists");
       await User.updateOne({ _id: branchOwner._id }, { $set: { username: data.ownerUsername } });
     }
   }
   if (data.ownerPassword) {
-    const branchOwner = await User.findOne({ role: "owner", "branches.0": new mongoose.Types.ObjectId(id) }).select("_id").lean();
+    const branchOwner = await User.findOne({
+      role: "owner",
+      "branches.0": new mongoose.Types.ObjectId(id),
+    })
+      .select("_id")
+      .lean();
     if (branchOwner) {
       const hash = await bcrypt.hash(data.ownerPassword as string, 10);
       await User.updateOne({ _id: branchOwner._id }, { $set: { passwordHash: hash } });
@@ -193,7 +225,11 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
 }
 
 export async function deleteBranch(id: string) {
-  const branch = await Branch.findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true }).lean();
+  const branch = await Branch.findByIdAndUpdate(
+    id,
+    { $set: { isActive: false } },
+    { new: true }
+  ).lean();
   if (!branch) throw new AppError(404, "Branch not found");
   clearBranchCache();
   return branch;

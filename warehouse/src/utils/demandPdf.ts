@@ -1,6 +1,6 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import { lensTypeLabel } from "./helpers";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { lensTypeLabel } from './helpers';
 
 export interface DemandPdfItem {
   coating: string;
@@ -19,20 +19,20 @@ export interface DemandPdfData {
 }
 
 function normPower(v: string): string {
-  return v === "+0.00" || v === "0.00" || v === "-0.00" ? "0.00" : v;
+  return v === '+0.00' || v === '0.00' || v === '-0.00' ? '0.00' : v;
 }
 
 function formatPower(lensType: string, powerKey: string): string {
-  if (!powerKey) return "—";
-  if (powerKey.includes("|")) {
-    const [sph, cyl] = powerKey.split("|");
+  if (!powerKey) return '—';
+  if (powerKey.includes('|')) {
+    const [sph, cyl] = powerKey.split('|');
     return `${normPower(sph)} ${normPower(cyl)}`;
   }
   return `${lensTypeLabel(lensType)} ${normPower(powerKey)}`;
 }
 
 export function generateDemandPdf(data: DemandPdfData): void {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
@@ -46,31 +46,31 @@ export function generateDemandPdf(data: DemandPdfData): void {
 
   // Top Header Banner
   doc.setFillColor(...indigo);
-  doc.rect(0, 0, pageWidth, 28, "F");
+  doc.rect(0, 0, pageWidth, 28, 'F');
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
-  doc.text("STOCK DEMAND", margin, 18);
+  doc.text('STOCK DEMAND', margin, 18);
 
   // Generated Date
   const dateStr = data.generatedAt
-    ? new Date(data.generatedAt).toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+    ? new Date(data.generatedAt).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       })
-    : "—";
+    : '—';
 
   doc.setTextColor(...gray);
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Generated On:", margin, 38);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Generated On:', margin, 38);
   doc.setTextColor(...dark);
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  doc.setFont('helvetica', 'bold');
   doc.text(dateStr, margin, 45);
 
   doc.setDrawColor(...border);
@@ -79,7 +79,7 @@ export function generateDemandPdf(data: DemandPdfData): void {
 
   // Table Data
   const rows = data.items.map((it) => [
-    it.coating || "—",
+    it.coating || '—',
     formatPower(it.lensType, it.powerKey),
     String(it.qty),
   ]);
@@ -87,13 +87,13 @@ export function generateDemandPdf(data: DemandPdfData): void {
   autoTable(doc, {
     startY: 56,
     margin: { left: margin, right: margin },
-    head: [["Coating", "Power", "Pairs"]],
+    head: [['Coating', 'Power', 'Pairs']],
     body: rows,
-    theme: "grid",
+    theme: 'grid',
     headStyles: {
       fillColor: indigo,
       textColor: [255, 255, 255],
-      fontStyle: "bold",
+      fontStyle: 'bold',
       fontSize: 10,
       cellPadding: 4,
     },
@@ -103,13 +103,13 @@ export function generateDemandPdf(data: DemandPdfData): void {
       cellPadding: 4,
       lineColor: border,
       lineWidth: 0.15,
-      valign: "middle",
+      valign: 'middle',
     },
     alternateRowStyles: { fillColor: light },
     columnStyles: {
       0: { cellWidth: contentWidth * 0.35 },
       1: { cellWidth: contentWidth * 0.45 },
-      2: { cellWidth: contentWidth * 0.2, halign: "center" },
+      2: { cellWidth: contentWidth * 0.2, halign: 'center' },
     },
   });
 
@@ -123,16 +123,16 @@ export function generateDemandPdf(data: DemandPdfData): void {
   const boxH = 14;
 
   doc.setFillColor(...light);
-  doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, "F");
+  doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, 'F');
   doc.setDrawColor(...border);
-  doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, "S");
+  doc.roundedRect(totalBoxX, y, totalBoxW, boxH, 2, 2, 'S');
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(...indigo);
   doc.text(`Total Pairs To Buy:`, totalBoxX + 6, y + 9);
   doc.setFontSize(12);
-  doc.text(String(totalNeed), totalBoxX + totalBoxW - 6, y + 9, { align: "right" });
+  doc.text(String(totalNeed), totalBoxX + totalBoxW - 6, y + 9, { align: 'right' });
 
   // Footer
   const footerY = Math.max(y + boxH + 20, pageHeight - 20);
@@ -140,10 +140,12 @@ export function generateDemandPdf(data: DemandPdfData): void {
   doc.setLineWidth(0.3);
   doc.line(margin, footerY, pageWidth - margin, footerY);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(156, 163, 175);
-  doc.text("Generated by KMJ Optical Lens Warehouse", pageWidth / 2, footerY + 6, { align: "center" });
+  doc.text('Generated by KMJ Optical Lens Warehouse', pageWidth / 2, footerY + 6, {
+    align: 'center',
+  });
 
   const dateFile = new Date().toISOString().slice(0, 10);
   doc.save(`Stock_Demand_${dateFile}.pdf`);

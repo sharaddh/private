@@ -3,5 +3,8 @@ export function escapeRegex(value: string): string {
 }
 
 export function normalizeSku(sku: string): string {
-  return String(sku || "").trim().toUpperCase().replace(/\s+/g, "");
+  return String(sku || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
 }

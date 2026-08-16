@@ -29,9 +29,15 @@ async function metaFetch<T>(path: string, options: RequestInit = {}): Promise<T>
   return body as T;
 }
 
-export async function sendTextMessage(phone: string, text: string): Promise<MetaSendMessageResponse> {
+export async function sendTextMessage(
+  phone: string,
+  text: string
+): Promise<MetaSendMessageResponse> {
   const cfg = getWhatsAppConfig();
-  logger.info("Meta: sending text message", { phone: phone.slice(-4), phoneNumberId: cfg.phoneNumberId });
+  logger.info("Meta: sending text message", {
+    phone: phone.slice(-4),
+    phoneNumberId: cfg.phoneNumberId,
+  });
 
   return metaFetch<MetaSendMessageResponse>(`${cfg.phoneNumberId}/messages`, {
     method: "POST",
@@ -153,23 +159,20 @@ export async function uploadMedia(base64: string, mimetype: string): Promise<str
   const cfg = getWhatsAppConfig();
   const buffer = Buffer.from(base64, "base64");
 
-  const res = await fetch(
-    `${META_BASE_URL}/${cfg.apiVersion}/${cfg.phoneNumberId}/media`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${cfg.accessToken}`,
-      },
-      body: (() => {
-        const form = new FormData();
-        const blob = new Blob([buffer], { type: mimetype });
-        form.append("file", blob);
-        form.append("messaging_product", "whatsapp");
-        form.append("type", mimetype);
-        return form;
-      })(),
-    }
-  );
+  const res = await fetch(`${META_BASE_URL}/${cfg.apiVersion}/${cfg.phoneNumberId}/media`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${cfg.accessToken}`,
+    },
+    body: (() => {
+      const form = new FormData();
+      const blob = new Blob([buffer], { type: mimetype });
+      form.append("file", blob);
+      form.append("messaging_product", "whatsapp");
+      form.append("type", mimetype);
+      return form;
+    })(),
+  });
 
   const body = await res.json();
   if (!res.ok) {
@@ -181,7 +184,10 @@ export async function uploadMedia(base64: string, mimetype: string): Promise<str
   return (body as { id: string }).id;
 }
 
-export async function getPhoneNumberInfo(): Promise<{ display_phone_number: string; phone_number_id: string } | null> {
+export async function getPhoneNumberInfo(): Promise<{
+  display_phone_number: string;
+  phone_number_id: string;
+} | null> {
   if (!isWhatsAppConfigured()) return null;
   const cfg = getWhatsAppConfig();
   try {

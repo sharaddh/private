@@ -6,12 +6,19 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-base);
   color: var(--text-base);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 html {
@@ -32,12 +39,12 @@ html {
     --border-subtle: #e5e5ea;
     --border-medium: #d1d1d6;
     --border-strong: #8e8e93;
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-elevated: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-    --shadow-modal: 0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06);
-    --shadow-btn: 0 1px 2px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
-    --shadow-input: 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-lifted: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-lifted: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
@@ -53,81 +60,135 @@ html {
     --border-subtle: #282828;
     --border-medium: #3f3f3f;
     --border-strong: #7c7c7c;
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
-    --shadow-elevated: 0 4px 12px rgba(0,0,0,0.5);
-    --shadow-modal: 0 8px 24px rgba(0,0,0,0.6);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.6);
     --shadow-btn: none;
     --shadow-input: none;
-    --shadow-lifted: 0 4px 12px rgba(0,0,0,0.5);
+    --shadow-lifted: 0 4px 12px rgba(0, 0, 0, 0.5);
   }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .animate-fade-in {
   animation: fade-in 0.2s ease-out both;
 }
 
 @keyframes slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 .animate-slide-up {
   animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes scale-in {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .animate-scale-in {
   animation: scale-in 0.15s ease-out;
 }
 
 @keyframes cart-bump {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.35); }
-  60% { transform: scale(0.9); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.35);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .animate-cart-bump {
   animation: cart-bump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes selected-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); }
-  50% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0);
+  }
 }
 .animate-selected-pulse {
   animation: selected-pulse 2s ease-in-out 3;
 }
 
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(10px) scale(0.995); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .animate-page-enter {
   animation: page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-fade-up {
   animation: fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @layer base {
-  button, a, select, input, textarea, [role="button"] {
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  button,
+  a,
+  select,
+  input,
+  textarea,
+  [role='button'] {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease,
+      transform 0.15s ease;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -143,40 +204,74 @@ html {
 
   .btn-primary {
     @apply btn bg-primary-500 text-surface-950 rounded-pill px-8 py-3 text-button uppercase tracking-wider;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 2px 8px rgba(30,215,96,0.2);
-    &:hover { @apply bg-primary-400 scale-105; box-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 4px 16px rgba(30,215,96,0.3); }
-    &:active { @apply scale-95; }
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.15),
+      0 2px 8px rgba(30, 215, 96, 0.2);
+    &:hover {
+      @apply bg-primary-400 scale-105;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.15),
+        0 4px 16px rgba(30, 215, 96, 0.3);
+    }
+    &:active {
+      @apply scale-95;
+    }
   }
 
   .btn-secondary {
     @apply btn bg-th-elevated text-th-text border border-th-border rounded-pill px-8 py-3 text-button;
-    &:hover { @apply bg-th-hover scale-105; }
-    &:active { @apply scale-95; }
+    &:hover {
+      @apply bg-th-hover scale-105;
+    }
+    &:active {
+      @apply scale-95;
+    }
   }
 
   .btn-outline {
     @apply btn bg-th-surface text-th-text border border-th-border rounded-pill px-8 py-3 text-button;
-    &:hover { @apply border-th-text scale-105; }
-    &:active { @apply scale-95; }
+    &:hover {
+      @apply border-th-text scale-105;
+    }
+    &:active {
+      @apply scale-95;
+    }
   }
 
   .btn-danger {
     @apply btn bg-negative text-white rounded-pill px-8 py-3 text-button uppercase tracking-wider;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 2px 8px rgba(243,114,127,0.2);
-    &:hover { @apply scale-105; box-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 4px 16px rgba(243,114,127,0.3); }
-    &:active { @apply scale-95; }
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.15),
+      0 2px 8px rgba(243, 114, 127, 0.2);
+    &:hover {
+      @apply scale-105;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.15),
+        0 4px 16px rgba(243, 114, 127, 0.3);
+    }
+    &:active {
+      @apply scale-95;
+    }
   }
 
   .btn-success {
     @apply btn bg-primary-500 text-surface-950 rounded-pill px-8 py-3 text-button uppercase tracking-wider;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 2px 8px rgba(30,215,96,0.2);
-    &:hover { @apply bg-primary-400 scale-105; }
-    &:active { @apply scale-95; }
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.15),
+      0 2px 8px rgba(30, 215, 96, 0.2);
+    &:hover {
+      @apply bg-primary-400 scale-105;
+    }
+    &:active {
+      @apply scale-95;
+    }
   }
 
   .btn-ghost {
     @apply btn bg-transparent text-th-secondary rounded-pill px-4 py-2 text-caption;
-    &:hover { @apply bg-th-elevated text-th-text; }
+    &:hover {
+      @apply bg-th-elevated text-th-text;
+    }
   }
 
   .btn-sm {
@@ -198,7 +293,10 @@ html {
   .card {
     @apply bg-th-surface rounded-md p-5 border border-th-border transition-all duration-200;
     box-shadow: var(--shadow-card);
-    &:hover { @apply bg-th-elevated; box-shadow: var(--shadow-lifted); }
+    &:hover {
+      @apply bg-th-elevated;
+      box-shadow: var(--shadow-lifted);
+    }
   }
 
   .card-hover {
@@ -212,7 +310,11 @@ html {
 
   .glass-card-hover {
     @apply glass-card;
-    &:hover { @apply bg-th-elevated; box-shadow: var(--shadow-lifted); transform: translateY(-2px); }
+    &:hover {
+      @apply bg-th-elevated;
+      box-shadow: var(--shadow-lifted);
+      transform: translateY(-2px);
+    }
   }
 
   .card-header {
@@ -300,12 +402,12 @@ html {
   }
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }

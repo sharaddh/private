@@ -1,14 +1,15 @@
-import assert from "assert";
+import { describe, it, expect } from "vitest";
 import { whatsappService } from "./whatsapp.service";
 import { isWhatsAppConfigured } from "../config/whatsapp.config";
 
-function run(): void {
-  const status = whatsappService.getStatus();
-  assert.ok(status, "getStatus should return a value");
-  assert.ok(["connected", "error", "disconnected"].includes(status.status), "status should be valid");
-  console.log(`WhatsApp status: ${status.status}`);
-  console.log(`WhatsApp configured: ${isWhatsAppConfigured()}`);
-}
+describe("whatsapp.service", () => {
+  it("returns a valid status object", () => {
+    const status = whatsappService.getStatus();
+    expect(status).toBeTruthy();
+    expect(["connected", "error", "disconnected"]).toContain(status.status);
+  });
 
-run();
-console.log("whatsapp service regression checks passed");
+  it("reports configuration state without throwing", () => {
+    expect(() => isWhatsAppConfigured()).not.toThrow();
+  });
+});

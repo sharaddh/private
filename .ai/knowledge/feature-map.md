@@ -1074,7 +1074,7 @@
 |-----------|-------|
 | Status | ✅ Stable |
 | Backend Files | `server/src/app.ts:30-37` |
-| Notes | 200 requests/minute per IP |
+| Notes | 1000 requests/minute (per user / per IP) |
 
 ### 19.5 CORS
 

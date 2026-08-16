@@ -10,11 +10,13 @@ export const createPaymentSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const updatePaymentSchema = z.object({
-  customerId: z.string().optional(),
-  billId: z.string().optional(),
-  amount: z.number().min(0.01).optional(),
-  paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
-  paymentDate: z.string().optional(),
-  notes: z.string().optional(),
-}).strict();
+export const updatePaymentSchema = z
+  .object({
+    customerId: z.string().optional(),
+    billId: z.string().optional(),
+    amount: z.number().min(0.01).optional(),
+    paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
+    paymentDate: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .strict();

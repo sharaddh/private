@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useApi } from "./useApi";
-import { inventoryV2Service } from "../services";
-import type { PaginatedResponse } from "../types";
+import { useEffect, useState } from 'react';
+import { useApi } from './useApi';
+import { inventoryV2Service } from '../services';
+import type { PaginatedResponse } from '../types';
 import type {
   BrandSummary,
   BrandDetail,
@@ -20,11 +20,11 @@ import type {
   VariantListParams,
   WithdrawalListParams,
   WithdrawalV2,
-} from "../types/inventoryV2";
+} from '../types/inventoryV2';
 
 function pathWithParams(base: string, params?: Record<string, unknown>): string {
   if (!params) return base;
-  const entries = Object.entries(params).filter(([, v]) => v != null && v !== "");
+  const entries = Object.entries(params).filter(([, v]) => v != null && v !== '');
   if (entries.length === 0) return base;
   return `${base}?${new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString()}`;
 }
@@ -50,7 +50,12 @@ export function useV2Dashboard(threshold?: number) {
   const { data, loading, error, refetch } = useApi<InventoryDashboard>(
     () => inventoryV2Service.getDashboard(threshold),
     [threshold],
-    { cacheKey: pathWithParams("/api/inventory/dashboard", threshold !== undefined ? { threshold } : undefined) }
+    {
+      cacheKey: pathWithParams(
+        '/api/inventory/dashboard',
+        threshold !== undefined ? { threshold } : undefined
+      ),
+    }
   );
   return { dashboard: data, loading, error, refetch };
 }
@@ -59,7 +64,12 @@ export function useV2Brands(threshold?: number) {
   const { data, loading, error, refetch } = useApi<BrandSummary[]>(
     () => inventoryV2Service.listBrands(threshold),
     [threshold],
-    { cacheKey: pathWithParams("/api/inventory/brands", threshold !== undefined ? { threshold } : undefined) }
+    {
+      cacheKey: pathWithParams(
+        '/api/inventory/brands',
+        threshold !== undefined ? { threshold } : undefined
+      ),
+    }
   );
   return { brands: Array.isArray(data) ? data : [], loading, error, refetch };
 }
@@ -74,14 +84,22 @@ export function useV2BrandDetail(id: string) {
 }
 
 export function useV2Products(params?: ProductListParams) {
-  const path = pathWithParams("/api/inventory/products", params as Record<string, unknown>);
+  const path = pathWithParams('/api/inventory/products', params as Record<string, unknown>);
   const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryProduct>>(
     () => inventoryV2Service.listProducts(params),
     [JSON.stringify(params)],
     { cacheKey: path }
   );
   const p = pagedFrom(data);
-  return { products: p.items, total: p.total, page: p.page, pages: p.pages, loading, error, refetch };
+  return {
+    products: p.items,
+    total: p.total,
+    page: p.page,
+    pages: p.pages,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useV2ProductDetail(id: string) {
@@ -94,14 +112,22 @@ export function useV2ProductDetail(id: string) {
 }
 
 export function useV2Variants(params?: VariantListParams) {
-  const path = pathWithParams("/api/inventory/variants", params as Record<string, unknown>);
+  const path = pathWithParams('/api/inventory/variants', params as Record<string, unknown>);
   const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryVariant>>(
     () => inventoryV2Service.listVariants(params),
     [JSON.stringify(params)],
     { cacheKey: path }
   );
   const p = pagedFrom(data);
-  return { variants: p.items, total: p.total, page: p.page, pages: p.pages, loading, error, refetch };
+  return {
+    variants: p.items,
+    total: p.total,
+    page: p.page,
+    pages: p.pages,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useV2VariantDetail(id: string) {
@@ -118,7 +144,7 @@ export function useV2SearchVariants(query: string, enabled = true, limit = 20) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const q = (query || "").trim();
+    const q = (query || '').trim();
     if (!enabled || !q) {
       setResults([]);
       setLoading(false);
@@ -149,7 +175,7 @@ export function useV2Racks() {
   const { data, loading, error, refetch } = useApi<Rack[]>(
     () => inventoryV2Service.listRacks(),
     [],
-    { cacheKey: "/api/inventory/racks" }
+    { cacheKey: '/api/inventory/racks' }
   );
   return { racks: Array.isArray(data) ? data : [], loading, error, refetch };
 }
@@ -164,36 +190,60 @@ export function useV2RackItems(id: string) {
 }
 
 export function useV2Movements(params?: MovementListParams) {
-  const path = pathWithParams("/api/inventory/movements", params as Record<string, unknown>);
+  const path = pathWithParams('/api/inventory/movements', params as Record<string, unknown>);
   const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryMovement>>(
     () => inventoryV2Service.listMovements(params),
     [JSON.stringify(params)],
     { cacheKey: path }
   );
   const p = pagedFrom(data);
-  return { movements: p.items, total: p.total, page: p.page, pages: p.pages, loading, error, refetch };
+  return {
+    movements: p.items,
+    total: p.total,
+    page: p.page,
+    pages: p.pages,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useV2Withdrawals(params?: WithdrawalListParams) {
-  const path = pathWithParams("/api/inventory/withdrawals", params as Record<string, unknown>);
+  const path = pathWithParams('/api/inventory/withdrawals', params as Record<string, unknown>);
   const { data, loading, error, refetch } = useApi<PaginatedResponse<WithdrawalV2>>(
     () => inventoryV2Service.listWithdrawals(params),
     [JSON.stringify(params)],
     { cacheKey: path }
   );
   const p = pagedFrom(data);
-  return { withdrawals: p.items, total: p.total, page: p.page, pages: p.pages, loading, error, refetch };
+  return {
+    withdrawals: p.items,
+    total: p.total,
+    page: p.page,
+    pages: p.pages,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useV2CountSessions(params?: { page?: number; limit?: number }) {
-  const path = pathWithParams("/api/inventory/count-sessions", params as Record<string, unknown>);
+  const path = pathWithParams('/api/inventory/count-sessions', params as Record<string, unknown>);
   const { data, loading, error, refetch } = useApi<PaginatedResponse<CountSession>>(
     () => inventoryV2Service.listCountSessions(params),
     [JSON.stringify(params)],
     { cacheKey: path }
   );
   const p = pagedFrom(data);
-  return { sessions: p.items, total: p.total, page: p.page, pages: p.pages, loading, error, refetch };
+  return {
+    sessions: p.items,
+    total: p.total,
+    page: p.page,
+    pages: p.pages,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 export function useV2CountSession(id: string) {

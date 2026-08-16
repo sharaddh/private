@@ -1,5 +1,7 @@
 import { Router } from "express";
+import mongoose from "mongoose";
 import { branchScope } from "../middleware/branch";
+import { isConnected as redisConnected } from "../services/cache";
 import customers from "./customers";
 import auth from "./auth";
 import orders from "./orders";
@@ -30,6 +32,28 @@ const router = Router();
 
 router.get("/health", (_req, res) => {
   res.json({ success: true, status: "ok", timestamp: new Date().toISOString() });
+});
+
+router.get("/ready", (_req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  const redis = redisConnected();
+  const ready = dbReady;
+  if (ready) {
+    res.status(200).json({
+      success: true,
+      status: "ready",
+      db: "connected",
+      redis: redis ? "connected" : "disabled",
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    res.status(503).json({
+      success: false,
+      status: "not_ready",
+      db: "disconnected",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 router.use("/branches", branches);

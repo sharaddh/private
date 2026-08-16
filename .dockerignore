@@ -9,3 +9,16 @@ dist
 .env*
 .DS_Store
 Thumbs.db
+relay-server
+.github
+.ai
+coverage
+*.patch
+*.pdf
+*.jpg
+null
+app.patch
+dash.patch
+inv.patch
+layout.patch
+login.patch

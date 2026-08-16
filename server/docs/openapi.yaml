@@ -75,7 +75,7 @@ paths:
                 username: { type: string }
                 password: { type: string }
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
 
   /api/auth/login:
     post:
@@ -90,7 +90,7 @@ paths:
                 username: { type: string }
                 password: { type: string }
       responses:
-        '200':
+        "200":
           description: tokens
           content:
             application/json:
@@ -105,7 +105,7 @@ paths:
       summary: List customers
       security: []
       responses:
-        '200':
+        "200":
           description: list
           content:
             application/json:
@@ -116,7 +116,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Customer'
+                      $ref: "#/components/schemas/Customer"
     post:
       summary: Create customer
       requestBody:
@@ -128,7 +128,7 @@ paths:
                 name: { type: string }
                 mobile: { type: string }
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/customers/{id}:
     get:
@@ -139,21 +139,21 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        '200':
+        "200":
           description: customer
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Customer'
+                $ref: "#/components/schemas/Customer"
 
   /api/orders:
     get:
       summary: List orders
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
     post:
       summary: Create order
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       requestBody:
         content:
           application/json:
@@ -164,7 +164,7 @@ paths:
                 frame: { type: string }
                 lens: { type: string }
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/orders/{id}:
     get:
@@ -175,13 +175,13 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
 
   /api/bills:
     get:
       summary: List bills
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
     post:
       summary: Create bill
       requestBody:
@@ -196,7 +196,7 @@ paths:
                   items:
                     type: object
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/bills/{id}:
     get:
@@ -207,13 +207,13 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
 
   /api/payments:
     get:
       summary: List payments
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
     post:
       summary: Create payment
       requestBody:
@@ -225,13 +225,13 @@ paths:
                 customerId: { type: string }
                 amount: { type: number }
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/inventory:
     get:
       summary: List inventory
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
     post:
       summary: Create inventory item
       requestBody:
@@ -243,7 +243,7 @@ paths:
                 sku: { type: string }
                 brand: { type: string }
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/inventory/{id}/stock:
     put:
@@ -261,13 +261,13 @@ paths:
               properties:
                 quantity: { type: number }
       responses:
-        '200': { description: updated }
+        "200": { description: updated }
 
   /api/delivery:
     get:
       summary: List deliveries
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
     post:
       summary: Create delivery
       requestBody:
@@ -279,7 +279,7 @@ paths:
                 customerId: { type: string }
                 orderId: { type: string }
       responses:
-        '200': { description: created }
+        "200": { description: created }
 
   /api/delivery/{id}:
     get:
@@ -290,7 +290,7 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        '200': { description: OK }
+        "200": { description: OK }
 
 security:
   - bearerAuth: []

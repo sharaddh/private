@@ -4,7 +4,11 @@ import { User } from "../models/user";
 import { escapeRegex } from "../utils/string";
 import { logger } from "../utils/logger";
 
-const { Inventory: WHInventory, LensStock: WHLensStock, Withdrawal: WHWithdrawal } = getWarehouseModels();
+const {
+  Inventory: WHInventory,
+  LensStock: WHLensStock,
+  Withdrawal: WHWithdrawal,
+} = getWarehouseModels();
 
 interface BranchItem {
   branchId: string;
@@ -84,7 +88,9 @@ export async function getAllBranchInventory(query?: { search?: string }) {
           } as AggregatedInventory);
         }
       } catch (err) {
-        logger.error(`Failed to fetch inventory from branch ${branch.name}`, { error: (err as Error).message });
+        logger.error(`Failed to fetch inventory from branch ${branch.name}`, {
+          error: (err as Error).message,
+        });
       }
     })
   );
@@ -128,10 +134,15 @@ export async function getAllBranchStats() {
           models.Inventory.countDocuments({ quantity: { $lte: 5 } }),
           models.Inventory.countDocuments({ location: "warehouse" }),
           models.Inventory.aggregate([
-            { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
+            {
+              $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } },
+            },
           ]),
           models.Inventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-          models.Inventory.find({ quantity: { $lte: 5, $gt: 0 } }).sort({ quantity: 1 }).limit(10).lean(),
+          models.Inventory.find({ quantity: { $lte: 5, $gt: 0 } })
+            .sort({ quantity: 1 })
+            .limit(10)
+            .lean(),
         ]);
 
         totalItems += count;
@@ -162,27 +173,34 @@ export async function getAllBranchStats() {
           const q = (doc.quantities as Record<string, Record<string, number>>) || {};
           for (const lensType of Object.keys(q)) {
             for (const v of Object.values(q[lensType])) {
-              totalLensStock += (v as number);
+              totalLensStock += v as number;
             }
           }
         }
       } catch (err) {
-        logger.error(`Failed to fetch stats from branch ${branch.name}`, { error: (err as Error).message });
+        logger.error(`Failed to fetch stats from branch ${branch.name}`, {
+          error: (err as Error).message,
+        });
       }
     })
   );
 
   try {
-    const [mainCount, mainLow, mainWh, mainValResult, mainRecent, mainLowItems] = await Promise.all([
-      WHInventory.countDocuments(),
-      WHInventory.countDocuments({ quantity: { $lte: 5 } }),
-      WHInventory.countDocuments({ location: "warehouse" }),
-      WHInventory.aggregate([
-        { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
-      ]),
-      WHInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-      WHInventory.find({ quantity: { $lte: 5, $gt: 0 } }).sort({ quantity: 1 }).limit(10).lean(),
-    ]);
+    const [mainCount, mainLow, mainWh, mainValResult, mainRecent, mainLowItems] = await Promise.all(
+      [
+        WHInventory.countDocuments(),
+        WHInventory.countDocuments({ quantity: { $lte: 5 } }),
+        WHInventory.countDocuments({ location: "warehouse" }),
+        WHInventory.aggregate([
+          { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
+        ]),
+        WHInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
+        WHInventory.find({ quantity: { $lte: 5, $gt: 0 } })
+          .sort({ quantity: 1 })
+          .limit(10)
+          .lean(),
+      ]
+    );
 
     totalItems += mainCount;
     lowStock += mainLow;
@@ -212,7 +230,7 @@ export async function getAllBranchStats() {
       const q = (doc.quantities as Record<string, Record<string, number>>) || {};
       for (const lensType of Object.keys(q)) {
         for (const v of Object.values(q[lensType])) {
-          totalLensStock += (v as number);
+          totalLensStock += v as number;
         }
       }
     }
@@ -226,15 +244,10 @@ export async function getAllBranchStats() {
   const [totalUsers, totalWithdrawals, withdrawalAgg] = await Promise.all([
     User.countDocuments(),
     WHWithdrawal.countDocuments(),
-    WHWithdrawal.aggregate([
-      { $group: { _id: null, totalItems: { $sum: "$totalQuantity" } } },
-    ]),
+    WHWithdrawal.aggregate([{ $group: { _id: null, totalItems: { $sum: "$totalQuantity" } } }]),
   ]);
 
-  const recentWithdrawals = await WHWithdrawal.find()
-    .sort({ withdrawnAt: -1 })
-    .limit(10)
-    .lean();
+  const recentWithdrawals = await WHWithdrawal.find().sort({ withdrawnAt: -1 }).limit(10).lean();
 
   return {
     totalItems,
@@ -270,7 +283,9 @@ export async function getAllBranchLensStock() {
           } as AggregatedLensStock);
         }
       } catch (err) {
-        logger.error(`Failed to fetch lens stock from branch ${branch.name}`, { error: (err as Error).message });
+        logger.error(`Failed to fetch lens stock from branch ${branch.name}`, {
+          error: (err as Error).message,
+        });
       }
     })
   );

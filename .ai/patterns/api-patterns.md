@@ -937,7 +937,7 @@ router.get("/data?token=abc123", ...);
 
 ### Tradeoffs
 
-- Access tokens expire in 24h, refresh tokens in 7d — long-lived for an ERP used by
+- Access tokens expire in 7d, refresh tokens in 7d — long-lived for an ERP used by
   a small team in a single shop.
 - The `tryRefresh` function deduplicates concurrent refresh attempts via `refreshPromise`.
 - `authenticate` middleware returns 401; `requireRole` returns 403 — important distinction.
@@ -964,7 +964,7 @@ import rateLimit from "express-rate-limit";
 app.use(
   rateLimit({
     windowMs: 60 * 1000,  // 1 minute window
-    max: 200,             // 200 requests per minute per IP
+    max: 1000,            // 1000 requests per minute per IP
     standardHeaders: true, // Return rate limit info in headers
     legacyHeaders: false,  // Disable X-RateLimit-* headers
   })
@@ -989,9 +989,11 @@ app.use(rateLimit({ windowMs: 60000, max: 10 })); // Only 10 requests per minute
 
 ### Tradeoffs
 
-- 200 requests/minute is generous enough for normal ERP usage but prevents scripted abuse.
+- 1000 requests/minute is generous enough for normal ERP usage but prevents scripted abuse.
 - `standardHeaders: true` adds `RateLimit-*` headers for monitoring.
-- No per-route rate limits — the global limit is sufficient for a single-tenant ERP.
+- Global limit is per-IP for anonymous requests and per-user for authenticated
+  requests (`user:${sub}` keys); auth routes have a stricter `AUTH_RATE_LIMIT_MAX` (30/min).
+- With `REDIS_URL` set, limits are Redis-backed and shared across processes/restarts.
 
 ### Related Patterns
 

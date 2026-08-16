@@ -82,7 +82,12 @@ export interface WebhookEntry {
         status: "sent" | "delivered" | "read" | "played";
         timestamp: string;
         recipient_id: string;
-        errors?: Array<{ code: number; title: string; message: string; error_data?: { details: string } }>;
+        errors?: Array<{
+          code: number;
+          title: string;
+          message: string;
+          error_data?: { details: string };
+        }>;
       }>;
     };
     field: string;

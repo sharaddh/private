@@ -1,25 +1,48 @@
-import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
-import api from "../api";
-import type { LensStockItem } from "../types/lensStock";
-import { priceForPower } from "../types/lensStock";
-import type { FogMark } from "../types/fogMark";
-import { formatCurrency, fmtPairs, formatLensPower, lensTypeLabel, powerTextClass } from "../utils/helpers";
-import { generateWithdrawalPdf } from "../utils/withdrawalPdf";
-import StatCard from "../components/StatCard";
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import api from '../api';
+import type { LensStockItem } from '../types/lensStock';
+import { priceForPower } from '../types/lensStock';
+import type { FogMark } from '../types/fogMark';
 import {
-  Drawer, DrawerContent, DrawerHandle, DrawerTitle,
-} from "../components/ui/drawer";
+  formatCurrency,
+  fmtPairs,
+  formatLensPower,
+  lensTypeLabel,
+  powerTextClass,
+} from '../utils/helpers';
+import { generateWithdrawalPdf } from '../utils/withdrawalPdf';
+import StatCard from '../components/StatCard';
+import { Drawer, DrawerContent, DrawerHandle, DrawerTitle } from '../components/ui/drawer';
 import {
-  History, PackageMinus, CheckCircle2, Undo2, MessageCircle, Pencil, Check, Minus, Plus, Trash2,
-  Clock, Glasses, IndianRupee, X,
-} from "lucide-react";
+  History,
+  PackageMinus,
+  CheckCircle2,
+  Undo2,
+  MessageCircle,
+  Pencil,
+  Check,
+  Minus,
+  Plus,
+  Trash2,
+  Clock,
+  Glasses,
+  IndianRupee,
+  X,
+} from 'lucide-react';
 
 interface WithdrawalRecord {
   _id: string;
   username: string;
-  items: { coating: string; lensType: string; powerKey: string; quantity: number; price?: number; fogMark?: string }[];
+  items: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    price?: number;
+    fogMark?: string;
+  }[];
   totalQuantity: number;
   totalPrice?: number;
   paid?: boolean;
@@ -37,14 +60,17 @@ interface EditItem {
 
 function powerDisplay(item: { lensType: string; powerKey: string }): string {
   const formatted = formatLensPower(item.powerKey);
-  if (item.lensType === "compound") return formatted.replace("SPH ", "").replace("CYL ", "");
+  if (item.lensType === 'compound') return formatted.replace('SPH ', '').replace('CYL ', '');
   return `${lensTypeLabel(item.lensType)} ${formatted}`;
 }
 
 function formatWithdrawalDate(d: string): string {
-  return new Date(d).toLocaleString("en-IN", {
-    day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+  return new Date(d).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -62,13 +88,13 @@ export default function Withdrawals() {
   const [fogMarks, setFogMarks] = useState<FogMark[]>([]);
 
   useEffect(() => {
-    api.get<FogMark[]>("/api/fog-marks").then((res) => {
+    api.get<FogMark[]>('/api/fog-marks').then((res) => {
       if (res.success && Array.isArray(res.data)) setFogMarks(res.data);
     });
   }, []);
 
   async function loadStock() {
-    const res = await api.get<LensStockItem[]>("/api/warehouse/lens-stock/list");
+    const res = await api.get<LensStockItem[]>('/api/warehouse/lens-stock/list');
     if (res.success && Array.isArray(res.data)) {
       const map: Record<string, number> = {};
       const itemsByCoating: Record<string, LensStockItem> = {};
@@ -93,7 +119,7 @@ export default function Withdrawals() {
 
   async function fetchHistory() {
     setLoadingHistory(true);
-    const res = await api.get<WithdrawalRecord[]>("/api/cart/withdrawals");
+    const res = await api.get<WithdrawalRecord[]>('/api/cart/withdrawals');
     if (res.success && Array.isArray(res.data)) {
       setHistory(res.data);
     }
@@ -123,12 +149,14 @@ export default function Withdrawals() {
   async function togglePaid(rec: WithdrawalRecord) {
     setTogglingId(rec._id);
     const next = !rec.paid;
-    const res = await api.put<WithdrawalRecord>(`/api/cart/withdrawals/${rec._id}/pay`, { paid: next });
+    const res = await api.put<WithdrawalRecord>(`/api/cart/withdrawals/${rec._id}/pay`, {
+      paid: next,
+    });
     if (res.success && res.data) {
       setHistory((prev) => prev.map((r) => (r._id === rec._id ? res.data! : r)));
-      toast(next ? "Withdrawal marked as paid" : "Withdrawal marked as unpaid", "success");
+      toast(next ? 'Withdrawal marked as paid' : 'Withdrawal marked as unpaid', 'success');
     } else {
-      toast(res.message || "Failed to update payment status", "error");
+      toast(res.message || 'Failed to update payment status', 'error');
     }
     setTogglingId(null);
   }
@@ -141,12 +169,20 @@ export default function Withdrawals() {
       totalQuantity: rec.totalQuantity,
       totalPrice: rec.totalPrice,
     });
-    window.open("https://web.whatsapp.com/", "_blank");
+    window.open('https://web.whatsapp.com/', '_blank');
   }
 
   function openEdit(rec: WithdrawalRecord) {
     setEditingRec(rec);
-    setEditItems(rec.items.map((it) => ({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: it.quantity, fogMark: it.fogMark })));
+    setEditItems(
+      rec.items.map((it) => ({
+        coating: it.coating,
+        lensType: it.lensType,
+        powerKey: it.powerKey,
+        quantity: it.quantity,
+        fogMark: it.fogMark,
+      }))
+    );
   }
 
   function changeEditQty(idx: number, delta: number) {
@@ -165,16 +201,18 @@ export default function Withdrawals() {
 
   async function saveEdit() {
     if (!editingRec) return;
-    if (editItems.length === 0 && !confirm("Remove all items from this withdrawal?")) return;
+    if (editItems.length === 0 && !confirm('Remove all items from this withdrawal?')) return;
     setSavingEdit(true);
-    const res = await api.put<WithdrawalRecord>(`/api/cart/withdrawals/${editingRec._id}`, { items: editItems });
+    const res = await api.put<WithdrawalRecord>(`/api/cart/withdrawals/${editingRec._id}`, {
+      items: editItems,
+    });
     if (res.success && res.data) {
       setHistory((prev) => prev.map((r) => (r._id === editingRec._id ? res.data! : r)));
-      toast("Withdrawal updated", "success");
+      toast('Withdrawal updated', 'success');
       setEditingRec(null);
       loadStock();
     } else {
-      toast(res.message || "Failed to update withdrawal", "error");
+      toast(res.message || 'Failed to update withdrawal', 'error');
     }
     setSavingEdit(false);
   }
@@ -190,7 +228,8 @@ export default function Withdrawals() {
           <div>
             <h1 className="text-feature font-bold text-th-text leading-tight">Withdrawals</h1>
             <p className="text-small text-th-muted">
-              {user?.username ? `@${user.username}` : "You"} · {history.length} withdrawal{history.length !== 1 ? "s" : ""}
+              {user?.username ? `@${user.username}` : 'You'} · {history.length} withdrawal
+              {history.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -226,7 +265,9 @@ export default function Withdrawals() {
             iconBg="bg-amber-500/15"
             value={formatCurrency(stats.unpaidAmount)}
             label="Pending amount"
-            badge={stats.unpaid > 0 ? { text: `${stats.unpaid} due`, variant: "yellow" } : undefined}
+            badge={
+              stats.unpaid > 0 ? { text: `${stats.unpaid} due`, variant: 'yellow' } : undefined
+            }
           />
         </div>
       )}
@@ -255,9 +296,13 @@ export default function Withdrawals() {
                 className="bg-th-card border border-th-border rounded-xl overflow-hidden animate-fade-up"
               >
                 {/* Header Strip */}
-                <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${isPaid ? "border-emerald-500/20 bg-emerald-500/5" : "border-amber-500/20 bg-amber-500/5"}`}>
+                <div
+                  className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${isPaid ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`}
+                >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? "bg-emerald-500/15" : "bg-amber-500/15"}`}>
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? 'bg-emerald-500/15' : 'bg-amber-500/15'}`}
+                    >
                       {isPaid ? (
                         <CheckCircle2 size={20} className="text-emerald-500" />
                       ) : (
@@ -266,9 +311,13 @@ export default function Withdrawals() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-body-bold text-th-text truncate">{formatWithdrawalDate(rec.withdrawnAt)}</span>
+                        <span className="text-body-bold text-th-text truncate">
+                          {formatWithdrawalDate(rec.withdrawnAt)}
+                        </span>
                         {isPaid ? (
-                          <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">Paid</span>
+                          <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">
+                            Paid
+                          </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold shrink-0">
                             Due {formatCurrency(rec.totalPrice ?? 0)}
@@ -285,11 +334,13 @@ export default function Withdrawals() {
                     onClick={() => togglePaid(rec)}
                     disabled={togglingId === rec._id}
                     className={`flex items-center gap-1.5 px-3.5 py-2 rounded-pill text-small-bold active:scale-95 transition-all disabled:opacity-50 shrink-0 ${
-                      isPaid ? "bg-th-elevated text-th-text hover:bg-th-elevated/80" : "bg-primary-500 text-surface-950 hover:bg-primary-400"
+                      isPaid
+                        ? 'bg-th-elevated text-th-text hover:bg-th-elevated/80'
+                        : 'bg-primary-500 text-surface-950 hover:bg-primary-400'
                     }`}
                   >
                     {togglingId === rec._id ? (
-                      "Saving..."
+                      'Saving...'
                     ) : isPaid ? (
                       <>
                         <Undo2 size={16} /> <span>Mark Unpaid</span>
@@ -305,16 +356,22 @@ export default function Withdrawals() {
                 {/* Items Body */}
                 <div className="px-4 py-1">
                   {rec.items.map((it, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-3 py-2.5 border-b border-th-border/50 last:border-0">
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-3 py-2.5 border-b border-th-border/50 last:border-0"
+                    >
                       <div className="min-w-0">
                         <div className={`text-small-bold truncate ${powerTextClass(it.powerKey)}`}>
                           {powerDisplay(it)}
                         </div>
                         <div className="text-small text-th-muted truncate">
-                          {it.coating}{it.fogMark ? ` · ${it.fogMark}` : ""}
+                          {it.coating}
+                          {it.fogMark ? ` · ${it.fogMark}` : ''}
                         </div>
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">×{fmtPairs(it.quantity)}</span>
+                      <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">
+                        ×{fmtPairs(it.quantity)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -324,8 +381,10 @@ export default function Withdrawals() {
                   <div className="min-w-0">
                     <div className="text-badge text-th-muted uppercase tracking-wider">Total</div>
                     <div className="text-body-bold text-th-text">
-                      {fmtPairs(rec.totalQuantity)} ·{" "}
-                      <span className="text-primary-500">{formatCurrency(rec.totalPrice ?? 0)}</span>
+                      {fmtPairs(rec.totalQuantity)} ·{' '}
+                      <span className="text-primary-500">
+                        {formatCurrency(rec.totalPrice ?? 0)}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -354,7 +413,9 @@ export default function Withdrawals() {
       {/* Edit Drawer */}
       <Drawer
         open={!!editingRec}
-        onOpenChange={(o) => { if (!o && !savingEdit) setEditingRec(null); }}
+        onOpenChange={(o) => {
+          if (!o && !savingEdit) setEditingRec(null);
+        }}
         handleOnly
         autoFocus
       >
@@ -370,7 +431,9 @@ export default function Withdrawals() {
               <h3 className="text-body-bold text-th-text truncate">Edit Withdrawal</h3>
             </div>
             <button
-              onClick={() => { if (!savingEdit) setEditingRec(null); }}
+              onClick={() => {
+                if (!savingEdit) setEditingRec(null);
+              }}
               className="p-1.5 hover:bg-th-hover rounded-lg text-th-muted transition-colors shrink-0"
             >
               <X size={18} />
@@ -379,17 +442,26 @@ export default function Withdrawals() {
 
           <div className="flex-1 overflow-y-auto p-5 space-y-2 min-h-0">
             {editItems.length === 0 ? (
-              <p className="text-center text-th-muted text-body py-6">No items in this withdrawal</p>
+              <p className="text-center text-th-muted text-body py-6">
+                No items in this withdrawal
+              </p>
             ) : (
               editItems.map((it, idx) => {
                 const stock = stockMap[`${it.coating}::${it.lensType}::${it.powerKey}`] || 0;
                 return (
-                  <div key={`${it.coating}|${it.lensType}|${it.powerKey}`} className="p-3 rounded-xl bg-th-elevated border border-th-border/40 space-y-2">
+                  <div
+                    key={`${it.coating}|${it.lensType}|${it.powerKey}`}
+                    className="p-3 rounded-xl bg-th-elevated border border-th-border/40 space-y-2"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <span className="text-small-bold text-th-text truncate">{it.coating}</span>
-                        <span className="px-1.5 py-0.5 rounded text-badge font-bold bg-th-base text-th-secondary">{lensTypeLabel(it.lensType)}</span>
-                        <span className={`text-small-bold ${powerTextClass(it.powerKey)}`}>{formatLensPower(it.powerKey)}</span>
+                        <span className="px-1.5 py-0.5 rounded text-badge font-bold bg-th-base text-th-secondary">
+                          {lensTypeLabel(it.lensType)}
+                        </span>
+                        <span className={`text-small-bold ${powerTextClass(it.powerKey)}`}>
+                          {formatLensPower(it.powerKey)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
@@ -399,7 +471,9 @@ export default function Withdrawals() {
                         >
                           <Minus size={14} strokeWidth={2.5} />
                         </button>
-                        <span className="w-10 text-center text-body-bold text-th-text">{fmtPairs(it.quantity)}</span>
+                        <span className="w-10 text-center text-body-bold text-th-text">
+                          {fmtPairs(it.quantity)}
+                        </span>
                         <button
                           onClick={() => changeEditQty(idx, 1)}
                           disabled={it.quantity >= stock}
@@ -416,17 +490,23 @@ export default function Withdrawals() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-badge text-th-muted uppercase tracking-wider shrink-0">ID</span>
+                      <span className="text-badge text-th-muted uppercase tracking-wider shrink-0">
+                        ID
+                      </span>
                       <select
-                        value={it.fogMark || ""}
+                        value={it.fogMark || ''}
                         onChange={(e) => changeEditFog(idx, e.target.value)}
                         className={`flex-1 min-w-0 px-2.5 py-1.5 rounded-lg text-small font-medium border bg-th-base outline-none focus:ring-2 focus:ring-primary-500/40 ${
-                          it.fogMark ? "border-primary-500/40 text-primary-500" : "border-th-border text-th-muted"
+                          it.fogMark
+                            ? 'border-primary-500/40 text-primary-500'
+                            : 'border-th-border text-th-muted'
                         }`}
                       >
                         <option value="">No mark</option>
                         {fogMarks.map((m) => (
-                          <option key={m._id} value={m.name}>{m.name}</option>
+                          <option key={m._id} value={m.name}>
+                            {m.name}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -442,7 +522,17 @@ export default function Withdrawals() {
                 {fmtPairs(editItems.reduce((s, it) => s + it.quantity, 0))}
               </span>
               <span className="text-small-bold text-th-text">
-                Total · <span className="text-primary-500">{formatCurrency(editItems.reduce((s, it) => s + (priceForPower(priceMap[it.coating], it.powerKey) || 0) * (it.quantity / 2), 0))}</span>
+                Total ·{' '}
+                <span className="text-primary-500">
+                  {formatCurrency(
+                    editItems.reduce(
+                      (s, it) =>
+                        s +
+                        (priceForPower(priceMap[it.coating], it.powerKey) || 0) * (it.quantity / 2),
+                      0
+                    )
+                  )}
+                </span>
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -459,7 +549,7 @@ export default function Withdrawals() {
                 className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-primary-500 text-surface-950 text-body font-bold active:scale-95 transition-all disabled:opacity-50"
               >
                 <Check size={16} strokeWidth={2.5} />
-                {savingEdit ? "Saving..." : "Save Changes"}
+                {savingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

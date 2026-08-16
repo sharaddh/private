@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { cacheGet, cacheSet, cacheDel } from "../services/cache";
 
 function branchKey(req: Request): string {
-  const branchId = req.headers["x-branch-id"] as string || req.query._branch as string || "default";
+  const branchId =
+    (req.headers["x-branch-id"] as string) || (req.query._branch as string) || "default";
   return branchId;
 }
 

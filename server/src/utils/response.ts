@@ -11,7 +11,12 @@ export function sendCreated<T>(res: Response, data: T, message = "Created succes
   sendSuccess(res, data, message, 201);
 }
 
-export function sendError(res: Response, message: string, status = 400, extra?: Record<string, unknown>): void {
+export function sendError(
+  res: Response,
+  message: string,
+  status = 400,
+  extra?: Record<string, unknown>
+): void {
   const body: Record<string, unknown> = { success: false, message };
   if (extra) Object.assign(body, extra);
   res.status(status).json(body);

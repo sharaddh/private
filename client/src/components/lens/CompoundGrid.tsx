@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ChevronDown, ChevronRight, ShoppingCart, X } from "lucide-react";
-import { NEG_CYL, POS_CYL, NEG_SPH_INNER, POS_SPH_INNER, SPH_INNER } from "./powers";
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, ShoppingCart, X } from 'lucide-react';
+import { NEG_CYL, POS_CYL, NEG_SPH_INNER, POS_SPH_INNER, SPH_INNER } from './powers';
 
 interface Props {
   quantities: Record<string, number>;
@@ -13,18 +13,27 @@ interface Props {
   cartQty?: Record<string, number>;
 }
 
-export default function CompoundGrid({ quantities, onIncrement, onDecrement, onAddToCart, onRemoveFromCart, clickToAdd, clickTitle, cartQty }: Props) {
-  const [openCyl, setOpenCyl] = useState<string>("");
+export default function CompoundGrid({
+  quantities,
+  onIncrement,
+  onDecrement,
+  onAddToCart,
+  onRemoveFromCart,
+  clickToAdd,
+  clickTitle,
+  cartQty,
+}: Props) {
+  const [openCyl, setOpenCyl] = useState<string>('');
   const editable = Boolean(onIncrement || onDecrement);
 
   const cylGroups: { label: string; values: string[]; color: string }[] = [
-    { label: "Negative CYL", values: NEG_CYL, color: "text-amber-500" },
-    { label: "Positive CYL", values: POS_CYL, color: "text-emerald-500" },
+    { label: 'Negative CYL', values: NEG_CYL, color: 'text-amber-500' },
+    { label: 'Positive CYL', values: POS_CYL, color: 'text-emerald-500' },
   ];
 
   const sphInnerGroups: { label: string; values: string[]; color: string }[] = [
-    { label: "Negative SPH", values: NEG_SPH_INNER, color: "text-amber-500" },
-    { label: "Positive SPH", values: POS_SPH_INNER, color: "text-emerald-500" },
+    { label: 'Negative SPH', values: NEG_SPH_INNER, color: 'text-amber-500' },
+    { label: 'Positive SPH', values: POS_SPH_INNER, color: 'text-emerald-500' },
   ];
 
   return (
@@ -33,13 +42,23 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement, onA
         if (group.values.length === 0) return null;
         return (
           <div key={group.label}>
-            <div className="text-body font-bold uppercase tracking-wider mb-2 ml-1">{group.label}</div>
+            <div className="text-body font-bold uppercase tracking-wider mb-2 ml-1">
+              {group.label}
+            </div>
             <div className="space-y-1">
               {group.values.map((cyl) => {
                 const isOpen = openCyl === cyl;
-                const cylNeg = cyl.startsWith("-");
-                const cylColor = cylNeg ? "text-amber-500" : cyl === "+0.00" ? "text-th-muted" : "text-emerald-500";
-                const cylBg = cylNeg ? "bg-amber-500/10" : cyl === "+0.00" ? "bg-th-elevated" : "bg-emerald-500/10";
+                const cylNeg = cyl.startsWith('-');
+                const cylColor = cylNeg
+                  ? 'text-amber-500'
+                  : cyl === '+0.00'
+                    ? 'text-th-muted'
+                    : 'text-emerald-500';
+                const cylBg = cylNeg
+                  ? 'bg-amber-500/10'
+                  : cyl === '+0.00'
+                    ? 'bg-th-elevated'
+                    : 'bg-emerald-500/10';
 
                 let sphStockCount = 0;
                 for (const sph of SPH_INNER) {
@@ -48,96 +67,171 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement, onA
 
                 return (
                   <div key={cyl}>
-                    <button type="button"
-                      onClick={() => setOpenCyl((prev) => (prev === cyl ? "" : cyl))}
+                    <button
+                      type="button"
+                      onClick={() => setOpenCyl((prev) => (prev === cyl ? '' : cyl))}
                       className="flex items-center gap-2 w-full px-2.5 py-3 rounded-lg active:bg-th-elevated transition-colors"
                     >
-                      {isOpen ? <ChevronDown size={20} className="text-th-muted" /> : <ChevronRight size={20} className="text-th-muted" />}
-                      <span className={`px-2.5 py-0.5 rounded-pill ${cylBg} ${cylColor} text-body font-bold`}>CYL {cyl}</span>
-                      <span className="text-body text-primary-500 font-medium">{sphStockCount} in stock</span>
+                      {isOpen ? (
+                        <ChevronDown size={20} className="text-th-muted" />
+                      ) : (
+                        <ChevronRight size={20} className="text-th-muted" />
+                      )}
+                      <span
+                        className={`px-2.5 py-0.5 rounded-pill ${cylBg} ${cylColor} text-body font-bold`}
+                      >
+                        CYL {cyl}
+                      </span>
+                      <span className="text-body text-primary-500 font-medium">
+                        {sphStockCount} in stock
+                      </span>
                     </button>
                     {isOpen && (
                       <div className="mt-2 space-y-3">
                         {sphInnerGroups.map((sphGroup) => (
                           <div key={sphGroup.label}>
-                            <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">{sphGroup.label}</div>
+                            <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">
+                              {sphGroup.label}
+                            </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                               {sphGroup.values.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;
-                                const isNeg = sph.startsWith("-");
-                                const isPos = sph.startsWith("+") && sph !== "+0.00";
-                                const sphLabel = sph === "+0.00" || sph === "0.00" || sph === "-0.00" ? "0.00" : sph;
-                                const cylLabel = cyl === "+0.00" || cyl === "0.00" || cyl === "-0.00" ? "0.00" : cyl;
-                                const cylNeg = cyl.startsWith("-");
-                                const cylPos = cyl.startsWith("+") && cyl !== "+0.00";
+                                const isNeg = sph.startsWith('-');
+                                const isPos = sph.startsWith('+') && sph !== '+0.00';
+                                const sphLabel =
+                                  sph === '+0.00' || sph === '0.00' || sph === '-0.00'
+                                    ? '0.00'
+                                    : sph;
+                                const cylLabel =
+                                  cyl === '+0.00' || cyl === '0.00' || cyl === '-0.00'
+                                    ? '0.00'
+                                    : cyl;
+                                const cylNeg = cyl.startsWith('-');
+                                const cylPos = cyl.startsWith('+') && cyl !== '+0.00';
 
-                                const border = isNeg ? "border-amber-400/40" : isPos ? "border-emerald-400/40" : "border-th-border";
-                                const bg = isNeg ? "bg-amber-400/5" : isPos ? "bg-emerald-400/5" : "bg-th-elevated";
-                                const qtyClr = isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : qty > 0 ? "text-th-secondary" : "text-th-muted";
+                                const border = isNeg
+                                  ? 'border-amber-400/40'
+                                  : isPos
+                                    ? 'border-emerald-400/40'
+                                    : 'border-th-border';
+                                const bg = isNeg
+                                  ? 'bg-amber-400/5'
+                                  : isPos
+                                    ? 'bg-emerald-400/5'
+                                    : 'bg-th-elevated';
+                                const qtyClr = isNeg
+                                  ? 'text-amber-500'
+                                  : isPos
+                                    ? 'text-emerald-500'
+                                    : qty > 0
+                                      ? 'text-th-secondary'
+                                      : 'text-th-muted';
 
                                 const cardBase = `flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border ${border} ${bg}`;
                                 const labelEl = (
                                   <span className="text-sm sm:text-base font-bold leading-none whitespace-nowrap">
-                                    <span className={isNeg ? "text-amber-500" : isPos ? "text-emerald-500" : "text-th-secondary"}>{sphLabel}</span>
+                                    <span
+                                      className={
+                                        isNeg
+                                          ? 'text-amber-500'
+                                          : isPos
+                                            ? 'text-emerald-500'
+                                            : 'text-th-secondary'
+                                      }
+                                    >
+                                      {sphLabel}
+                                    </span>
                                     <span className="text-th-muted"> | </span>
-                                    <span className={cylNeg ? "text-amber-500" : cylPos ? "text-emerald-500" : "text-th-muted"}>{cylLabel}</span>
+                                    <span
+                                      className={
+                                        cylNeg
+                                          ? 'text-amber-500'
+                                          : cylPos
+                                            ? 'text-emerald-500'
+                                            : 'text-th-muted'
+                                      }
+                                    >
+                                      {cylLabel}
+                                    </span>
                                   </span>
                                 );
-                                const qtyEl = <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{qty}</span>;
+                                const qtyEl = (
+                                  <span
+                                    className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}
+                                  >
+                                    {qty}
+                                  </span>
+                                );
 
-                                return (
-                                  clickToAdd ? (
-                                    (() => {
-                                      const cq = cartQty?.[key] || 0;
-                                      const maxed = qty <= 0 || cq >= qty;
-                                      return (
-                                        <div
-                                          key={sph}
-                                          role="button"
-                                          tabIndex={maxed ? -1 : 0}
-                                          onClick={maxed ? undefined : () => onAddToCart?.(key)}
-                                          onKeyDown={maxed ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAddToCart?.(key); } }}
-                                          aria-disabled={maxed}
-                                          title={clickTitle || `Add ${key} to cart`}
-                                          className={`${cardBase} relative transition-all ${
-                                            maxed
-                                              ? "opacity-45 cursor-not-allowed"
-                                              : "cursor-pointer hover:border-primary-500/60 hover:ring-1 hover:ring-primary-500/25 active:scale-95 group"
-                                          }`}
-                                        >
-                                          {cq > 0 && (
-                                            <button type="button"
-                                              onClick={(e) => { e.stopPropagation(); onRemoveFromCart?.(key); }}
-                                              className="absolute top-1 right-1 flex items-center px-1.5 py-0.5 rounded-full bg-th-elevated text-th-muted hover:text-negative hover:bg-negative/10 transition-colors"
-                                              aria-label={`Deselect ${key}`}
-                                              title="Deselect"
-                                            >
-                                              <X size={11} strokeWidth={3} />
-                                            </button>
-                                          )}
-                                          {labelEl}
-                                          {qtyEl}
-                                        </div>
-                                      );
-                                    })()
-                                  ) : (
+                                return clickToAdd ? (
+                                  (() => {
+                                    const cq = cartQty?.[key] || 0;
+                                    const maxed = qty <= 0 || cq >= qty;
+                                    return (
+                                      <div
+                                        key={sph}
+                                        role="button"
+                                        tabIndex={maxed ? -1 : 0}
+                                        onClick={maxed ? undefined : () => onAddToCart?.(key)}
+                                        onKeyDown={
+                                          maxed
+                                            ? undefined
+                                            : (e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                  e.preventDefault();
+                                                  onAddToCart?.(key);
+                                                }
+                                              }
+                                        }
+                                        aria-disabled={maxed}
+                                        title={clickTitle || `Add ${key} to cart`}
+                                        className={`${cardBase} relative transition-all ${
+                                          maxed
+                                            ? 'opacity-45 cursor-not-allowed'
+                                            : 'cursor-pointer hover:border-primary-500/60 hover:ring-1 hover:ring-primary-500/25 active:scale-95 group'
+                                        }`}
+                                      >
+                                        {cq > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onRemoveFromCart?.(key);
+                                            }}
+                                            className="absolute top-1 right-1 flex items-center px-1.5 py-0.5 rounded-full bg-th-elevated text-th-muted hover:text-negative hover:bg-negative/10 transition-colors"
+                                            aria-label={`Deselect ${key}`}
+                                            title="Deselect"
+                                          >
+                                            <X size={11} strokeWidth={3} />
+                                          </button>
+                                        )}
+                                        {labelEl}
+                                        {qtyEl}
+                                      </div>
+                                    );
+                                  })()
+                                ) : (
                                   <div key={sph} className={cardBase}>
                                     {labelEl}
                                     {qtyEl}
                                     {editable ? (
                                       <div className="flex items-center gap-2">
                                         {onDecrement && (
-                                          <button type="button"
+                                          <button
+                                            type="button"
                                             onClick={() => onDecrement(key)}
                                             className="w-10 h-10 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
                                             aria-label={`Decrement ${key}`}
                                           >
-                                            <span className="text-lg font-bold leading-none">−</span>
+                                            <span className="text-lg font-bold leading-none">
+                                              −
+                                            </span>
                                           </button>
                                         )}
                                         {onAddToCart && (
-                                          <button type="button"
+                                          <button
+                                            type="button"
                                             onClick={() => onAddToCart(key)}
                                             className="w-12 h-12 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center active:scale-90 active:bg-primary-500/20 transition-all"
                                             aria-label={`Add ${key} to cart`}
@@ -147,17 +241,21 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement, onA
                                           </button>
                                         )}
                                         {onIncrement && (
-                                          <button type="button"
+                                          <button
+                                            type="button"
                                             onClick={() => onIncrement(key)}
                                             className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
                                             aria-label={`Increment ${key}`}
                                           >
-                                            <span className="text-lg font-bold leading-none">+</span>
+                                            <span className="text-lg font-bold leading-none">
+                                              +
+                                            </span>
                                           </button>
                                         )}
                                       </div>
                                     ) : onAddToCart ? (
-                                      <button type="button"
+                                      <button
+                                        type="button"
                                         onClick={() => onAddToCart(key)}
                                         className="w-12 h-12 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center active:scale-90 active:bg-primary-500/20 transition-all"
                                         aria-label={`Add ${key} to cart`}
@@ -167,7 +265,6 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement, onA
                                       </button>
                                     ) : null}
                                   </div>
-                                  )
                                 );
                               })}
                             </div>

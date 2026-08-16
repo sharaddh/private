@@ -1,13 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type ReactNode,
-} from "react";
-import api from "../api";
-import type { User, BranchInfo } from "../types";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import api from '../api';
+import type { User, BranchInfo } from '../types';
 
 interface AuthState {
   token: string | null;
@@ -29,9 +22,9 @@ interface AuthContextValue extends AuthState {
 }
 
 const STORAGE_KEYS = {
-  token: "accessToken",
-  refresh: "refreshToken",
-  branchId: "currentBranchId",
+  token: 'accessToken',
+  refresh: 'refreshToken',
+  branchId: 'currentBranchId',
 } as const;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -54,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     api
-      .get<User>("/api/auth/me")
+      .get<User>('/api/auth/me')
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data) {
@@ -112,8 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const role = state.user?.role;
-  const isAdmin = !!state.token && role !== "staff";
-  const isStaff = !!state.token && role === "staff";
+  const isAdmin = !!state.token && role !== 'staff';
+  const isStaff = !!state.token && role === 'staff';
   const currentBranch = branches.find((b) => b._id === state.currentBranchId) || null;
 
   return (
@@ -138,6 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

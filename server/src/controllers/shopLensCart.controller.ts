@@ -16,7 +16,9 @@ export async function getCount(req: AuthRequest, res: Response) {
 export async function addItem(req: AuthRequest, res: Response) {
   const { coating, lensType, powerKey, quantity } = req.body || {};
   if (!coating || !lensType || !powerKey) {
-    res.status(400).json({ success: false, message: "coating, lensType, and powerKey are required" });
+    res
+      .status(400)
+      .json({ success: false, message: "coating, lensType, and powerKey are required" });
     return;
   }
   const data = await shopLensCartService.addToCart(

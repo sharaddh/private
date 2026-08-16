@@ -1,4 +1,4 @@
-import api from "../api";
+import api from '../api';
 import type {
   ApiResponse,
   LensCartApi,
@@ -9,23 +9,30 @@ import type {
   ShopLensWithdrawal,
   ShopLensWithdrawalItemInput,
   WithdrawResult,
-} from "../types";
+} from '../types';
 
 class LensStockService {
   private base(scope: LensStockScope): string {
-    return scope === "warehouse" ? "/api/warehouse/lens-stock" : "/api/lens-stock";
+    return scope === 'warehouse' ? '/api/warehouse/lens-stock' : '/api/lens-stock';
   }
 
   async list(scope: LensStockScope): Promise<ApiResponse<LensStockItem[]>> {
-    const path = scope === "warehouse" ? "/api/warehouse/lens-stock/list" : "/api/lens-stock";
+    const path = scope === 'warehouse' ? '/api/warehouse/lens-stock/list' : '/api/lens-stock';
     return api.get<LensStockItem[]>(path);
   }
 
-  async create(scope: LensStockScope, data: { coating: string; priceNeg?: number; pricePos?: number }): Promise<ApiResponse<LensStockItem>> {
+  async create(
+    scope: LensStockScope,
+    data: { coating: string; priceNeg?: number; pricePos?: number }
+  ): Promise<ApiResponse<LensStockItem>> {
     return api.post<LensStockItem>(this.base(scope), data);
   }
 
-  async rename(scope: LensStockScope, id: string, data: { coating: string; priceNeg?: number; pricePos?: number }): Promise<ApiResponse<LensStockItem>> {
+  async rename(
+    scope: LensStockScope,
+    id: string,
+    data: { coating: string; priceNeg?: number; pricePos?: number }
+  ): Promise<ApiResponse<LensStockItem>> {
     return api.put<LensStockItem>(`${this.base(scope)}/${id}`, data);
   }
 
@@ -40,17 +47,31 @@ class LensStockService {
     powerKey: string,
     quantity: number
   ): Promise<ApiResponse<LensStockItem>> {
-    return api.put<LensStockItem>(`${this.base(scope)}/${id}/quantity`, { lensType, powerKey, quantity });
+    return api.put<LensStockItem>(`${this.base(scope)}/${id}/quantity`, {
+      lensType,
+      powerKey,
+      quantity,
+    });
   }
 
   // ─── Shop lens cart (branch-scoped) ─────────────────────────────────────────
 
   async getCartItems(): Promise<ApiResponse<ShopCartItem[]>> {
-    return api.get<ShopCartItem[]>("/api/lens-stock/cart");
+    return api.get<ShopCartItem[]>('/api/lens-stock/cart');
   }
 
-  async addToCart(coating: string, lensType: LensType, powerKey: string, quantity = 1): Promise<ApiResponse<ShopCartItem>> {
-    return api.post<ShopCartItem>("/api/lens-stock/cart", { coating, lensType, powerKey, quantity });
+  async addToCart(
+    coating: string,
+    lensType: LensType,
+    powerKey: string,
+    quantity = 1
+  ): Promise<ApiResponse<ShopCartItem>> {
+    return api.post<ShopCartItem>('/api/lens-stock/cart', {
+      coating,
+      lensType,
+      powerKey,
+      quantity,
+    });
   }
 
   async updateCartItem(id: string, quantity: number): Promise<ApiResponse<ShopCartItem>> {
@@ -62,18 +83,21 @@ class LensStockService {
   }
 
   async clearCart(): Promise<ApiResponse<null>> {
-    return api.del<null>("/api/lens-stock/cart");
+    return api.del<null>('/api/lens-stock/cart');
   }
 
   async withdrawCart(note?: string): Promise<ApiResponse<WithdrawResult>> {
-    return api.post<WithdrawResult>("/api/lens-stock/cart/withdraw", { note });
+    return api.post<WithdrawResult>('/api/lens-stock/cart/withdraw', { note });
   }
 
   async getWithdrawals(): Promise<ApiResponse<ShopLensWithdrawal[]>> {
-    return api.get<ShopLensWithdrawal[]>("/api/lens-stock/withdrawals");
+    return api.get<ShopLensWithdrawal[]>('/api/lens-stock/withdrawals');
   }
 
-  async updateWithdrawal(id: string, items: ShopLensWithdrawalItemInput[]): Promise<ApiResponse<ShopLensWithdrawal>> {
+  async updateWithdrawal(
+    id: string,
+    items: ShopLensWithdrawalItemInput[]
+  ): Promise<ApiResponse<ShopLensWithdrawal>> {
     return api.put<ShopLensWithdrawal>(`/api/lens-stock/withdrawals/${id}`, { items });
   }
 
@@ -84,11 +108,16 @@ class LensStockService {
   // ─── Warehouse lens cart (kmj_warehouse) ────────────────────────────────────
 
   async warehouseGetCartItems(): Promise<ApiResponse<ShopCartItem[]>> {
-    return api.get<ShopCartItem[]>("/api/cart");
+    return api.get<ShopCartItem[]>('/api/cart');
   }
 
-  async warehouseAddToCart(coating: string, lensType: LensType, powerKey: string, quantity = 1): Promise<ApiResponse<ShopCartItem>> {
-    return api.post<ShopCartItem>("/api/cart", { coating, lensType, powerKey, quantity });
+  async warehouseAddToCart(
+    coating: string,
+    lensType: LensType,
+    powerKey: string,
+    quantity = 1
+  ): Promise<ApiResponse<ShopCartItem>> {
+    return api.post<ShopCartItem>('/api/cart', { coating, lensType, powerKey, quantity });
   }
 
   async warehouseUpdateCartItem(id: string, quantity: number): Promise<ApiResponse<ShopCartItem>> {
@@ -104,18 +133,21 @@ class LensStockService {
   }
 
   async warehouseClearCart(): Promise<ApiResponse<null>> {
-    return api.del<null>("/api/cart");
+    return api.del<null>('/api/cart');
   }
 
   async warehouseWithdrawCart(): Promise<ApiResponse<WithdrawResult>> {
-    return api.post<WithdrawResult>("/api/cart/withdraw", {});
+    return api.post<WithdrawResult>('/api/cart/withdraw', {});
   }
 
   async warehouseGetWithdrawals(): Promise<ApiResponse<ShopLensWithdrawal[]>> {
-    return api.get<ShopLensWithdrawal[]>("/api/cart/withdrawals");
+    return api.get<ShopLensWithdrawal[]>('/api/cart/withdrawals');
   }
 
-  async warehouseUpdateWithdrawal(id: string, items: ShopLensWithdrawalItemInput[]): Promise<ApiResponse<ShopLensWithdrawal>> {
+  async warehouseUpdateWithdrawal(
+    id: string,
+    items: ShopLensWithdrawalItemInput[]
+  ): Promise<ApiResponse<ShopLensWithdrawal>> {
     return api.put<ShopLensWithdrawal>(`/api/cart/withdrawals/${id}`, { items });
   }
 
@@ -126,7 +158,8 @@ class LensStockService {
 
 export const shopCartApi: LensCartApi = {
   getItems: () => lensStockService.getCartItems(),
-  addItem: (coating, lensType, powerKey, quantity) => lensStockService.addToCart(coating, lensType, powerKey, quantity),
+  addItem: (coating, lensType, powerKey, quantity) =>
+    lensStockService.addToCart(coating, lensType, powerKey, quantity),
   updateItem: (id, quantity) => lensStockService.updateCartItem(id, quantity),
   removeItem: (id) => lensStockService.removeCartItem(id),
   clear: () => lensStockService.clearCart(),
@@ -138,7 +171,8 @@ export const shopCartApi: LensCartApi = {
 
 export const warehouseCartApi: LensCartApi = {
   getItems: () => lensStockService.warehouseGetCartItems(),
-  addItem: (coating, lensType, powerKey, quantity) => lensStockService.warehouseAddToCart(coating, lensType, powerKey, quantity),
+  addItem: (coating, lensType, powerKey, quantity) =>
+    lensStockService.warehouseAddToCart(coating, lensType, powerKey, quantity),
   updateItem: (id, quantity) => lensStockService.warehouseUpdateCartItem(id, quantity),
   updateFogMark: (id, fogMark) => lensStockService.warehouseUpdateFogMark(id, fogMark),
   removeItem: (id) => lensStockService.warehouseRemoveCartItem(id),

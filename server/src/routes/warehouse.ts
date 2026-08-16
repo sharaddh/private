@@ -18,8 +18,16 @@ router.get("/lens-stock/list", authenticate, asyncHandler(warehouseLensStockCont
 router.get("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.getById));
 router.put("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.rename));
 router.delete("/lens-stock/:id", authenticate, asyncHandler(warehouseLensStockController.remove));
-router.put("/lens-stock/:id/quantity", authenticate, asyncHandler(warehouseLensStockController.updateQuantity));
-router.put("/lens-stock/:id/quantities", authenticate, asyncHandler(warehouseLensStockController.bulkUpdate));
+router.put(
+  "/lens-stock/:id/quantity",
+  authenticate,
+  asyncHandler(warehouseLensStockController.updateQuantity)
+);
+router.put(
+  "/lens-stock/:id/quantities",
+  authenticate,
+  asyncHandler(warehouseLensStockController.bulkUpdate)
+);
 
 // Warehouse inventory CRUD
 router.post("/inventory", authenticate, asyncHandler(warehouseInventoryController.create));
@@ -27,6 +35,10 @@ router.get("/inventory/list", authenticate, asyncHandler(warehouseInventoryContr
 router.get("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.getById));
 router.put("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.update));
 router.delete("/inventory/:id", authenticate, asyncHandler(warehouseInventoryController.remove));
-router.put("/inventory/:id/stock", authenticate, asyncHandler(warehouseInventoryController.adjustStock));
+router.put(
+  "/inventory/:id/stock",
+  authenticate,
+  asyncHandler(warehouseInventoryController.adjustStock)
+);
 
 export default router;

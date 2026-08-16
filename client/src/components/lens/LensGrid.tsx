@@ -1,11 +1,11 @@
-import { useCallback } from "react";
-import { lensStockService } from "../../services";
-import { useToast } from "../../context/ToastContext";
-import type { LensStockItem, LensStockScope, LensType } from "../../types";
-import PowerRow from "./PowerRow";
-import CompoundGrid from "./CompoundGrid";
-import PlainGrid from "./PlainGrid";
-import type { TabKey } from "./powers";
+import { useCallback } from 'react';
+import { lensStockService } from '../../services';
+import { useToast } from '../../context/ToastContext';
+import type { LensStockItem, LensStockScope, LensType } from '../../types';
+import PowerRow from './PowerRow';
+import CompoundGrid from './CompoundGrid';
+import PlainGrid from './PlainGrid';
+import type { TabKey } from './powers';
 
 interface Props {
   item: LensStockItem;
@@ -18,43 +18,67 @@ interface Props {
   cartQty?: Record<string, number>;
 }
 
-export default function LensGrid({ item, scope, lensType, onUpdate, onAddToCart, onRemoveFromCart, clickTitle, cartQty }: Props) {
+export default function LensGrid({
+  item,
+  scope,
+  lensType,
+  onUpdate,
+  onAddToCart,
+  onRemoveFromCart,
+  clickTitle,
+  cartQty,
+}: Props) {
   const toast = useToast();
 
-  const effectiveLensType: LensType = lensType === "plain" ? "sph" : lensType;
+  const effectiveLensType: LensType = lensType === 'plain' ? 'sph' : lensType;
   const quantities = item.quantities?.[effectiveLensType] || {};
 
-  const persist = useCallback(async (powerKey: string, newQty: number) => {
-    if (!onUpdate) return;
-    onUpdate({
-      ...item,
-      quantities: {
-        ...item.quantities,
-        [effectiveLensType]: { ...quantities, [powerKey]: newQty },
-      },
-    });
-    const res = await lensStockService.updateQuantity(scope, item._id, effectiveLensType, powerKey, newQty);
-    if (!res.success) {
+  const persist = useCallback(
+    async (powerKey: string, newQty: number) => {
+      if (!onUpdate) return;
       onUpdate({
         ...item,
         quantities: {
           ...item.quantities,
-          [effectiveLensType]: { ...quantities },
+          [effectiveLensType]: { ...quantities, [powerKey]: newQty },
         },
       });
-      toast.error(res.message || "Failed to update");
-    }
-  }, [item, effectiveLensType, quantities, scope, onUpdate, toast]);
+      const res = await lensStockService.updateQuantity(
+        scope,
+        item._id,
+        effectiveLensType,
+        powerKey,
+        newQty
+      );
+      if (!res.success) {
+        onUpdate({
+          ...item,
+          quantities: {
+            ...item.quantities,
+            [effectiveLensType]: { ...quantities },
+          },
+        });
+        toast.error(res.message || 'Failed to update');
+      }
+    },
+    [item, effectiveLensType, quantities, scope, onUpdate, toast]
+  );
 
-  const handleIncrement = useCallback((powerKey: string) => {
-    persist(powerKey, (quantities[powerKey] || 0) + 1);
-  }, [quantities, persist]);
+  const handleIncrement = useCallback(
+    (powerKey: string) => {
+      persist(powerKey, (quantities[powerKey] || 0) + 1);
+    },
+    [quantities, persist]
+  );
 
-  const handleDecrement = useCallback((powerKey: string) => {
-    const current = quantities[powerKey] || 0;
-    if (current <= 0) return;
-    persist(powerKey, current - 1);
-  }, [quantities, persist]);
+  const handleDecrement = useCallback(
+    (powerKey: string) => {
+      const current = quantities[powerKey] || 0;
+      if (current <= 0) return;
+      persist(powerKey, current - 1);
+    },
+    [quantities, persist]
+  );
 
   const handleAddToCart = useCallback(
     (powerKey: string) => {
@@ -74,7 +98,7 @@ export default function LensGrid({ item, scope, lensType, onUpdate, onAddToCart,
   const dec = onUpdate ? handleDecrement : undefined;
   const clickToAdd = Boolean(onAddToCart) && !onUpdate;
 
-  if (lensType === "compound") {
+  if (lensType === 'compound') {
     return (
       <CompoundGrid
         quantities={quantities}
@@ -88,7 +112,7 @@ export default function LensGrid({ item, scope, lensType, onUpdate, onAddToCart,
       />
     );
   }
-  if (lensType === "plain") {
+  if (lensType === 'plain') {
     return (
       <PlainGrid
         quantities={quantities}
@@ -98,7 +122,7 @@ export default function LensGrid({ item, scope, lensType, onUpdate, onAddToCart,
         onRemoveFromCart={onRemoveFromCart ? handleRemoveFromCart : undefined}
         clickToAdd={clickToAdd}
         clickTitle={clickTitle}
-        cartQty={cartQty?.["+0.00"]}
+        cartQty={cartQty?.['+0.00']}
       />
     );
   }

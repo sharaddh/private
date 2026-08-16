@@ -45,7 +45,10 @@ export async function createCountSession(rackId: string, by: string = "", note: 
 }
 
 export async function listCountSessions(options: PaginationOptions = {}) {
-  const baseQuery = InventoryCountSession.find().sort({ createdAt: -1 }) as mongoose.Query<any[], any>;
+  const baseQuery = InventoryCountSession.find().sort({ createdAt: -1 }) as mongoose.Query<
+    any[],
+    any
+  >;
   return paginateQuery(baseQuery, { page: options.page, limit: options.limit });
 }
 
@@ -62,20 +65,25 @@ export async function updateCountEntries(
 ) {
   const session = await InventoryCountSession.findById(id);
   if (!session) throw new AppError(404, "Count session not found");
-  if (session.status !== "draft") throw new AppError(400, "Only draft count sessions can be updated");
+  if (session.status !== "draft")
+    throw new AppError(400, "Only draft count sessions can be updated");
 
-  let countedUnits = 0;
   for (const input of inputs || []) {
     const qty = Math.floor(Number(input.countedQuantity));
     if (!Number.isFinite(qty) || qty < 0) {
-      throw new AppError(400, `Counted quantity for ${input.variantId} must be a non-negative number`);
+      throw new AppError(
+        400,
+        `Counted quantity for ${input.variantId} must be a non-negative number`
+      );
     }
-    const entry = await InventoryCountEntry.findOne({ countSessionId: id, variantId: input.variantId });
+    const entry = await InventoryCountEntry.findOne({
+      countSessionId: id,
+      variantId: input.variantId,
+    });
     if (!entry) throw new AppError(404, `Count entry not found for variant ${input.variantId}`);
     entry.countedQuantity = qty;
     entry.difference = qty - entry.expectedQuantity;
     await entry.save();
-    countedUnits += qty;
   }
 
   const allEntries = await InventoryCountEntry.find({ countSessionId: id }).lean();
@@ -92,7 +100,8 @@ export async function updateCountEntries(
 export async function completeCountSession(id: string, by: string = "", note: string = "") {
   const session = await InventoryCountSession.findById(id);
   if (!session) throw new AppError(404, "Count session not found");
-  if (session.status !== "draft") throw new AppError(400, "Count session is already completed or cancelled");
+  if (session.status !== "draft")
+    throw new AppError(400, "Count session is already completed or cancelled");
 
   const entries = await InventoryCountEntry.find({ countSessionId: id }).lean();
 
@@ -102,7 +111,11 @@ export async function completeCountSession(id: string, by: string = "", note: st
     countedQuantity: e.countedQuantity,
   }));
 
-  const result = await applyStockCorrections(corrections, note || `Rack count for ${session.rackId}`, by);
+  const result = await applyStockCorrections(
+    corrections,
+    note || `Rack count for ${session.rackId}`,
+    by
+  );
 
   session.status = "completed";
   session.completedBy = by;
@@ -118,7 +131,8 @@ export async function completeCountSession(id: string, by: string = "", note: st
 export async function cancelCountSession(id: string, by: string = "") {
   const session = await InventoryCountSession.findById(id);
   if (!session) throw new AppError(404, "Count session not found");
-  if (session.status !== "draft") throw new AppError(400, "Count session is already completed or cancelled");
+  if (session.status !== "draft")
+    throw new AppError(400, "Count session is already completed or cancelled");
   session.status = "cancelled";
   session.completedBy = by;
   session.completedAt = new Date();

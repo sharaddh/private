@@ -31,13 +31,13 @@ Security Middleware (helmet, cors, compression)
 Body Parsing (express.json, 25MB limit)
   │
   ▼
-Logging (morgan)
+Logging (pino-http, x-request-id)
   │
   ▼
 Audit Logging (custom)
   │
   ▼
-Rate Limiting (200 req/60s)
+Rate Limiting (1000 req/60s)
   │
   ▼
 Route Matching
@@ -453,7 +453,7 @@ export interface JwtPayload {
 }
 
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRY });
 }
 
 export function verifyToken(token: string): JwtPayload {
@@ -541,7 +541,7 @@ export const asyncHandler = (fn: Function) => {
 1. **Always use HTTPS** in production
 2. **Always validate JWT** signatures and expiration
 3. **Never expose JWT secrets**
-4. **Always use short-lived access tokens** (24h)
+4. **Always set access/refresh token expiry** (7d each for this ERP)
 5. **Always use longer-lived refresh tokens** (7d)
 
 ### Authorization Rules

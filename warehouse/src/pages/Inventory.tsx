@@ -1,26 +1,26 @@
-﻿import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import api from "../api";
-import { Plus, Package } from "lucide-react";
-import { useDebounce } from "../hooks/useDebounce";
-import { useToast } from "../context/ToastContext";
-import type { InventoryItem } from "../types/inventory";
-import InventoryTable from "../components/InventoryTable";
-import InventoryFilters from "../components/InventoryFilters";
-import InventoryFormModal from "../components/InventoryFormModal";
-import WithdrawModal from "../components/WithdrawModal";
-import DeleteConfirmModal from "../components/DeleteConfirmModal";
-import Pagination from "../components/Pagination";
-import EmptyState from "../components/EmptyState";
-import Spinner from "../components/Spinner";
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import api from '../api';
+import { Plus, Package } from 'lucide-react';
+import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../context/ToastContext';
+import type { InventoryItem } from '../types/inventory';
+import InventoryTable from '../components/InventoryTable';
+import InventoryFilters from '../components/InventoryFilters';
+import InventoryFormModal from '../components/InventoryFormModal';
+import WithdrawModal from '../components/WithdrawModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import Pagination from '../components/Pagination';
+import EmptyState from '../components/EmptyState';
+import Spinner from '../components/Spinner';
 
 const PAGE_SIZE = 20;
 
 export default function Inventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [locationFilter, setLocationFilter] = useState("warehouse");
+  const [search, setSearch] = useState('');
+  const [locationFilter, setLocationFilter] = useState('warehouse');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [withdrawItem, setWithdrawItem] = useState<InventoryItem | null>(null);
@@ -33,40 +33,46 @@ export default function Inventory() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const loc = searchParams.get("location");
+    const loc = searchParams.get('location');
     if (loc) setLocationFilter(loc);
   }, [searchParams]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
-    const res = await api.get<InventoryItem[]>("/api/warehouse/inventory/list");
+    const res = await api.get<InventoryItem[]>('/api/warehouse/inventory/list');
     if (res.success && Array.isArray(res.data)) {
       setItems(res.data);
     }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   const filtered = useMemo(() => {
     let result = items;
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase();
-      result = result.filter((i) =>
-        i.sku?.toLowerCase().includes(q) ||
-        i.brand?.toLowerCase().includes(q) ||
-        i.model?.toLowerCase().includes(q) ||
-        i.supplier?.toLowerCase().includes(q)
+      result = result.filter(
+        (i) =>
+          i.sku?.toLowerCase().includes(q) ||
+          i.brand?.toLowerCase().includes(q) ||
+          i.model?.toLowerCase().includes(q) ||
+          i.supplier?.toLowerCase().includes(q)
       );
     }
-    if (locationFilter !== "all") result = result.filter((i) => i.location === locationFilter);
-    const sortBy: keyof InventoryItem = "sku";
-    const sortDir: "asc" | "desc" = "asc";
+    if (locationFilter !== 'all') result = result.filter((i) => i.location === locationFilter);
+    const sortBy: keyof InventoryItem = 'sku';
+    const sortDir: 'asc' | 'desc' = 'asc';
     result.sort((a, b) => {
-      const av = a[sortBy] ?? "";
-      const bv = b[sortBy] ?? "";
-      const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
-      return sortDir === "asc" ? cmp : -cmp;
+      const av = a[sortBy] ?? '';
+      const bv = b[sortBy] ?? '';
+      const cmp =
+        typeof av === 'number' && typeof bv === 'number'
+          ? av - bv
+          : String(av).localeCompare(String(bv));
+      return sortDir === 'asc' ? cmp : -cmp;
     });
     return result;
   }, [items, debouncedSearch, locationFilter]);
@@ -77,16 +83,28 @@ export default function Inventory() {
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, page]);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, locationFilter]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, locationFilter]);
 
-  function openAdd() { setEditing(null); setShowForm(true); }
-  function openEdit(item: InventoryItem) { setEditing(item); setShowForm(true); }
+  function openAdd() {
+    setEditing(null);
+    setShowForm(true);
+  }
+  function openEdit(item: InventoryItem) {
+    setEditing(item);
+    setShowForm(true);
+  }
 
   async function handleDelete(id: string) {
     setDeleting(id);
-    const res = await api.del("/api/warehouse/inventory/" + id);
-    if (res.success) { toast("Item deleted"); fetchItems(); }
-    else { toast(res.message || "Failed to delete", "error"); }
+    const res = await api.del('/api/warehouse/inventory/' + id);
+    if (res.success) {
+      toast('Item deleted');
+      fetchItems();
+    } else {
+      toast(res.message || 'Failed to delete', 'error');
+    }
     setDeleting(null);
     setDeleteTarget(null);
   }
@@ -103,7 +121,10 @@ export default function Inventory() {
             <p className="page-subtitle">Manage warehouse lens stock — {filtered.length} items</p>
           </div>
         </div>
-        <button onClick={openAdd} className="btn-primary flex items-center gap-2 shrink-0 px-4 sm:px-8">
+        <button
+          onClick={openAdd}
+          className="btn-primary flex items-center gap-2 shrink-0 px-4 sm:px-8"
+        >
           <Plus size={18} /> Add Lens
         </button>
       </div>
@@ -123,8 +144,8 @@ export default function Inventory() {
         <EmptyState
           icon={Package}
           title="No lens items found"
-          message={search ? "Try adjusting your search" : undefined}
-          action={!search ? { label: "Add First Lens", onClick: openAdd } : undefined}
+          message={search ? 'Try adjusting your search' : undefined}
+          action={!search ? { label: 'Add First Lens', onClick: openAdd } : undefined}
         />
       ) : (
         <>
@@ -141,7 +162,10 @@ export default function Inventory() {
 
       <InventoryFormModal
         open={showForm}
-        onClose={() => { setShowForm(false); setEditing(null); }}
+        onClose={() => {
+          setShowForm(false);
+          setEditing(null);
+        }}
         editing={editing}
         onSaved={fetchItems}
       />

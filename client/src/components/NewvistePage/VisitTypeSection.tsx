@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 import {
   Eye,
   RefreshCw,
@@ -11,8 +11,8 @@ import {
   MessageSquare,
   Activity,
   Check,
-} from "lucide-react";
-import { useTranslate } from "../../context/TranslateContext";
+} from 'lucide-react';
+import { useTranslate } from '../../context/TranslateContext';
 
 interface Props {
   visitType: string;
@@ -38,19 +38,55 @@ export default function VisitTypeSection({
   const { uiT } = useTranslate();
 
   const VISIT_TYPES = [
-    { value: "new", label: uiT("New Glasses", "नई चश्मा"), description: uiT("Full prescription glasses", "पूर्ण प्रिस्क्रिप्शन चश्मा"), icon: Eye, color: "bg-th-elevated" },
-    { value: "frame_change", label: uiT("Frame Change", "फ्रेम बदलें"), description: uiT("Replace existing frame", "मौजूदा फ्रेम बदलें"), icon: RefreshCw, color: "bg-th-elevated" },
-    { value: "new_lens", label: uiT("New Lens", "नया लेंस"), description: uiT("Replace existing lens", "मौजूदा लेंस बदलें"), icon: Maximize2, color: "bg-th-elevated" },
-    { value: "contact_lens", label: uiT("Contact Lens", "कॉन्टैक्ट लेंस"), description: uiT("Contact lens fitting", "कॉन्टैक्ट लेंस फिटिंग"), icon: Circle, color: "bg-th-elevated" },
-    { value: "service", label: uiT("Service", "सेवा"), description: uiT("Repair & adjustments", "मरम्मत और समायोजन"), icon: Wrench, color: "bg-th-elevated" },
-    { value: "other", label: uiT("Other", "अन्य"), description: uiT("General visit", "सामान्य यात्रा"), icon: Grid3X3, color: "bg-th-elevated" },
+    {
+      value: 'new',
+      label: uiT('New Glasses', 'नई चश्मा'),
+      description: uiT('Full prescription glasses', 'पूर्ण प्रिस्क्रिप्शन चश्मा'),
+      icon: Eye,
+      color: 'bg-th-elevated',
+    },
+    {
+      value: 'frame_change',
+      label: uiT('Frame Change', 'फ्रेम बदलें'),
+      description: uiT('Replace existing frame', 'मौजूदा फ्रेम बदलें'),
+      icon: RefreshCw,
+      color: 'bg-th-elevated',
+    },
+    {
+      value: 'new_lens',
+      label: uiT('New Lens', 'नया लेंस'),
+      description: uiT('Replace existing lens', 'मौजूदा लेंस बदलें'),
+      icon: Maximize2,
+      color: 'bg-th-elevated',
+    },
+    {
+      value: 'contact_lens',
+      label: uiT('Contact Lens', 'कॉन्टैक्ट लेंस'),
+      description: uiT('Contact lens fitting', 'कॉन्टैक्ट लेंस फिटिंग'),
+      icon: Circle,
+      color: 'bg-th-elevated',
+    },
+    {
+      value: 'service',
+      label: uiT('Service', 'सेवा'),
+      description: uiT('Repair & adjustments', 'मरम्मत और समायोजन'),
+      icon: Wrench,
+      color: 'bg-th-elevated',
+    },
+    {
+      value: 'other',
+      label: uiT('Other', 'अन्य'),
+      description: uiT('General visit', 'सामान्य यात्रा'),
+      icon: Grid3X3,
+      color: 'bg-th-elevated',
+    },
   ];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", damping: 24, stiffness: 120 }}
+      transition={{ type: 'spring', damping: 24, stiffness: 120 }}
       className="space-y-6"
     >
       {/* Visit Type Selection */}
@@ -60,8 +96,12 @@ export default function VisitTypeSection({
             <Activity size={18} className="text-[#1ed760]" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-th-text">{uiT("Visit Type", "यात्रा प्रकार")}</h2>
-            <p className="text-xs text-th-secondary">{uiT("Choose the purpose of your visit", "अपनी यात्रा का उद्देश्य चुनें")}</p>
+            <h2 className="text-base font-bold text-th-text">
+              {uiT('Visit Type', 'यात्रा प्रकार')}
+            </h2>
+            <p className="text-xs text-th-secondary">
+              {uiT('Choose the purpose of your visit', 'अपनी यात्रा का उद्देश्य चुनें')}
+            </p>
           </div>
         </div>
 
@@ -77,8 +117,8 @@ export default function VisitTypeSection({
                 whileTap={{ scale: 0.95 }}
                 className={`relative overflow-hidden rounded-md p-4 text-left transition-all ${
                   selected
-                    ? "bg-th-card shadow-[0_0_0_2px_#1ed760]"
-                    : "bg-th-elevated hover:bg-th-card"
+                    ? 'bg-th-card shadow-[0_0_0_2px_#1ed760]'
+                    : 'bg-th-elevated hover:bg-th-card'
                 }`}
                 aria-pressed={selected}
               >
@@ -96,7 +136,7 @@ export default function VisitTypeSection({
                     className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-[#1ed760] flex items-center justify-center"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 18, stiffness: 300 }}
+                    transition={{ type: 'spring', damping: 18, stiffness: 300 }}
                   >
                     <Check size={14} className="text-th-text" strokeWidth={3} />
                   </motion.div>
@@ -114,8 +154,12 @@ export default function VisitTypeSection({
             <Calendar size={18} className="text-[#1ed760]" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-th-text">{uiT("Visit Details", "यात्रा विवरण")}</h2>
-            <p className="text-xs text-th-secondary">{uiT("Date, doctor, and notes", "तारीख, डॉक्टर, और नोट्स")}</p>
+            <h2 className="text-base font-bold text-th-text">
+              {uiT('Visit Details', 'यात्रा विवरण')}
+            </h2>
+            <p className="text-xs text-th-secondary">
+              {uiT('Date, doctor, and notes', 'तारीख, डॉक्टर, और नोट्स')}
+            </p>
           </div>
         </div>
 
@@ -141,7 +185,7 @@ export default function VisitTypeSection({
               className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-[#1ed760]"
             />
             <input
-              placeholder={uiT("Doctor name (optional)", "डॉक्टर का नाम (वैकल्पिक)")}
+              placeholder={uiT('Doctor name (optional)', 'डॉक्टर का नाम (वैकल्पिक)')}
               value={visitDoctor}
               onChange={(e) => setVisitDoctor(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
@@ -155,7 +199,7 @@ export default function VisitTypeSection({
               className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-[#1ed760]"
             />
             <input
-              placeholder={uiT("Remarks (optional)", "टिप्पणी (वैकल्पिक)")}
+              placeholder={uiT('Remarks (optional)', 'टिप्पणी (वैकल्पिक)')}
               value={visitRemarks}
               onChange={(e) => setVisitRemarks(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"

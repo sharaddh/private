@@ -1,5 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { LensCartApi, LensType, ShopCartItem, ShopLensWithdrawal, ShopLensWithdrawalItemInput, WithdrawResult } from "../../types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type {
+  LensCartApi,
+  LensType,
+  ShopCartItem,
+  ShopLensWithdrawal,
+  ShopLensWithdrawalItemInput,
+  WithdrawResult,
+} from '../../types';
 
 interface LensCartContextValue {
   items: ShopCartItem[];
@@ -7,13 +14,21 @@ interface LensCartContextValue {
   loading: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
-  addToCart: (coating: string, lensType: LensType, powerKey: string, quantity?: number) => Promise<boolean>;
+  addToCart: (
+    coating: string,
+    lensType: LensType,
+    powerKey: string,
+    quantity?: number
+  ) => Promise<boolean>;
   updateQty: (id: string, quantity: number) => Promise<boolean>;
   removeItem: (id: string) => Promise<boolean>;
   clear: () => Promise<boolean>;
   withdraw: (note?: string) => Promise<WithdrawResult | null>;
-  getWithdrawals: () => ReturnType<LensCartApi["getWithdrawals"]>;
-  updateWithdrawal: (id: string, items: ShopLensWithdrawalItemInput[]) => Promise<ShopLensWithdrawal | null>;
+  getWithdrawals: () => ReturnType<LensCartApi['getWithdrawals']>;
+  updateWithdrawal: (
+    id: string,
+    items: ShopLensWithdrawalItemInput[]
+  ) => Promise<ShopLensWithdrawal | null>;
   deleteWithdrawal: (id: string) => Promise<boolean>;
   fogMarkEnabled: boolean;
   updateFogMark: (id: string, fogMark: string) => Promise<boolean>;
@@ -22,7 +37,13 @@ interface LensCartContextValue {
 
 const LensCartContext = createContext<LensCartContextValue | null>(null);
 
-export function LensCartProvider({ api, children }: { api: LensCartApi; children: React.ReactNode }) {
+export function LensCartProvider({
+  api,
+  children,
+}: {
+  api: LensCartApi;
+  children: React.ReactNode;
+}) {
   const [items, setItems] = useState<ShopCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -40,7 +61,12 @@ export function LensCartProvider({ api, children }: { api: LensCartApi; children
   }, [refresh]);
 
   const addToCart = useCallback(
-    async (coating: string, lensType: LensType, powerKey: string, quantity = 1): Promise<boolean> => {
+    async (
+      coating: string,
+      lensType: LensType,
+      powerKey: string,
+      quantity = 1
+    ): Promise<boolean> => {
       const res = await api.addItem(coating, lensType, powerKey, quantity);
       if (res.success) {
         await refresh();
@@ -99,7 +125,10 @@ export function LensCartProvider({ api, children }: { api: LensCartApi; children
   const getWithdrawals = useCallback(() => api.getWithdrawals(), [api]);
 
   const updateWithdrawal = useCallback(
-    async (id: string, items: ShopLensWithdrawalItemInput[]): Promise<ShopLensWithdrawal | null> => {
+    async (
+      id: string,
+      items: ShopLensWithdrawalItemInput[]
+    ): Promise<ShopLensWithdrawal | null> => {
       const res = await api.updateWithdrawal(id, items);
       if (res.success && res.data) return res.data;
       return null;
@@ -149,7 +178,22 @@ export function LensCartProvider({ api, children }: { api: LensCartApi; children
       updateFogMark,
       refresh,
     }),
-    [items, loading, open, addToCart, updateQty, removeItem, clear, withdraw, getWithdrawals, updateWithdrawal, deleteWithdrawal, fogMarkEnabled, updateFogMark, refresh]
+    [
+      items,
+      loading,
+      open,
+      addToCart,
+      updateQty,
+      removeItem,
+      clear,
+      withdraw,
+      getWithdrawals,
+      updateWithdrawal,
+      deleteWithdrawal,
+      fogMarkEnabled,
+      updateFogMark,
+      refresh,
+    ]
   );
 
   return <LensCartContext.Provider value={value}>{children}</LensCartContext.Provider>;
@@ -157,6 +201,6 @@ export function LensCartProvider({ api, children }: { api: LensCartApi; children
 
 export function useLensCart(): LensCartContextValue {
   const ctx = useContext(LensCartContext);
-  if (!ctx) throw new Error("useLensCart must be used within LensCartProvider");
+  if (!ctx) throw new Error('useLensCart must be used within LensCartProvider');
   return ctx;
 }

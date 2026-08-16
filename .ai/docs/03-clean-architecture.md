@@ -346,7 +346,7 @@ compression (gzip)
 express.json (body parsing)
   │
   ▼
-morgan (logging)
+pino-http (logging)
   │
   ▼
 audit (audit logging)
@@ -380,7 +380,7 @@ errorHandler (error handling)
 | cors | Cross-origin requests | Infrastructure |
 | compression | Response compression | Infrastructure |
 | express.json | Body parsing | Infrastructure |
-| morgan | Request logging | Infrastructure |
+| pino-http | Request logging | Infrastructure |
 | audit | Audit logging | Infrastructure |
 | rateLimit | Rate limiting | Infrastructure |
 | authenticate | JWT verification | Security |

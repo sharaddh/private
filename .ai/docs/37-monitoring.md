@@ -83,7 +83,7 @@ Use external monitoring services (UptimeRobot, Pingdom, or similar):
 
 ```
 Monitor Configuration:
-- URL: https://app.kmj.com/api/health
+- URL: https://app.kmj.com/api/ready
 - Interval: 5 minutes
 - Timeout: 30 seconds
 - Alert conditions:

@@ -1,13 +1,13 @@
-import type { ApiResponse } from "./types";
+import type { ApiResponse } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const TOKEN_KEYS = {
-  ACCESS: "accessToken",
-  REFRESH: "refreshToken",
+  ACCESS: 'accessToken',
+  REFRESH: 'refreshToken',
 } as const;
 
-const BRANCH_KEY = "currentBranchId";
+const BRANCH_KEY = 'currentBranchId';
 
 interface RequestOptions extends RequestInit {
   signal?: AbortSignal;
@@ -33,12 +33,12 @@ function getBranchId(): string | null {
 
 function buildHeaders(isJson = true): Record<string, string> {
   const headers: Record<string, string> = {};
-  if (isJson) headers["Content-Type"] = "application/json";
-  headers["Accept"] = "application/json";
+  if (isJson) headers['Content-Type'] = 'application/json';
+  headers['Accept'] = 'application/json';
   const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const branchId = getBranchId();
-  if (branchId) headers["x-branch-id"] = branchId;
+  if (branchId) headers['x-branch-id'] = branchId;
   return headers;
 }
 
@@ -55,28 +55,44 @@ async function tryRefresh(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh }),
-      });
-      const data = await res.json();
-      if (data.success && data.data?.access) {
-        try {
-          localStorage.setItem(TOKEN_KEYS.ACCESS, data.data.access);
-        } catch {
-          /* storage full or unavailable */
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh }),
+        });
+        if (res.status === 429) {
+          if (attempt === 0) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
+          }
+          return false;
         }
-        return true;
+        const data = await res.json();
+        if (data.success && data.data?.access) {
+          try {
+            localStorage.setItem(TOKEN_KEYS.ACCESS, data.data.access);
+          } catch {
+            /* storage full or unavailable */
+          }
+          return true;
+        }
+        return false;
+      } catch {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 1500));
+          continue;
+        }
+        return false;
       }
-      return false;
-    } catch {
-      return false;
-    } finally {
-      refreshPromise = null;
     }
+    return false;
   })();
+
+  refreshPromise.finally(() => {
+    refreshPromise = null;
+  });
 
   return refreshPromise;
 }
@@ -95,7 +111,10 @@ async function request<T = unknown>(
   init: RequestOptions = {},
   retries = 2
 ): Promise<ApiResponse<T>> {
-  const isLoginPath = path.includes("/auth/login") || path.includes("/auth/register") || path.includes("/auth/staff-login");
+  const isLoginPath =
+    path.includes('/auth/login') ||
+    path.includes('/auth/register') ||
+    path.includes('/auth/staff-login');
 
   let res: Response;
   try {
@@ -105,7 +124,7 @@ async function request<T = unknown>(
       await new Promise((r) => setTimeout(r, 1000));
       return request<T>(path, init, retries - 1);
     }
-    return { success: false, message: "Network error. Please check your connection." };
+    return { success: false, message: 'Network error. Please check your connection.' };
   }
 
   if (res.status === 401 && !isLoginPath) {
@@ -119,8 +138,8 @@ async function request<T = unknown>(
       res = await fetch(`${API_URL}${path}`, { ...init, headers: newHeaders });
     } else {
       clearTokens();
-      window.location.hash = "#/login";
-      return { success: false, message: "Session expired. Please login again." };
+      window.location.hash = '#/login';
+      return { success: false, message: 'Session expired. Please login again.' };
     }
   }
 
@@ -159,23 +178,17 @@ export async function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
   return request<T>(path, { headers: buildHeaders(false) });
 }
 
-export async function post<T = unknown>(
-  path: string,
-  body: unknown
-): Promise<ApiResponse<T>> {
+export async function post<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
   return request<T>(path, {
-    method: "POST",
+    method: 'POST',
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });
 }
 
-export async function put<T = unknown>(
-  path: string,
-  body: unknown
-): Promise<ApiResponse<T>> {
+export async function put<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
   return request<T>(path, {
-    method: "PUT",
+    method: 'PUT',
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });
@@ -183,17 +196,14 @@ export async function put<T = unknown>(
 
 export async function del<T = unknown>(path: string): Promise<ApiResponse<T>> {
   return request<T>(path, {
-    method: "DELETE",
+    method: 'DELETE',
     headers: buildHeaders(false),
   });
 }
 
-export async function patch<T = unknown>(
-  path: string,
-  body: unknown
-): Promise<ApiResponse<T>> {
+export async function patch<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {
   return request<T>(path, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: buildHeaders(true),
     body: JSON.stringify(body),
   });

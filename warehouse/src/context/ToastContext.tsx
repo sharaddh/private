@@ -1,14 +1,14 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { X, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 
 interface Toast {
   id: number;
   message: string;
-  type: "success" | "error" | "info";
+  type: 'success' | 'error' | 'info';
 }
 
 interface ToastContextValue {
-  toast: (message: string, type?: Toast["type"]) => void;
+  toast: (message: string, type?: Toast['type']) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -22,15 +22,15 @@ const TOAST_ICONS = {
 };
 
 const TOAST_BG = {
-  success: "bg-primary-500/10 border-primary-500/30",
-  error: "bg-negative/10 border-negative/30",
-  info: "bg-announcement/10 border-announcement/30",
+  success: 'bg-primary-500/10 border-primary-500/30',
+  error: 'bg-negative/10 border-negative/30',
+  info: 'bg-announcement/10 border-announcement/30',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback((message: string, type: Toast["type"] = "success") => {
+  const toast = useCallback((message: string, type: Toast['type'] = 'success') => {
     const id = nextId++;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -54,7 +54,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               {TOAST_ICONS[t.type]}
               <span className="text-sm text-th-text min-w-0 break-words">{t.message}</span>
-              <button onClick={() => remove(t.id)} className="text-th-muted hover:text-th-text ml-2">
+              <button
+                onClick={() => remove(t.id)}
+                className="text-th-muted hover:text-th-text ml-2"
+              >
                 <X size={14} />
               </button>
             </div>
@@ -67,6 +70,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within ToastProvider");
+  if (!ctx) throw new Error('useToast must be used within ToastProvider');
   return ctx;
 }

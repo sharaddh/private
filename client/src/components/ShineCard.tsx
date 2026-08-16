@@ -1,4 +1,4 @@
-import { useRef, useCallback, type ReactNode } from "react";
+import { useRef, useCallback, type ReactNode } from 'react';
 
 interface ShineCardProps {
   children: ReactNode;
@@ -8,26 +8,36 @@ interface ShineCardProps {
   tabIndex?: number;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   id?: string;
-  "aria-label"?: string;
+  'aria-label'?: string;
   style?: React.CSSProperties;
 }
 
-export default function ShineCard({ children, className = "", onClick, role, tabIndex, onKeyDown, id, "aria-label": ariaLabel, style }: ShineCardProps) {
+export default function ShineCard({
+  children,
+  className = '',
+  onClick,
+  role,
+  tabIndex,
+  onKeyDown,
+  id,
+  'aria-label': ariaLabel,
+  style,
+}: ShineCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    el.style.setProperty("--sx", `${e.clientX - rect.left}px`);
-    el.style.setProperty("--sy", `${e.clientY - rect.top}px`);
+    el.style.setProperty('--sx', `${e.clientX - rect.left}px`);
+    el.style.setProperty('--sy', `${e.clientY - rect.top}px`);
   }, []);
 
   const onLeave = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    el.style.setProperty("--sx", "-200px");
-    el.style.setProperty("--sy", "-200px");
+    el.style.setProperty('--sx', '-200px');
+    el.style.setProperty('--sy', '-200px');
   }, []);
 
   return (

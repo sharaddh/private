@@ -5,11 +5,13 @@ Node.js + Express backend for the KMJ Optical ERP system with MongoDB database i
 ## Quick Start
 
 Install dependencies:
+
 ```bash
 npm install
 ```
 
 Start development server (with auto-reload):
+
 ```bash
 npm run dev
 ```
@@ -38,10 +40,12 @@ See `.env.example` for all available configuration options.
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/register` - User registration
 
 ### Customers
+
 - `GET /api/customers` - List all customers
 - `POST /api/customers` - Create customer
 - `GET /api/customers/:id` - Get customer details
@@ -49,6 +53,7 @@ See `.env.example` for all available configuration options.
 - `DELETE /api/customers/:id` - Delete customer
 
 ### Orders
+
 - `GET /api/orders` - List all orders
 - `POST /api/orders` - Create order
 - `GET /api/orders/:id` - Get order details
@@ -56,22 +61,26 @@ See `.env.example` for all available configuration options.
 - `DELETE /api/orders/:id` - Delete order
 
 ### Bills
+
 - `GET /api/bills` - List all bills
 - `POST /api/bills` - Create bill
 - `GET /api/bills/:id` - Get bill details
 - `PUT /api/bills/:id` - Update bill
 
 ### Payments
+
 - `GET /api/payments` - List all payments
 - `POST /api/payments` - Create payment
 - `GET /api/payments/:id` - Get payment details
 
 ### Inventory
+
 - `GET /api/inventory` - List inventory items
 - `POST /api/inventory` - Add inventory item
 - `PUT /api/inventory/:id` - Update inventory
 
 ### Delivery
+
 - `GET /api/delivery` - List deliveries
 - `POST /api/delivery` - Create delivery
 - `PUT /api/delivery/:id` - Update delivery status
@@ -148,6 +157,7 @@ Full OpenAPI/Swagger documentation is available in `docs/openapi.yaml`
 ## Migrations
 
 Run database migrations:
+
 ```bash
 npm run migrate
 ```

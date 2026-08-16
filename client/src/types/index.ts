@@ -22,7 +22,7 @@ export interface User {
   username: string;
   name?: string;
   mobile?: string;
-  role: "owner" | "staff";
+  role: 'owner' | 'staff';
   branches: BranchInfo[];
   createdAt?: string;
 }
@@ -91,7 +91,7 @@ export interface CustomerFormData {
 
 // ─── Visit ───────────────────────────────────────────────────────────────────
 
-export type VisitType = "new" | "frame_change" | "new_lens" | "contact_lens" | "service" | "other";
+export type VisitType = 'new' | 'frame_change' | 'new_lens' | 'contact_lens' | 'service' | 'other';
 
 export interface EyeData {
   sph?: number;
@@ -122,9 +122,9 @@ export interface Visit {
 
 // ─── Order ───────────────────────────────────────────────────────────────────
 
-export type OrderStatus = "Draft" | "Ordered" | "In Lab" | "Ready" | "Delivered" | "Cancelled";
+export type OrderStatus = 'Draft' | 'Ordered' | 'In Lab' | 'Ready' | 'Delivered' | 'Cancelled';
 
-export type OrderClassification = "pending" | "stock" | "buy" | "order";
+export type OrderClassification = 'pending' | 'stock' | 'buy' | 'order';
 
 export interface OrderItem {
   description: string;
@@ -169,7 +169,7 @@ export interface Order {
 
 // ─── Bill ────────────────────────────────────────────────────────────────────
 
-export type BillStatus = "Active" | "Cancelled";
+export type BillStatus = 'Active' | 'Cancelled';
 
 export interface BillItem {
   description: string;
@@ -198,7 +198,8 @@ export interface Bill {
 
 // ─── Payment ─────────────────────────────────────────────────────────────────
 
-export type PaymentMode = "Cash" | "UPI" | "Card" | "Bank Transfer" | "नकद" | "कार्ड" | "बैंक" | "बीमा" | "Insurance";
+export type PaymentMode =
+  'Cash' | 'UPI' | 'Card' | 'Bank Transfer' | 'नकद' | 'कार्ड' | 'बैंक' | 'बीमा' | 'Insurance';
 
 export interface Payment {
   _id: string;
@@ -213,17 +214,30 @@ export interface Payment {
 
 // ─── Inventory ───────────────────────────────────────────────────────────────
 
-export type InventoryCategory = "Specs" | "Sunglasses" | "Contact Lens" | "Hearing Aid" | "Solution" | "Kit";
+export type InventoryCategory =
+  'Specs' | 'Sunglasses' | 'Contact Lens' | 'Hearing Aid' | 'Solution' | 'Kit';
 
-export type InventoryType = "spectacles" | "sunglasses" | "lens" | "bifocal" | "progressive" | "blue-cut" | "photochromic" | "accessory" | "hearing-aid" | "cleaner" | "case" | "other";
+export type InventoryType =
+  | 'spectacles'
+  | 'sunglasses'
+  | 'lens'
+  | 'bifocal'
+  | 'progressive'
+  | 'blue-cut'
+  | 'photochromic'
+  | 'accessory'
+  | 'hearing-aid'
+  | 'cleaner'
+  | 'case'
+  | 'other';
 
-export type InventoryLocation = "shop" | "warehouse";
+export type InventoryLocation = 'shop' | 'warehouse';
 
-export type InventoryGender = "Male" | "Female" | "Unisex" | "";
+export type InventoryGender = 'Male' | 'Female' | 'Unisex' | '';
 
 export interface StockHistoryEntry {
   qty: number;
-  type: "adjust" | "import" | "order" | "restore";
+  type: 'adjust' | 'import' | 'order' | 'restore';
   note?: string;
   by?: string;
   at: string;
@@ -332,9 +346,9 @@ export interface CreateWithdrawalInput {
 
 // ─── Lens Stock ───────────────────────────────────────────────────────────────
 
-export type LensType = "sph" | "cyl" | "compound";
+export type LensType = 'sph' | 'cyl' | 'compound';
 
-export type LensStockScope = "shop" | "warehouse";
+export type LensStockScope = 'shop' | 'warehouse';
 
 export interface LensStockItem {
   _id: string;
@@ -370,7 +384,10 @@ export interface ShopLensWithdrawalItem {
   available?: number;
 }
 
-export type ShopLensWithdrawalItemInput = Pick<ShopLensWithdrawalItem, "coating" | "lensType" | "powerKey" | "quantity">;
+export type ShopLensWithdrawalItemInput = Pick<
+  ShopLensWithdrawalItem,
+  'coating' | 'lensType' | 'powerKey' | 'quantity'
+>;
 
 export interface ShopLensWithdrawal {
   _id: string;
@@ -397,20 +414,28 @@ export interface FogMark {
 
 export interface LensCartApi {
   getItems: () => Promise<ApiResponse<ShopCartItem[]>>;
-  addItem: (coating: string, lensType: LensType, powerKey: string, quantity?: number) => Promise<ApiResponse<ShopCartItem>>;
+  addItem: (
+    coating: string,
+    lensType: LensType,
+    powerKey: string,
+    quantity?: number
+  ) => Promise<ApiResponse<ShopCartItem>>;
   updateItem: (id: string, quantity: number) => Promise<ApiResponse<ShopCartItem>>;
   updateFogMark?: (id: string, fogMark: string) => Promise<ApiResponse<ShopCartItem>>;
   removeItem: (id: string) => Promise<ApiResponse<null>>;
   clear: () => Promise<ApiResponse<null>>;
   withdraw: (note?: string) => Promise<ApiResponse<WithdrawResult>>;
   getWithdrawals: () => Promise<ApiResponse<ShopLensWithdrawal[]>>;
-  updateWithdrawal: (id: string, items: ShopLensWithdrawalItemInput[]) => Promise<ApiResponse<ShopLensWithdrawal>>;
+  updateWithdrawal: (
+    id: string,
+    items: ShopLensWithdrawalItemInput[]
+  ) => Promise<ApiResponse<ShopLensWithdrawal>>;
   deleteWithdrawal: (id: string) => Promise<ApiResponse<null>>;
 }
 
 // ─── Delivery ────────────────────────────────────────────────────────────────
 
-export type DeliveryStatus = "Pending" | "In Transit" | "Ready" | "Delivered" | "Cancelled";
+export type DeliveryStatus = 'Pending' | 'In Transit' | 'Ready' | 'Delivered' | 'Cancelled';
 
 export interface Delivery {
   _id: string;
@@ -428,7 +453,7 @@ export interface Announcement {
   _id: string;
   title: string;
   message: string;
-  priority: "low" | "medium" | "high";
+  priority: 'low' | 'medium' | 'high';
   isActive: boolean;
   createdBy?: string;
   createdAt: string;
@@ -497,7 +522,7 @@ export interface DashboardData {
   paymentModeSplit: { mode: string; total: number; count: number }[];
   orderStatusCounts: { status: string; count: number }[];
   salesTrend: string;
-  collectionTrend: { value: number; direction: "up" | "down" | "flat" };
+  collectionTrend: { value: number; direction: 'up' | 'down' | 'flat' };
   todayDeliveredOrders: Order[];
   dailyCollections: { date: string; total: number }[];
   weeklyOrderTrend: { date: string; count: number }[];
@@ -530,7 +555,7 @@ export interface PaginationParams {
   limit?: number;
   search?: string;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface DateRangeParams {

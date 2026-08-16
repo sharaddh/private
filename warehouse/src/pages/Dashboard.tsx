@@ -1,17 +1,35 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import {
-  Users, ShoppingCart, PackageMinus, Glasses, Clock, Warehouse, Activity, ListChecks,
-  AlertTriangle, IndianRupee, Package, TrendingUp, ArrowRight,
-} from "lucide-react";
-import { SkeletonStats } from "../components/Skeleton";
-import StatCard from "../components/StatCard";
-import SectionHeader from "../components/SectionHeader";
-import QuickAction from "../components/QuickAction";
-import Badge from "../components/Badge";
-import { formatCurrency, fmtPairs, formatDate, lensTypeLabel, powerChipClass, formatLensPower } from "../utils/helpers";
-import { useAuth } from "../context/AuthContext";
+  Users,
+  ShoppingCart,
+  PackageMinus,
+  Glasses,
+  Clock,
+  Warehouse,
+  Activity,
+  ListChecks,
+  AlertTriangle,
+  IndianRupee,
+  Package,
+  TrendingUp,
+  ArrowRight,
+} from 'lucide-react';
+import { SkeletonStats } from '../components/Skeleton';
+import StatCard from '../components/StatCard';
+import SectionHeader from '../components/SectionHeader';
+import QuickAction from '../components/QuickAction';
+import Badge from '../components/Badge';
+import {
+  formatCurrency,
+  fmtPairs,
+  formatDate,
+  lensTypeLabel,
+  powerChipClass,
+  formatLensPower,
+} from '../utils/helpers';
+import { useAuth } from '../context/AuthContext';
 
 interface WithdrawalRecord {
   _id: string;
@@ -62,16 +80,19 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   useEffect(() => {
-    api.get<Stats>("/api/warehouse/inventory/stats").then((res) => {
-      if (res.success && res.data) {
-        const d = res.data;
-        if (!Array.isArray(d.recentWithdrawals)) d.recentWithdrawals = [];
-        if (!Array.isArray(d.recentItems)) d.recentItems = [];
-        if (!Array.isArray(d.lowStockItems)) d.lowStockItems = [];
-        setStats(d);
-      }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    api
+      .get<Stats>('/api/warehouse/inventory/stats')
+      .then((res) => {
+        if (res.success && res.data) {
+          const d = res.data;
+          if (!Array.isArray(d.recentWithdrawals)) d.recentWithdrawals = [];
+          if (!Array.isArray(d.recentItems)) d.recentItems = [];
+          if (!Array.isArray(d.lowStockItems)) d.lowStockItems = [];
+          setStats(d);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -90,8 +111,13 @@ export default function Dashboard() {
   const recentItems = stats?.recentItems || [];
   const lowStockItems = stats?.lowStockItems || [];
   const lowStockCount = stats?.lowStock || 0;
-  const firstName = (user?.name || user?.username || "User").split(" ")[0];
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const firstName = (user?.name || user?.username || 'User').split(' ')[0];
+  const today = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const inventoryValue = stats?.totalValue || 0;
 
@@ -111,7 +137,8 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 shrink-0">
           <span className="px-3 py-1.5 rounded-pill bg-th-elevated text-small font-bold text-th-secondary hidden sm:inline-flex">
             <span className="inline-flex items-center gap-1.5">
-              <TrendingUp size={14} className="text-emerald-500" /> {fmtPairs(stats?.totalLensStock || 0)} in stock
+              <TrendingUp size={14} className="text-emerald-500" />{' '}
+              {fmtPairs(stats?.totalLensStock || 0)} in stock
             </span>
           </span>
         </div>
@@ -120,15 +147,21 @@ export default function Dashboard() {
       {/* Low stock alert */}
       {lowStockCount > 0 && (
         <button
-          onClick={() => navigate("/inventory")}
+          onClick={() => navigate('/inventory')}
           className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-warning/10 border border-warning/30 text-left active:scale-[0.99] transition-all"
         >
           <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center shrink-0">
             <AlertTriangle size={20} className="text-warning" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-body-bold text-th-text">{lowStockCount} item{lowStockCount !== 1 ? "s" : ""} running low on stock</p>
-            <p className="text-small text-th-muted">{lowStockItems.length > 0 ? `Showing ${lowStockItems.length} — qty ${LOW_STOCK_THRESHOLD} or less` : "Quantity of 5 or less needs restocking"}</p>
+            <p className="text-body-bold text-th-text">
+              {lowStockCount} item{lowStockCount !== 1 ? 's' : ''} running low on stock
+            </p>
+            <p className="text-small text-th-muted">
+              {lowStockItems.length > 0
+                ? `Showing ${lowStockItems.length} — qty ${LOW_STOCK_THRESHOLD} or less`
+                : 'Quantity of 5 or less needs restocking'}
+            </p>
           </div>
           <ArrowRight size={18} className="text-warning shrink-0" />
         </button>
@@ -142,7 +175,11 @@ export default function Dashboard() {
           iconBg="bg-primary-500/20"
           value={stats?.totalLensStock || 0}
           label="Lens Pieces"
-          badge={stats?.totalLensCoatings ? { text: `${stats.totalLensCoatings} coatings`, variant: "blue" } : undefined}
+          badge={
+            stats?.totalLensCoatings
+              ? { text: `${stats.totalLensCoatings} coatings`, variant: 'blue' }
+              : undefined
+          }
         />
         <StatCard
           icon={Package}
@@ -150,7 +187,11 @@ export default function Dashboard() {
           iconBg="bg-cyan-500/20"
           value={stats?.totalItems || 0}
           label="Inventory Items"
-          badge={stats?.warehouseItems ? { text: `${stats.warehouseItems} in WH`, variant: "purple" } : undefined}
+          badge={
+            stats?.warehouseItems
+              ? { text: `${stats.warehouseItems} in WH`, variant: 'purple' }
+              : undefined
+          }
         />
         <StatCard
           icon={IndianRupee}
@@ -172,7 +213,11 @@ export default function Dashboard() {
           iconBg="bg-amber-500/20"
           value={stats?.totalWithdrawals || 0}
           label="Withdrawals"
-          badge={(stats?.totalWithdrawnItems || 0) > 0 ? { text: `${stats?.totalWithdrawnItems} items`, variant: "green" } : undefined}
+          badge={
+            (stats?.totalWithdrawnItems || 0) > 0
+              ? { text: `${stats?.totalWithdrawnItems} items`, variant: 'green' }
+              : undefined
+          }
         />
         <StatCard
           icon={AlertTriangle}
@@ -180,7 +225,7 @@ export default function Dashboard() {
           iconBg="bg-negative/15"
           value={lowStockCount}
           label="Low Stock Items"
-          badge={lowStockCount > 0 ? { text: "Action needed", variant: "yellow" } : undefined}
+          badge={lowStockCount > 0 ? { text: 'Action needed', variant: 'yellow' } : undefined}
         />
       </div>
 
@@ -192,19 +237,19 @@ export default function Dashboard() {
             icon={Glasses}
             label="Lens Stock"
             color="primary-500"
-            onClick={() => navigate("/lens-stock")}
+            onClick={() => navigate('/lens-stock')}
           />
           <QuickAction
             icon={ShoppingCart}
             label="Cart"
             color="announcement"
-            onClick={() => navigate("/cart")}
+            onClick={() => navigate('/cart')}
           />
           <QuickAction
             icon={Users}
             label="Users"
             color="emerald-500"
-            onClick={() => navigate("/users")}
+            onClick={() => navigate('/users')}
           />
         </div>
       </div>
@@ -214,12 +259,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {lowStockItems.length > 0 && (
             <div className="glass-card">
-              <SectionHeader title="Low Stock" icon={AlertTriangle} action={<Badge variant="red">{lowStockItems.length}</Badge>} />
+              <SectionHeader
+                title="Low Stock"
+                icon={AlertTriangle}
+                action={<Badge variant="red">{lowStockItems.length}</Badge>}
+              />
               <div className="space-y-1">
                 {lowStockItems.map((item, idx) => (
                   <div
                     key={item._id}
-                    onClick={() => navigate("/inventory")}
+                    onClick={() => navigate('/inventory')}
                     style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
                     className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
                   >
@@ -234,7 +283,9 @@ export default function Dashboard() {
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {item.branchName && <Badge variant="purple">{item.branchName}</Badge>}
-                        <Badge variant={item.location === "warehouse" ? "purple" : "green"}>{item.location}</Badge>
+                        <Badge variant={item.location === 'warehouse' ? 'purple' : 'green'}>
+                          {item.location}
+                        </Badge>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -254,7 +305,7 @@ export default function Dashboard() {
                 {recentItems.map((item, idx) => (
                   <div
                     key={item._id}
-                    onClick={() => navigate("/inventory")}
+                    onClick={() => navigate('/inventory')}
                     style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
                     className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
                   >
@@ -268,12 +319,15 @@ export default function Dashboard() {
                         {item.model && <span className="text-th-muted"> {item.model}</span>}
                       </p>
                       <p className="text-small text-th-muted truncate">
-                        {item.branchName ? `${item.branchName} · ` : ""}{formatDate(item.createdAt)}
+                        {item.branchName ? `${item.branchName} · ` : ''}
+                        {formatDate(item.createdAt)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-body-bold text-th-text">{item.quantity}</p>
-                      <p className="text-micro text-th-muted">{formatCurrency(item.sellingPrice || 0)}</p>
+                      <p className="text-micro text-th-muted">
+                        {formatCurrency(item.sellingPrice || 0)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -286,12 +340,16 @@ export default function Dashboard() {
       {/* Recent Withdrawals */}
       {recent.length > 0 && (
         <div className="glass-card">
-          <SectionHeader title="Recent Withdrawals" icon={ListChecks} action={<Badge variant="gray">{recent.length}</Badge>} />
+          <SectionHeader
+            title="Recent Withdrawals"
+            icon={ListChecks}
+            action={<Badge variant="gray">{recent.length}</Badge>}
+          />
           <div className="space-y-1">
             {recent.map((rec, idx) => (
               <div
                 key={rec._id}
-                onClick={() => navigate("/users")}
+                onClick={() => navigate('/users')}
                 style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
                 className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
               >
@@ -299,14 +357,17 @@ export default function Dashboard() {
                   <PackageMinus size={14} className="text-emerald-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-body text-th-text truncate">{rec.username} withdrew {fmtPairs(rec.totalQuantity)}</p>
+                  <p className="text-body text-th-text truncate">
+                    {rec.username} withdrew {fmtPairs(rec.totalQuantity)}
+                  </p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {rec.items.slice(0, 4).map((it, idx) => (
                       <span
                         key={idx}
                         className={`px-1.5 py-0.5 rounded text-micro font-medium ${powerChipClass(it.powerKey)}`}
                       >
-                        {it.coating} {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x{fmtPairs(it.quantity)}
+                        {it.coating} {lensTypeLabel(it.lensType)} · {formatLensPower(it.powerKey)} x
+                        {fmtPairs(it.quantity)}
                       </span>
                     ))}
                     {rec.items.length > 4 && (

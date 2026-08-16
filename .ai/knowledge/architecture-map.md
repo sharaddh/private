@@ -563,7 +563,7 @@ Incoming Request
     ▼
 ┌─────────────────────────────────────────┐
 │ 7. Rate Limiter                          │
-│    - 200 requests per minute per IP      │
+│    - 1000 requests per minute per user (or per IP for anonymous) │
 │    - Standard headers                    │
 └─────────────┬───────────────────────────┘
               │
@@ -1034,7 +1034,7 @@ Connection States:
     ▼
 ┌─────────────────────────────────────────┐
 │ Layer 3: Rate Limiting                   │
-│ - 200 requests/minute per IP            │
+│ - 1000 requests/minute per user (or per IP for anonymous) │
 │ - Standard headers                      │
 └─────────────┬───────────────────────────┘
               │
@@ -1042,7 +1042,7 @@ Connection States:
 ┌─────────────────────────────────────────┐
 │ Layer 4: Authentication                  │
 │ - JWT Bearer token                      │
-│ - Access: 24h, Refresh: 7d              │
+│ - Access: 7d, Refresh: 7d              │
 │ - bcrypt password hashing (10 rounds)   │
 └─────────────┬───────────────────────────┘
               │
@@ -1163,7 +1163,7 @@ When making architectural changes:
 
 6. **Error handler is last**: The errorHandler middleware must be registered after all routes.
 
-7. **Rate limiting is global**: 200 req/min applies to all routes. Consider per-route overrides for high-traffic endpoints.
+7. **Rate limiting is global**: 1000 req/min applies to all routes (per-user when authenticated, per-IP otherwise). Consider per-route overrides for high-traffic endpoints.
 
 8. **No MongoDB transactions**: The system does not use MongoDB transactions. Workspace transaction is best-effort sequential.
 

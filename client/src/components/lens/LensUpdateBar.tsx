@@ -1,4 +1,4 @@
-import { PackagePlus, X } from "lucide-react";
+import { PackagePlus, X } from 'lucide-react';
 
 interface Props {
   onDone: () => void;
@@ -13,7 +13,8 @@ export default function LensUpdateBar({ onDone }: Props) {
           <span className="truncate">Use + to add 1 piece, − to remove 1 piece</span>
         </span>
         <span className="flex-1" />
-        <button type="button"
+        <button
+          type="button"
           onClick={onDone}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-pill bg-th-elevated text-th-secondary hover:text-th-text text-small-bold border border-th-border transition-colors"
         >

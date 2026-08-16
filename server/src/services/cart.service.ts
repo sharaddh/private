@@ -60,20 +60,35 @@ export async function addToCart(
     return { ...existing.toJSON(), available };
   }
   if (qty > available) throw new AppError(400, stockError(coating, powerKey, available));
-  const item = new CartItem({ user: userId, coating, lensType, powerKey, quantity: qty, price, fogMark });
+  const item = new CartItem({
+    user: userId,
+    coating,
+    lensType,
+    powerKey,
+    quantity: qty,
+    price,
+    fogMark,
+  });
   await item.save();
   return { ...item.toJSON(), available };
 }
 
-export async function updateCartItem(userId: string, itemId: string, quantity?: number, fogMark?: string) {
-  if (quantity !== undefined && quantity < 1) throw new AppError(400, "Quantity must be at least 1");
+export async function updateCartItem(
+  userId: string,
+  itemId: string,
+  quantity?: number,
+  fogMark?: string
+) {
+  if (quantity !== undefined && quantity < 1)
+    throw new AppError(400, "Quantity must be at least 1");
   const item = await CartItem.findOne({ _id: itemId, user: userId });
   if (!item) throw new AppError(404, "Cart item not found");
   const stock = await LensStock.findOne({ coating: item.coating });
   if (!stock) throw new AppError(400, `${item.coating}: lens stock not found`);
   const available = getAvailableStock(stock, item.lensType, item.powerKey);
   if (quantity !== undefined) {
-    if (quantity > available) throw new AppError(400, stockError(item.coating, item.powerKey, available));
+    if (quantity > available)
+      throw new AppError(400, stockError(item.coating, item.powerKey, available));
     item.quantity = Math.floor(quantity);
   }
   if (typeof fogMark === "string") item.fogMark = fogMark;
@@ -97,7 +112,14 @@ export async function withdrawCart(userId: string, username: string) {
   if (items.length === 0) throw new AppError(400, "Cart is empty");
 
   const errors: string[] = [];
-  const withdrawnItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number; fogMark?: string }[] = [];
+  const withdrawnItems: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    price: number;
+    fogMark?: string;
+  }[] = [];
   let totalQuantity = 0;
   let totalPrice = 0;
 
@@ -128,7 +150,14 @@ export async function withdrawCart(userId: string, username: string) {
     await lensStock.save();
 
     const price = item.price ?? (lensStock.price as number) ?? 0;
-    withdrawnItems.push({ coating: item.coating, lensType: item.lensType, powerKey: item.powerKey, quantity: item.quantity, price, fogMark: item.fogMark || undefined });
+    withdrawnItems.push({
+      coating: item.coating,
+      lensType: item.lensType,
+      powerKey: item.powerKey,
+      quantity: item.quantity,
+      price,
+      fogMark: item.fogMark || undefined,
+    });
     totalQuantity += item.quantity;
     totalPrice += price * (item.quantity / 2);
   }
@@ -212,17 +241,35 @@ export async function markWithdrawalPaid(userId: string, id: string, paid: boole
 export async function updateWithdrawal(
   userId: string,
   id: string,
-  items: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[]
+  items: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    fogMark?: string;
+  }[]
 ) {
   const withdrawal = await Withdrawal.findOne({ _id: id, user: userId });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
-  const normalized: { coating: string; lensType: string; powerKey: string; quantity: number; fogMark?: string }[] = [];
+  const normalized: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    fogMark?: string;
+  }[] = [];
   for (const it of items || []) {
     if (!it || !it.coating || !it.lensType || !it.powerKey) continue;
     const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
     if (qty === 0) continue;
-    normalized.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, fogMark: it.fogMark || "" });
+    normalized.push({
+      coating: it.coating,
+      lensType: it.lensType,
+      powerKey: it.powerKey,
+      quantity: qty,
+      fogMark: it.fogMark || "",
+    });
   }
 
   if (normalized.length === 0) {
@@ -287,7 +334,14 @@ export async function updateWithdrawal(
     await stock.save();
   }
 
-  const mergedItems: { coating: string; lensType: string; powerKey: string; quantity: number; price: number; fogMark: string }[] = [];
+  const mergedItems: {
+    coating: string;
+    lensType: string;
+    powerKey: string;
+    quantity: number;
+    price: number;
+    fogMark: string;
+  }[] = [];
   const fogByKey = new Map<string, string>();
   for (const it of normalized) {
     const key = `${it.coating}|${it.lensType}|${it.powerKey}`;
@@ -299,7 +353,14 @@ export async function updateWithdrawal(
     const qty = newMap.get(key)!;
     const lensStock = await getStock(it.coating);
     const price = getPriceForPower(lensStock, it.powerKey);
-    mergedItems.push({ coating: it.coating, lensType: it.lensType, powerKey: it.powerKey, quantity: qty, price, fogMark: fogByKey.get(key) || "" });
+    mergedItems.push({
+      coating: it.coating,
+      lensType: it.lensType,
+      powerKey: it.powerKey,
+      quantity: qty,
+      price,
+      fogMark: fogByKey.get(key) || "",
+    });
     newMap.delete(key);
   }
 
@@ -323,7 +384,7 @@ export async function sendWithdrawalPdf(userId: string, id: string, phone?: stri
   const { normalizePhone, isValidWhatsAppPhone } = await import("../utils/phone");
   const { User } = await import("../models/user");
 
-  let targetPhone = "";
+  let targetPhone: string;
   if (phone) {
     targetPhone = phone;
   } else {

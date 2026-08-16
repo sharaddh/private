@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model } from "mongoose";
 import { withBranch } from "../utils/branchProxy";
 
 const TodoSchemaObj = new Schema(

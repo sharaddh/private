@@ -1,6 +1,6 @@
 module.exports = {
   darkMode: 'class',
-  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -27,7 +27,7 @@ module.exports = {
           200: '#8de4b0',
           300: '#54d888',
           400: '#2ed76a',
-          500: '#1ed760',   // Spotify Green — the only brand color
+          500: '#1ed760', // Spotify Green — the only brand color
           600: '#1ab94f',
           700: '#169a3f',
           800: '#127c30',
@@ -37,15 +37,15 @@ module.exports = {
         surface: {
           50: '#ffffff',
           100: '#eeeeee',
-          200: '#b3b3b3',   // Silver — secondary text
-          300: '#cbcbcb',   // Near White — brighter secondary
-          400: '#7c7c7c',   // Light Border
-          500: '#4d4d4d',   // Border Gray
+          200: '#b3b3b3', // Silver — secondary text
+          300: '#cbcbcb', // Near White — brighter secondary
+          400: '#7c7c7c', // Light Border
+          500: '#4d4d4d', // Border Gray
           600: '#2a2a2a',
-          700: '#252525',   // Dark Card
-          800: '#1f1f1f',   // Mid Dark — buttons, interactive
-          900: '#181818',   // Dark Surface — cards, containers
-          950: '#121212',   // Near Black — deepest background
+          700: '#252525', // Dark Card
+          800: '#1f1f1f', // Mid Dark — buttons, interactive
+          900: '#181818', // Dark Surface — cards, containers
+          950: '#121212', // Near Black — deepest background
         },
         // Semantic colors
         negative: {
@@ -71,34 +71,76 @@ module.exports = {
         },
         // Status colors (functional)
         emerald: {
-          50: '#eafaf0', 100: '#c6f0d8', 200: '#8de4b0', 300: '#54d888',
-          400: '#2ed76a', 500: '#1ed760', 600: '#1ab94f', 700: '#169a3f',
-          800: '#127c30', 900: '#0e5e22',
+          50: '#eafaf0',
+          100: '#c6f0d8',
+          200: '#8de4b0',
+          300: '#54d888',
+          400: '#2ed76a',
+          500: '#1ed760',
+          600: '#1ab94f',
+          700: '#169a3f',
+          800: '#127c30',
+          900: '#0e5e22',
         },
         red: {
-          50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
-          400: '#f87171', 500: '#f3727f', 600: '#dc2626', 700: '#b91c1c',
-          800: '#991b1b', 900: '#7f1d1d',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#f3727f',
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
         },
         amber: {
-          50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
-          400: '#fbbf24', 500: '#ffa42b', 600: '#d97706', 700: '#b45309',
-          800: '#92400e', 900: '#78350f',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#ffa42b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
         },
         blue: {
-          50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
-          400: '#60a5fa', 500: '#539df5', 600: '#2563eb', 700: '#1d4ed8',
-          800: '#1e40af', 900: '#1e3a8a',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#539df5',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
         },
         purple: {
-          50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
-          400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce',
-          800: '#6b21a8', 900: '#581c87',
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
         },
         cyan: {
-          50: '#ecfeff', 100: '#cffafe', 200: '#a5f3fc', 300: '#67e8f9',
-          400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490',
-          800: '#155e75', 900: '#164e63',
+          50: '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
         },
       },
       fontFamily: {
@@ -107,57 +149,68 @@ module.exports = {
       },
       fontSize: {
         // Spotify compact typography scale (+0.25rem)
-        'section': ['1.75rem', { lineHeight: 'normal', fontWeight: '700' }],
-        'feature': ['1.375rem', { lineHeight: '1.3', fontWeight: '600' }],
+        section: ['1.75rem', { lineHeight: 'normal', fontWeight: '700' }],
+        feature: ['1.375rem', { lineHeight: '1.3', fontWeight: '600' }],
         'body-bold': ['1.25rem', { lineHeight: 'normal', fontWeight: '700' }],
-        'body': ['1.25rem', { lineHeight: 'normal', fontWeight: '400' }],
-        'button-upper': ['1.125rem', { lineHeight: '1', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase' }],
-        'button': ['1.125rem', { lineHeight: 'normal', fontWeight: '700', letterSpacing: '0.014em' }],
-        'nav': ['1.125rem', { lineHeight: 'normal', fontWeight: '400' }],
+        body: ['1.25rem', { lineHeight: 'normal', fontWeight: '400' }],
+        'button-upper': [
+          '1.125rem',
+          {
+            lineHeight: '1',
+            fontWeight: '600',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          },
+        ],
+        button: ['1.125rem', { lineHeight: 'normal', fontWeight: '700', letterSpacing: '0.014em' }],
+        nav: ['1.125rem', { lineHeight: 'normal', fontWeight: '400' }],
         'nav-bold': ['1.125rem', { lineHeight: 'normal', fontWeight: '700' }],
-        'caption': ['1.125rem', { lineHeight: 'normal', fontWeight: '400' }],
+        caption: ['1.125rem', { lineHeight: 'normal', fontWeight: '400' }],
         'caption-bold': ['1.125rem', { lineHeight: '1.5', fontWeight: '700' }],
-        'small': ['1rem', { lineHeight: '1.5', fontWeight: '400' }],
+        small: ['1rem', { lineHeight: '1.5', fontWeight: '400' }],
         'small-bold': ['1rem', { lineHeight: '1.5', fontWeight: '700' }],
-        'badge': ['0.90625rem', { lineHeight: '1.33', fontWeight: '600', textTransform: 'capitalize' }],
-        'micro': ['0.875rem', { lineHeight: 'normal', fontWeight: '400' }],
+        badge: [
+          '0.90625rem',
+          { lineHeight: '1.33', fontWeight: '600', textTransform: 'capitalize' },
+        ],
+        micro: ['0.875rem', { lineHeight: 'normal', fontWeight: '400' }],
       },
       boxShadow: {
-        'sm': 'var(--shadow-card)',
-        'DEFAULT': 'var(--shadow-card)',
-        'md': 'var(--shadow-card)',
-        'lg': 'var(--shadow-elevated)',
-        'xl': 'var(--shadow-elevated)',
+        sm: 'var(--shadow-card)',
+        DEFAULT: 'var(--shadow-card)',
+        md: 'var(--shadow-card)',
+        lg: 'var(--shadow-elevated)',
+        xl: 'var(--shadow-elevated)',
         '2xl': 'var(--shadow-modal)',
-        'product': 'var(--shadow-elevated)',
-        'none': 'none',
-        'btn': 'var(--shadow-btn)',
-        'input': 'var(--shadow-input)',
-        'lifted': 'var(--shadow-lifted)',
-        'inset': 'inset 0 0 0 1px var(--border-medium)',
+        product: 'var(--shadow-elevated)',
+        none: 'none',
+        btn: 'var(--shadow-btn)',
+        input: 'var(--shadow-input)',
+        lifted: 'var(--shadow-lifted)',
+        inset: 'inset 0 0 0 1px var(--border-medium)',
         'inset-focus': 'inset 0 0 0 2px var(--spotify-green)',
       },
       borderRadius: {
         // Spotify radius scale
-        'none': '0px',
-        'badge': '2px',
-        'xs': '4px',
-        'sm': '6px',
-        'md': '8px',
-        'lg': '10px',
-        'xl': '12px',
+        none: '0px',
+        badge: '2px',
+        xs: '4px',
+        sm: '6px',
+        md: '8px',
+        lg: '10px',
+        xl: '12px',
         '2xl': '16px',
         '3xl': '20px',
-        'pill': '8px',
-        'full': '50%',
+        pill: '8px',
+        full: '50%',
       },
       spacing: {
-        'xxs': '4px',
-        'section': '32px',
+        xxs: '4px',
+        section: '32px',
       },
       transitionDuration: {
-        '200': '200ms',
-        '300': '300ms',
+        200: '200ms',
+        300: '300ms',
       },
       keyframes: {
         'scale-in': {
@@ -198,7 +251,7 @@ module.exports = {
         'slide-in-left': 'slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
       },
-    }
+    },
   },
-  plugins: []
+  plugins: [],
 };

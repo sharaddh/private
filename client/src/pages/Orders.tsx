@@ -1,22 +1,41 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "../context/ToastContext";
-import { useAuth } from "../context/AuthContext";
-import { useTranslate } from "../context/TranslateContext";
-import PageSkeleton from "../components/PageSkeleton";
-import ShineCard from "../components/ShineCard";
-import { Eye, Package, Glasses, FlaskConical, Circle, ArrowUpRight, Loader2, Minus, Plus, Check, Clock, CalendarDays } from "lucide-react";
-import DateRangePicker from "../components/DateRangePicker";
-import { orderService } from "../services";
-import { compactRx } from "../utils/rx";
-import type { Order, OrderStatus, Customer } from "../types";
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { useTranslate } from '../context/TranslateContext';
+import PageSkeleton from '../components/PageSkeleton';
+import ShineCard from '../components/ShineCard';
+import {
+  Eye,
+  Package,
+  Glasses,
+  FlaskConical,
+  Circle,
+  ArrowUpRight,
+  Loader2,
+  Minus,
+  Plus,
+  Check,
+  Clock,
+  CalendarDays,
+} from 'lucide-react';
+import DateRangePicker from '../components/DateRangePicker';
+import { orderService } from '../services';
+import { compactRx } from '../utils/rx';
+import type { Order, OrderStatus, Customer } from '../types';
 
-const STATUS_STEPS: readonly OrderStatus[] = ["Draft", "Ordered", "In Lab", "Ready", "Delivered"] as const;
+const STATUS_STEPS: readonly OrderStatus[] = [
+  'Draft',
+  'Ordered',
+  'In Lab',
+  'Ready',
+  'Delivered',
+] as const;
 
 const VALID_NEXT: Record<OrderStatus, OrderStatus | undefined> = {
-  Draft: "Ordered",
-  Ordered: "In Lab",
-  "In Lab": "Ready",
+  Draft: 'Ordered',
+  Ordered: 'In Lab',
+  'In Lab': 'Ready',
   Ready: undefined,
   Delivered: undefined,
   Cancelled: undefined,
@@ -27,7 +46,15 @@ interface OrderCard extends Order {
   accessories?: string[];
 }
 
-function DotProgress({ status, forwardedCount, quantity }: { status: OrderStatus; forwardedCount?: number; quantity?: number }) {
+function DotProgress({
+  status,
+  forwardedCount,
+  quantity,
+}: {
+  status: OrderStatus;
+  forwardedCount?: number;
+  quantity?: number;
+}) {
   const currentIdx = STATUS_STEPS.indexOf(status);
   const qty = quantity || 1;
   const fwd = forwardedCount || 0;
@@ -36,21 +63,28 @@ function DotProgress({ status, forwardedCount, quantity }: { status: OrderStatus
     <div className="flex items-center gap-1 px-1">
       {STATUS_STEPS.slice(0, 4).map((step, i) => (
         <div key={step} className="flex items-center flex-1 last:flex-none">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[14px] font-bold transition-all duration-300 ${
-            i < currentIdx
-              ? "bg-[#1ed760] text-black"
-              : i === currentIdx
-              ? "ring-2 ring-[#1ed760]/50 bg-[#1ed760] text-black"
-              : "bg-th-elevated text-th-secondary"
-          }`}>
-            {i < currentIdx ? "\u2713" : i + 1}
+          <div
+            className={`w-5 h-5 rounded-full flex items-center justify-center text-[14px] font-bold transition-all duration-300 ${
+              i < currentIdx
+                ? 'bg-[#1ed760] text-black'
+                : i === currentIdx
+                  ? 'ring-2 ring-[#1ed760]/50 bg-[#1ed760] text-black'
+                  : 'bg-th-elevated text-th-secondary'
+            }`}
+          >
+            {i < currentIdx ? '\u2713' : i + 1}
           </div>
           {i < 3 && (
-            <div className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 relative overflow-hidden ${
-              i < currentIdx ? "bg-[#1ed760]" : "bg-th-elevated"
-            }`}>
+            <div
+              className={`flex-1 h-0.5 mx-1 rounded transition-all duration-300 relative overflow-hidden ${
+                i < currentIdx ? 'bg-[#1ed760]' : 'bg-th-elevated'
+              }`}
+            >
               {i === currentIdx && pct > 0 && (
-                <div className="absolute inset-0 bg-[#1ed760] transition-all duration-500" style={{ width: `${pct * 100}%` }} />
+                <div
+                  className="absolute inset-0 bg-[#1ed760] transition-all duration-500"
+                  style={{ width: `${pct * 100}%` }}
+                />
               )}
             </div>
           )}
@@ -61,24 +95,30 @@ function DotProgress({ status, forwardedCount, quantity }: { status: OrderStatus
 }
 
 const STATUS_THEME: Record<OrderStatus, { dot: string; badge: string }> = {
-  Draft:    { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
-  Ordered:  { dot: "bg-[#af2896]", badge: "bg-[#af2896]/20 text-[#e854c7]" },
-  "In Lab": { dot: "bg-[#e8115b]", badge: "bg-[#e8115b]/20 text-[#ff6b8a]" },
-  Ready:    { dot: "bg-[#509bf5]", badge: "bg-[#509bf5]/20 text-[#82b6ff]" },
-  Delivered: { dot: "bg-[#1ed760]", badge: "bg-[#1ed760]/20 text-[#1ed760]" },
-  Cancelled: { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
+  Draft: { dot: 'bg-[#b3b3b3]', badge: 'bg-th-elevated text-th-secondary' },
+  Ordered: { dot: 'bg-[#af2896]', badge: 'bg-[#af2896]/20 text-[#e854c7]' },
+  'In Lab': { dot: 'bg-[#e8115b]', badge: 'bg-[#e8115b]/20 text-[#ff6b8a]' },
+  Ready: { dot: 'bg-[#509bf5]', badge: 'bg-[#509bf5]/20 text-[#82b6ff]' },
+  Delivered: { dot: 'bg-[#1ed760]', badge: 'bg-[#1ed760]/20 text-[#1ed760]' },
+  Cancelled: { dot: 'bg-[#b3b3b3]', badge: 'bg-th-elevated text-th-secondary' },
 };
 
 const LENS_STATUS: Record<string, { dot: string; badge: string }> = {
-  pending: { dot: "bg-[#b3b3b3]", badge: "bg-th-elevated text-th-secondary" },
-  stock:   { dot: "bg-[#1ed760]", badge: "bg-[#1ed760]/10 text-[#1ed760]" },
-  buy:     { dot: "bg-[#509bf5]", badge: "bg-[#509bf5]/10 text-[#82b6ff]" },
-  order:   { dot: "bg-[#af2896]", badge: "bg-[#af2896]/10 text-[#e854c7]" },
+  pending: { dot: 'bg-[#b3b3b3]', badge: 'bg-th-elevated text-th-secondary' },
+  stock: { dot: 'bg-[#1ed760]', badge: 'bg-[#1ed760]/10 text-[#1ed760]' },
+  buy: { dot: 'bg-[#509bf5]', badge: 'bg-[#509bf5]/10 text-[#82b6ff]' },
+  order: { dot: 'bg-[#af2896]', badge: 'bg-[#af2896]/10 text-[#e854c7]' },
 };
 
 function todayStr(): string {
   const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  return (
+    d.getFullYear() +
+    '-' +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(d.getDate()).padStart(2, '0')
+  );
 }
 
 export default function Orders() {
@@ -86,9 +126,12 @@ export default function Orders() {
   const navigate = useNavigate();
   const { isStaff } = useAuth();
   const { uiT } = useTranslate();
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>('all');
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
-  const [advanceModal, setAdvanceModal] = useState<{ order: OrderCard; nextStatus: OrderStatus } | null>(null);
+  const [advanceModal, setAdvanceModal] = useState<{
+    order: OrderCard;
+    nextStatus: OrderStatus;
+  } | null>(null);
   const [advanceQty, setAdvanceQty] = useState<number>(1);
   const [startDate, setStartDate] = useState<string>(todayStr());
   const [endDate, setEndDate] = useState<string>(todayStr());
@@ -102,13 +145,15 @@ export default function Orders() {
       params.startDate = startDate;
       params.endDate = endDate;
     } else {
-      params.limit = "10000";
+      params.limit = '10000';
     }
     const res = await orderService.listFiltered(params);
     if (res.success && res.data) setList(res.data.data as OrderCard[]);
   }, [startDate, endDate, showAll]);
 
-  useEffect(() => { fetchOrders().finally(() => setLoading(false)); }, [fetchOrders]);
+  useEffect(() => {
+    fetchOrders().finally(() => setLoading(false));
+  }, [fetchOrders]);
 
   useEffect(() => {
     const interval = setInterval(fetchOrders, 30000);
@@ -117,42 +162,57 @@ export default function Orders() {
 
   useEffect(() => {
     const onFocus = () => fetchOrders();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [fetchOrders]);
 
-  async function doAdvance(order: OrderCard, nextStatus: OrderStatus, advQty: number): Promise<void> {
+  async function doAdvance(
+    order: OrderCard,
+    nextStatus: OrderStatus,
+    advQty: number
+  ): Promise<void> {
     const qty = order.quantity || 1;
     const remaining = qty - (order.forwardedCount || 0);
     if (advQty <= 0) return;
     setStatusLoading(order._id);
-    setList((prev) => prev.map((o) => o._id === order._id ? {
-      ...o,
-      forwardedCount: advQty < remaining ? (o.forwardedCount || 0) + advQty : 0,
-      status: advQty < remaining ? o.status : nextStatus,
-    } : o));
+    setList((prev) =>
+      prev.map((o) =>
+        o._id === order._id
+          ? {
+              ...o,
+              forwardedCount: advQty < remaining ? (o.forwardedCount || 0) + advQty : 0,
+              status: advQty < remaining ? o.status : nextStatus,
+            }
+          : o
+      )
+    );
     try {
       const res = await orderService.advanceStatus(order._id, nextStatus, advQty);
       if (!res.success) {
-        toast.error(res.message || "Failed to update status");
+        toast.error(res.message || 'Failed to update status');
       } else if (res.data?.partial) {
         toast.success(`${advQty} of ${qty} pair(s) moved to "${nextStatus}"`);
-      } else if (nextStatus === "Ready") {
-        toast.success("Order ready — pickup notification sent");
+      } else if (nextStatus === 'Ready') {
+        toast.success('Order ready — pickup notification sent');
       } else {
         toast.success(`Order moved to "${nextStatus}"`);
       }
     } catch {
-      toast.error("Failed to update status");
+      toast.error('Failed to update status');
+    } finally {
+      setStatusLoading(null);
+      fetchOrders();
     }
-    finally { setStatusLoading(null); fetchOrders(); }
   }
 
   function openAdvanceModal(order: OrderCard): void {
     const next = VALID_NEXT[order.status];
     if (!next) return;
     const remaining = (order.quantity || 1) - (order.forwardedCount || 0);
-    if (remaining <= 1) { doAdvance(order, next, 1); return; }
+    if (remaining <= 1) {
+      doAdvance(order, next, 1);
+      return;
+    }
     setAdvanceQty(remaining);
     setAdvanceModal({ order, nextStatus: next });
   }
@@ -167,25 +227,25 @@ export default function Orders() {
   }
 
   function customerName(o: OrderCard): string {
-    if (typeof o.customerId === "object" && o.customerId?.name) return o.customerId.name;
-    if (typeof o.customerId === "string") return o.customerId.slice(-6);
-    return "\u2014";
+    if (typeof o.customerId === 'object' && o.customerId?.name) return o.customerId.name;
+    if (typeof o.customerId === 'string') return o.customerId.slice(-6);
+    return '\u2014';
   }
 
   function customerMobile(o: OrderCard): string {
-    if (typeof o.customerId === "object" && o.customerId?.mobile) return o.customerId.mobile;
-    return "";
+    if (typeof o.customerId === 'object' && o.customerId?.mobile) return o.customerId.mobile;
+    return '';
   }
 
   if (loading) return <PageSkeleton page="orders" />;
 
-  const filteredList = filter === "all" ? list : list.filter((o) => o.status === filter);
+  const filteredList = filter === 'all' ? list : list.filter((o) => o.status === filter);
 
   const stats = {
     total: list.length,
-    ordered: list.filter((o) => o.status === "Ordered" || o.status === "Draft").length,
-    inLab: list.filter((o) => o.status === "In Lab").length,
-    ready: list.filter((o) => o.status === "Ready").length,
+    ordered: list.filter((o) => o.status === 'Ordered' || o.status === 'Draft').length,
+    inLab: list.filter((o) => o.status === 'In Lab').length,
+    ready: list.filter((o) => o.status === 'Ready').length,
   };
 
   return (
@@ -193,7 +253,9 @@ export default function Orders() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-th-text tracking-tight">{uiT("Orders", "ऑर्डर")}</h1>
+          <h1 className="text-2xl font-bold text-th-text tracking-tight">
+            {uiT('Orders', 'ऑर्डर')}
+          </h1>
           <p className="text-sm text-th-secondary mt-1">Orders generated from visits.</p>
         </div>
       </div>
@@ -201,18 +263,36 @@ export default function Orders() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { key: "all", label: uiT("Total", "कुल"), value: stats.total, color: "text-th-text" },
-          { key: "Ordered", label: uiT("Ordered", "ऑर्डर किया"), value: stats.ordered, color: "text-[#e854c7]" },
-          { key: "In Lab", label: uiT("In Lab", "लैब में"), value: stats.inLab, color: "text-[#ff6b8a]" },
-          { key: "Ready", label: uiT("Ready", "तैयार"), value: stats.ready, color: "text-[#82b6ff]" },
+          { key: 'all', label: uiT('Total', 'कुल'), value: stats.total, color: 'text-th-text' },
+          {
+            key: 'Ordered',
+            label: uiT('Ordered', 'ऑर्डर किया'),
+            value: stats.ordered,
+            color: 'text-[#e854c7]',
+          },
+          {
+            key: 'In Lab',
+            label: uiT('In Lab', 'लैब में'),
+            value: stats.inLab,
+            color: 'text-[#ff6b8a]',
+          },
+          {
+            key: 'Ready',
+            label: uiT('Ready', 'तैयार'),
+            value: stats.ready,
+            color: 'text-[#82b6ff]',
+          },
         ].map((s) => (
-          <ShineCard key={s.key} onClick={() => setFilter(s.key)}
+          <ShineCard
+            key={s.key}
+            onClick={() => setFilter(s.key)}
             role="button"
             tabIndex={0}
             aria-label={`Filter by ${s.label}: ${s.value}`}
             className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer ${
-              filter === s.key ? "ring-2 ring-[#1ed760]/50" : ""
-            }`}>
+              filter === s.key ? 'ring-2 ring-[#1ed760]/50' : ''
+            }`}
+          >
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-sm font-medium text-th-secondary mt-1">{s.label}</p>
           </ShineCard>
@@ -222,35 +302,51 @@ export default function Orders() {
       {/* Filter pills */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { key: "all", label: uiT("All Orders", "सभी ऑर्डर") },
-          { key: "Draft", label: uiT("Draft", "ड्राफ्ट") },
-          { key: "Ordered", label: uiT("Ordered", "ऑर्डर किया") },
-          { key: "In Lab", label: uiT("In Lab", "लैब में") },
-          { key: "Ready", label: uiT("Ready", "तैयार") },
-          { key: "Delivered", label: uiT("Delivered", "डिलीवर हो गया") },
+          { key: 'all', label: uiT('All Orders', 'सभी ऑर्डर') },
+          { key: 'Draft', label: uiT('Draft', 'ड्राफ्ट') },
+          { key: 'Ordered', label: uiT('Ordered', 'ऑर्डर किया') },
+          { key: 'In Lab', label: uiT('In Lab', 'लैब में') },
+          { key: 'Ready', label: uiT('Ready', 'तैयार') },
+          { key: 'Delivered', label: uiT('Delivered', 'डिलीवर हो गया') },
         ].map((f) => (
-                <button key={f.key} type="button" onClick={() => setFilter(f.key)}
-                  aria-label={`Show ${f.label} orders`}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
-                    filter === f.key
-                      ? "bg-[#1ed760] text-black"
-                      : "bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text"
-                  }`}>
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            aria-label={`Show ${f.label} orders`}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+              filter === f.key
+                ? 'bg-[#1ed760] text-black'
+                : 'bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text'
+            }`}
+          >
             {f.label}
           </button>
         ))}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <DateRangePicker startDate={startDate} endDate={endDate} onChange={(s: string, e: string) => { setStartDate(s); setEndDate(e); setShowAll(false); }} count={filteredList.length} label="order" />
-        <button onClick={() => setShowAll(!showAll)}
-          aria-label={showAll ? "Show filtered orders" : "Show all orders"}
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onChange={(s: string, e: string) => {
+            setStartDate(s);
+            setEndDate(e);
+            setShowAll(false);
+          }}
+          count={filteredList.length}
+          label="order"
+        />
+        <button
+          onClick={() => setShowAll(!showAll)}
+          aria-label={showAll ? 'Show filtered orders' : 'Show all orders'}
           className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
             showAll
-              ? "bg-[#1ed760] text-black"
-              : "text-th-secondary bg-th-elevated hover:bg-th-hover hover:text-th-text"
-          }`}>
-          {uiT("All Orders", "सभी ऑर्डर")}
+              ? 'bg-[#1ed760] text-black'
+              : 'text-th-secondary bg-th-elevated hover:bg-th-hover hover:text-th-text'
+          }`}
+        >
+          {uiT('All Orders', 'सभी ऑर्डर')}
         </button>
       </div>
 
@@ -258,7 +354,9 @@ export default function Orders() {
       {filteredList.length === 0 ? (
         <div className="bg-th-surface rounded-lg text-center py-16">
           <Package size={40} className="mx-auto text-[#535353] mb-3" />
-          <p className="text-th-secondary text-sm">{uiT("No orders found", "कोई ऑर्डर नहीं मिला")}</p>
+          <p className="text-th-secondary text-sm">
+            {uiT('No orders found', 'कोई ऑर्डर नहीं मिला')}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -268,26 +366,38 @@ export default function Orders() {
             const total = o.billInfo?.totalAmount || 0;
             const qty = o.quantity || 1;
 
-            let dlBadge = "";
+            let dlBadge = '';
             let dlOverdue = false;
             if (o.deliveryDate) {
               const d = new Date(o.deliveryDate);
               const today = new Date(todayStr());
               const diff = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-              if (diff < 0) { dlOverdue = true; dlBadge = `${Math.abs(diff)}d ${uiT("late", "पार")}`; }
-              else if (diff === 0) dlBadge = uiT("Today", "आज");
-              else if (diff === 1) dlBadge = uiT("Tomorrow", "कल");
+              if (diff < 0) {
+                dlOverdue = true;
+                dlBadge = `${Math.abs(diff)}d ${uiT('late', 'पार')}`;
+              } else if (diff === 0) dlBadge = uiT('Today', 'आज');
+              else if (diff === 1) dlBadge = uiT('Tomorrow', 'कल');
             }
 
             const rx = o.prescription;
-            const rRx = rx?.rightEye ? compactRx(rx.rightEye.dv as Record<string, unknown> | undefined, rx.rightEye.nv as Record<string, unknown> | undefined) : null;
-            const lRx = rx?.leftEye ? compactRx(rx.leftEye.dv as Record<string, unknown> | undefined, rx.leftEye.nv as Record<string, unknown> | undefined) : null;
-            const rStatus = o.rightLensStatus || "pending";
-            const lStatus = o.leftLensStatus || "pending";
+            const rRx = rx?.rightEye
+              ? compactRx(
+                  rx.rightEye.dv as Record<string, unknown> | undefined,
+                  rx.rightEye.nv as Record<string, unknown> | undefined
+                )
+              : null;
+            const lRx = rx?.leftEye
+              ? compactRx(
+                  rx.leftEye.dv as Record<string, unknown> | undefined,
+                  rx.leftEye.nv as Record<string, unknown> | undefined
+                )
+              : null;
+            const rStatus = o.rightLensStatus || 'pending';
+            const lStatus = o.leftLensStatus || 'pending';
 
             const viewOrder = () => {
-              const cid = typeof o.customerId === "object" ? o.customerId?._id : o.customerId;
-              navigate(`/customers/${cid}?visitId=${o.visitId || ""}`);
+              const cid = typeof o.customerId === 'object' ? o.customerId?._id : o.customerId;
+              navigate(`/customers/${cid}?visitId=${o.visitId || ''}`);
             };
 
             const goPickup = () => {
@@ -295,19 +405,31 @@ export default function Orders() {
             };
 
             return (
-              <ShineCard key={o._id}
-                className="group bg-th-surface rounded-2xl overflow-hidden hover:bg-th-hover shadow-lg border border-th-border transition-all">
+              <ShineCard
+                key={o._id}
+                className="group bg-th-surface rounded-2xl overflow-hidden hover:bg-th-hover shadow-lg border border-th-border transition-all"
+              >
                 <div className="p-4 pb-3">
                   {/* Header */}
                   <div className="flex items-center gap-2.5 mb-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${theme.badge}`}>
-                      {customerName(o).charAt(0)?.toUpperCase() || "?"}
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${theme.badge}`}
+                    >
+                      {customerName(o).charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-bold text-th-text truncate leading-tight">{customerName(o)}</p>
-                      {customerMobile(o) && <p className="text-[13px] text-th-secondary truncate">{customerMobile(o)}</p>}
+                      <p className="text-[15px] font-bold text-th-text truncate leading-tight">
+                        {customerName(o)}
+                      </p>
+                      {customerMobile(o) && (
+                        <p className="text-[13px] text-th-secondary truncate">
+                          {customerMobile(o)}
+                        </p>
+                      )}
                     </div>
-                    <span className={`text-[12px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${theme.badge} flex-shrink-0`}>
+                    <span
+                      className={`text-[12px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${theme.badge} flex-shrink-0`}
+                    >
                       {o.status}
                     </span>
                   </div>
@@ -316,25 +438,43 @@ export default function Orders() {
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="bg-th-elevated rounded-lg px-3 py-1.5">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#82b6ff]">{uiT("R", "दाएं")}</span>
-                        {rStatus !== "pending" && (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).badge}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).dot}`} /> {rStatus}
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#82b6ff]">
+                          {uiT('R', 'दाएं')}
+                        </span>
+                        {rStatus !== 'pending' && (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).badge}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[rStatus] || LENS_STATUS.pending).dot}`}
+                            />{' '}
+                            {rStatus}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-th-text truncate">{rRx || uiT("plain", "plain")}</p>
+                      <p className="text-sm font-bold text-th-text truncate">
+                        {rRx || uiT('plain', 'plain')}
+                      </p>
                     </div>
                     <div className="bg-th-elevated rounded-lg px-3 py-1.5">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#ff6b8a]">{uiT("L", "बाएं")}</span>
-                        {lStatus !== "pending" && (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).badge}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).dot}`} /> {lStatus}
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#ff6b8a]">
+                          {uiT('L', 'बाएं')}
+                        </span>
+                        {lStatus !== 'pending' && (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).badge}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${(LENS_STATUS[lStatus] || LENS_STATUS.pending).dot}`}
+                            />{' '}
+                            {lStatus}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-th-text truncate">{lRx || uiT("plain", "plain")}</p>
+                      <p className="text-sm font-bold text-th-text truncate">
+                        {lRx || uiT('plain', 'plain')}
+                      </p>
                     </div>
                   </div>
 
@@ -342,7 +482,9 @@ export default function Orders() {
                   <div className="flex flex-wrap gap-1 mb-2.5">
                     {o.frameBrand ? (
                       <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
-                        <Glasses size={12} className="text-th-secondary flex-shrink-0" /> {o.frameBrand}{o.frameModel ? ` ${o.frameModel}` : ""}
+                        <Glasses size={12} className="text-th-secondary flex-shrink-0" />{' '}
+                        {o.frameBrand}
+                        {o.frameModel ? ` ${o.frameModel}` : ''}
                       </span>
                     ) : o.frame ? (
                       <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
@@ -351,16 +493,25 @@ export default function Orders() {
                     ) : null}
                     {o.lensBrand && (
                       <span className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
-                        <Eye size={12} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}{o.lensType ? ` \u00B7 ${o.lensType}` : ""}
+                        <Eye size={12} className="text-th-secondary flex-shrink-0" /> {o.lensBrand}
+                        {o.lensType ? ` \u00B7 ${o.lensType}` : ''}
                       </span>
                     )}
                     {(o.accessories || []).map((a: string, i: number) => {
                       const lower = a.toLowerCase();
-                      const accIcon = lower.includes("clean") || lower.includes("solution") ? <FlaskConical size={12} className="text-[#1ed760] flex-shrink-0" />
-                        : lower.includes("contact") || lower.includes("lens") ? <Circle size={12} className="text-[#e8115b] flex-shrink-0" />
-                        : <Package size={12} className="text-th-secondary flex-shrink-0" />;
+                      const accIcon =
+                        lower.includes('clean') || lower.includes('solution') ? (
+                          <FlaskConical size={12} className="text-[#1ed760] flex-shrink-0" />
+                        ) : lower.includes('contact') || lower.includes('lens') ? (
+                          <Circle size={12} className="text-[#e8115b] flex-shrink-0" />
+                        ) : (
+                          <Package size={12} className="text-th-secondary flex-shrink-0" />
+                        );
                       return (
-                        <span key={a || i} className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full">
+                        <span
+                          key={a || i}
+                          className="inline-flex items-center gap-1 text-[13px] bg-th-elevated px-1.5 py-0.5 rounded-md text-th-secondary font-medium truncate max-w-full"
+                        >
                           {accIcon} {a}
                         </span>
                       );
@@ -370,27 +521,49 @@ export default function Orders() {
                   {/* Meta */}
                   <div className="flex items-center gap-1.5 flex-wrap text-[13px] text-th-secondary">
                     {o.deliveryDate ? (
-                      <span className={`inline-flex items-center gap-1 ${dlOverdue ? "text-[#e8115b] font-semibold" : ""}`}>
-                        <Clock size={12} className="flex-shrink-0" /> {new Date(o.deliveryDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      <span
+                        className={`inline-flex items-center gap-1 ${dlOverdue ? 'text-[#e8115b] font-semibold' : ''}`}
+                      >
+                        <Clock size={12} className="flex-shrink-0" />{' '}
+                        {new Date(o.deliveryDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
                         {dlBadge && (
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${dlOverdue ? "bg-[#e8115b]/10 text-[#e8115b]" : "bg-[#1ed760]/10 text-[#1ed760]"}`}>
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${dlOverdue ? 'bg-[#e8115b]/10 text-[#e8115b]' : 'bg-[#1ed760]/10 text-[#1ed760]'}`}
+                          >
                             {dlBadge}
                           </span>
                         )}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1"><Clock size={12} /> {"\u2014"}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={12} /> {'\u2014'}
+                      </span>
                     )}
-                    <span className="text-th-muted">{"\u00B7"}</span>
-                    <span className="inline-flex items-center gap-1"><CalendarDays size={12} /> {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "\u2014"}</span>
-                    <span className="text-th-muted">{"\u00B7"}</span>
-                    <span>{qty} {uiT("pair", "जोड़ी")}</span>
+                    <span className="text-th-muted">{'\u00B7'}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays size={12} />{' '}
+                      {o.createdAt
+                        ? new Date(o.createdAt).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })
+                        : '\u2014'}
+                    </span>
+                    <span className="text-th-muted">{'\u00B7'}</span>
+                    <span>
+                      {qty} {uiT('pair', 'जोड़ी')}
+                    </span>
                     {pending > 0 ? (
                       <span className="ml-auto inline-flex items-center gap-1 text-[13px] font-bold text-[#e8115b] bg-[#e8115b]/10 px-1.5 py-0.5 rounded">
-                        {uiT("Due", "बकाया")} ₹{pending.toLocaleString()}
+                        {uiT('Due', 'बकाया')} ₹{pending.toLocaleString()}
                       </span>
                     ) : total > 0 ? (
-                      <span className="ml-auto text-[14px] font-bold text-th-text">₹{total.toLocaleString()}</span>
+                      <span className="ml-auto text-[14px] font-bold text-th-text">
+                        ₹{total.toLocaleString()}
+                      </span>
                     ) : null}
                   </div>
                 </div>
@@ -398,36 +571,59 @@ export default function Orders() {
                 {/* Progress bar */}
                 {VALID_NEXT[o.status] && (
                   <div className="px-4 pb-2">
-                    <DotProgress status={o.status} forwardedCount={o.forwardedCount} quantity={o.quantity} />
+                    <DotProgress
+                      status={o.status}
+                      forwardedCount={o.forwardedCount}
+                      quantity={o.quantity}
+                    />
                   </div>
                 )}
                 {/* Partial progress indicator */}
                 {(o.forwardedCount || 0) > 0 && (o.forwardedCount || 0) < (o.quantity || 1) && (
                   <div className="px-4 pb-2">
                     <span className="text-[13px] font-medium text-[#e8115b] bg-[#e8115b]/10 px-2 py-0.5 rounded-lg">
-                      {o.forwardedCount} of {o.quantity} pair(s) advanced to {VALID_NEXT[o.status] || "next"}
+                      {o.forwardedCount} of {o.quantity} pair(s) advanced to{' '}
+                      {VALID_NEXT[o.status] || 'next'}
                     </span>
                   </div>
                 )}
                 {/* Actions */}
                 <div className="px-4 pb-4 pt-0">
                   <div className="flex items-center gap-2 pt-3 border-t border-th-hover">
-                    <button type="button" onClick={viewOrder}
+                    <button
+                      type="button"
+                      onClick={viewOrder}
                       aria-label={`View order for ${customerName(o)}`}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-black bg-[#1ed760] hover:bg-[#1fdf64] active:scale-95 transition-all duration-150">
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-black bg-[#1ed760] hover:bg-[#1fdf64] active:scale-95 transition-all duration-150"
+                    >
                       <Eye size={16} /> View
                     </button>
                     {!isStaff && VALID_NEXT[o.status] ? (
-                      <button type="button" disabled={statusLoading === o._id} onClick={() => openAdvanceModal(o)}
+                      <button
+                        type="button"
+                        disabled={statusLoading === o._id}
+                        onClick={() => openAdvanceModal(o)}
                         aria-label={`Advance order to ${VALID_NEXT[o.status]}`}
-                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-[#1ed760] bg-[#1ed760]/10 hover:bg-[#1ed760]/20 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {statusLoading === o._id ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-[#1ed760] bg-[#1ed760]/10 hover:bg-[#1ed760]/20 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {statusLoading === o._id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <ArrowUpRight size={16} />
+                        )}
                         {VALID_NEXT[o.status]}
                       </button>
                     ) : (
-                      <button type="button" onClick={o.status === "Ready" ? goPickup : viewOrder}
-                        aria-label={o.status === "Ready" ? `Open pickup for ${customerName(o)}` : `Open customer page for ${customerName(o)}`}
-                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-th-secondary bg-th-elevated hover:bg-th-hover active:scale-95 transition-all duration-150">
+                      <button
+                        type="button"
+                        onClick={o.status === 'Ready' ? goPickup : viewOrder}
+                        aria-label={
+                          o.status === 'Ready'
+                            ? `Open pickup for ${customerName(o)}`
+                            : `Open customer page for ${customerName(o)}`
+                        }
+                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold text-th-secondary bg-th-elevated hover:bg-th-hover active:scale-95 transition-all duration-150"
+                      >
                         <ArrowUpRight size={16} />
                       </button>
                     )}
@@ -441,12 +637,20 @@ export default function Orders() {
 
       {/* Advance quantity modal */}
       {advanceModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fade-in p-4" onClick={() => setAdvanceModal(null)}>
-          <div className="bg-th-surface rounded-lg p-6 max-w-sm w-full animate-scale-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fade-in p-4"
+          onClick={() => setAdvanceModal(null)}
+        >
+          <div
+            className="bg-th-surface rounded-lg p-6 max-w-sm w-full animate-scale-in shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-10 h-10 bg-[#1ed760]/10 rounded-sm flex items-center justify-center mx-auto mb-3">
               <ArrowUpRight size={20} className="text-[#1ed760]" />
             </div>
-            <h3 className="text-base font-bold text-th-text text-center mb-1">Mark as &quot;{advanceModal.nextStatus}&quot;</h3>
+            <h3 className="text-base font-bold text-th-text text-center mb-1">
+              Mark as &quot;{advanceModal.nextStatus}&quot;
+            </h3>
             <p className="text-xs text-th-secondary text-center mb-4">
               {advanceModal.order.quantity && advanceModal.order.quantity > 1
                 ? `How many of ${advanceModal.order.quantity} pair(s) to advance?`
@@ -454,36 +658,66 @@ export default function Orders() {
             </p>
             {advanceModal.order.quantity && advanceModal.order.quantity > 1 && (
               <div className="flex items-center justify-center gap-3 mb-4">
-                <button onClick={() => setAdvanceQty(Math.max(1, advanceQty - 1))}
+                <button
+                  onClick={() => setAdvanceQty(Math.max(1, advanceQty - 1))}
                   aria-label="Decrease quantity"
-                  className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors">
+                  className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors"
+                >
                   <Minus size={16} className="text-th-secondary" />
                 </button>
-                <span className="text-xl font-bold text-th-text w-10 text-center">{advanceQty}</span>
-                <button onClick={() => setAdvanceQty(Math.min((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0), advanceQty + 1))}
+                <span className="text-xl font-bold text-th-text w-10 text-center">
+                  {advanceQty}
+                </span>
+                <button
+                  onClick={() =>
+                    setAdvanceQty(
+                      Math.min(
+                        (advanceModal.order.quantity || 1) -
+                          (advanceModal.order.forwardedCount || 0),
+                        advanceQty + 1
+                      )
+                    )
+                  }
                   aria-label="Increase quantity"
-                  className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors">
+                  className="w-9 h-9 rounded-full bg-th-elevated flex items-center justify-center hover:bg-th-hover transition-colors"
+                >
                   <Plus size={16} className="text-th-secondary" />
                 </button>
               </div>
             )}
             {(advanceModal.order.forwardedCount || 0) > 0 && (
               <p className="text-xs text-[#e8115b] text-center mb-2">
-                {advanceModal.order.forwardedCount} of {advanceModal.order.quantity} already advanced. Remaining: {(advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0)}
+                {advanceModal.order.forwardedCount} of {advanceModal.order.quantity} already
+                advanced. Remaining:{' '}
+                {(advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0)}
               </p>
             )}
             <div className="space-y-1.5">
-              <button onClick={confirmAdvance} disabled={statusLoading === advanceModal.order._id}
+              <button
+                onClick={confirmAdvance}
+                disabled={statusLoading === advanceModal.order._id}
                 aria-label={`Confirm advance ${advanceQty} pair(s) to ${advanceModal.nextStatus}`}
-                className="w-full bg-[#1ed760] text-black rounded-lg flex items-center justify-center gap-2 py-2.5 text-sm font-semibold hover:bg-[#1fdf64] disabled:opacity-50 transition-all duration-150">
-                {statusLoading === advanceModal.order._id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                {advanceModal.order.quantity && advanceQty < ((advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0))
+                className="w-full bg-[#1ed760] text-black rounded-lg flex items-center justify-center gap-2 py-2.5 text-sm font-semibold hover:bg-[#1fdf64] disabled:opacity-50 transition-all duration-150"
+              >
+                {statusLoading === advanceModal.order._id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                {advanceModal.order.quantity &&
+                advanceQty <
+                  (advanceModal.order.quantity || 1) - (advanceModal.order.forwardedCount || 0)
                   ? `Advance ${advanceQty} of ${advanceModal.order.quantity} pair(s)`
                   : `Mark All as ${advanceModal.nextStatus}`}
               </button>
-              <button onClick={() => setAdvanceModal(null)} disabled={statusLoading === advanceModal.order._id}
+              <button
+                onClick={() => setAdvanceModal(null)}
+                disabled={statusLoading === advanceModal.order._id}
                 aria-label="Cancel advance"
-                className="w-full bg-th-elevated text-th-secondary rounded-lg py-2.5 text-sm font-semibold hover:bg-th-hover transition-all duration-150 disabled:opacity-50">{uiT("Cancel", "रद्द करें")}</button>
+                className="w-full bg-th-elevated text-th-secondary rounded-lg py-2.5 text-sm font-semibold hover:bg-th-hover transition-all duration-150 disabled:opacity-50"
+              >
+                {uiT('Cancel', 'रद्द करें')}
+              </button>
             </div>
           </div>
         </div>

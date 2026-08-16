@@ -5,7 +5,18 @@ dotenv.config();
 async function clearFalka() {
   await mongoose.connect(process.env.MONGO_URI!, { maxPoolSize: 10 });
   const falkaDb = mongoose.connection.useDb("kmj_falke_bajar");
-  const collections = ["customers","visits","prescriptions","orders","bills","payments","inventory","deliveries","settings","todos"];
+  const collections = [
+    "customers",
+    "visits",
+    "prescriptions",
+    "orders",
+    "bills",
+    "payments",
+    "inventory",
+    "deliveries",
+    "settings",
+    "todos",
+  ];
   for (const c of collections) {
     try {
       await falkaDb.collection(c).drop();

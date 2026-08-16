@@ -471,9 +471,20 @@ If versioning is needed:
 app.use(
   rateLimit({
     windowMs: 60 * 1000,    // 1 minute window
-    max: 200,                // 200 requests per window
-    standardHeaders: true,   // Return rate limit info in headers
-    legacyHeaders: false,    // Disable X-RateLimit-* headers
+    max: 1000,              // 1000 requests per window
+    standardHeaders: true,  // Return rate limit info in headers
+    legacyHeaders: false,   // Disable X-RateLimit-* headers
+    keyGenerator: (req) => {
+      // authenticated requests get their own per-user quota
+      const auth = req.headers.authorization;
+      if (auth?.startsWith("Bearer ")) {
+        try {
+          const payload = verifyToken<{ sub?: string }>(auth.slice(7));
+          if (payload?.sub) return `user:${payload.sub}`;
+        } catch { /* fall through to IP */ }
+      }
+      return req.ip || "unknown";
+    },
   })
 );
 ```
@@ -481,15 +492,15 @@ app.use(
 ### Rate Limit Headers
 
 ```
-RateLimit-Limit: 200
-RateLimit-Remaining: 195
+RateLimit-Limit: 1000
+RateLimit-Remaining: 995
 RateLimit-Reset: 1705312800
 ```
 
 ### Rate Limit Rules
 
 1. **Global rate limit** on all `/api` routes
-2. **200 requests per minute** per IP
+2. **1000 requests per minute** per authenticated user / per IP (anonymous)
 3. **Return 429** when exceeded
 4. **Use standard headers** for client awareness
 5. **Consider stricter limits** for auth endpoints (future)

@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { useApi, useApiPost } from "./useApi";
-import { deliveryService } from "../services";
-import type { Order, PaginatedResponse, PaginationParams, DateRangeParams } from "../types";
+import { useCallback } from 'react';
+import { useApi, useApiPost } from './useApi';
+import { deliveryService } from '../services';
+import type { Order, PaginatedResponse, PaginationParams, DateRangeParams } from '../types';
 
 export function useReadyDeliveries(params?: PaginationParams) {
   const { data, loading, error, refetch } = useApi<PaginatedResponse<Order>>(
@@ -24,9 +24,12 @@ export function useDeliveredOrders(params?: PaginationParams & DateRangeParams) 
 export function useMarkDelivered() {
   const { loading, error, reset } = useApiPost<Order, { deliveryDate?: string; notes?: string }>();
 
-  const deliver = useCallback(async (orderId: string, data?: { deliveryDate?: string; notes?: string }) => {
-    return deliveryService.markDelivered(orderId, data);
-  }, []);
+  const deliver = useCallback(
+    async (orderId: string, data?: { deliveryDate?: string; notes?: string }) => {
+      return deliveryService.markDelivered(orderId, data);
+    },
+    []
+  );
 
   return { deliver, loading, error, reset };
 }
