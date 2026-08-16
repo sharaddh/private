@@ -1,10 +1,7 @@
-import mongoose from "mongoose";
-import { Bill } from "../models/bill";
-import { Customer } from "../models/customer";
-import { Payment } from "../models/payment";
-import { withTransaction } from "../utils/transaction";
-import { paginateQuery, parseDateRange, buildDateFilter } from "../utils/pagination";
+import { prisma } from "../db/prisma";
+import { paginateFind, prismaDateRange, parseDateRange } from "../utils/pagination";
 import { istDateKey } from "../utils/date";
+import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import { restoreStockForOrder, decrementStockForOrder } from "./inventory.service";
 import type { PaginatedResult } from "../types";
@@ -42,10 +39,10 @@ interface BillFilters {
 }
 
 interface BillResult {
-  _id: mongoose.Types.ObjectId;
+  id: string;
   billNumber: string;
-  customerId: mongoose.Types.ObjectId;
-  visitId?: mongoose.Types.ObjectId;
+  customerId: string;
+  visitId?: string;
   items: Array<{
     description: string;
     quantity: number;
@@ -80,22 +77,19 @@ function calculateBillAmounts(
   return { subtotal, totalAmount, pendingAmount };
 }
 
+const billInclude = {
+  customer: { select: { id: true, name: true, mobile: true, customerId: true } },
+} as const;
+
 export async function generateBillNumber(): Promise<string> {
   const datePart = istDateKey(new Date()).replace(/-/g, "");
   const prefix = `BILL-${datePart}-`;
 
-  const Counter = mongoose.connection.collection("counters");
-  const result = await Counter.findOneAndUpdate(
-    { _id: `billSequence-${datePart}` as unknown as mongoose.Types.ObjectId, datePrefix: datePart },
-    {
-      $inc: { seq: 1 },
-      $setOnInsert: { datePrefix: datePart },
-    },
-    { upsert: true, returnDocument: "after" }
-  );
+  const count = await prisma.bill.count({
+    where: { billNumber: { startsWith: prefix } },
+  });
 
-  const seq = (result as unknown as { seq?: number })?.seq ?? 1;
-  const seqStr = String(seq).padStart(4, "0");
+  const seqStr = String(count + 1).padStart(4, "0");
   return `${prefix}${seqStr}`;
 }
 
@@ -122,116 +116,118 @@ export async function createBill(
 
   const billNumber = await generateBillNumber();
 
-  const result = await withTransaction(async (session) => {
-    const bill = await Bill.create(
-      [
-        {
-          billNumber,
-          customerId,
-          visitId: visitId || data.visitId,
-          items: items.map((it) => ({
-            description: it.description,
-            quantity: it.quantity || 1,
-            unitPrice: it.unitPrice || 0,
-            total: (it.quantity || 1) * (it.unitPrice || 0),
-          })),
-          subtotal,
-          discount,
-          tax,
-          advancePaid,
-          pendingAmount,
-          totalAmount,
-          status: "Active",
-        },
-      ],
-      { session }
-    );
-
-    await Customer.findByIdAndUpdate(
+  const bill = await prisma.bill.create({
+    data: {
+      billNumber,
       customerId,
-      { $inc: { totalSpent: totalAmount, pendingAmount } },
-      { session }
-    );
-
-    return bill[0];
+      visitId: visitId || data.visitId,
+      branchId: requireBranchId(),
+      items: {
+        create: items.map((it) => ({
+          description: it.description,
+          quantity: it.quantity || 1,
+          unitPrice: it.unitPrice || 0,
+          total: (it.quantity || 1) * (it.unitPrice || 0),
+        })),
+      },
+      subtotal,
+      discount,
+      tax,
+      advancePaid,
+      pendingAmount,
+      totalAmount,
+      status: "Active",
+    },
+    include: billInclude,
   });
 
-  return result as unknown as BillResult;
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: {
+      totalSpent: { increment: totalAmount },
+      pendingAmount: { increment: pendingAmount },
+    },
+  });
+
+  return bill as unknown as BillResult;
 }
 
 export async function updateBill(billId: string, updates: UpdateBillData): Promise<BillResult> {
-  const result = await withTransaction(async (session) => {
-    const bill = await (Bill as any).findById(billId).session(session);
-    if (!bill) {
-      throw new AppError(404, "Bill not found");
+  const existing = await prisma.bill.findUnique({ where: { id: billId } });
+  if (!existing) {
+    throw new AppError(404, "Bill not found");
+  }
+
+  const oldTotal = existing.totalAmount || 0;
+  const oldPending = existing.pendingAmount || 0;
+  const oldStatus = existing.status;
+
+  const items =
+    updates.items ||
+    (existing.items as unknown as Array<{ description: string; quantity: number; unitPrice: number }>).map((it) => ({
+      description: it.description,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+    }));
+  const discount = updates.discount !== undefined ? updates.discount : existing.discount;
+  const tax = updates.tax !== undefined ? updates.tax : existing.tax;
+  const advancePaid = updates.advancePaid !== undefined ? updates.advancePaid : existing.advancePaid;
+
+  const { subtotal, totalAmount, pendingAmount } = calculateBillAmounts(
+    items,
+    discount,
+    tax,
+    advancePaid
+  );
+
+  const newItems =
+    updates.items
+      ? items.map((it: BillItemInput) => ({
+          description: it.description,
+          quantity: it.quantity || 1,
+          unitPrice: it.unitPrice || 0,
+          total: (it.quantity || 1) * (it.unitPrice || 0),
+        }))
+      : existing.items;
+
+  const newStatus = updates.status || existing.status;
+
+  if (oldStatus !== newStatus && Array.isArray(existing.stockItems) && (existing.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
+    const stockItems = existing.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
+    if (newStatus === "Cancelled") {
+      await restoreStockForOrder({ stockItems });
+    } else if (oldStatus === "Cancelled") {
+      await decrementStockForOrder({ stockItems });
     }
+  }
 
-    const oldTotal = bill.totalAmount || 0;
-    const oldPending = bill.pendingAmount || 0;
-    const oldStatus = bill.status;
-
-    const items =
-      updates.items ||
-      bill.items.map((it: { description: string; quantity: number; unitPrice: number }) => ({
-        description: it.description,
-        quantity: it.quantity,
-        unitPrice: it.unitPrice,
-      }));
-    const discount = updates.discount !== undefined ? updates.discount : bill.discount;
-    const tax = updates.tax !== undefined ? updates.tax : bill.tax;
-    const advancePaid = updates.advancePaid !== undefined ? updates.advancePaid : bill.advancePaid;
-
-    const { subtotal, totalAmount, pendingAmount } = calculateBillAmounts(
-      items,
+  const bill = await prisma.bill.update({
+    where: { id: billId },
+    data: {
+      items: newItems,
       discount,
       tax,
-      advancePaid
-    );
-
-    if (updates.items) {
-      bill.items = items.map((it: BillItemInput) => ({
-        description: it.description,
-        quantity: it.quantity || 1,
-        unitPrice: it.unitPrice || 0,
-        total: (it.quantity || 1) * (it.unitPrice || 0),
-      }));
-    }
-    if (updates.discount !== undefined) bill.discount = discount;
-    if (updates.tax !== undefined) bill.tax = tax;
-    if (updates.advancePaid !== undefined) bill.advancePaid = advancePaid;
-    if (updates.status) bill.status = updates.status;
-
-    bill.subtotal = subtotal;
-    bill.totalAmount = totalAmount;
-    bill.pendingAmount = pendingAmount;
-
-    if (oldStatus !== bill.status && Array.isArray(bill.stockItems) && bill.stockItems.length > 0) {
-      if (bill.status === "Cancelled") {
-        await restoreStockForOrder({ stockItems: bill.stockItems }, session);
-      } else if (oldStatus === "Cancelled") {
-        await decrementStockForOrder({ stockItems: bill.stockItems }, session);
-      }
-    }
-
-    await bill.save({ session });
-
-    const newTotal = totalAmount;
-    const newPending = pendingAmount;
-    const totalDiff = newTotal - oldTotal;
-    const pendingDiff = newPending - oldPending;
-
-    const customerUpdates: Record<string, number> = {};
-    if (Math.abs(totalDiff) > 0.01) customerUpdates.totalSpent = totalDiff;
-    if (Math.abs(pendingDiff) > 0.01) customerUpdates.pendingAmount = pendingDiff;
-
-    if (Object.keys(customerUpdates).length > 0) {
-      await Customer.findByIdAndUpdate(bill.customerId, { $inc: customerUpdates }, { session });
-    }
-
-    return bill;
+      advancePaid,
+      subtotal,
+      totalAmount,
+      pendingAmount,
+      status: newStatus,
+    },
+    include: billInclude,
   });
 
-  return result as unknown as BillResult;
+  const totalDiff = totalAmount - oldTotal;
+  const pendingDiff = pendingAmount - oldPending;
+
+  const customerData: Record<string, unknown> = {};
+  if (Math.abs(totalDiff) > 0.01) customerData.totalSpent = { increment: totalDiff };
+  if (Math.abs(pendingDiff) > 0.01) customerData.pendingAmount = { increment: pendingDiff };
+
+  if (Object.keys(customerData).length > 0) {
+    await prisma.customer.update({ where: { id: bill.customerId }, data: customerData });
+  }
+
+  return bill as unknown as BillResult;
 }
 
 export async function collectBillPayment(
@@ -239,73 +235,72 @@ export async function collectBillPayment(
   amount: number,
   paymentMode: string
 ): Promise<{ payment: unknown; bill: unknown }> {
-  const result = await withTransaction(async (session) => {
-    const bill = await (Bill as any).findById(billId).session(session);
-    if (!bill) {
-      throw new AppError(404, "Bill not found");
-    }
-    if (bill.pendingAmount <= 0) {
-      throw new AppError(400, "No pending amount on this bill");
-    }
+  const bill = await prisma.bill.findUnique({ where: { id: billId } });
+  if (!bill) {
+    throw new AppError(404, "Bill not found");
+  }
+  if (bill.pendingAmount <= 0) {
+    throw new AppError(400, "No pending amount on this bill");
+  }
 
-    const actualCollect = Math.min(amount, bill.pendingAmount);
+  const actualCollect = Math.min(amount, bill.pendingAmount);
 
-    const payment = await (Payment as any).create(
-      [
-        {
-          customerId: bill.customerId,
-          billId: bill._id,
-          amount: actualCollect,
-          paymentMode: paymentMode || "Cash",
-          paymentDate: new Date(),
-          notes: "Payment collected",
-        },
-      ],
-      { session }
-    );
+  const newAdvancePaid = (bill.advancePaid || 0) + actualCollect;
+  const newPending = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
 
-    bill.advancePaid = (bill.advancePaid || 0) + actualCollect;
-    bill.pendingAmount = Math.max(0, (bill.totalAmount || 0) - bill.advancePaid);
-    await bill.save({ session });
+  const [payment, updatedBill] = await prisma.$transaction([
+    prisma.payment.create({
+      data: {
+        customerId: bill.customerId,
+        billId: bill.id,
+        amount: actualCollect,
+        paymentMode: paymentMode || "Cash",
+        paymentDate: new Date(),
+        notes: "Payment collected",
+        branchId: requireBranchId(),
+      },
+    }),
+    prisma.bill.update({
+      where: { id: billId },
+      data: { advancePaid: newAdvancePaid, pendingAmount: newPending },
+    }),
+  ]);
 
-    await Customer.findByIdAndUpdate(
-      bill.customerId,
-      { $inc: { pendingAmount: -actualCollect } },
-      { session }
-    );
-
-    return { payment: payment[0], bill };
+  await prisma.customer.update({
+    where: { id: bill.customerId },
+    data: { pendingAmount: { decrement: actualCollect } },
   });
 
-  return result as { payment: unknown; bill: unknown };
+  return { payment, bill: updatedBill };
 }
 
 export async function deleteBill(billId: string): Promise<void> {
-  await withTransaction(async (session) => {
-    const bill = await Bill.findByIdAndDelete(billId).session(session);
-    if (!bill) {
-      throw new AppError(404, "Bill not found");
-    }
+  const bill = await prisma.bill.findUnique({ where: { id: billId }, include: { stockItems: true } });
+  if (!bill) {
+    throw new AppError(404, "Bill not found");
+  }
 
-    if (Array.isArray(bill.stockItems) && bill.stockItems.length > 0) {
-      await restoreStockForOrder({ stockItems: bill.stockItems }, session);
-    }
+  if (Array.isArray(bill.stockItems) && (bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
+    const stockItems = bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
+    await restoreStockForOrder({ stockItems });
+  }
 
-    await Customer.findByIdAndUpdate(
-      bill.customerId,
-      {
-        $inc: {
-          totalSpent: -(bill.totalAmount || 0),
-          pendingAmount: -(bill.pendingAmount || 0),
-        },
-      },
-      { session }
-    );
+  await prisma.bill.delete({ where: { id: billId } });
+
+  await prisma.customer.update({
+    where: { id: bill.customerId },
+    data: {
+      totalSpent: { decrement: bill.totalAmount || 0 },
+      pendingAmount: { decrement: bill.pendingAmount || 0 },
+    },
   });
 }
 
 export async function getBillById(billId: string): Promise<BillResult> {
-  const bill = await Bill.findById(billId).populate("customerId", "name mobile customerId").lean();
+  const bill = await prisma.bill.findUnique({
+    where: { id: billId },
+    include: billInclude,
+  });
   if (!bill) {
     throw new AppError(404, "Bill not found");
   }
@@ -313,28 +308,25 @@ export async function getBillById(billId: string): Promise<BillResult> {
 }
 
 export async function listBills(filters: BillFilters): Promise<PaginatedResult<BillResult>> {
-  const filter: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {};
 
   if (filters.customerId) {
-    filter.customerId = filters.customerId;
+    where.customerId = filters.customerId;
   }
 
   const { start, end } = parseDateRange({
     startDate: filters.startDate,
     endDate: filters.endDate,
   });
-  const dateFilter = buildDateFilter("createdAt", start, end);
-  if (dateFilter) {
-    Object.assign(filter, dateFilter);
+  const dateRange = prismaDateRange("createdAt", start, end);
+  if (dateRange) {
+    Object.assign(where, dateRange);
   }
 
-  const query = Bill.find(filter)
-    .populate("customerId", "name mobile customerId")
-    .sort({ createdAt: -1 });
-
-  return paginateQuery(query as never, {
-    page: filters.page,
-    limit: filters.limit,
-    cursor: filters.cursor,
-  }) as unknown as Promise<PaginatedResult<BillResult>>;
+  return paginateFind(
+    (args) => prisma.bill.findMany({ ...args, include: billInclude }),
+    (w) => prisma.bill.count({ where: w }),
+    { page: filters.page, limit: filters.limit, cursor: filters.cursor },
+    { where, orderBy: { createdAt: "desc" } }
+  ) as Promise<PaginatedResult<BillResult>>;
 }

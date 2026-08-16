@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
 import { User } from "../models/user";
 import { Branch } from "../models/branch";
 import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
@@ -48,7 +47,7 @@ interface FormattedUser {
   mobile: string;
   role: string;
   branches: Array<{
-    _id: string;
+    id: string;
     name: string;
     code: string;
     dbName: string;
@@ -76,31 +75,46 @@ interface LoginResult {
 
 async function formatUserWithBranches(user: any): Promise<FormattedUser> {
   const role = user.role as string;
-  const branches = user.branches as mongoose.Types.ObjectId[] | undefined;
 
   let branchList: FormattedUser["branches"] = [];
-  if (branches && branches.length > 0) {
-    const branchIds = branches.map((b) => String(b));
-    const docs = await Branch.find({ _id: { $in: branches }, isActive: true })
-      .select("name code dbName isActive settings")
-      .lean();
 
-    const docMap = new Map(docs.map((b) => [String(b._id), b]));
-    branchList = branchIds
-      .map((id) => docMap.get(id))
-      .filter((b): b is NonNullable<(typeof docs)[number]> => Boolean(b))
-      .map((b) => ({
-        _id: String(b._id),
-        name: b.name,
-        code: b.code,
-        dbName: b.dbName,
-        isActive: b.isActive,
-        settings: b.settings,
-      }));
+  if (user.branches && Array.isArray(user.branches) && user.branches.length > 0) {
+    const branches = user.branches as any[];
+    if (typeof branches[0] === "object" && branches[0] !== null) {
+      branchList = branches
+        .filter((b) => b.isActive)
+        .map((b) => ({
+          id: b.id,
+          name: b.name,
+          code: b.code,
+          dbName: b.dbName,
+          isActive: b.isActive,
+          settings: b.settings,
+        }));
+    } else {
+      const branchIds = branches.map((b: any) => (typeof b === "string" ? b : String(b)));
+      const docs = await Branch.findMany({
+        where: { id: { in: branchIds }, isActive: true },
+        select: { id: true, name: true, code: true, dbName: true, isActive: true, settings: true },
+      });
+
+      const docMap = new Map(docs.map((b) => [b.id, b]));
+      branchList = branchIds
+        .map((id) => docMap.get(id))
+        .filter((b): b is NonNullable<(typeof docs)[number]> => Boolean(b))
+        .map((b) => ({
+          id: b.id,
+          name: b.name,
+          code: b.code,
+          dbName: b.dbName,
+          isActive: b.isActive,
+          settings: b.settings as any,
+        }));
+    }
   }
 
   return {
-    id: String(user._id),
+    id: user.id,
     username: user.username,
     name: user.name || "",
     mobile: user.mobile || "",
@@ -121,7 +135,7 @@ export async function registerUser(
     throw new AppError(400, "Username and password required");
   }
 
-  const existing = await User.findOne({ username: data.username }).lean();
+  const existing = await User.findFirst({ where: { username: data.username } });
   if (existing) {
     throw new AppError(409, "Username already exists");
   }
@@ -134,12 +148,15 @@ export async function registerUser(
     finalRole === "staff" && data.branchId ? [data.branchId] : data.branches || [];
 
   const user = await User.create({
-    username: data.username,
-    passwordHash,
-    name: data.name || "",
-    mobile: data.mobile || "",
-    role: finalRole,
-    branches: userBranches,
+    data: {
+      username: data.username,
+      passwordHash,
+      name: data.name || "",
+      mobile: data.mobile || "",
+      role: finalRole,
+      branches: userBranches.length > 0 ? { connect: userBranches.map((id) => ({ id })) } : undefined,
+    },
+    include: { branches: true },
   });
 
   return formatUserWithBranches(user);
@@ -150,7 +167,7 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findOne({ username: data.username }).lean();
+  const user = await User.findFirst({ where: { username: data.username } });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
@@ -166,14 +183,14 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
 
   const formatted = await formatUserWithBranches(user);
   const userBranches = formatted.branches || [];
-  const selectedBranchId = userBranches[0]?._id;
+  const selectedBranchId = userBranches[0]?.id;
 
   const access = signAccess({
-    sub: String(user._id),
+    sub: user.id,
     username: user.username,
     role: user.role,
   });
-  const refresh = signRefresh({ sub: String(user._id) });
+  const refresh = signRefresh({ sub: user.id });
 
   return {
     user: formatted,
@@ -188,7 +205,7 @@ export async function staffLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findOne({ username: data.username }).lean();
+  const user = await User.findFirst({ where: { username: data.username } });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
@@ -208,14 +225,14 @@ export async function staffLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(403, "Your account has not been assigned to any branch. Contact admin.");
   }
 
-  const branchId = staffBranches[0]._id;
+  const branchId = staffBranches[0].id;
 
   const access = signAccess({
-    sub: String(user._id),
+    sub: user.id,
     username: user.username,
     role: user.role,
   });
-  const refresh = signRefresh({ sub: String(user._id) });
+  const refresh = signRefresh({ sub: user.id });
 
   return {
     user: formatted,
@@ -230,7 +247,7 @@ export async function warehouseLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findOne({ username: data.username }).lean();
+  const user = await User.findFirst({ where: { username: data.username } });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
@@ -245,11 +262,11 @@ export async function warehouseLogin(data: LoginData): Promise<LoginResult> {
   }
 
   const access = signAccess({
-    sub: String(user._id),
+    sub: user.id,
     username: user.username,
     role: user.role,
   });
-  const refresh = signRefresh({ sub: String(user._id) });
+  const refresh = signRefresh({ sub: user.id });
   const formatted = await formatUserWithBranches(user);
 
   return {
@@ -267,23 +284,26 @@ export async function registerOwner(
     throw new AppError(400, "Username and password required");
   }
 
-  const existing = await User.findOne({ username: data.username }).lean();
+  const existing = await User.findFirst({ where: { username: data.username } });
   if (existing) {
     throw new AppError(409, "Username already exists");
   }
 
-  const ownerCount = await User.countDocuments({ role: "owner" });
+  const ownerCount = await User.count({ where: { role: "owner" } });
   if (ownerCount > 0 && requestorRole !== "owner") {
     throw new AppError(403, "Only owners can create new owners");
   }
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const user = await User.create({
-    username: data.username,
-    passwordHash,
-    name: data.name || "",
-    mobile: data.mobile || "",
-    role: "owner",
+    data: {
+      username: data.username,
+      passwordHash,
+      name: data.name || "",
+      mobile: data.mobile || "",
+      role: "owner",
+    },
+    include: { branches: true },
   });
 
   return formatUserWithBranches(user);
@@ -295,13 +315,13 @@ export async function refreshToken(refreshTokenStr: string): Promise<{ access: s
   }
 
   const payload = verifyToken<{ sub: string }>(refreshTokenStr);
-  const user = await User.findById(payload.sub).lean();
+  const user = await User.findUnique({ where: { id: payload.sub } });
   if (!user) {
     throw new AppError(404, "User not found");
   }
 
   const access = signAccess({
-    sub: String(user._id),
+    sub: user.id,
     username: user.username,
     role: user.role,
   });
@@ -310,7 +330,10 @@ export async function refreshToken(refreshTokenStr: string): Promise<{ access: s
 }
 
 export async function getProfile(userId: string): Promise<FormattedUser> {
-  const user = await User.findById(userId).select("-passwordHash").lean();
+  const user = await User.findUnique({
+    where: { id: userId },
+    include: { branches: true },
+  });
   if (!user) {
     throw new AppError(404, "User not found");
   }
@@ -328,9 +351,16 @@ export async function updateProfile(
     update.passwordHash = await bcrypt.hash(data.password, 10);
   }
 
-  const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true })
-    .select("-passwordHash")
-    .lean();
+  let user;
+  try {
+    user = await User.update({
+      where: { id: userId },
+      data: update as any,
+      include: { branches: true },
+    });
+  } catch {
+    user = null;
+  }
   if (!user) {
     throw new AppError(404, "User not found");
   }
@@ -347,17 +377,26 @@ export async function updateUser(
     throw new AppError(403, "Access denied");
   }
 
-  const update: Record<string, unknown> = {};
-  if (data.branches !== undefined) update.branches = data.branches;
-  if (data.name !== undefined) update.name = data.name;
-  if (data.mobile !== undefined) update.mobile = data.mobile;
+  const updateData: Record<string, unknown> = {};
+  if (data.branches !== undefined) {
+    updateData.branches = { set: data.branches.map((id) => ({ id })) };
+  }
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.mobile !== undefined) updateData.mobile = data.mobile;
   if (data.password?.trim()) {
-    update.passwordHash = await bcrypt.hash(data.password, 10);
+    updateData.passwordHash = await bcrypt.hash(data.password, 10);
   }
 
-  const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true })
-    .select("-passwordHash")
-    .lean();
+  let user;
+  try {
+    user = await User.update({
+      where: { id: userId },
+      data: updateData as any,
+      include: { branches: true },
+    });
+  } catch {
+    user = null;
+  }
   if (!user) {
     throw new AppError(404, "User not found");
   }
@@ -370,7 +409,10 @@ export async function listUsers(requestorRole: string): Promise<FormattedUser[]>
     throw new AppError(403, "Only admin can list users");
   }
 
-  const users = await User.find().select("-passwordHash").sort({ createdAt: -1 }).lean();
+  const users = await User.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { branches: true },
+  });
 
   return Promise.all(users.map((u) => formatUserWithBranches(u)));
 }
@@ -389,13 +431,13 @@ export async function listWarehouseUsers(requestorRole: string): Promise<
     throw new AppError(403, "Access denied");
   }
 
-  const users = await User.find({ role: "owner" })
-    .select("-passwordHash")
-    .sort({ createdAt: -1 })
-    .lean();
+  const users = await User.findMany({
+    where: { role: "owner" },
+    orderBy: { createdAt: "desc" },
+  });
 
   return users.map((u) => ({
-    id: String(u._id),
+    id: u.id,
     username: u.username,
     name: u.name,
     mobile: u.mobile,
@@ -413,7 +455,7 @@ export async function deleteUser(
     throw new AppError(403, "Access denied");
   }
 
-  const target = await User.findById(targetId).lean();
+  const target = await User.findUnique({ where: { id: targetId } });
   if (!target) {
     throw new AppError(404, "User not found");
   }
@@ -422,9 +464,9 @@ export async function deleteUser(
     throw new AppError(400, "Owner accounts cannot be deleted");
   }
 
-  if (String(target._id) === requestorUserId) {
+  if (target.id === requestorUserId) {
     throw new AppError(400, "Cannot delete yourself");
   }
 
-  await User.findByIdAndDelete(targetId);
+  await User.delete({ where: { id: targetId } });
 }
