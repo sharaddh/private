@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 
 const InventoryCountEntrySchemaObj = new Schema(
   {
@@ -21,5 +22,4 @@ const InventoryCountEntrySchemaObj = new Schema(
 InventoryCountEntrySchemaObj.index({ countSessionId: 1, variantId: 1 });
 
 export const InventoryCountEntrySchema = InventoryCountEntrySchemaObj;
-const _InventoryCountEntry = model("InventoryCountEntry", InventoryCountEntrySchemaObj);
-export const InventoryCountEntry = withBranch(_InventoryCountEntry, "InventoryCountEntry");
+export const InventoryCountEntry = scoped(prisma.inventoryCountEntry) as Prisma.InventoryCountEntryDelegate;

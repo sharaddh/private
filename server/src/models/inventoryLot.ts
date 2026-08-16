@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 import { VALID_LOT_SOURCES } from "../types";
 
 const InventoryLotSchemaObj = new Schema(
@@ -27,5 +28,4 @@ InventoryLotSchemaObj.index({ variantId: 1, createdAt: 1 });
 InventoryLotSchemaObj.index({ variantId: 1, expiryDate: 1 });
 
 export const InventoryLotSchema = InventoryLotSchemaObj;
-const _InventoryLot = model("InventoryLot", InventoryLotSchemaObj);
-export const InventoryLot = withBranch(_InventoryLot, "InventoryLot");
+export const InventoryLot = scoped(prisma.inventoryLot) as Prisma.InventoryLotDelegate;
