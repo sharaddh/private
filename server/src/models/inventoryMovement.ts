@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
-import { withBranch } from "../utils/branchProxy";
+import { Schema } from "mongoose";
+import { prisma, type Prisma } from "../db/prisma";
+import { scoped } from "../utils/scope";
 import { VALID_INVENTORY_MOVEMENT_TYPES, VALID_MOVEMENT_REFERENCES } from "../types";
 
 const LotBreakdownSchemaObj = new Schema(
@@ -39,5 +40,4 @@ InventoryMovementSchemaObj.index({ referenceId: 1 });
 InventoryMovementSchemaObj.index({ createdAt: -1 });
 
 export const InventoryMovementSchema = InventoryMovementSchemaObj;
-const _InventoryMovement = model("InventoryMovement", InventoryMovementSchemaObj);
-export const InventoryMovement = withBranch(_InventoryMovement, "InventoryMovement");
+export const InventoryMovement = scoped(prisma.inventoryMovement) as Prisma.InventoryMovementDelegate;
