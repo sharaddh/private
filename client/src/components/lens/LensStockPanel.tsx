@@ -6,8 +6,10 @@ import {
   TABS,
   getTotalQty,
   POWER_VALUES,
-  SPH_INNER,
-  CYL_RANGE,
+  NEG_SPH_INNER,
+  POS_SPH_INNER,
+  NEG_CYL,
+  POS_CYL,
   ZERO_KEYS,
   type TabKey,
 } from './powers';
@@ -247,8 +249,13 @@ function LensStockPanelInner({
         addIfLow('sph', key);
         addIfLow('cyl', key);
       }
-      for (const sph of SPH_INNER) {
-        for (const cyl of CYL_RANGE) {
+      for (const sph of NEG_SPH_INNER) {
+        for (const cyl of NEG_CYL) {
+          addIfLow('compound', `${sph}|${cyl}`);
+        }
+      }
+      for (const sph of POS_SPH_INNER) {
+        for (const cyl of POS_CYL) {
           addIfLow('compound', `${sph}|${cyl}`);
         }
       }

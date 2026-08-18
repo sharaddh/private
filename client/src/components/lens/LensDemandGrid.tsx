@@ -9,7 +9,6 @@ import {
   POS_CYL,
   NEG_SPH_INNER,
   POS_SPH_INNER,
-  SPH_INNER,
   type TabKey,
 } from './powers';
 
@@ -122,13 +121,9 @@ export default function LensDemandGrid({
     demandSel.get(demandKey(coating, lensTypeKey, powerKey)) || 0;
 
   if (lensType === 'compound') {
-    const cylGroups: { label: string; values: string[] }[] = [
-      { label: 'Negative CYL', values: NEG_CYL },
-      { label: 'Positive CYL', values: POS_CYL },
-    ];
-    const sphInnerGroups: { label: string; values: string[] }[] = [
-      { label: 'Negative SPH', values: NEG_SPH_INNER },
-      { label: 'Positive SPH', values: POS_SPH_INNER },
+    const cylGroups: { label: string; values: string[]; sphValues: string[] }[] = [
+      { label: 'Negative CYL', values: NEG_CYL, sphValues: NEG_SPH_INNER },
+      { label: 'Positive CYL', values: POS_CYL, sphValues: POS_SPH_INNER },
     ];
     return (
       <div className="space-y-2">
@@ -143,7 +138,7 @@ export default function LensDemandGrid({
                 {group.values.map((cyl) => {
                   const isOpen = openGroup === cyl;
                   let sphStockCount = 0;
-                  for (const sph of SPH_INNER) {
+                  for (const sph of group.sphValues) {
                     if ((quantities[`${sph}|${cyl}`] || 0) > 0) sphStockCount++;
                   }
                   return (
@@ -166,33 +161,26 @@ export default function LensDemandGrid({
                         </span>
                       </button>
                       {isOpen && (
-                        <div className="mt-2 space-y-3">
-                          {sphInnerGroups.map((sphGroup) => (
-                            <div key={sphGroup.label}>
-                              <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">
-                                {sphGroup.label}
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                {sphGroup.values.map((sph) => {
-                                  const key = `${sph}|${cyl}`;
-                                  const qty = quantities[key] || 0;
-                                  const need = Math.max(0, demandTarget - qty);
-                                  const dKey = demandKey(coating, 'compound', key);
-                                  return (
-                                    <DemandCell
-                                      key={sph}
-                                      power={`${sph === '+0.00' || sph === '0.00' || sph === '-0.00' ? '0.00' : sph} | ${cyl === '+0.00' || cyl === '0.00' ? '0.00' : cyl}`}
-                                      qty={qty}
-                                      need={need}
-                                      demandQty={demandSel.get(dKey) || 0}
-                                      onToggle={() => onToggleDemand(dKey)}
-                                      onRemove={() => onRemoveDemand(dKey)}
-                                    />
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="mt-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                            {group.sphValues.map((sph) => {
+                              const key = `${sph}|${cyl}`;
+                              const qty = quantities[key] || 0;
+                              const need = Math.max(0, demandTarget - qty);
+                              const dKey = demandKey(coating, 'compound', key);
+                              return (
+                                <DemandCell
+                                  key={sph}
+                                  power={`${sph === '+0.00' || sph === '0.00' || sph === '-0.00' ? '0.00' : sph} | ${cyl === '+0.00' || cyl === '0.00' ? '0.00' : cyl}`}
+                                  qty={qty}
+                                  need={need}
+                                  demandQty={demandSel.get(dKey) || 0}
+                                  onToggle={() => onToggleDemand(dKey)}
+                                  onRemove={() => onRemoveDemand(dKey)}
+                                />
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>

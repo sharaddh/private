@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, ShoppingCart, X } from 'lucide-react';
-import { NEG_CYL, POS_CYL, NEG_SPH_INNER, POS_SPH_INNER, SPH_INNER } from './powers';
+import { NEG_CYL, POS_CYL, NEG_SPH_INNER, POS_SPH_INNER } from './powers';
 
 interface Props {
   quantities: Record<string, number>;
@@ -26,14 +26,9 @@ export default function CompoundGrid({
   const [openCyl, setOpenCyl] = useState<string>('');
   const editable = Boolean(onIncrement || onDecrement);
 
-  const cylGroups: { label: string; values: string[]; color: string }[] = [
-    { label: 'Negative CYL', values: NEG_CYL, color: 'text-amber-500' },
-    { label: 'Positive CYL', values: POS_CYL, color: 'text-emerald-500' },
-  ];
-
-  const sphInnerGroups: { label: string; values: string[]; color: string }[] = [
-    { label: 'Negative SPH', values: NEG_SPH_INNER, color: 'text-amber-500' },
-    { label: 'Positive SPH', values: POS_SPH_INNER, color: 'text-emerald-500' },
+  const cylGroups: { label: string; values: string[]; color: string; sphValues: string[] }[] = [
+    { label: 'Negative CYL', values: NEG_CYL, color: 'text-amber-500', sphValues: NEG_SPH_INNER },
+    { label: 'Positive CYL', values: POS_CYL, color: 'text-emerald-500', sphValues: POS_SPH_INNER },
   ];
 
   return (
@@ -61,7 +56,7 @@ export default function CompoundGrid({
                     : 'bg-emerald-500/10';
 
                 let sphStockCount = 0;
-                for (const sph of SPH_INNER) {
+                for (const sph of group.sphValues) {
                   if ((quantities[`${sph}|${cyl}`] || 0) > 0) sphStockCount++;
                 }
 
@@ -87,14 +82,9 @@ export default function CompoundGrid({
                       </span>
                     </button>
                     {isOpen && (
-                      <div className="mt-2 space-y-3">
-                        {sphInnerGroups.map((sphGroup) => (
-                          <div key={sphGroup.label}>
-                            <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">
-                              {sphGroup.label}
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
-                              {sphGroup.values.map((sph) => {
+                      <div className="mt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+                          {group.sphValues.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;
                                 const isNeg = sph.startsWith('-');
@@ -268,8 +258,6 @@ export default function CompoundGrid({
                                 );
                               })}
                             </div>
-                          </div>
-                        ))}
                       </div>
                     )}
                   </div>
