@@ -27,7 +27,7 @@ const envSchema = z.object({
     .default(30),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   ENABLE_CLUSTER: z.string().default("false"),
-  CLUSTER_WORKERS: z.preprocess(emptyToUndefined, z.coerce.number().int().positive()).default(0),
+  CLUSTER_WORKERS: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0)).default(0),
 });
 
 const parsed = envSchema.safeParse(process.env);
