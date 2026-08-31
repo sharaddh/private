@@ -80,7 +80,7 @@ app.post(
   "/api/whatsapp/webhook",
   express.raw({ type: "application/json", limit: "1mb" }),
   (req, _res, next) => {
-    (req as any).rawBody = req.body;
+    req.rawBody = req.body as Buffer;
     next();
   },
   verifyWebhook,
