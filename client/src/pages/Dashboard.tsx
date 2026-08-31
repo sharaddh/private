@@ -469,11 +469,17 @@ export default function Dashboard() {
   const [deliveriesTab, setDeliveriesTab] = useState<'pending' | 'today' | 'delivered'>('pending');
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [sendingDemand, setSendingDemand] = useState<'buy' | 'order' | null>(null);
+  const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
   const toast = useToast();
   const { dark, toggle } = useTheme();
   const { uiT } = useTranslate();
   const { user, currentBranch, isStaff } = useAuth();
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     if (dashboard) setHasDataOnce(true);
@@ -651,7 +657,6 @@ export default function Dashboard() {
   if (loading && !hasDataOnce) return <PageSkeleton page="dashboard" />;
   if (!dashboard) return null;
 
-  const now = new Date();
   const hour = now.getHours();
   const greeting =
     hour < 12
