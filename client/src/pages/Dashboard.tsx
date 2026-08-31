@@ -221,6 +221,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-3 sm:mb-4">
       <div className="flex items-center gap-2 sm:gap-3">
+        <span className="w-1 h-4 sm:h-5 rounded-full bg-gradient-to-b from-[#1ed760] to-[#6366f1]" />
         <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">
           {title}
         </h3>
@@ -237,7 +238,7 @@ function SectionHeader({
           className="flex items-center gap-1 sm:gap-1.5 text-[13px] sm:text-[16px] font-bold text-[#1ed760] hover:text-[#1ed760] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#1ed760]/10 uppercase tracking-wider transition-all active:scale-95"
         >
           {actionLabel || 'View all'}
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </button>
       )}
     </div>
