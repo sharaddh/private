@@ -829,7 +829,7 @@ export default function Dashboard() {
           label={uiT('Warehouse', 'वेयरहाउस')}
           subtitle={uiT('Manage central stock', 'केंद्रीय स्टॉक प्रबंधित करें')}
           onClick={() =>
-            window.open('https://kmj-m9aq.onrender.com/#/', '_blank', 'noopener,noreferrer')
+            window.open('/warehouse/#/', '_blank', 'noopener,noreferrer')
           }
           color="#0ea5e9"
         />
