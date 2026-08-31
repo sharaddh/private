@@ -134,9 +134,9 @@ function MetricCard({
   subtitle?: string;
 }) {
   return (
-    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-full active:scale-95 shadow-md cursor-default">
+    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-full active:scale-95 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-default transition-all duration-200 group">
       <div
-        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mb-1.5 sm:mb-2.5"
+        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mb-1.5 sm:mb-2.5 transition-transform duration-200 group-hover:scale-110"
         style={{ backgroundColor: `${color}15` }}
       >
         <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
