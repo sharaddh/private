@@ -41,35 +41,37 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
       return (
         <div
-          className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center"
+          className="flex flex-col items-center justify-center min-h-[300px] p-6 text-center"
           role="alert"
           aria-live="assertive"
         >
-          <div className="w-16 h-16 bg-[#e91429]/10 rounded-[8px] flex items-center justify-center mb-4">
-            <AlertTriangle size={32} className="text-[#e91429]" aria-hidden="true" />
+          <div className="w-14 h-14 bg-[#e91429]/10 rounded-2xl flex items-center justify-center mb-4">
+            <AlertTriangle size={28} className="text-[#e91429]" aria-hidden="true" />
           </div>
-          <h2 className="text-[28px] font-bold text-th-text mb-2">Something went wrong</h2>
-          <p className="text-[20px] text-th-secondary mb-2 max-w-md">
+          <h2 className="text-[20px] sm:text-[24px] font-bold text-th-text mb-1.5">
+            Something went wrong
+          </h2>
+          <p className="text-[14px] sm:text-[16px] text-th-secondary mb-4 max-w-md">
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           {import.meta.env.DEV && this.state.error?.stack && (
-            <pre className="text-[16px] text-th-secondary/60 max-w-lg mb-6 overflow-auto text-left whitespace-pre-wrap bg-th-hover/50 p-3 rounded-lg">
+            <pre className="text-[12px] sm:text-[13px] text-th-secondary/60 max-w-lg mb-5 overflow-auto text-left whitespace-pre-wrap bg-th-hover/50 p-3 rounded-lg w-full max-h-40">
               {this.state.error.stack}
             </pre>
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             <button
               onClick={this.handleReset}
-              className="inline-flex items-center gap-2 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold px-6 py-2.5 rounded-lg uppercase tracking-wider text-[18px] transition-all duration-200 active:scale-[0.95]"
+              className="inline-flex items-center gap-2 bg-[#1ed760] hover:bg-[#1ed760]/90 text-black font-semibold px-5 py-2 rounded-lg text-[14px] uppercase tracking-wider transition-all active:scale-[0.95]"
             >
-              <RefreshCw size={16} aria-hidden="true" />
+              <RefreshCw size={14} aria-hidden="true" />
               Try Again
             </button>
             <button
               onClick={this.handleGoHome}
-              className="inline-flex items-center gap-2 bg-th-hover hover:bg-th-active text-th-text font-semibold px-6 py-2.5 rounded-lg uppercase tracking-wider text-[18px] transition-all duration-200 active:scale-[0.95]"
+              className="inline-flex items-center gap-2 bg-th-elevated hover:bg-th-card text-th-text font-semibold px-5 py-2 rounded-lg text-[14px] uppercase tracking-wider transition-all active:scale-[0.95]"
             >
-              <Home size={16} aria-hidden="true" />
+              <Home size={14} aria-hidden="true" />
               Home
             </button>
           </div>
