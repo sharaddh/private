@@ -159,7 +159,7 @@ export interface Order {
   coating?: string;
   coatingPrice?: number;
   tint?: string;
-  accessories?: { name: string; price: number; quantity?: number }[];
+  accessories?: string[];
   rightLensStatus?: string;
   leftLensStatus?: string;
   prescription?: Prescription;

@@ -124,13 +124,13 @@ export function OrderStatusDonut({
   dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
-  const total = data.reduce((s, d) => s + d.total, 0);
+  const total = data.reduce((s, d) => s + d.count, 0);
   return (
     <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
-            Today's Payments
+            Order Status
           </h3>
           <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">
             {total} total orders
@@ -409,13 +409,13 @@ export function TodayPaymentDonut({
   dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
-  const total = data.reduce((s, d) => s + d.count, 0);
+  const total = data.reduce((s, d) => s + d.total, 0);
   return (
     <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
-            Order Status
+            Today's Payments
           </h3>
           <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">
             ₹{total.toLocaleString('en-IN')} collected
