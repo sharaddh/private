@@ -373,7 +373,7 @@ function AlertCard({
   };
   return (
     <ShineCard
-      className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-3 sm:p-4 active:scale-95 shadow-md hover:shadow-lg w-full h-full ${onClick ? 'cursor-pointer hover:bg-th-card' : ''}`}
+      className={`relative ${bgMap[color] || bgMap.blue} rounded-lg p-3 sm:p-4 active:scale-95 shadow-md hover:shadow-lg hover:scale-[1.02] w-full h-full ${onClick ? 'cursor-pointer hover:bg-th-card' : ''} transition-all duration-200`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -392,9 +392,9 @@ function AlertCard({
             {label}
           </p>
           <p
-            className={`text-lg sm:text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5 leading-tight`}
+            className={`text-lg sm:text-xl font-bold ${textMap[color] || textMap.blue} mt-0.5 leading-tight flex items-center gap-1`}
           >
-            {value}
+            {typeof value === 'number' ? <AnimatedCounter value={value} /> : value}
           </p>
         </div>
         {action && (
