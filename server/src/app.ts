@@ -135,12 +135,12 @@ app.use("/api", routes);
 app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
 function findDistPath(candidates: string[], label: string): string {
-  console.log(`[DIST] Searching for ${label}...`);
+  logger.info(`[DIST] Searching for ${label}...`);
   for (const p of candidates) {
-    console.log(`[DIST]   Checking: ${p} -> ${fs.existsSync(p) ? "FOUND" : "missing"}`);
+    logger.info(`[DIST]   Checking: ${p} -> ${fs.existsSync(p) ? "FOUND" : "missing"}`);
     if (fs.existsSync(p)) return p;
   }
-  console.log(`[DIST] ${label} not found in any candidate path`);
+  logger.warn(`[DIST] ${label} not found in any candidate path`);
   return "";
 }
 
@@ -153,7 +153,7 @@ function sendSpaIndex(res: express.Response, indexPath: string): void {
   res.sendFile(indexPath);
 }
 
-console.log(`[BOOT] __dirname=${__dirname}, cwd=${process.cwd()}, platform=${process.platform}`);
+logger.info(`[BOOT] __dirname=${__dirname}, cwd=${process.cwd()}, platform=${process.platform}`);
 
 const clientDistCandidates = [
   path.resolve(__dirname, "../../client/dist"),
@@ -177,7 +177,7 @@ const warehouseDistPath = findDistPath(warehouseDistCandidates, "warehouse/dist"
 const warehouseIndex = warehouseDistPath ? path.join(warehouseDistPath, "index.html") : "";
 
 if (distIndex && fs.existsSync(distIndex)) {
-  console.log(`[SERVE] Client dist: ${distPath}`);
+  logger.info(`[SERVE] Client dist: ${distPath}`);
   app.use(
     express.static(distPath, {
       maxAge: "1y",
@@ -190,11 +190,11 @@ if (distIndex && fs.existsSync(distIndex)) {
     })
   );
 } else {
-  console.warn("[SERVE] Client dist NOT found - client app will not be served");
+  logger.warn("[SERVE] Client dist NOT found - client app will not be served");
 }
 
 if (warehouseIndex && fs.existsSync(warehouseIndex)) {
-  console.log(`[SERVE] Warehouse dist: ${warehouseDistPath}`);
+  logger.info(`[SERVE] Warehouse dist: ${warehouseDistPath}`);
   app.use(
     "/warehouse",
     express.static(warehouseDistPath, {
@@ -218,7 +218,7 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
     sendSpaIndex(res, warehouseIndex);
   });
 } else {
-  console.warn("[SERVE] Warehouse dist NOT found - warehouse app will not be served");
+  logger.warn("[SERVE] Warehouse dist NOT found - warehouse app will not be served");
 }
 
 app.get("*", (req, res) => {
