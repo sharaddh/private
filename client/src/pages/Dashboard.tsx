@@ -185,10 +185,10 @@ function QuickActionCard({
     <ShineCard
       onClick={onClick}
       aria-label={label}
-      className="h-[70px] sm:h-[84px] flex items-center gap-2.5 sm:gap-3 bg-th-surface rounded-xl p-2.5 sm:p-3 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg cursor-pointer"
+      className="h-[70px] sm:h-[84px] flex items-center gap-2.5 sm:gap-3 bg-th-surface rounded-xl p-2.5 sm:p-3 w-full group active:scale-95 hover:bg-th-card shadow-md hover:shadow-lg hover:border-[#1ed760]/30 border border-transparent cursor-pointer transition-all duration-200"
     >
       <div
-        className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+        className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3"
         style={{ backgroundColor: `${color || '#1ed760'}18` }}
       >
         <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: color || '#1ed760' }} />
@@ -201,6 +201,7 @@ function QuickActionCard({
           {subtitle}
         </span>
       </div>
+      <ArrowUpRight className="w-3.5 h-3.5 text-th-muted opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />
     </ShineCard>
   );
 }
