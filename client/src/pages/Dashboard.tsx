@@ -1993,25 +1993,25 @@ export default function Dashboard() {
   return (
     <div className="bg-th-base min-h-screen" role="main">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 py-3 sm:py-5 md:py-6">
-        {renderHeader()}
+        <div className="section-animate">{renderHeader()}</div>
         {!isStaff && (
           <>
-            {renderHero()}
-            {renderQuickActions()}
-            {renderKPIs()}
-            {renderCharts()}
-            {renderNeedsAttention()}
+            <div className="section-animate">{renderHero()}</div>
+            <div className="section-animate">{renderQuickActions()}</div>
+            <div className="section-animate">{renderKPIs()}</div>
+            <div className="section-animate">{renderCharts()}</div>
+            <div className="section-animate">{renderNeedsAttention()}</div>
           </>
         )}
 
         {/* Pending Bills + Deliveries (tabbed) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
+        <div className="section-animate grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
           {renderPendingBills()}
           {renderDeliveries()}
         </div>
 
         {/* Lens Demand + Recent Orders side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
+        <div className="section-animate grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
           {renderLensDemand()}
           {renderRecentOrders()}
         </div>
@@ -2020,14 +2020,14 @@ export default function Dashboard() {
         {(() => {
           const payments = renderPayments();
           return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
+            <div className="section-animate grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
               <div className={payments ? '' : 'lg:col-span-2'}>{renderTodo()}</div>
               {!isStaff && payments}
             </div>
           );
         })()}
 
-        {!isStaff && renderSummary()}
+        <div className="section-animate">{!isStaff && renderSummary()}</div>
       </div>
 
       {/* Scanner Modal */}
