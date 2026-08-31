@@ -4,6 +4,7 @@ import api from '../api';
 import { useApi, useDashboard } from '../hooks';
 import PageSkeleton from '../components/PageSkeleton';
 import ShineCard from '../components/ShineCard';
+import AnimatedCounter from '../components/AnimatedCounter';
 import CameraScanner from '../components/CameraScanner';
 import {
   SalesTrendChart,
@@ -143,7 +144,11 @@ function MetricCard({
         className="text-base sm:text-lg font-bold text-th-text tracking-tight leading-tight"
         style={{ color }}
       >
-        {value}
+        {typeof value === 'number' ? (
+          <AnimatedCounter value={value} className="text-inherit" />
+        ) : (
+          value
+        )}
       </span>
       {trend && (
         <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded-md mt-0.5 sm:mt-1 whitespace-nowrap">
