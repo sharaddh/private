@@ -717,8 +717,9 @@ export default function Dashboard() {
   // Hero Section
 
   const renderHero = () => (
-    <div className="bg-th-surface rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg border border-th-border">
-      <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
+    <div className="relative bg-gradient-to-r from-[#1ed760]/10 via-th-surface to-[#6366f1]/10 rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg border border-th-border overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1ed760]/5 to-transparent pointer-events-none" />
+      <div className="relative flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div>
             <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">
