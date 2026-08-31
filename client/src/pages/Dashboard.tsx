@@ -277,7 +277,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 sm:py-14 text-center px-4 sm:px-6">
-      <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-th-elevated flex items-center justify-center mb-3 sm:mb-4">
+      <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-th-elevated to-th-card flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-105 transition-transform">
         <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-th-muted" />
       </div>
       <p className="text-[16px] sm:text-[20px] font-semibold text-th-text">{title}</p>
@@ -288,7 +288,7 @@ function EmptyState({
         <button
           onClick={onAction}
           aria-label={actionLabel}
-          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[14px] sm:text-[18px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider"
+          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[14px] sm:text-[18px] font-bold bg-[#1ed760] text-black hover:scale-105 transition-all active:scale-95 uppercase tracking-wider shadow-lg shadow-[#1ed760]/20"
         >
           <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           {actionLabel}
