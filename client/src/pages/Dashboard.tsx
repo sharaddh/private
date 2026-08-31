@@ -1359,7 +1359,7 @@ export default function Dashboard() {
             const custObj = typeof o.customerId === 'object' && o.customerId ? o.customerId : null;
             const cName = custObj?.name ?? '—';
             const cMobile = custObj?.mobile ?? '';
-            const rx = (o as any).prescription;
+            const rx = o.prescription;
             const rxParts: string[] = [];
             if (rx?.rightEye?.dv) {
               const r = rx.rightEye.dv;

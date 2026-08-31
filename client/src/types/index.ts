@@ -150,12 +150,16 @@ export interface Order {
   frameModel?: string;
   frameColor?: string;
   frameSize?: string;
+  framePrice?: number;
   lensBrand?: string;
   lensType?: string;
   lensIndex?: string;
   lensMaterial?: string;
+  lensPrice?: number;
   coating?: string;
+  coatingPrice?: number;
   tint?: string;
+  accessories?: { name: string; price: number; quantity?: number }[];
   rightLensStatus?: string;
   leftLensStatus?: string;
   prescription?: Prescription;
@@ -163,6 +167,7 @@ export interface Order {
   billInfo?: { totalAmount: number; pendingAmount: number };
   deliveryDate?: string;
   notes?: string;
+  problems?: string;
   createdAt: string;
   updatedAt?: string;
 }
