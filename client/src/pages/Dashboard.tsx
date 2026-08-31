@@ -111,7 +111,7 @@ function UserAvatar({ name, className = '' }: { name: string; className?: string
   const initial = (name || '?').charAt(0).toUpperCase();
   return (
     <div
-      className={`rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold flex-shrink-0 ${className}`}
+      className={`rounded-full bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-black font-bold flex-shrink-0 ring-2 ring-white/10 ${className}`}
     >
       {initial}
     </div>
