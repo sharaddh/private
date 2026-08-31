@@ -9,7 +9,7 @@ const emptyToUndefined = (v: unknown) => (v === "" ? undefined : v);
 
 const envSchema = z.object({
   PORT: z.preprocess(emptyToUndefined, z.coerce.number().int().positive()).default(4000),
-  MONGO_URI: z.string().default(""),
+  MONGO_URI: z.string().optional().default(""),
   DATABASE_URL: z.string().default(""),
   JWT_SECRET: z.string().default(""),
   JWT_ACCESS_EXPIRY: z.string().default("7d"),
@@ -73,7 +73,6 @@ export const isProduction = env.NODE_ENV === "production";
 if (isProduction) {
   const missing = [
     { name: "JWT_SECRET", value: env.JWT_SECRET },
-    { name: "MONGO_URI", value: env.MONGO_URI },
     { name: "DATABASE_URL", value: env.DATABASE_URL },
   ].filter((r) => !r.value);
   if (missing.length > 0) {
