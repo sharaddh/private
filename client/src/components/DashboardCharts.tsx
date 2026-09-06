@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import {
   AreaChart,
   Area,
@@ -24,8 +25,8 @@ const PAYMENT_COLORS: Record<string, string> = {
   'Bank Transfer': '#06b6d4',
 };
 
-function formatDateLabel(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
+function formatDateLabel(dateStr: ReactNode): string {
+  const d = new Date(String(dateStr ?? '') + 'T00:00:00');
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 

@@ -1,6 +1,10 @@
 import type { ApiResponse } from './types';
+import { getCacheSnapshot, setCache } from './hooks/cacheStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+
+const GET_CACHE_TTL = 60 * 1000;
+const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/staff-login', '/auth/refresh'];
 
 const TOKEN_KEYS = {
   ACCESS: 'accessToken',
@@ -106,15 +110,43 @@ function clearTokens(): void {
   }
 }
 
+function refreshInBackground(path: string, init: RequestInit): void {
+  void (async () => {
+    try {
+      const clean: RequestInit = { ...init, signal: undefined };
+      const res = await fetch(`${API_URL}${path}`, clean);
+      if (!res.ok) return;
+      if (!(res.headers.get('content-type') || '').includes('application/json')) return;
+      const text = await res.text();
+      const payload = text ? JSON.parse(text) : {};
+      if (payload?.success && payload.data !== undefined) {
+        setCache(path, payload.data, GET_CACHE_TTL);
+      }
+    } catch {
+      /* background refresh failure is non-fatal */
+    }
+  })();
+}
+
 async function request<T = unknown>(
   path: string,
   init: RequestOptions = {},
   retries = 2
 ): Promise<ApiResponse<T>> {
-  const isLoginPath =
-    path.includes('/auth/login') ||
-    path.includes('/auth/register') ||
-    path.includes('/auth/staff-login');
+  const isLoginPath = AUTH_PATHS.some((p) => path.includes(p));
+  const isGet = !init.method || init.method.toUpperCase() === 'GET';
+  const canCache = isGet && !isLoginPath && !init.signal?.aborted;
+
+  if (canCache) {
+    const snap = getCacheSnapshot<T>(path);
+    if (snap.exists) {
+      if (!snap.expired) {
+        return { success: true, data: snap.data as T };
+      }
+      void refreshInBackground(path, init);
+      return { success: true, data: snap.data as T };
+    }
+  }
 
   let res: Response;
   try {
@@ -157,6 +189,14 @@ async function request<T = unknown>(
       message: payload.message || res.statusText,
       data: payload.data,
     };
+  }
+  if (
+    canCache &&
+    (res.headers.get('content-type') || '').includes('application/json') &&
+    payload.success &&
+    payload.data !== undefined
+  ) {
+    setCache(path, payload.data, GET_CACHE_TTL);
   }
   return payload;
 }

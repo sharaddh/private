@@ -1,35 +1,44 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/errors/ErrorBoundary';
 import PageSkeleton from './components/PageSkeleton';
 import RoleGuard from './components/RoleGuard';
 
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Customers = lazy(() => import('./pages/Customers'));
-const CustomerDetail = lazy(() => import('./pages/CustomerDetail'));
-const Orders = lazy(() => import('./pages/Orders'));
-const Bills = lazy(() => import('./pages/Bills'));
-const Payments = lazy(() => import('./pages/Payments'));
-const CollectPayment = lazy(() => import('./pages/CollectPayment'));
-const InventoryPage = lazy(() => import('./pages/InventoryPage'));
-const InventoryV2 = lazy(() => import('./pages/InventoryV2'));
-const Delivery = lazy(() => import('./pages/Delivery'));
-const Pickup = lazy(() => import('./pages/Pickup'));
-const Announcement = lazy(() => import('./pages/Announcement'));
-const Reports = lazy(() => import('./pages/Reports'));
-const Settings = lazy(() => import('./pages/Settings'));
-const WhatsAppPage = lazy(() => import('./pages/WhatsApp'));
-const Cameras = lazy(() => import('./pages/Cameras'));
-const Workspace = lazy(() => import('./pages/Workspace'));
-const NewVisit = lazy(() => import('./pages/NewVisit'));
-const CustomerNewVisit = lazy(() => import('./pages/CustomerNewVisit'));
-const ItemScan = lazy(() => import('./pages/ItemScan'));
-const Withdraw = lazy(() => import('./pages/Withdraw'));
-const WithdrawHistory = lazy(() => import('./pages/WithdrawHistory'));
-const Login = lazy(() => import('./pages/Login'));
-const StaffLogin = lazy(() => import('./pages/StaffLogin'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+type ComponentType<T> = React.ComponentType<T>;
+
+const routeLoaders: Record<string, () => Promise<unknown>> = {};
+
+function lazyPage<T>(name: string, loader: () => Promise<{ default: ComponentType<T> }>) {
+  routeLoaders[name] = loader;
+  return lazy(loader);
+}
+
+const Dashboard = lazyPage('Dashboard', () => import('./pages/Dashboard'));
+const Customers = lazyPage('Customers', () => import('./pages/Customers'));
+const CustomerDetail = lazyPage('CustomerDetail', () => import('./pages/CustomerDetail'));
+const Orders = lazyPage('Orders', () => import('./pages/Orders'));
+const Bills = lazyPage('Bills', () => import('./pages/Bills'));
+const Payments = lazyPage('Payments', () => import('./pages/Payments'));
+const CollectPayment = lazyPage('CollectPayment', () => import('./pages/CollectPayment'));
+const InventoryPage = lazyPage('InventoryPage', () => import('./pages/InventoryPage'));
+const InventoryV2 = lazyPage('InventoryV2', () => import('./pages/InventoryV2'));
+const Delivery = lazyPage('Delivery', () => import('./pages/Delivery'));
+const Pickup = lazyPage('Pickup', () => import('./pages/Pickup'));
+const Announcement = lazyPage('Announcement', () => import('./pages/Announcement'));
+const Reports = lazyPage('Reports', () => import('./pages/Reports'));
+const Settings = lazyPage('Settings', () => import('./pages/Settings'));
+const WhatsAppPage = lazyPage('WhatsApp', () => import('./pages/WhatsApp'));
+const Cameras = lazyPage('Cameras', () => import('./pages/Cameras'));
+const Workspace = lazyPage('Workspace', () => import('./pages/Workspace'));
+const NewVisit = lazyPage('NewVisit', () => import('./pages/NewVisit'));
+const CustomerNewVisit = lazyPage('CustomerNewVisit', () => import('./pages/CustomerNewVisit'));
+const ItemScan = lazyPage('ItemScan', () => import('./pages/ItemScan'));
+const Withdraw = lazyPage('Withdraw', () => import('./pages/Withdraw'));
+const WithdrawHistory = lazyPage('WithdrawHistory', () => import('./pages/WithdrawHistory'));
+const Login = lazyPage('Login', () => import('./pages/Login'));
+const StaffLogin = lazyPage('StaffLogin', () => import('./pages/StaffLogin'));
+const NotFound = lazyPage('NotFound', () => import('./pages/NotFound'));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
   return (
@@ -40,6 +49,21 @@ function SuspendedPage({ children, page }: { children: React.ReactNode; page: st
 }
 
 export default function App() {
+  const prefetched = useRef(false);
+
+  useEffect(() => {
+    if (prefetched.current) return;
+    prefetched.current = true;
+    const timer = setTimeout(() => {
+      Object.values(routeLoaders).forEach((load) => {
+        load().catch(() => {
+          /* prefetch failure is non-fatal */
+        });
+      });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Layout>
       <ErrorBoundary>

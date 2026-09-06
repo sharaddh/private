@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import api from '../api';
 import type { User, BranchInfo } from '../types';
+import { clearAllCache } from '../hooks/cacheStore';
 
 interface AuthState {
   token: string | null;
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEYS.token, token);
     localStorage.setItem(STORAGE_KEYS.refresh, refresh);
     setState({ token, refreshToken: refresh, user: null, currentBranchId: null });
+    clearAllCache();
   }, []);
 
   const logout = useCallback(() => {
@@ -92,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.branchId);
     setState({ token: null, refreshToken: null, user: null, currentBranchId: null });
     setBranches([]);
+    clearAllCache();
   }, []);
 
   const setUser = useCallback((user: User) => {
@@ -102,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setCurrentBranch = useCallback((branchId: string) => {
     localStorage.setItem(STORAGE_KEYS.branchId, branchId);
     setState((s) => ({ ...s, currentBranchId: branchId }));
+    clearAllCache();
   }, []);
 
   const role = state.user?.role;

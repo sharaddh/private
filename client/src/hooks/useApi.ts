@@ -50,14 +50,10 @@ export function useApi<T = unknown>(
   useEffect(() => {
     mountedRef.current = true;
     const snapshot = cacheKey ? getCacheSnapshot<T>(cacheKey) : null;
-    if (snapshot?.exists && !snapshot.expired) {
+    if (snapshot?.exists) {
       setData(snapshot.data);
       setLoading(false);
       doFetch(true);
-    } else if (snapshot?.exists && snapshot.expired) {
-      setData(snapshot.data);
-      setLoading(true);
-      doFetch();
     } else {
       doFetch();
     }
