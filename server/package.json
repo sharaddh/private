@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "generate": "prisma generate",
+    "migrate:prod": "prisma migrate deploy",
+    "build": "prisma generate && tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,14 +19,14 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "start": "node dist/index.js",
+    "start": "prisma migrate deploy && node dist/index.js",
     "migrate": "ts-node src/migrations/migrate-legacy.ts",
     "migrate:inventory": "ts-node src/migrations/migrate-inventory.ts",
     "migrate:halve-lens": "ts-node src/scripts/halve-lens-stock.ts",
     "migrate:double-lens": "ts-node src/scripts/double-lens-stock.ts",
     "etl": "ts-node src/scripts/etl-mongo-to-postgres.ts",
     "recalculate": "ts-node src/scripts/recalculate-customers.ts",
-    "postinstall": "node -e \"console.log('no postinstall needed')\""
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
