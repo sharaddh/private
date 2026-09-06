@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { settingsService, orderService, billService } from '../services';
-import PageSkeleton from '../components/PageSkeleton';
 import ShineCard from '../components/ShineCard';
 import { useToast } from '../context/ToastContext';
 import { useTranslate } from '../context/TranslateContext';
@@ -21,10 +20,18 @@ import {
   Receipt,
   Glasses,
   Eye,
-  FlaskConical,
-  Circle,
 } from 'lucide-react';
 import type { Customer, Order, Bill, ShopSettings, BillItem, PaymentMode } from '../types';
+
+function ListLoading() {
+  return (
+    <div className="space-y-2" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-16 bg-th-elevated rounded-xl animate-pulse" />
+      ))}
+    </div>
+  );
+}
 
 export default function Pickup() {
   const { uiT } = useTranslate();
@@ -82,13 +89,18 @@ export default function Pickup() {
   }, [readyOrders, orderIdFromUrl]);
 
   async function fetchReadyOrders() {
-    const res = await orderService.list<Order[]>();
-    if (res.success) {
-      setReadyOrders(
-        ((res.data as any)?.data || ((Array.isArray(res.data) ? res.data : []) as any[])).filter(
-          (o: any) => o.status === 'Ready'
-        )
-      );
+    setIsLoading(true);
+    try {
+      const res = await orderService.list<Order[]>();
+      if (res.success) {
+        setReadyOrders(
+          ((res.data as any)?.data || ((Array.isArray(res.data) ? res.data : []) as any[])).filter(
+            (o: any) => o.status === 'Ready'
+          )
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -536,10 +548,14 @@ export default function Pickup() {
                   />
                   <input
                     type="tel"
+                    autoFocus
                     placeholder={uiT('Search by mobile number...', 'मोबाइल नंबर से खोजें...')}
                     aria-label={uiT('Search by mobile number', 'मोबाइल नंबर से खोजें')}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setMessage('');
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') searchCustomer();
                     }}
@@ -548,9 +564,9 @@ export default function Pickup() {
                 </div>
                 <button
                   onClick={searchCustomer}
-                  disabled={isLoading}
+                  disabled={isLoading || phone.replace(/\D/g, '').length < 3}
                   aria-label={uiT('Search customer', 'ग्राहक खोजें')}
-                  className="btn-primary px-6 py-3 flex-shrink-0"
+                  className="btn-primary px-6 py-3 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <Loader2 size={20} className="animate-spin" aria-hidden="true" />
@@ -565,17 +581,24 @@ export default function Pickup() {
             </div>
 
             {/* Ready orders (no customer selected) */}
-            {readyOrders.length > 0 && !selectedCustomer && (
+            {!selectedCustomer && (
               <div className="bg-th-surface rounded-2xl shadow-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Clock size={15} className="text-[#1ed760]" aria-hidden="true" />
                   <p className="text-sm font-semibold text-th-text">
-                    {readyOrders.length}{' '}
-                    {uiT('order(s) ready for pickup', 'ऑर्डर पिकअप के लिए तैयार')}
+                    {uiT('Ready for pickup', 'पिकअप के लिए तैयार')} ({readyOrders.length})
                   </p>
                 </div>
                 <div className="space-y-2 max-h-[55vh] overflow-y-auto scrollbar-none pr-1">
-                  {readyOrders.map(renderReadyCard)}
+                  {isLoading && readyOrders.length === 0 ? (
+                    <ListLoading />
+                  ) : readyOrders.length > 0 ? (
+                    readyOrders.map(renderReadyCard)
+                  ) : (
+                    <p className="text-sm text-th-secondary text-center py-6">
+                      {uiT('No ready orders right now', 'अभी कोई तैयार ऑर्डर नहीं')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -628,7 +651,9 @@ export default function Pickup() {
                     <Package size={14} aria-hidden="true" /> {uiT('Orders Ready', 'ऑर्डर तैयार')} (
                     {orders.length})
                   </p>
-                  {orders.length === 0 ? (
+                  {isLoading && orders.length === 0 ? (
+                    <ListLoading />
+                  ) : orders.length === 0 ? (
                     <div className="text-center py-8 text-sm text-th-secondary bg-th-elevated rounded-xl">
                       {uiT('No orders ready for pickup', 'पिकअप के लिए कोई ऑर्डर तैयार नहीं')}
                     </div>
@@ -679,9 +704,9 @@ export default function Pickup() {
           {/* ─── RIGHT: order + bill + deliver ───────────────────────── */}
           <div className="space-y-4">
             {!selectedOrder ? (
-              <div className="bg-th-surface rounded-2xl shadow-lg flex flex-col items-center justify-center py-28 px-6 text-center">
-                <div className="w-16 h-16 bg-th-elevated rounded-full flex items-center justify-center mb-4">
-                  <Package size={32} className="text-th-muted" aria-hidden="true" />
+              <div className="bg-th-surface rounded-2xl shadow-lg flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="w-14 h-14 bg-th-elevated rounded-full flex items-center justify-center mb-4">
+                  <Package size={28} className="text-th-muted" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-bold text-th-text">
                   {uiT('No order selected', 'कोई ऑर्डर चुना नहीं गया')}
@@ -1134,8 +1159,6 @@ export default function Pickup() {
           </div>
         </div>
       )}
-
-      {isLoading && <PageSkeleton page="pickup" />}
     </div>
   );
 }
