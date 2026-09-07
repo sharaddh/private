@@ -95,6 +95,8 @@ export async function generateBillNumber(): Promise<string> {
   return `${prefix}${seqStr}`;
 }
 
+const MAX_BILL_NUMBER_ATTEMPTS = 5;
+
 export async function createBill(
   data: CreateBillData,
   customerId: string,
@@ -102,6 +104,18 @@ export async function createBill(
 ): Promise<BillResult> {
   if (!customerId) {
     throw new AppError(400, "Customer ID is required");
+  }
+
+  const resolvedVisitId = visitId || data.visitId;
+
+  if (resolvedVisitId) {
+    const existing = await prisma.bill.findFirst({
+      where: { visitId: resolvedVisitId, status: { not: "Cancelled" } },
+      include: billInclude,
+    });
+    if (existing) {
+      return existing as unknown as BillResult;
+    }
   }
 
   const items = data.items || [];
@@ -116,32 +130,44 @@ export async function createBill(
     advancePaid
   );
 
-  const billNumber = await generateBillNumber();
+  const branchId = requireBranchId();
 
-  const bill = await prisma.bill.create({
-    data: {
-      billNumber,
-      customerId,
-      visitId: visitId || data.visitId,
-      branchId: requireBranchId(),
-      items: {
-        create: items.map((it) => ({
-          description: it.description,
-          quantity: it.quantity || 1,
-          unitPrice: it.unitPrice || 0,
-          total: (it.quantity || 1) * (it.unitPrice || 0),
-        })),
-      },
-      subtotal,
-      discount,
-      tax,
-      advancePaid,
-      pendingAmount,
-      totalAmount,
-      status: "Active",
-    },
-    include: billInclude,
-  });
+  let bill: any = null;
+  for (let attempt = 0; attempt < MAX_BILL_NUMBER_ATTEMPTS; attempt++) {
+    const billNumber = await generateBillNumber();
+    try {
+      bill = await prisma.bill.create({
+        data: {
+          billNumber,
+          customerId,
+          visitId: resolvedVisitId,
+          branchId,
+          items: {
+            create: items.map((it) => ({
+              description: it.description,
+              quantity: it.quantity || 1,
+              unitPrice: it.unitPrice || 0,
+              total: (it.quantity || 1) * (it.unitPrice || 0),
+            })),
+          },
+          subtotal,
+          discount,
+          tax,
+          advancePaid,
+          pendingAmount,
+          totalAmount,
+          status: "Active",
+        },
+        include: billInclude,
+      });
+      break;
+    } catch (err: any) {
+      const isCollision = err && typeof err === "object" && err.code === "P2002";
+      if (!isCollision || attempt === MAX_BILL_NUMBER_ATTEMPTS - 1) {
+        throw err;
+      }
+    }
+  }
 
   await prisma.customer.update({
     where: { id: customerId },
@@ -251,8 +277,8 @@ export async function collectBillPayment(
   const newAdvancePaid = (bill.advancePaid || 0) + actualCollect;
   const newPending = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
 
-  const [payment, updatedBill] = await prisma.$transaction([
-    prisma.payment.create({
+  const { payment, bill: updatedBill } = await prisma.$transaction(async (tx) => {
+    const p = await tx.payment.create({
       data: {
         customerId: bill.customerId,
         billId: bill.id,
@@ -262,16 +288,16 @@ export async function collectBillPayment(
         notes: "Payment collected",
         branchId: requireBranchId(),
       },
-    }),
-    prisma.bill.update({
+    });
+    const ub = await tx.bill.update({
       where: { id: billId },
       data: { advancePaid: newAdvancePaid, pendingAmount: newPending },
-    }),
-  ]);
-
-  await prisma.customer.update({
-    where: { id: bill.customerId },
-    data: { pendingAmount: { decrement: actualCollect } },
+    });
+    await tx.customer.update({
+      where: { id: bill.customerId },
+      data: { pendingAmount: { decrement: actualCollect } },
+    });
+    return { payment: p, bill: ub };
   });
 
   return { payment, bill: updatedBill };

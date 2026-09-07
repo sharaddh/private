@@ -244,20 +244,26 @@ function collectStockRefs(order: OrderStockRef): Array<{ code: string; qty: numb
   return refs;
 }
 
-async function applyStockDelta(code: string, delta: number): Promise<void> {
+type StockDb = Prisma.TransactionClient;
+
+async function applyStockDelta(
+  code: string,
+  delta: number,
+  db: StockDb = prisma as unknown as StockDb
+): Promise<void> {
   const amount = Number.isFinite(delta) ? delta : 0;
   if (!code || amount === 0) return;
 
   if (amount < 0) {
     const dec = -amount;
-    const item = await prisma.inventory.findFirst({
+    const item = await db.inventory.findFirst({
       where: { sku: code, quantity: { gt: 0 } },
     });
     if (item) {
       const newQty = Math.max(0, item.quantity - dec);
-      await prisma.inventory.update({ where: { id: item.id }, data: { quantity: newQty } });
+      await db.inventory.update({ where: { id: item.id }, data: { quantity: newQty } });
     } else {
-      const item2 = await prisma.inventory.findFirst({
+      const item2 = await db.inventory.findFirst({
         where: {
           model: { contains: code, mode: "insensitive" },
           quantity: { gt: 0 },
@@ -265,25 +271,25 @@ async function applyStockDelta(code: string, delta: number): Promise<void> {
       });
       if (item2) {
         const newQty = Math.max(0, item2.quantity - dec);
-        await prisma.inventory.update({
+        await db.inventory.update({
           where: { id: item2.id },
           data: { quantity: newQty },
         });
       }
     }
   } else {
-    const item = await prisma.inventory.findFirst({ where: { sku: code } });
+    const item = await db.inventory.findFirst({ where: { sku: code } });
     if (item) {
-      await prisma.inventory.update({
+      await db.inventory.update({
         where: { id: item.id },
         data: { quantity: { increment: amount } },
       });
     } else {
-      const item2 = await prisma.inventory.findFirst({
+      const item2 = await db.inventory.findFirst({
         where: { model: { contains: code, mode: "insensitive" } },
       });
       if (item2) {
-        await prisma.inventory.update({
+        await db.inventory.update({
           where: { id: item2.id },
           data: { quantity: { increment: amount } },
         });
@@ -292,17 +298,24 @@ async function applyStockDelta(code: string, delta: number): Promise<void> {
   }
 }
 
-export async function decrementStockForOrder(order: OrderStockRef): Promise<void> {
+export async function decrementStockForOrder(
+  order: OrderStockRef,
+  db?: StockDb
+): Promise<void> {
   for (const ref of collectStockRefs(order)) {
-    await applyStockDelta(ref.code, -ref.qty);
+    await applyStockDelta(ref.code, -ref.qty, db);
   }
 }
 
-export async function assertStockAvailable(order: OrderStockRef): Promise<void> {
+export async function assertStockAvailable(
+  order: OrderStockRef,
+  db?: StockDb
+): Promise<void> {
+  const client = db ?? (prisma as unknown as StockDb);
   for (const ref of collectStockRefs(order)) {
-    let item = await prisma.inventory.findFirst({ where: { sku: ref.code } });
+    let item = await client.inventory.findFirst({ where: { sku: ref.code } });
     if (!item) {
-      item = await prisma.inventory.findFirst({
+      item = await client.inventory.findFirst({
         where: { model: { contains: ref.code, mode: "insensitive" } },
       });
     }
@@ -316,9 +329,12 @@ export async function assertStockAvailable(order: OrderStockRef): Promise<void> 
   }
 }
 
-export async function restoreStockForOrder(order: OrderStockRef): Promise<void> {
+export async function restoreStockForOrder(
+  order: OrderStockRef,
+  db?: StockDb
+): Promise<void> {
   for (const ref of collectStockRefs(order)) {
-    await applyStockDelta(ref.code, ref.qty);
+    await applyStockDelta(ref.code, ref.qty, db);
   }
 }
 

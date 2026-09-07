@@ -350,6 +350,7 @@ export default function Pickup() {
     }
     const res = await billService.createWithItems({
       customerId: selectedCustomer._id,
+      visitId: selectedOrder.visitId || selectedOrder._id,
       items: items.map((i) => ({
         description: i.description,
         quantity: i.qty,

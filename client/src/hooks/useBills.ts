@@ -49,6 +49,7 @@ export function useCreateBill() {
     Bill,
     {
       customerId: string;
+      visitId?: string;
       items: BillItem[];
       discount?: number;
       tax?: number;
@@ -60,6 +61,7 @@ export function useCreateBill() {
   const create = useCallback(
     async (data: {
       customerId: string;
+      visitId?: string;
       items: BillItem[];
       discount?: number;
       tax?: number;

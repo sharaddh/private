@@ -23,6 +23,7 @@ class BillService extends ApiService {
 
   async createWithItems(data: {
     customerId: string;
+    visitId?: string;
     items: BillItem[];
     discount?: number;
     tax?: number;
