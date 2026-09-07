@@ -39,6 +39,7 @@ interface Props {
   setDeliveryAddress: (v: string) => void;
   deliveryDate: string;
   setDeliveryDate: (v: string) => void;
+  hideDelivery?: boolean;
 }
 
 export default function PaymentPanel({
@@ -59,6 +60,7 @@ export default function PaymentPanel({
   setDeliveryAddress,
   deliveryDate,
   setDeliveryDate,
+  hideDelivery = false,
 }: Props) {
   const { uiT } = useTranslate();
 
@@ -202,7 +204,8 @@ export default function PaymentPanel({
         </div>
 
         {/* Delivery Panel */}
-        <div className="bg-th-surface rounded-lg shadow-lg p-5">
+        {!hideDelivery && (
+          <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
               <Truck size={18} className="text-[#1ed760]" />
@@ -274,7 +277,8 @@ export default function PaymentPanel({
               />
             </div>
           </div>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Right Column: Receipt Summary */}

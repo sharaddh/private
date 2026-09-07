@@ -111,7 +111,7 @@ function UserAvatar({ name, className = '' }: { name: string; className?: string
   const initial = (name || '?').charAt(0).toUpperCase();
   return (
     <div
-      className={`rounded-full bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-black font-bold flex-shrink-0 ring-2 ring-white/10 ${className}`}
+      className={`rounded-lg bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-black font-bold flex-shrink-0 ring-2 ring-white/10 ${className}`}
     >
       {initial}
     </div>
@@ -221,7 +221,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-3 sm:mb-4">
       <div className="flex items-center gap-2 sm:gap-3">
-        <span className="w-1 h-4 sm:h-5 rounded-full bg-gradient-to-b from-[#1ed760] to-[#6366f1]" />
+        <span className="w-1 h-4 sm:h-5 rounded-sm bg-gradient-to-b from-[#1ed760] to-[#6366f1]" />
         <h3 className="text-[17px] sm:text-[20px] font-bold text-th-text uppercase tracking-wider">
           {title}
         </h3>
@@ -736,7 +736,7 @@ export default function Dashboard() {
           <ScanLine className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           {uiT('Scan', 'स्कैन')}
         </button>
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#1ed760] flex items-center justify-center text-black font-bold text-[11px] sm:text-xs flex-shrink-0">
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#1ed760] flex items-center justify-center text-black font-bold text-[11px] sm:text-xs flex-shrink-0">
           S
         </div>
       </div>
@@ -864,7 +864,11 @@ export default function Dashboard() {
           label={uiT('Warehouse', 'वेयरहाउस')}
           subtitle={uiT('Manage central stock', 'केंद्रीय स्टॉक प्रबंधित करें')}
           onClick={() =>
-            window.open('/warehouse/#/', '_blank', 'noopener,noreferrer')
+            window.open(
+              'https://kmj-m9aq.onrender.com/#/',
+              '_blank',
+              'noopener,noreferrer'
+            )
           }
           color="#0ea5e9"
         />

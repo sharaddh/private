@@ -124,6 +124,7 @@ export default function ConfirmationDashboard({
     contact_lens: uiT('Contact Lens', 'कॉन्टैक्ट लेंस'),
     service: uiT('Service', 'सेवा'),
     other: uiT('Other', 'अन्य'),
+    direct_sell: uiT('Direct Sell', 'डायरेक्ट बिक्री'),
   };
 
   const summaryCards = [

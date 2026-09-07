@@ -1,6 +1,5 @@
 import { prisma } from "../db/prisma";
 import { requireBranchId } from "../utils/scope";
-import { AppError } from "../middleware/errorHandler";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
 import { logger } from "../utils/logger";
@@ -90,7 +89,18 @@ export async function executeTransaction(
     }
 
     if (!customer) {
-      throw new AppError(400, "Customer not found or created");
+      customer = await tx.customer.findFirst({
+        where: { branchId: requireBranchId(), name: "Walk-In Customer", mobile: null },
+      });
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: {
+            name: "Walk-In Customer",
+            customerId: `WALK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            branchId: requireBranchId(),
+          },
+        });
+      }
     }
     result.customer = customer;
 
