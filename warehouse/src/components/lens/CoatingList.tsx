@@ -272,7 +272,7 @@ export default function CoatingList({
                 <>
                   <div className="flex-1 min-w-0">
                     <div
-                      className={`text-small-bold truncate ${isSelected ? 'text-th-text' : 'text-th-secondary group-hover:text-th-text'}`}
+                      className={`text-small-bold leading-snug ${isSelected ? 'text-th-text' : 'text-th-secondary group-hover:text-th-text'}`}
                     >
                       {item.coating}
                     </div>
@@ -284,7 +284,9 @@ export default function CoatingList({
                       {totalQty > 0 ? `${fmtPairs(totalQty)} in stock` : 'Empty'}
                     </div>
                     <div className="text-small mt-0.5 font-bold text-th-muted">
-                      −{formatCurrency(item.priceNeg ?? 0)} / +{formatCurrency(item.pricePos ?? 0)}
+                      {item.priceNeg || item.pricePos
+                        ? `−${formatCurrency(item.priceNeg ?? 0)} / +${formatCurrency(item.pricePos ?? 0)}`
+                        : 'Free'}
                     </div>
                   </div>
 

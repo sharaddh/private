@@ -6,7 +6,7 @@ import CoatingList from '../components/lens/CoatingList';
 import LensGrid from '../components/lens/LensGrid';
 import { PageLoader } from '../components';
 import { formatCurrency, fmtPairs } from '../utils/helpers';
-import { PackagePlus, Plus, Check, X, Pencil } from 'lucide-react';
+import { PackagePlus, Plus, Check, X, Pencil, Trash2 } from 'lucide-react';
 
 function getTotalQty(item: LensStockItem): number {
   const q = (item.quantities as Record<string, Record<string, number>>) || {};
@@ -30,6 +30,10 @@ export default function UpdateStock() {
   const [mobileNewName, setMobileNewName] = useState('');
   const [mobileNewPriceNeg, setMobileNewPriceNeg] = useState('');
   const [mobileNewPricePos, setMobileNewPricePos] = useState('');
+  const [mobileRenaming, setMobileRenaming] = useState(false);
+  const [mobileRenameName, setMobileRenameName] = useState('');
+  const [mobileRenamePriceNeg, setMobileRenamePriceNeg] = useState('');
+  const [mobileRenamePricePos, setMobileRenamePricePos] = useState('');
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceNegDraft, setPriceNegDraft] = useState('');
   const [pricePosDraft, setPricePosDraft] = useState('');
@@ -115,6 +119,65 @@ export default function UpdateStock() {
       toast(res.message || 'Failed to add', 'error');
     }
   }, [mobileNewName, mobileNewPriceNeg, mobileNewPricePos, toast]);
+
+  const startMobileRename = useCallback(() => {
+    if (!selectedItem) return;
+    setMobileRenameName(selectedItem.coating);
+    setMobileRenamePriceNeg(String(selectedItem.priceNeg ?? selectedItem.price ?? 0));
+    setMobileRenamePricePos(String(selectedItem.pricePos ?? selectedItem.price ?? 0));
+    setMobileRenaming(true);
+  }, [selectedItem]);
+
+  const cancelMobileRename = useCallback(() => {
+    setMobileRenaming(false);
+    setMobileRenameName('');
+    setMobileRenamePriceNeg('');
+    setMobileRenamePricePos('');
+  }, []);
+
+  const handleMobileRename = useCallback(async () => {
+    if (!selectedItem) return;
+    const name = mobileRenameName.trim();
+    if (!name) {
+      toast('Enter a coating name', 'error');
+      return;
+    }
+    const priceNeg = mobileRenamePriceNeg.trim() === '' ? 0 : Number(mobileRenamePriceNeg);
+    const pricePos = mobileRenamePricePos.trim() === '' ? 0 : Number(mobileRenamePricePos);
+    if (Number.isNaN(priceNeg) || priceNeg < 0 || Number.isNaN(pricePos) || pricePos < 0) {
+      toast('Enter valid prices', 'error');
+      return;
+    }
+    const res = await api.put<LensStockItem>(`/api/warehouse/lens-stock/${selectedItem._id}`, {
+      coating: name,
+      priceNeg,
+      pricePos,
+    });
+    if (res.success && res.data) {
+      handleGridUpdate(res.data);
+      setMobileRenaming(false);
+      toast('Coating updated', 'success');
+    } else {
+      toast(res.message || 'Failed to update coating', 'error');
+    }
+  }, [selectedItem, mobileRenameName, mobileRenamePriceNeg, mobileRenamePricePos, toast, handleGridUpdate]);
+
+  const handleMobileDelete = useCallback(
+    (item: LensStockItem) => {
+      if (!confirm(`Delete "${item.coating}"?`)) return;
+      const run = async () => {
+        const res = await api.del(`/api/warehouse/lens-stock/${item._id}`);
+        if (res.success) {
+          handleDelete(item._id);
+          toast('Coating deleted', 'success');
+        } else {
+          toast(res.message || 'Failed to delete coating', 'error');
+        }
+      };
+      void run();
+    },
+    [handleDelete, toast]
+  );
 
   const savePrice = useCallback(async () => {
     if (!selectedItem) return;
@@ -239,7 +302,68 @@ export default function UpdateStock() {
               </div>
             </div>
           </div>
+        ) : mobileRenaming ? (
+          <div className="flex flex-col gap-2 mb-2">
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={mobileRenameName}
+                onChange={(e) => setMobileRenameName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleMobileRename();
+                  if (e.key === 'Escape') cancelMobileRename();
+                }}
+                className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                placeholder="Coating name..."
+              />
+              <button
+                onClick={handleMobileRename}
+                className="p-2.5 rounded-xl bg-primary-500/20 text-primary-500 hover:bg-primary-500/30 transition-colors"
+              >
+                <Check size={20} strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={cancelMobileRename}
+                className="p-2.5 rounded-xl bg-th-elevated text-th-muted hover:text-th-text transition-colors"
+              >
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1 flex-1">
+                <span className="text-small font-bold text-th-muted shrink-0">−₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={mobileRenamePriceNeg}
+                  onChange={(e) => setMobileRenamePriceNeg(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleMobileRename();
+                  }}
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                  placeholder="Neg price"
+                />
+              </div>
+              <div className="flex items-center gap-1 flex-1">
+                <span className="text-small font-bold text-th-muted shrink-0">+₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={mobileRenamePricePos}
+                  onChange={(e) => setMobileRenamePricePos(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleMobileRename();
+                  }}
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-th-input border border-th-border text-small font-bold text-th-text placeholder:text-th-muted focus:outline-none focus:border-primary-500"
+                  placeholder="Pos price"
+                />
+              </div>
+            </div>
+          </div>
         ) : (
+          <div className="space-y-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
             {items.map((item) => {
               const total = getTotalQty(item);
@@ -255,7 +379,7 @@ export default function UpdateStock() {
                   }`}
                 >
                   <span
-                    className={`text-small font-bold truncate w-full text-center ${isSelected ? 'text-th-text' : 'text-th-secondary'}`}
+                    className={`text-small font-bold w-full text-center leading-snug ${isSelected ? 'text-th-text' : 'text-th-secondary'}`}
                   >
                     {item.coating}
                   </span>
@@ -265,7 +389,9 @@ export default function UpdateStock() {
                     {total > 0 ? `${fmtPairs(total)} in stock` : 'Empty'}
                   </span>
                   <span className="text-small font-bold text-th-muted">
-                    −{formatCurrency(item.priceNeg ?? 0)}/+{formatCurrency(item.pricePos ?? 0)}
+                    {item.priceNeg || item.pricePos
+                      ? `−${formatCurrency(item.priceNeg ?? 0)}/+${formatCurrency(item.pricePos ?? 0)}`
+                      : 'Free'}
                   </span>
                 </button>
               );
@@ -283,12 +409,31 @@ export default function UpdateStock() {
               <span className="text-small font-bold text-th-muted">Add</span>
             </button>
           </div>
+          {selectedItem && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={startMobileRename}
+                className="flex items-center justify-center gap-1.5 flex-1 px-3.5 py-2.5 rounded-xl bg-th-elevated text-th-text hover:bg-th-elevated/80 text-small-bold active:scale-95 transition-all"
+              >
+                <Pencil size={15} />
+                Rename
+              </button>
+              <button
+                onClick={() => handleMobileDelete(selectedItem)}
+                className="flex items-center justify-center gap-1.5 flex-1 px-3.5 py-2.5 rounded-xl bg-negative/10 text-negative hover:bg-negative/20 text-small-bold active:scale-95 transition-all"
+              >
+                <Trash2 size={15} />
+                Delete
+              </button>
+            </div>
+          )}
+          </div>
         )}
       </div>
 
       {/* Desktop: sidebar + content */}
       <div className="flex-1 flex gap-4 min-h-0">
-        <div className="hidden lg:flex w-56 shrink-0 card p-4 flex-col overflow-hidden">
+        <div className="hidden lg:flex w-64 shrink-0 card p-4 flex-col overflow-hidden">
           <CoatingList
             items={items}
             selectedId={selectedId}
@@ -302,7 +447,7 @@ export default function UpdateStock() {
         <div className="flex-1 card p-3 lg:p-4 overflow-hidden flex flex-col">
           {selectedItem ? (
             <>
-              <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-th-border">
+              <div className="flex flex-wrap items-center gap-1.5 mb-2 pb-2 border-b border-th-border">
                 <div className="w-2 h-2 rounded-full bg-primary-500" />
                 <span className="text-body-bold font-bold text-th-text truncate">
                   {selectedItem.coating}

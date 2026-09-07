@@ -132,10 +132,10 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
                     ? 'bg-th-elevated'
                     : 'bg-emerald-500/10';
 
-                let sphStockCount = 0;
-                for (const sph of SPH_INNER) {
-                  if ((quantities[`${sph}|${cyl}`] || 0) > 0) sphStockCount++;
-                }
+                const sphValues = cylNeg ? negSphInner : posSphInner;
+                const sphStockCount = sphValues.filter(
+                  (sph) => (quantities[`${sph}|${cyl}`] || 0) > 0
+                ).length;
 
                 return (
                   <div key={cyl}>
@@ -160,7 +160,9 @@ export default function CompoundGrid({ quantities, onIncrement, onDecrement }: P
                     </button>
                     {isOpen && (
                       <div className="mt-2 space-y-3">
-                        {sphInnerGroups.map((sphGroup) => (
+                        {sphInnerGroups
+                          .filter((g) => (cylNeg ? g.label === 'Negative SPH' : g.label === 'Positive SPH'))
+                          .map((sphGroup) => (
                           <div key={sphGroup.label}>
                             <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">
                               {sphGroup.label}
