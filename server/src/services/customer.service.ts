@@ -5,6 +5,7 @@ import { Bill } from "../models/bill";
 import { Prescription } from "../models/prescription";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
+import type { Prisma } from "../db/prisma";
 import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
 import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
@@ -63,10 +64,46 @@ interface CustomerResult {
   updatedAt: Date;
 }
 
+interface OrderSummaryItem {
+  id: string;
+  customerId: string;
+  visitId?: string;
+  frame?: string | null;
+  frameBrand?: string | null;
+  frameModel?: string | null;
+  frameColor?: string | null;
+  framePrice?: number | null;
+  lens?: string | null;
+  lensBrand?: string | null;
+  lensType?: string | null;
+  lensIndex?: string | null;
+  lensPrice?: number | null;
+  coating?: string | null;
+  coatingPrice?: number | null;
+  accessories?: string[] | null;
+  quantity?: number | null;
+  status?: string | null;
+  createdAt?: Date | null;
+}
+
+interface PrescriptionSummaryItem {
+  id: string;
+  customerId: string;
+  visitId?: string;
+  rightEye?: Prisma.JsonValue;
+  leftEye?: Prisma.JsonValue;
+  pd?: string | null;
+  notes?: string | null;
+  createdAt?: Date | null;
+}
+
 interface CustomerSummary extends CustomerResult {
   visitCount: number;
   orderCount: number;
   totalBilled: number;
+  lastOrder: OrderSummaryItem | null;
+  lastPrescription: PrescriptionSummaryItem | null;
+  recentOrders: OrderSummaryItem[];
 }
 
 function generateCustomerId(): string {
@@ -184,19 +221,26 @@ export async function getCustomerSummary(id: string): Promise<CustomerSummary> {
     throw new AppError(404, "Customer not found");
   }
 
-  const [visitCount, orderCount, billAgg] = await Promise.all([
-    Visit.count({ where: { customerId: id } }),
-    Order.count({ where: { customerId: id } }),
-    Bill.aggregate({
-      where: { customerId: id },
-      _sum: { totalAmount: true },
-    }),
-  ]);
+  const [visitCount, orderCount, billAgg, lastOrder, lastPrescription, recentOrders] =
+    await Promise.all([
+      Visit.count({ where: { customerId: id } }),
+      Order.count({ where: { customerId: id } }),
+      Bill.aggregate({
+        where: { customerId: id },
+        _sum: { totalAmount: true },
+      }),
+      Order.findFirst({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
+      Prescription.findFirst({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
+      Order.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" }, take: 5 }),
+    ]);
 
   return {
     ...(customer as CustomerResult),
     visitCount,
     orderCount,
     totalBilled: billAgg._sum?.totalAmount ?? 0,
+    lastOrder: (lastOrder as OrderSummaryItem) ?? null,
+    lastPrescription: (lastPrescription as PrescriptionSummaryItem) ?? null,
+    recentOrders: (recentOrders as OrderSummaryItem[] | null) ?? [],
   };
 }

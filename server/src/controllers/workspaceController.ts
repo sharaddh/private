@@ -2,6 +2,7 @@ import { BranchRequest } from "../types";
 import { Response } from "express";
 import { executeTransaction, sendBillWhatsApp } from "../services/workspace.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { invalidateCache } from "../middleware/cache";
 import * as todoService from "../services/todo.service";
 
 export async function transaction(req: BranchRequest, res: Response) {
@@ -11,6 +12,8 @@ export async function transaction(req: BranchRequest, res: Response) {
   if (bill && customer) {
     sendBillWhatsApp(bill, customer, req.branchId);
   }
+  await invalidateCache("/api/customers");
+  await invalidateCache("/api/dashboard");
   sendSuccess(res, data, "Transaction completed");
 }
 

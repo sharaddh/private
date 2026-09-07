@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createCustomerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   mobile: z.string().min(1, "Mobile is required"),
-  email: z.string().email().optional(),
+  email: z.union([z.string().email().trim(), z.literal("")]).optional(),
   age: z.number().int().min(0).max(150).optional(),
   gender: z.string().optional(),
   alternateMobile: z.string().optional(),
@@ -17,7 +17,7 @@ export const updateCustomerSchema = z
   .object({
     name: z.string().min(1).optional(),
     mobile: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.union([z.string().email().trim(), z.literal("")]).optional(),
     age: z.number().int().min(0).max(150).optional(),
     gender: z.string().optional(),
     alternateMobile: z.string().optional(),

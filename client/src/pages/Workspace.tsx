@@ -22,7 +22,6 @@ import {
   Percent,
   CheckCircle,
   Search,
-  Phone,
   UserPlus,
   Users,
   ArrowRight,
@@ -118,9 +117,11 @@ interface PrescriptionData {
 }
 
 interface CustomerSummary {
-  customer?: { customerId: string };
-  lastOrder?: Order & { frame?: string; lens?: string; accessories?: string[] };
-  lastPrescription?: Prescription;
+  visitCount?: number;
+  orderCount?: number;
+  totalBilled?: number;
+  lastOrder?: (Order & { frame?: string; lens?: string }) | null;
+  lastPrescription?: Prescription | null;
   recentOrders?: Order[];
 }
 
@@ -146,9 +147,13 @@ export default function Workspace() {
   const [customerSummary, setCustomerSummary] = useState<CustomerSummary | null>(null);
   const [isNewCustomer, setIsNewCustomer] = useState<boolean>(false);
   const [isDirectSell, setIsDirectSell] = useState<boolean>(false);
-  const [phoneSearch, setPhoneSearch] = useState<string>('');
+  const [showOverview, setShowOverview] = useState<boolean>(false);
+  const [query, setQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<CustomerData[]>([]);
   const [searched, setSearched] = useState<boolean>(false);
+  const [searching, setSearching] = useState<boolean>(false);
+  const liveSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchSeq = useRef<number>(0);
   const [customerForm, setCustomerForm] = useState<CustomerData>({
     name: '',
     mobile: '',
@@ -394,34 +399,78 @@ export default function Workspace() {
     return discountAmount;
   }
 
-  async function searchCustomer() {
-    const num = phoneSearch.replace(/\D/g, '');
-    if (num.length < 3) return;
-    setSelectedCustomer(null);
-    setIsNewCustomer(false);
-    setSearched(true);
-    const res = await api.get<Customer[]>('/api/customers?phone=' + encodeURIComponent(num));
-    const custList =
-      (res.data as any)?.data || ((Array.isArray(res.data) ? res.data : []) as any[]);
-    if (res.success && custList.length > 0) {
-      const fullList = await Promise.all(
-        custList.map(async (c: any) => {
-          const fullRes = await api.get<Customer>('/api/customers/' + c._id);
-          const full = fullRes.success ? fullRes.data! : c;
-          const vRes = await visitService.getByCustomer(c._id);
-          const lastV =
-            vRes.success && vRes.data && vRes.data.length > 0
-              ? new Date(vRes.data[0].visitDate).toLocaleDateString()
-              : undefined;
-          return { ...full, lastVisit: lastV } as CustomerData;
-        })
-      );
-      setSearchResults(fullList);
-    } else {
+  async function runSearch(raw: string) {
+    const q = raw.trim();
+    const seq = ++searchSeq.current;
+    if (q.length < 2) {
       setSearchResults([]);
-      setIsNewCustomer(true);
-      setCustomerForm((prev) => ({ ...prev, mobile: num }));
+      setSearched(false);
+      setSearching(false);
+      return;
     }
+    setSearching(true);
+    setSearched(true);
+    try {
+      const res = await api.get<Customer[]>(
+        '/api/customers?search=' + encodeURIComponent(q) + '&limit=10'
+      );
+      if (seq !== searchSeq.current) return;
+      const custList =
+        (res.data as any)?.data || ((Array.isArray(res.data) ? res.data : []) as any[]);
+      setSearchResults(
+        res.success
+          ? custList.map((c: any) => ({
+              _id: c._id,
+              name: c.name || '',
+              mobile: c.mobile || '',
+              email: c.email || '',
+              address: c.address || '',
+              city: c.city || '',
+              age: c.age,
+              gender: c.gender || '',
+              totalVisits: c.totalVisits,
+              totalSpent: c.totalSpent,
+              pendingAmount: c.pendingAmount,
+              createdAt: c.createdAt,
+            }))
+          : []
+      );
+    } finally {
+      if (seq === searchSeq.current) setSearching(false);
+    }
+  }
+
+  function handleQueryChange(value: string) {
+    setQuery(value);
+    if (liveSearchTimer.current) clearTimeout(liveSearchTimer.current);
+    if (value.trim().length < 2) {
+      searchSeq.current++;
+      setSearchResults([]);
+      setSearched(false);
+      setSearching(false);
+      return;
+    }
+    setSearchResults([]);
+    setSearched(false);
+    setSearching(true);
+    liveSearchTimer.current = setTimeout(() => runSearch(value), 350);
+  }
+
+  function openNewCustomerFromQuery() {
+    const trimmed = query.trim();
+    const mobile = /^\d{5,}$/.test(trimmed) ? trimmed : '';
+    setSelectedCustomer(null);
+    setIsNewCustomer(true);
+    setCustomerForm((prev) => ({
+      ...prev,
+      name: '',
+      mobile,
+      email: '',
+      address: '',
+      city: '',
+      age: undefined,
+      gender: '',
+    }));
   }
 
   function selectCustomer(c: CustomerData) {
@@ -452,6 +501,7 @@ export default function Workspace() {
     });
     setDeliveryAddress(c.address || deliveryAddress);
     setIsNewCustomer(false);
+    setShowOverview(true);
 
     api.get<CustomerSummary>('/api/customers/summary/' + c._id).then((r) => {
       if (r.success) setCustomerSummary(r.data ?? null);
@@ -774,8 +824,13 @@ export default function Workspace() {
     navigate(`/customers/${cust?._id || ''}?visitId=${data?.visit?._id || ''}`);
   }
 
-  function handlePhoneKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') searchCustomer();
+  function handleSearchKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter') return;
+    if (searchResults.length === 1) {
+      selectCustomer(searchResults[0]);
+    } else if (searchResults.length === 0) {
+      openNewCustomerFromQuery();
+    }
   }
 
   function startDirectSell() {
@@ -786,13 +841,18 @@ export default function Workspace() {
   }
 
   function resetAll() {
+    if (liveSearchTimer.current) clearTimeout(liveSearchTimer.current);
+    liveSearchTimer.current = null;
+    searchSeq.current++;
     setSelectedCustomer(null);
     setCustomerSummary(null);
     setIsNewCustomer(false);
     setIsDirectSell(false);
-    setPhoneSearch('');
+    setShowOverview(false);
+    setQuery('');
     setSearchResults([]);
     setSearched(false);
+    setSearching(false);
     setCustomerForm({
       name: '',
       mobile: '',
@@ -833,7 +893,7 @@ export default function Workspace() {
   if (loadingSettings) return <PageSkeleton page="workspace" />;
 
   // ===== CUSTOMER SELECTION PHASE =====
-  if (!selectedCustomer && !isNewCustomer) {
+  if (!selectedCustomer && !isNewCustomer && !isDirectSell) {
     return (
       <div className="min-h-screen bg-th-elevated">
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-6">
@@ -846,40 +906,54 @@ export default function Workspace() {
             </h2>
             <p className="text-sm text-th-secondary mt-1">
               {uiT(
-                'Search for an existing customer by phone, or sell directly without one.',
-                'फोन नंबर से मौजूदा ग्राहक खोजें, या बिना ग्राहक के सीधे बेचें।'
+                'Search by name or phone — results appear as you type. Or sell directly without a customer.',
+                'नाम या फोन से खोजें — टाइप करते ही परिणाम दिखते हैं। या बिना ग्राहक के सीधे बेचें।'
               )}
             </p>
           </div>
 
           <div className="card rounded-xl shadow-lg p-5 sm:p-6">
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <Phone
+            <div className="relative">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted"
+                aria-hidden="true"
+              />
+              <input
+                ref={phoneRef}
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                placeholder={uiT('Search by name or phone...', 'नाम या फोन नंबर से खोजें...')}
+                aria-label={uiT('Search customer by name or phone', 'नाम या फोन से ग्राहक खोजें')}
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="w-full pl-10 pr-10 py-3 bg-th-elevated border border-th-border rounded-lg text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+              />
+              {searching && (
+                <Loader2
                   size={18}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-muted"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1ed760] animate-spin"
                   aria-hidden="true"
                 />
-                <input
-                  ref={phoneRef}
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder={uiT('Enter phone number...', 'फोन नंबर दर्ज करें...')}
-                  aria-label={uiT('Phone number search', 'फ़ोन नंबर खोज')}
-                  value={phoneSearch}
-                  onChange={(e) => setPhoneSearch(e.target.value)}
-                  onKeyDown={handlePhoneKeyDown}
-                  className="w-full pl-10 pr-4 py-3 bg-th-elevated border border-th-border rounded-lg text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
-                />
-              </div>
-              <button
-                onClick={searchCustomer}
-                aria-label={uiT('Search customer', 'ग्राहक खोजें')}
-                className="px-6 py-3 bg-[#1ed760] hover:bg-[#1db954] text-th-text font-semibold rounded-lg transition-all flex items-center gap-2"
-              >
-                <Search size={18} aria-hidden="true" />
-              </button>
+              )}
+              {!searching && query.length > 0 && (
+                <button
+                  onClick={() => handleQueryChange('')}
+                  aria-label={uiT('Clear search', 'खोज साफ़ करें')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-muted hover:text-th-text p-1"
+                >
+                  <X size={16} aria-hidden="true" />
+                </button>
+              )}
             </div>
+            <p className="text-xs text-th-secondary mt-2">
+              {uiT(
+                'Results appear as you type. Search by name, phone, or ID.',
+                'जैसे ही आप टाइप करते हैं परिणाम दिखते हैं। नाम, फोन या आईडी से खोजें।'
+              )}
+            </p>
 
             {searched && searchResults.length > 0 && (
               <div className="mt-5 space-y-3">
@@ -903,11 +977,6 @@ export default function Workspace() {
                       <div className="min-w-0">
                         <p className="font-semibold text-th-text truncate">{c.name}</p>
                         <p className="text-sm text-th-secondary">{c.mobile}</p>
-                        {c.lastVisit && (
-                          <p className="text-xs text-th-muted">
-                            {uiT('Last visit:', 'पिछली विज़िट:')} {c.lastVisit}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -922,40 +991,33 @@ export default function Workspace() {
                   </div>
                 ))}
                 <button
-                  onClick={() => {
-                    setIsNewCustomer(true);
-                    setSelectedCustomer(null);
-                    setCustomerForm((prev) => ({
-                      ...prev,
-                      name: '',
-                      email: '',
-                      address: '',
-                      city: '',
-                      age: undefined,
-                      gender: '',
-                    }));
-                  }}
-                  aria-label={uiT(
-                    'Add new customer with this number',
-                    'इस नंबर से नया ग्राहक जोड़ें'
-                  )}
+                  onClick={openNewCustomerFromQuery}
+                  aria-label={uiT('Add new customer', 'नया ग्राहक जोड़ें')}
                   className="flex items-center gap-2 text-[#1ed760] hover:text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-lg hover:bg-[#1ed760]/10 transition-all"
                 >
                   <UserPlus size={16} aria-hidden="true" />
-                  {uiT('Add new customer with this number', 'इस नंबर से नया ग्राहक जोड़ें')}
+                  {uiT('Add new customer', 'नया ग्राहक जोड़ें')}
                 </button>
               </div>
             )}
 
-            {searched && searchResults.length === 0 && !isNewCustomer && (
+            {searched && searchResults.length === 0 && (
               <div className="text-center py-8 text-th-muted">
                 <Users size={40} className="mx-auto mb-3 opacity-50" aria-hidden="true" />
                 <p className="text-sm">
                   {uiT(
-                    'No customers found. Press Enter or click Search again to add a new customer.',
-                    'कोई ग्राहक नहीं मिला। नया ग्राहक जोड़ने के लिए Enter दबाएं या फिर से खोजें।'
+                    `No customers found for "${query.trim()}".`,
+                    `"${query.trim()}" के लिए कोई ग्राहक नहीं मिला।`
                   )}
                 </p>
+                <button
+                  onClick={openNewCustomerFromQuery}
+                  aria-label={uiT('Add new customer', 'नया ग्राहक जोड़ें')}
+                  className="mt-4 flex items-center gap-2 text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-lg hover:bg-[#1ed760]/10 transition-all"
+                >
+                  <UserPlus size={16} aria-hidden="true" />
+                  {uiT('Add new customer', 'नया ग्राहक जोड़ें')}
+                </button>
               </div>
             )}
           </div>
@@ -1008,12 +1070,14 @@ export default function Workspace() {
               </div>
             </div>
 
-            <div className="bg-[#f5a623]/10 border border-[#f5a623]/30 text-amber-400 rounded-lg px-4 py-3 mb-5">
-              <p className="text-sm font-semibold text-amber-400">
-                {uiT('Phone:', 'फोन:')}{' '}
-                <span className="font-bold tabular-nums">{customerForm.mobile}</span>
-              </p>
-            </div>
+            {customerForm.mobile && (
+              <div className="bg-[#f5a623]/10 border border-[#f5a623]/30 text-amber-400 rounded-lg px-4 py-3 mb-5">
+                <p className="text-sm font-semibold text-amber-400">
+                  {uiT('Phone:', 'फोन:')}{' '}
+                  <span className="font-bold tabular-nums">{customerForm.mobile}</span>
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1030,13 +1094,14 @@ export default function Workspace() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-th-secondary mb-1">
-                  {uiT('Phone', 'फोन')}
+                  {uiT('Phone', 'फोन')} *
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-surface border border-th-border rounded-lg text-sm text-th-secondary tabular-nums"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all tabular-nums"
+                  placeholder={uiT('Phone number', 'फोन नंबर')}
                   aria-label={uiT('Phone number', 'फ़ोन नंबर')}
-                  value={customerForm.mobile}
-                  disabled
+                  value={customerForm.mobile || ''}
+                  onChange={(e) => setCustomerForm({ ...customerForm, mobile: e.target.value })}
                 />
               </div>
               <div>
@@ -1128,9 +1193,22 @@ export default function Workspace() {
                     toast.error(uiT('Name is required', 'नाम आवश्यक है'));
                     return;
                   }
+                  if (!customerForm.mobile?.trim()) {
+                    toast.error(uiT('Phone number is required', 'फोन नंबर आवश्यक है'));
+                    return;
+                  }
+                  const body: Record<string, any> = {
+                    name: customerForm.name.trim(),
+                    mobile: customerForm.mobile.trim(),
+                  };
+                  if (customerForm.email?.trim()) body.email = customerForm.email.trim();
+                  if (customerForm.address?.trim()) body.address = customerForm.address.trim();
+                  if (customerForm.city?.trim()) body.city = customerForm.city.trim();
+                  if (customerForm.gender) body.gender = customerForm.gender;
+                  if (typeof customerForm.age === 'number') body.age = customerForm.age;
                   const res = await api.post<{ _id?: string; id?: string }>(
                     '/api/customers',
-                    customerForm
+                    body
                   );
                   if (res.success) {
                     const newCust = { ...customerForm, _id: res.data?._id || res.data?.id };
@@ -1142,13 +1220,320 @@ export default function Workspace() {
                     toast.error(res.message || uiT('Failed to create customer', 'ग्राहक बनाने में विफल'));
                   }
                 }}
-                disabled={!customerForm.name}
+                disabled={!customerForm.name || !customerForm.mobile?.trim()}
                 aria-label={uiT('Save customer and continue', 'ग्राहक सहेजें और जारी रखें')}
                 className="btn-primary flex items-center gap-2"
               >
                 {uiT('Save & Continue', 'सहेजें और जारी रखें')} <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== CUSTOMER OVERVIEW PHASE =====
+  if (selectedCustomer && showOverview && !isDirectSell) {
+    const summary = customerSummary;
+    const lastOrder = summary?.lastOrder;
+    const lastRx = summary?.lastPrescription;
+    const orderTotal = lastOrder
+      ? (lastOrder.framePrice || 0) + (lastOrder.lensPrice || 0) + (lastOrder.coatingPrice || 0)
+      : 0;
+    const recentCount = summary?.recentOrders?.length ?? 0;
+    const hasData = !!summary || !!lastOrder || !!lastRx || recentCount > 0;
+    const rxLine = (eye: any) =>
+      formatRxBrief(
+        eye?.dv?.sph ?? eye?.sph,
+        eye?.dv?.cyl ?? eye?.cyl,
+        eye?.dv?.axis ?? eye?.axis
+      );
+
+    return (
+      <div className="min-h-screen bg-th-elevated">
+        <div className="sticky top-0 z-40 backdrop-blur-xl bg-th-surface/90 border-b border-th-border shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 h-16 sm:h-20 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={() => resetAll()}
+                aria-label={uiT('Change customer', 'ग्राहक बदलें')}
+                className="h-11 w-11 rounded-lg bg-th-elevated border border-th-border text-th-text flex items-center justify-center hover:bg-[#1ed760]/10 hover:border-[#1ed760] transition-all shrink-0"
+              >
+                <ArrowLeft size={18} aria-hidden="true" />
+              </button>
+              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-th-text font-bold text-lg shrink-0">
+                {selectedCustomer.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold text-th-text truncate">
+                  {selectedCustomer.name}
+                </h1>
+                <p className="text-xs text-th-secondary truncate tabular-nums">
+                  {selectedCustomer.mobile || uiT('No phone', 'कोई फोन नहीं')}
+                </p>
+              </div>
+            </div>
+            <span className="hidden sm:flex items-center rounded-lg px-4 py-2 text-sm font-bold bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760] shrink-0">
+              {uiT('Existing Customer', 'मौजूदा ग्राहक')}
+            </span>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-th-text">
+              {uiT('Customer History', 'ग्राहक इतिहास')}
+            </h2>
+            <p className="text-sm text-th-secondary">
+              {uiT('Previous visits, purchases and prescriptions.', 'पिछली विज़िट, खरीदारी और प्रिस्क्रिप्शन।')}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="card rounded-xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
+                <Activity size={18} className="text-[#1ed760]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-th-secondary">{uiT('Visits', 'विज़िट')}</p>
+                <p className="text-lg font-bold text-th-text tabular-nums">
+                  {summary?.visitCount ?? selectedCustomer.totalVisits ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="card rounded-xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
+                <ShoppingCart size={18} className="text-[#1ed760]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-th-secondary">{uiT('Orders', 'ऑर्डर')}</p>
+                <p className="text-lg font-bold text-th-text tabular-nums">
+                  {summary?.orderCount ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="card rounded-xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
+                <IndianRupee size={18} className="text-[#1ed760]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-th-secondary">{uiT('Billed', 'बिल')}</p>
+                <p className="text-lg font-bold text-th-text tabular-nums">
+                  ₹{(summary?.totalBilled ?? selectedCustomer.totalSpent ?? 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="card rounded-xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                <Clock size={18} className="text-amber-400" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-th-secondary">{uiT('Pending', 'बकाया')}</p>
+                <p className="text-lg font-bold tabular-nums text-amber-400">
+                  ₹{(selectedCustomer.pendingAmount ?? 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {!hasData && (
+            <div className="card rounded-xl p-6 text-center">
+              <Loader2 size={28} className="mx-auto mb-3 text-[#1ed760] animate-spin" aria-hidden="true" />
+              <p className="text-sm text-th-muted">
+                {uiT('Loading customer history...', 'ग्राहक इतिहास लोड हो रहा है...')}
+              </p>
+            </div>
+          )}
+
+          {hasData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="card rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShoppingCart size={16} className="text-[#1ed760]" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-th-text">
+                    {uiT('Last Purchase', 'आखिरी खरीदारी')}
+                  </h3>
+                  {lastOrder?.createdAt && (
+                    <span className="ml-auto text-xs text-th-muted">
+                      {new Date(lastOrder.createdAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                {lastOrder ? (
+                  <div className="space-y-2">
+                    {(lastOrder.frameBrand || lastOrder.frameModel) && (
+                      <p className="text-sm text-th-text">
+                        <span className="text-th-muted">Frame:</span>{' '}
+                        {[lastOrder.frameBrand, lastOrder.frameModel, lastOrder.frameColor]
+                          .filter(Boolean)
+                          .join(' ')}{' '}
+                        <span className="text-th-secondary tabular-nums">
+                          ₹{(lastOrder.framePrice || 0).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                    {(lastOrder.lensBrand || lastOrder.lensType) && (
+                      <p className="text-sm text-th-text">
+                        <span className="text-th-muted">Lens:</span>{' '}
+                        {[lastOrder.lensBrand, lastOrder.lensType]
+                          .filter(Boolean)
+                          .join(' ')}{' '}
+                        <span className="text-th-secondary tabular-nums">
+                          ₹{(lastOrder.lensPrice || 0).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                    {lastOrder.coating && (
+                      <p className="text-sm text-th-text">
+                        <span className="text-th-muted">Coating:</span> {lastOrder.coating}{' '}
+                        <span className="text-th-secondary tabular-nums">
+                          ₹{(lastOrder.coatingPrice || 0).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                    {lastOrder.accessories && lastOrder.accessories.length > 0 && (
+                      <p className="text-sm text-th-text">
+                        <span className="text-th-muted">Accessories:</span>{' '}
+                        {lastOrder.accessories.join(', ')}
+                      </p>
+                    )}
+                    {orderTotal > 0 && (
+                      <p className="text-sm font-semibold text-[#1ed760] tabular-nums">
+                        {uiT('Total:', 'कुल:')} ₹{orderTotal.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-th-muted">
+                    {uiT('No purchases yet.', 'अभी कोई खरीदारी नहीं।')}
+                  </p>
+                )}
+              </div>
+
+              <div className="card rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Eye size={16} className="text-[#1ed760]" aria-hidden="true" />
+                  <h3 className="text-sm font-semibold text-th-text">
+                    {uiT('Last Prescription', 'आखिरी प्रिस्क्रिप्शन')}
+                  </h3>
+                </div>
+                {lastRx && (lastRx.rightEye || lastRx.leftEye) ? (
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <span className="text-th-muted font-medium">OD (R):</span>{' '}
+                      <span className="text-th-text">{rxLine(lastRx.rightEye)}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-th-muted font-medium">OS (L):</span>{' '}
+                      <span className="text-th-text">{rxLine(lastRx.leftEye)}</span>
+                    </p>
+                    {lastRx.pd && (
+                      <p className="text-sm text-th-secondary">PD: {lastRx.pd}</p>
+                    )}
+                    {lastRx.notes && (
+                      <p className="text-sm text-th-muted truncate">{lastRx.notes}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-th-muted">
+                    {uiT('No prescription on record.', 'कोई प्रिस्क्रिप्शन दर्ज नहीं।')}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {hasData && summary?.recentOrders && summary.recentOrders.length > 0 && (
+            <div className="card rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <History size={16} className="text-[#1ed760]" aria-hidden="true" />
+                <h3 className="text-sm font-semibold text-th-text">
+                  {uiT('Recent Orders', 'हाल के ऑर्डर')}
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {summary.recentOrders.map((o: any) => {
+                  const oTotal =
+                    (o.framePrice || 0) + (o.lensPrice || 0) + (o.coatingPrice || 0);
+                  const items = [
+                    o.frameBrand && o.frameModel ? `Frame: ${o.frameBrand} ${o.frameModel}` : '',
+                    o.lensBrand ? `Lens: ${o.lensBrand}` : '',
+                    o.coating ? `Coating: ${o.coating}` : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+                  return (
+                    <div
+                      key={o._id}
+                      className="flex items-center justify-between gap-3 py-2 border-b border-th-border last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm text-th-text truncate">
+                          {items || uiT('Order', 'ऑर्डर')}
+                        </p>
+                        <p className="text-xs text-th-muted">
+                          {o.createdAt
+                            ? new Date(o.createdAt).toLocaleDateString()
+                            : uiT('—', '—')}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold text-th-text tabular-nums shrink-0">
+                        ₹{oTotal.toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {hasData && !lastOrder && !lastRx && (summary?.recentOrders?.length || 0) === 0 && (
+            <div className="card rounded-xl p-6 text-center text-th-muted">
+              <p className="text-sm">
+                {uiT(
+                  'No previous records for this customer.',
+                  'इस ग्राहक का कोई पिछला रिकॉर्ड नहीं है।'
+                )}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => {
+                setShowOverview(false);
+                setStep('service');
+              }}
+              aria-label={uiT('Start new visit', 'नई विज़िट शुरू करें')}
+              className="btn-primary flex items-center justify-center gap-2 py-3.5"
+            >
+              <ShoppingCart size={18} aria-hidden="true" />
+              {uiT('Start New Visit', 'नई विज़िट शुरू करें')}
+            </button>
+            {lastOrder && (
+              <button
+                onClick={() => {
+                  repeatLastOrder(summary as CustomerSummary);
+                  setShowOverview(false);
+                }}
+                aria-label={uiT('Repeat last order', 'आखिरी ऑर्डर दोहराएं')}
+                className="btn-secondary flex items-center justify-center gap-2 py-3.5"
+              >
+                <Repeat size={18} aria-hidden="true" />
+                {uiT('Repeat Last Order', 'आखिरी ऑर्डर दोहराएं')}
+              </button>
+            )}
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={() => resetAll()}
+              aria-label={uiT('Search another customer', 'दूसरा ग्राहक खोजें')}
+              className="text-sm text-th-secondary underline-offset-4 hover:underline"
+            >
+              {uiT('← Search another customer', '← दूसरा ग्राहक खोजें')}
+            </button>
           </div>
         </div>
       </div>

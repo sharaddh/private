@@ -8,7 +8,15 @@ import * as customerController from "../controllers/customerController";
 
 const router = Router();
 
-router.get("/", authenticate, cacheRoute(60), asyncHandler(customerController.getAll));
+router.get(
+  "/",
+  authenticate,
+  (req, res, next) => {
+    if (req.query.search || req.query.phone) return next();
+    return cacheRoute(60)(req, res, next);
+  },
+  asyncHandler(customerController.getAll)
+);
 router.post(
   "/",
   authenticate,
@@ -19,12 +27,7 @@ router.post(
     await customerController.create(req, res);
   })
 );
-router.get(
-  "/summary/:id",
-  authenticate,
-  cacheRoute(30),
-  asyncHandler(customerController.getSummary)
-);
+router.get("/summary/:id", authenticate, asyncHandler(customerController.getSummary));
 router.get("/:id", authenticate, asyncHandler(customerController.getById));
 router.put(
   "/:id",
