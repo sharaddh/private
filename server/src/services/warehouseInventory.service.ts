@@ -1,8 +1,7 @@
-import { getWarehouseModels } from "../models/db";
-import { escapeRegex } from "../utils/string";
+import { Prisma, prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
 
-const { Inventory } = getWarehouseModels();
+const Inventory = prisma.warehouseInventory;
 
 interface InventoryData {
   sku?: string;
@@ -38,72 +37,91 @@ const UPDATE_WHITELIST = [
   "description",
 ] as const;
 
+function toMongoDoc(row: any) {
+  if (!row) return row;
+  const { id, ...rest } = row;
+  return { ...rest, _id: id };
+}
+
+function isNotFound(err: unknown) {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025";
+}
+
 export async function getStats() {
-  const [totalItems, lowStock, warehouseItems, totalValueResult, recentItems] = await Promise.all([
-    Inventory.countDocuments(),
-    Inventory.countDocuments({ quantity: { $lte: 5 } }),
-    Inventory.countDocuments({ location: "warehouse" }),
-    Inventory.aggregate([
-      { $group: { _id: null, total: { $sum: { $multiply: ["$quantity", "$sellingPrice"] } } } },
-    ]),
-    Inventory.find().sort({ createdAt: -1 }).limit(5).lean(),
+  const [totalItems, lowStock, warehouseItems, allForValue, recentItems] = await Promise.all([
+    Inventory.count(),
+    Inventory.count({ where: { quantity: { lte: 5 } } }),
+    Inventory.count({ where: { location: "warehouse" } }),
+    Inventory.findMany({ select: { quantity: true, sellingPrice: true } }),
+    Inventory.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
   ]);
+
+  const totalValue = allForValue.reduce(
+    (s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0),
+    0
+  );
 
   return {
     totalItems,
     lowStock,
     warehouseItems,
-    totalValue: totalValueResult[0]?.total || 0,
-    recentItems,
+    totalValue,
+    recentItems: recentItems.map(toMongoDoc),
   };
 }
 
 export async function listInventory(query?: { search?: string }) {
-  const filter: Record<string, unknown> = {};
-  if (query?.search) {
-    const s = escapeRegex(query.search.trim());
-    const searchRegex = { $regex: s, $options: "i" };
-    filter.$or = [
-      { sku: searchRegex },
-      { brand: searchRegex },
-      { model: searchRegex },
-      { category: searchRegex },
-      { supplier: searchRegex },
+  const where: Prisma.WarehouseInventoryWhereInput = {};
+  const s = query?.search?.trim();
+  if (s) {
+    where.OR = [
+      { sku: { contains: s, mode: "insensitive" } },
+      { brand: { contains: s, mode: "insensitive" } },
+      { model: { contains: s, mode: "insensitive" } },
+      { category: { contains: s, mode: "insensitive" } },
+      { supplier: { contains: s, mode: "insensitive" } },
     ];
   }
-  return Inventory.find(filter).sort({ createdAt: -1 }).limit(Math.min(200, 200)).lean();
+  const items = await Inventory.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+  return items.map(toMongoDoc);
 }
 
 export async function getInventoryById(id: string) {
-  const item = await Inventory.findById(id).lean();
+  const item = await Inventory.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Inventory item not found");
-  return item;
+  return toMongoDoc(item);
 }
 
 export async function getInventoryBySku(code: string) {
-  const item = await Inventory.findOne({ sku: code }).lean();
+  const item = await Inventory.findUnique({ where: { sku: code } });
   if (!item) throw new AppError(404, "Inventory item not found");
-  return item;
+  return toMongoDoc(item);
 }
 
 export async function getQrImage(id: string) {
-  const item = (await Inventory.findById(id).select("sku").lean()) as { sku: string } | null;
+  const item = await Inventory.findUnique({ where: { id }, select: { sku: true } });
   if (!item) throw new AppError(404, "Inventory item not found");
   return { sku: item.sku };
 }
 
 export async function createInventory(data: InventoryData) {
-  return Inventory.create(data);
+  const item = await Inventory.create({
+    data: data as Prisma.WarehouseInventoryCreateInput,
+  });
+  return toMongoDoc(item);
 }
 
 export async function adjustStock(id: string, quantity: number) {
-  const item = await Inventory.findById(id);
+  const item = await Inventory.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Inventory item not found");
   const newQty = item.quantity + quantity;
   if (newQty < 0) throw new AppError(400, "Stock cannot go below zero");
-  item.quantity = newQty;
-  await item.save();
-  return item;
+  const updated = await Inventory.update({ where: { id }, data: { quantity: newQty } });
+  return toMongoDoc(updated);
 }
 
 export async function updateInventory(id: string, updates: Record<string, unknown>) {
@@ -113,17 +131,24 @@ export async function updateInventory(id: string, updates: Record<string, unknow
       filtered[key] = updates[key];
     }
   }
-  const item = await Inventory.findByIdAndUpdate(
-    id,
-    { $set: filtered },
-    { new: true, runValidators: true }
-  ).lean();
-  if (!item) throw new AppError(404, "Inventory item not found");
-  return item;
+  try {
+    const item = await Inventory.update({
+      where: { id },
+      data: filtered as Prisma.WarehouseInventoryUpdateInput,
+    });
+    return toMongoDoc(item);
+  } catch (err) {
+    if (isNotFound(err)) throw new AppError(404, "Inventory item not found");
+    throw err;
+  }
 }
 
 export async function deleteInventory(id: string) {
-  const item = await Inventory.findByIdAndDelete(id).lean();
-  if (!item) throw new AppError(404, "Inventory item not found");
-  return item;
+  try {
+    const item = await Inventory.delete({ where: { id } });
+    return toMongoDoc(item);
+  } catch (err) {
+    if (isNotFound(err)) throw new AppError(404, "Inventory item not found");
+    throw err;
+  }
 }

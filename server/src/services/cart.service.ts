@@ -18,6 +18,11 @@ function pairStr(v: number): string {
   return `${Math.round((v / 2) * 2) / 2}p`;
 }
 
+function withId(row: any) {
+  if (!row) return row;
+  return { ...row, _id: row.id };
+}
+
 function stockError(coating: string, powerKey: string, available: number): string {
   return `${coating} ${powerKey}: only ${pairStr(available)} in stock`;
 }
@@ -30,10 +35,12 @@ export async function getCartItems(userId: string) {
       coatingToStock.set(item.coating, await LensStock.findFirst({ where: { coating: item.coating } }));
     }
   }
-  return items.map((item) => ({
-    ...item,
-    available: getAvailableStock(coatingToStock.get(item.coating), item.lensType, item.powerKey),
-  }));
+  return items.map((item) =>
+    withId({
+      ...item,
+      available: getAvailableStock(coatingToStock.get(item.coating), item.lensType, item.powerKey),
+    })
+  );
 }
 
 export async function getCartCount(userId: string) {
@@ -60,13 +67,13 @@ export async function addToCart(
     const data: { quantity: number; price: number; fogMark?: string } = { quantity: total, price };
     if (fogMark) data.fogMark = fogMark;
     const updated = await CartItem.update({ where: { id: existing.id }, data });
-    return { ...updated, available };
+    return withId({ ...updated, available });
   }
   if (qty > available) throw new AppError(400, stockError(coating, powerKey, available));
   const item = await CartItem.create({
     data: { userId, coating, lensType, powerKey, quantity: qty, price, fogMark },
   });
-  return { ...item, available };
+  return withId({ ...item, available });
 }
 
 export async function updateCartItem(
@@ -91,16 +98,16 @@ export async function updateCartItem(
   if (typeof fogMark === "string") data.fogMark = fogMark;
   if (Object.keys(data).length > 0) {
     const updated = await CartItem.update({ where: { id: itemId }, data });
-    return { ...updated, available };
+    return withId({ ...updated, available });
   }
-  return { ...item, available };
+  return withId({ ...item, available });
 }
 
 export async function removeCartItem(userId: string, itemId: string) {
   const item = await CartItem.findFirst({ where: { id: itemId, userId } });
   if (!item) throw new AppError(404, "Cart item not found");
   await CartItem.delete({ where: { id: itemId } });
-  return item;
+  return withId(item);
 }
 
 export async function clearCart(userId: string) {
@@ -217,7 +224,7 @@ async function attachAvailable(withdrawals: any[]) {
       it.available = getAvailableStock(await getStock(it.coating), it.lensType, it.powerKey);
     }
   }
-  return withdrawals;
+  return withdrawals.map(withId);
 }
 
 export async function deleteWithdrawal(userId: string, id: string) {
@@ -240,7 +247,7 @@ export async function deleteWithdrawal(userId: string, id: string) {
 
   await WithdrawalItem.deleteMany({ where: { withdrawalId: id } });
   await Withdrawal.delete({ where: { id } });
-  return withdrawal;
+  return withId(withdrawal);
 }
 
 export async function markWithdrawalPaid(userId: string, id: string, paid: boolean = true) {
@@ -250,7 +257,7 @@ export async function markWithdrawalPaid(userId: string, id: string, paid: boole
     where: { id },
     data: { paid: Boolean(paid), paidAt: paid ? new Date() : null },
   });
-  return updated;
+  return withId(updated);
 }
 
 export async function updateWithdrawal(
@@ -397,7 +404,7 @@ export async function updateWithdrawal(
     include: { items: true },
   });
 
-  return updated;
+  return withId(updated);
 }
 
 export async function sendWithdrawalPdf(userId: string, id: string, phone?: string) {

@@ -1,104 +1,68 @@
-import { prisma } from "../db/prisma";
-import { getBranchModels, getWarehouseModels } from "../models/db";
-import { escapeRegex } from "../utils/string";
+import { Prisma, prisma } from "../db/prisma";
 import { logger } from "../utils/logger";
 
-const {
-  Inventory: WHInventory,
-  LensStock: WHLensStock,
-  Withdrawal: WHWithdrawal,
-} = getWarehouseModels();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAgg = { branchId: string; branchName: string; branchCode: string; [k: string]: any };
-
-interface BranchItem {
-  branchId: string;
-  branchName: string;
-  branchCode: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type AggregatedInventory = BranchItem & {
-  id: string;
-  sku: string;
-  category: string;
-  inventoryType: string;
-  brand: string;
-  model: string;
-  color: string;
-  size: string;
-  gender: string;
-  supplier: string;
-  quantity: number;
-  location: string;
-  purchasePrice: number;
-  sellingPrice: number;
-  description: string;
-  lensIndex?: string;
-  lensCoating?: string;
-  sphRight?: string;
-  cylRight?: string;
-  axisRight?: string;
-  sphLeft?: string;
-  cylLeft?: string;
-  axisLeft?: string;
-  addPower?: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type AggregatedLensStock = BranchItem & {
-  id: string;
-  coating: string;
-  quantities: Record<string, Record<string, number>>;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 interface BranchInfo {
   id: string;
   name: string;
   code: string;
-  dbName: string;
+}
+
+function toMongoDoc(row: any) {
+  if (!row) return row;
+  const { id, ...rest } = row;
+  return { ...rest, _id: id };
+}
+
+function withBranch(row: Record<string, any>, branch: BranchInfo, branchId = branch.id): AnyAgg {
+  return {
+    ...toMongoDoc(row),
+    branchId,
+    branchName: branch.name,
+    branchCode: branch.code,
+  };
+}
+
+const WAREHOUSE_BRANCH: BranchInfo = { id: "main", name: "Warehouse", code: "WH" };
+
+function inventorySearchWhere(
+  query?: { search?: string }
+): Prisma.InventoryWhereInput {
+  const s = query?.search?.trim();
+  if (!s) return {};
+  return {
+    OR: [
+      { sku: { contains: s, mode: "insensitive" } },
+      { brand: { contains: s, mode: "insensitive" } },
+      { model: { contains: s, mode: "insensitive" } },
+      { category: { contains: s, mode: "insensitive" } },
+      { supplier: { contains: s, mode: "insensitive" } },
+    ],
+  };
 }
 
 async function getActiveBranches(): Promise<BranchInfo[]> {
   return prisma.branch.findMany({
     where: { isActive: true },
-    select: { id: true, name: true, code: true, dbName: true },
-  }) as Promise<BranchInfo[]>;
+    select: { id: true, name: true, code: true },
+  });
 }
 
 export async function getAllBranchInventory(query?: { search?: string }) {
   const branches = await getActiveBranches();
   const allItems: AnyAgg[] = [];
 
-  const filter: Record<string, unknown> = {};
-  if (query?.search) {
-    const s = escapeRegex(query.search.trim());
-    const searchRegex = { $regex: s, $options: "i" };
-    filter.$or = [
-      { sku: searchRegex },
-      { brand: searchRegex },
-      { model: searchRegex },
-      { category: searchRegex },
-      { supplier: searchRegex },
-    ];
-  }
-
   await Promise.all(
-    branches.map(async (branch: BranchInfo) => {
+    branches.map(async (branch) => {
       try {
-        const models = getBranchModels(branch.dbName);
-        const items = await models.Inventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
+        const items = await prisma.inventory.findMany({
+          where: { ...inventorySearchWhere(query), branchId: branch.id },
+          orderBy: { createdAt: "desc" },
+          take: 500,
+        });
         for (const item of items) {
-          allItems.push({
-            ...item,
-            branchId: branch.id,
-            branchName: branch.name,
-            branchCode: branch.code,
-          } as AnyAgg);
+          allItems.push(withBranch(item, branch));
         }
       } catch (err) {
         logger.error(`Failed to fetch inventory from branch ${branch.name}`, {
@@ -109,14 +73,13 @@ export async function getAllBranchInventory(query?: { search?: string }) {
   );
 
   try {
-    const mainItems = await WHInventory.find(filter).sort({ createdAt: -1 }).limit(500).lean();
-    for (const item of mainItems) {
-      allItems.push({
-        ...(item as unknown as AnyAgg),
-        branchId: "main",
-        branchName: "Warehouse",
-        branchCode: "WH",
-      });
+    const items = await prisma.warehouseInventory.findMany({
+      where: inventorySearchWhere(query) as Prisma.WarehouseInventoryWhereInput,
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    });
+    for (const item of items) {
+      allItems.push(withBranch(item, WAREHOUSE_BRANCH, "main"));
     }
   } catch (err) {
     logger.error("Failed to fetch inventory from main DB", { error: (err as Error).message });
@@ -138,45 +101,51 @@ export async function getAllBranchStats() {
   const recentItems: AnyAgg[] = [];
   const lowStockItems: AnyAgg[] = [];
 
+  function calcValue(items: { quantity: number | null; sellingPrice: number | null }[]) {
+    return items.reduce(
+      (s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0),
+      0
+    );
+  }
+
   await Promise.all(
-    branches.map(async (branch: BranchInfo) => {
+    branches.map(async (branch) => {
       try {
-        const models = getBranchModels(branch.dbName);
-        const [count, low, wh, recent, lowItems, allForValue] = await Promise.all([
-          models.Inventory.countDocuments(),
-          models.Inventory.countDocuments({ quantity: { $lte: 5 } }),
-          models.Inventory.countDocuments({ location: "warehouse" }),
-          models.Inventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-          models.Inventory.find({ quantity: { $lte: 5, $gt: 0 } })
-            .sort({ quantity: 1 })
-            .limit(10)
-            .lean(),
-          models.Inventory.find({}, { quantity: 1, sellingPrice: 1 }).lean(),
+        const [count, low, wh, recent, lowItems, allForValue, lensDocs] = await Promise.all([
+          prisma.inventory.count({ where: { branchId: branch.id } }),
+          prisma.inventory.count({ where: { branchId: branch.id, quantity: { lte: 5 } } }),
+          prisma.inventory.count({
+            where: { branchId: branch.id, location: "warehouse" },
+          }),
+          prisma.inventory.findMany({
+            where: { branchId: branch.id },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          }),
+          prisma.inventory.findMany({
+            where: { branchId: branch.id, quantity: { lte: 5, gt: 0 } },
+            orderBy: { quantity: "asc" },
+            take: 10,
+          }),
+          prisma.inventory.findMany({
+            where: { branchId: branch.id },
+            select: { quantity: true, sellingPrice: true },
+          }),
+          prisma.lensStock.findMany({ where: { branchId: branch.id } }),
         ]);
 
         totalItems += count;
         lowStock += low;
         warehouseItems += wh;
-        totalValue += allForValue.reduce((s: number, i: any) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
+        totalValue += calcValue(allForValue);
 
         for (const item of recent) {
-          recentItems.push({
-            ...item,
-            branchId: branch.id,
-            branchName: branch.name,
-            branchCode: branch.code,
-          } as AnyAgg);
+          recentItems.push(withBranch(item, branch));
         }
         for (const item of lowItems) {
-          lowStockItems.push({
-            ...item,
-            branchId: branch.id,
-            branchName: branch.name,
-            branchCode: branch.code,
-          } as AnyAgg);
+          lowStockItems.push(withBranch(item, branch));
         }
 
-        const lensDocs = await models.LensStock.find().lean();
         totalLensCoatings += lensDocs.length;
         for (const doc of lensDocs) {
           const q = (doc.quantities as Record<string, Record<string, number>>) || {};
@@ -195,43 +164,35 @@ export async function getAllBranchStats() {
   );
 
   try {
-    const [mainCount, mainLow, mainWh, mainRecent, mainLowItems, mainAllForValue] = await Promise.all(
-      [
-        WHInventory.countDocuments(),
-        WHInventory.countDocuments({ quantity: { $lte: 5 } }),
-        WHInventory.countDocuments({ location: "warehouse" }),
-        WHInventory.find().sort({ createdAt: -1 }).limit(5).lean(),
-        WHInventory.find({ quantity: { $lte: 5, $gt: 0 } })
-          .sort({ quantity: 1 })
-          .limit(10)
-          .lean(),
-        WHInventory.find({}, { quantity: 1, sellingPrice: 1 }).lean(),
-      ]
-    );
+    const [mainCount, mainLow, mainWh, mainRecent, mainLowItems, mainAllForValue] =
+      await Promise.all([
+        prisma.warehouseInventory.count(),
+        prisma.warehouseInventory.count({ where: { quantity: { lte: 5 } } }),
+        prisma.warehouseInventory.count({ where: { location: "warehouse" } }),
+        prisma.warehouseInventory.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+        prisma.warehouseInventory.findMany({
+          where: { quantity: { lte: 5, gt: 0 } },
+          orderBy: { quantity: "asc" },
+          take: 10,
+        }),
+        prisma.warehouseInventory.findMany({
+          select: { quantity: true, sellingPrice: true },
+        }),
+      ]);
 
     totalItems += mainCount;
     lowStock += mainLow;
     warehouseItems += mainWh;
-    totalValue += mainAllForValue.reduce((s: number, i: any) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
+    totalValue += calcValue(mainAllForValue);
 
     for (const item of mainRecent) {
-      recentItems.push({
-        ...(item as unknown as AnyAgg),
-        branchId: "main",
-        branchName: "Warehouse",
-        branchCode: "WH",
-      });
+      recentItems.push(withBranch(item, WAREHOUSE_BRANCH, "main"));
     }
     for (const item of mainLowItems) {
-      lowStockItems.push({
-        ...(item as unknown as AnyAgg),
-        branchId: "main",
-        branchName: "Warehouse",
-        branchCode: "WH",
-      });
+      lowStockItems.push(withBranch(item, WAREHOUSE_BRANCH, "main"));
     }
 
-    const mainLensDocs = await WHLensStock.find().lean();
+    const mainLensDocs = await prisma.warehouseLensStock.findMany();
     totalLensCoatings += mainLensDocs.length;
     for (const doc of mainLensDocs) {
       const q = (doc.quantities as Record<string, Record<string, number>>) || {};
@@ -248,14 +209,13 @@ export async function getAllBranchStats() {
   recentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   lowStockItems.sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
 
-  const [totalUsers, totalWithdrawals, allWithdrawals] = await Promise.all([
+  const [totalUsers, totalWithdrawals, allWithdrawals, recentWithdrawals] = await Promise.all([
     prisma.user.count(),
-    WHWithdrawal.countDocuments(),
-    WHWithdrawal.find({}, { totalQuantity: 1 }).lean(),
+    prisma.withdrawal.count(),
+    prisma.withdrawal.findMany({ select: { totalQuantity: true } }),
+    prisma.withdrawal.findMany({ orderBy: { withdrawnAt: "desc" }, take: 10 }),
   ]);
-  const totalWithdrawnItems = allWithdrawals.reduce((s: number, w: any) => s + (w.totalQuantity || 0), 0);
-
-  const recentWithdrawals = await WHWithdrawal.find().sort({ withdrawnAt: -1 }).limit(10).lean();
+  const totalWithdrawnItems = allWithdrawals.reduce((s, w) => s + (w.totalQuantity || 0), 0);
 
   return {
     totalItems,
@@ -269,7 +229,7 @@ export async function getAllBranchStats() {
     totalWithdrawnItems,
     recentItems: recentItems.slice(0, 5),
     lowStockItems: lowStockItems.slice(0, 10),
-    recentWithdrawals,
+    recentWithdrawals: recentWithdrawals.map(toMongoDoc),
   };
 }
 
@@ -278,17 +238,14 @@ export async function getAllBranchLensStock() {
   const allItems: AnyAgg[] = [];
 
   await Promise.all(
-    branches.map(async (branch: BranchInfo) => {
+    branches.map(async (branch) => {
       try {
-        const models = getBranchModels(branch.dbName);
-        const items = await models.LensStock.find().sort({ coating: 1 }).lean();
+        const items = await prisma.lensStock.findMany({
+          where: { branchId: branch.id },
+          orderBy: { coating: "asc" },
+        });
         for (const item of items) {
-          allItems.push({
-            ...item,
-            branchId: branch.id,
-            branchName: branch.name,
-            branchCode: branch.code,
-          } as AnyAgg);
+          allItems.push(withBranch(item, branch));
         }
       } catch (err) {
         logger.error(`Failed to fetch lens stock from branch ${branch.name}`, {
@@ -299,14 +256,9 @@ export async function getAllBranchLensStock() {
   );
 
   try {
-    const mainItems = await WHLensStock.find().sort({ coating: 1 }).lean();
-    for (const item of mainItems) {
-      allItems.push({
-        ...(item as unknown as AnyAgg),
-        branchId: "main",
-        branchName: "Warehouse",
-        branchCode: "WH",
-      });
+    const items = await prisma.warehouseLensStock.findMany({ orderBy: { coating: "asc" } });
+    for (const item of items) {
+      allItems.push(withBranch(item, WAREHOUSE_BRANCH, "main"));
     }
   } catch (err) {
     logger.error("Failed to fetch lens stock from main DB", { error: (err as Error).message });
