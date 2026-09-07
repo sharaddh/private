@@ -213,7 +213,7 @@ export async function getAllBranchStats() {
     prisma.user.count(),
     prisma.withdrawal.count(),
     prisma.withdrawal.findMany({ select: { totalQuantity: true } }),
-    prisma.withdrawal.findMany({ orderBy: { withdrawnAt: "desc" }, take: 10 }),
+    prisma.withdrawal.findMany({ orderBy: { withdrawnAt: "desc" }, take: 10, include: { items: true } }),
   ]);
   const totalWithdrawnItems = allWithdrawals.reduce((s, w) => s + (w.totalQuantity || 0), 0);
 

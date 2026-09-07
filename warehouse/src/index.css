@@ -384,7 +384,7 @@ html {
   }
 
   .nav-link {
-    @apply relative flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-300 ease-out;
+    @apply relative flex flex-col items-center justify-center gap-1 px-2 sm:px-4 py-2 transition-all duration-300 ease-out;
   }
   .nav-link:active {
     transform: scale(0.9);

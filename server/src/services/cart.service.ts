@@ -5,7 +5,7 @@ import { getPriceForPower } from "./lensStock.service";
 import { istDateKey } from "../utils/date";
 
 const CartItem = prisma.cartItem;
-const LensStock = prisma.lensStock;
+const LensStock = prisma.warehouseLensStock;
 const Withdrawal = prisma.withdrawal;
 const WithdrawalItem = prisma.withdrawalItem;
 
@@ -224,7 +224,7 @@ async function attachAvailable(withdrawals: any[]) {
       it.available = getAvailableStock(await getStock(it.coating), it.lensType, it.powerKey);
     }
   }
-  return withdrawals.map(withId);
+  return withdrawals.map((w) => withId({ ...w, user: w.userId }));
 }
 
 export async function deleteWithdrawal(userId: string, id: string) {
@@ -256,6 +256,7 @@ export async function markWithdrawalPaid(userId: string, id: string, paid: boole
   const updated = await Withdrawal.update({
     where: { id },
     data: { paid: Boolean(paid), paidAt: paid ? new Date() : null },
+    include: { items: true },
   });
   return withId(updated);
 }

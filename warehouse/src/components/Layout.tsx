@@ -25,6 +25,7 @@ const sidebarMenu = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/lens-stock', label: 'Lens Stock', icon: Glasses },
   { path: '/update-stock', label: 'Update Stock', icon: PackagePlus },
+  { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'Withdrawals', icon: History },
   { path: '/fog-marks', label: 'Fog Marks', icon: Tags },
@@ -34,6 +35,7 @@ const sidebarMenu = [
 const mobileNav = [
   { path: '/', label: 'Home', icon: LayoutDashboard },
   { path: '/lens-stock', label: 'Stock', icon: Glasses },
+  { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'History', icon: History },
   { path: '/users', label: 'User', icon: UserCog },
