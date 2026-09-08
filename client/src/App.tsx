@@ -182,7 +182,7 @@ export default function App() {
             path="/inventory-v2"
             element={
               <RoleGuard path="/inventory-v2">
-                <SuspendedPage page="inventory">
+                <SuspendedPage page="inventory-v2">
                   <InventoryV2 />
                 </SuspendedPage>
               </RoleGuard>
