@@ -4,7 +4,6 @@ import api from '../api';
 import { useToast } from '../context';
 import CoatingList from '../components/lens/CoatingList';
 import LensGrid from '../components/lens/LensGrid';
-import { PageLoader } from '../components';
 import { formatCurrency, fmtPairs } from '../utils/helpers';
 import { PackagePlus, Plus, Check, X, Pencil, Trash2 } from 'lucide-react';
 
@@ -20,6 +19,50 @@ function getTotalQty(item: LensStockItem): number {
     }
   }
   return total;
+}
+
+function UpdateStockSkeleton() {
+  return (
+    <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-th-hover animate-pulse" />
+        <div className="space-y-1.5">
+          <div className="h-5 w-36 rounded bg-th-hover animate-pulse" />
+          <div className="h-3 w-24 rounded bg-th-hover animate-pulse" />
+        </div>
+      </div>
+
+      {/* Mobile: coating strip */}
+      <div className="lg:hidden space-y-2">
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="shrink-0 w-24 h-20 rounded-xl bg-th-hover animate-pulse" />
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop: sidebar + content */}
+      <div className="flex-1 flex gap-4 min-h-0">
+        <div className="hidden lg:flex w-72 shrink-0 card p-4 flex-col gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-16 rounded-xl bg-th-hover animate-pulse" />
+          ))}
+        </div>
+        <div className="flex-1 card p-3 lg:p-4">
+          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-th-border">
+            <div className="w-2 h-2 rounded-full bg-th-hover animate-pulse shrink-0" />
+            <div className="h-4 w-32 rounded bg-th-hover animate-pulse" />
+            <div className="ml-auto h-7 w-24 rounded-lg bg-th-hover animate-pulse" />
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <div key={i} className="h-20 rounded-xl bg-th-hover animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function UpdateStock() {
@@ -214,7 +257,7 @@ export default function UpdateStock() {
     setPricePosDraft('');
   }, []);
 
-  if (loading) return <PageLoader />;
+  if (loading) return <UpdateStockSkeleton />;
 
   return (
     <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0 animate-page-enter">
@@ -433,7 +476,7 @@ export default function UpdateStock() {
 
       {/* Desktop: sidebar + content */}
       <div className="flex-1 flex gap-4 min-h-0">
-        <div className="hidden lg:flex w-64 shrink-0 card p-4 flex-col overflow-hidden">
+        <div className="hidden lg:flex w-72 shrink-0 card p-4 flex-col overflow-hidden">
           <CoatingList
             items={items}
             selectedId={selectedId}
@@ -444,12 +487,12 @@ export default function UpdateStock() {
           />
         </div>
 
-        <div className="flex-1 card p-3 lg:p-4 overflow-hidden flex flex-col">
+        <div className="flex-1 card p-2 sm:p-3 lg:p-4 overflow-hidden flex flex-col">
           {selectedItem ? (
             <>
-              <div className="flex flex-wrap items-center gap-1.5 mb-2 pb-2 border-b border-th-border">
-                <div className="w-2 h-2 rounded-full bg-primary-500" />
-                <span className="text-body-bold font-bold text-th-text truncate">
+              <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-th-border min-w-0">
+                <div className="w-2 h-2 rounded-full bg-primary-500 shrink-0" />
+                <span className="text-body-bold font-bold text-th-text truncate min-w-0">
                   {selectedItem.coating}
                 </span>
                 {editingPrice ? (
@@ -497,7 +540,7 @@ export default function UpdateStock() {
                 ) : (
                   <button
                     onClick={startPriceEdit}
-                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-th-elevated text-primary-500 hover:bg-primary-500/10 text-small font-bold transition-colors"
+                    className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-th-elevated text-primary-500 hover:bg-primary-500/10 text-small font-bold transition-colors"
                     title="Edit prices"
                   >
                     <span>
