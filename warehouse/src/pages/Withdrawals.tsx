@@ -275,7 +275,30 @@ export default function Withdrawals() {
       {/* Withdrawals List */}
       <div className="flex-1 min-h-0 overflow-auto space-y-3">
         {loadingHistory ? (
-          <p className="text-center text-th-muted text-small py-8">Loading...</p>
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-th-card border border-th-border rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-th-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-th-hover animate-pulse shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="h-3.5 w-32 rounded bg-th-hover animate-pulse" />
+                      <div className="h-3 w-20 rounded bg-th-hover animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-12 rounded bg-th-hover animate-pulse" />
+                </div>
+                <div className="p-4 space-y-2">
+                  <div className="h-2.5 w-3/4 rounded bg-th-hover animate-pulse" />
+                  <div className="h-2.5 w-1/2 rounded bg-th-hover animate-pulse" />
+                </div>
+                <div className="px-4 py-3 border-t border-th-border flex items-center justify-between gap-2">
+                  <div className="h-3 w-16 rounded bg-th-hover animate-pulse" />
+                  <div className="h-6 w-20 rounded-pill bg-th-hover animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : history.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">

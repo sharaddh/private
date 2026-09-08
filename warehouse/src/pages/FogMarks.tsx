@@ -3,10 +3,71 @@ import api from '../api';
 import { Tags, Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import type { FogMark } from '../types/fogMark';
-import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
+
+function FogMarksTableSkeleton() {
+  return (
+    <div className="card overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden sm:block">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-th-border bg-th-base">
+              {['Name', 'Created', 'Actions'].map((h) => (
+                <th
+                  key={h}
+                  className={`text-badge text-th-muted px-4 py-3 uppercase tracking-wider ${
+                    h === 'Actions' ? 'text-right' : 'text-left'
+                  }`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="animate-pulse">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <tr key={i} className="border-b border-th-border">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-24 rounded bg-th-hover" />
+                    <div className="h-5 w-10 rounded-pill bg-th-hover" />
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="h-3.5 w-24 rounded bg-th-hover" />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-th-hover" />
+                    <div className="w-8 h-8 rounded-lg bg-th-hover" />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Mobile list skeleton */}
+      <div className="sm:hidden space-y-2 p-3 animate-pulse">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-th-elevated rounded-lg p-3 flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-4 w-24 rounded bg-th-hover" />
+              <div className="h-3 w-20 rounded bg-th-hover" />
+            </div>
+            <div className="flex gap-1">
+              <div className="w-9 h-9 rounded-lg bg-th-hover" />
+              <div className="w-9 h-9 rounded-lg bg-th-hover" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function FogMarks() {
   const [marks, setMarks] = useState<FogMark[]>([]);
@@ -101,7 +162,7 @@ export default function FogMarks() {
       </div>
 
       {loading ? (
-        <Spinner size={32} className="mx-auto mt-16" />
+        <FogMarksTableSkeleton />
       ) : marks.length === 0 ? (
         <EmptyState
           icon={Tags}

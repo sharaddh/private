@@ -11,7 +11,6 @@ import {
   Wallet,
   Coins,
 } from 'lucide-react';
-import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import StatCard from '../components/StatCard';
 import {
@@ -205,7 +204,98 @@ export default function Users() {
   );
 
   if (loading) {
-    return <Spinner size={32} className="mx-auto mt-16" />;
+    return (
+      <div className="space-y-4 pb-20 lg:pb-0">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-th-hover animate-pulse" />
+          <div className="space-y-1.5">
+            <div className="h-5 w-24 rounded bg-th-hover animate-pulse" />
+            <div className="h-3 w-40 rounded bg-th-hover animate-pulse" />
+          </div>
+        </div>
+
+        {/* Date filter */}
+        <div className="card p-3 flex flex-wrap items-end gap-3">
+          <div className="space-y-1.5">
+            <div className="h-3 w-8 rounded bg-th-hover animate-pulse" />
+            <div className="h-10 w-40 rounded-lg bg-th-hover animate-pulse" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-3 w-8 rounded bg-th-hover animate-pulse" />
+            <div className="h-10 w-40 rounded-lg bg-th-hover animate-pulse" />
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="card p-4 space-y-2.5">
+              <div className="w-9 h-9 rounded-lg bg-th-hover animate-pulse" />
+              <div className="h-6 w-14 rounded bg-th-hover animate-pulse" />
+              <div className="h-3 w-20 rounded bg-th-hover animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden lg:block card overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-th-border bg-th-base">
+                {['Branch Owner', 'Withdrawals', 'Total Amount', 'Due Amount'].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left text-badge text-th-muted px-4 py-3 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="animate-pulse">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-th-border">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-th-hover" />
+                      <div className="h-4 w-32 rounded bg-th-hover" />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-24 rounded bg-th-hover" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-20 rounded bg-th-hover" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-16 rounded bg-th-hover" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile: card list */}
+        <div className="lg:hidden space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card p-3 space-y-2.5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-th-hover animate-pulse" />
+                <div className="flex-1 space-y-1.5 pt-0.5">
+                  <div className="h-4 w-32 rounded bg-th-hover animate-pulse" />
+                  <div className="h-3 w-20 rounded bg-th-hover animate-pulse" />
+                </div>
+              </div>
+              <div className="border-t border-th-border pt-2 space-y-1.5">
+                <div className="h-3 w-40 rounded bg-th-hover animate-pulse" />
+                <div className="h-3 w-32 rounded bg-th-hover animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
