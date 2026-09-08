@@ -4,6 +4,7 @@ import { Bill } from "../models/bill";
 import { Payment } from "../models/payment";
 import { Delivery } from "../models/delivery";
 import { Prescription } from "../models/prescription";
+import { prisma } from "../db/prisma";
 import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
 import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
@@ -11,6 +12,7 @@ import {
   decrementStockForOrder,
   restoreStockForOrder,
   assertStockAvailable,
+  type OrderStockRef,
 } from "./inventory.service";
 import { VALID_TRANSITIONS, VALID_CLASSIFICATIONS } from "../types";
 import type { PaginatedResult, OrderStatus } from "../types";
@@ -216,12 +218,19 @@ export async function updateOrder(orderId: string, updates: UpdateOrderData): Pr
 }
 
 export async function deleteOrder(orderId: string): Promise<void> {
-  const order = await Order.findUnique({ where: { id: orderId } });
+  const order = await Order.findUnique({ where: { id: orderId }, include: { stockItems: true } });
   if (!order) {
     throw new AppError(404, "Order not found");
   }
-  await restoreStockForOrder(order);
-  await Order.delete({ where: { id: orderId } });
+
+  await prisma.$transaction(async (tx) => {
+    if (Array.isArray(order.stockItems) && order.stockItems.length > 0) {
+      await restoreStockForOrder(order as OrderStockRef, tx as any);
+    }
+    // Remove RESTRICT children before deleting the order itself.
+    await tx.orderStockItem.deleteMany({ where: { orderId } });
+    await tx.order.delete({ where: { id: orderId } });
+  });
 }
 
 export async function getOrderById(orderId: string): Promise<OrderResult> {

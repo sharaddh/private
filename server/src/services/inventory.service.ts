@@ -358,7 +358,10 @@ export async function updateInventory(id: string, updates: Record<string, unknow
 export async function deleteInventory(id: string) {
   const existing = await prisma.inventory.findUnique({ where: { id } });
   if (!existing) throw new AppError(404, "Inventory item not found");
-  return prisma.inventory.delete({ where: { id } });
+  return prisma.$transaction(async (tx) => {
+    await tx.inventoryMovementHistory.deleteMany({ where: { inventoryId: id } });
+    return tx.inventory.delete({ where: { id } });
+  });
 }
 
 const importRowSchema = z.object({

@@ -4,11 +4,11 @@ import { Order } from "../models/order";
 import { Bill } from "../models/bill";
 import { Prescription } from "../models/prescription";
 import { Payment } from "../models/payment";
-import { Delivery } from "../models/delivery";
-import type { Prisma } from "../db/prisma";
+import { prisma, type Prisma } from "../db/prisma";
 import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
 import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
+import { restoreStockForOrder, type OrderStockRef } from "./inventory.service";
 import type { PaginatedResult } from "../types";
 
 interface CustomerFilters {
@@ -203,16 +203,42 @@ export async function deleteCustomer(id: string): Promise<void> {
     throw new AppError(404, "Customer not found");
   }
 
-  await Customer.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    // Restore stock for this customer's orders before deleting them, mirroring
+    // deleteOrder so inventory isn't permanently lost.
+    const orders = await tx.order.findMany({
+      where: { customerId: id },
+      include: { stockItems: true },
+    });
+    for (const order of orders) {
+      await restoreStockForOrder(order as OrderStockRef, tx as any);
+    }
 
-  await Promise.all([
-    Visit.deleteMany({ where: { customerId: id } }),
-    Order.deleteMany({ where: { customerId: id } }),
-    Bill.deleteMany({ where: { customerId: id } }),
-    Prescription.deleteMany({ where: { customerId: id } }),
-    Payment.deleteMany({ where: { customerId: id } }),
-    Delivery.deleteMany({ where: { customerId: id } }),
-  ]);
+    // Children first, deepest relations first (all RESTRICT, no cascade):
+    // bills -> items/stock items, orders -> stock items, then grandchildren.
+    const bills = await tx.bill.findMany({ where: { customerId: id }, select: { id: true } });
+    if (bills.length) {
+      const billIds = bills.map((b) => b.id);
+      await tx.billItem.deleteMany({ where: { billId: { in: billIds } } });
+      await tx.billStockItem.deleteMany({ where: { billId: { in: billIds } } });
+    }
+
+    const orderIds = orders.map((o) => o.id);
+    if (orderIds.length) {
+      await tx.orderStockItem.deleteMany({ where: { orderId: { in: orderIds } } });
+      // deliveries reference orderId as SET NULL, but delete them explicitly too
+      await tx.delivery.deleteMany({ where: { orderId: { in: orderIds } } });
+    }
+
+    await tx.bill.deleteMany({ where: { customerId: id } });
+    await tx.order.deleteMany({ where: { customerId: id } });
+    await tx.prescription.deleteMany({ where: { customerId: id } });
+    await tx.payment.deleteMany({ where: { customerId: id } });
+    await tx.delivery.deleteMany({ where: { customerId: id } });
+    await tx.visit.deleteMany({ where: { customerId: id } });
+
+    await tx.customer.delete({ where: { id } });
+  });
 }
 
 export async function getCustomerSummary(id: string): Promise<CustomerSummary> {

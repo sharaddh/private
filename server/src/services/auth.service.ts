@@ -3,6 +3,7 @@ import { User } from "../models/user";
 import { Branch } from "../models/branch";
 import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
 import { AppError } from "../middleware/errorHandler";
+import { prisma } from "../db/prisma";
 
 interface RegisterData {
   username: string;
@@ -477,5 +478,31 @@ export async function deleteUser(
     throw new AppError(400, "Cannot delete yourself");
   }
 
-  await User.delete({ where: { id: targetId } });
+  await prisma.$transaction(async (tx) => {
+    // Children first (all RESTRICT, no cascade):
+    const withdrawals = await tx.withdrawal.findMany({
+      where: { userId: targetId },
+      select: { id: true },
+    });
+    const withdrawalIds = withdrawals.map((w) => w.id);
+    if (withdrawalIds.length) {
+      await tx.withdrawalItem.deleteMany({ where: { withdrawalId: { in: withdrawalIds } } });
+    }
+    await tx.withdrawal.deleteMany({ where: { userId: targetId } });
+
+    const shopWithdrawals = await tx.shopLensWithdrawal.findMany({
+      where: { userId: targetId },
+      select: { id: true },
+    });
+    const shopWithdrawalIds = shopWithdrawals.map((w) => w.id);
+    if (shopWithdrawalIds.length) {
+      await tx.shopLensWithdrawalItem.deleteMany({ where: { withdrawalId: { in: shopWithdrawalIds } } });
+    }
+    await tx.shopLensWithdrawal.deleteMany({ where: { userId: targetId } });
+
+    await tx.cartItem.deleteMany({ where: { userId: targetId } });
+    await tx.shopCartItem.deleteMany({ where: { userId: targetId } });
+
+    await tx.user.delete({ where: { id: targetId } });
+  });
 }

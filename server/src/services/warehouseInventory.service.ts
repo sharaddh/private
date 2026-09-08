@@ -145,7 +145,11 @@ export async function updateInventory(id: string, updates: Record<string, unknow
 
 export async function deleteInventory(id: string) {
   try {
-    const item = await Inventory.delete({ where: { id } });
+    const item = await prisma.$transaction(async (tx) => {
+      // Children first (restrict FK on warehouse_inventory_movement_history).
+      await tx.warehouseInventoryMovementHistory.deleteMany({ where: { inventoryId: id } });
+      return tx.warehouseInventory.delete({ where: { id } });
+    });
     return toMongoDoc(item);
   } catch (err) {
     if (isNotFound(err)) throw new AppError(404, "Inventory item not found");

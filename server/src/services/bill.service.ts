@@ -309,19 +309,25 @@ export async function deleteBill(billId: string): Promise<void> {
     throw new AppError(404, "Bill not found");
   }
 
-  if (Array.isArray(bill.stockItems) && (bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
-    const stockItems = bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
-    await restoreStockForOrder({ stockItems });
-  }
+  await prisma.$transaction(async (tx) => {
+    if (Array.isArray(bill.stockItems) && (bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
+      const stockItems = bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
+      await restoreStockForOrder({ stockItems }, tx as any);
+    }
 
-  await prisma.bill.delete({ where: { id: billId } });
+    // Remove RESTRICT children before deleting the bill itself.
+    await tx.billItem.deleteMany({ where: { billId } });
+    await tx.billStockItem.deleteMany({ where: { billId } });
 
-  await prisma.customer.update({
-    where: { id: bill.customerId },
-    data: {
-      totalSpent: { decrement: bill.totalAmount || 0 },
-      pendingAmount: { decrement: bill.pendingAmount || 0 },
-    },
+    await tx.bill.delete({ where: { id: billId } });
+
+    await tx.customer.update({
+      where: { id: bill.customerId },
+      data: {
+        totalSpent: { decrement: bill.totalAmount || 0 },
+        pendingAmount: { decrement: bill.pendingAmount || 0 },
+      },
+    });
   });
 }
 
