@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -25,7 +25,6 @@ const sidebarMenu = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/lens-stock', label: 'Lens Stock', icon: Glasses },
   { path: '/update-stock', label: 'Update Stock', icon: PackagePlus },
-  { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'Withdrawals', icon: History },
   { path: '/fog-marks', label: 'Fog Marks', icon: Tags },
@@ -35,7 +34,6 @@ const sidebarMenu = [
 const mobileNav = [
   { path: '/', label: 'Home', icon: LayoutDashboard },
   { path: '/lens-stock', label: 'Stock', icon: Glasses },
-  { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'History', icon: History },
   { path: '/users', label: 'User', icon: UserCog },
@@ -68,6 +66,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
+
+  useEffect(() => {
+    const path = location.pathname;
+    const active = sidebarMenu.find((m) =>
+      m.path === '/' ? path === '/' : path.startsWith(m.path)
+    );
+    document.title = active
+      ? `Warehouse — ${active.label}`
+      : 'Warehouse - KMJ Optical';
+  }, [location.pathname]);
 
   const isAuthPage = location.pathname === '/login';
   if (isAuthPage) return <>{children}</>;
