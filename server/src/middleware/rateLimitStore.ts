@@ -1,6 +1,6 @@
 import { MemoryStore } from "express-rate-limit";
 import { RedisStore, type SendCommandFn } from "rate-limit-redis";
-import { getClient } from "../services/cache";
+import { getClient, isConnected } from "../services/cache";
 
 type IncrementResponse = { totalHits: number; resetTime: Date | undefined };
 
@@ -32,14 +32,20 @@ export function createRateLimitStore(prefix: string): StoreLike {
 
   const getRedisStore = (): StoreLike | null => {
     if (redisStore) return redisStore;
+    // Only use Redis when the connection actually became ready; otherwise fall
+    // back to the in-memory store (Redis is optional for single-instance/dev).
+    if (!isConnected()) return null;
     const client = getClient();
-    if (client) {
+    if (!client) return null;
+    try {
       const call = client.call.bind(client) as unknown as (
         ...args: string[]
       ) => Promise<boolean | number | string | Array<boolean | number | string>>;
       const sendCommand: SendCommandFn = (...args) => call(...args);
       redisStore = new RedisStore({ sendCommand, prefix }) as unknown as StoreLike;
       if (initOptions && redisStore.init) redisStore.init(initOptions);
+    } catch {
+      redisStore = null;
     }
     return redisStore;
   };

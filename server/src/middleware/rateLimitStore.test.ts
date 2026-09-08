@@ -4,6 +4,7 @@ import { getClient } from "../services/cache";
 
 vi.mock("../services/cache", () => ({
   getClient: vi.fn(() => null),
+  isConnected: vi.fn(() => false),
 }));
 
 describe("createRateLimitStore", () => {
