@@ -14,7 +14,6 @@ import {
   IndianRupee,
   Package,
   TrendingUp,
-  ArrowRight,
 } from 'lucide-react';
 import { SkeletonStats } from '../components/Skeleton';
 import StatCard from '../components/StatCard';
@@ -42,20 +41,6 @@ interface WithdrawalRecord {
   withdrawnAt: string;
 }
 
-interface InventoryItem {
-  _id: string;
-  sku: string;
-  category: string;
-  brand: string;
-  model: string;
-  quantity: number;
-  sellingPrice: number;
-  location: string;
-  branchName?: string;
-  branchCode?: string;
-  createdAt: string;
-}
-
 interface Stats {
   totalItems: number;
   lowStock: number;
@@ -66,12 +51,8 @@ interface Stats {
   totalUsers: number;
   totalWithdrawals: number;
   totalWithdrawnItems: number;
-  recentItems: InventoryItem[];
-  lowStockItems: InventoryItem[];
   recentWithdrawals: WithdrawalRecord[];
 }
-
-const LOW_STOCK_THRESHOLD = 5;
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -86,8 +67,6 @@ export default function Dashboard() {
         if (res.success && res.data) {
           const d = res.data;
           if (!Array.isArray(d.recentWithdrawals)) d.recentWithdrawals = [];
-          if (!Array.isArray(d.recentItems)) d.recentItems = [];
-          if (!Array.isArray(d.lowStockItems)) d.lowStockItems = [];
           setStats(d);
         }
         setLoading(false);
@@ -108,8 +87,6 @@ export default function Dashboard() {
   }
 
   const recent = stats?.recentWithdrawals || [];
-  const recentItems = stats?.recentItems || [];
-  const lowStockItems = stats?.lowStockItems || [];
   const lowStockCount = stats?.lowStock || 0;
   const firstName = (user?.name || user?.username || 'User').split(' ')[0];
   const today = new Date().toLocaleDateString('en-IN', {
@@ -143,29 +120,6 @@ export default function Dashboard() {
           </span>
         </div>
       </div>
-
-      {/* Low stock alert */}
-      {lowStockCount > 0 && (
-        <button
-          onClick={() => navigate('/inventory')}
-          className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-warning/10 border border-warning/30 text-left active:scale-[0.99] transition-all"
-        >
-          <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center shrink-0">
-            <AlertTriangle size={20} className="text-warning" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-body-bold text-th-text">
-              {lowStockCount} item{lowStockCount !== 1 ? 's' : ''} running low on stock
-            </p>
-            <p className="text-small text-th-muted">
-              {lowStockItems.length > 0
-                ? `Showing ${lowStockItems.length} — qty ${LOW_STOCK_THRESHOLD} or less`
-                : 'Quantity of 5 or less needs restocking'}
-            </p>
-          </div>
-          <ArrowRight size={18} className="text-warning shrink-0" />
-        </button>
-      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -253,89 +207,6 @@ export default function Dashboard() {
           />
         </div>
       </div>
-
-      {/* Low stock + recent inventory */}
-      {(lowStockItems.length > 0 || recentItems.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {lowStockItems.length > 0 && (
-            <div className="glass-card">
-              <SectionHeader
-                title="Low Stock"
-                icon={AlertTriangle}
-                action={<Badge variant="red">{lowStockItems.length}</Badge>}
-              />
-              <div className="space-y-1">
-                {lowStockItems.map((item, idx) => (
-                  <div
-                    key={item._id}
-                    onClick={() => navigate('/inventory')}
-                    style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
-                    className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-negative/15 flex items-center justify-center shrink-0">
-                      <AlertTriangle size={14} className="text-negative" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body text-th-text truncate">
-                        <span className="font-bold">{item.sku}</span>
-                        {item.brand && <span className="text-th-muted"> · {item.brand}</span>}
-                        {item.model && <span className="text-th-muted"> {item.model}</span>}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {item.branchName && <Badge variant="purple">{item.branchName}</Badge>}
-                        <Badge variant={item.location === 'warehouse' ? 'purple' : 'green'}>
-                          {item.location}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-body-bold text-negative">{item.quantity}</p>
-                      <p className="text-micro text-th-muted">left</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {recentItems.length > 0 && (
-            <div className="glass-card">
-              <SectionHeader title="Recently Added" icon={Package} />
-              <div className="space-y-1">
-                {recentItems.map((item, idx) => (
-                  <div
-                    key={item._id}
-                    onClick={() => navigate('/inventory')}
-                    style={{ animationDelay: `${Math.min(idx, 8) * 35}ms` }}
-                    className="flex items-center gap-3 p-3 hover:bg-th-hover cursor-pointer transition-all rounded-md animate-fade-up"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center shrink-0">
-                      <Package size={14} className="text-primary-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body text-th-text truncate">
-                        <span className="font-bold">{item.sku}</span>
-                        {item.brand && <span className="text-th-muted"> · {item.brand}</span>}
-                        {item.model && <span className="text-th-muted"> {item.model}</span>}
-                      </p>
-                      <p className="text-small text-th-muted truncate">
-                        {item.branchName ? `${item.branchName} · ` : ''}
-                        {formatDate(item.createdAt)}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-body-bold text-th-text">{item.quantity}</p>
-                      <p className="text-micro text-th-muted">
-                        {formatCurrency(item.sellingPrice || 0)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Recent Withdrawals */}
       {recent.length > 0 && (
