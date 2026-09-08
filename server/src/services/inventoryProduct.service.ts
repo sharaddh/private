@@ -220,7 +220,7 @@ export async function listProducts(options: ProductFilters = {}) {
     (args) => prisma.inventoryProduct.findMany(args),
     (where) => prisma.inventoryProduct.count({ where }),
     { page: options.page, limit: options.limit },
-    { where: filter, orderBy: { brandName: "asc", model: "asc" } }
+    { where: filter, orderBy: [{ brandName: "asc" }, { model: "asc" }] }
   );
 }
 
@@ -345,7 +345,7 @@ export async function listVariants(options: VariantFilters = {}) {
     (args) => prisma.inventoryVariant.findMany(args),
     (where) => prisma.inventoryVariant.count({ where }),
     { page: options.page, limit: options.limit },
-    { where: filter, orderBy: { brandName: "asc", model: "asc", color: "asc" } }
+    { where: filter, orderBy: [{ brandName: "asc" }, { model: "asc" }, { color: "asc" }] }
   );
 }
 
@@ -363,7 +363,7 @@ export async function searchVariants(query: string, limit: number = 20) {
         { rackLabel: { contains: s, mode: "insensitive" } },
       ],
     },
-    orderBy: { brandName: "asc", model: "asc", color: "asc" },
+    orderBy: [{ brandName: "asc" }, { model: "asc" }, { color: "asc" }],
     take: Math.min(Math.max(limit, 1), 100),
   });
 }
@@ -628,7 +628,7 @@ export async function getRackItems(rackId: string) {
   if (!rack) throw new AppError(404, "Rack not found");
   const items = await prisma.inventoryVariant.findMany({
     where: { rackId, active: true },
-    orderBy: { brandName: "asc", model: "asc", color: "asc" },
+    orderBy: [{ brandName: "asc" }, { model: "asc" }, { color: "asc" }],
   });
   return { rack, items };
 }
