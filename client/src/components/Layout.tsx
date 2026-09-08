@@ -177,6 +177,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const toast = useToast();
 
+  const isActive = (path: string) =>
+    path === '/'
+      ? location.pathname === '/'
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
+
   const isAuthPage = ['/login', '/staff-login'].includes(location.pathname);
 
   useEffect(() => {
@@ -184,7 +189,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       document.title = 'KMJ Optical — Login';
       return;
     }
-    const match = desktopMenu.find((m) => m.path === location.pathname);
+    const match = desktopMenu.find((m) => isActive(m.path));
     document.title = match ? `KMJ Optical — ${match.label}` : 'KMJ Optical';
   }, [location.pathname, isAuthPage]);
 
@@ -343,7 +348,6 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   if (isAuthPage) return <>{children}</>;
 
-  const isActive = (path: string) => location.pathname === path;
   const desktopMenu = allDesktopMenu.filter((m) => !isStaff || m.staff);
   const mobileNav = allMobileNav.filter((m) => !isStaff || m.staff);
 
@@ -516,7 +520,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 z-1">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-14 sm:h-16 items-center justify-between border-b border-th-border px-3 sm:px-4 lg:px-6 bg-th-surface/80 backdrop-blur-xl shadow-sm flex-shrink-0">
           {/* Left: Mobile menu + Sidebar toggle + Page title */}
@@ -536,7 +540,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <PanelLeft size={20} />
             </button>
             <h2 className="hidden truncate text-sm font-semibold text-th-text sm:block">
-              {desktopMenu.find((m) => m.path === location.pathname)?.label || 'Dashboard'}
+              {trLabel(desktopMenu.find((m) => isActive(m.path))?.label || 'Dashboard')}
             </h2>
           </div>
 
