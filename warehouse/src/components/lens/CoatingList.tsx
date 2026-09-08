@@ -272,21 +272,22 @@ export default function CoatingList({
                 <>
                   <div className="flex-1 min-w-0">
                     <div
-                      className={`text-small-bold leading-snug ${isSelected ? 'text-th-text' : 'text-th-secondary group-hover:text-th-text'}`}
+                      className={`text-small-bold leading-snug truncate ${isSelected ? 'text-th-text' : 'text-th-secondary group-hover:text-th-text'}`}
                     >
                       {item.coating}
                     </div>
-                    <div
-                      className={`text-small mt-0.5 font-medium ${
-                        totalQty > 0 ? 'text-primary-500' : 'text-th-muted'
-                      }`}
-                    >
-                      {totalQty > 0 ? `${fmtPairs(totalQty)} in stock` : 'Empty'}
-                    </div>
-                    <div className="text-small mt-0.5 font-bold text-th-muted">
-                      {item.priceNeg || item.pricePos
-                        ? `−${formatCurrency(item.priceNeg ?? 0)} / +${formatCurrency(item.pricePos ?? 0)}`
-                        : 'Free'}
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span
+                        className={`text-micro font-medium ${totalQty > 0 ? 'text-primary-500' : 'text-th-muted'}`}
+                      >
+                        {totalQty > 0 ? `${fmtPairs(totalQty)} in stock` : 'Empty'}
+                      </span>
+                      <span className="text-micro text-th-border">|</span>
+                      <span className="text-micro font-bold text-th-muted whitespace-nowrap">
+                        {item.priceNeg || item.pricePos
+                          ? `−${formatCurrency(item.priceNeg ?? 0)}/+${formatCurrency(item.pricePos ?? 0)}`
+                          : 'Free'}
+                      </span>
                     </div>
                   </div>
 
