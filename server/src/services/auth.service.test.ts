@@ -38,7 +38,9 @@ const ownerUser = {
   name: "Admin",
   mobile: "123",
   role: "owner",
-  branches: [],
+  branches: [
+    { id: "branch-1", name: "Govindpuri", code: "GVP", dbName: "kmj_govindpuri", isActive: true, settings: null },
+  ],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -81,6 +83,12 @@ describe("auth.service", () => {
     expect(result.user.role).toBe("owner");
     expect(result.access).toBeTruthy();
     expect(result.refresh).toBeTruthy();
+    // login response must carry the resolved branch so the client can scope
+    // its first requests synchronously (fixes post-login "missing branch scope" 500s)
+    expect(result.branchId).toBe("branch-1");
+    expect(vi.mocked(User.findFirst).mock.calls[0][0]).toMatchObject({
+      include: { branches: true },
+    });
   });
 
   it("staffLogin requires a branch assignment", async () => {
@@ -90,6 +98,17 @@ describe("auth.service", () => {
     await expect(staffLogin({ username: "staff", password: "x" })).rejects.toThrow(
       "has not been assigned to any branch"
     );
+  });
+
+  it("staffLogin returns branchId for an assigned staff member", async () => {
+    vi.mocked(User.findFirst).mockResolvedValue(
+      { ...ownerUser, role: "staff" } as never
+    );
+    const result = await staffLogin({ username: "staff", password: "correct" });
+    expect(result.branchId).toBe("branch-1");
+    expect(vi.mocked(User.findFirst).mock.calls[0][0]).toMatchObject({
+      include: { branches: true },
+    });
   });
 
   it("warehouseLogin only allows owners", async () => {

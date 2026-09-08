@@ -167,7 +167,10 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findFirst({ where: { username: data.username } });
+  const user = await User.findFirst({
+    where: { username: data.username },
+    include: { branches: true },
+  });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
@@ -205,7 +208,10 @@ export async function staffLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findFirst({ where: { username: data.username } });
+  const user = await User.findFirst({
+    where: { username: data.username },
+    include: { branches: true },
+  });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
@@ -247,7 +253,10 @@ export async function warehouseLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(400, "Username and password required");
   }
 
-  const user = await User.findFirst({ where: { username: data.username } });
+  const user = await User.findFirst({
+    where: { username: data.username },
+    include: { branches: true },
+  });
   if (!user) {
     throw new AppError(400, "Invalid credentials");
   }
