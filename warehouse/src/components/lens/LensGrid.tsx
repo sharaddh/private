@@ -14,14 +14,14 @@ interface Props {
 type TabKey = LensType | 'plain';
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: 'plain', label: 'Plain' },
   { key: 'sph', label: 'SPH' },
   { key: 'cyl', label: 'CYL' },
   { key: 'compound', label: 'Compound' },
-  { key: 'plain', label: 'Plain' },
 ];
 
 export default function LensGrid({ item, onUpdate }: Props) {
-  const [lensType, setLensType] = useState<TabKey>('sph');
+  const [lensType, setLensType] = useState<TabKey>('plain');
   const { toast } = useToast();
 
   const effectiveLensType: LensType = lensType === 'plain' ? 'sph' : lensType;
