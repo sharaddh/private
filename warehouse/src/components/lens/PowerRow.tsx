@@ -42,25 +42,27 @@ const PowerCell = memo(function PowerCell({
         : 'text-th-muted';
 
   return (
-    <div className={`flex flex-col items-center gap-2.5 p-3 rounded-xl border ${border} ${bg}`}>
-      <span className="text-sm sm:text-base font-bold text-th-secondary leading-none">
+    <div className={`flex flex-col items-center gap-2 p-2.5 sm:p-3 rounded-xl border ${border} ${bg}`}>
+      <span className="text-sm sm:text-base font-bold text-th-secondary leading-none tabular-nums">
         {isZero ? '0.00' : power}
       </span>
-      <span className={`text-lg sm:text-xl font-bold leading-none ${qtyClr}`}>{fmtPairs(qty)}</span>
-      <div className="flex items-center gap-2">
+      <span className={`text-base sm:text-xl font-bold leading-none tabular-nums ${qtyClr}`}>{fmtPairs(qty)}</span>
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <button
           type="button"
           onClick={() => onDecrement(power)}
-          className="w-12 h-12 rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
+          className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-negative/10 text-negative flex items-center justify-center active:scale-90 active:bg-negative/20 transition-all"
         >
-          <Minus size={22} strokeWidth={2.5} />
+          <Minus size={18} strokeWidth={2.5} className="sm:hidden" />
+          <Minus size={22} strokeWidth={2.5} className="hidden sm:block" />
         </button>
         <button
           type="button"
           onClick={() => onIncrement(power)}
-          className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
+          className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center active:scale-90 active:bg-emerald-500/20 transition-all"
         >
-          <Plus size={22} strokeWidth={2.5} />
+          <Plus size={18} strokeWidth={2.5} className="sm:hidden" />
+          <Plus size={22} strokeWidth={2.5} className="hidden sm:block" />
         </button>
       </div>
     </div>
@@ -118,7 +120,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
             <span className="text-body text-th-muted">({negativeEntries.length})</span>
           </button>
           {openGroup === 'Negative' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2 mt-2">
               {negatives.map((p) => (
                 <MemoizedPowerCell
                   key={p}
@@ -151,7 +153,7 @@ export default function PowerRow({ quantities, onIncrement, onDecrement }: Props
             <span className="text-body text-th-muted">({positiveEntries.length})</span>
           </button>
           {openGroup === 'Positive' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2 mt-2">
               {positives.map((p) => (
                 <MemoizedPowerCell
                   key={p}
