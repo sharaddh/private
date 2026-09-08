@@ -9,6 +9,7 @@ import {
   type WithdrawalListParams,
 } from '../../types/inventoryV2';
 import { movementLabel, movementTone, formatDateTime } from './shared';
+import { SkeletonTable, SkeletonList } from '../Skeleton';
 
 function fmtDate(iso?: string): string {
   if (!iso) return '—';
@@ -130,7 +131,7 @@ function MovementsList({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {loading && movements.length === 0 ? (
-        <p className="text-center text-th-muted py-10">Loading activity...</p>
+        <SkeletonTable rows={6} cols={6} />
       ) : movements.length === 0 ? (
         <p className="text-center text-th-muted py-10">No activity found</p>
       ) : (
@@ -302,7 +303,7 @@ function WithdrawalsList({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {loading && withdrawals.length === 0 ? (
-        <p className="text-center text-th-muted py-10">Loading withdrawals...</p>
+        <SkeletonList items={4} />
       ) : withdrawals.length === 0 ? (
         <p className="text-center text-th-muted py-10">No withdrawals found</p>
       ) : (

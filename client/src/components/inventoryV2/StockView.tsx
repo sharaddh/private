@@ -14,6 +14,7 @@ import {
 import { useV2Variants, useV2Brands, useV2Racks } from '../../hooks';
 import { PRODUCT_CATEGORIES, type InventoryVariant } from '../../types/inventoryV2';
 import { Pagination, formatCurrency, itemLabel, stockTextClass } from './shared';
+import { SkeletonTable } from '../Skeleton';
 import { type StockActionState, VariantDetailPanel, StockEmpty } from './StockActions';
 
 const PAGE_SIZE = 20;
@@ -241,9 +242,7 @@ export default function StockView({
       </div>
 
       {loading && !variants.length ? (
-        <div className="flex items-center gap-2 text-th-secondary text-sm">
-          <RefreshCw size={15} className="animate-spin" /> Loading stock...
-        </div>
+        <SkeletonTable rows={6} cols={7} />
       ) : variants.length === 0 ? (
         <StockEmpty onNew={onNewItem} />
       ) : (
