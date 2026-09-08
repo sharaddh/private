@@ -59,10 +59,10 @@ function getQtyFor(item: LensStockItem, lensType: string, powerKey: string): num
 type TabKey = LensType | 'plain';
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: 'plain', label: 'Plain' },
   { key: 'sph', label: 'SPH' },
   { key: 'cyl', label: 'CYL' },
   { key: 'compound', label: 'Compound' },
-  { key: 'plain', label: 'Plain' },
 ];
 
 const LensCard = memo(function LensCard({
@@ -368,7 +368,7 @@ const PlainView = memo(function PlainView({
   const dKey = demandKey(coating, 'sph', powerKey);
   const need = demandTarget !== undefined ? Math.max(0, roundHalf(demandTarget - qty / 2)) : 0;
   return (
-    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mt-2">
+    <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 sm:gap-2 mt-2">
       <LensCard
         coating={coating}
         lensType="sph"
@@ -476,7 +476,7 @@ const FlatGrid = memo(function FlatGrid({
               </span>
             </button>
             {isOpen && (
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 sm:gap-2 mt-2">
                 {group.powers.map((power) => {
                   const qty = quantities[power] || 0;
                   const currentCartQty = getItemQty(coating, lensType, power);
@@ -638,7 +638,7 @@ const CompoundView = memo(function CompoundView({
                             <div className="text-body font-bold uppercase tracking-wider mb-2 px-1 text-th-muted">
                               {sphGroup.label}
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2">
                               {sphGroup.values.map((sph) => {
                                 const key = `${sph}|${cyl}`;
                                 const qty = quantities[key] || 0;
@@ -697,7 +697,7 @@ const CompoundView = memo(function CompoundView({
 export default function LensStock() {
   const [items, setItems] = useState<LensStockItem[]>([]);
   const [selectedId, setSelectedId] = useLocalStorage<string | null>('wh_lens_selected_id', null);
-  const [lensType, setLensType] = useLocalStorage<TabKey>('wh_lens_tab', 'sph');
+  const [lensType, setLensType] = useLocalStorage<TabKey>('wh_lens_tab', 'plain');
   const [loading, setLoading] = useState(true);
   const [demandMode, setDemandMode] = useLocalStorage<boolean>('wh_lens_demand_mode', false);
   const [demandTarget, setDemandTarget] = useLocalStorage<number>('wh_lens_demand_target', 10);
@@ -842,8 +842,51 @@ export default function LensStock() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="text-th-muted text-body">Loading...</span>
+      <div className="h-full flex flex-col gap-3 pb-20 lg:pb-0">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-th-hover animate-pulse" />
+          <div className="space-y-1.5">
+            <div className="h-5 w-36 rounded bg-th-hover animate-pulse" />
+            <div className="h-3 w-24 rounded bg-th-hover animate-pulse" />
+          </div>
+          <div className="ml-auto h-9 w-32 rounded-pill bg-th-hover animate-pulse" />
+        </div>
+
+        {/* Mobile: coating select + tabs */}
+        <div className="lg:hidden space-y-2.5">
+          <div className="h-12 rounded-xl bg-th-hover animate-pulse" />
+          <div className="flex gap-1 bg-th-elevated rounded-pill p-0.5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-1 h-9 rounded-pill bg-th-hover animate-pulse" />
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: sidebar + content */}
+        <div className="flex-1 flex gap-4 min-h-0">
+          <div className="hidden lg:flex w-60 shrink-0 card p-4 flex-col gap-2">
+            <div className="h-4 w-20 rounded bg-th-hover animate-pulse mb-2" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-xl bg-th-hover animate-pulse" />
+            ))}
+          </div>
+          <div className="flex-1 card p-2 sm:p-3 lg:p-4">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-th-border">
+              <div className="w-2 h-2 rounded-full bg-th-hover animate-pulse shrink-0" />
+              <div className="h-4 w-32 rounded bg-th-hover animate-pulse" />
+              <div className="ml-auto flex gap-1 bg-th-elevated rounded-pill p-1">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="w-14 h-7 rounded-pill bg-th-hover animate-pulse" />
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-1.5">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-xl bg-th-hover animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1005,7 +1048,7 @@ export default function LensStock() {
           </div>
         </div>
 
-        <div className="flex-1 card p-3 lg:p-4 overflow-hidden flex flex-col">
+        <div className="flex-1 card p-2 sm:p-3 lg:p-4 overflow-hidden flex flex-col">
           {selectedItem ? (
             <>
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-th-border">
