@@ -237,6 +237,74 @@ export default function PageSkeleton({ page }: { page: string }) {
         </div>
       );
 
+    case 'inventory-v2':
+      return (
+        <div className="space-y-6">
+          {/* Page header */}
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40" delay={0} />
+            <Skeleton className="h-4 w-72" delay={60} />
+          </div>
+          {/* Section tabs */}
+          <div className="flex gap-1">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-28" delay={100 + i * 40} />
+            ))}
+          </div>
+          {/* Value / refresh row */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-36" delay={260} />
+              <Skeleton className="h-10 w-24" delay={300} />
+            </div>
+            <div className="flex items-center gap-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-th-surface rounded-[8px] border border-th-border px-4 py-2 flex items-center gap-2 animate-skeleton-stagger"
+                  style={{ animationDelay: `${340 + i * 40}ms` }}
+                >
+                  <Skeleton className="h-4 w-4" delay={340 + i * 40} />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-2.5 w-20" delay={360 + i * 40} />
+                    <Skeleton className="h-4 w-24" delay={380 + i * 40} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* KPI cards */}
+          <SkeletonStats count={5} />
+          {/* Quick actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-th-surface rounded-[8px] border border-th-border px-4 py-3 flex items-center gap-3 animate-skeleton-stagger"
+                style={{ animationDelay: `${420 + i * 50}ms` }}
+              >
+                <Skeleton className="w-9 h-9 rounded-full shrink-0" delay={420 + i * 50} />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-24" delay={450 + i * 50} />
+                  <Skeleton className="h-3 w-32" delay={480 + i * 50} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Activity section */}
+          <div className="bg-th-surface rounded-[8px] border border-th-border p-5">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Skeleton className="w-5 h-5" delay={620} />
+              <div>
+                <Skeleton className="h-4 w-32" delay={650} />
+                <Skeleton className="h-3 w-48 mt-1" delay={680} />
+              </div>
+            </div>
+            <SkeletonTable rows={4} cols={6} />
+          </div>
+        </div>
+      );
+
     case 'delivery':
       return (
         <div className="space-y-6">
