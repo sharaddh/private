@@ -27,10 +27,71 @@ import {
   QuickActionButton,
   PageSection,
 } from './shared';
-import PageSkeleton from '../PageSkeleton';
+import { Skeleton, SkeletonStats, SkeletonTable } from '../Skeleton';
 import type { StockActionState } from './StockActions';
 
 const THRESHOLD_OPTIONS = [3, 5, 10, 20];
+
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-5">
+      {/* Value / refresh row */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-36" delay={0} />
+          <Skeleton className="h-10 w-24" delay={40} />
+        </div>
+        <div className="flex items-center gap-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-th-surface rounded-[8px] border border-th-border px-4 py-2 flex items-center gap-2 animate-skeleton-stagger"
+              style={{ animationDelay: `${80 + i * 40}ms` }}
+            >
+              <Skeleton className="h-4 w-4" delay={80 + i * 40} />
+              <div className="space-y-1.5">
+                <Skeleton className="h-2.5 w-20" delay={100 + i * 40} />
+                <Skeleton className="h-4 w-24" delay={120 + i * 40} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <SkeletonStats count={5} />
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-th-surface rounded-[8px] border border-th-border px-4 py-3 flex items-center gap-3 animate-skeleton-stagger"
+            style={{ animationDelay: `${180 + i * 50}ms` }}
+          >
+            <Skeleton className="w-9 h-9 rounded-full shrink-0" delay={180 + i * 50} />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-24" delay={210 + i * 50} />
+              <Skeleton className="h-3 w-32" delay={240 + i * 50} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent activity section */}
+      <div className="bg-th-surface rounded-[8px] border border-th-border p-5">
+        <div className="flex items-center gap-2.5 mb-4">
+          <Skeleton className="w-5 h-5" delay={400} />
+          <div>
+            <Skeleton className="h-4 w-32" delay={430} />
+            <Skeleton className="h-3 w-48 mt-1" delay={460} />
+          </div>
+        </div>
+        <SkeletonTable rows={4} cols={6} />
+      </div>
+    </div>
+  );
+}
 
 export default function OverviewView({
   onAction,
@@ -80,7 +141,7 @@ export default function OverviewView({
     [dashboard]
   );
 
-  if (loading && !dashboard) return <PageSkeleton page="dashboard" />;
+  if (loading && !dashboard) return <OverviewSkeleton />;
 
   const alerts = [
     ...lowItems.map((v) => ({ v, kind: 'low' as const })),

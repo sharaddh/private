@@ -7,7 +7,6 @@ import {
   Boxes,
   Building2,
   ClipboardList,
-  Loader2,
   CheckCircle2,
   XCircle,
   Save,
@@ -44,6 +43,7 @@ import {
   Field,
   itemLabel,
 } from './shared';
+import { Skeleton, SkeletonTable, SkeletonList } from '../Skeleton';
 
 const inputStyleShared = inputStyle;
 
@@ -135,7 +135,25 @@ function RacksSection({ refreshKey }: { refreshKey: number }) {
       }
     >
       {loading && racks.length === 0 ? (
-        <p className="text-center text-th-muted py-8">Loading racks...</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-th-base rounded-[8px] border border-th-border p-4 animate-skeleton-stagger"
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-5 w-16" delay={i * 50} />
+                  <Skeleton className="h-4 w-28" delay={i * 50 + 30} />
+                </div>
+                <Skeleton className="h-7 w-7" delay={i * 50 + 60} />
+              </div>
+              <Skeleton className="h-6 w-24 rounded-full mt-3" delay={i * 50 + 90} />
+              <Skeleton className="h-9 w-full mt-4" delay={i * 50 + 120} />
+            </div>
+          ))}
+        </div>
       ) : racks.length === 0 ? (
         <p className="text-center text-th-muted py-8">
           No racks yet. Create one to organise inventory.
@@ -299,7 +317,7 @@ function RackItemsModal({ rackId, onClose }: { rackId: string; onClose: () => vo
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <p className="text-center text-th-muted py-8">Loading items...</p>
+            <SkeletonTable rows={5} cols={3} />
           ) : items.length === 0 ? (
             <p className="text-center text-th-muted py-8">No items in this rack</p>
           ) : (
@@ -426,7 +444,22 @@ function BrandsSection({ refreshKey }: { refreshKey: number }) {
       }
     >
       {loading && brands.length === 0 ? (
-        <p className="text-center text-th-muted py-8">Loading brands...</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-th-surface border border-th-border rounded-md p-4 animate-skeleton-stagger"
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <Skeleton className="h-5 w-24" delay={i * 50} />
+                <Skeleton className="h-4 w-4" delay={i * 50 + 30} />
+              </div>
+              <Skeleton className="h-6 w-6 mt-3" delay={i * 50 + 60} />
+              <Skeleton className="h-3 w-20 mt-2" delay={i * 50 + 90} />
+            </div>
+          ))}
+        </div>
       ) : brands.length === 0 ? (
         <p className="text-center text-th-muted py-8">No brands yet. Add your first brand.</p>
       ) : (
@@ -561,7 +594,7 @@ function CountsSection({
       }
     >
       {loading && !sessions.length ? (
-        <p className="text-center text-th-muted py-8">Loading count sessions...</p>
+        <SkeletonList items={4} />
       ) : sessions.length === 0 ? (
         <p className="text-center text-th-muted py-8">No count sessions yet.</p>
       ) : (
@@ -659,9 +692,7 @@ function CreateCountModal({ onClose, onCreated }: { onClose: () => void; onCreat
         <form onSubmit={submit} className="space-y-4">
           <Field label="Rack" required>
             {racksLoading && !racks.length ? (
-              <p className="text-sm text-th-secondary flex items-center gap-2">
-                <Loader2 size={14} className="animate-spin" /> Loading racks...
-              </p>
+              <Skeleton className="h-10 w-full" delay={0} />
             ) : (
               <select
                 className={inputCls}
@@ -777,7 +808,17 @@ function CountDetailModal({
   if (loading && !detail) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <p className="text-th-text text-sm">Loading...</p>
+        <div className="w-full max-w-2xl rounded-2xl bg-th-surface border border-th-border shadow-xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-48" delay={0} />
+            <Skeleton className="h-6 w-6" delay={40} />
+          </div>
+          <SkeletonTable rows={5} cols={4} />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-28" delay={300} />
+            <Skeleton className="h-10 w-32" delay={340} />
+          </div>
+        </div>
       </div>
     );
   }
