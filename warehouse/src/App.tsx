@@ -6,7 +6,6 @@ import { PageLoader } from './components';
 
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Inventory = lazy(() => import('./pages/Inventory'));
 const LensStock = lazy(() => import('./pages/LensStock'));
 const UpdateStock = lazy(() => import('./pages/UpdateStock'));
 const Users = lazy(() => import('./pages/Users'));
@@ -37,36 +36,6 @@ export default function App() {
             <ProtectedRoute>
               <SuspendedPage>
                 <Dashboard />
-              </SuspendedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/inventory"
-          element={
-            <ProtectedRoute>
-              <SuspendedPage>
-                <Inventory />
-              </SuspendedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/inventory/new"
-          element={
-            <ProtectedRoute>
-              <SuspendedPage>
-                <Inventory />
-              </SuspendedPage>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/inventory/edit/:id"
-          element={
-            <ProtectedRoute>
-              <SuspendedPage>
-                <Inventory />
               </SuspendedPage>
             </ProtectedRoute>
           }
