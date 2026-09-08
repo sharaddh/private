@@ -136,15 +136,24 @@ export async function executeTransaction(
     }
 
     if (body.order) {
+      const { stockItems: orderStockItems, ...orderData } = body.order;
       const order = await tx.order.create({
         data: {
           customerId: customer.id,
           visitId: (result.visit as any)?.id,
           branchId: requireBranchId(),
-          ...body.order,
+          ...orderData,
+          stockItems: {
+            create: (Array.isArray(orderStockItems) ? orderStockItems : []).map(
+              (it: any) => ({
+                sku: it.sku || "",
+                quantity: it.quantity || 0,
+              })
+            ),
+          },
         },
       });
-      await decrementStockForOrder(order as any, tx);
+      await decrementStockForOrder(body.order as OrderStockRef, tx);
       result.order = order;
     } else if (stockRef) {
       await decrementStockForOrder(stockRef, tx);
