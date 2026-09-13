@@ -348,60 +348,55 @@ export default function Withdrawals() {
               >
                 {/* Header Strip */}
                 <div
-                  className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${isPaid ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`}
+                  className={`flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-4 py-3 sm:py-2.5 border-b ${isPaid ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPaid ? 'bg-emerald-500/15' : 'bg-amber-500/15'}`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isPaid ? 'bg-emerald-500/15' : 'bg-amber-500/15'}`}
                     >
                       {isPaid ? (
-                        <CheckCircle2 size={20} className="text-emerald-500" />
+                        <CheckCircle2 size={16} className="text-emerald-500" />
                       ) : (
-                        <Clock size={20} className="text-amber-500" />
+                        <Clock size={16} className="text-amber-500" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-body-bold text-th-text truncate">
-                          {formatWithdrawalDate(rec.withdrawnAt)}
-                        </span>
-                        {isPaid ? (
-                          <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">
-                            Paid
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold shrink-0">
-                            Due {formatCurrency(rec.totalPrice ?? 0)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-small text-th-muted truncate">
-                        {fmtPairs(rec.totalQuantity)}
-                      </div>
-                    </div>
+                    <span className="text-body-bold text-th-text truncate">
+                      {formatWithdrawalDate(rec.withdrawnAt)}
+                    </span>
                   </div>
 
-                  <button
-                    onClick={() => togglePaid(rec)}
-                    disabled={togglingId === rec._id}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-pill text-small-bold active:scale-95 transition-all disabled:opacity-50 shrink-0 ${
-                      isPaid
-                        ? 'bg-th-elevated text-th-text hover:bg-th-elevated/80'
-                        : 'bg-primary-500 text-surface-950 hover:bg-primary-400'
-                    }`}
-                  >
-                    {togglingId === rec._id ? (
-                      'Saving...'
-                    ) : isPaid ? (
-                      <>
-                        <Undo2 size={16} /> <span>Mark Unpaid</span>
-                      </>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isPaid ? (
+                      <span className="px-2 py-0.5 rounded-pill bg-emerald-500/15 text-emerald-500 text-badge font-bold shrink-0">
+                        Paid
+                      </span>
                     ) : (
-                      <>
-                        <CheckCircle2 size={16} /> <span>Mark Paid</span>
-                      </>
+                      <span className="px-2 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold shrink-0">
+                        Due {formatCurrency(rec.totalPrice ?? 0)}
+                      </span>
                     )}
-                  </button>
+                    <button
+                      onClick={() => togglePaid(rec)}
+                      disabled={togglingId === rec._id}
+                      className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-pill text-small-bold active:scale-95 transition-all disabled:opacity-50 ${
+                        isPaid
+                          ? 'bg-th-elevated text-th-text hover:bg-th-elevated/80'
+                          : 'bg-primary-500 text-surface-950 hover:bg-primary-400'
+                      }`}
+                    >
+                      {togglingId === rec._id ? (
+                        'Saving...'
+                      ) : isPaid ? (
+                        <>
+                          <Undo2 size={14} /> <span>Mark Unpaid</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={14} /> <span>Mark Paid</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Items Body */}
