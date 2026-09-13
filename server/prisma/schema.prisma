@@ -916,6 +916,32 @@ model WarehouseLensStock {
   @@map("warehouse_lens_stock")
 }
 
+model WarehouseDemandList {
+  id        String   @id @default(uuid()) @map("_id")
+  status    String   @default("open")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  sentAt    DateTime?
+  closedAt  DateTime?
+  createdBy String   @default("")
+  items     WarehouseDemandItem[]
+
+  @@map("warehouse_demand_lists")
+}
+
+model WarehouseDemandItem {
+  id       String  @id @default(uuid()) @map("_id")
+  listId   String
+  coating  String
+  lensType String
+  powerKey String
+  qty      Float
+  list     WarehouseDemandList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+  @@map("warehouse_demand_items")
+}
+
 model CartItem {
   id        String   @id @default(uuid()) @map("_id")
   userId    String
