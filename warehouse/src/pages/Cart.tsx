@@ -7,6 +7,7 @@ import { priceForPower } from '../types/lensStock';
 import type { FogMark } from '../types/fogMark';
 import { formatCurrency, fmtPairs, formatLensPower, powerTextClass } from '../utils/helpers';
 import { ShoppingCart, Trash2, Minus, Plus, PackageMinus, Glasses, Tags } from 'lucide-react';
+import { coatingColor } from '../utils/coatingColors';
 
 export default function Cart() {
   const { items, count, updateQty, removeItem, clearCart, withdraw, setFogMark } = useCart();
@@ -132,6 +133,7 @@ export default function Cart() {
                 item.lensType === 'compound' ? 'Compound' : item.lensType.toUpperCase();
               const stock = getStockQty(item.coating, item.lensType, item.powerKey);
               const atMax = stock > 0 && item.quantity >= stock;
+              const cc = coatingColor(item.coating);
 
               return (
                 <div
@@ -146,26 +148,21 @@ export default function Cart() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-body-bold text-th-text truncate">
-                            {item.coating}
-                          </span>
                           <span className="px-2 py-0.5 rounded text-small font-bold bg-th-elevated text-th-secondary">
                             {lensLabel}
                           </span>
-                          <span className={`text-small-bold ${powerTextClass(item.powerKey)}`}>
+                          <span className={`text-body-bold ${powerTextClass(item.powerKey)}`}>
                             {formatLensPower(item.powerKey)}
-                          </span>
-                        </div>
-                        <div className="mt-1">
-                          <span className="text-small text-th-muted">
-                            {formatCurrency(getItemPrice(item))} × {fmtPairs(item.quantity)}
-                          </span>
-                          <span className="text-small-bold text-primary-500 ml-2">
-                            {formatCurrency(getItemPrice(item) * (item.quantity / 2))}
                           </span>
                         </div>
                       </div>
                     </div>
+                    <span
+                      className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${cc.softBg} ${cc.border}`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${cc.dot}`} />
+                      <span className={`text-small-bold ${cc.text}`}>{item.coating}</span>
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-th-border">
