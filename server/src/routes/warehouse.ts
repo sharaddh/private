@@ -4,6 +4,7 @@ import { asyncHandler } from "../middleware/asyncHandler";
 import * as warehouseAggController from "../controllers/warehouseAggregate.controller";
 import * as warehouseLensStockController from "../controllers/warehouseLensStock.controller";
 import * as warehouseInventoryController from "../controllers/warehouseInventory.controller";
+import * as warehouseDemandController from "../controllers/warehouseDemand.controller";
 
 const router = Router();
 
@@ -40,5 +41,14 @@ router.put(
   authenticate,
   asyncHandler(warehouseInventoryController.adjustStock)
 );
+
+// Warehouse demand lists (full lifecycle: open -> sent -> closed)
+router.get("/demands", authenticate, asyncHandler(warehouseDemandController.list));
+router.post("/demands", authenticate, asyncHandler(warehouseDemandController.create));
+router.get("/demands/:id", authenticate, asyncHandler(warehouseDemandController.getById));
+router.put("/demands/:id", authenticate, asyncHandler(warehouseDemandController.updateItems));
+router.post("/demands/:id/send", authenticate, asyncHandler(warehouseDemandController.send));
+router.post("/demands/:id/close", authenticate, asyncHandler(warehouseDemandController.close));
+router.delete("/demands/:id", authenticate, asyncHandler(warehouseDemandController.remove));
 
 export default router;
