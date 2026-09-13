@@ -78,3 +78,6 @@ docker-compose.override.yml
 
 # Vendor clone (external repo with its own .git)
 opencode-skills/
+
+# Local design review server state (not part of the repo)
+.opencode/brainstorm/visual/state/
