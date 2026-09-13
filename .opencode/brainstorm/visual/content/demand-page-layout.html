@@ -1,0 +1,101 @@
+<h2>Demand page — two screens</h2>
+<p class="subtitle">A dedicated Demand page with a list view and a builder view. Both fit the existing app look.</p>
+
+<div class="section">
+  <h3>Screen A — Lists view (default, after login)</h3>
+  <div class="mockup">
+    <div class="mockup-header">Demand · all lists</div>
+    <div class="mockup-body" style="font-family:system-ui;color:#1f2937;background:#fff;padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:16px;font-weight:700">Stock Demand</div>
+        <button class="mock-button" style="background:#2563eb;color:#fff;border:none;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600">＋ New Demand</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;font-size:11px;font-weight:600">
+        <span style="padding:3px 10px;border-radius:999px;background:#2563eb;color:#fff">All</span>
+        <span style="padding:3px 10px;border-radius:999px;background:#eef2ff;color:#2563eb">Open · 2</span>
+        <span style="padding:3px 10px;border-radius:999px;background:#eef2ff;color:#2563eb">Sent · 1</span>
+        <span style="padding:3px 10px;border-radius:999px;background:#f3f4f6;color:#6b7280">Closed · 5</span>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:2fr 5fr 1.6fr 1.4fr;gap:8px;padding:9px 12px;background:#f9fafb;font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase">
+          <span>Demand</span><span>Items</span><span>Status</span><span>Actions</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 5fr 1.6fr 1.4fr;gap:8px;padding:10px 12px;border-top:1px solid #e5e7eb;font-size:12px;align-items:center">
+          <span><b>#12</b> &nbsp;09:12 today &nbsp;<span style="color:#6b7280">by prakash</span></span>
+          <span>16 lenses · <b>24 p</b> · ₹12,400</span>
+          <span><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700">Open</span></span>
+          <span style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="mock-button" style="font-size:10px">Edit</button>
+            <button class="mock-button" style="font-size:10px">PDF</button>
+            <button class="mock-button" style="font-size:10px">Send</button>
+            <button class="mock-button" style="font-size:10px;color:#dc2626">Delete</button>
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 5fr 1.6fr 1.4fr;gap:8px;padding:10px 12px;border-top:1px solid #e5e7eb;font-size:12px;align-items:center">
+          <span><b>#11</b> &nbsp;Yesterday &nbsp;<span style="color:#6b7280">by prakash</span></span>
+          <span>8 lenses · <b>12 p</b> · ₹6,000</span>
+          <span><span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700">Sent</span></span>
+          <span style="display:flex;gap:4px"><button class="mock-button" style="font-size:10px">Edit</button><button class="mock-button" style="font-size:10px">PDF</button><button class="mock-button" style="font-size:10px">Close</button></span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 5fr 1.6fr 1.4fr;gap:8px;padding:10px 12px;border-top:1px solid #e5e7eb;font-size:12px;align-items:center">
+          <span><b>#10</b> &nbsp;3 days ago</span>
+          <span>22 lenses · <b>31 p</b> · ₹18,900</span>
+          <span><span style="background:#e5e7eb;color:#374151;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700">Closed</span></span>
+          <span style="display:flex;gap:4px"><button class="mock-button" style="font-size:10px">Edit</button><button class="mock-button" style="font-size:10px">PDF</button></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Screen B — Builder view (editing an open list)</h3>
+  <p class="subtitle">Same fast tap-through grid as today's Stock Demand, now saved as the list — with a send button instead of just a download.</p>
+  <div class="mockup">
+    <div class="mockup-header">Demand · #12 · Open — editing</div>
+    <div class="mockup-body" style="font-family:system-ui;color:#1f2937;background:#fff;padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="mock-button" style="font-size:12px">← Back to lists</button>
+        <div style="font-size:12px;color:#6b7280">Fill each power up to <input class="mock-input" style="width:48px;text-align:center;padding:2px" value="10"/> p</div>
+      </div>
+      <div style="display:flex;gap:10px;height:150px">
+        <div style="width:150px;border:1px solid #e5e7eb;border-radius:10px;padding:8px;font-size:11px">
+          <div style="font-weight:700;color:#6b7280;margin-bottom:6px">COATINGS <span style="float:right">9</span></div>
+          <div style="padding:6px 8px;border-radius:8px;background:#dbeafe;color:#1d4ed8;font-weight:600">Hard UV · 24 p</div>
+          <div style="padding:6px 8px;color:#374151">Blue Cut · 12 p</div>
+          <div style="padding:6px 8px;color:#374151">Crizal · Empty</div>
+          <div style="padding:6px 8px;color:#374151">Photo · 4 p</div>
+        </div>
+        <div style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:8px">
+          <div style="font-size:10px;color:#6b7280;font-weight:700;margin-bottom:6px">HARD UV &nbsp;<span style="float:right">−₹350 / +₹450</span></div>
+          <div style="display:flex;gap:2px;margin-bottom:4px;font-size:10px;font-weight:700;color:#6b7280">
+            <span style="padding:4px 12px;border-radius:999px;background:#2563eb;color:#fff">Plain</span>
+            <span style="padding:4px 12px;border-radius:999px">SPH</span>
+            <span style="padding:4px 12px;border-radius:999px">CYL</span>
+            <span style="padding:4px 12px;border-radius:999px">Compound</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(8,minmax(34px,1fr));gap:4px;font-size:10px;text-align:center">
+            <div style="border:1px solid #f59e0b40;background:#f59e0b14;border-radius:8px;padding:6px 2px">-2.00<br/><b>6</b></div>
+            <div style="border:1px solid #2563eb55;background:#2563eb22;border-radius:8px;padding:6px 2px">-1.50<br/><b>2</b><br/><span style="color:#2563eb;font-weight:700">+1.5</span></div>
+            <div style="border:1px solid #f59e0b40;background:#f59e0b14;border-radius:8px;padding:6px 2px">-1.00<br/><b>0</b><br/><span style="color:#d97706;font-weight:700">need 5</span></div>
+            <div style="border:1px solid #f59e0b40;background:#f59e0b14;border-radius:8px;padding:6px 2px">-0.75<br/><b>4</b></div>
+            <div style="border:1px solid #10b98140;background:#10b98114;border-radius:8px;padding:6px 2px">+0.00<br/><b>8</b></div>
+            <div style="border:1px solid #10b98140;background:#10b98114;border-radius:8px;padding:6px 2px">+0.75<br/><b>3</b></div>
+            <div style="border:1px solid #2563eb55;background:#2563eb22;border-radius:8px;padding:6px 2px">+1.50<br/><b>1</b><br/><span style="color:#2563eb;font-weight:700">+1</span></div>
+            <div style="border:1px solid #10b98140;background:#10b98114;border-radius:8px;padding:6px 2px">+2.00<br/><b>2</b></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb">
+        <div style="font-size:12px"><b>16 lenses</b> selected &nbsp;·&nbsp; <b>24 p</b> to buy &nbsp;·&nbsp; <b style="color:#1d4ed8">₹12,400</b></div>
+        <div style="display:flex;gap:6px">
+          <button class="mock-button" style="font-size:12px">All low stock</button>
+          <button class="mock-button" style="font-size:12px">Clear</button>
+          <button class="mock-button" style="font-size:12px">PDF</button>
+          <button class="mock-button" style="font-size:12px;background:#2563eb;color:#fff;border:none">Save</button>
+          <button class="mock-button" style="font-size:12px;background:#1e40af;color:#fff;border:none">Mark as Sent</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
