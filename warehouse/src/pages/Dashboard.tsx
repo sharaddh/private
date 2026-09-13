@@ -194,7 +194,7 @@ export default function Dashboard() {
             icon={Glasses}
             label="Lens Stock"
             color="primary-500"
-            onClick={() => navigate('/lens-stock')}
+            onClick={() => navigate('/')}
           />
           <QuickAction
             icon={ShoppingCart}
