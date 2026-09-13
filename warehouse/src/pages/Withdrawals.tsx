@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../api';
@@ -13,8 +13,8 @@ import {
   powerTextClass,
 } from '../utils/helpers';
 import { generateWithdrawalPdf } from '../utils/withdrawalPdf';
-import StatCard from '../components/StatCard';
 import { Drawer, DrawerContent, DrawerHandle, DrawerTitle } from '../components/ui/drawer';
+import type { LucideIcon } from 'lucide-react';
 import {
   History,
   PackageMinus,
@@ -72,6 +72,28 @@ function formatWithdrawalDate(d: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+interface StatItemProps {
+  icon: LucideIcon;
+  iconColor: string;
+  iconBg: string;
+  value: ReactNode;
+  label: string;
+}
+
+function StatItem({ icon: Icon, iconColor, iconBg, value, label }: StatItemProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-th-border bg-th-surface px-3.5 py-2.5 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
+          <Icon size={16} className={iconColor} />
+        </div>
+        <p className="text-body-bold text-th-text leading-tight">{value}</p>
+      </div>
+      <p className="text-caption text-th-secondary">{label}</p>
+    </div>
+  );
 }
 
 export default function Withdrawals() {
@@ -237,37 +259,43 @@ export default function Withdrawals() {
 
       {/* Stats */}
       {history.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <StatItem
             icon={History}
             iconColor="text-primary-500"
             iconBg="bg-primary-500/15"
             value={history.length}
             label="Withdrawals"
           />
-          <StatCard
+          <StatItem
             icon={Glasses}
             iconColor="text-announcement-500"
             iconBg="bg-announcement-500/15"
             value={fmtPairs(stats.totalItems)}
             label="Pairs withdrawn"
           />
-          <StatCard
+          <StatItem
             icon={IndianRupee}
             iconColor="text-emerald-500"
             iconBg="bg-emerald-500/15"
             value={formatCurrency(stats.totalAmount)}
             label="Total amount"
           />
-          <StatCard
+          <StatItem
             icon={Clock}
             iconColor="text-amber-500"
             iconBg="bg-amber-500/15"
-            value={formatCurrency(stats.unpaidAmount)}
-            label="Pending amount"
-            badge={
-              stats.unpaid > 0 ? { text: `${stats.unpaid} due`, variant: 'yellow' } : undefined
+            value={
+              <>
+                {formatCurrency(stats.unpaidAmount)}
+                {stats.unpaid > 0 && (
+                  <span className="ml-1.5 align-middle px-1.5 py-0.5 rounded-pill bg-amber-500/15 text-amber-500 text-badge font-bold">
+                    {stats.unpaid} due
+                  </span>
+                )}
+              </>
             }
+            label="Pending amount"
           />
         </div>
       )}
