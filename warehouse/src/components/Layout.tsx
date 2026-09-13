@@ -21,6 +21,8 @@ import {
   History,
   ClipboardList,
 } from 'lucide-react';
+import { getHeaderCoating, subscribeHeaderCoating } from '../utils/headerCoating';
+import { coatingColor } from '../utils/coatingColors';
 
 const sidebarMenu = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -68,6 +70,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
+  const [headerCoating, setHeaderCoating] = useState<string | null>(getHeaderCoating());
+
+  useEffect(() => {
+    const unsubscribe = subscribeHeaderCoating(setHeaderCoating);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const path = location.pathname;
@@ -239,8 +247,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <Menu size={18} className="text-th-text" />
             </button>
-            <h2 className="text-body-bold text-th-text">
+            <h2 className="text-body-bold text-th-text flex items-center gap-2 min-w-0">
               {sidebarMenu.find((m) => isActive(m.path))?.label || 'Lens Warehouse'}
+              {headerCoating && isActive('/') && (
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${coatingColor(headerCoating).dot}`}
+                  />
+                  <span className={`text-caption-bold truncate ${coatingColor(headerCoating).text}`}>
+                    {headerCoating}
+                  </span>
+                </span>
+              )}
             </h2>
           </div>
         </header>
