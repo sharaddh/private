@@ -122,16 +122,19 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         <StatCard
           icon={Glasses}
           iconColor="text-primary-500"
           iconBg="bg-primary-500/20"
-          value={stats?.totalLensStock || 0}
-          label="Lens Pieces"
+          value={fmtPairs(stats?.totalLensStock || 0)}
+          label="Lens Pairs"
           badge={
             stats?.totalLensCoatings
-              ? { text: `${stats.totalLensCoatings} coatings`, variant: 'blue' }
+              ? {
+                  text: `${stats.totalLensCoatings} coating${stats.totalLensCoatings !== 1 ? 's' : ''}`,
+                  variant: 'blue',
+                }
               : undefined
           }
         />
