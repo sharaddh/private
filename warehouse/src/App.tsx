@@ -51,16 +51,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/lens-stock"
-          element={
-            <ProtectedRoute>
-              <SuspendedPage>
-                <LensStock />
-              </SuspendedPage>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/lens-stock" element={<Navigate to="/" replace />} />
         <Route
           path="/demand"
           element={
