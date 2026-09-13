@@ -352,7 +352,7 @@ export default function Users() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
         <StatCard
           icon={UsersIcon}
           iconColor="text-primary-500"
