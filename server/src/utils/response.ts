@@ -4,6 +4,7 @@ import { logger } from "./logger";
 // Prisma stores the Mongo-compatible identifier on the `id` field (column `_id`).
 // The client-facing API exposes it as `_id`, so we map it centrally here.
 export function serializeIds(value: unknown): unknown {
+  if (value instanceof Date) return value;
   if (Array.isArray(value)) return value.map(serializeIds);
   if (value && typeof value === "object") {
     const obj = value as Record<string, unknown>;
