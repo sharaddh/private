@@ -52,4 +52,18 @@ describe("response", () => {
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ success: false, message: "Resource not found" });
   });
+
+  it("serializeIds preserves Date objects instead of flattening them", () => {
+    const res = mockRes();
+    const date = new Date("2026-09-13T12:00:00.000Z");
+    sendSuccess(res as never, { id: "abc", createdAt: date });
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: {
+        id: "abc",
+        _id: "abc",
+        createdAt: date,
+      },
+    });
+  });
 });
