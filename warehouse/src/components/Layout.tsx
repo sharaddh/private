@@ -1,8 +1,7 @@
-import { useState, memo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useCartCount } from '../context/CartContext';
 import {
   LayoutDashboard,
   Package,
@@ -42,26 +41,6 @@ const mobileNav = [
   { path: '/withdrawals', label: 'History', icon: History },
   { path: '/users', label: 'User', icon: UserCog },
 ];
-
-const CartBadge = memo(function CartBadge() {
-  const count = useCartCount();
-  if (count <= 0) return null;
-  return (
-    <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary-500 text-surface-950 text-micro font-bold leading-none">
-      {count > 99 ? '99+' : count}
-    </span>
-  );
-});
-
-const MobileCartBadge = memo(function MobileCartBadge() {
-  const count = useCartCount();
-  if (count <= 0) return null;
-  return (
-    <span className="absolute -top-1.5 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary-500 text-surface-950 text-micro font-bold flex items-center justify-center leading-none">
-      {count > 99 ? '99+' : count}
-    </span>
-  );
-});
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -166,7 +145,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 {item.path === '/cart' ? (
-                  <span data-cart-icon>
+                  <span data-cart-icon className="flex items-center shrink-0">
                     <Icon
                       size={18}
                       className={
@@ -182,8 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     }
                   />
                 )}
-                {sidebarOpen && <span>{item.label}</span>}
-                {item.path === '/cart' && <CartBadge />}
+                {sidebarOpen && <span className="flex-1 min-w-0">{item.label}</span>}
               </Link>
             );
           })}
@@ -290,7 +268,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         : 'text-th-muted'
                     }
                   />
-                  {item.path === '/cart' && <MobileCartBadge />}
                 </div>
                 <span className={`nav-link-label ${active ? 'text-primary-500' : 'text-th-muted'}`}>
                   {item.label}
