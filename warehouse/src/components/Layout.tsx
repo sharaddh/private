@@ -19,11 +19,13 @@ import {
   ShoppingCart,
   Tags,
   History,
+  ClipboardList,
 } from 'lucide-react';
 
 const sidebarMenu = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/lens-stock', label: 'Lens Stock', icon: Glasses },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/', label: 'Lens Stock', icon: Glasses },
+  { path: '/demand', label: 'Demand', icon: ClipboardList },
   { path: '/update-stock', label: 'Update Stock', icon: PackagePlus },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'Withdrawals', icon: History },
@@ -32,8 +34,8 @@ const sidebarMenu = [
 ];
 
 const mobileNav = [
-  { path: '/', label: 'Home', icon: LayoutDashboard },
-  { path: '/lens-stock', label: 'Stock', icon: Glasses },
+  { path: '/dashboard', label: 'Home', icon: LayoutDashboard },
+  { path: '/', label: 'Stock', icon: Glasses },
   { path: '/cart', label: 'Cart', icon: ShoppingCart },
   { path: '/withdrawals', label: 'History', icon: History },
   { path: '/users', label: 'User', icon: UserCog },
