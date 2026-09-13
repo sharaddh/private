@@ -36,6 +36,16 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SuspendedPage>
+                <LensStock />
+              </SuspendedPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <SuspendedPage>
                 <Dashboard />
               </SuspendedPage>
             </ProtectedRoute>
