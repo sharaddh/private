@@ -13,6 +13,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Withdrawals = lazy(() => import('./pages/Withdrawals'));
 const FogMarks = lazy(() => import('./pages/FogMarks'));
+const Demands = lazy(() => import('./pages/Demands'));
 
 function SuspendedPage({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -46,6 +47,16 @@ export default function App() {
             <ProtectedRoute>
               <SuspendedPage>
                 <LensStock />
+              </SuspendedPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/demand"
+          element={
+            <ProtectedRoute>
+              <SuspendedPage>
+                <Demands />
               </SuspendedPage>
             </ProtectedRoute>
           }
