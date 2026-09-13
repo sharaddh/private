@@ -5,3 +5,4 @@
 - `User` model uses `id`; Mongo-compat `_id` is aliased by the response serializer — code reading `user.branches[0]._id` depends on that alias (2026-09-08)
 - `opencode-skills/` is a standalone clone of `osmontero/opencode-skills.git` (own `.git`, own remote) and is gitignored — never `git add` it, gitlink would be broken (2026-09-08)
 - `order.create` on the workspace transaction needs `stockItems` wrapped as `{ create: [...] }` (client sends a flat `[{sku, quantity}]` array); `decrementStockForOrder` must get the raw `body.order`, not the created row (Prisma omits relations unless `include`d) (2026-09-08)
+- `serializeIds` in `server/src/utils/response.ts` flattens `Date` objects to `{}` (e.g. `"createdAt":{}`) because `{ ...obj }` on a Date copies no own enumerable props — fixed with `if (value instanceof Date) return value;`. Any API response with Date fields relies on this; dates arrive as ISO strings (2026-09-13)
