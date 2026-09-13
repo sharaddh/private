@@ -13,6 +13,7 @@ import {
   powerTextClass,
 } from '../utils/helpers';
 import { generateWithdrawalPdf } from '../utils/withdrawalPdf';
+import { coatingColor } from '../utils/coatingColors';
 import { Drawer, DrawerContent, DrawerHandle, DrawerTitle } from '../components/ui/drawer';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -404,15 +405,20 @@ export default function Withdrawals() {
                   {rec.items.map((it, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between gap-3 py-2.5 border-b border-th-border/50 last:border-0"
+                      className="flex items-center justify-between gap-3 py-2 border-b border-th-border/50 last:border-0"
                     >
                       <div className="min-w-0">
                         <div className={`text-small-bold truncate ${powerTextClass(it.powerKey)}`}>
                           {powerDisplay(it)}
                         </div>
-                        <div className="text-small text-th-muted truncate">
-                          {it.coating}
-                          {it.fogMark ? ` · ${it.fogMark}` : ''}
+                        <div className="flex items-center gap-1.5 text-small text-th-muted truncate">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${coatingColor(it.coating).dot}`}
+                          />
+                          <span className="truncate">
+                            {it.coating}
+                            {it.fogMark ? ` · ${it.fogMark}` : ''}
+                          </span>
                         </div>
                       </div>
                       <span className="px-2.5 py-1 rounded-lg bg-th-elevated text-small-bold text-th-text shrink-0">
@@ -423,9 +429,9 @@ export default function Withdrawals() {
                 </div>
 
                 {/* Footer Strip */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-th-border bg-th-elevated/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 py-2.5 border-t border-th-border bg-th-elevated/20">
                   <div className="min-w-0">
-                    <div className="text-badge text-th-muted uppercase tracking-wider">Total</div>
+                    <div className="text-caption text-th-muted uppercase tracking-wider">Total</div>
                     <div className="text-body-bold text-th-text">
                       {fmtPairs(rec.totalQuantity)} ·{' '}
                       <span className="text-primary-500">
@@ -436,16 +442,16 @@ export default function Withdrawals() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleSendPdf(rec)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-pill bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20 text-small-bold active:scale-95 transition-all"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-pill bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20 text-small-bold active:scale-95 transition-all"
                     >
-                      <MessageCircle size={16} />
+                      <MessageCircle size={14} />
                       WhatsApp
                     </button>
                     <button
                       onClick={() => openEdit(rec)}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-pill bg-th-elevated text-th-text hover:bg-th-elevated/80 text-small-bold active:scale-95 transition-all"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-pill bg-th-elevated text-th-text hover:bg-th-elevated/80 text-small-bold active:scale-95 transition-all"
                     >
-                      <Pencil size={16} />
+                      <Pencil size={14} />
                       Edit
                     </button>
                   </div>
