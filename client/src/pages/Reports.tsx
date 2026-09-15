@@ -621,9 +621,10 @@ export default function Reports() {
                         (Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24)
                       );
                       const custName =
-                        typeof b.customerId === 'object' && b.customerId?.name
+                        b.customer?.name ||
+                        (typeof b.customerId === 'object' && b.customerId?.name
                           ? b.customerId.name
-                          : '—';
+                          : '—');
                       return (
                         <tr key={b._id} className="border-b border-th-card hover:bg-th-elevated">
                           <td className="py-2 px-3 font-medium text-th-text">
