@@ -30,6 +30,8 @@ import {
   ShoppingBag,
   ClipboardList,
   TrendingUp,
+  TrendingDown,
+  Sparkles,
   IndianRupee,
   ScanLine,
   Boxes,
@@ -40,6 +42,7 @@ import {
   Check,
   Trash2,
   ArrowUpRight,
+  ArrowDownRight,
   UserPlus,
   FileText,
   BarChart3,
@@ -745,57 +748,153 @@ export default function Dashboard() {
 
   // Hero Section
 
-  const renderHero = () => (
-    <div className="relative bg-gradient-to-r from-[#1ed760]/10 via-th-surface to-[#6366f1]/10 rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg border border-th-border overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1ed760]/5 to-transparent pointer-events-none" />
-      <div className="relative flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
-        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-          <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">
-              {uiT("Today's Sales", 'आज की बिक्री')}
-            </p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">
-              ₹{(d.todaySales || 0).toLocaleString()}
-            </p>
+  const renderHero = () => {
+    const trendRaw = d.salesTrend;
+    const trendNum = trendRaw === 'N/A' ? null : Number(trendRaw);
+    const tiles = [
+      {
+        key: 'sales',
+        label: uiT("Today's Sales", 'आज की बिक्री'),
+        value: (d.todaySales || 0).toLocaleString(),
+        icon: IndianRupee,
+        accent: '#1ed760',
+        from: 'from-[#1ed760]',
+        to: 'to-[#0d9e50]',
+        glow: 'shadow-[#1ed760]/20',
+        onClick: () => navigate('/reports'),
+        aria: "Today's sales",
+        hint: `${d.todayOrders || 0} ${uiT('orders today', 'आज के ऑर्डर')}`,
+      },
+      {
+        key: 'collection',
+        label: uiT('Collection', 'संग्रह'),
+        value: (d.todayCollection || 0).toLocaleString(),
+        icon: Wallet,
+        accent: '#8b5cf6',
+        from: 'from-[#a78bfa]',
+        to: 'to-[#7c3aed]',
+        glow: 'shadow-[#8b5cf6]/20',
+        onClick: () => navigate('/payments'),
+        aria: 'Collections',
+        hint: `${(d.todayPaymentModeSplit || []).reduce((a, p) => a + (p.count || 0), 0) || 0} ${uiT('payments today', 'आज के भुगतान')}`,
+      },
+      {
+        key: 'orders',
+        label: uiT('Orders', 'ऑर्डर'),
+        value: String(d.todayOrders || 0),
+        icon: ShoppingBag,
+        accent: '#06b6d4',
+        from: 'from-[#22d3ee]',
+        to: 'to-[#0e7490]',
+        glow: 'shadow-[#06b6d4]/20',
+        onClick: () => navigate('/orders'),
+        aria: 'Orders',
+        hint: d.weekOrders ? `${d.weekOrders} ${uiT('this week', 'इस सप्ताह')}` : undefined,
+      },
+      {
+        key: 'pending',
+        label: uiT('Pending', 'बाकी'),
+        value: (d.pendingPayments || 0).toLocaleString(),
+        icon: Receipt,
+        accent: '#ef4444',
+        from: 'from-[#f87171]',
+        to: 'to-[#dc2626]',
+        glow: 'shadow-[#ef4444]/20',
+        onClick: () => navigate('/bills'),
+        aria: 'Pending payments',
+        hint: `${d.pendingBills.length || 0} ${uiT('bills to collect', 'बिल वसूलने हैं')}`,
+      },
+    ];
+
+    return (
+      <div className="relative rounded-2xl bg-gradient-to-br from-th-surface via-th-surface to-th-elevated border border-th-border overflow-hidden p-2.5 sm:p-3 group/hero transition-shadow duration-300 hover:shadow-2xl">
+        {/* Decorative ambient glows */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#1ed760]/10 blur-3xl transition-opacity duration-500 group-hover/hero:opacity-150" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#8b5cf6]/10 blur-3xl transition-opacity duration-500 group-hover/hero:opacity-150" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#1ed760]/50 to-transparent" />
+
+        <div className="relative flex items-center justify-between gap-2 flex-wrap mb-2 sm:mb-2.5">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1 h-3 rounded-sm bg-gradient-to-b from-[#1ed760] to-[#8b5cf6]" />
+            <h2 className="text-[11px] sm:text-[12px] font-bold text-th-muted uppercase tracking-widest">
+              {uiT("Today's Overview", 'आज का अवलोकन')}
+            </h2>
           </div>
-          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
-          <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">
-              {uiT('Collection', 'संग्रह')}
-            </p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">
-              ₹{(d.todayCollection || 0).toLocaleString()}
-            </p>
-          </div>
-          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
-          <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">
-              {uiT('Orders', 'ऑर्डर')}
-            </p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">
-              {d.todayOrders}
-            </p>
-          </div>
-          <div className="w-px h-6 sm:h-8 bg-th-border hidden sm:block" />
-          <div>
-            <p className="text-[11px] sm:text-[15px] font-bold text-th-muted uppercase tracking-widest">
-              {uiT('Pending', 'बाकी')}
-            </p>
-            <p className="text-[20px] sm:text-[26px] font-bold text-th-text tracking-tight">
-              {d.pendingBills.length}
-            </p>
-          </div>
+          <span
+            className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider transition-all duration-300 ${
+              trendNum === null
+                ? 'bg-th-elevated text-[#1ed760]'
+                : trendNum >= 0
+                  ? 'bg-[#1ed760]/10 text-[#1ed760]'
+                  : 'bg-[#ef4444]/10 text-[#ef4444]'
+            }`}
+          >
+            {trendNum === null ? (
+              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+            ) : trendNum >= 0 ? (
+              <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+            ) : (
+              <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+            )}
+            {trendNum === null
+              ? 'NEW'
+              : `${trendNum >= 0 ? '+' : ''}${Number.isInteger(trendNum) ? trendNum : trendNum.toFixed(1)}%`}
+            <span className="opacity-60 font-semibold hidden sm:inline">
+              {uiT('vs last week', 'पिछले सप्ताह')}
+            </span>
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-[12px] sm:text-[16px] text-th-muted">
-          <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1ed760]" />
-          {d.salesTrend === 'N/A'
-            ? 'NEW'
-            : `${Number(d.salesTrend) >= 0 ? '+' : ''}${d.salesTrend}%`}{' '}
-          {uiT('vs last week', 'पिछले सप्ताह')}
+
+        <div className="relative grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
+          {tiles.map((t) => (
+            <ShineCard
+              key={t.key}
+              onClick={t.onClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && t.onClick()}
+              aria-label={`Show ${t.aria}`}
+              className={`relative bg-th-surface rounded-xl p-2 sm:p-2.5 h-full flex flex-col group overflow-hidden border border-th-border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-th-card hover:shadow-xl ${t.glow}`}
+            >
+              <div
+                className={`absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-[0.07] transition-all duration-500 group-hover:opacity-[0.14] group-hover:scale-150 bg-gradient-to-br ${t.from} ${t.to}`}
+              />
+              <div className="flex items-start justify-between gap-1.5 relative">
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${t.from} ${t.to} flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 flex-shrink-0`}
+                >
+                  <t.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-th-surface" strokeWidth={2.5} />
+                </div>
+                <ArrowUpRight
+                  className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-th-muted opacity-0 -translate-x-1 translate-y-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-300 flex-shrink-0"
+                  style={{ color: t.accent }}
+                />
+              </div>
+              <div className="relative mt-1 sm:mt-1.5 flex-1 flex flex-col justify-end">
+                <span
+                  className="text-sm sm:text-lg font-bold tracking-tight leading-none flex items-baseline gap-0.5"
+                  style={{ color: t.accent }}
+                >
+                  <span className="text-xs sm:text-sm font-semibold opacity-80">
+                    {t.key === 'sales' || t.key === 'collection' || t.key === 'pending' ? '₹' : ''}
+                  </span>
+                  <AnimatedCounter value={t.value} className="tabular-nums" />
+                </span>
+                <span className="text-[11px] sm:text-xs font-bold text-th-text mt-0.5 sm:mt-1 uppercase tracking-wider">
+                  {t.label}
+                </span>
+                {t.hint ? (
+                  <span className="text-[10px] sm:text-[11px] text-th-muted mt-0.5 font-medium truncate">
+                    {t.hint}
+                  </span>
+                ) : null}
+              </div>
+            </ShineCard>
+          ))}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Quick Actions
 
@@ -1169,8 +1268,7 @@ export default function Dashboard() {
           <div className="divide-y divide-th-border max-h-[440px] overflow-y-auto scrollbar-none">
             {draftOrders.map((o) => {
               const id = o._id;
-              const custObj =
-                typeof o.customerId === 'object' && o.customerId ? o.customerId : null;
+const custObj = typeof o.customer === 'object' ? o.customer : null;
               const cName = custObj?.name ?? '';
               const cMobile = custObj?.mobile ?? '';
               const isSelected = selectedOrders.has(id);
@@ -1196,7 +1294,7 @@ export default function Dashboard() {
 
               const goToCustomer = (e?: React.MouseEvent) => {
                 e?.stopPropagation();
-                const cId = custObj?._id ?? null;
+                const cId = typeof o.customerId === 'string' ? o.customerId : (o.customerId as { _id?: string })?._id ?? null;
                 if (cId) navigate(`/customers/${cId}?visitId=${o.visitId || ''}`);
               };
 
