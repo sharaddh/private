@@ -617,9 +617,10 @@ export default function Customers(): React.JSX.Element {
                 </div>
               </form>
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
 
       <Modal
         open={showDetail}

@@ -13,6 +13,9 @@ export async function transaction(req: BranchRequest, res: Response) {
     sendBillWhatsApp(bill, customer, req.branchId);
   }
   await invalidateCache("/api/customers");
+  await invalidateCache("/api/orders");
+  await invalidateCache("/api/bills");
+  await invalidateCache("/api/payments");
   await invalidateCache("/api/dashboard");
   sendSuccess(res, data, "Transaction completed");
 }
