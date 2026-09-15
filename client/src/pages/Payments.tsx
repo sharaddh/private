@@ -24,11 +24,13 @@ export default function Payments() {
   const list: Payment[] = rawList?.data ?? [];
 
   function customerName(p: Payment): string {
+    if (typeof p.customer === 'object' && p.customer?.name) return p.customer.name;
     if (typeof p.customerId === 'object' && p.customerId?.name) return p.customerId.name;
-    return (typeof p.customerId === 'string' ? p.customerId : '')?.slice(-6) || '—';
+    return '—';
   }
 
   function customerMobile(p: Payment): string {
+    if (typeof p.customer === 'object' && p.customer?.mobile) return p.customer.mobile;
     if (typeof p.customerId === 'object' && p.customerId?.mobile) return p.customerId.mobile;
     return '';
   }
