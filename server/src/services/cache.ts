@@ -99,9 +99,12 @@ export async function cacheSet(key: string, data: unknown, ttl = DEFAULT_TTL): P
 export async function cacheDel(pattern: string): Promise<void> {
   if (!isConnected()) return;
   try {
-    // Match all branch variants (e.g. "branchId:/api/customers/..." or "default:/api/customers/...")
+    // Match all branch variants (e.g. "branchId:/api/customers/..." or "default:/api/customers/...").
+    // Cache keys include the full query string (branchId:/api/orders?limit=10&...), so append a
+    // trailing wildcard unless already present, otherwise glob misses query-string keys entirely.
     const branchPattern = pattern.startsWith("*:") ? pattern : `*:${pattern}`;
-    const keys = await scanKeys(branchPattern);
+    const glob = branchPattern.endsWith("*") ? branchPattern : `${branchPattern}*`;
+    const keys = await scanKeys(glob);
     if (keys.length > 0) {
       const pipeline = client!.pipeline();
       keys.forEach((k) => pipeline.del(k));
