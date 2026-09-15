@@ -137,8 +137,8 @@ export default function Delivery() {
     const q = search.trim().toLowerCase();
     if (!q) return todayReady;
     return todayReady.filter((o) => {
-      const name = typeof o.customerId === 'object' ? o.customerId?.name || '' : '';
-      const mobile = typeof o.customerId === 'object' ? o.customerId?.mobile || '' : '';
+      const name = o.customer?.name || '';
+      const mobile = o.customer?.mobile || '';
       return name.toLowerCase().includes(q) || mobile.includes(q);
     });
   }, [todayReady, search]);
