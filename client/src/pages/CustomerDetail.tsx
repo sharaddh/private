@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import PageSkeleton from '../components/PageSkeleton';
@@ -972,7 +973,7 @@ export default function CustomerDetail() {
               </div>
 
               {/* Recent Visits */}
-              <div className="bg-th-surface rounded-lg p-5">
+              <div className="bg-th-surface rounded-lg p-5 border-l-4 border-l-[#1ed760]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-[#1ed760]" />
@@ -1086,10 +1087,10 @@ export default function CustomerDetail() {
             {/* Right column: Bills + Orders summary */}
             <div className="space-y-5">
               {/* Bills summary */}
-              <div className="bg-th-surface rounded-lg p-5">
+              <div className="bg-th-surface rounded-lg p-5 border-l-4 border-l-[#6ea8fe]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Receipt size={14} className="text-[#1ed760]" />
+                    <Receipt size={14} className="text-[#6ea8fe]" />
                     <p className="text-base font-bold uppercase tracking-wider text-th-text">
                       {uiT('Bills', 'बिल')}
                     </p>
@@ -1103,38 +1104,52 @@ export default function CustomerDetail() {
                 </div>
                 {bills.length > 0 ? (
                   <div className="space-y-2">
-                    {bills.slice(0, 4).map((b: any) => (
-                      <div
-                        key={b._id}
-                        className="flex items-center justify-between p-2.5 rounded-md bg-th-elevated"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-base font-semibold text-th-text">
-                            {b.billNumber || '—'}
-                          </p>
-                          <p className="text-base text-th-secondary">
-                            {new Date(b.createdAt).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-base font-bold text-th-text">
-                            ₹{(b.totalAmount || 0).toLocaleString()}
-                          </p>
-                          {(b.pendingAmount || 0) > 0 ? (
-                            <p className="text-base font-bold text-[#e8a427]">
-                              ₹{b.pendingAmount} due
+                    {bills.slice(0, 4).map((b: any) => {
+                      const linkedVisit = visits.find(
+                        (v: any) => getVisitId(v._id) === getVisitId(b.visitId)
+                      );
+                      return (
+                        <div
+                          key={b._id}
+                          onClick={() => {
+                            if (linkedVisit) {
+                              setTab('visits');
+                              openVisitDetail(linkedVisit);
+                            }
+                          }}
+                          className={`flex items-center justify-between p-2.5 rounded-md bg-th-elevated transition-colors ${
+                            linkedVisit ? 'cursor-pointer hover:bg-th-hover' : ''
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-base font-semibold text-th-text">
+                              {b.billNumber || '—'}
                             </p>
-                          ) : (
-                            <p className="text-base font-bold text-[#1ed760]">
-                              {uiT('Paid', 'भुगतान')}
+                            <p className="text-base text-th-secondary">
+                              {new Date(b.createdAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                              {b.items?.length ? ` · ${b.items.length} item${b.items.length > 1 ? 's' : ''}` : ''}
                             </p>
-                          )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-base font-bold text-th-text">
+                              ₹{(b.totalAmount || 0).toLocaleString()}
+                            </p>
+                            {(b.pendingAmount || 0) > 0 ? (
+                              <p className="text-base font-bold text-[#e8a427]">
+                                ₹{b.pendingAmount} {uiT('due', 'बकाया')}
+                              </p>
+                            ) : (
+                              <p className="text-base font-bold text-[#1ed760]">
+                                {uiT('Paid', 'भुगतान')}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-base text-th-secondary py-3 text-center">
