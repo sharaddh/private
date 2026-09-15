@@ -3007,8 +3007,10 @@ export default function CustomerDetail() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )
+      }
     </div>
   );
 }
