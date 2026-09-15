@@ -172,7 +172,7 @@ export default function Pickup() {
   }
 
   async function pickReadyOrder(o: Order) {
-    const mobile = typeof o.customerId === 'object' ? o.customerId?.mobile : '';
+    const mobile = o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
     if (!mobile) return;
     setPhone(mobile);
     setIsLoading(true);
@@ -435,8 +435,8 @@ export default function Pickup() {
   }
 
   const renderReadyCard = (o: Order) => {
-    const cName = typeof o.customerId === 'object' ? o.customerId?.name : '';
-    const cMobile = typeof o.customerId === 'object' ? o.customerId?.mobile : '';
+    const cName = o.customer?.name || (typeof o.customerId === 'object' ? o.customerId?.name : '');
+    const cMobile = o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
     return (
       <ShineCard
         key={o._id}
