@@ -1,5 +1,5 @@
 import type { ApiResponse } from './types';
-import { getCacheSnapshot, setCache } from './hooks/cacheStore';
+import { getCacheSnapshot, setCache, clearAllCache } from './hooks/cacheStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
