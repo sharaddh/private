@@ -187,6 +187,7 @@ export interface BillItem {
 export interface Bill {
   _id: string;
   customerId: string | { _id: string; name: string; mobile: string; address?: string };
+  customer?: { name?: string; mobile?: string };
   visitId?: string;
   billNumber: string;
   status: BillStatus;
