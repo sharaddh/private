@@ -148,8 +148,8 @@ export default function Delivery() {
     return allOrders.filter((o) => {
       if (statusFilter !== 'all' && o.status !== statusFilter) return false;
       if (!q) return true;
-      const name = typeof o.customerId === 'object' ? o.customerId?.name || '' : '';
-      const mobile = typeof o.customerId === 'object' ? o.customerId?.mobile || '' : '';
+      const name = o.customer?.name || '';
+      const mobile = o.customer?.mobile || '';
       return name.toLowerCase().includes(q) || mobile.includes(q);
     });
   }, [allOrders, statusFilter, search]);
