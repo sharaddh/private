@@ -190,6 +190,15 @@ async function request<T = unknown>(
       data: payload.data,
     };
   }
+
+  // Any successful write (POST/PUT/PATCH/DELETE) changes the underlying data,
+  // so all cached GET snapshots are now stale and must be dropped. Otherwise
+  // pages like the customer profile or dashboard keep serving the pre-write
+  // snapshot from the stale-while-revalidate cache.
+  if (!isGet) {
+    clearAllCache();
+  }
+
   if (
     canCache &&
     (res.headers.get('content-type') || '').includes('application/json') &&
