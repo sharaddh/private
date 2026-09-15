@@ -211,6 +211,7 @@ export type PaymentMode =
 export interface Payment {
   _id: string;
   customerId: string | { _id: string; name: string; mobile: string };
+  customer?: { name?: string; mobile?: string };
   billId?: string;
   amount: number;
   paymentMode: PaymentMode;
