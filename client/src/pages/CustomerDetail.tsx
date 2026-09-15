@@ -1159,7 +1159,7 @@ export default function CustomerDetail() {
               </div>
 
               {/* Orders summary */}
-              <div className="bg-th-surface rounded-lg p-5">
+              <div className="bg-th-surface rounded-lg p-5 border-l-4 border-l-[#e8a427]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <ShoppingCart size={14} className="text-[#e8a427]" />
@@ -1176,40 +1176,64 @@ export default function CustomerDetail() {
                 </div>
                 {orders.length > 0 ? (
                   <div className="space-y-2">
-                    {orders.slice(0, 4).map((o: any) => (
-                      <div
-                        key={o._id}
-                        className="flex items-center justify-between p-2.5 rounded-md bg-th-elevated"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-base font-semibold text-th-text truncate">
-                            {[o.frameBrand, o.frame, o.lensBrand].filter(Boolean).join(' / ') ||
-                              'Order'}
-                          </p>
-                          <p className="text-base text-th-secondary">
-                            {o.deliveryDate
-                              ? new Date(o.deliveryDate).toLocaleDateString('en-IN', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                })
-                              : '—'}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-sm font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 ${
-                            o.status === 'Delivered'
-                              ? 'bg-[#1ed760]/10 text-[#1ed760]'
-                              : o.status === 'Cancelled'
-                                ? 'bg-red-500/10 text-red-400'
-                                : o.status === 'Ready'
-                                  ? 'bg-[#6ea8fe]/10 text-[#6ea8fe]'
-                                  : 'bg-[#e8a427]/10 text-[#e8a427]'
+                    {orders.slice(0, 4).map((o: any) => {
+                      const linkedVisit = visits.find(
+                        (v: any) => getVisitId(v._id) === getVisitId(o.visitId)
+                      );
+                      const oDate = o.deliveryDate
+                        ? new Date(o.deliveryDate).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })
+                        : o.createdAt
+                          ? `${uiT('Placed', 'बनाया')} ${new Date(o.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}`
+                          : '';
+                      return (
+                        <div
+                          key={o._id}
+                          onClick={() => {
+                            if (linkedVisit) {
+                              setTab('visits');
+                              openVisitDetail(linkedVisit);
+                            }
+                          }}
+                          className={`flex items-center gap-2 p-2.5 rounded-md bg-th-elevated transition-colors ${
+                            linkedVisit ? 'cursor-pointer hover:bg-th-hover' : ''
                           }`}
                         >
-                          {o.status || 'Draft'}
-                        </span>
-                      </div>
-                    ))}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-base font-semibold text-th-text truncate">
+                              {[o.frameBrand, o.frame, o.lensBrand, o.coating]
+                                .filter(Boolean)
+                                .join(' / ') || 'Order'}
+                            </p>
+                            <p className="text-base text-th-secondary">
+                              {oDate || '—'}
+                              {o.quantity && o.quantity > 1 ? ` · Qty ${o.quantity}` : ''}
+                              {o.billInfo?.totalAmount != null
+                                ? ` · ₹${o.billInfo.totalAmount.toLocaleString()}`
+                                : ''}
+                            </p>
+                          </div>
+                          <span
+                            className={`text-sm font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 ${
+                              o.status === 'Delivered'
+                                ? 'bg-[#1ed760]/10 text-[#1ed760]'
+                                : o.status === 'Cancelled'
+                                  ? 'bg-red-500/10 text-red-400'
+                                  : o.status === 'Ready'
+                                    ? 'bg-[#6ea8fe]/10 text-[#6ea8fe]'
+                                    : 'bg-[#e8a427]/10 text-[#e8a427]'
+                            }`}
+                          >
+                            {o.status || 'Draft'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-base text-th-secondary py-3 text-center">
