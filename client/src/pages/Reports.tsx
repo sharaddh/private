@@ -179,7 +179,7 @@ export default function Reports() {
       uiT('Days', 'दिन'),
     ];
     const rows = pendingData.map((b: Bill) => {
-      const name = typeof b.customerId === 'object' && b.customerId?.name ? b.customerId.name : '—';
+      const name = b.customer?.name || (typeof b.customerId === 'object' && b.customerId?.name ? b.customerId.name : '—');
       const days = Math.floor(
         (Date.now() - new Date(b.createdAt).getTime()) / (1000 * 60 * 60 * 24)
       );
