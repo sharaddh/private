@@ -141,6 +141,7 @@ export interface StockStatus {
 export interface Order {
   _id: string;
   customerId: string | { _id: string; name: string; mobile: string };
+  customer?: { name?: string; mobile?: string };
   visitId?: string;
   status: OrderStatus;
   classification?: OrderClassification;
