@@ -1493,7 +1493,7 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
           />
         ) : (
           d.recentOrders.map((o, idx) => {
-            const custObj = typeof o.customerId === 'object' && o.customerId ? o.customerId : null;
+            const custObj = typeof o.customer === 'object' ? o.customer : null;
             const cName = custObj?.name ?? '—';
             const cMobile = custObj?.mobile ?? '';
             const rx = o.prescription;
@@ -1581,7 +1581,7 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
           />
         ) : (
           d.pendingBills.map((b, idx) => {
-            const custObj = typeof b.customerId === 'object' && b.customerId ? b.customerId : null;
+            const custObj = typeof b.customer === 'object' ? b.customer : null;
             const cName = custObj?.name ?? '—';
             const cMobile = custObj?.mobile ?? '';
             return (
@@ -1652,7 +1652,7 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
 
     const renderRow = (item: Order, idx: number) => {
       const custObj =
-        typeof item.customerId === 'object' && item.customerId ? item.customerId : null;
+        typeof item.customer === 'object' ? item.customer : null;
       const cName = custObj?.name ?? '—';
       const cMobile = custObj?.mobile ?? '';
 
@@ -1662,7 +1662,11 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
           <div
             key={o._id || idx}
             className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-th-card transition-all cursor-pointer"
-            onClick={() => navigate(`/customers/${custObj?._id ?? ''}?visitId=${o.visitId || ''}`)}
+            onClick={() =>
+                navigate(
+                  `/customers/${typeof item.customerId === 'string' ? item.customerId : (item.customerId as { _id?: string })?._id ?? ''}?visitId=${o.visitId || ''}`
+                )
+              }
           >
             <div className="relative flex-shrink-0">
               <UserAvatar name={cName} className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-sm" />
