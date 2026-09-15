@@ -413,15 +413,16 @@ export default function Customers(): React.JSX.Element {
         </div>
       )}
 
-      {showForm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-          onClick={() => setShowForm(false)}
-        >
+      {showForm &&
+        createPortal(
           <div
-            className="bg-th-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+            onClick={() => setShowForm(false)}
           >
+            <div
+              className="bg-th-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between px-6 py-4 border-b border-th-border">
               <h3 className="text-base font-bold text-th-text">
                 {editing ? uiT('Edit', 'संपादित करें') : uiT('Add Customer', 'ग्राहक जोड़ें')}
