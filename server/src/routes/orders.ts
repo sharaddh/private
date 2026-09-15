@@ -228,6 +228,9 @@ router.patch(
         }
       }
 
+      // Invalidate before responding so the client's immediate refetch never sees stale data
+      await invalidateCache("/api/orders");
+      await invalidateCache("/api/dashboard");
       res.json({ success: true, data: result });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
