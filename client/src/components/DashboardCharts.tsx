@@ -282,11 +282,11 @@ export function SalesVsCollectionChart({
       </div>
       <div className="flex items-center gap-4 mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-1 rounded-full bg-[#6366f1]" />
+          <span className="w-3 h-1 rounded-2xl bg-[#6366f1]" />
           <span className="text-[13px] text-th-secondary">Sales</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-1 rounded-full bg-[#1ed760]" />
+          <span className="w-3 h-1 rounded-2xl bg-[#1ed760]" />
           <span className="text-[13px] text-th-secondary">Collection</span>
         </div>
       </div>
