@@ -1838,11 +1838,12 @@ export default function CustomerDetail() {
       </div>
 
       {/* ── Edit Profile Modal ── */}
-      {editing && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setEditing(false)}
-        >
+      {editing &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setEditing(false)}
+          >
           <div
             className="bg-th-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -1988,15 +1989,18 @@ export default function CustomerDetail() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )
+      }
 
       {/* ── Visit Detail Modal ── */}
-      {selectedVisit && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setSelectedVisit(null)}
-        >
+      {selectedVisit &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            onClick={() => setSelectedVisit(null)}
+          >
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
           <div
             className="relative w-full max-w-3xl bg-th-surface rounded-xl max-h-[90vh] overflow-y-auto shadow-xl scrollbar-none"
