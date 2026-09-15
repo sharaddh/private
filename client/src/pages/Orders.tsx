@@ -227,12 +227,13 @@ export default function Orders() {
   }
 
   function customerName(o: OrderCard): string {
+    if (typeof o.customer === 'object' && o.customer?.name) return o.customer.name;
     if (typeof o.customerId === 'object' && o.customerId?.name) return o.customerId.name;
-    if (typeof o.customerId === 'string') return o.customerId.slice(-6);
     return '\u2014';
   }
 
   function customerMobile(o: OrderCard): string {
+    if (typeof o.customer === 'object' && o.customer?.mobile) return o.customer.mobile;
     if (typeof o.customerId === 'object' && o.customerId?.mobile) return o.customerId.mobile;
     return '';
   }
@@ -240,13 +241,6 @@ export default function Orders() {
   if (loading) return <PageSkeleton page="orders" />;
 
   const filteredList = filter === 'all' ? list : list.filter((o) => o.status === filter);
-
-  const stats = {
-    total: list.length,
-    ordered: list.filter((o) => o.status === 'Ordered' || o.status === 'Draft').length,
-    inLab: list.filter((o) => o.status === 'In Lab').length,
-    ready: list.filter((o) => o.status === 'Ready').length,
-  };
 
   return (
     <div className="space-y-6">
@@ -260,67 +254,58 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Status filter */}
+      <div className="flex gap-2 flex-wrap">
         {[
-          { key: 'all', label: uiT('Total', 'कुल'), value: stats.total, color: 'text-th-text' },
+          { key: 'all', label: uiT('All', 'सभी'), count: list.length },
+          {
+            key: 'Draft',
+            label: uiT('Draft', 'ड्राफ्ट'),
+            count: list.filter((o) => o.status === 'Draft').length,
+          },
           {
             key: 'Ordered',
             label: uiT('Ordered', 'ऑर्डर किया'),
-            value: stats.ordered,
-            color: 'text-[#e854c7]',
+            count: list.filter((o) => o.status === 'Ordered').length,
           },
           {
             key: 'In Lab',
             label: uiT('In Lab', 'लैब में'),
-            value: stats.inLab,
-            color: 'text-[#ff6b8a]',
+            count: list.filter((o) => o.status === 'In Lab').length,
           },
           {
             key: 'Ready',
             label: uiT('Ready', 'तैयार'),
-            value: stats.ready,
-            color: 'text-[#82b6ff]',
+            count: list.filter((o) => o.status === 'Ready').length,
           },
-        ].map((s) => (
-          <ShineCard
-            key={s.key}
-            onClick={() => setFilter(s.key)}
-            role="button"
-            tabIndex={0}
-            aria-label={`Filter by ${s.label}: ${s.value}`}
-            className={`bg-th-surface rounded-lg text-center py-4 px-3 cursor-pointer ${
-              filter === s.key ? 'ring-2 ring-[#1ed760]/50' : ''
-            }`}
-          >
-            <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-sm font-medium text-th-secondary mt-1">{s.label}</p>
-          </ShineCard>
-        ))}
-      </div>
-
-      {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { key: 'all', label: uiT('All Orders', 'सभी ऑर्डर') },
-          { key: 'Draft', label: uiT('Draft', 'ड्राफ्ट') },
-          { key: 'Ordered', label: uiT('Ordered', 'ऑर्डर किया') },
-          { key: 'In Lab', label: uiT('In Lab', 'लैब में') },
-          { key: 'Ready', label: uiT('Ready', 'तैयार') },
-          { key: 'Delivered', label: uiT('Delivered', 'डिलीवर हो गया') },
+          {
+            key: 'Delivered',
+            label: uiT('Delivered', 'डिलीवर हो गया'),
+            count: list.filter((o) => o.status === 'Delivered').length,
+          },
         ].map((f) => (
           <button
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
-            aria-label={`Show ${f.label} orders`}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+            aria-pressed={filter === f.key}
+            aria-label={`Show ${f.label} orders (${f.count})`}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all duration-150 inline-flex items-center gap-2 ${
               filter === f.key
                 ? 'bg-[#1ed760] text-black'
                 : 'bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text'
             }`}
           >
             {f.label}
+            <span
+              className={`min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold inline-flex items-center justify-center leading-none ${
+                filter === f.key
+                  ? 'bg-black/20 text-black'
+                  : 'bg-th-surface text-th-secondary'
+              }`}
+            >
+              {f.count}
+            </span>
           </button>
         ))}
       </div>
@@ -339,14 +324,14 @@ export default function Orders() {
         />
         <button
           onClick={() => setShowAll(!showAll)}
-          aria-label={showAll ? 'Show filtered orders' : 'Show all orders'}
+          aria-label={showAll ? 'Show filtered orders by date' : 'Show all orders across dates'}
           className={`px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
             showAll
               ? 'bg-[#1ed760] text-black'
               : 'text-th-secondary bg-th-elevated hover:bg-th-hover hover:text-th-text'
           }`}
         >
-          {uiT('All Orders', 'सभी ऑर्डर')}
+          {uiT('All Dates', 'सभी तारीख')}
         </button>
       </div>
 
