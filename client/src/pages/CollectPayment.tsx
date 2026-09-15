@@ -48,11 +48,11 @@ export default function CollectPayment() {
 
   const custName = (() => {
     if (!bill) return '—';
-    return typeof bill.customerId === 'object' ? bill.customerId?.name || '—' : '—';
+    return bill.customer?.name || (typeof bill.customerId === 'object' ? bill.customerId?.name || '—' : '—');
   })();
   const custMobile = (() => {
     if (!bill) return '';
-    return typeof bill.customerId === 'object' ? bill.customerId?.mobile || '' : '';
+    return bill.customer?.mobile || (typeof bill.customerId === 'object' ? bill.customerId?.mobile || '' : '');
   })();
 
   async function handleCollect() {
