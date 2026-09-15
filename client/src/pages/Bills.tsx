@@ -47,8 +47,7 @@ export default function Bills() {
   }, [fetchBills, fetchSettings]);
 
   function resolveCustomer(bill: Bill): ResolvedCustomer {
-    if (typeof bill.customerId === 'object' && bill.customerId) return bill.customerId;
-    return null;
+    return bill.customer || (typeof bill.customerId === 'object' && bill.customerId ? bill.customerId : null);
   }
 
   function handlePrint(bill: Bill) {
