@@ -190,18 +190,16 @@ export default function Delivery() {
   }
 
   function custName(o: AnyOrder): string {
-    if (typeof o.customerId === 'object' && o.customerId?.name) return o.customerId.name;
-    return '—';
+    return o.customer?.name || '—';
   }
 
   function custMobile(o: AnyOrder): string {
-    if (typeof o.customerId === 'object' && o.customerId?.mobile) return o.customerId.mobile;
-    return '';
+    return o.customer?.mobile || '';
   }
 
   function custId(o: AnyOrder): string {
-    if (typeof o.customerId === 'object' && o.customerId?._id) return o.customerId._id;
-    return o.customerId || '';
+    if (typeof o.customerId === 'string') return o.customerId;
+    return o.customerId?._id || '';
   }
 
   function isOverdue(o: AnyOrder): boolean {
