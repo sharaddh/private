@@ -449,6 +449,7 @@ export interface Delivery {
   _id: string;
   orderId: string;
   customerId: string | { _id: string; name: string; mobile: string };
+  customer?: { name?: string; mobile?: string };
   status: DeliveryStatus;
   deliveryDate?: string;
   notes?: string;
