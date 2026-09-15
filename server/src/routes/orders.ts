@@ -65,17 +65,33 @@ router.patch(
   "/:id/classify",
   authenticate,
   validate(classifyOrderSchema, "body"),
-  asyncHandler(orderController.setClassification)
+  asyncHandler(async (req, res) => {
+    await orderController.setClassification(req, res);
+    invalidateCache("/api/orders");
+    invalidateCache("/api/dashboard");
+  })
 );
 
 router.patch(
   "/:id/classify-eye",
   authenticate,
   validate(classifyEyeSchema, "body"),
-  asyncHandler(orderController.setEyeClassification)
+  asyncHandler(async (req, res) => {
+    await orderController.setEyeClassification(req, res);
+    invalidateCache("/api/orders");
+    invalidateCache("/api/dashboard");
+  })
 );
 
-router.patch("/:id/review", authenticate, asyncHandler(orderController.setReviewed));
+router.patch(
+  "/:id/review",
+  authenticate,
+  asyncHandler(async (req, res) => {
+    await orderController.setReviewed(req, res);
+    invalidateCache("/api/orders");
+    invalidateCache("/api/dashboard");
+  })
+);
 
 router.patch(
   "/:id/status",
