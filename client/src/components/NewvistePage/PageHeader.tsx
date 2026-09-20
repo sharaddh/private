@@ -30,8 +30,8 @@ export default function PageHeader({ customer, id, navigate, visitType, loading,
   };
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-th-surface/90 border-b border-th-border shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <header className="sticky rounded-xl top-0 z-40 backdrop-blur-xl bg-th-surface/90 border-b border-th-border shadow-sm">
+      <div className="h-20 px-5  flex items-center justify-between">
         {/* Left */}
 
         <div className="flex items-center gap-4 min-w-0">

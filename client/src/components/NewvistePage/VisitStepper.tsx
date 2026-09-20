@@ -33,7 +33,7 @@ export default function VisitStepper({ steps, currentIdx, setStep }: Props) {
 
                 {index !== steps.length - 1 && (
                   <div className="absolute top-5 left-1/2 w-full">
-                    <div className="ml-5 mr-5 h-[2px] rounded-full bg-th-elevated overflow-hidden">
+                    <div className="ml-5 mr-5 h-[2px]  bg-th-elevated overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{

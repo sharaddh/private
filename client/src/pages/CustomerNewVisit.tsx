@@ -610,7 +610,7 @@ export default function CustomerNewVisit() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-th-base"
+      className="min-h-screen bg-th-base "
     >
       <PageHeader
         customer={customer}
@@ -621,7 +621,7 @@ export default function CustomerNewVisit() {
         saving={saving}
       />
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-3 py-6 space-y-6">
         <VisitStepper steps={steps} currentIdx={currentIdx} setStep={setStep} />
 
         <AnimatePresence mode="wait">
