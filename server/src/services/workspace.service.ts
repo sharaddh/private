@@ -136,7 +136,14 @@ export async function executeTransaction(
     }
 
     if (body.order) {
-      const { stockItems: orderStockItems, ...orderData } = body.order;
+      const { stockItems: orderStockItems, ...orderData } = body.order as Record<string, any>;
+      // Normalize date-only strings (e.g. "2026-09-20") to full ISO-8601 DateTime
+      // before passing to Prisma; otherwise order.create rejects with
+      // "Invalid value for argument `deliveryDate`".
+      for (const field of ['deliveryDate', 'actualDeliveryDate', 'labExpectedDate']) {
+        const val = orderData[field];
+        if (val) orderData[field] = new Date(val);
+      }
       const order = await tx.order.create({
         data: {
           customerId: customer.id,
