@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { splitsSchema } from "./payment.validator";
 
 export const transactionSchema = z.object({
   customerId: z.string().optional(),
@@ -39,6 +40,7 @@ export const transactionSchema = z.object({
       mode: z.string().optional(),
       paymentMode: z.string().optional(),
       notes: z.string().optional(),
+      splits: splitsSchema.optional(),
     })
     .optional(),
   delivery: z
