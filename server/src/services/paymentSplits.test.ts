@@ -13,8 +13,8 @@ function fakeTx() {
   const db = {
     created,
     payment: {
-      create: async ({ data }: { data: FakeRow }) => {
-        const row = { id: `pay_${created.length + 1}`, ...data };
+      create: async ({ data }: { data: Record<string, unknown> }) => {
+        const row = { id: `pay_${created.length + 1}`, ...data } as FakeRow;
         created.push(row);
         return row;
       },
