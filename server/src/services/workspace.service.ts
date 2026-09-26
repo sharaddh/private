@@ -1,5 +1,7 @@
 import { prisma } from "../db/prisma";
 import { requireBranchId } from "../utils/scope";
+import { AppError } from "../middleware/errorHandler";
+import { normalizeSplits, recordPayments } from "./paymentSplits";
 import { generateBillPdf } from "../utils/pdf";
 import { normalizePhone } from "../utils/phone";
 import { logger } from "../utils/logger";
@@ -42,6 +44,7 @@ interface TransactionInput {
     mode?: string;
     paymentMode?: string;
     notes?: string;
+    splits?: Array<{ mode: string; amount: number }>;
   };
   delivery?: {
     address?: string;
@@ -175,8 +178,19 @@ export async function executeTransaction(
       const subtotal = items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0);
       const discount = body.bill.discount || 0;
       const totalAmount = Math.max(0, subtotal - discount);
-      const advancePaid = body.payment?.amount || 0;
+      const paymentInput = body.payment;
+      const normalized = normalizeSplits(paymentInput);
+      // Driven by the normalized total rather than `payment.amount`, so a client
+      // that sends only `splits` still produces a self-consistent bill.
+      const advancePaid = normalized.total;
       const pendingAmount = Math.max(0, totalAmount - advancePaid);
+
+      if (normalized.usedSplits && advancePaid > totalAmount) {
+        throw new AppError(
+          400,
+          `Collected ₹${advancePaid} but the bill total is ₹${totalAmount}`
+        );
+      }
 
       const bill = await tx.bill.create({
         data: {
@@ -217,20 +231,18 @@ export async function executeTransaction(
         });
       }
 
-      if (advancePaid > 0) {
-        const paymentInput = body.payment;
-        const payment = await tx.payment.create({
-          data: {
-            customerId: customer.id,
-            billId: bill.id,
-            amount: advancePaid,
-            paymentMode: paymentInput?.paymentMode || paymentInput?.mode || "Cash",
-            paymentDate: new Date(),
-            notes: paymentInput?.notes || "Advance payment",
-            branchId: requireBranchId(),
-          },
+      if (normalized.rows.length > 0) {
+        const { payments } = await recordPayments(tx, {
+          customerId: customer.id,
+          billId: bill.id,
+          rows: normalized.rows,
+          notes: paymentInput?.notes || "Advance payment",
+          branchId: requireBranchId(),
         });
-        result.payment = payment;
+        // `payment` keeps its old single-row shape for existing consumers;
+        // `payments` exposes the full breakdown.
+        result.payment = payments[0];
+        result.payments = payments;
       }
     }
 
