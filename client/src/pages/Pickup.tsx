@@ -22,6 +22,24 @@ import {
   Eye,
 } from 'lucide-react';
 import type { Customer, Order, Bill, ShopSettings, BillItem, PaymentMode } from '../types';
+import SplitPaymentInput from '../components/SplitPaymentInput';
+import { isCanonicalPaymentMode } from '../constants/paymentModes';
+import {
+  buildPaymentPayload,
+  isOverAllocated,
+  isSplitActive,
+  nonZeroRows,
+  primaryRow,
+  singleRow,
+  splitTotal,
+  type SplitRow,
+} from '../utils/splitAllocation';
+
+/**
+ * Delivery collection has always offered only these three. Keeping the list
+ * narrow is deliberate — it is a counter handover, not a full till.
+ */
+const DELIVERY_MODES = ['Cash', 'UPI', 'Card'] as const;
 
 function ListLoading() {
   return (
@@ -48,8 +66,9 @@ export default function Pickup() {
   const [bill, setBill] = useState<Bill | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [collectAmount, setCollectAmount] = useState<number>(0);
-  const [collectMode, setCollectMode] = useState<string>('Cash');
+  // Tender rows are the source of truth for the collection; `collectAmount` and
+  // `collectMode` below are derived from them.
+  const [splits, setSplits] = useState<SplitRow[]>(singleRow());
   const [delivering, setDelivering] = useState<boolean>(false);
   const [waStatus, setWaStatus] = useState<string>('checking');
   const [message, setMessage] = useState<string>('');
@@ -63,6 +82,12 @@ export default function Pickup() {
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const billTotal = Math.max(0, billSubtotal - billDiscount);
+
+  /** The most this screen can collect. Zero until a bill is attached. */
+  const collectable = bill?.pendingAmount ?? 0;
+  const collectAmount = splitTotal(splits);
+  const collectMode = primaryRow(splits).mode;
+  const overAllocated = isOverAllocated(splits, collectable);
 
   const orderIdFromUrl = searchParams.get('orderId');
 
@@ -244,7 +269,7 @@ export default function Pickup() {
       setBillItems(items);
       setBillDiscount(0);
     } else {
-      setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+      setSplits(singleRow('Cash', b.pendingAmount > 0 ? b.pendingAmount : 0));
     }
     return b;
   }
@@ -292,7 +317,7 @@ export default function Pickup() {
     setShowCreateBill(false);
     const b = await syncBillForOrder(o);
     if (b) {
-      setCollectAmount(b.pendingAmount > 0 ? b.pendingAmount : 0);
+      setSplits(singleRow('Cash', b.pendingAmount > 0 ? b.pendingAmount : 0));
       setBill(b);
     } else {
       setBill(null);
@@ -362,7 +387,7 @@ export default function Pickup() {
     });
     if (res.success) {
       setBill(res.data!);
-      setCollectAmount(res.data!.pendingAmount || 0);
+      setSplits(singleRow('Cash', res.data!.pendingAmount || 0));
       setShowCreateBill(false);
       setMessage(`✓ ${uiT('Bill created', 'बिल बनाया गया')} ${uiT('successfully', 'सफलतापूर्वक')}`);
       const billsRes = await billService.list<Bill[]>();
@@ -384,13 +409,31 @@ export default function Pickup() {
 
   async function handleDeliver() {
     if (!selectedOrder) return;
+    // A split that over-collects is refused here as well as server-side. The
+    // legacy single-mode path is left alone: site 3 has never capped and site 4
+    // caps server-side, and that asymmetry is deliberately unchanged.
+    if (overAllocated) {
+      setMessage(
+        uiT(
+          'Split exceeds the pending balance. Reduce an amount first.',
+          'विभाजित राशि बकाया राशि से अधिक है। पहले राशि घटाएं।'
+        )
+      );
+      setShowConfirmDeliver(false);
+      return;
+    }
     setDelivering(true);
     setMessage('');
     const isDelivered = (selectedOrder as any).status === 'Delivered';
     if (isDelivered && collectAmount > 0) {
+      // Site 4 — PATCH /api/orders/:id/collect-payment
       const res = await api.patch(`/api/orders/${selectedOrder._id}/collect-payment`, {
-        collectPayment: collectAmount,
-        paymentMode: collectMode,
+        ...buildPaymentPayload({
+          rows: splits,
+          amountField: 'collectPayment',
+          modeField: 'paymentMode',
+          isModeAllowed: isCanonicalPaymentMode,
+        }),
       });
       if (res.success) {
         setMessage(
@@ -403,10 +446,18 @@ export default function Pickup() {
         globalToast.error(res.message || 'Failed');
       }
     } else {
+      // Site 3 — PATCH /api/orders/:id/status
       const payload: Record<string, unknown> = { status: 'Delivered' };
       if (collectAmount > 0) {
-        payload.collectPayment = collectAmount;
-        payload.paymentMode = collectMode;
+        Object.assign(
+          payload,
+          buildPaymentPayload({
+            rows: splits,
+            amountField: 'collectPayment',
+            modeField: 'paymentMode',
+            isModeAllowed: isCanonicalPaymentMode,
+          })
+        );
       }
       const res = await api.patch(`/api/orders/${selectedOrder._id}/status`, payload);
       if (res.success) {
@@ -860,43 +911,16 @@ export default function Pickup() {
                           <h3 className="text-sm font-semibold text-th-text mb-2">
                             {uiT('Collect Payment', 'भुगतान एकत्र करें')}
                           </h3>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-th-secondary mb-1">
-                                {uiT('Amount', 'राशि')}
-                              </label>
-                              <input
-                                type="number"
-                                step="0.01"
-                                className="input-field text-lg font-bold"
-                                aria-label={uiT('Collect amount', 'एकत्र राशि')}
-                                value={collectAmount}
-                                onChange={(e) => setCollectAmount(Number(e.target.value))}
-                                max={bill.pendingAmount}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-th-secondary mb-1">
-                                {uiT('Mode', 'मोड')}
-                              </label>
-                              <div className="grid grid-cols-3 gap-1">
-                                {['Cash', 'UPI', 'Card'].map((m) => (
-                                  <button
-                                    key={m}
-                                    onClick={() => setCollectMode(m)}
-                                    aria-label={uiT('Payment mode', 'भुगतान मोड') + ': ' + m}
-                                    className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
-                                      collectMode === m
-                                        ? 'bg-[#1ed760] text-black border-[#1ed760]'
-                                        : 'bg-th-elevated text-th-secondary border-th-border'
-                                    }`}
-                                  >
-                                    {m}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
+                          <SplitPaymentInput
+                            rows={splits}
+                            onChange={setSplits}
+                            collectable={collectable}
+                            modes={DELIVERY_MODES}
+                            variant="buttons"
+                            disabled={delivering}
+                            showMaxButton
+                            amountLabel={uiT('Amount', 'राशि')}
+                          />
                         </div>
                       </>
                     )}
@@ -1056,7 +1080,7 @@ export default function Pickup() {
                 <div className="flex flex-wrap gap-3 pt-3 border-t border-th-border">
                   <button
                     onClick={() => setShowConfirmDeliver(true)}
-                    disabled={delivering || !bill}
+                    disabled={delivering || !bill || overAllocated}
                     aria-label={uiT('Deliver order', 'ऑर्डर डिलीवर करें')}
                     className="bg-[#1ed760] hover:bg-[#1db954] text-black font-bold uppercase tracking-wider text-xs rounded-lg flex items-center gap-2 px-8 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all shadow-[0_8px_24px_rgb(30,215,96,0.3)]"
                   >
@@ -1112,8 +1136,15 @@ export default function Pickup() {
                   {uiT('Collect Payment', 'भुगतान एकत्र करें')}
                 </h3>
                 <p className="text-sm text-th-secondary text-center mb-5">
-                  {uiT('Collect', 'एकत्र करें')} ₹{collectAmount} {uiT('via', 'द्वारा')}{' '}
-                  {collectMode}?
+                  {isSplitActive(splits)
+                    ? nonZeroRows(splits).map((r, i) => (
+                        <span key={`${r.mode}-${i}`} className="block">
+                          {uiT('Collect', 'एकत्र करें')} ₹{r.amount.toLocaleString('en-IN')}{' '}
+                          {uiT('via', 'द्वारा')} {r.mode}
+                          {i < nonZeroRows(splits).length - 1 ? ' +' : '?'}
+                        </span>
+                      ))
+                    : `${uiT('Collect', 'एकत्र करें')} ₹${collectAmount} ${uiT('via', 'द्वारा')} ${collectMode}?`}
                 </p>
               </>
             ) : (
@@ -1123,7 +1154,11 @@ export default function Pickup() {
                 </h3>
                 <p className="text-sm text-th-secondary text-center mb-5">
                   {collectAmount > 0
-                    ? `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?`
+                    ? isSplitActive(splits)
+                      ? `${uiT('Mark as delivered and collect', 'डिलीवर करें और एकत्र करें')} ₹${collectAmount} ${uiT('across', 'across')} ${nonZeroRows(splits)
+                          .map((r) => r.mode)
+                          .join(' + ')}?`
+                      : `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?`
                     : uiT('Mark this order as Delivered?', 'इस ऑर्डर को डिलीवर चिन्हित करें?')}
                 </p>
               </>

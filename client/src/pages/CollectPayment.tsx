@@ -6,9 +6,17 @@ import ShineCard from '../components/ShineCard';
 import { useToast } from '../context/ToastContext';
 import { useTranslate } from '../context/TranslateContext';
 import { ArrowLeft, IndianRupee, Receipt, CheckCircle2, Loader2 } from 'lucide-react';
+import SplitPaymentInput from '../components/SplitPaymentInput';
+import { CANONICAL_PAYMENT_MODES, isCanonicalPaymentMode } from '../constants/paymentModes';
+import {
+  buildPaymentPayload,
+  isOverAllocated,
+  isSplitActive,
+  singleRow,
+  splitTotal,
+  type SplitRow,
+} from '../utils/splitAllocation';
 import type { Bill } from '../types';
-
-const COLLECT_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Insurance'];
 
 export default function CollectPayment() {
   const { uiT } = useTranslate();
@@ -20,8 +28,7 @@ export default function CollectPayment() {
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
   const [collecting, setCollecting] = useState(false);
-  const [amount, setAmount] = useState(0);
-  const [mode, setMode] = useState('Cash');
+  const [splits, setSplits] = useState<SplitRow[]>(singleRow());
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,7 +39,7 @@ export default function CollectPayment() {
       const res = await api.get<Bill>(`/api/bills/${id}`);
       if (res.success && res.data) {
         setBill(res.data);
-        setAmount(res.data.pendingAmount > 0 ? res.data.pendingAmount : 0);
+        setSplits(singleRow('Cash', res.data.pendingAmount > 0 ? res.data.pendingAmount : 0));
       } else {
         setError(res.message || 'Bill not found');
       }
@@ -57,12 +64,24 @@ export default function CollectPayment() {
 
   async function handleCollect() {
     if (!bill || !billId) return;
-    const amt = Number(amount);
+    const amt = splitTotal(splits);
     if (!amt || amt <= 0) {
       toast.error(uiT('Enter a valid amount', 'मान्य राशि दर्ज करें'));
       return;
     }
-    if (amt > bill.pendingAmount) {
+    // A real split is rejected outright rather than capped, matching site 2's
+    // server rule. The single-mode path keeps its existing client-side check so
+    // today's behaviour is unchanged.
+    if (isOverAllocated(splits, bill.pendingAmount)) {
+      toast.error(
+        uiT(
+          'Split exceeds the pending balance',
+          'विभाजित राशि बकाया राशि से अधिक है'
+        )
+      );
+      return;
+    }
+    if (!isSplitActive(splits) && amt > bill.pendingAmount) {
       toast.error(uiT('Amount exceeds pending balance', 'राशि बकाया राशि से अधिक है'));
       return;
     }
@@ -70,8 +89,12 @@ export default function CollectPayment() {
     setError('');
     try {
       const res = await api.post<{ bill: Bill }>(`/api/bills/${billId}/collect-payment`, {
-        amount: amt,
-        paymentMode: mode,
+        ...buildPaymentPayload({
+          rows: splits,
+          amountField: 'amount',
+          modeField: 'paymentMode',
+          isModeAllowed: isCanonicalPaymentMode,
+        }),
       });
       if (res.success && res.data?.bill) {
         setBill(res.data.bill);
@@ -81,6 +104,10 @@ export default function CollectPayment() {
         setError(res.message || 'Failed to collect payment');
         toast.error(res.message || 'Failed');
       }
+    } catch (err) {
+      // Field values are deliberately preserved so a rejected split can be
+      // corrected in place instead of retyped.
+      setError(err instanceof Error ? err.message : 'Failed to collect payment');
     } finally {
       setCollecting(false);
     }
@@ -185,52 +212,20 @@ export default function CollectPayment() {
             </div>
           ) : (
             <ShineCard className="bg-th-surface rounded-lg p-5 space-y-4 shadow-lg">
-              <div>
-                <label className="block text-xs font-medium text-th-secondary mb-1">
-                  {uiT('Amount', 'राशि')}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input-field text-2xl font-bold"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  max={bill.pendingAmount}
-                  min={0}
-                />
-                <button
-                  onClick={() => setAmount(bill.pendingAmount)}
-                  className="mt-2 text-xs font-medium text-[#1ed760] hover:underline"
-                >
-                  {uiT('Collect full amount', 'पूरी राशि एकत्र करें')} ₹
-                  {bill.pendingAmount.toLocaleString('en-IN')}
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-th-secondary mb-2">
-                  {uiT('Mode', 'मोड')}
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {COLLECT_MODES.map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setMode(m)}
-                      className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
-                        mode === m
-                          ? 'bg-[#1ed760] text-black border-[#1ed760]'
-                          : 'bg-th-elevated text-th-secondary border-th-border'
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <SplitPaymentInput
+                rows={splits}
+                onChange={setSplits}
+                collectable={bill.pendingAmount}
+                modes={CANONICAL_PAYMENT_MODES}
+                variant="buttons"
+                disabled={collecting}
+                showMaxButton
+                amountLabel={uiT('Amount', 'राशि')}
+              />
 
               <button
                 onClick={handleCollect}
-                disabled={collecting}
+                disabled={collecting || isOverAllocated(splits, bill.pendingAmount)}
                 className="w-full bg-[#1ed760] hover:bg-[#1db954] text-black font-bold uppercase tracking-wider text-sm rounded-lg flex items-center justify-center gap-2 py-4 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all shadow-[0_8px_24px_rgb(30,215,96,0.3)]"
               >
                 {collecting ? (
@@ -240,7 +235,7 @@ export default function CollectPayment() {
                 )}
                 {collecting
                   ? uiT('Collecting...', 'एकत्र हो रहा है...')
-                  : `${uiT('Collect', 'एकत्र करें')} ₹${(Number(amount) || 0).toLocaleString('en-IN')}`}
+                  : `${uiT('Collect', 'एकत्र करें')} ₹${splitTotal(splits).toLocaleString('en-IN')}`}
               </button>
             </ShineCard>
           )}

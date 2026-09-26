@@ -6,14 +6,27 @@ import {
   MapPin,
   CalendarDays,
   Banknote,
-  Smartphone,
-  CreditCard as CardIcon,
-  Building2,
-  Shield,
   CalendarClock,
 } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
 import { toDateKey } from '../../utils/date';
+import SplitPaymentInput from '../SplitPaymentInput';
+import { CANONICAL_PAYMENT_MODES } from '../../constants/paymentModes';
+import {
+  isSplitActive,
+  nonZeroRows,
+  primaryRow,
+  splitTotal,
+  type SplitRow,
+} from '../../utils/splitAllocation';
+
+/** Hindi display labels, kept beside the modes so the tiles read as before. */
+const MODE_LABELS: Record<string, string> = {
+  Cash: 'नकद',
+  Card: 'कार्ड',
+  'Bank Transfer': 'बैंक',
+  Insurance: 'बीमा',
+};
 
 const getDateFromOffset = (daysOffset: number) => {
   const date = new Date();
@@ -30,10 +43,24 @@ interface Props {
   setDiscountAmount: (v: number) => void;
   discountVal: number;
   totalAmount: number;
-  advancePaid: number;
-  setAdvancePaid: (v: number) => void;
-  paymentMode: string;
-  setPaymentMode: (v: string) => void;
+  /**
+   * The tender rows, 1 or 2. Row 1 is the legacy `amount`/`mode` pair and a
+   * second non-zero row makes it a split. Controlled — the panel holds no
+   * payment state of its own.
+   *
+   * Optional so the panel stays source-compatible with the unfired duplicate
+   * screen under `pages/CustomerNewVisit/`, which still passes only the legacy
+   * single-mode props. That copy is dead (never bundled) and is deliberately not
+   * being kept in sync, so the shared component has to keep answering to both.
+   */
+  splits?: SplitRow[];
+  setSplits?: (rows: SplitRow[]) => void;
+  /** Legacy single-mode amount. Used only when `splits` is not supplied. */
+  advancePaid?: number;
+  setAdvancePaid?: (v: number) => void;
+  /** Legacy single-mode mode. Used only when `splits` is not supplied. */
+  paymentMode?: string;
+  setPaymentMode?: (v: string) => void;
   finalTotal: number;
   deliveryAddress: string;
   setDeliveryAddress: (v: string) => void;
@@ -51,9 +78,11 @@ export default function PaymentPanel({
   setDiscountAmount,
   discountVal,
   totalAmount,
-  advancePaid,
+  splits,
+  setSplits,
+  advancePaid: legacyAdvancePaid,
   setAdvancePaid,
-  paymentMode,
+  paymentMode: legacyPaymentMode,
   setPaymentMode,
   finalTotal,
   deliveryAddress,
@@ -64,16 +93,27 @@ export default function PaymentPanel({
 }: Props) {
   const { uiT } = useTranslate();
 
+  const rows: SplitRow[] = splits ?? [
+    { mode: legacyPaymentMode ?? 'Cash', amount: legacyAdvancePaid ?? 0 },
+  ];
+
+  const advancePaid = splitTotal(rows);
+  const paymentMode = primaryRow(rows).mode;
   const pendingBalance = Math.max(0, finalTotal - advancePaid);
   const isFullyPaid = advancePaid >= finalTotal;
+  const splitActive = isSplitActive(rows);
 
-  const PAYMENT_METHODS = [
-    { value: 'Cash', label: uiT('Cash', 'नकद'), icon: Banknote },
-    { value: 'UPI', label: 'UPI', icon: Smartphone },
-    { value: 'Card', label: uiT('Card', 'कार्ड'), icon: CardIcon },
-    { value: 'Bank Transfer', label: uiT('Bank', 'बैंक'), icon: Building2 },
-    { value: 'Insurance', label: uiT('Insurance', 'बीमा'), icon: Shield },
-  ];
+  /**
+   * Route an edit back to whichever shape the caller supplied. A caller that
+   * passed both gets both kept in step, so a half-migrated screen cannot drift.
+   */
+  function updateRows(next: SplitRow[]) {
+    if (setSplits) setSplits(next);
+    setAdvancePaid?.(splitTotal(next));
+    setPaymentMode?.(primaryRow(next).mode);
+  }
+
+  const PAYMENT_METHODS = CANONICAL_PAYMENT_MODES;
 
   const DATE_SHORTCUTS = [
     { label: uiT('Today', 'आज'), days: 0 },
@@ -160,46 +200,16 @@ export default function PaymentPanel({
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-2 mb-4">
-              {PAYMENT_METHODS.map((m) => {
-                const Icon = m.icon;
-                const selected = paymentMode === m.value;
-                return (
-                  <button
-                    key={m.value}
-                    onClick={() => setPaymentMode(m.value)}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-md text-[14px] font-bold transition-all ${
-                      selected
-                        ? 'bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760]'
-                        : 'bg-th-elevated text-th-secondary hover:bg-th-card'
-                    }`}
-                  >
-                    <Icon size={16} />
-                    <span className="truncate w-full text-center">{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-th-secondary font-bold">
-                ₹
-              </span>
-              <input
-                type="number"
-                placeholder={uiT('Advance Collected', 'अग्रिम एकत्र')}
-                value={advancePaid || ''}
-                onChange={(e) => setAdvancePaid(Number(e.target.value))}
-                onWheel={(e) => (e.target as HTMLElement).blur()}
-                className="w-full pl-9 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
-              />
-              <button
-                onClick={() => setAdvancePaid(finalTotal)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-th-card text-[14px] font-bold rounded-md text-th-text hover:bg-[#1ed760] hover:text-black transition-colors"
-              >
-                Max
-              </button>
-            </div>
+            <SplitPaymentInput
+              rows={rows}
+              onChange={updateRows}
+              collectable={finalTotal}
+              modes={PAYMENT_METHODS}
+              modeLabels={MODE_LABELS}
+              variant="tiles"
+              showMaxButton
+              amountPlaceholder={uiT('Advance Collected', 'अग्रिम एकत्र')}
+            />
           </div>
         </div>
 
@@ -302,12 +312,25 @@ export default function PaymentPanel({
               </div>
             )}
 
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-[#1ed760] font-medium">
-                {uiT('Advance Paid', 'अग्रिम भुगतान')} ({paymentMode})
-              </span>
-              <span className="font-bold text-[#1ed760]">-₹{advancePaid.toLocaleString()}</span>
-            </div>
+            {splitActive ? (
+              nonZeroRows(rows).map((row, i) => (
+                <div key={`${row.mode}-${i}`} className="flex justify-between items-center text-sm">
+                  <span className="text-[#1ed760] font-medium">
+                    {uiT('Advance Paid', 'अग्रिम भुगतान')} ({row.mode})
+                  </span>
+                  <span className="font-bold text-[#1ed760] tabular-nums">
+                    -₹{row.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[#1ed760] font-medium">
+                  {uiT('Advance Paid', 'अग्रिम भुगतान')} ({paymentMode})
+                </span>
+                <span className="font-bold text-[#1ed760]">-₹{advancePaid.toLocaleString()}</span>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-th-elevated pt-5 mb-5 border-dashed">
