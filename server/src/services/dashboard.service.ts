@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma";
+import { requireBranchId } from "../utils/scope";
 import {
   istDateKey,
   istStartOfDay,
@@ -52,6 +53,7 @@ function translatePaymentMode(mode: string): string {
 }
 
 export async function getStats() {
+  const branchId = requireBranchId();
   const { start: dayStart, end: dayEnd } = getDayRange();
   const { start: weekStart, end: weekEnd } = getWeekRange();
   const { start: monthStart, end: monthEnd } = getMonthRange();
@@ -104,110 +106,112 @@ export async function getStats() {
     inventoryForCategories,
     paymentsForTodayModeSplit,
   ] = await Promise.all([
-    prisma.customer.count(),
-    prisma.order.count(),
-    prisma.bill.count({ where: { status: "Active" } }),
-    prisma.payment.count(),
-    prisma.inventory.count(),
-    prisma.delivery.count(),
-    prisma.visit.count(),
+    prisma.customer.count({ where: { branchId } }),
+    prisma.order.count({ where: { branchId } }),
+    prisma.bill.count({ where: { branchId, status: "Active" } }),
+    prisma.payment.count({ where: { branchId } }),
+    prisma.inventory.count({ where: { branchId } }),
+    prisma.delivery.count({ where: { branchId } }),
+    prisma.visit.count({ where: { branchId } }),
     prisma.bill.aggregate({
-      where: { createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
     prisma.payment.aggregate({
-      where: { paymentDate: { gte: dayStart, lte: dayEnd } },
+      where: { branchId, paymentDate: { gte: dayStart, lte: dayEnd } },
       _sum: { amount: true },
     }),
     prisma.bill.aggregate({
-      where: { createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
     prisma.bill.aggregate({
-      where: { createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
-    prisma.delivery.count({ where: { status: "Ready" } }),
-    prisma.customer.count({ where: { createdAt: { gte: dayStart, lte: dayEnd } } }),
-    prisma.inventory.count({ where: { quantity: { lte: 5 } } }),
+    prisma.delivery.count({ where: { branchId, status: "Ready" } }),
+    prisma.customer.count({ where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } } }),
+    prisma.inventory.count({ where: { branchId, quantity: { lte: 5 } } }),
     prisma.bill.findMany({
-      where: { status: "Active", pendingAmount: { gt: 0 } },
+      where: { branchId, status: "Active", pendingAmount: { gt: 0 } },
       orderBy: { createdAt: "desc" },
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.customer.findMany({
+      where: { branchId },
       orderBy: { createdAt: "desc" },
       take: 5,
       select: { name: true, mobile: true, totalSpent: true, totalVisits: true },
     }),
     prisma.order.findMany({
-      where: { createdAt: { gte: dayStart, lte: dayEnd } },
+      where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } },
       orderBy: { createdAt: "desc" },
       take: 10,
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.order.findMany({
-      where: { status: "Ready", deliveryDate: { gte: dayStart, lte: dayEnd } },
+      where: { branchId, status: "Ready", deliveryDate: { gte: dayStart, lte: dayEnd } },
       orderBy: [{ deliveryDate: "asc" }, { createdAt: "desc" }],
       take: 10,
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.order.findMany({
-      where: { status: { notIn: ["Delivered", "Cancelled"] } },
+      where: { branchId, status: { notIn: ["Delivered", "Cancelled"] } },
       orderBy: { createdAt: "desc" },
       take: 100,
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.bill.aggregate({
-      where: { createdAt: { gte: prevDayStart, lte: prevDayEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: prevDayStart, lte: prevDayEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
     prisma.bill.aggregate({
-      where: { createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
     prisma.payment.aggregate({
-      where: { paymentDate: { gte: prevDayStart, lte: prevDayEnd } },
+      where: { branchId, paymentDate: { gte: prevDayStart, lte: prevDayEnd } },
       _sum: { amount: true },
     }),
     prisma.bill.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo, lte: dayEnd }, status: "Active" },
+      where: { branchId, createdAt: { gte: thirtyDaysAgo, lte: dayEnd }, status: "Active" },
       select: { createdAt: true, totalAmount: true },
     }),
     prisma.payment.findMany({
-      where: { paymentDate: { gte: monthStart, lte: monthEnd } },
+      where: { branchId, paymentDate: { gte: monthStart, lte: monthEnd } },
       select: { paymentMode: true, amount: true },
     }),
-    prisma.order.groupBy({ by: ["status"], _count: true }),
+    prisma.order.groupBy({ by: ["status"], where: { branchId }, _count: true }),
     prisma.order.findMany({
-      where: { status: "Delivered", actualDeliveryDate: { gte: dayStart, lte: dayEnd } },
+      where: { branchId, status: "Delivered", actualDeliveryDate: { gte: dayStart, lte: dayEnd } },
       orderBy: { actualDeliveryDate: "desc" },
       include: { customer: { select: { name: true, mobile: true } } },
     }),
-    prisma.order.count({ where: { createdAt: { gte: dayStart, lte: dayEnd } } }),
-    prisma.order.count({ where: { createdAt: { gte: weekStart, lte: weekEnd } } }),
-    prisma.order.count({ where: { createdAt: { gte: monthStart, lte: monthEnd } } }),
-    prisma.bill.count({ where: { createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" } }),
-    prisma.bill.count({ where: { createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" } }),
-    prisma.bill.count({ where: { createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" } }),
+    prisma.order.count({ where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } } }),
+    prisma.order.count({ where: { branchId, createdAt: { gte: weekStart, lte: weekEnd } } }),
+    prisma.order.count({ where: { branchId, createdAt: { gte: monthStart, lte: monthEnd } } }),
+    prisma.bill.count({ where: { branchId, createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" } }),
+    prisma.bill.count({ where: { branchId, createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" } }),
+    prisma.bill.count({ where: { branchId, createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" } }),
     prisma.order.findMany({
-      where: { status: { in: ["Draft", "Ordered", "In Lab"] } },
+      where: { branchId, status: { in: ["Draft", "Ordered", "In Lab"] } },
       orderBy: { createdAt: "desc" },
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.order.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo, lte: dayEnd } },
+      where: { branchId, createdAt: { gte: thirtyDaysAgo, lte: dayEnd } },
       select: { createdAt: true },
     }),
     prisma.payment.findMany({
-      where: { paymentDate: { gte: thirtyDaysAgo, lte: dayEnd } },
+      where: { branchId, paymentDate: { gte: thirtyDaysAgo, lte: dayEnd } },
       select: { paymentMode: true, amount: true, paymentDate: true },
     }),
     prisma.inventory.findMany({
+      where: { branchId },
       select: { category: true, sellingPrice: true, quantity: true },
     }),
     prisma.payment.findMany({
-      where: { paymentDate: { gte: dayStart, lte: dayEnd } },
+      where: { branchId, paymentDate: { gte: dayStart, lte: dayEnd } },
       select: { paymentMode: true, amount: true },
     }),
   ]);
@@ -217,7 +221,7 @@ export async function getStats() {
     .filter(Boolean) as string[];
   const recentPrescriptions =
     recentOrderVisitIds.length > 0
-      ? await prisma.prescription.findMany({ where: { visitId: { in: recentOrderVisitIds } } })
+      ? await prisma.prescription.findMany({ where: { branchId, visitId: { in: recentOrderVisitIds } } })
       : [];
   const rxMap = new Map(recentPrescriptions.map((p) => [p.visitId!, p]));
   const recentOrdersWithRx = recentOrders.map((o: any) => {
@@ -230,7 +234,7 @@ export async function getStats() {
   const allVisitIds = [...new Set([...recentOrderVisitIds, ...incompleteOrderVisitIds])];
   const allPrescriptions =
     allVisitIds.length > 0
-      ? await prisma.prescription.findMany({ where: { visitId: { in: allVisitIds } } })
+      ? await prisma.prescription.findMany({ where: { branchId, visitId: { in: allVisitIds } } })
       : [];
   const fullRxMap = new Map(allPrescriptions.map((p) => [p.visitId!, p]));
   const incompleteOrdersWithRx = incompleteOrders.map((o: any) => {
