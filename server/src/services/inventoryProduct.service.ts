@@ -14,7 +14,7 @@ function isValidUUID(str: string): boolean {
 }
 
 function getBranchId(): string {
-  const branchId = getBranchId();
+  const branchId = requireCtx()?.branchId;
   if (!branchId) throw new AppError(400, "Branch context is required");
   return branchId;
 }
