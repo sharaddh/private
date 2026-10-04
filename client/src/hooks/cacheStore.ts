@@ -95,18 +95,18 @@ export function getCacheSnapshot<T>(
   key: string,
   customTtl?: number
 ): { data: T | null; exists: boolean; expired: boolean } {
-  const entry = store.get(key) as CacheEntry<T> | undefined;
+  const entry = store.get(scopedKey(key)) as CacheEntry<T> | undefined;
   if (!entry) return { data: null, exists: false, expired: false };
   return { data: entry.data, exists: true, expired: isExpired(entry, customTtl) };
 }
 
 export function setCache<T>(key: string, data: T, ttl?: number): void {
-  store.set(key, { data, timestamp: Date.now(), ttl, promise: null });
+  store.set(scopedKey(key), { data, timestamp: Date.now(), ttl, promise: null });
   persist();
 }
 
 export function invalidateCache(key: string): void {
-  store.delete(key);
+  store.delete(scopedKey(key));
   persist();
 }
 
