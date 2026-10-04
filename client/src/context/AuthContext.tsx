@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import api from '../api';
 import type { User, BranchInfo } from '../types';
 import { clearAllCache } from '../hooks/cacheStore';
@@ -43,6 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(loadAuth);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
 
+  // Live mirror of `state.currentBranchId`. The `/api/auth/me` effect below
+  // reads it so a branch chosen at login (e.g. the server's primary branch for
+  // the account) is never overwritten by the effect's stale closure, which
+  // would otherwise reset the app to `user.branches[0]` on every login.
+  const currentBranchIdRef = useRef(state.currentBranchId);
+  useEffect(() => {
+    currentBranchIdRef.current = state.currentBranchId;
+  }, [state.currentBranchId]);
+
   useEffect(() => {
     if (!state.token) return;
 
@@ -56,12 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setState((s) => ({ ...s, user }));
           const userBranches = user.branches || [];
           setBranches(userBranches);
-          if (!state.currentBranchId && userBranches.length > 0) {
+          const current = currentBranchIdRef.current;
+          if (!current && userBranches.length > 0) {
             setCurrentBranch(userBranches[0]._id);
-          } else if (state.currentBranchId) {
-            const found = userBranches.some((b) => b._id === state.currentBranchId);
+          } else if (current) {
+            const found = userBranches.some((b) => b._id === current);
             if (!found) {
-              api.get<BranchInfo>(`/api/branches/${state.currentBranchId}`).then((br) => {
+              api.get<BranchInfo>(`/api/branches/${current}`).then((br) => {
                 if (!cancelled && br.success && br.data) {
                   setBranches((prev) => [...prev, br.data!]);
                 }
@@ -84,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((token: string, refresh: string) => {
     localStorage.setItem(STORAGE_KEYS.token, token);
     localStorage.setItem(STORAGE_KEYS.refresh, refresh);
+    localStorage.removeItem(STORAGE_KEYS.branchId);
     setState({ token, refreshToken: refresh, user: null, currentBranchId: null });
     clearAllCache();
   }, []);

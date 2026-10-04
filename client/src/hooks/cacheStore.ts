@@ -9,8 +9,24 @@ const DEFAULT_TTL = 5 * 60 * 1000;
 const STORAGE_KEY = '__kmj_spa_cache_v1';
 const MAX_ENTRIES = 80;
 const MAX_TOTAL_JSON_SIZE = 4 * 1024 * 1024;
+const BRANCH_KEY = 'currentBranchId';
 
 const store = new Map<string, CacheEntry<unknown>>();
+
+// Cache entries are scoped to the active branch. Without this, a switch to
+// another branch in the same browser would keep serving the previous branch's
+// cached GET snapshots (dashboard, reports, lists) for up to a TTL period.
+function currentBranchId(): string {
+  try {
+    return localStorage.getItem(BRANCH_KEY) || 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+function scopedKey(key: string): string {
+  return `${currentBranchId()}:${key}`;
+}
 
 function isExpired(entry: CacheEntry<unknown>, customTtl?: number): boolean {
   const ttl = customTtl ?? entry.ttl ?? DEFAULT_TTL;
@@ -79,18 +95,18 @@ export function getCacheSnapshot<T>(
   key: string,
   customTtl?: number
 ): { data: T | null; exists: boolean; expired: boolean } {
-  const entry = store.get(key) as CacheEntry<T> | undefined;
+  const entry = store.get(scopedKey(key)) as CacheEntry<T> | undefined;
   if (!entry) return { data: null, exists: false, expired: false };
   return { data: entry.data, exists: true, expired: isExpired(entry, customTtl) };
 }
 
 export function setCache<T>(key: string, data: T, ttl?: number): void {
-  store.set(key, { data, timestamp: Date.now(), ttl, promise: null });
+  store.set(scopedKey(key), { data, timestamp: Date.now(), ttl, promise: null });
   persist();
 }
 
 export function invalidateCache(key: string): void {
-  store.delete(key);
+  store.delete(scopedKey(key));
   persist();
 }
 
@@ -100,22 +116,23 @@ export function clearAllCache(): void {
 }
 
 export function getCachedPromise<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const existing = store.get(key) as CacheEntry<T> | undefined;
+  const scoped = scopedKey(key);
+  const existing = store.get(scoped) as CacheEntry<T> | undefined;
   if (existing?.promise) return existing.promise;
   if (existing && !isExpired(existing)) return Promise.resolve(existing.data);
 
   const promise = fetcher()
     .then((data) => {
-      store.set(key, { data, timestamp: Date.now(), promise: null });
+      store.set(scoped, { data, timestamp: Date.now(), promise: null });
       persist();
       return data;
     })
     .catch((err) => {
-      store.delete(key);
+      store.delete(scoped);
       throw err;
     });
 
-  store.set(key, { data: null as unknown as T, timestamp: 0, promise });
+  store.set(scoped, { data: null as unknown as T, timestamp: 0, promise });
   return promise;
 }
 

@@ -26,6 +26,7 @@
     "migrate:double-lens": "ts-node src/scripts/double-lens-stock.ts",
     "etl": "ts-node src/scripts/etl-mongo-to-postgres.ts",
     "recalculate": "ts-node src/scripts/recalculate-customers.ts",
+    "set-primary-branches": "ts-node src/scripts/set-primary-branches.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

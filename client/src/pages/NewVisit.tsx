@@ -22,6 +22,26 @@ import CameraScanner from '../components/CameraScanner';
 import { cleanEyeSet } from '../utils/rx';
 import { todayStr, toDateKey } from '../utils/date';
 import { useTranslate } from '../context/TranslateContext';
+import SplitPaymentInput from '../components/SplitPaymentInput';
+import { isCanonicalPaymentMode, CANONICAL_PAYMENT_MODES } from '../constants/paymentModes';
+import {
+  buildPaymentPayload,
+  isOverAllocated,
+  isSplitActive,
+  nonZeroRows,
+  singleRow,
+  splitTotal,
+  type SplitRow,
+} from '../utils/splitAllocation';
+
+/** Display labels for the mode `<select>`, matching what this screen showed before. */
+const PAYMENT_MODE_LABELS: Record<string, string> = {
+  Cash: 'नकद',
+  Card: 'कार्ड',
+  UPI: 'UPI',
+  'Bank Transfer': 'बैंक ट्रांसफर',
+  Insurance: 'बीमा',
+};
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const VISIT_TYPES = [
   { value: 'new', label: 'New Glasses' },
@@ -100,10 +120,13 @@ export default function NewVisit() {
   // Bill
   const [billItems, setBillItems] = useState<Array<{ description: string; price: number }>>([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [paymentMode, setPaymentMode] = useState('Cash');
+  // Tender rows are the source of truth; `advancePaid`/`paymentMode` are derived.
+  const [splits, setSplits] = useState<SplitRow[]>(singleRow());
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+
+  const advancePaid = splitTotal(splits);
+  const overAllocated = isOverAllocated(splits, totalAmount);
 
   // Scan
   const [scanModal, setScanModal] = useState(false);
@@ -338,8 +361,7 @@ export default function NewVisit() {
     setOrderDeliveryDate('');
     setBillItems([]);
     setTotalAmount(0);
-    setAdvancePaid(0);
-    setPaymentMode('Cash');
+    setSplits(singleRow());
     setDeliveryAddress('');
     setDeliveryDate('');
     setSuccess(null);
@@ -356,13 +378,24 @@ export default function NewVisit() {
       case 'billing':
         return billItems.some((i) => i.description && i.price > 0);
       case 'payment':
-        return advancePaid > 0 || advancePaid >= totalAmount;
+        return splitTotal(splits) > 0;
       default:
         return false;
     }
   }
 
   async function saveTransaction() {
+    // A split that over-collects is refused here as well as server-side, so the
+    // user gets the reason before a round-trip.
+    if (overAllocated) {
+      toast.error(
+        uiT(
+          'Split payment is more than the bill total. Reduce an amount before saving.',
+          'विभाजित भुगतान कुल बिल से अधिक है। सहेजने से पहले राशि घटाएं।'
+        )
+      );
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = {};
@@ -444,7 +477,12 @@ export default function NewVisit() {
       const validItems = billItems.filter((i) => i.description && i.price > 0);
       if (validItems.length > 0) {
         payload.bill = { items: validItems, totalAmount };
-        payload.payment = { amount: advancePaid, mode: paymentMode };
+        payload.payment = buildPaymentPayload({
+          rows: splits,
+          amountField: 'amount',
+          modeField: 'mode',
+          isModeAllowed: isCanonicalPaymentMode,
+        });
       }
 
       if (deliveryAddress)
@@ -1231,7 +1269,7 @@ export default function NewVisit() {
               <div className="flex justify-between items-center pt-3 border-t border-th-border">
                 <span className="text-sm font-medium text-th-muted">{uiT('Total', 'कुल')}</span>
                 <span className="text-xl font-bold text-th-text">
-                  \u20B9{totalAmount.toLocaleString()}
+                  ₹{totalAmount.toLocaleString()}
                 </span>
               </div>
 
@@ -1261,58 +1299,45 @@ export default function NewVisit() {
                 <h2 className="text-lg font-bold text-th-text">{uiT('Payment', 'भुगतान')}</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-th-secondary mb-1.5">
-                    {uiT('Amount Paid', 'भुगतान राशि')}
-                  </label>
-                  <input
-                    type="number"
-                    className="input-field text-lg font-bold"
-                    placeholder="0"
-                    value={advancePaid || ''}
-                    onChange={(e) => setAdvancePaid(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-th-secondary mb-1.5">
-                    {uiT('Payment Mode', 'भुगतान मोड')}
-                  </label>
-                  <select
-                    className="input-field"
-                    value={paymentMode}
-                    onChange={(e) => setPaymentMode(e.target.value)}
-                  >
-                    {[
-                      { en: 'Cash', hi: 'नकद' },
-                      { en: 'Card', hi: 'कार्ड' },
-                      { en: 'UPI', hi: 'UPI' },
-                      { en: 'Bank Transfer', hi: 'बैंक ट्रांसफर' },
-                      { en: 'Insurance', hi: 'बीमा' },
-                    ].map((m) => (
-                      <option key={m.en} value={m.en}>
-                        {uiT(m.en, m.hi)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <SplitPaymentInput
+                rows={splits}
+                onChange={setSplits}
+                collectable={totalAmount}
+                modes={CANONICAL_PAYMENT_MODES}
+                modeLabels={PAYMENT_MODE_LABELS}
+                variant="select"
+                disabled={saving}
+                amountLabel={uiT('Amount Paid', 'भुगतान राशि')}
+              />
 
               <div className="bg-th-elevated rounded-sm p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-th-secondary">{uiT('Total Bill', 'कुल बिल')}</span>
-                  <span className="font-semibold">\u20B9{totalAmount.toLocaleString()}</span>
+                  <span className="font-semibold">₹{totalAmount.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-th-secondary">{uiT('Paid', 'भुगतान')}</span>
-                  <span className="font-semibold text-green-600">
-                    \u20B9{advancePaid.toLocaleString()}
-                  </span>
-                </div>
+                {isSplitActive(splits) ? (
+                  nonZeroRows(splits).map((row, i) => (
+                    <div key={`${row.mode}-${i}`} className="flex justify-between text-sm">
+                      <span className="text-th-secondary">
+                        {uiT('Paid', 'भुगतान')} ({row.mode})
+                      </span>
+                      <span className="font-semibold text-green-600">
+                        ₹{row.amount.toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-th-secondary">{uiT('Paid', 'भुगतान')}</span>
+                    <span className="font-semibold text-green-600">
+                      ₹{advancePaid.toLocaleString()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm pt-2 border-t border-th-border">
                   <span className="font-medium">{uiT('Pending', 'बाकी')}</span>
                   <span className="font-bold text-amber-400">
-                    \u20B9{Math.max(0, totalAmount - advancePaid).toLocaleString()}
+                    ₹{Math.max(0, totalAmount - advancePaid).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -1355,7 +1380,7 @@ export default function NewVisit() {
                 </button>
                 <button
                   onClick={saveTransaction}
-                  disabled={saving || (advancePaid <= 0 && advancePaid < totalAmount)}
+                  disabled={saving || overAllocated || (advancePaid <= 0 && advancePaid < totalAmount)}
                   className="btn-success flex items-center gap-2 px-8 py-3 text-base disabled:opacity-50"
                 >
                   {saving ? (

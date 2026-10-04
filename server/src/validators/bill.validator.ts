@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { VALID_PAYMENT_MODES } from "../types";
+import { splitsSchema } from "./payment.validator";
 
 export const createBillSchema = z
   .object({
@@ -42,5 +43,6 @@ export const collectPaymentSchema = z
   .object({
     amount: z.number().positive("Payment amount must be positive"),
     paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
+    splits: splitsSchema.optional(),
   })
   .strict();

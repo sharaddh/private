@@ -13,6 +13,7 @@ interface RegisterData {
   role?: string;
   branchId?: string;
   branches?: string[];
+  primaryBranchId?: string;
 }
 
 interface LoginData {
@@ -32,6 +33,7 @@ interface UpdateUserData {
   branches?: string[];
   role?: string;
   password?: string;
+  primaryBranchId?: string | null;
 }
 
 interface RegisterOwnerData {
@@ -47,6 +49,7 @@ interface FormattedUser {
   name: string;
   mobile: string;
   role: string;
+  primaryBranchId?: string | null;
   branches: Array<{
     id: string;
     name: string;
@@ -120,6 +123,7 @@ async function formatUserWithBranches(user: any): Promise<FormattedUser> {
     name: user.name || "",
     mobile: user.mobile || "",
     role,
+    primaryBranchId: user.primaryBranchId ?? undefined,
     branches: branchList,
   };
 }
@@ -148,6 +152,8 @@ export async function registerUser(
   const userBranches =
     finalRole === "staff" && data.branchId ? [data.branchId] : data.branches || [];
 
+  const primaryBranchId = data.primaryBranchId ?? (finalRole === "staff" ? data.branchId : undefined);
+
   const user = await User.create({
     data: {
       username: data.username,
@@ -155,6 +161,7 @@ export async function registerUser(
       name: data.name || "",
       mobile: data.mobile || "",
       role: finalRole,
+      primaryBranchId,
       branches: userBranches.length > 0 ? { connect: userBranches.map((id) => ({ id })) } : undefined,
     },
     include: { branches: true },
@@ -187,7 +194,7 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
 
   const formatted = await formatUserWithBranches(user);
   const userBranches = formatted.branches || [];
-  const selectedBranchId = userBranches[0]?.id;
+  const selectedBranchId = user.primaryBranchId ?? userBranches[0]?.id;
 
   const access = signAccess({
     sub: user.id,
@@ -232,7 +239,7 @@ export async function staffLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(403, "Your account has not been assigned to any branch. Contact admin.");
   }
 
-  const branchId = staffBranches[0].id;
+  const branchId = user.primaryBranchId ?? staffBranches[0].id;
 
   const access = signAccess({
     sub: user.id,
@@ -390,6 +397,9 @@ export async function updateUser(
   const updateData: Record<string, unknown> = {};
   if (data.branches !== undefined) {
     updateData.branches = { set: data.branches.map((id) => ({ id })) };
+  }
+  if (data.primaryBranchId !== undefined) {
+    updateData.primaryBranchId = data.primaryBranchId;
   }
   if (data.name !== undefined) updateData.name = data.name;
   if (data.mobile !== undefined) updateData.mobile = data.mobile;

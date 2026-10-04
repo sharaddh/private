@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
 import { hasEyeData } from '../../utils/rx';
+import { isSplitActive, nonZeroRows, type SplitRow } from '../../utils/splitAllocation';
 
 // Safe color mapping to prevent Tailwind purging dynamically created class names
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
@@ -90,6 +91,12 @@ interface Props {
   discountVal: number;
   finalTotal: number;
   advancePaid: number;
+  /**
+   * The tender rows behind `advancePaid`. Optional so the screen still renders
+   * for a caller that only knows the single-mode total — in that case the one
+   * legacy "Advance Paid" line is shown exactly as before.
+   */
+  splits?: SplitRow[];
   deliveryAddress: string;
   deliveryDate: string;
 }
@@ -109,6 +116,7 @@ export default function ConfirmationDashboard({
   discountVal,
   finalTotal,
   advancePaid,
+  splits,
   deliveryAddress,
   deliveryDate,
 }: Props) {
@@ -116,6 +124,8 @@ export default function ConfirmationDashboard({
 
   const balance = Math.max(0, finalTotal - advancePaid);
   const isFullyPaid = advancePaid >= finalTotal;
+  /** Only a genuine two-mode tender earns the itemised breakdown. */
+  const splitRows = splits && isSplitActive(splits) ? nonZeroRows(splits) : [];
 
   const VISIT_TYPE_LABELS: Record<string, string> = {
     new: uiT('New Glasses', 'नई चश्मा'),
@@ -365,12 +375,28 @@ export default function ConfirmationDashboard({
           </div>
 
           <div className="border-t border-[#1f1f1f] mt-3 pt-3 space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-[#1ed760]">{uiT('Advance Paid', 'अग्रिम भुगतान')}</span>
-              <span className="font-bold text-[#1ed760] tabular-nums">
-                ₹{advancePaid.toLocaleString()}
-              </span>
-            </div>
+            {splitRows.length > 0 ? (
+              splitRows.map((row, i) => (
+                <div
+                  key={`${row.mode}-${i}`}
+                  className="flex justify-between text-sm"
+                >
+                  <span className="text-[#1ed760]">
+                    {uiT('Advance Paid', 'अग्रिम भुगतान')} ({row.mode})
+                  </span>
+                  <span className="font-bold text-[#1ed760] tabular-nums">
+                    ₹{row.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-[#1ed760]">{uiT('Advance Paid', 'अग्रिम भुगतान')}</span>
+                <span className="font-bold text-[#1ed760] tabular-nums">
+                  ₹{advancePaid.toLocaleString()}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span className={`font-bold ${isFullyPaid ? 'text-[#1ed760]' : 'text-[#ff9500]'}`}>
                 {isFullyPaid ? uiT('Fully Paid', 'पूर्ण भुगतान') : uiT('Balance Due', 'शेष देय')}

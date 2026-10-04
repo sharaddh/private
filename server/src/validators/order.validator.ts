@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { VALID_CLASSIFICATIONS, VALID_PAYMENT_MODES } from "../types";
+import { splitsSchema } from "./payment.validator";
 
 export const createOrderSchema = z.object({
   customerId: z.string().min(1),
@@ -54,6 +55,7 @@ export const statusUpdateSchema = z.object({
   status: z.string().min(1),
   collectPayment: z.number().min(0).optional(),
   paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
+  splits: splitsSchema.optional(),
   advanceQuantity: z.number().int().min(0).optional(),
 });
 
@@ -74,4 +76,5 @@ export const demandSendSchema = z.object({
 export const collectPaymentSchema = z.object({
   collectPayment: z.number().positive("Payment amount must be positive"),
   paymentMode: z.enum(VALID_PAYMENT_MODES).optional(),
+  splits: splitsSchema.optional(),
 });

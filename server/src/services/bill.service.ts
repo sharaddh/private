@@ -4,6 +4,7 @@ import { istDateKey } from "../utils/date";
 import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import { restoreStockForOrder, decrementStockForOrder } from "./inventory.service";
+import { normalizeSplits, recordPayments, type PaymentSplit } from "./paymentSplits";
 import type { PaginatedResult } from "../types";
 
 interface BillItemInput {
@@ -236,7 +237,9 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
       total: (it.quantity || 1) * (it.unitPrice || 0),
     }));
     await prisma.billItem.deleteMany({ where: { billId } });
-    await prisma.billItem.createMany({ data: newItems.map((it) => ({ ...it, billId, branchId: existing.branchId })) });
+    await prisma.billItem.createMany({
+      data: newItems.map((it) => ({ ...it, billId })),
+    });
   }
 
   const bill = await prisma.bill.update({
@@ -262,8 +265,9 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
 export async function collectBillPayment(
   billId: string,
   amount: number,
-  paymentMode: string
-): Promise<{ payment: unknown; bill: unknown }> {
+  paymentMode: string,
+  splits?: unknown
+): Promise<{ payment: unknown; bill: unknown; payments?: unknown[] }> {
   const bill = await prisma.bill.findUnique({ where: { id: billId } });
   if (!bill) {
     throw new AppError(404, "Bill not found");
@@ -272,22 +276,35 @@ export async function collectBillPayment(
     throw new AppError(400, "No pending amount on this bill");
   }
 
-  const actualCollect = Math.min(amount, bill.pendingAmount);
+  const normalized = normalizeSplits({ amount, paymentMode, splits });
+  let rows: PaymentSplit[];
+  if (normalized.usedSplits) {
+    // A split is rejected rather than truncated, so staff can never believe they
+    // collected more than was recorded.
+    if (normalized.total > bill.pendingAmount) {
+      throw new AppError(
+        400,
+        `Collected ₹${normalized.total} but only ₹${bill.pendingAmount} is pending on this bill`
+      );
+    }
+    rows = normalized.rows;
+  } else {
+    // Unchanged legacy behaviour: the typed `amount` is capped silently.
+    const actualCollect = Math.min(amount, bill.pendingAmount);
+    rows = normalized.rows.map((row) => ({ ...row, amount: actualCollect }));
+  }
 
-  const newAdvancePaid = (bill.advancePaid || 0) + actualCollect;
+  const collected = rows.reduce((sum, row) => sum + row.amount, 0);
+  const newAdvancePaid = (bill.advancePaid || 0) + collected;
   const newPending = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
 
-  const { payment, bill: updatedBill } = await prisma.$transaction(async (tx) => {
-    const p = await tx.payment.create({
-      data: {
-        customerId: bill.customerId,
-        billId: bill.id,
-        amount: actualCollect,
-        paymentMode: paymentMode || "Cash",
-        paymentDate: new Date(),
-        notes: "Payment collected",
-        branchId: requireBranchId(),
-      },
+  const { payments, bill: updatedBill } = await prisma.$transaction(async (tx) => {
+    const written = await recordPayments(tx, {
+      customerId: bill.customerId,
+      billId: bill.id,
+      rows,
+      notes: "Payment collected",
+      branchId: requireBranchId(),
     });
     const ub = await tx.bill.update({
       where: { id: billId },
@@ -295,12 +312,12 @@ export async function collectBillPayment(
     });
     await tx.customer.update({
       where: { id: bill.customerId },
-      data: { pendingAmount: { decrement: actualCollect } },
+      data: { pendingAmount: { decrement: collected } },
     });
-    return { payment: p, bill: ub };
+    return { payments: written.payments, bill: ub };
   });
 
-  return { payment, bill: updatedBill };
+  return { payment: payments[0], payments, bill: updatedBill };
 }
 
 export async function deleteBill(billId: string): Promise<void> {
@@ -343,7 +360,7 @@ export async function getBillById(billId: string): Promise<BillResult> {
 }
 
 export async function listBills(filters: BillFilters): Promise<PaginatedResult<BillResult>> {
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { branchId: requireBranchId() };
 
   if (filters.customerId) {
     where.customerId = filters.customerId;

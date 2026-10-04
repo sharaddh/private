@@ -1,8 +1,8 @@
 import { Router } from "express";
+import { prisma } from "../db/prisma";
 import { Order } from "../models/order";
 import { Bill } from "../models/bill";
 import { Delivery } from "../models/delivery";
-import { Payment } from "../models/payment";
 import { Customer } from "../models/customer";
 import { Settings } from "../models/settings";
 import { Prescription } from "../models/prescription";
@@ -27,6 +27,11 @@ import {
   demandSendSchema,
   collectPaymentSchema,
 } from "../validators/order.validator";
+import {
+  normalizeSplits,
+  recordPayments,
+  type PaymentSplit,
+} from "../services/paymentSplits";
 import * as orderController from "../controllers/orderController";
 
 const router = Router();
@@ -100,9 +105,8 @@ router.patch(
   async (req, res) => {
     try {
       const wa = whatsappManager.getInstance((req as any).branchId);
-      const { status, collectPayment, paymentMode, advanceQuantity } = statusUpdateSchema.parse(
-        req.body
-      );
+      const { status, collectPayment, paymentMode, splits, advanceQuantity } =
+        statusUpdateSchema.parse(req.body);
       const order = await Order.findUnique({ where: { id: req.params.id } });
       if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
@@ -201,30 +205,56 @@ router.patch(
           });
         }
         if (bill && bill.pendingAmount > 0) {
-          const payment = await Payment.create({
-            data: {
+          const targetBill = bill;
+          const normalized = normalizeSplits({ collectPayment, paymentMode, splits });
+          let rows: PaymentSplit[];
+          if (normalized.usedSplits) {
+            if (normalized.total > targetBill.pendingAmount) {
+              throw new AppError(
+                400,
+                `Collected ₹${normalized.total} but only ₹${targetBill.pendingAmount} is pending on this bill`
+              );
+            }
+            rows = normalized.rows;
+          } else {
+            // Unchanged legacy behaviour: unlike the other collection sites, this
+            // one has never capped the amount against the pending balance.
+            const collected = normalized.total || collectPayment;
+            rows = normalized.rows.map((row) => ({ ...row, amount: collected }));
+          }
+
+          const collected = rows.reduce((sum, row) => sum + row.amount, 0);
+          const newAdvancePaid = (targetBill.advancePaid || 0) + collected;
+          const newPendingAmount = Math.max(0, (targetBill.totalAmount || 0) - newAdvancePaid);
+
+          // Payment, bill and customer move together: a failure part-way used to
+          // leave a payment row against an unreduced balance.
+          const { payments } = await prisma.$transaction(async (tx) => {
+            const written = await recordPayments(tx, {
               customerId: order.customerId,
-              billId: bill.id,
-              amount: collectPayment,
-              paymentMode: paymentMode || "Cash",
-              paymentDate: new Date(),
+              billId: targetBill.id,
+              rows,
               notes: `Collected on delivery (order ${order.id})`,
               branchId: requireBranchId(),
-            },
+            });
+            await tx.bill.update({
+              where: { id: targetBill.id },
+              data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+            });
+            await tx.customer.update({
+              where: { id: order.customerId },
+              data: { pendingAmount: { decrement: collected } },
+            });
+            return written;
           });
-          const newAdvancePaid = (bill.advancePaid || 0) + collectPayment;
-          const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
-          await Bill.update({
-            where: { id: bill.id },
-            data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
-          });
-          result.payment = payment;
-          result.bill = { ...bill, advancePaid: newAdvancePaid, pendingAmount: newPendingAmount };
 
-          await Customer.update({
-            where: { id: order.customerId },
-            data: { pendingAmount: { decrement: collectPayment } },
-          });
+          result.payment = payments[0];
+          result.payments = payments;
+          result.bill = {
+            ...targetBill,
+            advancePaid: newAdvancePaid,
+            pendingAmount: newPendingAmount,
+          };
         }
       }
 
@@ -244,7 +274,7 @@ router.patch(
   validate(collectPaymentSchema, "body"),
   async (req, res) => {
     try {
-      const { collectPayment, paymentMode } = req.body;
+      const { collectPayment, paymentMode, splits } = req.body;
       if (!collectPayment || collectPayment <= 0) {
         return res.status(400).json({ success: false, message: "Invalid payment amount" });
       }
@@ -266,34 +296,59 @@ router.patch(
         return res.status(400).json({ success: false, message: "No pending amount on this bill" });
       }
 
-      const actualCollect = Math.min(collectPayment, bill.pendingAmount);
-      const payment = await Payment.create({
-        data: {
+      const normalized = normalizeSplits({ collectPayment, paymentMode, splits });
+      const targetBill = bill;
+      let rows: PaymentSplit[];
+      if (normalized.usedSplits) {
+        if (normalized.total > targetBill.pendingAmount) {
+          throw new AppError(
+            400,
+            `Collected ₹${normalized.total} but only ₹${targetBill.pendingAmount} is pending on this bill`
+          );
+        }
+        rows = normalized.rows;
+      } else {
+        // Unchanged legacy behaviour: the silent Math.min cap.
+        const actualCollect = Math.min(collectPayment, targetBill.pendingAmount);
+        rows = normalized.rows.map((row) => ({ ...row, amount: actualCollect }));
+      }
+
+      const collected = rows.reduce((sum, row) => sum + row.amount, 0);
+      const newAdvancePaid = (targetBill.advancePaid || 0) + collected;
+      const newPendingAmount = Math.max(0, (targetBill.totalAmount || 0) - newAdvancePaid);
+
+      // Payment, bill and customer move together: a failure part-way used to
+      // leave a payment row against an unreduced balance.
+      const { payments } = await prisma.$transaction(async (tx) => {
+        const written = await recordPayments(tx, {
           customerId: order.customerId,
-          billId: bill.id,
-          amount: actualCollect,
-          paymentMode: paymentMode || "Cash",
-          paymentDate: new Date(),
+          billId: targetBill.id,
+          rows,
           notes: `Collected after delivery (order ${order.id})`,
           branchId: requireBranchId(),
-        },
-      });
-      const newAdvancePaid = (bill.advancePaid || 0) + actualCollect;
-      const newPendingAmount = Math.max(0, (bill.totalAmount || 0) - newAdvancePaid);
-      await Bill.update({
-        where: { id: bill.id },
-        data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
-      });
-
-      await Customer.update({
-        where: { id: order.customerId },
-        data: { pendingAmount: { decrement: actualCollect } },
+        });
+        await tx.bill.update({
+          where: { id: targetBill.id },
+          data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+        });
+        await tx.customer.update({
+          where: { id: order.customerId },
+          data: { pendingAmount: { decrement: collected } },
+        });
+        return written;
       });
 
       invalidateCache("/api/orders");
       invalidateCache("/api/dashboard");
 
-      res.json({ success: true, data: { payment, bill: { ...bill, advancePaid: newAdvancePaid, pendingAmount: newPendingAmount } } });
+      res.json({
+        success: true,
+        data: {
+          payment: payments[0],
+          payments,
+          bill: { ...bill, advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
+        },
+      });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }

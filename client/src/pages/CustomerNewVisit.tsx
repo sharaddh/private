@@ -32,6 +32,13 @@ import PrescriptionPanel from '../components/NewvistePage/PrescriptionPanel';
 import OrderItems from '../components/NewvistePage/OrderItems';
 import BillingPanel from '../components/NewvistePage/BillingPanel';
 import PaymentPanel from '../components/NewvistePage/PaymentPanel';
+import {
+  buildPaymentPayload,
+  isOverAllocated,
+  singleRow,
+  splitTotal,
+  type SplitRow,
+} from '../utils/splitAllocation';
 import ConfirmationDashboard from '../components/NewvistePage/ConfirmationDashboard';
 import BottomNav from '../components/NewvistePage/BottomNav';
 
@@ -91,8 +98,9 @@ export default function CustomerNewVisit() {
     Array<{ description: string; price: number; qty: number; sku?: string }>
   >([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [paymentMode, setPaymentMode] = useState('Cash');
+  // Tender rows are the source of truth for the payment; `advancePaid` and
+  // `paymentMode` are derived from them.
+  const [splits, setSplits] = useState<SplitRow[]>(singleRow());
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
@@ -245,8 +253,11 @@ export default function CustomerNewVisit() {
           if (d.orderLenses) setOrderLenses(d.orderLenses);
           if (d.orderAccessories) setOrderAccessories(d.orderAccessories);
           if (d.billItems) setBillItems(d.billItems);
-          if (d.advancePaid !== undefined) setAdvancePaid(d.advancePaid);
-          if (d.paymentMode) setPaymentMode(d.paymentMode);
+          // A draft written before this feature carries the legacy pair only.
+          if (Array.isArray(d.splits) && d.splits.length > 0) setSplits(d.splits);
+          else if (d.advancePaid !== undefined || d.paymentMode) {
+            setSplits(singleRow(d.paymentMode || 'Cash', d.advancePaid || 0));
+          }
           if (d.discountPercent !== undefined) setDiscountPercent(d.discountPercent);
           if (d.discountAmount !== undefined) setDiscountAmount(d.discountAmount);
           if (d.discountType) setDiscountType(d.discountType);
@@ -278,8 +289,7 @@ export default function CustomerNewVisit() {
       orderLenses,
       orderAccessories,
       billItems,
-      advancePaid,
-      paymentMode,
+      splits,
       discountPercent,
       discountAmount,
       discountType,
@@ -301,8 +311,7 @@ export default function CustomerNewVisit() {
     orderLenses,
     orderAccessories,
     billItems,
-    advancePaid,
-    paymentMode,
+    splits,
     discountPercent,
     discountAmount,
     discountType,
@@ -412,6 +421,17 @@ export default function CustomerNewVisit() {
 
   async function saveTransaction() {
     if (savingRef.current) return;
+    // Only a real two-mode split is checked; the legacy single-mode path keeps
+    // its existing behaviour of accepting whatever was typed.
+    if (isOverAllocated(splits, Math.max(0, totalAmount - calcDiscount()))) {
+      toast.error(
+        uiT(
+          'Split payment is more than the bill total. Reduce an amount before saving.',
+          'विभाजित भुगतान बिल कुल से अधिक है। सेव करने से पहले राशि घटाएं।'
+        )
+      );
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = { customerId: id };
@@ -504,7 +524,13 @@ export default function CustomerNewVisit() {
           advancePaid,
           pendingAmount: Math.max(0, totalAmount - discount - advancePaid),
         };
-        payload.payment = { amount: advancePaid, mode: paymentMode };
+        // Legacy `amount` always carries the split total; `splits` only goes on
+        // the wire for a genuine two-mode tender.
+        payload.payment = buildPaymentPayload({
+          rows: splits,
+          amountField: 'amount',
+          modeField: 'mode',
+        });
       }
 
       if (deliveryAddress)
@@ -605,6 +631,7 @@ export default function CustomerNewVisit() {
   const currentIdx = stepKeys.indexOf(step);
   const discountVal = calcDiscount();
   const finalTotal = Math.max(0, totalAmount - discountVal);
+  const advancePaid = splitTotal(splits);
 
   return (
     <motion.div
@@ -698,10 +725,8 @@ export default function CustomerNewVisit() {
               setDiscountAmount={setDiscountAmount}
               discountVal={discountVal}
               totalAmount={totalAmount}
-              advancePaid={advancePaid}
-              setAdvancePaid={setAdvancePaid}
-              paymentMode={paymentMode}
-              setPaymentMode={setPaymentMode}
+              splits={splits}
+              setSplits={setSplits}
               finalTotal={finalTotal}
               deliveryAddress={deliveryAddress}
               setDeliveryAddress={setDeliveryAddress}
@@ -727,6 +752,7 @@ export default function CustomerNewVisit() {
               discountVal={discountVal}
               finalTotal={finalTotal}
               advancePaid={advancePaid}
+              splits={splits}
               deliveryAddress={deliveryAddress}
               deliveryDate={deliveryDate}
             />

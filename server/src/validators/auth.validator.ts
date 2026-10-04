@@ -8,6 +8,7 @@ export const registerSchema = z.object({
   role: z.enum(["staff"]).optional(),
   branchId: z.string().optional(),
   branches: z.array(z.string()).optional(),
+  primaryBranchId: z.string().optional(),
 });
 
 export const loginSchema = z.object({
@@ -29,4 +30,5 @@ export const updateUserSchema = z.object({
   branches: z.array(z.string()).optional(),
   name: z.string().optional(),
   mobile: z.string().optional(),
+  primaryBranchId: z.string().nullable().optional(),
 });

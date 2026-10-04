@@ -50,6 +50,13 @@ import { formatRxBrief, cleanEyeSet } from '../utils/rx';
 import { todayStr, toDateKey } from '../utils/date';
 import { normalizeWhatsAppPhone } from '../utils/whatsapp';
 import PaymentPanel from '../components/NewvistePage/PaymentPanel';
+import {
+  buildPaymentPayload,
+  isOverAllocated,
+  singleRow,
+  splitTotal,
+  type SplitRow,
+} from '../utils/splitAllocation';
 import ConfirmationDashboard from '../components/NewvistePage/ConfirmationDashboard';
 import BottomNav from '../components/NewvistePage/BottomNav';
 import type { Customer, Order, Visit, ShopSettings, Prescription, InventoryItem } from '../types';
@@ -187,8 +194,10 @@ export default function Workspace() {
 
   const [billItems, setBillItems] = useState<BillItemLocal[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [advancePaid, setAdvancePaid] = useState<number>(0);
-  const [paymentMode, setPaymentMode] = useState<string>('Cash');
+  // The tender rows are the single source of truth for the payment. `advancePaid`
+  // and `paymentMode` below are derived from row 1 / the split total, so every
+  // existing use of them keeps working unchanged.
+  const [splits, setSplits] = useState<SplitRow[]>(singleRow());
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
@@ -654,6 +663,18 @@ export default function Workspace() {
       );
       return;
     }
+    // A split that over-collects is rejected by the server, so block it here
+    // where the message can name the shortfall. Only a real two-mode split is
+    // checked: the legacy single-mode path keeps its existing behaviour.
+    if (isOverAllocated(splits, Math.max(0, totalAmount - calcDiscount()))) {
+      toast.error(
+        uiT(
+          'Split payment is more than the bill total. Reduce an amount before saving.',
+          'विभाजित भुगतान बिल कुल से अधिक है। सेव करने से पहले राशि घटाएं।'
+        )
+      );
+      return;
+    }
     setSaving(true);
     try {
       const custId = selectedCustomer?._id;
@@ -741,7 +762,14 @@ export default function Workspace() {
           advancePaid,
           pendingAmount: Math.max(0, totalAmount - discount - advancePaid),
         };
-        payload.payment = { amount: advancePaid, mode: paymentMode };
+        // `amount` is always the split total and `splits` is only attached for a
+        // genuine two-mode tender, so a server that drops the unknown `splits`
+        // key still records the right total instead of a wrong one.
+        payload.payment = buildPaymentPayload({
+          rows: splits,
+          amountField: 'amount',
+          modeField: 'mode',
+        });
       }
 
       if (deliveryAddress)
@@ -880,8 +908,7 @@ export default function Workspace() {
     setOrderAccessories([]);
     setBillItems([]);
     setTotalAmount(0);
-    setAdvancePaid(0);
-    setPaymentMode('Cash');
+    setSplits(singleRow());
     setDiscountPercent(0);
     setDiscountAmount(0);
     setDiscountType('percent');
@@ -1545,6 +1572,7 @@ export default function Workspace() {
   const currentIdx = stepKeys.indexOf(step);
   const discountVal = calcDiscount();
   const finalTotal = Math.max(0, totalAmount - discountVal);
+  const advancePaid = splitTotal(splits);
   const overStock = billItems.some((i) => i.availableQty != null && i.qty > i.availableQty);
   const customerId = selectedCustomer?._id || '';
 
@@ -1623,10 +1651,8 @@ export default function Workspace() {
           setDiscountAmount={setDiscountAmount}
           discountVal={discountVal}
           totalAmount={totalAmount}
-          advancePaid={advancePaid}
-          setAdvancePaid={setAdvancePaid}
-          paymentMode={paymentMode}
-          setPaymentMode={setPaymentMode}
+          splits={splits}
+          setSplits={setSplits}
           finalTotal={finalTotal}
           deliveryAddress={deliveryAddress}
           setDeliveryAddress={setDeliveryAddress}
@@ -1653,6 +1679,7 @@ export default function Workspace() {
           discountVal={discountVal}
           finalTotal={finalTotal}
           advancePaid={advancePaid}
+          splits={splits}
           deliveryAddress={deliveryAddress}
           deliveryDate={deliveryDate}
         />

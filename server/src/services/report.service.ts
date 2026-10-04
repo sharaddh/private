@@ -1,9 +1,11 @@
 import { prisma } from "../db/prisma";
+import { requireBranchId } from "../utils/scope";
 import { istStartOfDay, istEndOfDay, istStartOfToday } from "../utils/date";
 
 export async function getRevenueReport(start?: string, end?: string) {
-  const match: Record<string, unknown> = {};
-  const payMatch: Record<string, unknown> = {};
+  const branchId = requireBranchId();
+  const match: Record<string, unknown> = { branchId };
+  const payMatch: Record<string, unknown> = { branchId };
 
   if (start || end) {
     const dateFilter: Record<string, Date> = {};
@@ -36,12 +38,14 @@ export async function getRevenueReport(start?: string, end?: string) {
 }
 
 export async function getMonthlyReport() {
+  const branchId = requireBranchId();
   const now = new Date();
   const year = now.getFullYear();
 
   const [bills, payments] = await Promise.all([
     prisma.bill.findMany({
       where: {
+        branchId,
         status: "Active",
         createdAt: { gte: istStartOfDay(`${year}-01-01`), lte: now },
       },
@@ -49,6 +53,7 @@ export async function getMonthlyReport() {
     }),
     prisma.payment.findMany({
       where: {
+        branchId,
         paymentDate: { gte: istStartOfDay(`${year}-01-01`), lte: now },
       },
       select: { paymentDate: true, amount: true },
@@ -110,7 +115,8 @@ export async function getCustomerReport(filters?: {
   startDate?: string;
   endDate?: string;
 }) {
-  const match: Record<string, unknown> = {};
+  const branchId = requireBranchId();
+  const match: Record<string, unknown> = { branchId };
   if (filters?.city) match.city = filters.city;
   if (filters?.startDate || filters?.endDate) {
     const dateFilter: Record<string, Date> = {};
@@ -121,7 +127,7 @@ export async function getCustomerReport(filters?: {
 
   const todayMatch = filters?.startDate || filters?.endDate
     ? match
-    : { createdAt: { gte: istStartOfToday() } };
+    : { branchId, createdAt: { gte: istStartOfToday() } };
 
   const [topCustomers, newCustomers, totalCustomers, cityBreakdown] = await Promise.all([
     prisma.customer.findMany({
@@ -145,7 +151,8 @@ export async function getCustomerReport(filters?: {
 }
 
 export async function getInventoryReport(category?: string) {
-  const match: Record<string, unknown> = {};
+  const branchId = requireBranchId();
+  const match: Record<string, unknown> = { branchId };
   if (category) match.category = category;
 
   const [allItems, categoryItems, lowStockItems, locationItems] = await Promise.all([
@@ -238,14 +245,17 @@ export async function getInventoryReport(category?: string) {
 }
 
 export async function getDeliveryReport() {
+  const branchId = requireBranchId();
   const [statusCounts, overdueDeliveries, deliveryData] = await Promise.all([
     prisma.delivery.groupBy({
       by: ["status"],
+      where: { branchId },
       _count: true,
       orderBy: { _count: { status: "desc" } },
     }),
     prisma.delivery.findMany({
       where: {
+        branchId,
         status: { in: ["Pending", "In Transit"] },
         expectedDeliveryDate: { lt: new Date() },
       },
@@ -258,6 +268,7 @@ export async function getDeliveryReport() {
     }),
     prisma.delivery.findMany({
       where: {
+        branchId,
         actualDeliveryDate: { not: null },
         expectedDeliveryDate: { not: null },
       },
