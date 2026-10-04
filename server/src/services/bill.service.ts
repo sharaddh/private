@@ -237,7 +237,9 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
       total: (it.quantity || 1) * (it.unitPrice || 0),
     }));
     await prisma.billItem.deleteMany({ where: { billId } });
-    await prisma.billItem.createMany({ data: newItems.map((it) => ({ ...it, billId, branchId: existing.branchId })) });
+    await prisma.billItem.createMany({
+      data: newItems.map((it) => ({ ...it, billId })),
+    });
   }
 
   const bill = await prisma.bill.update({
