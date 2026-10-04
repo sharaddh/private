@@ -65,12 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setState((s) => ({ ...s, user }));
           const userBranches = user.branches || [];
           setBranches(userBranches);
-          if (!state.currentBranchId && userBranches.length > 0) {
+          const current = currentBranchIdRef.current;
+          if (!current && userBranches.length > 0) {
             setCurrentBranch(userBranches[0]._id);
-          } else if (state.currentBranchId) {
-            const found = userBranches.some((b) => b._id === state.currentBranchId);
+          } else if (current) {
+            const found = userBranches.some((b) => b._id === current);
             if (!found) {
-              api.get<BranchInfo>(`/api/branches/${state.currentBranchId}`).then((br) => {
+              api.get<BranchInfo>(`/api/branches/${current}`).then((br) => {
                 if (!cancelled && br.success && br.data) {
                   setBranches((prev) => [...prev, br.data!]);
                 }
