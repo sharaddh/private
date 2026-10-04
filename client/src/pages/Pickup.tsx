@@ -206,7 +206,14 @@ export default function Pickup() {
       const custList = ((res.data as any)?.data || res.data || []) as Customer[];
       if (res.success && custList.length > 0) {
         setCustomers(custList);
-        const c = custList[0];
+        // A mobile number can be shared by several customers. Never assume the
+        // first match: use the order's own customerId so the person who placed
+        // this exact order (and their bills) is selected.
+        const orderCustId =
+          typeof o.customerId === 'object'
+            ? (o.customerId as { _id?: string })?._id
+            : (o.customerId as string | undefined);
+        const c = custList.find((x) => x._id === orderCustId) || custList[0];
         setSelectedCustomer(c);
         const [ordersRes, billsRes] = await Promise.all([
           api.get<Order[]>('/api/orders?customerId=' + c._id),
