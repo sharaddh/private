@@ -30,4 +30,5 @@ export const updateUserSchema = z.object({
   branches: z.array(z.string()).optional(),
   name: z.string().optional(),
   mobile: z.string().optional(),
+  primaryBranchId: z.string().nullable().optional(),
 });
