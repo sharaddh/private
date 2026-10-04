@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import api from '../api';
 import type { User, BranchInfo } from '../types';
 import { clearAllCache } from '../hooks/cacheStore';
@@ -42,6 +42,15 @@ function loadAuth(): AuthState {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(loadAuth);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
+
+  // Live mirror of `state.currentBranchId`. The `/api/auth/me` effect below
+  // reads it so a branch chosen at login (e.g. the server's primary branch for
+  // the account) is never overwritten by the effect's stale closure, which
+  // would otherwise reset the app to `user.branches[0]` on every login.
+  const currentBranchIdRef = useRef(state.currentBranchId);
+  useEffect(() => {
+    currentBranchIdRef.current = state.currentBranchId;
+  }, [state.currentBranchId]);
 
   useEffect(() => {
     if (!state.token) return;
