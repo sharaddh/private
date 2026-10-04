@@ -194,7 +194,7 @@ export async function loginUser(data: LoginData): Promise<LoginResult> {
 
   const formatted = await formatUserWithBranches(user);
   const userBranches = formatted.branches || [];
-  const selectedBranchId = userBranches[0]?.id;
+  const selectedBranchId = user.primaryBranchId ?? userBranches[0]?.id;
 
   const access = signAccess({
     sub: user.id,
@@ -239,7 +239,7 @@ export async function staffLogin(data: LoginData): Promise<LoginResult> {
     throw new AppError(403, "Your account has not been assigned to any branch. Contact admin.");
   }
 
-  const branchId = staffBranches[0].id;
+  const branchId = user.primaryBranchId ?? staffBranches[0].id;
 
   const access = signAccess({
     sub: user.id,
