@@ -23,6 +23,7 @@ export interface User {
   name?: string;
   mobile?: string;
   role: 'owner' | 'staff';
+  primaryBranchId?: string | null;
   branches: BranchInfo[];
   createdAt?: string;
 }
