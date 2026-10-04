@@ -643,6 +643,7 @@ export async function getRackItems(rackId: string) {
 
 export async function getDashboard(threshold: number = 5) {
   const t = Math.max(threshold, 0);
+  const branchId = getBranchId();
 
   const [
     products,
@@ -653,22 +654,22 @@ export async function getDashboard(threshold: number = 5) {
     brands,
     recentMovements,
   ] = await Promise.all([
-    prisma.inventoryProduct.count({ where: { active: true } }),
-    prisma.inventoryVariant.count({ where: { active: true } }),
-    prisma.inventoryVariant.aggregate({ where: { active: true }, _sum: { stockQuantity: true } }),
-    prisma.inventoryVariant.count({ where: { active: true, stockQuantity: { gt: 0, lte: t } } }),
-    prisma.inventoryVariant.count({ where: { active: true, stockQuantity: 0 } }),
-    prisma.brand.count({ where: { active: true } }),
-    prisma.inventoryMovement.findMany({ orderBy: { createdAt: "desc" }, take: 15 }),
+    prisma.inventoryProduct.count({ where: { active: true, branchId } }),
+    prisma.inventoryVariant.count({ where: { active: true, branchId } }),
+    prisma.inventoryVariant.aggregate({ where: { active: true, branchId }, _sum: { stockQuantity: true } }),
+    prisma.inventoryVariant.count({ where: { active: true, branchId, stockQuantity: { gt: 0, lte: t } } }),
+    prisma.inventoryVariant.count({ where: { active: true, branchId, stockQuantity: 0 } }),
+    prisma.brand.count({ where: { active: true, branchId } }),
+    prisma.inventoryMovement.findMany({ where: { branchId }, orderBy: { createdAt: "desc" }, take: 15 }),
   ]);
 
   const stockUnits = stockAgg._sum.stockQuantity || 0;
 
-  const lots = await prisma.inventoryLot.findMany({ select: { quantity: true, purchasePrice: true } });
+  const lots = await prisma.inventoryLot.findMany({ where: { branchId }, select: { quantity: true, purchasePrice: true } });
   const inventoryCost = lots.reduce((sum, l) => sum + l.quantity * l.purchasePrice, 0);
 
   const activeVariants = await prisma.inventoryVariant.findMany({
-    where: { active: true },
+    where: { active: true, branchId },
     select: { stockQuantity: true, defaultSellingPrice: true },
   });
   const inventoryValue = activeVariants.reduce(
