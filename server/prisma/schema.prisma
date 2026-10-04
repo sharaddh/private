@@ -60,6 +60,7 @@ model Branch {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   users User[]
+  primaryUsers User[] @relation("UserPrimaryBranch")
 
   customers              Customer[]
   visits                 Visit[]
