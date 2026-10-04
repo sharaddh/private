@@ -152,6 +152,8 @@ export async function registerUser(
   const userBranches =
     finalRole === "staff" && data.branchId ? [data.branchId] : data.branches || [];
 
+  const primaryBranchId = data.primaryBranchId ?? (finalRole === "staff" ? data.branchId : undefined);
+
   const user = await User.create({
     data: {
       username: data.username,
@@ -159,6 +161,7 @@ export async function registerUser(
       name: data.name || "",
       mobile: data.mobile || "",
       role: finalRole,
+      primaryBranchId,
       branches: userBranches.length > 0 ? { connect: userBranches.map((id) => ({ id })) } : undefined,
     },
     include: { branches: true },
