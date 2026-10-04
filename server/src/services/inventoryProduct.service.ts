@@ -90,13 +90,14 @@ export async function findOrCreateProduct(
 // ---------------------------------------------------------------------------
 
 export async function listBrands(threshold: number = 5) {
+  const branchId = getBranchId();
   const brands = await prisma.brand.findMany({
-    where: { active: true },
+    where: { active: true, branchId },
     orderBy: { name: "asc" },
   });
 
   const variants = await prisma.inventoryVariant.findMany({
-    where: { active: true, brandId: { not: null } },
+    where: { active: true, branchId, brandId: { not: null } },
     select: { brandId: true, stockQuantity: true },
   });
 
@@ -123,17 +124,18 @@ export async function listBrands(threshold: number = 5) {
 }
 
 export async function getBrandSummary(brandId: string) {
+  const branchId = getBranchId();
   const brand = await prisma.brand.findUnique({ where: { id: brandId } });
   if (!brand) throw new AppError(404, "Brand not found");
 
   const [products, variantCount, unitsResult] = await Promise.all([
     prisma.inventoryProduct.findMany({
-      where: { brandId: brand.id, active: true },
+      where: { branchId, brandId: brand.id, active: true },
       select: { category: true },
     }),
-    prisma.inventoryVariant.count({ where: { brandId: brand.id, active: true } }),
+    prisma.inventoryVariant.count({ where: { branchId, brandId: brand.id, active: true } }),
     prisma.inventoryVariant.aggregate({
-      where: { brandId: brand.id, active: true },
+      where: { branchId, brandId: brand.id, active: true },
       _sum: { stockQuantity: true },
     }),
   ]);
@@ -203,7 +205,7 @@ export interface ProductFilters extends PaginationOptions {
 }
 
 export async function listProducts(options: ProductFilters = {}) {
-  const filter: any = { active: true };
+  const filter: any = { active: true, branchId: getBranchId() };
   if (options.brandId) filter.brandId = options.brandId;
   if (options.category) filter.category = options.category;
   if (options.gender) filter.gender = options.gender;
@@ -314,7 +316,7 @@ export interface VariantFilters extends PaginationOptions {
 }
 
 export async function listVariants(options: VariantFilters = {}) {
-  const filter: any = { active: true };
+  const filter: any = { active: true, branchId: getBranchId() };
   if (options.productId) filter.productId = options.productId;
   if (options.brandId) filter.brandId = options.brandId;
   if (options.category) filter.category = options.category;
@@ -355,6 +357,7 @@ export async function searchVariants(query: string, limit: number = 20) {
   return prisma.inventoryVariant.findMany({
     where: {
       active: true,
+      branchId: getBranchId(),
       OR: [
         { sku: { contains: s, mode: "insensitive" } },
         { model: { contains: s, mode: "insensitive" } },
@@ -528,13 +531,14 @@ export async function archiveVariant(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function listRacks() {
+  const branchId = getBranchId();
   const racks = await prisma.rack.findMany({
-    where: { active: true },
+    where: { active: true, branchId },
     orderBy: { section: "asc" },
   });
 
   const variants = await prisma.inventoryVariant.findMany({
-    where: { active: true, rackId: { not: null } },
+    where: { active: true, branchId, rackId: { not: null } },
     select: { rackId: true, stockQuantity: true },
   });
 
