@@ -13,6 +13,7 @@ interface RegisterData {
   role?: string;
   branchId?: string;
   branches?: string[];
+  primaryBranchId?: string;
 }
 
 interface LoginData {
@@ -32,6 +33,7 @@ interface UpdateUserData {
   branches?: string[];
   role?: string;
   password?: string;
+  primaryBranchId?: string | null;
 }
 
 interface RegisterOwnerData {
