@@ -116,22 +116,23 @@ export function clearAllCache(): void {
 }
 
 export function getCachedPromise<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const existing = store.get(key) as CacheEntry<T> | undefined;
+  const scoped = scopedKey(key);
+  const existing = store.get(scoped) as CacheEntry<T> | undefined;
   if (existing?.promise) return existing.promise;
   if (existing && !isExpired(existing)) return Promise.resolve(existing.data);
 
   const promise = fetcher()
     .then((data) => {
-      store.set(key, { data, timestamp: Date.now(), promise: null });
+      store.set(scoped, { data, timestamp: Date.now(), promise: null });
       persist();
       return data;
     })
     .catch((err) => {
-      store.delete(key);
+      store.delete(scoped);
       throw err;
     });
 
-  store.set(key, { data: null as unknown as T, timestamp: 0, promise });
+  store.set(scoped, { data: null as unknown as T, timestamp: 0, promise });
   return promise;
 }
 
