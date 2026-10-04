@@ -123,6 +123,7 @@ async function formatUserWithBranches(user: any): Promise<FormattedUser> {
     name: user.name || "",
     mobile: user.mobile || "",
     role,
+    primaryBranchId: user.primaryBranchId ?? undefined,
     branches: branchList,
   };
 }
