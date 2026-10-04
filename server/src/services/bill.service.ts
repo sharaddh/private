@@ -360,7 +360,7 @@ export async function getBillById(billId: string): Promise<BillResult> {
 }
 
 export async function listBills(filters: BillFilters): Promise<PaginatedResult<BillResult>> {
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { branchId: requireBranchId() };
 
   if (filters.customerId) {
     where.customerId = filters.customerId;
