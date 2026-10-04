@@ -247,7 +247,14 @@ export default function Pickup() {
 
   async function syncBillForOrder(o: Order, custBills?: Bill[]): Promise<Bill | null> {
     const targetId = o.visitId || o._id;
-    const b = (custBills || bills).find((b) => b.visitId === targetId) || null;
+    const pool = custBills || bills;
+    const b =
+      pool.find((b) => b.visitId === targetId) ||
+      pool.find((b) => b.visitId === o._id) ||
+      // The order list embeds the matching bill as `billInfo`; trust that id
+      // even if the visitId linkage drifted.
+      ((o as any).billInfo?._id ? pool.find((b) => b._id === (o as any).billInfo._id) : null) ||
+      null;
     setBill(b);
     if (!b) {
       const items: { description: string; qty: number; price: number }[] = [];
