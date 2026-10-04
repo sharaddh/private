@@ -398,6 +398,9 @@ export async function updateUser(
   if (data.branches !== undefined) {
     updateData.branches = { set: data.branches.map((id) => ({ id })) };
   }
+  if (data.primaryBranchId !== undefined) {
+    updateData.primaryBranchId = data.primaryBranchId;
+  }
   if (data.name !== undefined) updateData.name = data.name;
   if (data.mobile !== undefined) updateData.mobile = data.mobile;
   if (data.password?.trim()) {
