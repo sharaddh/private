@@ -3,6 +3,7 @@ import { Bill } from "../models/bill";
 import { Customer } from "../models/customer";
 import { paginateFind, prismaDateRange, parseDateRange } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
+import { requireBranchId } from "../utils/scope";
 import type { PaginatedResult } from "../types";
 import type { Prisma } from "@prisma/client";
 
@@ -167,7 +168,7 @@ export async function deletePayment(paymentId: string): Promise<void> {
 export async function listPayments(
   filters: PaymentFilters
 ): Promise<PaginatedResult<PaymentResult>> {
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { branchId: requireBranchId() };
 
   if (filters.customerId) {
     where.customerId = filters.customerId;
