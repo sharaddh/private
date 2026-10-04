@@ -151,7 +151,8 @@ export async function getCustomerReport(filters?: {
 }
 
 export async function getInventoryReport(category?: string) {
-  const match: Record<string, unknown> = {};
+  const branchId = requireBranchId();
+  const match: Record<string, unknown> = { branchId };
   if (category) match.category = category;
 
   const [allItems, categoryItems, lowStockItems, locationItems] = await Promise.all([
@@ -244,14 +245,17 @@ export async function getInventoryReport(category?: string) {
 }
 
 export async function getDeliveryReport() {
+  const branchId = requireBranchId();
   const [statusCounts, overdueDeliveries, deliveryData] = await Promise.all([
     prisma.delivery.groupBy({
       by: ["status"],
+      where: { branchId },
       _count: true,
       orderBy: { _count: { status: "desc" } },
     }),
     prisma.delivery.findMany({
       where: {
+        branchId,
         status: { in: ["Pending", "In Transit"] },
         expectedDeliveryDate: { lt: new Date() },
       },
@@ -264,6 +268,7 @@ export async function getDeliveryReport() {
     }),
     prisma.delivery.findMany({
       where: {
+        branchId,
         actualDeliveryDate: { not: null },
         expectedDeliveryDate: { not: null },
       },
