@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((token: string, refresh: string) => {
     localStorage.setItem(STORAGE_KEYS.token, token);
     localStorage.setItem(STORAGE_KEYS.refresh, refresh);
+    localStorage.removeItem(STORAGE_KEYS.branchId);
     setState({ token, refreshToken: refresh, user: null, currentBranchId: null });
     clearAllCache();
   }, []);
