@@ -49,6 +49,7 @@ interface FormattedUser {
   name: string;
   mobile: string;
   role: string;
+  primaryBranchId?: string | null;
   branches: Array<{
     id: string;
     name: string;
