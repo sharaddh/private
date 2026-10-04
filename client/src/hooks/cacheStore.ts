@@ -9,8 +9,24 @@ const DEFAULT_TTL = 5 * 60 * 1000;
 const STORAGE_KEY = '__kmj_spa_cache_v1';
 const MAX_ENTRIES = 80;
 const MAX_TOTAL_JSON_SIZE = 4 * 1024 * 1024;
+const BRANCH_KEY = 'currentBranchId';
 
 const store = new Map<string, CacheEntry<unknown>>();
+
+// Cache entries are scoped to the active branch. Without this, a switch to
+// another branch in the same browser would keep serving the previous branch's
+// cached GET snapshots (dashboard, reports, lists) for up to a TTL period.
+function currentBranchId(): string {
+  try {
+    return localStorage.getItem(BRANCH_KEY) || 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+function scopedKey(key: string): string {
+  return `${currentBranchId()}:${key}`;
+}
 
 function isExpired(entry: CacheEntry<unknown>, customTtl?: number): boolean {
   const ttl = customTtl ?? entry.ttl ?? DEFAULT_TTL;
