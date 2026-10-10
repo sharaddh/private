@@ -11,6 +11,11 @@ export const createCustomerSchema = z.object({
   city: z.string().optional(),
   tags: z.array(z.string()).optional(),
   customerId: z.string().optional(),
+  // Ayushman Bharat Scheme fields
+  isAyushman: z.boolean().optional(),
+  abhaNumber: z.string().optional(),
+  ayushmanLastUsedAt: z.union([z.string(), z.date()]).optional(),
+  ayushmanUsedYear: z.number().int().optional(),
 });
 
 export const updateCustomerSchema = z
@@ -24,6 +29,11 @@ export const updateCustomerSchema = z
     address: z.string().optional(),
     city: z.string().optional(),
     tags: z.array(z.string()).optional(),
+    // Ayushman Bharat Scheme fields
+    isAyushman: z.boolean().optional(),
+    abhaNumber: z.string().optional(),
+    ayushmanLastUsedAt: z.union([z.string(), z.date()]).optional(),
+    ayushmanUsedYear: z.number().int().optional(),
   })
   .strict();
 
