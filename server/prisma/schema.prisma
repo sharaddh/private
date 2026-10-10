@@ -292,6 +292,10 @@ model Bill {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  // Ayushman Bharat scheme
+  ayushmanApplied  Boolean @default(false)
+  ayushmanDiscount Float   @default(0)
+
   branch     Branch          @relation(fields: [branchId], references: [id])
   customer   Customer        @relation(fields: [customerId], references: [id])
   visit      Visit?          @relation(fields: [visitId], references: [id])
