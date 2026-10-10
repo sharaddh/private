@@ -130,23 +130,28 @@ model Camera {
 // ===========================================================================
 
 model Customer {
-  id              String   @id @default(uuid()) @map("_id")
-  branchId        String
-  customerId      String?
-  name            String
-  email           String?
-  age             Int?
-  gender          String?
-  mobile          String?
-  alternateMobile String?
-  address         String?
-  city            String?
-  tags            String[]
-  totalVisits     Int      @default(0)
-  totalSpent      Float    @default(0)
-  pendingAmount   Float    @default(0)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid()) @map("_id")
+  branchId           String
+  customerId         String?
+  name               String
+  email              String?
+  age                Int?
+  gender             String?
+  mobile             String?
+  alternateMobile    String?
+  address            String?
+  city               String?
+  tags               String[]
+  totalVisits        Int      @default(0)
+  totalSpent         Float    @default(0)
+  pendingAmount      Float    @default(0)
+  // Ayushman Bharat Scheme fields
+  isAyushman         Boolean  @default(false)
+  abhaNumber         String?
+  ayushmanLastUsedAt DateTime?
+  ayushmanUsedYear   Int?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   branch        Branch         @relation(fields: [branchId], references: [id])
   visits        Visit[]
@@ -270,21 +275,24 @@ model OrderStockItem {
 }
 
 model Bill {
-  id            String   @id @default(uuid()) @map("_id")
-  branchId      String
-  billNumber    String
-  customerId    String
-  visitId       String?
-  orderId       String?
-  subtotal      Float    @default(0)
-  discount      Float    @default(0)
-  tax           Float    @default(0)
-  advancePaid   Float    @default(0)
-  pendingAmount Float    @default(0)
-  totalAmount   Float    @default(0)
-  status        String   @default("Active") // Active | Cancelled
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid()) @map("_id")
+  branchId           String
+  billNumber         String
+  customerId         String
+  visitId            String?
+  orderId            String?
+  subtotal           Float    @default(0)
+  discount           Float    @default(0)
+  tax                Float    @default(0)
+  advancePaid        Float    @default(0)
+  pendingAmount      Float    @default(0)
+  totalAmount        Float    @default(0)
+  status             String   @default("Active") // Active | Cancelled
+  // Ayushman Bharat Scheme fields
+  ayushmanApplied    Boolean  @default(false)
+  ayushmanDiscount   Float    @default(0)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   branch     Branch          @relation(fields: [branchId], references: [id])
   customer   Customer        @relation(fields: [customerId], references: [id])

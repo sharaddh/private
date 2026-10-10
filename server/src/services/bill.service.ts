@@ -20,6 +20,9 @@ interface CreateBillData {
   discount?: number;
   tax?: number;
   advancePaid?: number;
+  // Ayushman Bharat Scheme fields
+  ayushmanApplied?: boolean;
+  ayushmanDiscount?: number;
 }
 
 interface UpdateBillData {
@@ -28,6 +31,9 @@ interface UpdateBillData {
   tax?: number;
   advancePaid?: number;
   status?: string;
+  // Ayushman Bharat Scheme fields
+  ayushmanApplied?: boolean;
+  ayushmanDiscount?: number;
 }
 
 interface BillFilters {
@@ -58,6 +64,9 @@ interface BillResult {
   pendingAmount: number;
   totalAmount: number;
   status: string;
+  // Ayushman Bharat Scheme fields
+  ayushmanApplied?: boolean;
+  ayushmanDiscount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -120,7 +129,10 @@ export async function createBill(
   }
 
   const items = data.items || [];
-  const discount = data.discount || 0;
+  let discount = data.discount || 0;
+  // Ayushman Bharat Scheme
+  let ayushmanAppliedFlag = data.ayushmanApplied || false;
+  let ayushmanDiscountCalc = 0;
   const tax = data.tax || 0;
   const advancePaid = data.advancePaid || 0;
 
@@ -175,6 +187,9 @@ export async function createBill(
     data: {
       totalSpent: { increment: totalAmount },
       pendingAmount: { increment: pendingAmount },
+      ...(ayushmanAppliedFlag && ayushmanDiscountCalc > 0
+        ? { ayushmanLastUsedAt: new Date(), ayushmanUsedYear: new Date().getFullYear(), isAyushman: true }
+        : {}),
     },
   });
 

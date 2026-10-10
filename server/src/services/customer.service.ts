@@ -31,6 +31,11 @@ interface CreateCustomerData {
   address?: string;
   city?: string;
   tags?: string[];
+  // Ayushman Bharat Scheme fields
+  isAyushman?: boolean;
+  abhaNumber?: string;
+  ayushmanLastUsedAt?: Date | string;
+  ayushmanUsedYear?: number;
 }
 
 interface UpdateCustomerData {
@@ -43,6 +48,11 @@ interface UpdateCustomerData {
   address?: string;
   city?: string;
   tags?: string[];
+  // Ayushman Bharat Scheme fields
+  isAyushman?: boolean;
+  abhaNumber?: string;
+  ayushmanLastUsedAt?: Date | string;
+  ayushmanUsedYear?: number;
 }
 
 interface CustomerResult {
@@ -60,6 +70,11 @@ interface CustomerResult {
   totalVisits: number;
   totalSpent: number;
   pendingAmount: number;
+  // Ayushman Bharat Scheme fields
+  isAyushman?: boolean;
+  abhaNumber?: string;
+  ayushmanLastUsedAt?: Date | null;
+  ayushmanUsedYear?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

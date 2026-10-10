@@ -48,6 +48,8 @@ export default function Customers(): React.JSX.Element {
     age: '',
     gender: '',
     tags: '',
+    isAyushman: false,
+    abhaNumber: '',
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -116,6 +118,8 @@ export default function Customers(): React.JSX.Element {
       age: '',
       gender: '',
       tags: '',
+    isAyushman: false,
+    abhaNumber: '',
     });
     setShowForm(true);
     setError('');
@@ -133,6 +137,8 @@ export default function Customers(): React.JSX.Element {
       age: c.age?.toString() || '',
       gender: c.gender || '',
       tags: c.tags?.join(', ') || '',
+        isAyushman: c.isAyushman || false,
+        abhaNumber: c.abhaNumber || '',
     });
     setShowForm(true);
     setError('');
@@ -160,9 +166,9 @@ export default function Customers(): React.JSX.Element {
         invalidateCache('/api/customers?limit=1000');
         setShowForm(false);
         if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`);
-      } else setError(res.message || uiT('Operation failed', 'ऑपरेशन विफल'));
+      } else setError(res.message || uiT('Operation failed', 'αñæαñ¬αñ░αÑçαñ╢αñ¿ αñ╡αñ┐αñ½αñ▓'));
     } catch {
-      setError(uiT('An error occurred', 'एक त्रुटि हुई'));
+      setError(uiT('An error occurred', 'αñÅαñò αññαÑìαñ░αÑüαñƒαñ┐ αñ╣αÑüαñê'));
     } finally {
       setIsLoading(false);
     }
@@ -173,7 +179,7 @@ export default function Customers(): React.JSX.Element {
       !confirm(
         uiT(
           'Are you sure you want to delete this customer?',
-          'क्या आप वाकई इस ग्राहक को हटाना चाहते हैं?'
+          'αñòαÑìαñ»αñ╛ αñåαñ¬ αñ╡αñ╛αñòαñê αñçαñ╕ αñùαÑìαñ░αñ╛αñ╣αñò αñòαÑï αñ╣αñƒαñ╛αñ¿αñ╛ αñÜαñ╛αñ╣αññαÑç αñ╣αÑêαñé?'
         )
       )
     )
@@ -189,12 +195,12 @@ export default function Customers(): React.JSX.Element {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-th-text tracking-tight">
-            {uiT('Customers', 'ग्राहक')}
+            {uiT('Customers', 'αñùαÑìαñ░αñ╛αñ╣αñò')}
           </h1>
           <p className="text-sm text-th-secondary mt-0.5">
             {uiT(
               'Search, view, and manage customer profiles.',
-              'ग्राहक प्रोफ़ाइल खोजें, देखें और प्रबंधित करें।'
+              'αñùαÑìαñ░αñ╛αñ╣αñò αñ¬αÑìαñ░αÑïαñ½αñ╝αñ╛αñçαñ▓ αñûαÑïαñ£αÑçαñé, αñªαÑçαñûαÑçαñé αñöαñ░ αñ¬αÑìαñ░αñ¼αñéαñºαñ┐αññ αñòαñ░αÑçαñéαÑñ'
             )}
           </p>
         </div>
@@ -208,12 +214,12 @@ export default function Customers(): React.JSX.Element {
                   refetch(true);
                   const d = res.data as Record<string, unknown> | undefined;
                   toast.success(
-                    `${uiT('Fixed', 'ठीक किया')} ${(d as { updated?: number })?.updated || 0} ${uiT('customer records', 'ग्राहक रिकॉर्ड')}`
+                    `${uiT('Fixed', 'αñáαÑÇαñò αñòαñ┐αñ»αñ╛')} ${(d as { updated?: number })?.updated || 0} ${uiT('customer records', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ░αñ┐αñòαÑëαñ░αÑìαñí')}`
                   );
                 } else {
                   toast.error(
-                    `${uiT('Recalculation failed', 'पुनर्गणना विफल')}: ` +
-                      (res.message || uiT('Unknown error', 'अज्ञात त्रुटि'))
+                    `${uiT('Recalculation failed', 'αñ¬αÑüαñ¿αñ░αÑìαñùαñúαñ¿αñ╛ αñ╡αñ┐αñ½αñ▓')}: ` +
+                      (res.message || uiT('Unknown error', 'αñàαñ£αÑìαñ₧αñ╛αññ αññαÑìαñ░αÑüαñƒαñ┐'))
                   );
                 }
                 setRecalculating(false);
@@ -223,8 +229,8 @@ export default function Customers(): React.JSX.Element {
             >
               <Activity size={14} />
               {recalculating
-                ? uiT('Fixing...', 'सुधार हो रहा है...')
-                : uiT('Fix Data', 'डेटा ठीक करें')}
+                ? uiT('Fixing...', 'αñ╕αÑüαñºαñ╛αñ░ αñ╣αÑï αñ░αñ╣αñ╛ αñ╣αÑê...')
+                : uiT('Fix Data', 'αñíαÑçαñƒαñ╛ αñáαÑÇαñò αñòαñ░αÑçαñé')}
             </button>
           )}
           <button
@@ -232,7 +238,7 @@ export default function Customers(): React.JSX.Element {
             className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
           >
             <Plus size={16} />
-            <span>{uiT('Add Customer', 'ग्राहक जोड़ें')}</span>
+            <span>{uiT('Add Customer', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αÑçαñé')}</span>
           </button>
         </div>
       </div>
@@ -246,11 +252,11 @@ export default function Customers(): React.JSX.Element {
           type="text"
           placeholder={uiT(
             'Search by name, mobile, email, or ID...',
-            'नाम, मोबाइल, ईमेल या आईडी से खोजें...'
+            'αñ¿αñ╛αñ«, αñ«αÑïαñ¼αñ╛αñçαñ▓, αñêαñ«αÑçαñ▓ αñ»αñ╛ αñåαñêαñíαÑÇ αñ╕αÑç αñûαÑïαñ£αÑçαñé...'
           )}
           value={searchQuery}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-          aria-label={uiT('Search customers', 'ग्राहक खोजें')}
+          aria-label={uiT('Search customers', 'αñùαÑìαñ░αñ╛αñ╣αñò αñûαÑïαñ£αÑçαñé')}
           className="w-full bg-th-elevated text-th-text placeholder-[#a7a7a7] pl-11 pr-10 py-3 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#1ed760] transition-shadow"
         />
         {searchQuery.trim() && (
@@ -270,25 +276,25 @@ export default function Customers(): React.JSX.Element {
           </div>
           <h3 className="text-lg font-bold text-th-text mb-1">
             {searchQuery
-              ? uiT('No customers found', 'कोई ग्राहक नहीं मिला')
-              : uiT('No customers yet', 'अभी तक कोई ग्राहक नहीं')}
+              ? uiT('No customers found', 'αñòαÑïαñê αñùαÑìαñ░αñ╛αñ╣αñò αñ¿αñ╣αÑÇαñé αñ«αñ┐αñ▓αñ╛')
+              : uiT('No customers yet', 'αñàαñ¡αÑÇ αññαñò αñòαÑïαñê αñùαÑìαñ░αñ╛αñ╣αñò αñ¿αñ╣αÑÇαñé')}
           </h3>
           <p className="text-sm text-th-secondary mb-5">
             {searchQuery
-              ? `${uiT('No results matching', 'कोई परिणाम मेल नहीं खा रहा')} "${searchQuery}"`
-              : uiT('Start by adding your first customer.', 'अपना पहला ग्राहक जोड़कर शुरू करें।')}
+              ? `${uiT('No results matching', 'αñòαÑïαñê αñ¬αñ░αñ┐αñúαñ╛αñ« αñ«αÑçαñ▓ αñ¿αñ╣αÑÇαñé αñûαñ╛ αñ░αñ╣αñ╛')} "${searchQuery}"`
+              : uiT('Start by adding your first customer.', 'αñàαñ¬αñ¿αñ╛ αñ¬αñ╣αñ▓αñ╛ αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αñòαñ░ αñ╢αÑüαñ░αÑé αñòαñ░αÑçαñéαÑñ')}
           </p>
           <button
             onClick={openCreate}
             className="inline-flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 transition-colors"
           >
-            <UserPlus size={16} /> {uiT('Add Customer', 'ग्राहक जोड़ें')}
+            <UserPlus size={16} /> {uiT('Add Customer', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αÑçαñé')}
           </button>
         </div>
       ) : (
         <div className="mt-6">
           <p className="text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-3">
-            {filteredList.length} {uiT('customer(s)', 'ग्राहक')}
+            {filteredList.length} {uiT('customer(s)', 'αñùαÑìαñ░αñ╛αñ╣αñò')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredList.map((c: Customer) => (
@@ -337,7 +343,7 @@ export default function Customers(): React.JSX.Element {
                           openEdit(c);
                         }}
                         className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors"
-                        title={uiT('Edit', 'संपादित करें')}
+                        title={uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé')}
                       >
                         <Edit2 size={12} />
                       </button>
@@ -348,7 +354,7 @@ export default function Customers(): React.JSX.Element {
                             handleDelete(c._id);
                           }}
                           className="p-1 hover:bg-red-500/10 rounded text-th-secondary hover:text-red-400 transition-colors"
-                          title={uiT('Delete', 'हटाएं')}
+                          title={uiT('Delete', 'αñ╣αñƒαñ╛αñÅαñé')}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -394,16 +400,16 @@ export default function Customers(): React.JSX.Element {
                       <Calendar size={10} /> {c.totalVisits || 0}
                     </span>
                     <span className="text-[15px] font-bold text-[#1ed760]">
-                      ₹{(c.totalSpent || 0).toLocaleString()}
+                      Γé╣{(c.totalSpent || 0).toLocaleString()}
                     </span>
                   </div>
                   {(c.pendingAmount || 0) > 0 ? (
                     <span className="text-[14px] font-semibold text-[#e8a427]">
-                      ₹{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'बकाया')}
+                      Γé╣{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'αñ¼αñòαñ╛αñ»αñ╛')}
                     </span>
                   ) : (c.totalVisits || 0) > 0 ? (
                     <span className="text-[14px] text-[#1ed760] font-medium">
-                      {uiT('Clear', 'चुकता')}
+                      {uiT('Clear', 'αñÜαÑüαñòαññαñ╛')}
                     </span>
                   ) : null}
                 </div>
@@ -425,7 +431,7 @@ export default function Customers(): React.JSX.Element {
             >
             <div className="flex items-center justify-between px-6 py-4 border-b border-th-border">
               <h3 className="text-base font-bold text-th-text">
-                {editing ? uiT('Edit', 'संपादित करें') : uiT('Add Customer', 'ग्राहक जोड़ें')}
+                {editing ? uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé') : uiT('Add Customer', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αÑçαñé')}
               </h3>
               <button
                 onClick={() => setShowForm(false)}
@@ -444,12 +450,12 @@ export default function Customers(): React.JSX.Element {
                 <div className="bg-th-elevated rounded-lg p-4">
                   <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                     <UserPlus size={14} className="text-[#1ed760]" />{' '}
-                    {uiT('Personal Info', 'व्यक्तिगत जानकारी')}
+                    {uiT('Personal Info', 'αñ╡αÑìαñ»αñòαÑìαññαñ┐αñùαññ αñ£αñ╛αñ¿αñòαñ╛αñ░αÑÇ')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Name', 'नाम')} *
+                        {uiT('Name', 'αñ¿αñ╛αñ«')} *
                       </label>
                       <input
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -458,12 +464,12 @@ export default function Customers(): React.JSX.Element {
                           setForm({ ...form, name: e.target.value })
                         }
                         required
-                        aria-label={uiT('Customer name', 'ग्राहक का नाम')}
+                        aria-label={uiT('Customer name', 'αñùαÑìαñ░αñ╛αñ╣αñò αñòαñ╛ αñ¿αñ╛αñ«')}
                       />
                     </div>
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Age', 'आयु')}
+                        {uiT('Age', 'αñåαñ»αÑü')}
                       </label>
                       <input
                         type="number"
@@ -473,12 +479,12 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setForm({ ...form, age: e.target.value })
                         }
-                        aria-label={uiT('Customer age', 'ग्राहक की आयु')}
+                        aria-label={uiT('Customer age', 'αñùαÑìαñ░αñ╛αñ╣αñò αñòαÑÇ αñåαñ»αÑü')}
                       />
                     </div>
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Gender', 'लिंग')}
+                        {uiT('Gender', 'αñ▓αñ┐αñéαñù')}
                       </label>
                       <select
                         className="w-full bg-th-hover text-th-text px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -486,12 +492,12 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                           setForm({ ...form, gender: e.target.value })
                         }
-                        aria-label={uiT('Customer gender', 'ग्राहक का लिंग')}
+                        aria-label={uiT('Customer gender', 'αñùαÑìαñ░αñ╛αñ╣αñò αñòαñ╛ αñ▓αñ┐αñéαñù')}
                       >
-                        <option value="">{uiT('Select', 'चुनें')}</option>
-                        <option value="Male">{uiT('Male', 'पुरुष')}</option>
-                        <option value="Female">{uiT('Female', 'महिला')}</option>
-                        <option value="Other">{uiT('Other', 'अन्य')}</option>
+                        <option value="">{uiT('Select', 'αñÜαÑüαñ¿αÑçαñé')}</option>
+                        <option value="Male">{uiT('Male', 'αñ¬αÑüαñ░αÑüαñ╖')}</option>
+                        <option value="Female">{uiT('Female', 'αñ«αñ╣αñ┐αñ▓αñ╛')}</option>
+                        <option value="Other">{uiT('Other', 'αñàαñ¿αÑìαñ»')}</option>
                       </select>
                     </div>
                   </div>
@@ -499,12 +505,12 @@ export default function Customers(): React.JSX.Element {
 
                 <div className="bg-th-elevated rounded-lg p-4">
                   <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                    <Phone size={14} className="text-[#1ed760]" /> {uiT('Contact', 'संपर्क')}
+                    <Phone size={14} className="text-[#1ed760]" /> {uiT('Contact', 'αñ╕αñéαñ¬αñ░αÑìαñò')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Mobile', 'मोबाइल')} *
+                        {uiT('Mobile', 'αñ«αÑïαñ¼αñ╛αñçαñ▓')} *
                       </label>
                       <input
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -512,12 +518,12 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setForm({ ...form, mobile: e.target.value })
                         }
-                        aria-label={uiT('Mobile number', 'मोबाइल नंबर')}
+                        aria-label={uiT('Mobile number', 'αñ«αÑïαñ¼αñ╛αñçαñ▓ αñ¿αñéαñ¼αñ░')}
                       />
                     </div>
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Alt Mobile', 'वैकल्पिक मोबाइल')}
+                        {uiT('Alt Mobile', 'αñ╡αÑêαñòαñ▓αÑìαñ¬αñ┐αñò αñ«αÑïαñ¼αñ╛αñçαñ▓')}
                       </label>
                       <input
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -525,12 +531,12 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setForm({ ...form, alternateMobile: e.target.value })
                         }
-                        aria-label={uiT('Alternate mobile number', 'वैकल्पिक मोबाइल नंबर')}
+                        aria-label={uiT('Alternate mobile number', 'αñ╡αÑêαñòαñ▓αÑìαñ¬αñ┐αñò αñ«αÑïαñ¼αñ╛αñçαñ▓ αñ¿αñéαñ¼αñ░')}
                       />
                     </div>
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Email', 'ईमेल')}
+                        {uiT('Email', 'αñêαñ«αÑçαñ▓')}
                       </label>
                       <input
                         type="email"
@@ -539,7 +545,7 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setForm({ ...form, email: e.target.value })
                         }
-                        aria-label={uiT('Email address', 'ईमेल पता')}
+                        aria-label={uiT('Email address', 'αñêαñ«αÑçαñ▓ αñ¬αññαñ╛')}
                       />
                     </div>
                   </div>
@@ -547,12 +553,12 @@ export default function Customers(): React.JSX.Element {
 
                 <div className="bg-th-elevated rounded-lg p-4">
                   <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                    <MapPin size={14} className="text-[#1ed760]" /> {uiT('Address', 'पता')}
+                    <MapPin size={14} className="text-[#1ed760]" /> {uiT('Address', 'αñ¬αññαñ╛')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="md:col-span-2">
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('Address', 'पता')}
+                        {uiT('Address', 'αñ¬αññαñ╛')}
                       </label>
                       <textarea
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -561,12 +567,12 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                           setForm({ ...form, address: e.target.value })
                         }
-                        aria-label={uiT('Address', 'पता')}
+                        aria-label={uiT('Address', 'αñ¬αññαñ╛')}
                       />
                     </div>
                     <div>
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
-                        {uiT('City', 'शहर')}
+                        {uiT('City', 'αñ╢αñ╣αñ░')}
                       </label>
                       <input
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -574,7 +580,7 @@ export default function Customers(): React.JSX.Element {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setForm({ ...form, city: e.target.value })
                         }
-                        aria-label={uiT('City', 'शहर')}
+                        aria-label={uiT('City', 'αñ╢αñ╣αñ░')}
                       />
                     </div>
                   </div>
@@ -582,7 +588,7 @@ export default function Customers(): React.JSX.Element {
 
                 <div className="bg-th-elevated rounded-lg p-4">
                   <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                    <Tag size={14} className="text-[#1ed760]" /> {uiT('Tags', 'टैग')}
+                    <Tag size={14} className="text-[#1ed760]" /> {uiT('Tags', 'αñƒαÑêαñù')}
                   </h3>
                   <input
                     className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
@@ -591,17 +597,31 @@ export default function Customers(): React.JSX.Element {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setForm({ ...form, tags: e.target.value })
                     }
-                    aria-label={uiT('Tags', 'टैग')}
+                    aria-label={uiT('Tags', 'αñƒαÑêαñù')}
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
+                <div className="bg-th-elevated rounded-lg p-4">
+                  <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
+                    <Tag size={14} className="text-[#1ed760]" /> Ayushman Bharat Scheme
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" id="isAyushman" checked={form.isAyushman} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, isAyushman: e.target.checked })} className="w-4 h-4 rounded border-th-border text-[#1ed760] focus:ring-[#1ed760]" />
+                      <label htmlFor="isAyushman" className="text-sm text-th-text font-medium">Ayushman Beneficiary</label>
+                    </div>
+                    <div>
+                      <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">ABHA Number</label>
+                      <input className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow" value={form.abhaNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, abhaNumber: e.target.value })} placeholder="ABHA number" aria-label="ABHA number" />
+                    </div>
+                  </div>
+                </div>                <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
                     className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors"
                   >
-                    {uiT('Cancel', 'रद्द करें')}
+                    {uiT('Cancel', 'αñ░αñªαÑìαñª αñòαñ░αÑçαñé')}
                   </button>
                   <button
                     type="submit"
@@ -609,10 +629,10 @@ export default function Customers(): React.JSX.Element {
                     className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform disabled:opacity-50"
                   >
                     {isLoading
-                      ? uiT('Saving...', 'सहेजा जा रहा है...')
+                      ? uiT('Saving...', 'αñ╕αñ╣αÑçαñ£αñ╛ αñ£αñ╛ αñ░αñ╣αñ╛ αñ╣αÑê...')
                       : editing
-                        ? uiT('Edit', 'संपादित करें')
-                        : uiT('Add Customer', 'ग्राहक जोड़ें')}
+                        ? uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé')
+                        : uiT('Add Customer', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αÑçαñé')}
                   </button>
                 </div>
               </form>
@@ -625,7 +645,7 @@ export default function Customers(): React.JSX.Element {
       <Modal
         open={showDetail}
         onClose={() => setShowDetail(false)}
-        title={uiT('Customer Details', 'ग्राहक विवरण')}
+        title={uiT('Customer Details', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ╡αñ┐αñ╡αñ░αñú')}
         size="lg"
       >
         {detailCustomer && (
@@ -647,25 +667,25 @@ export default function Customers(): React.JSX.Element {
                 <Activity size={16} className="text-[#1ed760] mx-auto mb-1" />
                 <p className="text-lg font-bold text-th-text">{detailCustomer.totalVisits || 0}</p>
                 <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Visits', 'विज़िट')}
+                  {uiT('Visits', 'αñ╡αñ┐αñ£αñ╝αñ┐αñƒ')}
                 </p>
               </div>
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#1ed760] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#1ed760]">
-                  ₹{(detailCustomer.totalSpent || 0).toLocaleString()}
+                  Γé╣{(detailCustomer.totalSpent || 0).toLocaleString()}
                 </p>
                 <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Spent', 'खर्च')}
+                  {uiT('Spent', 'αñûαñ░αÑìαñÜ')}
                 </p>
               </div>
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#e8a427] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#e8a427]">
-                  ₹{(detailCustomer.pendingAmount || 0).toLocaleString()}
+                  Γé╣{(detailCustomer.pendingAmount || 0).toLocaleString()}
                 </p>
                 <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Pending', 'बाकी')}
+                  {uiT('Pending', 'αñ¼αñ╛αñòαÑÇ')}
                 </p>
               </div>
             </div>
@@ -673,24 +693,24 @@ export default function Customers(): React.JSX.Element {
             <div className="bg-th-surface rounded-lg p-4">
               <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
                 <UserPlus size={14} className="text-[#1ed760]" />{' '}
-                {uiT('Personal Info', 'व्यक्तिगत जानकारी')}
+                {uiT('Personal Info', 'αñ╡αÑìαñ»αñòαÑìαññαñ┐αñùαññ αñ£αñ╛αñ¿αñòαñ╛αñ░αÑÇ')}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Age', 'आयु')}
+                    {uiT('Age', 'αñåαñ»αÑü')}
                   </p>
-                  <p className="text-th-text">{detailCustomer.age || '—'}</p>
+                  <p className="text-th-text">{detailCustomer.age || 'ΓÇö'}</p>
                 </div>
                 <div>
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Gender', 'लिंग')}
+                    {uiT('Gender', 'αñ▓αñ┐αñéαñù')}
                   </p>
-                  <p className="text-th-text">{detailCustomer.gender || '—'}</p>
+                  <p className="text-th-text">{detailCustomer.gender || 'ΓÇö'}</p>
                 </div>
                 <div>
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Member Since', 'सदस्य तब से')}
+                    {uiT('Member Since', 'αñ╕αñªαñ╕αÑìαñ» αññαñ¼ αñ╕αÑç')}
                   </p>
                   <p className="text-th-text">
                     {detailCustomer.createdAt
@@ -699,7 +719,7 @@ export default function Customers(): React.JSX.Element {
                           month: 'short',
                           year: 'numeric',
                         })
-                      : '—'}
+                      : 'ΓÇö'}
                   </p>
                 </div>
               </div>
@@ -707,45 +727,45 @@ export default function Customers(): React.JSX.Element {
 
             <div className="bg-th-surface rounded-lg p-4">
               <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                <Phone size={14} className="text-[#1ed760]" /> {uiT('Contact', 'संपर्क')}
+                <Phone size={14} className="text-[#1ed760]" /> {uiT('Contact', 'αñ╕αñéαñ¬αñ░αÑìαñò')}
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Mobile', 'मोबाइल')}
+                    {uiT('Mobile', 'αñ«αÑïαñ¼αñ╛αñçαñ▓')}
                   </p>
-                  <p className="text-th-text">{detailCustomer.mobile || '—'}</p>
+                  <p className="text-th-text">{detailCustomer.mobile || 'ΓÇö'}</p>
                 </div>
                 <div>
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Alt Mobile', 'वैकल्पिक मोबाइल')}
+                    {uiT('Alt Mobile', 'αñ╡αÑêαñòαñ▓αÑìαñ¬αñ┐αñò αñ«αÑïαñ¼αñ╛αñçαñ▓')}
                   </p>
-                  <p className="text-th-text">{detailCustomer.alternateMobile || '—'}</p>
+                  <p className="text-th-text">{detailCustomer.alternateMobile || 'ΓÇö'}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Email', 'ईमेल')}
+                    {uiT('Email', 'αñêαñ«αÑçαñ▓')}
                   </p>
-                  <p className="text-th-text">{detailCustomer.email || '—'}</p>
+                  <p className="text-th-text">{detailCustomer.email || 'ΓÇö'}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-th-surface rounded-lg p-4">
               <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                <MapPin size={14} className="text-[#1ed760]" /> {uiT('Address', 'पता')}
+                <MapPin size={14} className="text-[#1ed760]" /> {uiT('Address', 'αñ¬αññαñ╛')}
               </h3>
               <p className="text-sm text-th-secondary">
                 {detailCustomer.address
                   ? `${detailCustomer.address}${detailCustomer.city ? `, ${detailCustomer.city}` : ''}`
-                  : '—'}
+                  : 'ΓÇö'}
               </p>
             </div>
 
             {detailCustomer.tags && detailCustomer.tags.length > 0 && (
               <div className="bg-th-surface rounded-lg p-4">
                 <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                  <Tag size={14} className="text-[#1ed760]" /> {uiT('Tags', 'टैग')}
+                  <Tag size={14} className="text-[#1ed760]" /> {uiT('Tags', 'αñƒαÑêαñù')}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {detailCustomer.tags.map((t: string, i: number) => (
@@ -765,7 +785,7 @@ export default function Customers(): React.JSX.Element {
                 onClick={() => setShowDetail(false)}
                 className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors"
               >
-                {uiT('Close', 'बंद करें')}
+                {uiT('Close', 'αñ¼αñéαñª αñòαñ░αÑçαñé')}
               </button>
               <button
                 onClick={() => {
@@ -774,7 +794,7 @@ export default function Customers(): React.JSX.Element {
                 }}
                 className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
               >
-                <Edit2 size={14} /> {uiT('Edit', 'संपादित करें')}
+                <Edit2 size={14} /> {uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé')}
               </button>
               <button
                 onClick={() => {
@@ -783,7 +803,7 @@ export default function Customers(): React.JSX.Element {
                 }}
                 className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
               >
-                <Eye size={14} /> {uiT('View Full Profile', 'पूरी प्रोफ़ाइल देखें')}
+                <Eye size={14} /> {uiT('View Full Profile', 'αñ¬αÑéαñ░αÑÇ αñ¬αÑìαñ░αÑïαñ½αñ╝αñ╛αñçαñ▓ αñªαÑçαñûαÑçαñé')}
               </button>
             </div>
           </div>

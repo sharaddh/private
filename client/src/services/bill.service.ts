@@ -29,6 +29,8 @@ class BillService extends ApiService {
     tax?: number;
     advancePaid?: number;
     notes?: string;
+    ayushmanApplied?: boolean;
+    ayushmanDiscount?: number;
   }): Promise<ApiResponse<Bill>> {
     return api.post<Bill>(this.basePath, data);
   }
