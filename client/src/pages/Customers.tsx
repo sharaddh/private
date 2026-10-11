@@ -25,7 +25,6 @@ import {
   IndianRupee,
   Eye,
   Calendar,
-  MapPinned,
 } from 'lucide-react';
 import type { Customer, CustomerFormData } from '../types';
 
@@ -34,6 +33,7 @@ export default function Customers(): React.JSX.Element {
   const [list, setList] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [ayushmanFilter, setAyushmanFilter] = useState<'all' | 'abha'>('all');
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -95,16 +95,18 @@ export default function Customers(): React.JSX.Element {
 
   const filteredList = useMemo((): Customer[] => {
     const q = searchQuery.trim();
-    if (!q) return list;
     const lower = q.toLowerCase();
-    return list.filter(
-      (c: Customer) =>
+    return list.filter((c: Customer) => {
+      if (ayushmanFilter === 'abha' && !c.isAyushman) return false;
+      if (!q) return true;
+      return (
         c.name?.toLowerCase().includes(lower) ||
         c.mobile?.includes(q) ||
         c.customerId?.toLowerCase().includes(lower) ||
         c.email?.toLowerCase().includes(lower)
-    );
-  }, [searchQuery, list]);
+      );
+    });
+  }, [searchQuery, list, ayushmanFilter]);
 
   function openCreate(): void {
     setEditing(null);
@@ -269,6 +271,29 @@ export default function Customers(): React.JSX.Element {
         )}
       </div>
 
+      <div className="flex items-center gap-2 mt-3">
+        <button
+          onClick={() => setAyushmanFilter('all')}
+          className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors ${
+            ayushmanFilter === 'all'
+              ? 'bg-[#1ed760] text-black'
+              : 'bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text'
+          }`}
+        >
+          {uiT('All', 'सभी')}
+        </button>
+        <button
+          onClick={() => setAyushmanFilter('abha')}
+          className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors ${
+            ayushmanFilter === 'abha'
+              ? 'bg-[#1ed760] text-black'
+              : 'bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text'
+          }`}
+        >
+          ABHA {list.filter((c: Customer) => c.isAyushman).length}
+        </button>
+      </div>
+
       {filteredList.length === 0 ? (
         <div className="bg-th-surface rounded-lg text-center py-16 mt-6">
           <div className="w-16 h-16 bg-th-hover rounded-full flex items-center justify-center mx-auto mb-4">
@@ -329,11 +354,6 @@ export default function Customers(): React.JSX.Element {
                           </span>
                         )}
                       </div>
-                      {c.customerId && (
-                        <span className="text-[14px] text-th-secondary font-mono bg-th-elevated px-1.5 py-0.5 rounded-lg inline-block mt-0.5">
-                          #{c.customerId.replace('CUST-', '').slice(-6)}
-                        </span>
-                      )}
                     </div>
 
                     <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -368,12 +388,23 @@ export default function Customers(): React.JSX.Element {
                         <Phone size={10} /> {c.mobile.replace(/^0+/, '')}
                       </span>
                     )}
-                    {c.city && (
-                      <span className="flex items-center gap-1">
-                        <MapPinned size={10} /> {c.city}
-                      </span>
-                    )}
                   </div>
+
+                  {c.isAyushman && (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
+                      <span className="px-1.5 py-0.5 bg-[#1ed760]/15 text-[#1ed760] rounded text-[13px] font-bold">
+                        ABHA
+                      </span>
+                      <span className="text-[13px] text-th-secondary">
+                        {c.ayushmanUsedYear === new Date().getFullYear()
+                          ? `${uiT('Next specs', 'अगली सुविधा')}: 1 ${uiT(
+                              'Jan',
+                              'जनवरी'
+                            )} ${new Date().getFullYear() + 1}`
+                          : uiT('Eligible now', 'अभी पात्र')}
+                      </span>
+                    </div>
+                  )}
 
                   {c.tags && c.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
