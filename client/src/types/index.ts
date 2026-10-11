@@ -74,6 +74,11 @@ export interface Customer {
   totalVisits?: number;
   totalSpent?: number;
   pendingAmount?: number;
+  // Ayushman Bharat Scheme fields
+  isAyushman?: boolean;
+  abhaNumber?: string;
+  ayushmanLastUsedAt?: string | Date | null;
+  ayushmanUsedYear?: number | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -88,6 +93,9 @@ export interface CustomerFormData {
   age: string;
   gender: string;
   tags: string;
+  // Ayushman Bharat Scheme fields
+  isAyushman: boolean;
+  abhaNumber: string;
 }
 
 // ─── Visit ───────────────────────────────────────────────────────────────────
@@ -200,6 +208,9 @@ export interface Bill {
   advancePaid: number;
   pendingAmount: number;
   notes?: string;
+  // Ayushman Bharat Scheme fields
+  ayushmanApplied?: boolean;
+  ayushmanDiscount?: number;
   createdAt: string;
   updatedAt?: string;
 }

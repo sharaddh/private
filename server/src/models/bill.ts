@@ -28,6 +28,9 @@ const BillSchemaObj = new Schema(
     pendingAmount: { type: Number, default: 0 },
     totalAmount: { type: Number, default: 0 },
     status: { type: String, enum: ["Active", "Cancelled"], default: "Active" },
+    // Ayushman Bharat Scheme fields
+    ayushmanApplied: { type: Boolean, default: false },
+    ayushmanDiscount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -18,6 +18,9 @@ export const createBillSchema = z
     discount: z.number().min(0).optional(),
     tax: z.number().min(0).optional(),
     advancePaid: z.number().min(0).optional(),
+    // Ayushman Bharat Scheme fields
+    ayushmanApplied: z.boolean().optional(),
+    ayushmanDiscount: z.number().min(0).optional(),
   })
   .strict();
 
@@ -36,6 +39,9 @@ export const updateBillSchema = z
     tax: z.number().min(0).optional(),
     advancePaid: z.number().min(0).optional(),
     status: z.enum(["Active", "Cancelled"]).optional(),
+    // Ayushman Bharat Scheme fields
+    ayushmanApplied: z.boolean().optional(),
+    ayushmanDiscount: z.number().min(0).optional(),
   })
   .strict();
 

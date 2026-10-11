@@ -17,6 +17,11 @@ const CustomerSchemaObj = new Schema(
     totalVisits: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
     pendingAmount: { type: Number, default: 0 },
+    // Ayushman Bharat Scheme fields
+    isAyushman: { type: Boolean, default: false },
+    abhaNumber: { type: String },
+    ayushmanLastUsedAt: { type: Date },
+    ayushmanUsedYear: { type: Number },
   },
   { timestamps: true }
 );
