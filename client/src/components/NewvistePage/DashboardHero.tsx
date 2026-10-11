@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, ShoppingBag, Wallet, Receipt, Clock } from 'lucide-react';
 
-export const SalesDashboardCard = ({ d, uiT }) => {
+export const SalesDashboardCard = ({ d, uiT }: { d: any; uiT: any }) => {
   const metrics = [
     {
       label: uiT("Today's Sales", 'आज की बिक्री'),
