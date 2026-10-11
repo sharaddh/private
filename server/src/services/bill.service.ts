@@ -134,6 +134,16 @@ export async function createBill(
   const ayushmanAppliedFlag = Boolean(data.ayushmanApplied);
   let ayushmanDiscountCalc = 0;
   if (ayushmanAppliedFlag) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { isAyushman: true, abhaNumber: true, ayushmanUsedYear: true },
+    });
+    if (!customer || !customer.isAyushman || !customer.abhaNumber) {
+      throw new AppError(400, "Customer is not enrolled in the Ayushman Bharat Scheme");
+    }
+    if (customer.ayushmanUsedYear === new Date().getFullYear()) {
+      throw new AppError(400, "Customer already used the Ayushman Bharat benefit this year");
+    }
     ayushmanDiscountCalc = items
       .filter((it) => {
         const d = (it.description || "").toLowerCase();

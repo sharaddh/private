@@ -77,11 +77,17 @@ export default function Pickup() {
     [{ description: '', qty: 1, price: 0 }]
   );
   const [billDiscount, setBillDiscount] = useState<number>(0);
+  const [billAyushman, setBillAyushman] = useState<boolean>(false);
   const [showConfirmDeliver, setShowConfirmDeliver] = useState<boolean>(false);
   const [loadedFromUrl, setLoadedFromUrl] = useState<boolean>(false);
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const billTotal = Math.max(0, billSubtotal - billDiscount);
+  const ayushmanEligibleValue = billItems
+    .filter((i) => /frame|lens|coating/i.test(i.description))
+    .reduce((s, i) => s + i.qty * i.price, 0);
+  const ayushmanEstimate = billAyushman ? Math.round(ayushmanEligibleValue * 0.5) : 0;
+  const billTotalWithAyushman = Math.max(0, billTotal - ayushmanEstimate);
 
   /** The most this screen can collect. Zero until a bill is attached. */
   const collectable = bill?.pendingAmount ?? 0;
@@ -197,7 +203,8 @@ export default function Pickup() {
   }
 
   async function pickReadyOrder(o: Order) {
-    const mobile = o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
+    const mobile =
+      o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
     if (!mobile) return;
     setPhone(mobile);
     setIsLoading(true);
@@ -282,6 +289,7 @@ export default function Pickup() {
       if (items.length === 0) items.push({ description: '', qty: 1, price: 0 });
       setBillItems(items);
       setBillDiscount(0);
+      setBillAyushman(false);
     } else {
       setSplits(singleRow('Cash', b.pendingAmount > 0 ? b.pendingAmount : 0));
     }
@@ -360,6 +368,7 @@ export default function Pickup() {
       if (items.length === 0) items.push({ description: '', qty: 1, price: 0 });
       setBillItems(items);
       setBillDiscount(0);
+      setBillAyushman(false);
     }
   }
 
@@ -398,6 +407,7 @@ export default function Pickup() {
       discount: billDiscount,
       tax: 0,
       advancePaid: 0,
+      ayushmanApplied: billAyushman,
     });
     if (res.success) {
       setBill(res.data!);
@@ -501,7 +511,8 @@ export default function Pickup() {
 
   const renderReadyCard = (o: Order) => {
     const cName = o.customer?.name || (typeof o.customerId === 'object' ? o.customerId?.name : '');
-    const cMobile = o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
+    const cMobile =
+      o.customer?.mobile || (typeof o.customerId === 'object' ? o.customerId?.mobile : '');
     return (
       <ShineCard
         key={o._id}
@@ -903,6 +914,14 @@ export default function Pickup() {
                         <span>-₹{bill.discount?.toFixed(0)}</span>
                       </div>
                     )}
+                    {bill.ayushmanApplied && (
+                      <div className="flex justify-between text-sm text-[#1ed760] font-medium">
+                        <span>
+                          {uiT('Ayushman Discount', 'आयुष्मान छूट')} ({uiT('50%', '50%')})
+                        </span>
+                        <span>-₹{(bill.ayushmanDiscount || 0).toFixed(0)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm font-bold text-th-text">
                       <span>{uiT('Total', 'कुल')}</span>
                       <span>₹{bill.totalAmount?.toFixed(0) || '0'}</span>
@@ -1009,6 +1028,33 @@ export default function Pickup() {
                         <Plus size={14} aria-hidden="true" /> {uiT('Add Item', 'आइटम जोड़ें')}
                       </button>
                     </div>
+                    {selectedCustomer?.isAyushman && (
+                      <label className="flex items-center gap-2.5 bg-[#1ed760]/5 border border-[#1ed760]/20 rounded-lg p-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={billAyushman}
+                          onChange={(e) => setBillAyushman(e.target.checked)}
+                          className="w-4 h-4 accent-[#1ed760]"
+                          aria-label={uiT('Apply Ayushman Bharat', 'आयुष्मान भारत लागू करें')}
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-th-text">
+                            {uiT('Ayushman Bharat Scheme', 'आयुष्मान भारत योजना')}
+                          </p>
+                          <p className="text-xs text-th-secondary">
+                            {uiT(
+                              '50% off on frame, lens & coating (once per year)',
+                              'फ्रेम, लेंस और कोटिंग पर 50% छूट (साल में एक बार)'
+                            )}
+                          </p>
+                        </div>
+                        {billAyushman && (
+                          <span className="text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-2 py-0.5 rounded-lg uppercase">
+                            {uiT('ABHA Applied', 'ABHA लागू')}
+                          </span>
+                        )}
+                      </label>
+                    )}
                     <div className="flex items-center gap-3">
                       <div className="w-32">
                         <label className="block text-xs font-medium text-th-secondary mb-1">
@@ -1031,8 +1077,15 @@ export default function Pickup() {
                           </span>
                         </p>
                         <p className="text-lg font-bold text-th-text">
-                          {uiT('Total', 'कुल')}: ₹{billTotal.toFixed(0)}
+                          {uiT('Total', 'कुल')}: ₹
+                          {billAyushman ? billTotalWithAyushman.toFixed(0) : billTotal.toFixed(0)}
                         </p>
+                        {billAyushman && (
+                          <p className="text-xs text-[#1ed760] font-medium">
+                            {uiT('incl. Ayushman 50%', 'आयुष्मान 50% सहित')} −₹
+                            {ayushmanEstimate.toFixed(0)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2 pt-1">
@@ -1042,7 +1095,7 @@ export default function Pickup() {
                         className="btn-primary flex items-center gap-2 px-6 py-3"
                       >
                         <Plus size={18} aria-hidden="true" /> {uiT('Create Bill', 'बिल बनाएं')} — ₹
-                        {billTotal.toFixed(0)}
+                        {billAyushman ? billTotalWithAyushman.toFixed(0) : billTotal.toFixed(0)}
                       </button>
                       <button
                         onClick={() => setShowCreateBill(false)}
@@ -1068,7 +1121,10 @@ export default function Pickup() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setShowCreateBill(true)}
+                      onClick={() => {
+                        setBillAyushman(false);
+                        setShowCreateBill(true);
+                      }}
                       aria-label={uiT('Create bill from order', 'ऑर्डर से बिल बनाएं')}
                       className="btn-primary btn-sm flex items-center gap-1 mx-auto"
                     >
@@ -1169,7 +1225,9 @@ export default function Pickup() {
                 <p className="text-sm text-th-secondary text-center mb-5">
                   {collectAmount > 0
                     ? isSplitActive(splits)
-                      ? `${uiT('Mark as delivered and collect', 'डिलीवर करें और एकत्र करें')} ₹${collectAmount} ${uiT('across', 'across')} ${nonZeroRows(splits)
+                      ? `${uiT('Mark as delivered and collect', 'डिलीवर करें और एकत्र करें')} ₹${collectAmount} ${uiT('across', 'across')} ${nonZeroRows(
+                          splits
+                        )
                           .map((r) => r.mode)
                           .join(' + ')}?`
                       : `Mark as delivered and collect ₹${collectAmount} via ${collectMode}?`
