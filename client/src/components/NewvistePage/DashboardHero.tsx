@@ -4,25 +4,25 @@ import { TrendingUp, ShoppingBag, Wallet, Receipt, Clock } from 'lucide-react';
 export const SalesDashboardCard = ({ d, uiT }: { d: any; uiT: any }) => {
   const metrics = [
     {
-      label: uiT("Today's Sales", 'आज की बिक्री'),
-      value: `₹${(d.todaySales || 0).toLocaleString()}`,
+      label: uiT("Today's Sales", 'à¤†à¤œ à¤•à¥€ à¤¬à¤¿à¤•à¥à¤°à¥€'),
+      value: `â‚¹${(d.todaySales || 0).toLocaleString()}`,
       icon: Wallet,
       accent: 'from-emerald-500/20 to-teal-500/0',
     },
     {
-      label: uiT('Collection', 'संग्रह'),
-      value: `₹${(d.todayCollection || 0).toLocaleString()}`,
+      label: uiT('Collection', 'à¤¸à¤‚à¤—à¥à¤°à¤¹'),
+      value: `â‚¹${(d.todayCollection || 0).toLocaleString()}`,
       icon: Receipt,
       accent: 'from-blue-500/20 to-indigo-500/0',
     },
     {
-      label: uiT('Orders', 'ऑर्डर'),
+      label: uiT('Orders', 'à¤‘à¤°à¥à¤¡à¤°'),
       value: d.todayOrders ?? 0,
       icon: ShoppingBag,
       accent: 'from-purple-500/20 to-violet-500/0',
     },
     {
-      label: uiT('Pending', 'बाकी'),
+      label: uiT('Pending', 'à¤¬à¤¾à¤•à¥€'),
       value: d.pendingBills?.length ?? 0,
       icon: Clock,
       accent: 'from-amber-500/20 to-orange-500/0',
@@ -81,7 +81,7 @@ export const SalesDashboardCard = ({ d, uiT }: { d: any; uiT: any }) => {
                 : `${Number(d.salesTrend) >= 0 ? '+' : ''}${d.salesTrend}%`}
             </span>
             <span className="text-violet-200/70 font-normal">
-              {uiT('vs last week', 'पिछले सप्ताह')}
+              {uiT('vs last week', 'à¤ªà¤¿à¤›à¤²à¥‡ à¤¸à¤ªà¥à¤¤à¤¾à¤¹')}
             </span>
           </div>
         </div>
