@@ -431,12 +431,12 @@ export default function Customers(): React.JSX.Element {
                       <Calendar size={10} /> {c.totalVisits || 0}
                     </span>
                     <span className="text-[15px] font-bold text-[#1ed760]">
-                      Γé╣{(c.totalSpent || 0).toLocaleString()}
+                      ₹{(c.totalSpent || 0).toLocaleString()}
                     </span>
                   </div>
                   {(c.pendingAmount || 0) > 0 ? (
                     <span className="text-[14px] font-semibold text-[#e8a427]">
-                      Γé╣{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'αñ¼αñòαñ╛αñ»αñ╛')}
+                      ₹{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'αñ¼αñòαñ╛αñ»αñ╛')}
                     </span>
                   ) : (c.totalVisits || 0) > 0 ? (
                     <span className="text-[14px] text-[#1ed760] font-medium">
@@ -704,7 +704,7 @@ export default function Customers(): React.JSX.Element {
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#1ed760] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#1ed760]">
-                  Γé╣{(detailCustomer.totalSpent || 0).toLocaleString()}
+                  ₹{(detailCustomer.totalSpent || 0).toLocaleString()}
                 </p>
                 <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
                   {uiT('Spent', 'αñûαñ░αÑìαñÜ')}
@@ -713,7 +713,7 @@ export default function Customers(): React.JSX.Element {
               <div className="bg-th-elevated rounded-lg p-3 text-center">
                 <IndianRupee size={16} className="text-[#e8a427] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[#e8a427]">
-                  Γé╣{(detailCustomer.pendingAmount || 0).toLocaleString()}
+                  ₹{(detailCustomer.pendingAmount || 0).toLocaleString()}
                 </p>
                 <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
                   {uiT('Pending', 'αñ¼αñ╛αñòαÑÇ')}

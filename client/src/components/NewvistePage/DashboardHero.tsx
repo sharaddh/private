@@ -5,13 +5,13 @@ export const SalesDashboardCard = ({ d, uiT }: { d: any; uiT: any }) => {
   const metrics = [
     {
       label: uiT("Today's Sales", 'à¤†à¤œ à¤•à¥€ à¤¬à¤¿à¤•à¥à¤°à¥€'),
-      value: `â‚¹${(d.todaySales || 0).toLocaleString()}`,
+      value: `₹${(d.todaySales || 0).toLocaleString()}`,
       icon: Wallet,
       accent: 'from-emerald-500/20 to-teal-500/0',
     },
     {
       label: uiT('Collection', 'à¤¸à¤‚à¤—à¥à¤°à¤¹'),
-      value: `â‚¹${(d.todayCollection || 0).toLocaleString()}`,
+      value: `₹${(d.todayCollection || 0).toLocaleString()}`,
       icon: Receipt,
       accent: 'from-blue-500/20 to-indigo-500/0',
     },
