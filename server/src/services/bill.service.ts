@@ -130,9 +130,18 @@ export async function createBill(
 
   const items = data.items || [];
   let discount = data.discount || 0;
-  // Ayushman Bharat Scheme
-  let ayushmanAppliedFlag = data.ayushmanApplied || false;
+  // Ayushman Bharat Scheme: 50% off on frame, lens and coating line items
+  const ayushmanAppliedFlag = Boolean(data.ayushmanApplied);
   let ayushmanDiscountCalc = 0;
+  if (ayushmanAppliedFlag) {
+    ayushmanDiscountCalc = items
+      .filter((it) => {
+        const d = (it.description || "").toLowerCase();
+        return d.includes("frame") || d.includes("lens") || d.includes("coating");
+      })
+      .reduce((sum, it) => sum + (it.quantity || 1) * (it.unitPrice || 0) * 0.5, 0);
+    discount += ayushmanDiscountCalc;
+  }
   const tax = data.tax || 0;
   const advancePaid = data.advancePaid || 0;
 
@@ -170,6 +179,9 @@ export async function createBill(
           pendingAmount,
           totalAmount,
           status: "Active",
+          ...(ayushmanAppliedFlag
+            ? { ayushmanApplied: true, ayushmanDiscount: ayushmanDiscountCalc }
+            : {}),
         },
         include: billInclude,
       });
@@ -188,7 +200,11 @@ export async function createBill(
       totalSpent: { increment: totalAmount },
       pendingAmount: { increment: pendingAmount },
       ...(ayushmanAppliedFlag && ayushmanDiscountCalc > 0
-        ? { ayushmanLastUsedAt: new Date(), ayushmanUsedYear: new Date().getFullYear(), isAyushman: true }
+        ? {
+            ayushmanLastUsedAt: new Date(),
+            ayushmanUsedYear: new Date().getFullYear(),
+            isAyushman: true,
+          }
         : {}),
     },
   });
@@ -208,14 +224,17 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
 
   const items =
     updates.items ||
-    (existing.items as Array<{ description: string; quantity: number; unitPrice: number }>).map((it) => ({
-      description: it.description,
-      quantity: it.quantity,
-      unitPrice: it.unitPrice,
-    }));
+    (existing.items as Array<{ description: string; quantity: number; unitPrice: number }>).map(
+      (it) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+      })
+    );
   const discount = updates.discount !== undefined ? updates.discount : existing.discount;
   const tax = updates.tax !== undefined ? updates.tax : existing.tax;
-  const advancePaid = updates.advancePaid !== undefined ? updates.advancePaid : existing.advancePaid;
+  const advancePaid =
+    updates.advancePaid !== undefined ? updates.advancePaid : existing.advancePaid;
 
   const { subtotal, totalAmount, pendingAmount } = calculateBillAmounts(
     items,
@@ -228,9 +247,13 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
 
   if (oldStatus !== newStatus && existing.stockItems && existing.stockItems.length > 0) {
     if (newStatus === "Cancelled") {
-      await restoreStockForOrder({ stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }> });
+      await restoreStockForOrder({
+        stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }>,
+      });
     } else if (oldStatus === "Cancelled") {
-      await decrementStockForOrder({ stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }> });
+      await decrementStockForOrder({
+        stockItems: existing.stockItems as Array<{ sku?: string; quantity?: number }>,
+      });
     }
   }
 
@@ -336,13 +359,19 @@ export async function collectBillPayment(
 }
 
 export async function deleteBill(billId: string): Promise<void> {
-  const bill = await prisma.bill.findUnique({ where: { id: billId }, include: { stockItems: true } });
+  const bill = await prisma.bill.findUnique({
+    where: { id: billId },
+    include: { stockItems: true },
+  });
   if (!bill) {
     throw new AppError(404, "Bill not found");
   }
 
   await prisma.$transaction(async (tx) => {
-    if (Array.isArray(bill.stockItems) && (bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0) {
+    if (
+      Array.isArray(bill.stockItems) &&
+      (bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>).length > 0
+    ) {
       const stockItems = bill.stockItems as unknown as Array<{ sku?: string; quantity?: number }>;
       await restoreStockForOrder({ stockItems }, tx as any);
     }
