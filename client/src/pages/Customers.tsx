@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import api from '../api';
@@ -26,8 +26,50 @@ import {
   Eye,
   Calendar,
   Receipt,
+  Glasses,
 } from 'lucide-react';
-import type { Customer, CustomerFormData } from '../types';
+import type { Customer, CustomerFormData, Prescription, Order, EyeData } from '../types';
+
+interface CardDetail {
+  loading: boolean;
+  prescriptions: Prescription[];
+  orders: Order[];
+}
+
+function fmtDate(d?: string | Date): string {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function signedNum(v?: number): string {
+  if (v == null || Number.isNaN(v)) return '—';
+  return `${v > 0 ? '+' : ''}${v.toFixed(2)}`;
+}
+
+function rxSummary(p?: Prescription | null): string {
+  if (!p) return '';
+  const r = p.rightEye?.dv as Partial<EyeData> | undefined;
+  const l = p.leftEye?.dv as Partial<EyeData> | undefined;
+  const rx = (e?: Partial<EyeData>): string => {
+    if (!e?.sph) return '—';
+    const cyl = e.cyl ? ` / ${signedNum(e.cyl)}` : '';
+    return `${signedNum(e.sph)}${cyl}`;
+  };
+  const bits = [`R ${rx(r)}`, `L ${rx(l)}`];
+  if (p.pd) bits.push(`PD ${p.pd}`);
+  return bits.join('   ');
+}
+
+const ORDER_COLORS: Record<string, string> = {
+  Ready: 'bg-[#1ed760]/15 text-[#1ed760]',
+  'In Lab': 'bg-[#3b82f6]/15 text-[#3b82f6]',
+  Ordered: 'bg-[#a78bfa]/15 text-[#a78bfa]',
+  Delivered: 'bg-th-elevated text-th-secondary',
+  Pending: 'bg-[#e8a427]/15 text-[#e8a427]',
+  Cancelled: 'bg-red-500/10 text-red-400',
+};
 
 export default function Customers(): React.JSX.Element {
   const toast = useToast();
@@ -58,6 +100,61 @@ export default function Customers(): React.JSX.Element {
   const { isStaff, user } = useAuth();
   const { uiT } = useTranslate();
   const [recalculating, setRecalculating] = useState<boolean>(false);
+  const [detailMap, setDetailMap] = useState<Record<string, CardDetail>>({});
+  const [hover, setHover] = useState<null | { c: Customer; left: number; top: number; width: number }>(
+    null
+  );
+  const hoverCloseTimer = useRef<number | null>(null);
+  const detailFetching = useRef<Set<string>>(new Set());
+
+  async function loadCardDetail(id: string) {
+    if (detailFetching.current.has(id)) return;
+    if (detailMap[id]) return;
+    detailFetching.current.add(id);
+    setDetailMap((m) => ({ ...m, [id]: { loading: true, prescriptions: [], orders: [] } }));
+    try {
+      const [rxRes, ordRes] = await Promise.all([
+        api.get<Prescription[]>('/api/prescriptions?customerId=' + id),
+        api.get<Order[]>('/api/orders?customerId=' + id),
+      ]);
+      const listOf = (res: unknown): unknown[] => {
+        const data = (res as { data?: unknown })?.data;
+        if (Array.isArray(data)) return data as unknown[];
+        if (data && typeof data === 'object' && Array.isArray((data as Record<string, unknown>).data))
+          return ((data as Record<string, unknown>).data as unknown[]) || [];
+        return [];
+      };
+      const prescriptions = (listOf(rxRes) as Prescription[]).filter((p) => p && p.rightEye);
+      const orders = listOf(ordRes) as Order[];
+      setDetailMap((m) => ({ ...m, [id]: { loading: false, prescriptions, orders } }));
+    } catch {
+      setDetailMap((m) => ({ ...m, [id]: { loading: false, prescriptions: [], orders: [] } }));
+    } finally {
+      detailFetching.current.delete(id);
+    }
+  }
+
+  function openHover(e: React.MouseEvent<Element>, c: Customer) {
+    if (hoverCloseTimer.current) {
+      window.clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setHover({ c, left: rect.left, top: rect.top, width: rect.width });
+    loadCardDetail(c._id);
+  }
+
+  function closeHoverSoon() {
+    if (hoverCloseTimer.current) window.clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = window.setTimeout(() => setHover(null), 180);
+  }
+
+  function cancelCloseHover() {
+    if (hoverCloseTimer.current) {
+      window.clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+  }
 
   const fetchCustomers = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -323,153 +420,377 @@ export default function Customers(): React.JSX.Element {
             {filteredList.length} {uiT('customer(s)', 'αñùαÑìαñ░αñ╛αñ╣αñò')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filteredList.map((c: Customer) => (
-              <ShineCard
-                key={c._id}
-                onClick={() => navigate(`/customers/${c._id}`)}
-                className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] overflow-hidden border border-th-border hover:border-[#1ed760]/30"
-              >
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative flex-shrink-0">
-                      <div
-                        className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${
-                          (c.pendingAmount || 0) > 0
-                            ? 'bg-[#e8a427] text-black'
-                            : 'bg-[#1ed760] text-black'
-                        }`}
-                      >
-                        {c.name?.charAt(0)?.toUpperCase() || '?'}
+            {filteredList.map((c: Customer) => {
+              const d = detailMap[c._id];
+              const lastRx = d?.prescriptions?.[0] as
+                | (Prescription & { _id?: string; createdAt?: string })
+                | undefined;
+              const rxLine = lastRx
+                ? `${rxSummary(lastRx)}   ·   ${fmtDate(lastRx.createdAt)}`
+                : d?.loading
+                  ? '…'
+                  : uiT('No prescription yet', 'अभी तक कोई नुस्खा नहीं');
+              return (
+                <div
+                  key={c._id}
+                  onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => openHover(e, c)}
+                  onMouseLeave={closeHoverSoon}
+                >
+                  <ShineCard
+                    onClick={() => navigate(`/customers/${c._id}`)}
+                    className="group relative bg-th-surface rounded-xl cursor-pointer hover:shadow-lg hover:shadow-black/10 active:scale-[0.98] overflow-hidden border border-th-border hover:border-[#1ed760]/30"
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="relative flex-shrink-0">
+                          <div
+                            className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base ${
+                              (c.pendingAmount || 0) > 0
+                                ? 'bg-[#e8a427] text-black'
+                                : 'bg-[#1ed760] text-black'
+                            }`}
+                          >
+                            {c.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          {(c.pendingAmount || 0) > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-th-surface" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-sm text-th-text truncate">{c.name}</h3>
+                            {c.isAyushman && (
+                              <span className="px-1.5 py-0.5 bg-[#1ed760]/15 text-[#1ed760] rounded-md text-[11px] font-bold shrink-0">
+                                ABHA
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-th-secondary">
+                            {c.mobile ? (
+                              <span className="flex items-center gap-1">
+                                <Phone size={11} /> {c.mobile.replace(/^0+/, '')}
+                              </span>
+                            ) : null}
+                            {c.age ? (
+                              <span>
+                                {c.age}y{c.gender ? `, ${c.gender[0]}` : ''}
+                              </span>
+                            ) : c.gender ? (
+                              <span>{c.gender}</span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              openHover(e, c);
+                            }}
+                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
+                            title={uiT('Quick view', 'त्वरित देखें')}
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              navigate(`/pickup?customerId=${c._id}`);
+                            }}
+                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
+                            title={uiT('Bill', 'बिल बनाएं')}
+                          >
+                            <Receipt size={16} />
+                          </button>
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              openEdit(c);
+                            }}
+                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
+                            title={uiT('Edit', 'संपादित करें')}
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          {!isStaff && (
+                            <button
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleDelete(c._id);
+                              }}
+                              className="p-1.5 hover:bg-red-500/10 rounded-md text-th-secondary hover:text-red-400 transition-colors"
+                              title={uiT('Delete', 'हटाएं')}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {(c.pendingAmount || 0) > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-th-surface" />
-                      )}
-                    </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="font-semibold text-sm text-th-text truncate">{c.name}</h3>
-                        {c.age && (
-                          <span className="text-[14px] text-th-secondary shrink-0">
-                            {c.age}y{c.gender ? `, ${c.gender}` : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          navigate(`/pickup?customerId=${c._id}`);
-                        }}
-                        className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors"
-                        title={uiT('Bill', 'बिल बनाएं')}
-                      >
-                        <Receipt size={12} />
-                      </button>
-                      <button
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          openEdit(c);
-                        }}
-                        className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors"
-                        title={uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé')}
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      {!isStaff && (
-                        <button
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                            handleDelete(c._id);
-                          }}
-                          className="p-1 hover:bg-red-500/10 rounded text-th-secondary hover:text-red-400 transition-colors"
-                          title={uiT('Delete', 'αñ╣αñƒαñ╛αñÅαñé')}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-2.5 text-xs text-th-secondary">
-                    {c.mobile && (
-                      <span className="flex items-center gap-1">
-                        <Phone size={10} /> {c.mobile.replace(/^0+/, '')}
-                      </span>
-                    )}
-                  </div>
-
-                  {c.isAyushman && (
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
-                      <span className="px-1.5 py-0.5 bg-[#1ed760]/15 text-[#1ed760] rounded text-[13px] font-bold">
-                        ABHA
-                      </span>
-                      <span className="text-[13px] text-th-secondary">
-                        {c.ayushmanUsedYear === new Date().getFullYear()
-                          ? `${uiT('Next specs', 'अगली सुविधा')}: 1 ${uiT(
-                              'Jan',
-                              'जनवरी'
-                            )} ${new Date().getFullYear() + 1}`
-                          : uiT('Eligible now', 'अभी पात्र')}
-                      </span>
-                      <button
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          navigate(`/pickup?customerId=${c._id}`);
-                        }}
-                        className="ml-auto px-2 py-0.5 bg-[#1ed760] text-black rounded-md text-[13px] font-bold hover:bg-[#1ed760]/80 transition-colors"
-                        title={uiT('Bill with Ayushman', 'आयुष्मान से बिल बनाएं')}
-                      >
-                        {uiT('Bill', 'बिल बनाएं')}
-                      </button>
-                    </div>
-                  )}
-
-                  {c.tags && c.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {c.tags.slice(0, 2).map((t: string) => (
+                      <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-th-border/60 text-[13px]">
+                        <Glasses size={14} className="text-[#1ed760]/70 shrink-0" />
+                        <span className="font-medium text-th-secondary shrink-0">
+                          {uiT('Last Rx', 'अंतिम नुस्खा')}
+                        </span>
                         <span
-                          key={t}
-                          className="px-1.5 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded text-[13px] font-medium"
+                          className={`min-w-0 flex-1 text-right font-mono truncate ${
+                            lastRx ? 'text-th-text' : 'text-th-secondary'
+                          }`}
+                          title={rxLine}
                         >
-                          {t}
+                          {rxLine}
                         </span>
-                      ))}
-                      {c.tags.length > 2 && (
-                        <span className="text-[13px] text-th-secondary px-0.5">
-                          +{c.tags.length - 2}
-                        </span>
+                      </div>
+
+                      {c.isAyushman && (
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+                          <span className="text-[13px] text-th-secondary">
+                            {c.ayushmanUsedYear === new Date().getFullYear()
+                              ? `${uiT('Next specs', 'अगली सुविधा')}: 1 ${uiT(
+                                  'Jan',
+                                  'जनवरी'
+                                )} ${new Date().getFullYear() + 1}`
+                              : uiT('Eligible now', 'अभी पात्र')}
+                          </span>
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              navigate(`/pickup?customerId=${c._id}`);
+                            }}
+                            className="ml-auto px-2 py-0.5 bg-[#1ed760] text-black rounded-md text-[13px] font-bold hover:bg-[#1ed760]/80 transition-colors"
+                            title={uiT('Bill with Ayushman', 'आयुष्मान से बिल बनाएं')}
+                          >
+                            {uiT('Bill', 'बिल बनाएं')}
+                          </button>
+                        </div>
+                      )}
+
+                      {c.tags && c.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {c.tags.slice(0, 2).map((t: string) => (
+                            <span
+                              key={t}
+                              className="px-1.5 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded text-[13px] font-medium"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                          {c.tags.length > 2 && (
+                            <span className="text-[13px] text-th-secondary px-0.5">
+                              +{c.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                <div className="flex items-center justify-between px-4 py-2.5 bg-th-elevated/50 border-t border-th-border">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-[15px] font-bold text-th-secondary">
-                      <Calendar size={10} /> {c.totalVisits || 0}
-                    </span>
-                    <span className="text-[15px] font-bold text-[#1ed760]">
-                      ₹{(c.totalSpent || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  {(c.pendingAmount || 0) > 0 ? (
-                    <span className="text-[14px] font-semibold text-[#e8a427]">
-                      ₹{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'αñ¼αñòαñ╛αñ»αñ╛')}
-                    </span>
-                  ) : (c.totalVisits || 0) > 0 ? (
-                    <span className="text-[14px] text-[#1ed760] font-medium">
-                      {uiT('Clear', 'αñÜαÑüαñòαññαñ╛')}
-                    </span>
-                  ) : null}
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-th-elevated/50 border-t border-th-border">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-[15px] font-bold text-th-secondary">
+                          <Calendar size={15} /> {c.totalVisits || 0}
+                        </span>
+                        <span className="flex items-center gap-1 text-[15px] font-bold text-[#1ed760]">
+                          <IndianRupee size={14} /> ₹{(c.totalSpent || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      {(c.pendingAmount || 0) > 0 ? (
+                        <span className="text-[14px] font-semibold text-[#e8a427]">
+                          ₹{(c.pendingAmount || 0).toLocaleString()} {uiT('due', 'बकाया')}
+                        </span>
+                      ) : (c.totalVisits || 0) > 0 ? (
+                        <span className="text-[14px] text-[#1ed760] font-medium">
+                          {uiT('Clear', 'चुकता')}
+                        </span>
+                      ) : null}
+                    </div>
+                  </ShineCard>
                 </div>
-              </ShineCard>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
+
+      {hover &&
+        createPortal(
+          (() => {
+            const d = detailMap[hover.c._id];
+            const orders = d?.orders || [];
+            const rxItems = (d?.prescriptions || []) as Array<
+              Prescription & { _id?: string; createdAt?: string }
+            >;
+            const counts: Record<string, number> = {};
+            orders.forEach((o) => {
+              counts[o.status] = (counts[o.status] || 0) + 1;
+            });
+            const totalBilled = orders.reduce((s, o) => s + (o.billInfo?.totalAmount || 0), 0);
+            const orderPending = orders.reduce((s, o) => s + (o.billInfo?.pendingAmount || 0), 0);
+            const popW = 340;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            let left = hover.left + hover.width + 10;
+            if (left + popW > vw - 8) left = Math.max(8, hover.left - popW - 10);
+            const top = Math.max(8, Math.min(hover.top, vh - 420));
+            return (
+              <div
+                className="fixed z-[90] w-[340px] max-w-[90vw] rounded-xl border border-th-border bg-th-surface shadow-2xl shadow-black/40 overflow-hidden animate-fade-in"
+                style={{ left, top, maxHeight: '78vh' }}
+                onMouseEnter={cancelCloseHover}
+                onMouseLeave={closeHoverSoon}
+              >
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-th-border bg-th-elevated/40">
+                  <div className="w-10 h-10 rounded-full bg-[#1ed760] text-black flex items-center justify-center font-bold shrink-0">
+                    {hover.c.name?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm text-th-text truncate">{hover.c.name}</p>
+                      {hover.c.isAyushman && (
+                        <span className="px-1.5 py-0.5 bg-[#1ed760]/15 text-[#1ed760] rounded-md text-[10px] font-bold shrink-0">
+                          ABHA
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-th-secondary truncate">
+                      {hover.c.mobile
+                        ? hover.c.mobile.replace(/^0+/, '')
+                        : uiT('No mobile', 'मोबाइल नहीं')}
+                      {hover.c.age ? ` · ${hover.c.age}y` : ''}
+                      {hover.c.city ? ` · ${hover.c.city}` : ''}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setHover(null)}
+                    className="p-1 rounded-md text-th-secondary hover:text-th-text hover:bg-th-elevated shrink-0"
+                    aria-label={uiT('Close', 'बंद करें')}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                <div
+                  className="px-4 py-3 overflow-y-auto scrollbar-none"
+                  style={{ maxHeight: 'calc(78vh - 128px)' }}
+                >
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-th-elevated/40 rounded-lg px-2 py-1.5 text-center">
+                      <p className="text-sm font-bold text-th-text">{hover.c.totalVisits || 0}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-th-secondary">
+                        {uiT('Visits', 'विज़िट')}
+                      </p>
+                    </div>
+                    <div className="bg-th-elevated/40 rounded-lg px-2 py-1.5 text-center">
+                      <p className="text-sm font-bold text-[#1ed760]">
+                        ₹{(hover.c.totalSpent || 0).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-th-secondary">
+                        {uiT('Spent', 'खर्च')}
+                      </p>
+                    </div>
+                    <div className="bg-th-elevated/40 rounded-lg px-2 py-1.5 text-center">
+                      <p
+                        className={`text-sm font-bold ${
+                          (hover.c.pendingAmount || 0) > 0 ? 'text-[#e8a427]' : 'text-th-secondary'
+                        }`}
+                      >
+                        ₹{(hover.c.pendingAmount || 0).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-th-secondary">
+                        {uiT('Due', 'बकाया')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mb-1.5">
+                    {uiT('Recent details', 'हाल का विवरण')}
+                  </p>
+                  {d?.loading ? (
+                    <div className="space-y-1.5">
+                      {[0, 1].map((i) => (
+                        <div key={i} className="h-8 bg-th-elevated rounded animate-pulse" />
+                      ))}
+                    </div>
+                  ) : rxItems.length === 0 ? (
+                    <p className="text-xs text-th-secondary">
+                      {uiT('No prescriptions yet', 'अभी तक कोई नुस्खा नहीं')}
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {rxItems.slice(0, 3).map((p, i) => (
+                        <div
+                          key={p._id || i}
+                          className="flex items-center justify-between gap-2 bg-th-elevated/40 rounded-lg px-2.5 py-1.5"
+                        >
+                          <span className="font-mono text-[12px] text-th-text truncate">
+                            {rxSummary(p)}
+                          </span>
+                          <span className="text-[11px] text-th-secondary shrink-0">
+                            {fmtDate(p.createdAt)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-th-secondary mt-3 mb-1.5">
+                    {uiT('Orders summary', 'ऑर्डर सारांश')}
+                  </p>
+                  {d?.loading ? (
+                    <div className="h-8 bg-th-elevated rounded animate-pulse" />
+                  ) : orders.length === 0 ? (
+                    <p className="text-xs text-th-secondary">
+                      {uiT('No orders yet', 'अभी तक कोई ऑर्डर नहीं')}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {Object.entries(counts).map(([status, n]) => (
+                          <span
+                            key={status}
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                              ORDER_COLORS[status] || 'bg-th-elevated text-th-secondary'
+                            }`}
+                          >
+                            {status} · {n}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-th-secondary">{uiT('Total billed', 'कुल बिल')}</span>
+                        <span className="font-bold text-th-text">
+                          ₹{totalBilled.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs mt-1">
+                        <span className="text-th-secondary">{uiT('Open due', 'बकाया')}</span>
+                        <span className="font-bold text-[#e8a427]">
+                          ₹{orderPending.toLocaleString()}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 px-4 py-3 border-t border-th-border">
+                  <button
+                    onClick={() => navigate(`/customers/${hover.c._id}`)}
+                    className="flex-1 px-3 py-2 rounded-lg border border-th-border text-th-text text-sm font-semibold hover:bg-th-elevated transition-colors"
+                  >
+                    {uiT('View Profile', 'प्रोफ़ाइल')}
+                  </button>
+                  <button
+                    onClick={() => navigate(`/pickup?customerId=${hover.c._id}`)}
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#1ed760] text-black text-sm font-bold hover:bg-[#1ed760]/90 transition-colors"
+                  >
+                    {uiT('Bill', 'बिल बनाएं')}
+                  </button>
+                </div>
+              </div>
+            );
+          })(),
+          document.body
+        )}
 
       {showForm &&
         createPortal(
