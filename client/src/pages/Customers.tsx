@@ -43,9 +43,11 @@ function fmtDate(d?: string | Date): string {
   return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function signedNum(v?: number): string {
-  if (v == null || Number.isNaN(v)) return '—';
-  return `${v > 0 ? '+' : ''}${v.toFixed(2)}`;
+function signedNum(v?: number | string | null): string {
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  if (Number.isNaN(n)) return '—';
+  return `${n > 0 ? '+' : ''}${n.toFixed(2)}`;
 }
 
 function rxSummary(p?: Prescription | null): string {
@@ -53,7 +55,7 @@ function rxSummary(p?: Prescription | null): string {
   const r = p.rightEye?.dv as Partial<EyeData> | undefined;
   const l = p.leftEye?.dv as Partial<EyeData> | undefined;
   const rx = (e?: Partial<EyeData>): string => {
-    if (!e?.sph) return '—';
+    if (e?.sph == null) return '—';
     const cyl = e.cyl ? ` / ${signedNum(e.cyl)}` : '';
     return `${signedNum(e.sph)}${cyl}`;
   };
@@ -624,8 +626,14 @@ export default function Customers(): React.JSX.Element {
             orders.forEach((o) => {
               counts[o.status] = (counts[o.status] || 0) + 1;
             });
-            const totalBilled = orders.reduce((s, o) => s + (o.billInfo?.totalAmount || 0), 0);
-            const orderPending = orders.reduce((s, o) => s + (o.billInfo?.pendingAmount || 0), 0);
+            const totalBilled = orders.reduce(
+              (s, o) => s + (Number(o.billInfo?.totalAmount) || 0),
+              0
+            );
+            const orderPending = orders.reduce(
+              (s, o) => s + (Number(o.billInfo?.pendingAmount) || 0),
+              0
+            );
             const popW = 340;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -682,7 +690,7 @@ export default function Customers(): React.JSX.Element {
                     </div>
                     <div className="bg-th-elevated/40 rounded-lg px-2 py-1.5 text-center">
                       <p className="text-sm font-bold text-[#1ed760]">
-                        ₹{(hover.c.totalSpent || 0).toLocaleString()}
+                        ₹{(Number(hover.c.totalSpent) || 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] uppercase tracking-wide text-th-secondary">
                         {uiT('Spent', 'खर्च')}
@@ -694,7 +702,7 @@ export default function Customers(): React.JSX.Element {
                           (hover.c.pendingAmount || 0) > 0 ? 'text-[#e8a427]' : 'text-th-secondary'
                         }`}
                       >
-                        ₹{(hover.c.pendingAmount || 0).toLocaleString()}
+                        ₹{(Number(hover.c.pendingAmount) || 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] uppercase tracking-wide text-th-secondary">
                         {uiT('Due', 'बकाया')}
