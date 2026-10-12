@@ -25,7 +25,6 @@ import {
   IndianRupee,
   Eye,
   Calendar,
-  Receipt,
   Glasses,
 } from 'lucide-react';
 import type { Customer, CustomerFormData, Prescription, Order, EyeData } from '../types';
@@ -427,8 +426,8 @@ export default function Customers(): React.JSX.Element {
               const lastRx = d?.prescriptions?.[0] as
                 | (Prescription & { _id?: string; createdAt?: string })
                 | undefined;
-              const rxLine = lastRx
-                ? `${rxSummary(lastRx)}   ·   ${fmtDate(lastRx.createdAt)}`
+              const rxText = lastRx
+                ? rxSummary(lastRx)
                 : d?.loading
                   ? '…'
                   : uiT('No prescription yet', 'अभी तक कोई नुस्खा नहीं');
@@ -483,65 +482,52 @@ export default function Customers(): React.JSX.Element {
                             ) : null}
                           </div>
                         </div>
-
-                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              openHover(e, c);
-                            }}
-                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
-                            title={uiT('Quick view', 'त्वरित देखें')}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              navigate(`/pickup?customerId=${c._id}`);
-                            }}
-                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
-                            title={uiT('Bill', 'बिल बनाएं')}
-                          >
-                            <Receipt size={16} />
-                          </button>
-                          <button
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              openEdit(c);
-                            }}
-                            className="p-1.5 hover:bg-th-elevated rounded-md text-th-secondary hover:text-[#1ed760] transition-colors"
-                            title={uiT('Edit', 'संपादित करें')}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          {!isStaff && (
-                            <button
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                handleDelete(c._id);
-                              }}
-                              className="p-1.5 hover:bg-red-500/10 rounded-md text-th-secondary hover:text-red-400 transition-colors"
-                              title={uiT('Delete', 'हटाएं')}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-th-border/60 text-[13px]">
+                      <div className="flex items-center gap-2 mt-2.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            navigate(`/pickup?customerId=${c._id}`);
+                          }}
+                          className="p-1.5 rounded-md bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-colors"
+                          title={uiT('Bill', 'बिल बनाएं')}
+                        >
+                          <IndianRupee size={18} />
+                        </button>
+                        <button
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            openEdit(c);
+                          }}
+                          className="p-1.5 rounded-md text-th-secondary hover:bg-th-elevated hover:text-[#1ed760] transition-colors"
+                          title={uiT('Edit', 'संपादित करें')}
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        {!isStaff && (
+                          <button
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              handleDelete(c._id);
+                            }}
+                            className="p-1.5 rounded-md text-th-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                            title={uiT('Delete', 'हटाएं')}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mt-2 text-[13px]">
                         <Glasses size={14} className="text-[#1ed760]/70 shrink-0" />
-                        <span className="font-medium text-th-secondary shrink-0">
-                          {uiT('Last Rx', 'अंतिम नुस्खा')}
-                        </span>
                         <span
-                          className={`min-w-0 flex-1 text-right font-mono truncate ${
+                          className={`min-w-0 flex-1 truncate font-mono ${
                             lastRx ? 'text-th-text' : 'text-th-secondary'
                           }`}
-                          title={rxLine}
+                          title={rxText}
                         >
-                          {rxLine}
+                          {rxText}
                         </span>
                       </div>
 
