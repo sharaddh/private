@@ -80,6 +80,7 @@ export default function Pickup() {
   const [billAyushman, setBillAyushman] = useState<boolean>(false);
   const [showConfirmDeliver, setShowConfirmDeliver] = useState<boolean>(false);
   const [loadedFromUrl, setLoadedFromUrl] = useState<boolean>(false);
+  const [loadedCustomerFromUrl, setLoadedCustomerFromUrl] = useState<boolean>(false);
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const billTotal = Math.max(0, billSubtotal - billDiscount);
@@ -96,6 +97,7 @@ export default function Pickup() {
   const overAllocated = isOverAllocated(splits, collectable);
 
   const orderIdFromUrl = searchParams.get('orderId');
+  const customerIdFromUrl = searchParams.get('customerId');
 
   useEffect(() => {
     settingsService.get().then((d) => {
@@ -118,6 +120,30 @@ export default function Pickup() {
       }
     }
   }, [readyOrders, orderIdFromUrl]);
+
+  useEffect(() => {
+    if (customerIdFromUrl && !selectedCustomer && !loadedCustomerFromUrl) {
+      setLoadedCustomerFromUrl(true);
+      loadCustomerById(customerIdFromUrl);
+    }
+  }, [customerIdFromUrl]);
+
+  async function loadCustomerById(customerId: string) {
+    setIsLoading(true);
+    try {
+      const res = await api.get<Customer>('/api/customers/' + customerId);
+      if (res.success && res.data) {
+        const c = res.data;
+        setPhone(c.mobile || '');
+        setBillAyushman(c.isAyushman === true);
+        await selectCustomer(c);
+      } else {
+        setMessage(uiT('No customer found', 'कोई ग्राहक नहीं मिला'));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function fetchReadyOrders() {
     setIsLoading(true);

@@ -25,6 +25,7 @@ import {
   IndianRupee,
   Eye,
   Calendar,
+  Receipt,
 } from 'lucide-react';
 import type { Customer, CustomerFormData } from '../types';
 
@@ -360,6 +361,16 @@ export default function Customers(): React.JSX.Element {
                       <button
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
+                          navigate(`/pickup?customerId=${c._id}`);
+                        }}
+                        className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors"
+                        title={uiT('Bill', 'बिल बनाएं')}
+                      >
+                        <Receipt size={12} />
+                      </button>
+                      <button
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
                           openEdit(c);
                         }}
                         className="p-1 hover:bg-th-elevated rounded text-th-secondary hover:text-[#1ed760] transition-colors"
@@ -403,6 +414,16 @@ export default function Customers(): React.JSX.Element {
                             )} ${new Date().getFullYear() + 1}`
                           : uiT('Eligible now', 'अभी पात्र')}
                       </span>
+                      <button
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          navigate(`/pickup?customerId=${c._id}`);
+                        }}
+                        className="ml-auto px-2 py-0.5 bg-[#1ed760] text-black rounded-md text-[13px] font-bold hover:bg-[#1ed760]/80 transition-colors"
+                        title={uiT('Bill with Ayushman', 'आयुष्मान से बिल बनाएं')}
+                      >
+                        {uiT('Bill', 'बिल बनाएं')}
+                      </button>
                     </div>
                   )}
 
