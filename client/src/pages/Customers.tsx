@@ -17,7 +17,6 @@ import {
   Search,
   Phone,
   Users,
-  Plus,
   X,
   MapPin,
   Tag,
@@ -330,17 +329,10 @@ export default function Customers(): React.JSX.Element {
             >
               <Activity size={14} />
               {recalculating
-                ? uiT('Fixing...', 'αñ╕αÑüαñºαñ╛αñ░ αñ╣αÑï αñ░αñ╣αñ╛ αñ╣αÑê...')
-                : uiT('Fix Data', 'αñíαÑçαñƒαñ╛ αñáαÑÇαñò αñòαñ░αÑçαñé')}
+                ? uiT('Fixing...', 'सुधार हो रहा है...')
+                : uiT('Fix Data', 'डेटा ठीक करें')}
             </button>
           )}
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
-          >
-            <Plus size={16} />
-            <span>{uiT('Add Customer', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ£αÑïαñíαñ╝αÑçαñé')}</span>
-          </button>
         </div>
       </div>
 

@@ -38,6 +38,8 @@ interface TransactionInput {
     subtotal?: number;
     discount?: number;
     totalAmount?: number;
+    ayushmanApplied?: boolean;
+    ayushmanDiscount?: number;
   };
   payment?: {
     amount?: number;
@@ -177,6 +179,10 @@ export async function executeTransaction(
       }));
       const subtotal = items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0);
       const discount = body.bill.discount || 0;
+      const ayushmanApplied = Boolean(body.bill.ayushmanApplied);
+      const ayushmanDiscount = ayushmanApplied
+        ? Math.max(0, Number(body.bill.ayushmanDiscount) || 0)
+        : 0;
       const totalAmount = Math.max(0, subtotal - discount);
       const paymentInput = body.payment;
       const normalized = normalizeSplits(paymentInput);
@@ -217,9 +223,22 @@ export async function executeTransaction(
           totalAmount,
           advancePaid,
           pendingAmount,
+          ayushmanApplied,
+          ayushmanDiscount,
         },
       });
       result.bill = bill;
+
+      if (ayushmanApplied && ayushmanDiscount > 0) {
+        await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            isAyushman: true,
+            ayushmanLastUsedAt: new Date(),
+            ayushmanUsedYear: new Date().getFullYear(),
+          },
+        });
+      }
 
       if (totalAmount > 0) {
         await tx.customer.update({

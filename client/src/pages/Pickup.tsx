@@ -77,18 +77,12 @@ export default function Pickup() {
     [{ description: '', qty: 1, price: 0 }]
   );
   const [billDiscount, setBillDiscount] = useState<number>(0);
-  const [billAyushman, setBillAyushman] = useState<boolean>(false);
   const [showConfirmDeliver, setShowConfirmDeliver] = useState<boolean>(false);
   const [loadedFromUrl, setLoadedFromUrl] = useState<boolean>(false);
   const [loadedCustomerFromUrl, setLoadedCustomerFromUrl] = useState<boolean>(false);
 
   const billSubtotal = billItems.reduce((s, i) => s + i.qty * i.price, 0);
   const billTotal = Math.max(0, billSubtotal - billDiscount);
-  const ayushmanEligibleValue = billItems
-    .filter((i) => /frame|lens|coating/i.test(i.description))
-    .reduce((s, i) => s + i.qty * i.price, 0);
-  const ayushmanEstimate = billAyushman ? Math.round(ayushmanEligibleValue * 0.5) : 0;
-  const billTotalWithAyushman = Math.max(0, billTotal - ayushmanEstimate);
 
   /** The most this screen can collect. Zero until a bill is attached. */
   const collectable = bill?.pendingAmount ?? 0;
@@ -135,7 +129,6 @@ export default function Pickup() {
       if (res.success && res.data) {
         const c = res.data;
         setPhone(c.mobile || '');
-        setBillAyushman(c.isAyushman === true);
         await selectCustomer(c);
       } else {
         setMessage(uiT('No customer found', 'कोई ग्राहक नहीं मिला'));
@@ -315,7 +308,6 @@ export default function Pickup() {
       if (items.length === 0) items.push({ description: '', qty: 1, price: 0 });
       setBillItems(items);
       setBillDiscount(0);
-      setBillAyushman(false);
     } else {
       setSplits(singleRow('Cash', b.pendingAmount > 0 ? b.pendingAmount : 0));
     }
@@ -394,7 +386,6 @@ export default function Pickup() {
       if (items.length === 0) items.push({ description: '', qty: 1, price: 0 });
       setBillItems(items);
       setBillDiscount(0);
-      setBillAyushman(false);
     }
   }
 
@@ -433,7 +424,6 @@ export default function Pickup() {
       discount: billDiscount,
       tax: 0,
       advancePaid: 0,
-      ayushmanApplied: billAyushman,
     });
     if (res.success) {
       setBill(res.data!);
@@ -1054,33 +1044,6 @@ export default function Pickup() {
                         <Plus size={14} aria-hidden="true" /> {uiT('Add Item', 'आइटम जोड़ें')}
                       </button>
                     </div>
-                    {selectedCustomer?.isAyushman && (
-                      <label className="flex items-center gap-2.5 bg-[#1ed760]/5 border border-[#1ed760]/20 rounded-lg p-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={billAyushman}
-                          onChange={(e) => setBillAyushman(e.target.checked)}
-                          className="w-4 h-4 accent-[#1ed760]"
-                          aria-label={uiT('Apply Ayushman Bharat', 'आयुष्मान भारत लागू करें')}
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-th-text">
-                            {uiT('Ayushman Bharat Scheme', 'आयुष्मान भारत योजना')}
-                          </p>
-                          <p className="text-xs text-th-secondary">
-                            {uiT(
-                              '50% off on frame, lens & coating (once per year)',
-                              'फ्रेम, लेंस और कोटिंग पर 50% छूट (साल में एक बार)'
-                            )}
-                          </p>
-                        </div>
-                        {billAyushman && (
-                          <span className="text-xs font-semibold text-[#1ed760] bg-[#1ed760]/10 px-2 py-0.5 rounded-lg uppercase">
-                            {uiT('ABHA Applied', 'ABHA लागू')}
-                          </span>
-                        )}
-                      </label>
-                    )}
                     <div className="flex items-center gap-3">
                       <div className="w-32">
                         <label className="block text-xs font-medium text-th-secondary mb-1">
@@ -1104,14 +1067,8 @@ export default function Pickup() {
                         </p>
                         <p className="text-lg font-bold text-th-text">
                           {uiT('Total', 'कुल')}: ₹
-                          {billAyushman ? billTotalWithAyushman.toFixed(0) : billTotal.toFixed(0)}
+                          {billTotal.toFixed(0)}
                         </p>
-                        {billAyushman && (
-                          <p className="text-xs text-[#1ed760] font-medium">
-                            {uiT('incl. Ayushman 50%', 'आयुष्मान 50% सहित')} −₹
-                            {ayushmanEstimate.toFixed(0)}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <div className="flex gap-2 pt-1">
@@ -1121,7 +1078,7 @@ export default function Pickup() {
                         className="btn-primary flex items-center gap-2 px-6 py-3"
                       >
                         <Plus size={18} aria-hidden="true" /> {uiT('Create Bill', 'बिल बनाएं')} — ₹
-                        {billAyushman ? billTotalWithAyushman.toFixed(0) : billTotal.toFixed(0)}
+                        {billTotal.toFixed(0)}
                       </button>
                       <button
                         onClick={() => setShowCreateBill(false)}
@@ -1148,7 +1105,6 @@ export default function Pickup() {
                     </div>
                     <button
                       onClick={() => {
-                        setBillAyushman(false);
                         setShowCreateBill(true);
                       }}
                       aria-label={uiT('Create bill from order', 'ऑर्डर से बिल बनाएं')}

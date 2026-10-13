@@ -99,6 +99,11 @@ interface Props {
   splits?: SplitRow[];
   deliveryAddress: string;
   deliveryDate: string;
+  /** Only ABHA-enrolled customers can apply the Ayushman 50% scheme. */
+  isAyushman?: boolean;
+  ayushmanSpecs?: boolean;
+  setAyushmanSpecs?: (v: boolean) => void;
+  ayushmanDiscount?: number;
 }
 
 export default function ConfirmationDashboard({
@@ -119,6 +124,10 @@ export default function ConfirmationDashboard({
   splits,
   deliveryAddress,
   deliveryDate,
+  isAyushman,
+  ayushmanSpecs,
+  setAyushmanSpecs,
+  ayushmanDiscount = 0,
 }: Props) {
   const { uiT } = useTranslate();
 
@@ -471,6 +480,41 @@ export default function ConfirmationDashboard({
           </p>
         </div>
       </div>
+
+      {isAyushman && (
+        <motion.label
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`flex items-start gap-3 rounded-lg p-4 cursor-pointer select-none shadow-[0_0_0_1px_#1ed760] ${
+            ayushmanSpecs ? 'bg-[#1ed760]/10' : 'bg-th-surface'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={!!ayushmanSpecs}
+            onChange={(e) => setAyushmanSpecs?.(e.target.checked)}
+            className="mt-1 w-5 h-5 accent-[#1ed760] shrink-0"
+          />
+          <div className="min-w-0">
+            <span className="text-sm font-bold text-th-text flex items-center gap-2">
+              <HeartPulse size={15} className="text-[#1ed760] shrink-0" />
+              {uiT('Ayushman specs', 'आयुष्मान चश्मा')}
+            </span>
+            <p className="text-xs text-th-secondary mt-0.5">
+              {uiT(
+                'Tick to apply the 50% Ayushman discount on frame/lens items.',
+                'फ्रेम/लेंस पर 50% आयुष्मान छूट लागू करने के लिए टिक करें।'
+              )}
+            </p>
+            {ayushmanSpecs && ayushmanDiscount > 0 && (
+              <p className="text-xs font-bold text-[#1ed760] mt-1 tabular-nums">
+                {uiT('Ayushman 50%', 'आयुष्मान 50%')}: -₹
+                {ayushmanDiscount.toLocaleString('en-IN')}
+              </p>
+            )}
+          </div>
+        </motion.label>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {summaryCards.map((card, i) => (

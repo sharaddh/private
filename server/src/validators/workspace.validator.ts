@@ -32,6 +32,8 @@ export const transactionSchema = z.object({
       subtotal: z.number().optional(),
       discount: z.number().optional(),
       totalAmount: z.number().optional(),
+      ayushmanApplied: z.boolean().optional(),
+      ayushmanDiscount: z.number().min(0).optional(),
     })
     .optional(),
   payment: z

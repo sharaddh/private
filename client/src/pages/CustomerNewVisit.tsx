@@ -104,6 +104,7 @@ export default function CustomerNewVisit() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
+  const [ayushmanSpecs, setAyushmanSpecs] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
 
@@ -414,9 +415,18 @@ export default function CustomerNewVisit() {
     setBillItems((prev) => prev.filter((_, idx) => idx !== i));
   }
 
+  function calcAyushmanDiscount() {
+    if (!ayushmanSpecs) return 0;
+    const eligible = billItems
+      .filter((i) => /frame|lens|coating/i.test(i.description))
+      .reduce((sum, i) => sum + i.price * (i.qty || 1), 0);
+    return Math.round(eligible * 0.5);
+  }
+
   function calcDiscount() {
-    if (discountType === 'percent') return (totalAmount * discountPercent) / 100;
-    return discountAmount;
+    const base =
+      discountType === 'percent' ? (totalAmount * discountPercent) / 100 : discountAmount;
+    return base + calcAyushmanDiscount();
   }
 
   async function saveTransaction() {
@@ -523,6 +533,9 @@ export default function CustomerNewVisit() {
           totalAmount: Math.max(0, totalAmount - discount),
           advancePaid,
           pendingAmount: Math.max(0, totalAmount - discount - advancePaid),
+          ...(ayushmanSpecs
+            ? { ayushmanApplied: true, ayushmanDiscount: calcAyushmanDiscount() }
+            : {}),
         };
         // Legacy `amount` always carries the split total; `splits` only goes on
         // the wire for a genuine two-mode tender.
@@ -755,6 +768,10 @@ export default function CustomerNewVisit() {
               splits={splits}
               deliveryAddress={deliveryAddress}
               deliveryDate={deliveryDate}
+              isAyushman={customer?.isAyushman === true}
+              ayushmanSpecs={ayushmanSpecs}
+              setAyushmanSpecs={setAyushmanSpecs}
+              ayushmanDiscount={calcAyushmanDiscount()}
             />
           )}
         </AnimatePresence>
