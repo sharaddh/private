@@ -21,6 +21,13 @@ class OrderService extends ApiService {
     return api.get<PaginatedResponse<Order>>(`${this.basePath}${qs}`);
   }
 
+  async statusCounts(
+    params: DateRangeParams & { customerId?: string; dateField?: string }
+  ): Promise<ApiResponse<Record<string, number>>> {
+    const qs = buildQueryString(params);
+    return api.get<Record<string, number>>(`${this.basePath}/status-counts${qs}`);
+  }
+
   async advanceStatus(
     id: string,
     status: OrderStatus,

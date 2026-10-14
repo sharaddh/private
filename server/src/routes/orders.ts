@@ -38,6 +38,13 @@ const router = Router();
 
 router.get("/", authenticate, cacheRoute(30), asyncHandler(orderController.list));
 
+router.get(
+  "/status-counts",
+  authenticate,
+  cacheRoute(30),
+  asyncHandler(orderController.statusCounts)
+);
+
 router.post(
   "/",
   authenticate,

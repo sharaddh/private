@@ -33,6 +33,8 @@ const STATUS_STEPS: readonly OrderStatus[] = [
   'Delivered',
 ] as const;
 
+const PAGE_SIZE = 50;
+
 const VALID_NEXT: Record<OrderStatus, OrderStatus | undefined> = {
   Draft: 'Ordered',
   Ordered: 'In Lab',
@@ -139,30 +141,61 @@ export default function Orders() {
   const [showAll, setShowAll] = useState<boolean>(false);
   const [list, setList] = useState<OrderCard[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const [pages, setPages] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   const fetchOrders = useCallback(async () => {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = { page, limit: PAGE_SIZE };
+    if (filter !== 'all') params.status = filter;
     if (!showAll) {
       params.startDate = startDate;
       params.endDate = endDate;
-    } else {
-      params.limit = '10000';
     }
     const res = await orderService.listFiltered(params);
-    if (res.success && res.data) setList(res.data.data as OrderCard[]);
+    if (res.success && res.data) {
+      setList(res.data.data as OrderCard[]);
+      setTotal(res.data.total ?? res.data.data.length);
+      setPages(res.data.pages ?? 1);
+    }
+  }, [startDate, endDate, showAll, filter, page]);
+
+  const fetchCounts = useCallback(async () => {
+    const params: { startDate?: string; endDate?: string } = {};
+    if (!showAll) {
+      params.startDate = startDate;
+      params.endDate = endDate;
+    }
+    const res = await orderService.statusCounts(params);
+    if (res.success && res.data) setCounts(res.data);
   }, [startDate, endDate, showAll]);
+
+  const refresh = useCallback(() => {
+    fetchOrders();
+    fetchCounts();
+  }, [fetchOrders, fetchCounts]);
 
   useEffect(() => {
     fetchOrders().finally(() => setLoading(false));
   }, [fetchOrders]);
 
-  useVisibilityPolling(fetchOrders, 60000);
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
+
+  // Reset to page 1 whenever the filter scope changes.
+  useEffect(() => {
+    setPage(1);
+  }, [filter, showAll, startDate, endDate]);
+
+  useVisibilityPolling(refresh, 60000);
 
   useEffect(() => {
-    const onFocus = () => fetchOrders();
+    const onFocus = () => refresh();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, [fetchOrders]);
+  }, [refresh]);
 
   async function doAdvance(
     order: OrderCard,
@@ -199,7 +232,7 @@ export default function Orders() {
       toast.error('Failed to update status');
     } finally {
       setStatusLoading(null);
-      fetchOrders();
+      refresh();
     }
   }
 
@@ -238,7 +271,9 @@ export default function Orders() {
 
   if (loading) return <PageSkeleton page="orders" />;
 
-  const filteredList = filter === 'all' ? list : list.filter((o) => o.status === filter);
+  // Orders are already filtered/paginated server-side for the active tab.
+  const filteredList = list;
+  const allCount = Object.values(counts).reduce((sum, n) => sum + (n || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -255,31 +290,31 @@ export default function Orders() {
       {/* Status filter */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { key: 'all', label: uiT('All', 'सभी'), count: list.length },
+          { key: 'all', label: uiT('All', 'सभी'), count: allCount },
           {
             key: 'Draft',
             label: uiT('Draft', 'ड्राफ्ट'),
-            count: list.filter((o) => o.status === 'Draft').length,
+            count: counts.Draft || 0,
           },
           {
             key: 'Ordered',
             label: uiT('Ordered', 'ऑर्डर किया'),
-            count: list.filter((o) => o.status === 'Ordered').length,
+            count: counts.Ordered || 0,
           },
           {
             key: 'In Lab',
             label: uiT('In Lab', 'लैब में'),
-            count: list.filter((o) => o.status === 'In Lab').length,
+            count: counts['In Lab'] || 0,
           },
           {
             key: 'Ready',
             label: uiT('Ready', 'तैयार'),
-            count: list.filter((o) => o.status === 'Ready').length,
+            count: counts.Ready || 0,
           },
           {
             key: 'Delivered',
             label: uiT('Delivered', 'डिलीवर हो गया'),
-            count: list.filter((o) => o.status === 'Delivered').length,
+            count: counts.Delivered || 0,
           },
         ].map((f) => (
           <button
@@ -317,7 +352,7 @@ export default function Orders() {
             setEndDate(e);
             setShowAll(false);
           }}
-          count={filteredList.length}
+          count={total}
           label="order"
         />
         <button
@@ -615,6 +650,28 @@ export default function Orders() {
               </ShineCard>
             );
           })}
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="px-3 py-1.5 rounded-lg text-[14px] font-bold bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {uiT('Prev', 'पिछला')}
+          </button>
+          <span className="text-[14px] font-semibold text-th-secondary">
+            {page} / {pages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(pages, p + 1))}
+            disabled={page >= pages}
+            className="px-3 py-1.5 rounded-lg text-[14px] font-bold bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {uiT('Next', 'अगला')}
+          </button>
         </div>
       )}
 

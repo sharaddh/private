@@ -38,6 +38,17 @@ export async function list(req: BranchRequest, res: Response) {
   sendSuccess(res, data);
 }
 
+export async function statusCounts(req: BranchRequest, res: Response) {
+  const { customerId, startDate, endDate, dateField } = req.query;
+  const data = await orderService.getOrderStatusCounts({
+    customerId: customerId as string,
+    startDate: startDate as string,
+    endDate: endDate as string,
+    dateField: dateField as string,
+  });
+  sendSuccess(res, data);
+}
+
 export async function updateStatus(req: BranchRequest, res: Response) {
   const data = await orderService.updateOrderStatus(req.params.id, {
     ...req.body,

@@ -67,13 +67,22 @@ export default function Delivery() {
   const [confirmOrder, setConfirmOrder] = useState<AnyOrder | null>(null);
   const [delivering, setDelivering] = useState(false);
 
-  const readyKey = '/api/orders?status=Ready&limit=10000';
+  // Today's ready orders only — the Ready view never shows other dates, so
+  // filter server-side instead of pulling every ready order ever.
+  const today = todayStr();
+  const readyKey = `/api/orders?status=Ready&dateField=deliveryDate&startDate=${today}&endDate=${today}&limit=1000`;
   const {
     data: readyData,
     loading: readyLoading,
     refetch: refetchReady,
   } = useCachedData<AnyOrder[]>(readyKey, async () => {
-    const res = await orderService.listFiltered({ status: 'Ready', limit: 10000 });
+    const res = await orderService.listFiltered({
+      status: 'Ready',
+      dateField: 'deliveryDate',
+      startDate: today,
+      endDate: today,
+      limit: 1000,
+    });
     return { success: res.success, data: res.data?.data ?? [] };
   }, []);
 
@@ -465,20 +474,15 @@ export default function Delivery() {
               <div className="bg-th-surface rounded-xl text-center py-16 shadow-lg">
                 <Truck size={40} className="mx-auto text-th-muted mb-3" />
                 <p className="text-th-secondary text-sm">
-                  {readyOrders.length === 0
+                  {todayReady.length === 0
                     ? uiT(
-                        'No orders ready for delivery right now.',
-                        'अभी डिलीवरी के लिए कोई ऑर्डर तैयार नहीं है।'
+                        'No orders ready for delivery today.',
+                        'आज डिलीवरी के लिए कोई ऑर्डर तैयार नहीं है।'
                       )
-                    : todayReady.length === 0
-                      ? uiT(
-                          'No orders are scheduled for delivery today.',
-                          'आज डिलीवरी के लिए कोई ऑर्डर निर्धारित नहीं है।'
-                        )
-                      : uiT(
-                          'No orders found for the selected search.',
-                          'चयनित खोज के लिए कोई ऑर्डर नहीं मिला।'
-                        )}
+                    : uiT(
+                        'No orders found for the selected search.',
+                        'चयनित खोज के लिए कोई ऑर्डर नहीं मिला।'
+                      )}
                 </p>
               </div>
             ) : (

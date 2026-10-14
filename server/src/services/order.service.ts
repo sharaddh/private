@@ -244,7 +244,7 @@ export async function getOrderById(orderId: string): Promise<OrderResult> {
   return order as unknown as OrderResult;
 }
 
-export async function listOrders(filters: OrderFilters): Promise<PaginatedResult<OrderResult>> {
+export function buildOrderWhere(filters: OrderFilters): Record<string, unknown> {
   const where: Record<string, unknown> = {};
 
   if (filters.customerId) {
@@ -266,6 +266,33 @@ export async function listOrders(filters: OrderFilters): Promise<PaginatedResult
   if (dateRange) {
     Object.assign(where, dateRange);
   }
+
+  return where;
+}
+
+/**
+ * Per-status order counts for a filter scope (date range / customer), excluding
+ * the status filter itself so every tab has a count. Uses a cheap groupBy that
+ * returns one row per status instead of materialising every order.
+ */
+export async function getOrderStatusCounts(
+  filters: OrderFilters
+): Promise<Record<string, number>> {
+  const where = buildOrderWhere({ ...filters, status: undefined });
+  const grouped = await Order.groupBy({
+    by: ["status"],
+    where,
+    _count: true,
+  } as any);
+  const counts: Record<string, number> = {};
+  for (const row of grouped as unknown as Array<{ status: string; _count: number }>) {
+    counts[row.status] = row._count;
+  }
+  return counts;
+}
+
+export async function listOrders(filters: OrderFilters): Promise<PaginatedResult<OrderResult>> {
+  const where = buildOrderWhere(filters);
 
   const result = await paginateFind(
     (args) =>
