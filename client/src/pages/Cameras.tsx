@@ -4,6 +4,7 @@ import api from '../api';
 import Modal from '../components/Modal';
 import { useTranslate } from '../context/TranslateContext';
 import { useToast } from '../context/ToastContext';
+import { useVisibilityPolling } from '../hooks';
 import {
   Camera,
   Plus,
@@ -467,11 +468,8 @@ export default function Cameras() {
     fetchCameras();
   }, [fetchCameras]);
 
-  // Poll status every 10s
-  useEffect(() => {
-    const interval = setInterval(fetchCameras, 10000);
-    return () => clearInterval(interval);
-  }, [fetchCameras]);
+  // Poll status every 30s, only while the tab is visible
+  useVisibilityPolling(fetchCameras, 30000);
 
   const handleSave = useCallback(
     async (data: { name: string; serialNumber: string; username: string; password: string }) => {

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import DateRangePicker from '../components/DateRangePicker';
 import { orderService } from '../services';
+import { useVisibilityPolling } from '../hooks';
 import { compactRx } from '../utils/rx';
 import type { Order, OrderStatus, Customer } from '../types';
 
@@ -155,10 +156,7 @@ export default function Orders() {
     fetchOrders().finally(() => setLoading(false));
   }, [fetchOrders]);
 
-  useEffect(() => {
-    const interval = setInterval(fetchOrders, 30000);
-    return () => clearInterval(interval);
-  }, [fetchOrders]);
+  useVisibilityPolling(fetchOrders, 60000);
 
   useEffect(() => {
     const onFocus = () => fetchOrders();

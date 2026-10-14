@@ -83,13 +83,10 @@ export async function getStats() {
     newCustomersToday,
     lowStockItems,
     pendingBills,
-    recentCustomers,
     recentOrders,
     todayDeliveries,
     pendingDeliveries,
-    _prevDaySalesResult,
     monthSalesPrevResult,
-    prevDayCollectionResult,
     billsForDailySales,
     paymentsForModeSplit,
     orderStatusCounts,
@@ -135,13 +132,11 @@ export async function getStats() {
     prisma.bill.findMany({
       where: { branchId, status: "Active", pendingAmount: { gt: 0 } },
       orderBy: { createdAt: "desc" },
-      include: { customer: { select: { name: true, mobile: true } } },
-    }),
-    prisma.customer.findMany({
-      where: { branchId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { name: true, mobile: true, totalSpent: true, totalVisits: true },
+      select: {
+        id: true,
+        pendingAmount: true,
+        customer: { select: { name: true, mobile: true } },
+      },
     }),
     prisma.order.findMany({
       where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } },
@@ -162,16 +157,8 @@ export async function getStats() {
       include: { customer: { select: { name: true, mobile: true } } },
     }),
     prisma.bill.aggregate({
-      where: { branchId, createdAt: { gte: prevDayStart, lte: prevDayEnd }, status: "Active" },
-      _sum: { totalAmount: true },
-    }),
-    prisma.bill.aggregate({
       where: { branchId, createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: "Active" },
       _sum: { totalAmount: true },
-    }),
-    prisma.payment.aggregate({
-      where: { branchId, paymentDate: { gte: prevDayStart, lte: prevDayEnd } },
-      _sum: { amount: true },
     }),
     prisma.bill.findMany({
       where: { branchId, createdAt: { gte: thirtyDaysAgo, lte: dayEnd }, status: "Active" },
@@ -194,7 +181,7 @@ export async function getStats() {
     prisma.bill.count({ where: { branchId, createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" } }),
     prisma.bill.count({ where: { branchId, createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" } }),
     prisma.order.findMany({
-      where: { branchId, status: { in: ["Draft", "Ordered", "In Lab"] } },
+      where: { branchId, status: "Draft" },
       orderBy: { createdAt: "desc" },
       include: { customer: { select: { name: true, mobile: true } } },
     }),
@@ -246,7 +233,6 @@ export async function getStats() {
   const weekSales = weekSalesResult._sum?.totalAmount || 0;
   const monthSales = monthSalesResult._sum?.totalAmount || 0;
   const prevMonthSales = monthSalesPrevResult._sum?.totalAmount || 0;
-  const prevDayCollection = prevDayCollectionResult._sum?.amount || 0;
 
   const salesTrendObj = calcTrend(monthSales, prevMonthSales);
   const salesTrend =
@@ -386,19 +372,15 @@ export async function getStats() {
     newCustomersToday,
     lowStock: lowStockItems,
     pendingPayments: pendingBills.length,
-    recentCustomers,
     recentOrders: recentOrdersWithRx,
     todayDeliveries,
     pendingDeliveries,
     pendingBills,
     incompleteOrders: incompleteOrdersWithRx,
-    orderCounts,
-    paymentCounts,
     dailySales: mappedDailySales,
     paymentModeSplit: mappedPaymentModeSplit,
     orderStatusCounts: mappedOrderStatusCounts,
     salesTrend,
-    collectionTrend: calcTrend(todayCollection, prevDayCollection),
     todayDeliveredOrders,
     todayOrders: todayOrderCount,
     weekOrders: weekOrderCount,

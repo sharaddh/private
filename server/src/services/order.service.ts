@@ -290,17 +290,34 @@ export async function listOrders(filters: OrderFilters): Promise<PaginatedResult
   if (orderVisitIds.length > 0) {
     const uniqueVisitIds = [...new Set(orderVisitIds.map((v) => v.visitId))];
 
-    // Batch-fetch prescriptions per visit (avoids N+1)
+    // Batch-fetch prescriptions per visit (avoids N+1). Only the columns the
+    // client renders (eye data) are selected to keep response egress low.
     const prescriptions = await Prescription.findMany({
       where: { visitId: { in: uniqueVisitIds } },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        visitId: true,
+        rightEye: true,
+        leftEye: true,
+        pd: true,
+        notes: true,
+      },
     });
     const rxByVisit = new Map(prescriptions.map((p: any) => [String(p.visitId), p]));
 
-    // Batch-fetch bill per order via visitId (avoids N+1)
+    // Batch-fetch bill per order via visitId (avoids N+1). Only the fields the
+    // client reads (id/total/pending) are selected.
     const bills = await Bill.findMany({
       where: { visitId: { in: uniqueVisitIds } },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        visitId: true,
+        totalAmount: true,
+        pendingAmount: true,
+        status: true,
+      },
     });
     const billByVisit = new Map(bills.map((b: any) => [String(b.visitId), b]));
 

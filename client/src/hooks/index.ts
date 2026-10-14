@@ -2,6 +2,7 @@ export { useApi, useApiGet, useApiPost, useApiPut, useApiDelete } from './useApi
 export { useCache, getCacheSnapshot, invalidateCache, clearAllCache } from './useCache';
 export { useCachedData } from './useCachedData';
 export { useDebounce } from './useDebounce';
+export { useVisibilityPolling } from './useVisibilityPolling';
 export {
   useCustomers,
   useCustomer,

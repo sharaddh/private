@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { customerService, settingsService, whatsappService } from '../services';
+import { useVisibilityPolling } from '../hooks';
 import PageSkeleton from '../components/PageSkeleton';
 import { useToast } from '../context/ToastContext';
 import { useTranslate } from '../context/TranslateContext';
@@ -124,9 +125,10 @@ export default function Announcement() {
       })
       .finally(() => setLoading(false));
     checkStatus();
-    const interval = setInterval(checkStatus, 5000);
-    return () => clearInterval(interval);
   }, [checkStatus]);
+
+  // Poll connection status every 30s, only while the tab is visible
+  useVisibilityPolling(checkStatus, 30000);
 
   useEffect(() => {
     let list = [...customers];
