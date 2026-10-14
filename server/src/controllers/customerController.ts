@@ -3,10 +3,11 @@ import * as customerService from "../services/customer.service";
 import { sendSuccess, sendCreated } from "../utils/response";
 
 export async function getAll(req: Request, res: Response) {
-  const { phone, search, page, limit, cursor, startDate, endDate } = req.query;
+  const { phone, search, isAyushman, page, limit, cursor, startDate, endDate } = req.query;
   const data = await customerService.listCustomers({
     phone: phone as string,
     search: search as string,
+    isAyushman: isAyushman === undefined ? undefined : isAyushman === "true",
     page: page as string,
     limit: limit as string,
     cursor: cursor as string,

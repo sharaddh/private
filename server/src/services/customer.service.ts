@@ -14,6 +14,7 @@ import type { PaginatedResult } from "../types";
 interface CustomerFilters {
   search?: string;
   phone?: string;
+  isAyushman?: boolean;
   startDate?: string;
   endDate?: string;
   page?: string;
@@ -132,6 +133,10 @@ export async function listCustomers(
 
   if (filters.phone) {
     where.mobile = { contains: filters.phone, mode: "insensitive" };
+  }
+
+  if (filters.isAyushman !== undefined) {
+    where.isAyushman = filters.isAyushman;
   }
 
   if (filters.search) {

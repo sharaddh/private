@@ -575,6 +575,7 @@ export interface PaginationParams {
   search?: string;
   sort?: string;
   order?: 'asc' | 'desc';
+  isAyushman?: boolean;
 }
 
 export interface DateRangeParams {

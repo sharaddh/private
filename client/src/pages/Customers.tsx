@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import api from '../api';
-import { invalidateCache } from '../hooks/useCache';
+import { clearAllCache } from '../hooks/useCache';
+import { useDebounce } from '../hooks';
 import Modal from '../components/Modal';
 import PageSkeleton from '../components/PageSkeleton';
 import ShineCard from '../components/ShineCard';
@@ -26,7 +27,15 @@ import {
   Calendar,
   Glasses,
 } from 'lucide-react';
-import type { Customer, CustomerFormData, Prescription, Order, EyeData } from '../types';
+import type {
+  Customer,
+  CustomerFormData,
+  Prescription,
+  Order,
+  EyeData,
+  PaginatedResponse,
+  PaginationParams,
+} from '../types';
 
 interface CardDetail {
   loading: boolean;
@@ -71,12 +80,19 @@ const ORDER_COLORS: Record<string, string> = {
   Cancelled: 'bg-red-500/10 text-red-400',
 };
 
+const PAGE_SIZE = 40;
+
 export default function Customers(): React.JSX.Element {
   const toast = useToast();
   const [list, setList] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [ayushmanFilter, setAyushmanFilter] = useState<'all' | 'abha'>('all');
+  const [page, setPage] = useState<number>(1);
+  const [pages, setPages] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
+  const [abhaCount, setAbhaCount] = useState<number>(0);
+  const debouncedSearch = useDebounce(searchQuery, 350);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -156,26 +172,49 @@ export default function Customers(): React.JSX.Element {
     }
   }
 
+  const firstLoad = useRef<boolean>(true);
+
   const fetchCustomers = useCallback(async (): Promise<void> => {
-    setLoading(true);
+    if (firstLoad.current) setLoading(true);
     try {
-      const res = await customerService.list<Customer>({ limit: 1000 });
-      const raw = res.data as unknown;
-      let customers: Customer[] = [];
-      if (Array.isArray(raw)) {
-        customers = raw;
-      } else if (
-        raw &&
-        typeof raw === 'object' &&
-        Array.isArray((raw as Record<string, unknown>).data)
-      ) {
-        customers = (raw as { data: Customer[] }).data;
+      const params: PaginationParams = { page, limit: PAGE_SIZE };
+      const q = debouncedSearch.trim();
+      if (q) params.search = q;
+      if (ayushmanFilter === 'abha') params.isAyushman = true;
+
+      const res = await customerService.list<PaginatedResponse<Customer>>(params);
+      const data = res.data as unknown;
+      if (Array.isArray(data)) {
+        setList(data as Customer[]);
+        setTotal(data.length);
+        setPages(1);
+      } else {
+        const page_ = data as { data?: Customer[]; total?: number; pages?: number } | undefined;
+        const rows = page_?.data ?? [];
+        setList(rows);
+        setTotal(page_?.total ?? rows.length);
+        setPages(page_?.pages ?? 1);
       }
-      setList(customers);
     } catch {
       setList([]);
+      setTotal(0);
+      setPages(1);
     } finally {
+      firstLoad.current = false;
       setLoading(false);
+    }
+  }, [page, debouncedSearch, ayushmanFilter]);
+
+  const fetchAbhaCount = useCallback(async (): Promise<void> => {
+    try {
+      const res = await customerService.list<PaginatedResponse<Customer>>({
+        limit: 1,
+        isAyushman: true,
+      });
+      const data = res.data as unknown as { total?: number } | undefined;
+      setAbhaCount(typeof data?.total === 'number' ? data.total : 0);
+    } catch {
+      setAbhaCount(0);
     }
   }, []);
 
@@ -183,28 +222,23 @@ export default function Customers(): React.JSX.Element {
     fetchCustomers();
   }, [fetchCustomers]);
 
+  useEffect(() => {
+    fetchAbhaCount();
+  }, [fetchAbhaCount]);
+
+  // Reset to the first page whenever the query or filter changes.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, ayushmanFilter]);
+
   const refetch = useCallback(
     (invalidate?: boolean): void => {
-      if (invalidate) invalidateCache('/api/customers?limit=1000');
+      if (invalidate) clearAllCache();
       fetchCustomers();
+      fetchAbhaCount();
     },
-    [fetchCustomers]
+    [fetchCustomers, fetchAbhaCount]
   );
-
-  const filteredList = useMemo((): Customer[] => {
-    const q = searchQuery.trim();
-    const lower = q.toLowerCase();
-    return list.filter((c: Customer) => {
-      if (ayushmanFilter === 'abha' && !c.isAyushman) return false;
-      if (!q) return true;
-      return (
-        c.name?.toLowerCase().includes(lower) ||
-        c.mobile?.includes(q) ||
-        c.customerId?.toLowerCase().includes(lower) ||
-        c.email?.toLowerCase().includes(lower)
-      );
-    });
-  }, [searchQuery, list, ayushmanFilter]);
 
   function openCreate(): void {
     setEditing(null);
@@ -263,9 +297,13 @@ export default function Customers(): React.JSX.Element {
         ? await customerService.update<Customer>(editing._id, payload)
         : await customerService.create<Customer>(payload);
       if (res.success) {
-        invalidateCache('/api/customers?limit=1000');
         setShowForm(false);
-        if (!editing && res.data?._id) navigate(`/customers/${res.data._id}`);
+        if (!editing && res.data?._id) {
+          navigate(`/customers/${res.data._id}`);
+        } else {
+          fetchCustomers();
+          fetchAbhaCount();
+        }
       } else setError(res.message || uiT('Operation failed', 'αñæαñ¬αñ░αÑçαñ╢αñ¿ αñ╡αñ┐αñ½αñ▓'));
     } catch {
       setError(uiT('An error occurred', 'αñÅαñò αññαÑìαñ░αÑüαñƒαñ┐ αñ╣αÑüαñê'));
@@ -285,7 +323,10 @@ export default function Customers(): React.JSX.Element {
     )
       return;
     const res = await customerService.remove<Customer>(id);
-    if (res.success) setList((prev: Customer[]) => prev.filter((c: Customer) => c._id !== id));
+    if (res.success) {
+      fetchCustomers();
+      fetchAbhaCount();
+    }
   }
 
   if (loading) return <PageSkeleton page="customers" />;
@@ -381,11 +422,11 @@ export default function Customers(): React.JSX.Element {
               : 'bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text'
           }`}
         >
-          ABHA {list.filter((c: Customer) => c.isAyushman).length}
+          ABHA {abhaCount}
         </button>
       </div>
 
-      {filteredList.length === 0 ? (
+      {list.length === 0 ? (
         <div className="bg-th-surface rounded-lg text-center py-16 mt-6">
           <div className="w-16 h-16 bg-th-hover rounded-full flex items-center justify-center mx-auto mb-4">
             <Users size={28} className="text-[#535353]" />
@@ -410,10 +451,10 @@ export default function Customers(): React.JSX.Element {
       ) : (
         <div className="mt-6">
           <p className="text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-3">
-            {filteredList.length} {uiT('customer(s)', 'αñùαÑìαñ░αñ╛αñ╣αñò')}
+            {total} {uiT('customer(s)', 'αñùαÑìαñ░αñ╛αñ╣αñò')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filteredList.map((c: Customer) => {
+            {list.map((c: Customer) => {
               const d = detailMap[c._id];
               const lastRx = d?.prescriptions?.[0] as
                 | (Prescription & { _id?: string; createdAt?: string })
@@ -589,6 +630,28 @@ export default function Customers(): React.JSX.Element {
               );
             })}
           </div>
+
+          {pages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 rounded-lg text-[14px] font-bold bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {uiT('Prev', 'पिछला')}
+              </button>
+              <span className="text-[14px] font-semibold text-th-secondary">
+                {page} / {pages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                disabled={page >= pages}
+                className="px-3 py-1.5 rounded-lg text-[14px] font-bold bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {uiT('Next', 'अगला')}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
