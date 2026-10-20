@@ -58,9 +58,6 @@ export async function getStats() {
   const { start: weekStart, end: weekEnd } = getWeekRange();
   const { start: monthStart, end: monthEnd } = getMonthRange();
 
-  const prevDayKey = shiftDateKey(istDateKey(dayStart), -1);
-  const { start: prevDayStart, end: prevDayEnd } = getDayRange(istStartOfDay(prevDayKey));
-
   const thirtyDaysAgoKey = shiftDateKey(istDateKey(dayStart), -29);
   const thirtyDaysAgo = istStartOfDay(thirtyDaysAgoKey);
 
@@ -193,9 +190,10 @@ export async function getStats() {
       where: { branchId, paymentDate: { gte: thirtyDaysAgo, lte: dayEnd } },
       select: { paymentMode: true, amount: true, paymentDate: true },
     }),
-    prisma.inventory.findMany({
+    prisma.inventory.groupBy({
+      by: ["category"],
       where: { branchId },
-      select: { category: true, sellingPrice: true, quantity: true },
+      _count: true,
     }),
     prisma.payment.findMany({
       where: { branchId, paymentDate: { gte: dayStart, lte: dayEnd } },
@@ -309,15 +307,10 @@ export async function getStats() {
     .map(([id, total]) => ({ _id: id, total }))
     .sort((a, b) => a._id.localeCompare(b._id));
 
-  const categoryGrouped = new Map<string, { count: number; totalValue: number }>();
-  for (const item of inventoryForCategories) {
-    const existing = categoryGrouped.get(item.category) || { count: 0, totalValue: 0 };
-    existing.count += 1;
-    existing.totalValue += item.sellingPrice * item.quantity;
-    categoryGrouped.set(item.category, existing);
-  }
-  const categoryBreakdown = Array.from(categoryGrouped.entries())
-    .map(([id, data]) => ({ _id: id, ...data }))
+  const categoryBreakdown = (
+    inventoryForCategories as unknown as Array<{ category: string; _count: number }>
+  )
+    .map((row) => ({ category: row.category, count: row._count, totalValue: 0 }))
     .sort((a, b) => b.count - a.count);
 
   const mappedDailySales = dailySalesAgg.map(
@@ -332,8 +325,8 @@ export async function getStats() {
     count: d.count,
   }));
   const mappedCategoryBreakdown = categoryBreakdown.map(
-    (d: { _id: string; count: number; totalValue: number }) => ({
-      category: d._id,
+    (d: { category: string; count: number; totalValue: number }) => ({
+      category: d.category,
       count: d.count,
       totalValue: d.totalValue,
     })
