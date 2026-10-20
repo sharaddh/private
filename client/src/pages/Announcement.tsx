@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import { customerService, settingsService, whatsappService } from '../services';
+import { customerService } from '../services';
 import { useVisibilityPolling } from '../hooks';
 import PageSkeleton from '../components/PageSkeleton';
 import { useToast } from '../context/ToastContext';
@@ -27,7 +27,7 @@ import {
   Paperclip,
   FileText,
 } from 'lucide-react';
-import type { Customer, ShopSettings } from '../types';
+import type { Customer } from '../types';
 
 interface AntiBanPreset {
   label: string;
@@ -65,7 +65,6 @@ export default function Announcement() {
   const [message, setMessage] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [selectAll, setSelectAll] = useState<boolean>(false);
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
@@ -108,8 +107,9 @@ export default function Announcement() {
   }, []);
 
   useEffect(() => {
-    Promise.all([customerService.list<Customer[]>(), settingsService.get()])
-      .then(([c, s]) => {
+    customerService
+      .list<Customer[]>()
+      .then((c) => {
         if (c.success) {
           const list =
             (c.data as any)?.data || ((Array.isArray(c.data) ? c.data : []) as Customer[]);
@@ -121,7 +121,6 @@ export default function Announcement() {
               .map((x: Customer) => x.mobile!.replace(/\D/g, ''))
           );
         }
-        if (s.success) setSettings(s.data ?? null);
       })
       .finally(() => setLoading(false));
     checkStatus();

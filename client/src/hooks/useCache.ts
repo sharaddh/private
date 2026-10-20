@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { getCacheSnapshot, setCache, invalidateCache, clearAllCache } from './cacheStore';
+import { getCacheSnapshot, setCache, invalidateCache } from './cacheStore';
 
 export function useCache<T>(key: string | null): {
   get: () => T | null;

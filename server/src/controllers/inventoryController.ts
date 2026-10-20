@@ -57,16 +57,14 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function adjustStock(req: AuthRequest, res: Response) {
-  const { quantity, note } = req.body;
-  const by = req.user?.username || "";
-  const data = await inventoryService.adjustStock(req.params.id, quantity, note, by);
+  const { quantity } = req.body;
+  const data = await inventoryService.adjustStock(req.params.id, quantity);
   sendSuccess(res, data);
 }
 
 export async function bulkImport(req: AuthRequest, res: Response) {
-  const { items, note } = req.body;
-  const by = req.user?.username || "";
-  const data = await inventoryService.importInventory(items || [], { note, by });
+  const { items } = req.body;
+  const data = await inventoryService.importInventory(items || []);
   sendSuccess(res, data);
 }
 

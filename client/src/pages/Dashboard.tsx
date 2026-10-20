@@ -16,14 +16,12 @@ import {
   TodayPaymentDonut,
 } from '../components/DashboardCharts';
 import { useToast } from '../context/ToastContext';
-import { useTheme } from '../context/ThemeContext';
 import { useTranslate } from '../context/TranslateContext';
 import { useAuth } from '../context/AuthContext';
-import { formatFullRx, compactRx } from '../utils/rx';
-import type { DashboardData, Customer, Order, Bill, Todo } from '../types';
+import { compactRx } from '../utils/rx';
+import type { Order, Todo } from '../types';
 import {
   Users,
-  Package,
   Wallet,
   Receipt,
   Truck,
@@ -37,12 +35,10 @@ import {
   Boxes,
   PackageCheck,
   Clock,
-  Activity,
   Plus,
   Check,
   Trash2,
   ArrowUpRight,
-  ArrowDownRight,
   UserPlus,
   FileText,
   BarChart3,
@@ -56,7 +52,6 @@ import {
   ShoppingCart,
   CheckSquare,
   Send,
-  Eye,
   MessageSquare,
   Calendar,
   LayoutDashboard,
@@ -453,7 +448,7 @@ function AutoGrowTextarea({
 }
 
 export default function Dashboard() {
-  const { dashboard, loading, error, refetch } = useDashboard();
+  const { dashboard, loading, refetch } = useDashboard();
   const { data: todosData, refetch: refetchTodos } = useApi<Todo[]>(
     () => api.get<Todo[]>('/api/workspace/todos'),
     [],
@@ -475,7 +470,6 @@ export default function Dashboard() {
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
   const toast = useToast();
-  const { dark, toggle } = useTheme();
   const { uiT } = useTranslate();
   const { user, currentBranch, isStaff } = useAuth();
 
@@ -609,8 +603,6 @@ export default function Dashboard() {
       return new Set(ids);
     });
   }, []);
-
-  const clearSelection = useCallback(() => setSelectedOrders(new Set()), []);
 
   const sendDemand = useCallback(
     async (type: 'buy' | 'order') => {
@@ -1068,12 +1060,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
               {hasSales && (
                 <div className="lg:col-span-3">
-                  <SalesTrendChart data={d.dailySales || []} dark={dark} />
+                  <SalesTrendChart data={d.dailySales || []} />
                 </div>
               )}
               {hasOrders && (
                 <div className={hasSales ? 'lg:col-span-2' : 'lg:col-span-5'}>
-                  <OrderStatusDonut data={d.orderStatusCounts || []} dark={dark} />
+                  <OrderStatusDonut data={d.orderStatusCounts || []} />
                 </div>
               )}
             </div>
@@ -1088,18 +1080,17 @@ export default function Dashboard() {
                 <SalesVsCollectionChart
                   salesData={d.dailySales || []}
                   collectionData={d.dailyCollections || []}
-                  dark={dark}
                 />
               </div>
             )}
             {hasPayments && (
               <div className={hasSales && hasCollections ? '' : 'md:col-span-2'}>
-                <PaymentModeBarChart data={d.paymentModeSplit || []} dark={dark} />
+                <PaymentModeBarChart data={d.paymentModeSplit || []} />
               </div>
             )}
             {hasTodayPayments && (
               <div className={hasSales && hasCollections ? '' : 'md:col-span-2'}>
-                <TodayPaymentDonut data={d.todayPaymentModeSplit || []} dark={dark} />
+                <TodayPaymentDonut data={d.todayPaymentModeSplit || []} />
               </div>
             )}
           </div>
@@ -1110,12 +1101,12 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {hasOrdersTrend && (
               <div className={hasCategories ? '' : 'md:col-span-2'}>
-                <WeeklyOrdersChart data={d.weeklyOrderTrend || []} dark={dark} />
+                <WeeklyOrdersChart data={d.weeklyOrderTrend || []} />
               </div>
             )}
             {hasCategories && (
               <div className={hasOrdersTrend ? '' : 'md:col-span-2'}>
-                <CategoryPieChart data={d.categoryBreakdown || []} dark={dark} />
+                <CategoryPieChart data={d.categoryBreakdown || []} />
               </div>
             )}
           </div>
@@ -1495,7 +1486,6 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
           d.recentOrders.map((o, idx) => {
             const custObj = typeof o.customer === 'object' ? o.customer : null;
             const cName = custObj?.name ?? '—';
-            const cMobile = custObj?.mobile ?? '';
             const rx = o.prescription;
             const rxParts: string[] = [];
             if (rx?.rightEye?.dv) {

@@ -115,25 +115,4 @@ export function clearAllCache(): void {
   persist();
 }
 
-export function getCachedPromise<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const scoped = scopedKey(key);
-  const existing = store.get(scoped) as CacheEntry<T> | undefined;
-  if (existing?.promise) return existing.promise;
-  if (existing && !isExpired(existing)) return Promise.resolve(existing.data);
-
-  const promise = fetcher()
-    .then((data) => {
-      store.set(scoped, { data, timestamp: Date.now(), promise: null });
-      persist();
-      return data;
-    })
-    .catch((err) => {
-      store.delete(scoped);
-      throw err;
-    });
-
-  store.set(scoped, { data: null as unknown as T, timestamp: 0, promise });
-  return promise;
-}
-
 hydrate();

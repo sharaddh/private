@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from "child_process";
 import path from "path";
 import fs from "fs";
 import { prisma } from "../db/prisma";
+import { logger } from "../utils/logger";
 
 const RELAY_DIR = path.resolve(__dirname, "../../../relay-server");
 const STATE_DIR = path.join(RELAY_DIR, ".state");
@@ -149,7 +150,7 @@ async function startRelay(
         stdio: ["ignore", "pipe", "pipe"],
       });
     } else {
-      console.log(`[camera-relay] dh-p2p not found at ${dhP2pPath}, skipping relay start`);
+      logger.info(`[camera-relay] dh-p2p not found at ${dhP2pPath}, skipping relay start`);
       await prisma.camera.update({
         where: { id: cameraId },
         data: { status: "offline", lastError: "dh-p2p binary not found" },
@@ -158,14 +159,14 @@ async function startRelay(
     }
 
     proc.stdout?.on("data", (data) => {
-      console.log(`[dh-p2p:${cameraId}] ${data.toString().trim()}`);
+      logger.info(`[dh-p2p:${cameraId}] ${data.toString().trim()}`);
     });
     proc.stderr?.on("data", (data) => {
-      console.error(`[dh-p2p:${cameraId}] ERR: ${data.toString().trim()}`);
+      logger.error(`[dh-p2p:${cameraId}] ERR: ${data.toString().trim()}`);
     });
 
     proc.on("exit", async (code) => {
-      console.log(`[dh-p2p:${cameraId}] Exited with code ${code}`);
+      logger.info(`[dh-p2p:${cameraId}] Exited with code ${code}`);
       runningProcesses.delete(cameraId);
       await prisma.camera.update({
         where: { id: cameraId },
@@ -192,11 +193,11 @@ async function startRelay(
 
     await prisma.camera.update({ where: { id: cameraId }, data: { status: "online" } });
 
-    console.log(
+    logger.info(
       `[camera-relay] Started relay for camera ${cameraId} (SN: ${serialNumber}, port: ${localPort})`
     );
   } catch (error: any) {
-    console.error(`[camera-relay] Failed to start relay for ${cameraId}:`, error.message);
+    logger.error(`[camera-relay] Failed to start relay for ${cameraId}: ${error.message}`);
     await prisma.camera.update({
       where: { id: cameraId },
       data: { status: "error", lastError: error.message },

@@ -286,18 +286,6 @@ export async function getStats() {
 
   const weeklyOrderTrend = orderCounts;
 
-  const paymentsByDateGrouped = new Map<string, { count: number; total: number }>();
-  for (const payment of paymentsForDailyCounts) {
-    const key = istDateKey(payment.paymentDate);
-    const existing = paymentsByDateGrouped.get(key) || { count: 0, total: 0 };
-    existing.count += 1;
-    existing.total += payment.amount;
-    paymentsByDateGrouped.set(key, existing);
-  }
-  const paymentCounts = Array.from(paymentsByDateGrouped.entries())
-    .map(([id, data]) => ({ _id: id, ...data }))
-    .sort((a, b) => a._id.localeCompare(b._id));
-
   const dailyCollectionByDate = new Map<string, number>();
   for (const payment of paymentsForDailyCounts) {
     const key = istDateKey(payment.paymentDate);

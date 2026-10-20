@@ -155,26 +155,15 @@ export async function getInventoryReport(category?: string) {
   const match: Record<string, unknown> = { branchId };
   if (category) match.category = category;
 
-  const [allItems, categoryItems, lowStockItems, locationItems] = await Promise.all([
+  const [allItems, lowStockItems] = await Promise.all([
     prisma.inventory.findMany({
       where: match,
-      select: { quantity: true, sellingPrice: true },
-    }),
-    prisma.inventory.groupBy({
-      by: ["category"],
-      where: match,
-      _count: true,
-      _sum: { quantity: true },
+      select: { category: true, location: true, quantity: true, sellingPrice: true },
     }),
     prisma.inventory.findMany({
       where: { quantity: { lte: 5 }, ...match },
       orderBy: { quantity: "asc" },
       take: 20,
-    }),
-    prisma.inventory.groupBy({
-      by: ["location"],
-      where: match,
-      _count: true,
     }),
   ]);
 
@@ -182,63 +171,50 @@ export async function getInventoryReport(category?: string) {
   let totalQuantity = 0;
   let totalValue = 0;
   let totalPriceSum = 0;
+
+  const catMap = new Map<
+    string,
+    { count: number; totalQuantity: number; totalValue: number }
+  >();
+  const locMap = new Map<string, { count: number; totalValue: number }>();
+
   for (const item of allItems) {
+    const qty = item.quantity || 0;
+    const price = item.sellingPrice || 0;
+    const value = qty * price;
     totalItems += 1;
-    totalQuantity += item.quantity || 0;
-    totalValue += (item.quantity || 0) * (item.sellingPrice || 0);
-    totalPriceSum += item.sellingPrice || 0;
+    totalQuantity += qty;
+    totalValue += value;
+    totalPriceSum += price;
+
+    const cat = catMap.get(item.category) ?? {
+      count: 0,
+      totalQuantity: 0,
+      totalValue: 0,
+    };
+    cat.count += 1;
+    cat.totalQuantity += qty;
+    cat.totalValue += value;
+    catMap.set(item.category, cat);
+
+    const loc = locMap.get(item.location) ?? { count: 0, totalValue: 0 };
+    loc.count += 1;
+    loc.totalValue += value;
+    locMap.set(item.location, loc);
   }
+
   const avgSellingPrice = totalItems > 0 ? totalPriceSum / totalItems : 0;
 
-  const categoryBreakdown = categoryItems.map((c) => {
-    const catItems = allItems; // recompute per-category from raw data
-    return { _id: c.category, count: c._count, totalQuantity: c._sum.quantity || 0, totalValue: 0 };
-  });
-
-  // Compute per-category totalValue by re-querying grouped data
-  const catGroups = await prisma.inventory.groupBy({
-    by: ["category"],
-    where: match,
-    _sum: { quantity: true },
-  });
-
-  const catTotals = new Map<string, number>();
-  for (const g of catGroups) {
-    // Fetch items in this category to compute totalValue (since $multiply isn't supported)
-    const items = await prisma.inventory.findMany({
-      where: { ...match, category: g.category },
-      select: { quantity: true, sellingPrice: true },
-    });
-    const catTotal = items.reduce((s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
-    catTotals.set(g.category, catTotal);
-  }
-
-  const categoryBreakdownFinal = categoryItems.map((c) => ({
-    _id: c.category,
-    count: c._count,
-    totalQuantity: c._sum.quantity || 0,
-    totalValue: catTotals.get(c.category) || 0,
-  }));
-
-  // Compute valueByLocation
-  const locationGroups = await prisma.inventory.groupBy({
-    by: ["location"],
-    where: match,
-  });
-
-  const valueByLocation = [];
-  for (const loc of locationGroups) {
-    const locItems = await prisma.inventory.findMany({
-      where: { ...match, location: loc.location },
-      select: { quantity: true, sellingPrice: true },
-    });
-    const locValue = locItems.reduce((s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
-    valueByLocation.push({ _id: loc.location, totalValue: locValue, count: locItems.length });
-  }
+  const categoryBreakdown = Array.from(catMap.entries()).map(
+    ([category, data]) => ({ _id: category, ...data })
+  );
+  const valueByLocation = Array.from(locMap.entries()).map(
+    ([location, data]) => ({ _id: location, ...data })
+  );
 
   return {
     overview: { totalItems, totalQuantity, totalValue, avgSellingPrice },
-    categoryBreakdown: categoryBreakdownFinal,
+    categoryBreakdown,
     lowStockItems,
     valueByLocation,
   };

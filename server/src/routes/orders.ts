@@ -16,6 +16,7 @@ import { AppError } from "../middleware/errorHandler";
 import { cacheRoute, invalidateCache } from "../middleware/cache";
 import { normalizePhone } from "../utils/phone";
 import { formatISTDate, formatISTDateTime } from "../utils/date";
+import { logger } from "../utils/logger";
 import { VALID_TRANSITIONS } from "../types";
 import { requireBranchId } from "../utils/scope";
 import {
@@ -179,7 +180,7 @@ router.patch(
           setTimeout(async () => {
             const sent = await wa.sendMessage(readyPhone, msg);
             if (!sent.ok)
-              console.error(`WhatsApp: order ${order.id} ready message failed:`, sent.error);
+              logger.error(`WhatsApp: order ${order.id} ready message failed: ${sent.error}`);
           }, readyDelay);
         }
       }
@@ -198,7 +199,7 @@ router.patch(
           setTimeout(async () => {
             const sent = await wa.sendMessage(deliveredPhone, msg);
             if (!sent.ok)
-              console.error(`WhatsApp: order ${order.id} delivered message failed:`, sent.error);
+              logger.error(`WhatsApp: order ${order.id} delivered message failed: ${sent.error}`);
           }, deliveredDelay);
         }
       }
@@ -618,7 +619,7 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
     const waStatus = await wa.getStatus();
 
     const sizeKB = (pdfBuffer.length / 1024).toFixed(1);
-    console.log(`Demand PDF: ${filename}, ${sizeKB}KB, WA status: ${waStatus.status}`);
+    logger.info(`Demand PDF: ${filename}, ${sizeKB}KB, WA status: ${waStatus.status}`);
 
     const base64 = pdfBuffer.toString("base64");
     let sent = false;
@@ -637,11 +638,11 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
       if (!sendResult.ok && sendResult.error) sendError = sendResult.error;
     } catch (e: any) {
       sendError = e.message;
-      console.error(`Demand PDF sendMedia threw: ${e.message}`);
+      logger.error(`Demand PDF sendMedia threw: ${e.message}`);
     }
 
     if (!sent && waStatus.status === "connected" && !sendError) {
-      console.log("Demand PDF sendMedia returned false, trying text fallback");
+      logger.debug("Demand PDF sendMedia returned false, trying text fallback");
       try {
         const items = entries
           .map((e: DemandEntry) => `${e.eye}  ${e.customerName} - ${e.lensLabel} | ${e.coating} | ${e.rxStr}`)
@@ -649,7 +650,7 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
         const textMsg = `${title}\n\n${items}\n\nTotal: ${entries.length} items`;
         await wa.sendMessage(normalized, textMsg);
       } catch (e2: any) {
-        console.error(`Demand text fallback also failed: ${e2.message}`);
+        logger.error(`Demand text fallback also failed: ${e2.message}`);
       }
     }
 
@@ -663,10 +664,10 @@ router.post("/demand-send", authenticate, validate(demandSendSchema, "body"), as
       sizeKB: parseFloat(sizeKB),
       sendError,
     };
-    console.log("Demand PDF response:", JSON.stringify(responseData));
+    logger.info("Demand PDF response:", responseData);
     res.json({ success: true, data: responseData });
   } catch (err: any) {
-    console.error("Demand send error:", err);
+    logger.error("Demand send error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 });

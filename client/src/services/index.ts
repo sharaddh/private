@@ -5,15 +5,9 @@ export { visitService } from './visit.service';
 export { paymentService } from './payment.service';
 export { inventoryService, type InventoryListParams } from './inventory.service';
 export { lensStockService, shopCartApi, warehouseCartApi } from './lensStock.service';
-export { deliveryService } from './delivery.service';
 export { dashboardService } from './dashboard.service';
 export { settingsService } from './settings.service';
-export { authService } from './auth.service';
-export { announcementService } from './announcement.service';
-export { todoService } from './todo.service';
 export { whatsappService } from './whatsapp.service';
-export { reportService } from './report.service';
-export { workspaceService } from './workspace.service';
 export { withdrawalService } from './withdrawal.service';
 export {
   inventoryV2Service,

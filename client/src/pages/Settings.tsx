@@ -12,10 +12,7 @@ import {
   Shield,
   Upload,
   MessageCircle,
-  RefreshCw,
   LogOut,
-  Sun,
-  Moon,
   Trash2,
   X,
   Building2,
@@ -36,7 +33,7 @@ import {
   Crown,
   Languages,
 } from 'lucide-react';
-import type { User as AppUser, BranchInfo } from '../types';
+import type { User as AppUser } from '../types';
 import SettingsHeader from './settings/SettingsHeader';
 import SectionNav from './settings/SectionNav';
 import type { Section } from './settings/SectionNav';

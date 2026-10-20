@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, User, History, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, User, Loader2 } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
 
 interface Customer {

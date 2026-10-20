@@ -201,7 +201,7 @@ export async function createInventory(data: InventoryData) {
   }
 }
 
-export async function adjustStock(id: string, quantity: number, note?: string, by?: string) {
+export async function adjustStock(id: string, quantity: number) {
   const item = await prisma.inventory.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Inventory item not found");
   const newQty = item.quantity + quantity;
@@ -388,10 +388,7 @@ export interface ImportResult {
   errors: Array<{ row: number; message: string }>;
 }
 
-export async function importInventory(
-  rows: unknown[],
-  meta: { note?: string; by?: string } = {}
-): Promise<ImportResult> {
+export async function importInventory(rows: unknown[]): Promise<ImportResult> {
   const errors: Array<{ row: number; message: string }> = [];
   const parsedRows: Array<{ row: number; data: z.infer<typeof importRowSchema> }> = [];
 

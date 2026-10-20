@@ -4,6 +4,7 @@ import { Branch } from "../models/branch";
 import { User } from "../models/user";
 import { clearBranchCache } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
+import { logger } from "../utils/logger";
 
 interface BranchData {
   name?: string;
@@ -46,7 +47,7 @@ async function syncBranchShopSettings(branch: any) {
       },
     });
   } catch (e: any) {
-    console.warn("Could not sync branch shop settings", e?.message);
+    logger.warn(`Could not sync branch shop settings: ${e?.message}`);
   }
 }
 

@@ -6,7 +6,6 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslate } from '../context/TranslateContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSettings } from '../hooks/useSettings';
 import {
   LayoutDashboard,
   Users,
@@ -133,7 +132,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { isStaff, currentBranch } = useAuth();
   const { uiT } = useTranslate();
   const { dark, toggle: toggleTheme } = useTheme();
-  const { settings } = useSettings();
 
   const trLabel = useCallback(
     (label: string) => {

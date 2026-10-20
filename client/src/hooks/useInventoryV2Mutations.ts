@@ -18,16 +18,12 @@ import type {
   CountSessionDetail,
   CreateBrandInput,
   CreateCountSessionInput,
-  CreateProductInput,
   CreateRackInput,
-  CreateVariantInput,
   CreateVariantWithStockInput,
-  InventoryProduct,
   InventoryVariant,
   Rack,
   UpdateBrandInput,
   UpdateCountEntriesInput,
-  UpdateProductInput,
   UpdateRackInput,
   UpdateVariantInput,
   WithdrawalV2,
@@ -47,39 +43,6 @@ export function useUpdateBrand() {
     []
   );
   return { update, loading, error, reset };
-}
-
-export function useCreateProduct() {
-  const { loading, error, reset } = useApiPost<InventoryProduct, CreateProductInput>();
-  const create = useCallback(
-    (data: CreateProductInput) => inventoryV2Service.createProduct(data),
-    []
-  );
-  return { create, loading, error, reset };
-}
-
-export function useUpdateProduct() {
-  const { loading, error, reset } = useApiPost<InventoryProduct, UpdateProductInput>();
-  const update = useCallback(
-    (id: string, data: UpdateProductInput) => inventoryV2Service.updateProduct(id, data),
-    []
-  );
-  return { update, loading, error, reset };
-}
-
-export function useDeleteProduct() {
-  const { loading, error, reset } = useApiDelete();
-  const remove = useCallback((id: string) => inventoryV2Service.deleteProduct(id), []);
-  return { remove, loading, error, reset };
-}
-
-export function useCreateVariant() {
-  const { loading, error, reset } = useApiPost<InventoryVariant, CreateVariantInput>();
-  const create = useCallback(
-    (data: CreateVariantInput) => inventoryV2Service.createVariant(data),
-    []
-  );
-  return { create, loading, error, reset };
 }
 
 export function useUpdateVariant() {

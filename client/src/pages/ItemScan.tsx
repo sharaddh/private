@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
-import { inventoryService } from '../services';
 import { useTranslate } from '../context/TranslateContext';
 import PageSkeleton from '../components/PageSkeleton';
 import QRCode from 'qrcode';
@@ -9,7 +8,6 @@ import {
   ArrowLeft,
   Package,
   Printer,
-  QrCode,
   Tag,
   User,
   Building,
@@ -111,7 +109,6 @@ export default function ItemScan() {
 
   const category = item.category || 'Frame';
   const gender = item.gender || '';
-  const type = item.inventoryType || category;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">

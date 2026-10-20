@@ -61,15 +61,6 @@ export function useInventory(params?: InventoryListParams) {
   };
 }
 
-export function useInventoryItem(id: string) {
-  const { data, loading, error, refetch } = useApi<InventoryItem>(
-    () => inventoryService.getById<InventoryItem>(id),
-    [id]
-  );
-
-  return { item: data, loading, error, refetch };
-}
-
 export function useCreateInventoryItem() {
   const { loading, error, reset } = useApiPost<InventoryItem, InventoryFormData>();
 

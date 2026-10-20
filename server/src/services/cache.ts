@@ -32,7 +32,7 @@ export function initCache(redisUrl: string): Redis {
   client.on("reconnecting", () => {});
   client.on("error", (err) => {
     if (err.message?.includes("ECONNREFUSED")) return;
-    if (process.env.NODE_ENV !== "production") console.warn("Redis:", err.message);
+    if (process.env.NODE_ENV !== "production") logger.warn(`Redis: ${err.message}`);
   });
 
   return client;

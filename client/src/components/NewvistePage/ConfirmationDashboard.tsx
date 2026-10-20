@@ -3,8 +3,6 @@ import {
   CheckCircle,
   Eye,
   Tag,
-  Grid3X3,
-  FileText,
   CreditCard,
   Truck,
   Activity,

@@ -3,7 +3,6 @@ import {
   SkeletonCard,
   SkeletonTable,
   SkeletonStats,
-  SkeletonStatCards,
   SkeletonList,
   SkeletonChart,
   SkeletonDonut,
@@ -12,7 +11,6 @@ import {
   SkeletonFilterPills,
   SkeletonProfileCard,
   SkeletonSearchBar,
-  SkeletonText,
 } from './Skeleton';
 
 export default function PageSkeleton({ page }: { page: string }) {

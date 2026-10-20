@@ -21,7 +21,6 @@ import {
   Save,
   X,
   MessageCircle,
-  FileText,
   User,
   ChevronRight,
   Clock,
@@ -31,7 +30,7 @@ import {
   TrendingUp,
   Stethoscope,
 } from 'lucide-react';
-import { formatEyeRx, hasEyeData, compactRx } from '../utils/rx';
+import { compactRx } from '../utils/rx';
 import { toDateKey } from '../utils/date';
 import { normalizeWhatsAppPhone } from '../utils/whatsapp';
 import { whatsappService } from '../services';

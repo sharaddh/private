@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
-import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle, Clock } from 'lucide-react';
+import { X, Camera, CameraOff, Search, RefreshCw, AlertTriangle } from 'lucide-react';
 
 interface CameraScannerProps {
   onScan: (code: string) => void;
@@ -19,7 +19,7 @@ function playBeep() {
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.stop(ctx.currentTime + 0.15);
-  } catch (e) {
+  } catch {
     /* audio beep is best-effort */
   }
 }

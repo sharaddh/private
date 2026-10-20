@@ -458,7 +458,7 @@ export default function InventoryPage() {
       toast.success(
         `${objects.length} ${uiT('rows ready to import', 'पंक्तियां आयात के लिए तैयार')}`
       );
-    } catch (err) {
+    } catch {
       toast.error(uiT('Could not read the file', 'फ़ाइल पढ़ी नहीं जा सकी'));
     } finally {
       e.target.value = '';
@@ -564,7 +564,7 @@ export default function InventoryPage() {
       }));
       downloadCsv(`inventory-${new Date().toISOString().slice(0, 10)}.csv`, out);
       toast.success(`${all.length} ${uiT('items exported', 'आइटम निर्यात हुए')}`);
-    } catch (err) {
+    } catch {
       toast.error(uiT('Export failed', 'निर्यात विफल रहा'));
     }
   }
@@ -1115,7 +1115,7 @@ export default function InventoryPage() {
           </div>
         </>
       ) : (
-        <LensStockPanel scope={lensScope} onScopeChange={setLensScope} staffMode={isStaff} />
+        <LensStockPanel scope={lensScope} staffMode={isStaff} />
       )}
 
       <Modal

@@ -23,7 +23,7 @@ import DateRangePicker from '../components/DateRangePicker';
 import { orderService } from '../services';
 import { useVisibilityPolling } from '../hooks';
 import { compactRx } from '../utils/rx';
-import type { Order, OrderStatus, Customer } from '../types';
+import type { Order, OrderStatus } from '../types';
 
 const STATUS_STEPS: readonly OrderStatus[] = [
   'Draft',

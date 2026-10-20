@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { clearAllCache } from '../hooks/useCache';
 import { useDebounce } from '../hooks';
-import Modal from '../components/Modal';
 import PageSkeleton from '../components/PageSkeleton';
 import ShineCard from '../components/ShineCard';
 import { useAuth } from '../context/AuthContext';
@@ -23,7 +22,6 @@ import {
   Tag,
   Activity,
   IndianRupee,
-  Eye,
   Calendar,
   Glasses,
 } from 'lucide-react';
@@ -95,8 +93,6 @@ export default function Customers(): React.JSX.Element {
   const debouncedSearch = useDebounce(searchQuery, 350);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
   const [form, setForm] = useState<CustomerFormData>({
     name: '',
     email: '',
@@ -113,7 +109,7 @@ export default function Customers(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
-  const { isStaff, user } = useAuth();
+  const { isStaff } = useAuth();
   const { uiT } = useTranslate();
   const [recalculating, setRecalculating] = useState<boolean>(false);
   const [detailMap, setDetailMap] = useState<Record<string, CardDetail>>({});
@@ -1064,173 +1060,6 @@ export default function Customers(): React.JSX.Element {
           document.body
         )}
 
-      <Modal
-        open={showDetail}
-        onClose={() => setShowDetail(false)}
-        title={uiT('Customer Details', 'αñùαÑìαñ░αñ╛αñ╣αñò αñ╡αñ┐αñ╡αñ░αñú')}
-        size="lg"
-      >
-        {detailCustomer && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 bg-th-elevated rounded-lg">
-              <div className="w-14 h-14 bg-[#1ed760] rounded-full flex items-center justify-center text-black font-bold text-xl">
-                {detailCustomer.name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-th-text">{detailCustomer.name}</h2>
-                <p className="text-sm text-th-secondary">
-                  {detailCustomer.customerId && `ID: ${detailCustomer.customerId}`}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-th-elevated rounded-lg p-3 text-center">
-                <Activity size={16} className="text-[#1ed760] mx-auto mb-1" />
-                <p className="text-lg font-bold text-th-text">{detailCustomer.totalVisits || 0}</p>
-                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Visits', 'αñ╡αñ┐αñ£αñ╝αñ┐αñƒ')}
-                </p>
-              </div>
-              <div className="bg-th-elevated rounded-lg p-3 text-center">
-                <IndianRupee size={16} className="text-[#1ed760] mx-auto mb-1" />
-                <p className="text-lg font-bold text-[#1ed760]">
-                  ₹{(detailCustomer.totalSpent || 0).toLocaleString()}
-                </p>
-                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Spent', 'αñûαñ░αÑìαñÜ')}
-                </p>
-              </div>
-              <div className="bg-th-elevated rounded-lg p-3 text-center">
-                <IndianRupee size={16} className="text-[#e8a427] mx-auto mb-1" />
-                <p className="text-lg font-bold text-[#e8a427]">
-                  ₹{(detailCustomer.pendingAmount || 0).toLocaleString()}
-                </p>
-                <p className="text-[14px] text-th-secondary font-bold uppercase tracking-wider">
-                  {uiT('Pending', 'αñ¼αñ╛αñòαÑÇ')}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                <UserPlus size={14} className="text-[#1ed760]" />{' '}
-                {uiT('Personal Info', 'αñ╡αÑìαñ»αñòαÑìαññαñ┐αñùαññ αñ£αñ╛αñ¿αñòαñ╛αñ░αÑÇ')}
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Age', 'αñåαñ»αÑü')}
-                  </p>
-                  <p className="text-th-text">{detailCustomer.age || 'ΓÇö'}</p>
-                </div>
-                <div>
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Gender', 'αñ▓αñ┐αñéαñù')}
-                  </p>
-                  <p className="text-th-text">{detailCustomer.gender || 'ΓÇö'}</p>
-                </div>
-                <div>
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Member Since', 'αñ╕αñªαñ╕αÑìαñ» αññαñ¼ αñ╕αÑç')}
-                  </p>
-                  <p className="text-th-text">
-                    {detailCustomer.createdAt
-                      ? new Date(detailCustomer.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })
-                      : 'ΓÇö'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                <Phone size={14} className="text-[#1ed760]" /> {uiT('Contact', 'αñ╕αñéαñ¬αñ░αÑìαñò')}
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Mobile', 'αñ«αÑïαñ¼αñ╛αñçαñ▓')}
-                  </p>
-                  <p className="text-th-text">{detailCustomer.mobile || 'ΓÇö'}</p>
-                </div>
-                <div>
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Alt Mobile', 'αñ╡αÑêαñòαñ▓αÑìαñ¬αñ┐αñò αñ«αÑïαñ¼αñ╛αñçαñ▓')}
-                  </p>
-                  <p className="text-th-text">{detailCustomer.alternateMobile || 'ΓÇö'}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[15px] text-th-secondary font-bold uppercase tracking-wider">
-                    {uiT('Email', 'αñêαñ«αÑçαñ▓')}
-                  </p>
-                  <p className="text-th-text">{detailCustomer.email || 'ΓÇö'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-th-surface rounded-lg p-4">
-              <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                <MapPin size={14} className="text-[#1ed760]" /> {uiT('Address', 'αñ¬αññαñ╛')}
-              </h3>
-              <p className="text-sm text-th-secondary">
-                {detailCustomer.address
-                  ? `${detailCustomer.address}${detailCustomer.city ? `, ${detailCustomer.city}` : ''}`
-                  : 'ΓÇö'}
-              </p>
-            </div>
-
-            {detailCustomer.tags && detailCustomer.tags.length > 0 && (
-              <div className="bg-th-surface rounded-lg p-4">
-                <h3 className="text-[15px] font-bold uppercase tracking-wider text-th-text flex items-center gap-2 mb-3">
-                  <Tag size={14} className="text-[#1ed760]" /> {uiT('Tags', 'αñƒαÑêαñù')}
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {detailCustomer.tags.map((t: string, i: number) => (
-                    <span
-                      key={t}
-                      className="px-2 py-0.5 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-[15px] font-medium"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-th-border">
-              <button
-                onClick={() => setShowDetail(false)}
-                className="text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-th-elevated text-th-secondary hover:bg-th-hover hover:text-th-text transition-colors"
-              >
-                {uiT('Close', 'αñ¼αñéαñª αñòαñ░αÑçαñé')}
-              </button>
-              <button
-                onClick={() => {
-                  setShowDetail(false);
-                  openEdit(detailCustomer);
-                }}
-                className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
-              >
-                <Edit2 size={14} /> {uiT('Edit', 'αñ╕αñéαñ¬αñ╛αñªαñ┐αññ αñòαñ░αÑçαñé')}
-              </button>
-              <button
-                onClick={() => {
-                  setShowDetail(false);
-                  navigate(`/customers/${detailCustomer._id}`);
-                }}
-                className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-wider px-5 py-2 rounded-lg bg-[#1ed760] text-black hover:bg-[#1ed760]/90 active:scale-95 transition-transform"
-              >
-                <Eye size={14} /> {uiT('View Full Profile', 'αñ¬αÑéαñ░αÑÇ αñ¬αÑìαñ░αÑïαñ½αñ╝αñ╛αñçαñ▓ αñªαÑçαñûαÑçαñé')}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

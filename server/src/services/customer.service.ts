@@ -3,7 +3,6 @@ import { Visit } from "../models/visit";
 import { Order } from "../models/order";
 import { Bill } from "../models/bill";
 import { Prescription } from "../models/prescription";
-import { Payment } from "../models/payment";
 import { prisma, type Prisma } from "../db/prisma";
 import { paginateFind, parseDateRange, prismaDateRange } from "../utils/pagination";
 import { requireBranchId } from "../utils/scope";

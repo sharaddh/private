@@ -117,9 +117,6 @@ export default function LensDemandGrid({
 
   const toggle = (label: string) => setOpenGroup((prev) => (prev === label ? '' : label));
 
-  const demandQtyFor = (lensTypeKey: LensType, powerKey: string): number =>
-    demandSel.get(demandKey(coating, lensTypeKey, powerKey)) || 0;
-
   if (lensType === 'compound') {
     const cylGroups: { label: string; values: string[]; sphValues: string[] }[] = [
       { label: 'Negative CYL', values: NEG_CYL, sphValues: NEG_SPH_INNER },

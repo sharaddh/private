@@ -8,7 +8,7 @@ import {
   type MovementListParams,
   type WithdrawalListParams,
 } from '../../types/inventoryV2';
-import { movementLabel, movementTone, formatDateTime } from './shared';
+import { movementLabel, movementTone } from './shared';
 import { SkeletonTable, SkeletonList } from '../Skeleton';
 
 function fmtDate(iso?: string): string {
@@ -24,7 +24,6 @@ const REFERENCE_LABELS: Record<string, string> = {
 };
 
 export default function HistoryView({ refreshKey }: { refreshKey: number }) {
-  const toast = useToast();
   const [mode, setMode] = useState<'movements' | 'withdrawals'>('movements');
 
   return (

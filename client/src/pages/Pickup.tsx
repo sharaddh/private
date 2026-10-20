@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
-import { settingsService, orderService, billService } from '../services';
+import { orderService, billService } from '../services';
 import ShineCard from '../components/ShineCard';
 import { useToast } from '../context/ToastContext';
 import { useTranslate } from '../context/TranslateContext';
@@ -21,7 +21,7 @@ import {
   Glasses,
   Eye,
 } from 'lucide-react';
-import type { Customer, Order, Bill, ShopSettings, BillItem, PaymentMode } from '../types';
+import type { Customer, Order, Bill } from '../types';
 import SplitPaymentInput from '../components/SplitPaymentInput';
 import { isCanonicalPaymentMode } from '../constants/paymentModes';
 import {
@@ -57,7 +57,6 @@ export default function Pickup() {
   const [searchParams] = useSearchParams();
   const globalToast = useToast();
   const [phone, setPhone] = useState<string>('');
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -94,9 +93,6 @@ export default function Pickup() {
   const customerIdFromUrl = searchParams.get('customerId');
 
   useEffect(() => {
-    settingsService.get().then((d) => {
-      if (d.success) setSettings(d.data ?? null);
-    });
     api.get<{ status: string }>('/api/whatsapp/status').then((d) => {
       if (d.success && d.data) setWaStatus(d.data.status);
     });

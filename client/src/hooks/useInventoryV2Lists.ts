@@ -4,16 +4,12 @@ import { inventoryV2Service } from '../services';
 import type { PaginatedResponse } from '../types';
 import type {
   BrandSummary,
-  BrandDetail,
   CountSession,
   CountSessionDetail,
   InventoryDashboard,
   InventoryMovement,
-  InventoryProduct,
   InventoryVariant,
   MovementListParams,
-  ProductDetail,
-  ProductListParams,
   Rack,
   RackItems,
   VariantDetail,
@@ -72,43 +68,6 @@ export function useV2Brands(threshold?: number) {
     }
   );
   return { brands: Array.isArray(data) ? data : [], loading, error, refetch };
-}
-
-export function useV2BrandDetail(id: string) {
-  const { data, loading, error, refetch } = useApi<BrandDetail>(
-    () => inventoryV2Service.getBrandSummary(id),
-    [id],
-    { enabled: !!id, cacheKey: id ? `/api/inventory/brands/${id}/summary` : undefined }
-  );
-  return { detail: data, loading, error, refetch };
-}
-
-export function useV2Products(params?: ProductListParams) {
-  const path = pathWithParams('/api/inventory/products', params as Record<string, unknown>);
-  const { data, loading, error, refetch } = useApi<PaginatedResponse<InventoryProduct>>(
-    () => inventoryV2Service.listProducts(params),
-    [JSON.stringify(params)],
-    { cacheKey: path }
-  );
-  const p = pagedFrom(data);
-  return {
-    products: p.items,
-    total: p.total,
-    page: p.page,
-    pages: p.pages,
-    loading,
-    error,
-    refetch,
-  };
-}
-
-export function useV2ProductDetail(id: string) {
-  const { data, loading, error, refetch } = useApi<ProductDetail>(
-    () => inventoryV2Service.getProduct(id),
-    [id],
-    { enabled: !!id, cacheKey: id ? `/api/inventory/products/${id}` : undefined }
-  );
-  return { detail: data, loading, error, refetch };
 }
 
 export function useV2Variants(params?: VariantListParams) {

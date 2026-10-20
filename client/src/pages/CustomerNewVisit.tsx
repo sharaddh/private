@@ -14,11 +14,6 @@ import { whatsappService } from '../services';
 import {
   ScanLine,
   Eye,
-  RefreshCw,
-  Maximize2,
-  Circle,
-  Wrench,
-  Grid3X3,
   Activity,
   ShoppingCart,
   CreditCard,
@@ -47,15 +42,6 @@ export default function CustomerNewVisit() {
   const navigate = useNavigate();
   const toast = useToast();
   const { t, uiT } = useTranslate();
-
-  const VISIT_TYPES = [
-    { value: 'new', label: uiT('New Glasses', 'नए चश्मे'), icon: Eye },
-    { value: 'frame_change', label: uiT('Frame Change', 'फ्रेम बदलें'), icon: RefreshCw },
-    { value: 'new_lens', label: uiT('New Lens', 'नया लेंस'), icon: Maximize2 },
-    { value: 'contact_lens', label: uiT('Contact Lens', 'कॉन्टैक्ट लेंस'), icon: Circle },
-    { value: 'service', label: uiT('Service', 'सेवा'), icon: Wrench },
-    { value: 'other', label: uiT('Other', 'अन्य'), icon: Grid3X3 },
-  ];
 
   const [customer, setCustomer] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
@@ -402,9 +388,6 @@ export default function CustomerNewVisit() {
     setOrderAccessories((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  // Blank prop placeholder for the OrderItems component (Real sync is handled by the useEffect above!)
-  function syncBillFromOrder() {}
-
   function updateBillItem(i: number, field: string, value: any) {
     setBillItems((prev) =>
       prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item))
@@ -609,7 +592,7 @@ export default function CustomerNewVisit() {
           )
         );
       }
-    } catch (e: any) {
+    } catch {
       toast.info(uiT('Greeting message skipped', 'अभिवादन संदेश छोड़ दिया गया'));
     }
     navigate(`/customers/${id}?visitId=${data?.visit?._id || ''}`);

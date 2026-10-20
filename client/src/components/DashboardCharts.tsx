@@ -12,7 +12,6 @@ import {
   BarChart,
   Bar,
   CartesianGrid,
-  Legend,
   ComposedChart,
   Line,
 } from 'recharts';
@@ -43,10 +42,8 @@ const tooltipStyle = {
 
 export function SalesTrendChart({
   data,
-  dark,
 }: {
   data: { date: string; total: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
   const recent7 = data.slice(-7).reduce((s, d) => s + d.total, 0);
@@ -119,10 +116,8 @@ export function SalesTrendChart({
 
 export function OrderStatusDonut({
   data,
-  dark,
 }: {
   data: { status: string; count: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.count, 0);
@@ -189,10 +184,8 @@ export function OrderStatusDonut({
 
 export function PaymentModeBarChart({
   data,
-  dark,
 }: {
   data: { mode: string; total: number; count: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
   const chartData = data.map((d) => ({
@@ -255,11 +248,9 @@ export function PaymentModeBarChart({
 export function SalesVsCollectionChart({
   salesData,
   collectionData,
-  dark,
 }: {
   salesData: { date: string; total: number }[];
   collectionData: { date: string; total: number }[];
-  dark?: boolean;
 }) {
   if (!salesData || salesData.length === 0) return null;
 
@@ -347,10 +338,8 @@ export function SalesVsCollectionChart({
 
 export function WeeklyOrdersChart({
   data,
-  dark,
 }: {
   data: { date: string; count: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
 
@@ -404,10 +393,8 @@ export function WeeklyOrdersChart({
 
 export function TodayPaymentDonut({
   data,
-  dark,
 }: {
   data: { mode: string; total: number; count: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.total, 0);
@@ -481,10 +468,8 @@ export function TodayPaymentDonut({
 
 export function CategoryPieChart({
   data,
-  dark,
 }: {
   data: { category: string; count: number; totalValue: number }[];
-  dark?: boolean;
 }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.count, 0);
@@ -518,7 +503,7 @@ export function CategoryPieChart({
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value, name) => [Number(value), 'Items']}
+                formatter={(value) => [Number(value), 'Items']}
                 contentStyle={tooltipStyle}
               />
             </PieChart>

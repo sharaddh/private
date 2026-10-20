@@ -5,8 +5,6 @@ import api from '../api';
 import {
   settingsService,
   visitService,
-  customerService,
-  inventoryService,
   whatsappService,
 } from '../services';
 import { useToast } from '../context/ToastContext';
@@ -28,16 +26,11 @@ import {
   ArrowLeft,
   X,
   ScanLine,
-  User,
   Tag,
   Repeat,
   History,
-  MessageCircle,
-  RefreshCw,
   Clock,
   IndianRupee,
-  AlertCircle,
-  Check,
   Loader2,
 } from 'lucide-react';
 import PageHeader from '../components/NewvistePage/PageHeader';
@@ -59,7 +52,7 @@ import {
 } from '../utils/splitAllocation';
 import ConfirmationDashboard from '../components/NewvistePage/ConfirmationDashboard';
 import BottomNav from '../components/NewvistePage/BottomNav';
-import type { Customer, Order, Visit, ShopSettings, Prescription, InventoryItem } from '../types';
+import type { Customer, Order, ShopSettings, Prescription, InventoryItem } from '../types';
 
 interface CustomerData {
   _id?: string;
@@ -137,14 +130,6 @@ export default function Workspace() {
   const toast = useToast();
   const { t, uiT } = useTranslate();
 
-  const VISIT_TYPES = [
-    { value: 'new', label: uiT('New Glasses', 'नए चश्मे'), icon: Eye },
-    { value: 'frame_change', label: uiT('Frame Change', 'फ्रेम बदलें'), icon: RefreshCw },
-    { value: 'new_lens', label: uiT('New Lens', 'नया लेंस'), icon: Eye },
-    { value: 'contact_lens', label: uiT('Contact Lens', 'कॉन्टैक्ट लेंस'), icon: Eye },
-    { value: 'service', label: uiT('Service', 'सेवा'), icon: Activity },
-    { value: 'other', label: uiT('Other', 'अन्य'), icon: Eye },
-  ];
   const phoneRef = useRef<HTMLInputElement>(null);
 
   const [settings, setSettings] = useState<ShopSettings | null>(null);
@@ -846,7 +831,7 @@ export default function Workspace() {
           )
         );
       }
-    } catch (e: any) {
+    } catch {
       toast.info(uiT('Greeting message skipped', 'अभिवादन संदेश छोड़ दिया गया'));
     }
     navigate(`/customers/${cust?._id || ''}?visitId=${data?.visit?._id || ''}`);

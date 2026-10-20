@@ -41,29 +41,25 @@ function priceForPower(item: LensStockItem, powerKey: string): number {
 
 export default function LensStockPanel({
   scope,
-  onScopeChange,
   staffMode = false,
 }: {
   scope: LensStockScope;
-  onScopeChange: (s: LensStockScope) => void;
   staffMode?: boolean;
 }) {
   const cartApi = scope === 'shop' ? shopCartApi : warehouseCartApi;
 
   return (
     <LensCartProvider api={cartApi}>
-      <LensStockPanelInner scope={scope} onScopeChange={onScopeChange} staffMode={staffMode} />
+      <LensStockPanelInner scope={scope} staffMode={staffMode} />
     </LensCartProvider>
   );
 }
 
 function LensStockPanelInner({
   scope,
-  onScopeChange,
   staffMode,
 }: {
   scope: LensStockScope;
-  onScopeChange: (s: LensStockScope) => void;
   staffMode: boolean;
 }) {
   const [items, setItems] = useState<LensStockItem[]>([]);

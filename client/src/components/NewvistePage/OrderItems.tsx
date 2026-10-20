@@ -4,7 +4,6 @@ import {
   Plus,
   ScanLine,
   Search,
-  Tag,
   Grid3X3,
   Eye,
   Barcode,

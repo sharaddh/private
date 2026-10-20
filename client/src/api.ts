@@ -151,7 +151,7 @@ async function request<T = unknown>(
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, init);
-  } catch (err) {
+  } catch {
     if (retries > 0 && !init.signal?.aborted) {
       await new Promise((r) => setTimeout(r, 1000));
       return request<T>(path, init, retries - 1);

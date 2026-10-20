@@ -1,5 +1,5 @@
 import { AppError } from "../middleware/errorHandler";
-import { prisma, Prisma } from "../db/prisma";
+import { prisma } from "../db/prisma";
 import { normalizeSku } from "../utils/string";
 import { paginateFind, PaginationOptions } from "../utils/pagination";
 import { ensureBrand, findOrCreateProduct } from "./inventoryProduct.service";
