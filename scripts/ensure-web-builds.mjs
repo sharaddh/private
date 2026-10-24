@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 /**
  * Ensures the client and warehouse frontends have a production build.
- *
- * Render/Docker builds sometimes run only the server workspace build
- * (`npm run build -w server`), which leaves client/dist and warehouse/dist
- * missing and makes the API service serve nothing for the web apps.
- * This script builds whichever frontend dist is absent and is a no-op when
- * both are already present.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -33,10 +27,25 @@ if (missing.length === 0) {
 
 for (const target of missing) {
   console.log(`[ensure-web-builds] building ${target.name} (dist missing)`);
-  const result = spawnSync("npm run build", {
+  // Install deps for the workspace if node_modules missing
+  if (!fs.existsSync(path.join(target.dir, "node_modules"))) {
+    console.log(`[ensure-web-builds] installing deps for ${target.name}...`);
+    const installRes = spawnSync("npm", ["ci", "--include=dev"], {
+      cwd: target.dir,
+      stdio: "inherit",
+      shell: true,
+    });
+    if (installRes.status !== 0) {
+      console.error(`[ensure-web-builds] ${target.name} install failed`);
+      process.exit(installRes.status === 0 ? 1 : installRes.status);
+    }
+  }
+
+  const result = spawnSync("npm", ["run", "build"], {
     cwd: target.dir,
     stdio: "inherit",
     shell: true,
+    env: { ...process.env, NODE_ENV: "production" },
   });
 
   if (result.status !== 0 || !fs.existsSync(target.marker)) {

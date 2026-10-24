@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: npm ci --include=dev && npm run build
+    buildCommand: npm ci --include=dev && npm run build -w client && npm run build -w warehouse && npm run build -w server
     startCommand: npm start
     healthCheckPath: /api/ready
     envVars:
