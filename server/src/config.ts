@@ -18,13 +18,15 @@ const envSchema = z.object({
   WAREHOUSE_DB_NAME: z.string().default("kmj_warehouse"),
   NODE_ENV: z.string().default("development"),
   CORS_ORIGINS: z.string().default(""),
+  CLIENT_APP_URL: z.string().default(""),
+  WAREHOUSE_APP_URL: z.string().default(""),
   RATE_LIMIT_WINDOW_MS: z
     .preprocess(emptyToUndefined, z.coerce.number().int().positive())
     .default(60000),
-  RATE_LIMIT_MAX: z.preprocess(emptyToUndefined, z.coerce.number().int().positive()).default(1000),
+  RATE_LIMIT_MAX: z.preprocess(emptyToUndefined, z.coerce.number().int().positive()).default(500),
   AUTH_RATE_LIMIT_MAX: z
     .preprocess(emptyToUndefined, z.coerce.number().int().positive())
-    .default(30),
+    .default(20),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   ENABLE_CLUSTER: z.string().default("false"),
   CLUSTER_WORKERS: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0)).default(0),
@@ -65,6 +67,27 @@ export const CORS_ORIGINS = env.CORS_ORIGINS
 export const RATE_LIMIT_WINDOW_MS = env.RATE_LIMIT_WINDOW_MS;
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
 export const AUTH_RATE_LIMIT_MAX = env.AUTH_RATE_LIMIT_MAX;
+
+/**
+ * Public URLs of the separately deployed frontends.
+ * Used as a fallback when the API service is built without the web app
+ * bundles, so `https://<api-host>/` still lands the user on a working app.
+ * Set to "none"/"off" to disable the fallback.
+ */
+const normalizeAppUrl = (raw: string, fallback: string): string => {
+  const value = (raw || fallback).trim();
+  if (!value || /^(none|off|disabled|false)$/i.test(value)) return "";
+  return value.replace(/\/+$/, "");
+};
+
+export const CLIENT_APP_URL = normalizeAppUrl(
+  env.CLIENT_APP_URL,
+  "https://kmjoptical.onrender.com"
+);
+export const WAREHOUSE_APP_URL = normalizeAppUrl(
+  env.WAREHOUSE_APP_URL,
+  "https://kmj-m9aq.onrender.com"
+);
 
 export const ENABLE_CLUSTER = env.ENABLE_CLUSTER === "true" || env.ENABLE_CLUSTER === "1";
 export const CLUSTER_WORKERS = env.CLUSTER_WORKERS || 0;

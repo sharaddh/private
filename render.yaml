@@ -2,7 +2,7 @@ services:
   - type: web
     name: kmj-erp
     env: node
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/ready
     envVars:
@@ -12,6 +12,10 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      - key: CLIENT_APP_URL
+        value: https://kmjoptical.onrender.com
+      - key: WAREHOUSE_APP_URL
+        value: https://kmj-m9aq.onrender.com
       - key: NODE_VERSION
         value: 20.19.0
       - key: NODE_ENV
@@ -25,9 +29,9 @@ services:
       - key: RATE_LIMIT_WINDOW_MS
         value: "60000"
       - key: RATE_LIMIT_MAX
-        value: "1000"
+        value: "500"
       - key: AUTH_RATE_LIMIT_MAX
-        value: "30"
+        value: "20"
       - key: LOG_LEVEL
         value: info
       - key: ENABLE_CLUSTER

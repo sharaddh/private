@@ -12,6 +12,8 @@ import {
   RATE_LIMIT_MAX,
   AUTH_RATE_LIMIT_MAX,
   NODE_ENV,
+  CLIENT_APP_URL,
+  WAREHOUSE_APP_URL,
 } from "./config";
 import routes from "./routes";
 import { audit } from "./middleware/audit";
@@ -23,6 +25,7 @@ import { webhookHandler } from "./controllers/whatsapp.controller";
 import { asyncHandler } from "./middleware/asyncHandler";
 import { verifyToken } from "./utils/jwt";
 import { pinoLogger, logger } from "./utils/logger";
+import { resolveSpaRoute, isAssetPath } from "./utils/spaFallback";
 
 const app = express();
 
@@ -66,7 +69,7 @@ app.use((_req, res, next) => {
   next();
 });
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(
   cors({
     origin: CORS_ORIGINS,
@@ -88,6 +91,7 @@ app.post(
 );
 
 app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(audit);
 
 const keyGenerator = (req: express.Request): string => {
@@ -145,7 +149,7 @@ function findDistPath(candidates: string[], label: string): string {
 }
 
 function isAssetRequest(reqPath: string): boolean {
-  return path.extname(reqPath) !== "";
+  return isAssetPath(reqPath);
 }
 
 function sendSpaIndex(res: express.Response, indexPath: string): void {
@@ -190,7 +194,11 @@ if (distIndex && fs.existsSync(distIndex)) {
     })
   );
 } else {
-  logger.warn("[SERVE] Client dist NOT found - client app will not be served");
+  logger.warn(
+    CLIENT_APP_URL
+      ? `[SERVE] Client dist NOT found - requests will redirect to ${CLIENT_APP_URL}`
+      : "[SERVE] Client dist NOT found - client app will not be served"
+  );
 }
 
 if (warehouseIndex && fs.existsSync(warehouseIndex)) {
@@ -218,33 +226,56 @@ if (warehouseIndex && fs.existsSync(warehouseIndex)) {
     sendSpaIndex(res, warehouseIndex);
   });
 } else {
-  logger.warn("[SERVE] Warehouse dist NOT found - warehouse app will not be served");
+  logger.warn(
+    WAREHOUSE_APP_URL
+      ? `[SERVE] Warehouse dist NOT found - requests will redirect to ${WAREHOUSE_APP_URL}`
+      : "[SERVE] Warehouse dist NOT found - warehouse app will not be served"
+  );
 }
 
 app.get("*", (req, res) => {
-  if (req.path.startsWith("/api")) {
-    res.status(404).json({ success: false, message: "API route not found" });
-    return;
-  }
-  if (distIndex && fs.existsSync(distIndex)) {
-    if (isAssetRequest(req.path)) {
+  const decision = resolveSpaRoute({
+    path: req.path,
+    hasClientBuild: Boolean(distIndex) && fs.existsSync(distIndex),
+    hasWarehouseBuild: Boolean(warehouseIndex) && fs.existsSync(warehouseIndex),
+    clientUrl: CLIENT_APP_URL,
+    warehouseUrl: WAREHOUSE_APP_URL,
+  });
+
+  switch (decision.kind) {
+    case "api-404":
+      res.status(404).json({ success: false, message: "API route not found" });
+      return;
+    case "serve-client":
+      sendSpaIndex(res, distIndex);
+      return;
+    case "serve-warehouse":
+      sendSpaIndex(res, warehouseIndex);
+      return;
+    case "redirect":
+      res.redirect(302, decision.location);
+      return;
+    case "asset-404":
       res.status(404).end();
       return;
-    }
-    sendSpaIndex(res, distIndex);
-    return;
+    default:
+      res.status(200).json({ success: true, message: "KMJ ERP API" });
   }
-  if (warehouseIndex && fs.existsSync(warehouseIndex)) {
-    if (isAssetRequest(req.path)) {
-      res.status(404).end();
-      return;
-    }
-    sendSpaIndex(res, warehouseIndex);
-    return;
-  }
-  res.status(200).json({ success: true, message: "KMJ ERP API" });
 });
 
 app.use(errorHandler);
 
 export default app;
+
+
+// Security headers for production
+app.disable('x-powered-by');
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
+}

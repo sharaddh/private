@@ -15,6 +15,7 @@ export function cacheRoute(ttlSeconds = 60) {
     const cached = await cacheGet<{ body: unknown; status: number }>(key);
     if (cached) {
       res.set("x-cache", "HIT");
+      res.set("Cache-Control", "private, max-age=30");
       return res.status(cached.status).json(cached.body);
     }
 
