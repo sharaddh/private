@@ -27,9 +27,9 @@ if (missing.length === 0) {
 
 for (const target of missing) {
   console.log(`[ensure-web-builds] building ${target.name} (dist missing)`);
-  // Install deps for the workspace if node_modules missing
-  if (!fs.existsSync(path.join(target.dir, "node_modules"))) {
-    console.log(`[ensure-web-builds] installing deps for ${target.name}...`);
+  // Install deps for the workspace if node_modules missing or vite missing
+  if (!fs.existsSync(path.join(target.dir, "node_modules", "vite")) && !fs.existsSync(path.join(target.dir, "node_modules", ".bin", "vite"))) {
+    console.log(`[ensure-web-builds] installing deps for ${target.name} (vite missing)...`);
     const installRes = spawnSync("npm", ["ci", "--include=dev"], {
       cwd: target.dir,
       stdio: "inherit",
@@ -41,7 +41,8 @@ for (const target of missing) {
     }
   }
 
-  const result = spawnSync("npm", ["run", "build"], {
+  const hasVite = fs.existsSync(path.join(target.dir, "node_modules", "vite"));
+  const result = spawnSync(hasVite ? "npm" : "npx", hasVite ? ["run", "build"] : ["--yes", "vite", "build"], {
     cwd: target.dir,
     stdio: "inherit",
     shell: true,
