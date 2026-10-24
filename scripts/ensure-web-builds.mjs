@@ -31,8 +31,8 @@ for (const target of missing) {
   const result = spawnSync("npm", ["run", "build"], {
     cwd: target.dir,
     stdio: "inherit",
-    shell: false,
-    env: { ...process.env, NODE_ENV: "production", PATH: process.env.PATH },
+    shell: process.platform === "win32",
+    env: { ...process.env, NODE_ENV: "production" },
   });
 
   if (result.status !== 0 || !fs.existsSync(target.marker)) {
