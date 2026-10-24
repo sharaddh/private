@@ -33,7 +33,7 @@ for (const target of missing) {
     const installRes = spawnSync("npm", ["ci", "--include=dev"], {
       cwd: target.dir,
       stdio: "inherit",
-      shell: true,
+      shell: false,
     });
     if (installRes.status !== 0) {
       console.error(`[ensure-web-builds] ${target.name} install failed`);
@@ -45,7 +45,7 @@ for (const target of missing) {
   const result = spawnSync(hasVite ? "npm" : "npx", hasVite ? ["run", "build"] : ["--yes", "vite", "build"], {
     cwd: target.dir,
     stdio: "inherit",
-    shell: true,
+    shell: false,
     env: { ...process.env, NODE_ENV: "production" },
   });
 
