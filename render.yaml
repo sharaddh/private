@@ -3,7 +3,7 @@ services:
     name: kmj-erp
     env: node
     buildCommand: npm ci --include=dev && npm run build -w client && npm run build -w warehouse && npm run build -w server
-    startCommand: npm start
+    startCommand: cd server && node ./node_modules/.bin/prisma migrate deploy && node dist/index.js
     healthCheckPath: /api/ready
     envVars:
       - key: DATABASE_URL
