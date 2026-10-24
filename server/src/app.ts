@@ -201,37 +201,45 @@ if (distIndex && fs.existsSync(distIndex)) {
   );
 }
 
-if (warehouseIndex && fs.existsSync(warehouseIndex)) {
-  logger.info(`[SERVE] Warehouse dist: ${warehouseDistPath}`);
-  app.use(
-    "/warehouse",
-    express.static(warehouseDistPath, {
-      maxAge: "1y",
-      immutable: true,
-      setHeaders(res, filePath) {
-        if (filePath.endsWith(".html")) {
-          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        }
-      },
-    })
-  );
-  app.get(["/warehouse", "/warehouse/"], (_req, res) => {
+app.get(["/", "/index.html"], (req, res) => {
+  if (distIndex && fs.existsSync(distIndex)) {
+    sendSpaIndex(res, distIndex);
+    return;
+  }
+  if (CLIENT_APP_URL) {
+    res.redirect(302, CLIENT_APP_URL);
+    return;
+  }
+  res.status(200).json({ success: true, message: "KMJ ERP API" });
+});
+
+app.get(["/warehouse", "/warehouse/"], (req, res) => {
+  if (warehouseIndex && fs.existsSync(warehouseIndex)) {
     sendSpaIndex(res, warehouseIndex);
-  });
-  app.get("/warehouse/*", (req, res) => {
+    return;
+  }
+  if (WAREHOUSE_APP_URL) {
+    res.redirect(302, WAREHOUSE_APP_URL);
+    return;
+  }
+  res.status(404).end();
+});
+
+app.get(["/warehouse/*"], (req, res) => {
+  if (warehouseIndex && fs.existsSync(warehouseIndex)) {
     if (isAssetRequest(req.path)) {
       res.status(404).end();
       return;
     }
     sendSpaIndex(res, warehouseIndex);
-  });
-} else {
-  logger.warn(
-    WAREHOUSE_APP_URL
-      ? `[SERVE] Warehouse dist NOT found - requests will redirect to ${WAREHOUSE_APP_URL}`
-      : "[SERVE] Warehouse dist NOT found - warehouse app will not be served"
-  );
-}
+    return;
+  }
+  if (!isAssetRequest(req.path) && WAREHOUSE_APP_URL) {
+    res.redirect(302, WAREHOUSE_APP_URL);
+    return;
+  }
+  res.status(404).end();
+});
 
 app.get("*", (req, res) => {
   const decision = resolveSpaRoute({
