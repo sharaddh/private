@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "install-all": "npm install",
+    "postinstall": "npm run build -w client || true && npm run build -w warehouse || true",
     "dev": "concurrently -n server,client,warehouse -c blue,green,yellow \"npm run dev -w server\" \"npm run dev -w client\" \"npm run dev -w warehouse\"",
     "build": "npm run build -w client && npm run build -w warehouse && npm run build -w server",
     "build:web": "npm run build -w client && npm run build -w warehouse",
