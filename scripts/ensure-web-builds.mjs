@@ -25,6 +25,8 @@ if (missing.length === 0) {
   process.exit(0);
 }
 
+let failed = 0;
+
 for (const target of missing) {
   console.log(`[ensure-web-builds] building ${target.name} (dist missing)`);
   // Try to use workspace build if possible
@@ -36,11 +38,16 @@ for (const target of missing) {
   });
 
   if (result.status !== 0 || !fs.existsSync(target.marker)) {
+    failed += 1;
     console.error(
-      `[ensure-web-builds] ${target.name} build failed. The ${target.name} app will not be served.`
+      `[ensure-web-builds] ${target.name} build failed. The ${target.name} app will not be served; ` +
+        "the API server will still start and redirect to its configured app URL."
     );
-    process.exit(result.status === 0 ? 1 : result.status);
   }
 }
 
-console.log("[ensure-web-builds] all frontend dists present");
+if (failed > 0) {
+  console.warn(`[ensure-web-builds] ${failed} frontend build(s) failed - continuing with server build`);
+} else {
+  console.log("[ensure-web-builds] all frontend dists present");
+}
