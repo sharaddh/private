@@ -4,7 +4,13 @@ import { getCacheSnapshot, setCache, clearAllCache } from './hooks/cacheStore';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const GET_CACHE_TTL = 60 * 1000;
-const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/staff-login', '/auth/refresh'];
+const AUTH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/register-owner',
+  '/auth/staff-login',
+  '/auth/refresh',
+];
 
 const TOKEN_KEYS = {
   ACCESS: 'accessToken',

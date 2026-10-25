@@ -38,6 +38,7 @@ const Withdraw = lazyPage('Withdraw', () => import('./pages/Withdraw'));
 const WithdrawHistory = lazyPage('WithdrawHistory', () => import('./pages/WithdrawHistory'));
 const Login = lazyPage('Login', () => import('./pages/Login'));
 const StaffLogin = lazyPage('StaffLogin', () => import('./pages/StaffLogin'));
+const OwnerSetup = lazyPage('OwnerSetup', () => import('./pages/OwnerSetup'));
 const NotFound = lazyPage('NotFound', () => import('./pages/NotFound'));
 
 function SuspendedPage({ children, page }: { children: React.ReactNode; page: string }) {
@@ -271,6 +272,14 @@ export default function App() {
             element={
               <SuspendedPage page="login">
                 <StaffLogin />
+              </SuspendedPage>
+            }
+          />
+          <Route
+            path="/owner-setup"
+            element={
+              <SuspendedPage page="login">
+                <OwnerSetup />
               </SuspendedPage>
             }
           />

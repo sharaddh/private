@@ -124,9 +124,15 @@ export default function Login() {
             </button>
           </form>
           <p className="text-center text-sm text-th-secondary mt-5">
-            {uiT('Staff?', 'स्टाफ?')}{' '}
+            {uiT('Staff?', '�,��?�Y�_��?')}{' '}
             <Link to="/staff-login" className="text-[#1ed760] hover:underline font-medium">
-              {uiT('Login here', 'यहाँ लॉगिन करें')}
+              {uiT('Login here', '�_�1�_�? ����%�-���" �����؅,')}
+            </Link>
+          </p>
+          <p className="text-center text-sm text-th-secondary mt-2">
+            First time setup?{' '}
+            <Link to="/owner-setup" className="text-[#1ed760] hover:underline font-medium">
+              Create owner
             </Link>
           </p>
         </div>

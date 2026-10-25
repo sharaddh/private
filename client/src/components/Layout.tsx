@@ -180,7 +180,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       ? location.pathname === '/'
       : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  const isAuthPage = ['/login', '/staff-login'].includes(location.pathname);
+  const isAuthPage = ['/login', '/staff-login', '/owner-setup'].includes(location.pathname);
 
   useEffect(() => {
     if (isAuthPage) {
