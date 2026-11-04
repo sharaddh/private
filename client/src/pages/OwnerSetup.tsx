@@ -17,6 +17,10 @@ export default function OwnerSetup() {
   const [mobile, setMobile] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const [branchName, setBranchName] = useState('');
+  const [branchCode, setBranchCode] = useState('');
+  const [branchAddress, setBranchAddress] = useState('');
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [created, setCreated] = useState(false);
@@ -45,6 +49,10 @@ export default function OwnerSetup() {
       setError('Passwords do not match');
       return;
     }
+    if (!branchName.trim() || !branchCode.trim()) {
+      setError('Branch name and code are required');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -53,6 +61,11 @@ export default function OwnerSetup() {
         password,
         name: name.trim(),
         mobile: mobile.trim(),
+        branch: {
+          name: branchName.trim(),
+          code: branchCode.trim(),
+          address: branchAddress.trim(),
+        },
       });
       if (res.success) {
         setCreated(true);
@@ -84,9 +97,10 @@ export default function OwnerSetup() {
           {created ? (
             <div className="text-center space-y-4">
               <CheckCircle2 size={40} className="text-[#1ed760] mx-auto" />
-              <h2 className="text-lg font-bold text-th-text">Owner account created</h2>
+              <h2 className="text-lg font-bold text-th-text">Owner and branch created</h2>
               <p className="text-sm text-th-secondary">
-                You can now sign in with <span className="text-th-text font-medium">{username}</span>.
+                Branch <span className="text-th-text font-medium">{branchName}</span> is assigned to{' '}
+                <span className="text-th-text font-medium">{username}</span>. You can now sign in.
               </p>
               <button
                 type="button"
@@ -171,6 +185,52 @@ export default function OwnerSetup() {
                   placeholder="Mobile number"
                   className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all"
                 />
+              </div>
+
+              <div className="pt-2 border-t border-th-border">
+                <p className="text-sm font-medium text-th-text mt-3 mb-3">First branch</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-th-secondary mb-1.5">
+                      Branch name
+                    </label>
+                    <input
+                      type="text"
+                      value={branchName}
+                      onChange={(e) => setBranchName(e.target.value)}
+                      placeholder="e.g. Main Branch"
+                      required
+                      className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-th-secondary mb-1.5">
+                      Branch code
+                    </label>
+                    <input
+                      type="text"
+                      value={branchCode}
+                      onChange={(e) => setBranchCode(e.target.value)}
+                      placeholder="e.g. MAIN"
+                      required
+                      className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-th-secondary mb-1.5">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={branchAddress}
+                      onChange={(e) => setBranchAddress(e.target.value)}
+                      placeholder="Shop address (optional)"
+                      className="w-full px-3 py-2.5 bg-th-elevated rounded text-sm text-th-text placeholder-th-muted focus:outline-none ring-inset ring-1 ring-th-border-strong focus:ring-1 focus:ring-[#1ed760] transition-all"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
