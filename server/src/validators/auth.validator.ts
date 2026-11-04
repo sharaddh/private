@@ -11,6 +11,23 @@ export const registerSchema = z.object({
   primaryBranchId: z.string().optional(),
 });
 
+export const registerOwnerSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+  name: z.string().optional(),
+  mobile: z.string().optional(),
+  branch: z
+    .object({
+      name: z.string().min(1, "Branch name is required"),
+      code: z.string().min(1, "Branch code is required"),
+      dbName: z.string().optional(),
+      address: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().optional(),
+    })
+    .optional(),
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
