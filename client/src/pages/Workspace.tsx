@@ -68,6 +68,8 @@ interface CustomerData {
   pendingAmount?: number;
   lastVisit?: string;
   createdAt?: string;
+  isAyushman?: boolean;
+  abhaNumber?: string;
 }
 
 interface FrameItem {
@@ -154,6 +156,8 @@ export default function Workspace() {
     city: '',
     age: undefined,
     gender: '',
+    isAyushman: false,
+    abhaNumber: '',
   });
 
   const [saving, setSaving] = useState<boolean>(false);
@@ -426,6 +430,8 @@ export default function Workspace() {
               totalSpent: c.totalSpent,
               pendingAmount: c.pendingAmount,
               createdAt: c.createdAt,
+              isAyushman: c.isAyushman || false,
+              abhaNumber: c.abhaNumber || '',
             }))
           : []
       );
@@ -464,6 +470,8 @@ export default function Workspace() {
       city: '',
       age: undefined,
       gender: '',
+      isAyushman: false,
+      abhaNumber: '',
     }));
   }
 
@@ -482,6 +490,8 @@ export default function Workspace() {
       pendingAmount: c.pendingAmount,
       lastVisit: c.lastVisit,
       createdAt: c.createdAt,
+      isAyushman: c.isAyushman || false,
+      abhaNumber: c.abhaNumber || '',
     };
     setSelectedCustomer(cust);
     setCustomerForm({
@@ -492,6 +502,8 @@ export default function Workspace() {
       city: c.city || '',
       age: c.age,
       gender: c.gender || '',
+      isAyushman: c.isAyushman || false,
+      abhaNumber: c.abhaNumber || '',
     });
     setDeliveryAddress(c.address || deliveryAddress);
     setIsNewCustomer(false);
@@ -874,6 +886,8 @@ export default function Workspace() {
       city: '',
       age: undefined,
       gender: '',
+      isAyushman: false,
+      abhaNumber: '',
     });
     setStep('service');
     setVisitType('new');
@@ -907,15 +921,15 @@ export default function Workspace() {
   // ===== CUSTOMER SELECTION PHASE =====
   if (!selectedCustomer && !isNewCustomer && !isDirectSell) {
     return (
-      <div className="min-h-screen bg-th-elevated">
+      <div className="min-h-auto ">
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-6">
           <div className="text-center">
             <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center mb-4 shadow-lg shadow-[#1ed760]/25">
               <ShoppingCart size={26} className="text-black" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl font-bold text-th-text">
+            <h1 className="text-2xl font-bold text-th-text">
               {uiT('New Visit', 'नई विज़िट')}
-            </h2>
+            </h1>
             <p className="text-sm text-th-secondary mt-1">
               {uiT(
                 'Search by name or phone — results appear as you type. Or sell directly without a customer.',
@@ -941,12 +955,12 @@ export default function Workspace() {
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                className="w-full pl-10 pr-10 py-3 bg-th-elevated border border-th-border rounded-lg text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-th-elevated border border-th-border rounded-lg text-lg text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
               />
               {searching && (
                 <Loader2
                   size={18}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1ed760] animate-spin"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-th-accent animate-spin"
                   aria-hidden="true"
                 />
               )}
@@ -954,7 +968,7 @@ export default function Workspace() {
                 <button
                   onClick={() => handleQueryChange('')}
                   aria-label={uiT('Clear search', 'खोज साफ़ करें')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-th-muted hover:text-th-text p-1"
+                  className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-th-muted hover:bg-th-hover hover:text-th-text"
                 >
                   <X size={16} aria-hidden="true" />
                 </button>
@@ -970,20 +984,25 @@ export default function Workspace() {
             {searched && searchResults.length > 0 && (
               <div className="mt-5 space-y-3">
                 <p className="text-sm font-medium text-th-secondary">
-                  {searchResults.length} {uiT('customer(s) found', 'ग्राहक मिले')}
+                  {searchResults.length}{' '}{uiT('customer(s) found', 'ग्राहक मिले').replace('(s)', searchResults.length === 1 ? '' : 's')}
                 </p>
                 {searchResults.map((c: CustomerData) => (
                   <div
                     key={c._id}
-                    className="flex items-center justify-between gap-3 p-4 rounded-xl border border-th-border hover:border-[#1ed760] hover:bg-[#1ed760]/5 transition-all cursor-pointer"
+                    className="flex items-center justify-between gap-3 p-4 rounded-xl border border-th-border hover:border-th-accent hover:bg-[#1ed760]/5 transition-all cursor-pointer"
                     onClick={() => selectCustomer(c)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && selectCustomer(c)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectCustomer(c);
+                      }
+                    }}
                     aria-label={uiT('Select customer', 'ग्राहक चुनें') + ' ' + c.name}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-th-text font-bold text-lg shrink-0">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-black font-bold text-lg shrink-0">
                         {c.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                       <div className="min-w-0">
@@ -992,11 +1011,13 @@ export default function Workspace() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs text-th-secondary">{c.totalVisits || 0} visits</p>
+                      <p className="text-xs text-th-secondary">
+                        {c.totalVisits || 0} {(c.totalVisits || 0) === 1 ? 'visit' : 'visits'}
+                      </p>
                       {(c.pendingAmount || 0) > 0 && (
-                        <p className="text-xs text-amber-400 font-medium">₹{c.pendingAmount} due</p>
+                        <p className="text-xs text-th-warning font-medium">₹{c.pendingAmount} due</p>
                       )}
-                      <span className="text-[#1ed760] text-sm font-medium mt-1 inline-block">
+                      <span className="text-th-accent text-sm font-medium mt-1 inline-block">
                         {uiT('Select', 'चुनें')} →
                       </span>
                     </div>
@@ -1005,7 +1026,7 @@ export default function Workspace() {
                 <button
                   onClick={openNewCustomerFromQuery}
                   aria-label={uiT('Add new customer', 'नया ग्राहक जोड़ें')}
-                  className="flex items-center gap-2 text-[#1ed760] hover:text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-lg hover:bg-[#1ed760]/10 transition-all"
+                  className="flex min-h-11 items-center gap-2 text-th-accent hover:text-th-accent font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-th-accent/50 rounded-lg hover:border-th-accent hover:bg-[#1ed760]/10 transition-all"
                 >
                   <UserPlus size={16} aria-hidden="true" />
                   {uiT('Add new customer', 'नया ग्राहक जोड़ें')}
@@ -1025,7 +1046,7 @@ export default function Workspace() {
                 <button
                   onClick={openNewCustomerFromQuery}
                   aria-label={uiT('Add new customer', 'नया ग्राहक जोड़ें')}
-                  className="mt-4 flex items-center gap-2 text-[#1ed760] font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-[#1ed760] rounded-lg hover:bg-[#1ed760]/10 transition-all"
+                  className="mt-4 flex min-h-11 items-center gap-2 text-th-accent font-medium text-sm w-full justify-center py-3 border-2 border-dashed border-th-accent/50 rounded-lg hover:border-th-accent hover:bg-[#1ed760]/10 transition-all"
                 >
                   <UserPlus size={16} aria-hidden="true" />
                   {uiT('Add new customer', 'नया ग्राहक जोड़ें')}
@@ -1073,9 +1094,9 @@ export default function Workspace() {
                 <UserPlus size={22} className="text-black" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-th-text">
+                <h1 className="text-xl font-bold text-th-text">
                   {uiT('New Customer', 'नया ग्राहक')}
-                </h2>
+                </h1>
                 <p className="text-sm text-th-secondary">
                   {uiT('Fill in the details to create a new customer.', 'नया ग्राहक बनाने के लिए विवरण भरें।')}
                 </p>
@@ -1083,8 +1104,8 @@ export default function Workspace() {
             </div>
 
             {customerForm.mobile && (
-              <div className="bg-[#f5a623]/10 border border-[#f5a623]/30 text-amber-400 rounded-lg px-4 py-3 mb-5">
-                <p className="text-sm font-semibold text-amber-400">
+              <div className="bg-[#f5a623]/10 border border-[#f5a623]/30 text-th-warning rounded-lg px-4 py-3 mb-5">
+                <p className="text-sm font-semibold text-th-warning">
                   {uiT('Phone:', 'फोन:')}{' '}
                   <span className="font-bold tabular-nums">{customerForm.mobile}</span>
                 </p>
@@ -1097,7 +1118,7 @@ export default function Workspace() {
                   {uiT('Name', 'नाम')} *
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   placeholder={uiT('Full name', 'पूरा नाम')}
                   aria-label={uiT('Full name', 'पूरा नाम')}
                   value={customerForm.name}
@@ -1109,7 +1130,7 @@ export default function Workspace() {
                   {uiT('Phone', 'फोन')} *
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all tabular-nums"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all tabular-nums"
                   placeholder={uiT('Phone number', 'फोन नंबर')}
                   aria-label={uiT('Phone number', 'फ़ोन नंबर')}
                   value={customerForm.mobile || ''}
@@ -1121,7 +1142,7 @@ export default function Workspace() {
                   {uiT('Email', 'ईमेल')}
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   placeholder="email@example.com"
                   aria-label={uiT('Email address', 'ईमेल पता')}
                   value={customerForm.email || ''}
@@ -1134,7 +1155,7 @@ export default function Workspace() {
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   placeholder={uiT('Age', 'आयु')}
                   aria-label={uiT('Age', 'आयु')}
                   value={customerForm.age ?? ''}
@@ -1151,7 +1172,7 @@ export default function Workspace() {
                   {uiT('Gender', 'लिंग')}
                 </label>
                 <select
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   aria-label={uiT('Gender', 'लिंग')}
                   value={customerForm.gender || ''}
                   onChange={(e) => setCustomerForm({ ...customerForm, gender: e.target.value })}
@@ -1167,7 +1188,7 @@ export default function Workspace() {
                   {uiT('City', 'शहर')}
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   placeholder={uiT('City', 'शहर')}
                   aria-label={uiT('City', 'शहर')}
                   value={customerForm.city || ''}
@@ -1179,12 +1200,53 @@ export default function Workspace() {
                   {uiT('Address', 'पता')}
                 </label>
                 <input
-                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+                  className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
                   placeholder={uiT('Address', 'पता')}
                   aria-label={uiT('Address', 'पता')}
                   value={customerForm.address || ''}
                   onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })}
                 />
+              </div>
+              <div className="md:col-span-2 rounded-lg border border-th-border bg-th-elevated p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 w-4 h-4 rounded border-th-border text-th-accent focus:ring-th-accent/30"
+                    checked={!!customerForm.isAyushman}
+                    onChange={(e) =>
+                      setCustomerForm({ ...customerForm, isAyushman: e.target.checked })
+                    }
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-th-text">
+                      <Tag size={14} className="text-th-accent" aria-hidden="true" />
+                      {uiT('ABHA / Ayushman customer', 'ABHA / Ayushman customer')}
+                    </span>
+                    <span className="block text-xs text-th-secondary mt-0.5">
+                      {uiT(
+                        'Mark this customer as an Ayushman beneficiary to apply the 50% scheme on bills.',
+                        'Mark this customer as an Ayushman beneficiary to apply the 50% scheme on bills.'
+                      )}
+                    </span>
+                  </span>
+                </label>
+                {customerForm.isAyushman && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-medium text-th-secondary mb-1">
+                      {uiT('ABHA Number', 'ABHA Number')}
+                    </label>
+                    <input
+                      className="w-full px-4 py-2.5 bg-th-surface border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all tabular-nums"
+                      placeholder={uiT('14-digit ABHA number', '14-digit ABHA number')}
+                      aria-label={uiT('ABHA number', 'ABHA number')}
+                      inputMode="numeric"
+                      value={customerForm.abhaNumber || ''}
+                      onChange={(e) =>
+                        setCustomerForm({ ...customerForm, abhaNumber: e.target.value })
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1218,6 +1280,10 @@ export default function Workspace() {
                   if (customerForm.city?.trim()) body.city = customerForm.city.trim();
                   if (customerForm.gender) body.gender = customerForm.gender;
                   if (typeof customerForm.age === 'number') body.age = customerForm.age;
+                  body.isAyushman = !!customerForm.isAyushman;
+                  if (customerForm.isAyushman && customerForm.abhaNumber?.trim()) {
+                    body.abhaNumber = customerForm.abhaNumber.trim();
+                  }
                   const res = await api.post<{ _id?: string; id?: string }>(
                     '/api/customers',
                     body
@@ -1270,23 +1336,30 @@ export default function Workspace() {
               <button
                 onClick={() => resetAll()}
                 aria-label={uiT('Change customer', 'ग्राहक बदलें')}
-                className="h-11 w-11 rounded-lg bg-th-elevated border border-th-border text-th-text flex items-center justify-center hover:bg-[#1ed760]/10 hover:border-[#1ed760] transition-all shrink-0"
+                className="h-11 w-11 rounded-lg bg-th-elevated border border-th-border text-th-text flex items-center justify-center hover:bg-[#1ed760]/10 hover:border-th-accent transition-all shrink-0"
               >
                 <ArrowLeft size={18} aria-hidden="true" />
               </button>
-              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-th-text font-bold text-lg shrink-0">
+              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#1ed760] to-[#0d9e50] flex items-center justify-center text-black font-bold text-lg shrink-0">
                 {selectedCustomer.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg font-semibold text-th-text truncate">
-                  {selectedCustomer.name}
-                </h1>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h1 className="text-base sm:text-lg font-semibold text-th-text truncate">
+                    {selectedCustomer.name}
+                  </h1>
+                  {selectedCustomer.isAyushman && (
+                    <span className="px-1.5 py-0.5 bg-[#1ed760]/15 text-th-accent rounded-md text-[11px] font-bold shrink-0">
+                      {uiT('ABHA', 'ABHA')}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-th-secondary truncate tabular-nums">
                   {selectedCustomer.mobile || uiT('No phone', 'कोई फोन नहीं')}
                 </p>
               </div>
             </div>
-            <span className="hidden sm:flex items-center rounded-lg px-4 py-2 text-sm font-bold bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760] shrink-0">
+            <span className="hidden sm:flex items-center rounded-lg px-4 py-2 text-sm font-bold bg-[#1ed760]/10 text-th-accent shadow-[0_0_0_1px_#1ed760] shrink-0">
               {uiT('Existing Customer', 'मौजूदा ग्राहक')}
             </span>
           </div>
@@ -1305,7 +1378,7 @@ export default function Workspace() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="card rounded-xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
-                <Activity size={18} className="text-[#1ed760]" aria-hidden="true" />
+                <Activity size={18} className="text-th-accent" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-th-secondary">{uiT('Visits', 'विज़िट')}</p>
@@ -1316,7 +1389,7 @@ export default function Workspace() {
             </div>
             <div className="card rounded-xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
-                <ShoppingCart size={18} className="text-[#1ed760]" aria-hidden="true" />
+                <ShoppingCart size={18} className="text-th-accent" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-th-secondary">{uiT('Orders', 'ऑर्डर')}</p>
@@ -1327,7 +1400,7 @@ export default function Workspace() {
             </div>
             <div className="card rounded-xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#1ed760]/10 flex items-center justify-center shrink-0">
-                <IndianRupee size={18} className="text-[#1ed760]" aria-hidden="true" />
+                <IndianRupee size={18} className="text-th-accent" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-th-secondary">{uiT('Billed', 'बिल')}</p>
@@ -1338,11 +1411,11 @@ export default function Workspace() {
             </div>
             <div className="card rounded-xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                <Clock size={18} className="text-amber-400" aria-hidden="true" />
+                <Clock size={18} className="text-th-warning" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-th-secondary">{uiT('Pending', 'बकाया')}</p>
-                <p className="text-lg font-bold tabular-nums text-amber-400">
+                <p className="text-lg font-bold tabular-nums text-th-warning">
                   ₹{(selectedCustomer.pendingAmount ?? 0).toLocaleString()}
                 </p>
               </div>
@@ -1351,7 +1424,7 @@ export default function Workspace() {
 
           {!hasData && (
             <div className="card rounded-xl p-6 text-center">
-              <Loader2 size={28} className="mx-auto mb-3 text-[#1ed760] animate-spin" aria-hidden="true" />
+              <Loader2 size={28} className="mx-auto mb-3 text-th-accent animate-spin" aria-hidden="true" />
               <p className="text-sm text-th-muted">
                 {uiT('Loading customer history...', 'ग्राहक इतिहास लोड हो रहा है...')}
               </p>
@@ -1362,7 +1435,7 @@ export default function Workspace() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="card rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <ShoppingCart size={16} className="text-[#1ed760]" aria-hidden="true" />
+                  <ShoppingCart size={16} className="text-th-accent" aria-hidden="true" />
                   <h3 className="text-sm font-semibold text-th-text">
                     {uiT('Last Purchase', 'आखिरी खरीदारी')}
                   </h3>
@@ -1411,7 +1484,7 @@ export default function Workspace() {
                       </p>
                     )}
                     {orderTotal > 0 && (
-                      <p className="text-sm font-semibold text-[#1ed760] tabular-nums">
+                      <p className="text-sm font-semibold text-th-accent tabular-nums">
                         {uiT('Total:', 'कुल:')} ₹{orderTotal.toLocaleString()}
                       </p>
                     )}
@@ -1425,7 +1498,7 @@ export default function Workspace() {
 
               <div className="card rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <Eye size={16} className="text-[#1ed760]" aria-hidden="true" />
+                  <Eye size={16} className="text-th-accent" aria-hidden="true" />
                   <h3 className="text-sm font-semibold text-th-text">
                     {uiT('Last Prescription', 'आखिरी प्रिस्क्रिप्शन')}
                   </h3>
@@ -1459,7 +1532,7 @@ export default function Workspace() {
           {hasData && summary?.recentOrders && summary.recentOrders.length > 0 && (
             <div className="card rounded-xl p-5">
               <div className="flex items-center gap-2 mb-3">
-                <History size={16} className="text-[#1ed760]" aria-hidden="true" />
+                <History size={16} className="text-th-accent" aria-hidden="true" />
                 <h3 className="text-sm font-semibold text-th-text">
                   {uiT('Recent Orders', 'हाल के ऑर्डर')}
                 </h3>
@@ -1542,7 +1615,7 @@ export default function Workspace() {
             <button
               onClick={() => resetAll()}
               aria-label={uiT('Search another customer', 'दूसरा ग्राहक खोजें')}
-              className="text-sm text-th-secondary underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center px-3 text-sm text-th-secondary underline-offset-4 hover:text-th-text hover:underline"
             >
               {uiT('← Search another customer', '← दूसरा ग्राहक खोजें')}
             </button>
@@ -1686,7 +1759,7 @@ export default function Workspace() {
               <button
                 onClick={() => resetAll()}
                 aria-label={uiT('Cancel direct sell', 'डायरेक्ट बिक्री रद्द करें')}
-                className="h-11 w-11 rounded-lg bg-th-elevated border border-th-border text-th-text flex items-center justify-center hover:bg-[#1ed760]/10 hover:border-[#1ed760] transition-all shrink-0"
+                className="h-11 w-11 rounded-lg bg-th-elevated border border-th-border text-th-text flex items-center justify-center hover:bg-[#1ed760]/10 hover:border-th-accent transition-all shrink-0"
               >
                 <ArrowLeft size={18} aria-hidden="true" />
               </button>
@@ -1782,7 +1855,7 @@ export default function Workspace() {
             Enter SKU or barcode to auto-fill frame details.
           </p>
           <input
-            className="w-full px-4 py-2.5 bg-th-elevated/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-[#1ed760]/20 focus:border-[#1ed760] transition-all"
+            className="w-full px-4 py-2.5 bg-th-elevated/80 border border-th-border rounded-sm text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
             placeholder="SKU or barcode"
             aria-label={uiT('SKU or barcode', 'SKU या बारकोड')}
             autoFocus
@@ -1817,7 +1890,7 @@ export default function Workspace() {
               'Use camera to scan barcode',
               'बारकोड स्कैन करने के लिए कैमरा उपयोग करें'
             )}
-            className="w-full text-center py-2.5 text-xs font-semibold text-[#1ed760] border-2 border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5"
+            className="w-full text-center py-2.5 text-xs font-semibold text-th-accent border-2 border-dashed border-th-border rounded-sm hover:bg-[#1ed760]/10 transition-all flex items-center justify-center gap-1.5"
           >
             <ScanLine size={14} aria-hidden="true" /> Use Camera
           </button>
