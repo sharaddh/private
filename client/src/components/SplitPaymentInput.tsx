@@ -127,7 +127,7 @@ export default function SplitPaymentInput({
                 onClick={() => setRow(index, { mode: m })}
                 className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-md text-[14px] font-bold transition-all ${
                   selected
-                    ? 'bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760]'
+                    ? 'bg-[#1ed760]/10 text-th-accent shadow-[0_0_0_1px_#1ed760]'
                     : 'bg-th-elevated text-th-secondary hover:bg-th-card'
                 }`}
               >
@@ -185,7 +185,7 @@ export default function SplitPaymentInput({
           value={row.amount || ''}
           onWheel={(e) => (e.target as HTMLElement).blur()}
           onChange={(e) => setRow(index, { amount: Number(e.target.value) })}
-          className="w-full pl-9 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all disabled:opacity-50"
+          className="w-full pl-9 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all disabled:opacity-50"
         />
         {showMaxButton && index === 0 && (
           <button
@@ -193,7 +193,7 @@ export default function SplitPaymentInput({
             disabled={disabled}
             onClick={() => setRow(0, { amount: collectable })}
             aria-label={uiT('Collect full amount', 'पूरी राशि')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-th-card text-[14px] font-bold rounded-md text-th-text hover:bg-[#1ed760] hover:text-black transition-colors"
+            className="absolute right-2 top-1/2 flex min-h-9 -translate-y-1/2 items-center px-3 py-1.5 bg-th-card text-[14px] font-bold rounded-md text-th-text hover:bg-[#1ed760] hover:text-black transition-colors"
           >
             Max
           </button>
@@ -217,7 +217,7 @@ export default function SplitPaymentInput({
           disabled={disabled}
           onClick={addSecondRow}
           aria-label={uiT('Split across a second payment mode', 'दूसरे मोड में विभाजित करें')}
-          className="w-full py-2 rounded-lg border border-dashed border-th-border text-xs font-bold text-th-secondary hover:border-[#1ed760] hover:text-[#1ed760] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+          className="w-full py-2 rounded-lg border border-dashed border-th-border text-xs font-bold text-th-secondary hover:border-th-accent hover:text-th-accent transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
         >
           <Plus size={14} aria-hidden="true" />
           {uiT('+ Split', '+ विभाजित करें')}
