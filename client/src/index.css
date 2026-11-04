@@ -744,3 +744,9 @@ input[type='number']::-webkit-outer-spin-button {
 .section-animate:nth-child(8) { animation-delay: 420ms; }
 .section-animate:nth-child(9) { animation-delay: 480ms; }
 .section-animate:nth-child(10) { animation-delay: 540ms; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
