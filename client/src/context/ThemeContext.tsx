@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { startThemeWave, type ThemeOrigin } from '../utils/themeWave';
 
 type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextValue {
   dark: boolean;
   theme: Theme;
-  toggle: () => void;
+  toggle: (origin?: ThemeOrigin) => void;
   setTheme: (theme: Theme) => void;
 }
 
@@ -46,13 +47,28 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
 
-  const toggle = useCallback(() => {
-    setThemeState((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      setDark(next === 'dark');
-      return next;
-    });
-  }, []);
+  const toggle = useCallback(
+    (origin?: ThemeOrigin) => {
+      const next: Theme = dark ? 'light' : 'dark';
+      let point = origin;
+
+      if (origin && origin.clientX === 0 && origin.clientY === 0) {
+        const rect = document.activeElement?.getBoundingClientRect();
+        if (rect) {
+          point = {
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+          };
+        }
+      }
+
+      startThemeWave(point, () => {
+        setThemeState(next);
+        setDark(next === 'dark');
+      });
+    },
+    [dark]
+  );
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
