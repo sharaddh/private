@@ -29,7 +29,7 @@ export default function BottomNav({
   const isLastStep = currentIdx === stepKeys.length - 1;
 
   return (
-    <div className="mt-8 border-t border-[#1f1f1f] pt-6">
+    <div className="mt-8 border-t border-th-border pt-6">
       <div className="flex items-center justify-between">
         {/* Back Button */}
         <motion.button
@@ -38,7 +38,8 @@ export default function BottomNav({
           onClick={() => setStep(stepKeys[currentIdx - 1])}
           className="
             inline-flex items-center gap-2
-            px-5 py-2.5
+            px-5 py-3
+            min-h-11
             rounded-lg
             bg-th-elevated
             text-th-text
@@ -53,7 +54,7 @@ export default function BottomNav({
         </motion.button>
 
         {!canNext && nextHint && (
-          <p className="text-xs font-semibold text-[#e53935] text-center px-3">{nextHint}</p>
+          <p className="text-xs font-semibold text-red-600 dark:text-red-400 text-center px-3">{nextHint}</p>
         )}
 
         {/* Next / Save */}
@@ -64,7 +65,8 @@ export default function BottomNav({
             onClick={saveTransaction}
             className="
               inline-flex items-center gap-2
-              px-6 py-2.5
+              px-6 py-3
+              min-h-11
               rounded-lg
               bg-[#1ed760]
               text-black
@@ -98,7 +100,8 @@ export default function BottomNav({
             onClick={() => setStep(stepKeys[currentIdx + 1])}
             className="
               inline-flex items-center gap-2
-              px-6 py-2.5
+              px-6 py-3
+              min-h-11
               rounded-lg
               bg-[#1ed760]
               text-black
