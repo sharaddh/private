@@ -93,7 +93,7 @@ export default function VisitTypeSection({
       <section className="bg-th-surface rounded-lg shadow-lg p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-            <Activity size={18} className="text-[#1ed760]" />
+            <Activity size={18} className="text-th-accent" />
           </div>
           <div>
             <h2 className="text-base font-bold text-th-text">
@@ -138,7 +138,7 @@ export default function VisitTypeSection({
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', damping: 18, stiffness: 300 }}
                   >
-                    <Check size={14} className="text-th-text" strokeWidth={3} />
+                    <Check size={14} className="text-black" strokeWidth={3} />
                   </motion.div>
                 )}
               </motion.button>
@@ -151,7 +151,7 @@ export default function VisitTypeSection({
       <section className="bg-th-surface rounded-lg shadow-lg p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-            <Calendar size={18} className="text-[#1ed760]" />
+            <Calendar size={18} className="text-th-accent" />
           </div>
           <div>
             <h2 className="text-base font-bold text-th-text">
@@ -168,13 +168,14 @@ export default function VisitTypeSection({
           <div className="relative group">
             <Calendar
               size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-[#1ed760]"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-th-accent"
             />
             <input
               type="date"
+              aria-label="Visit date"
               value={visitDate}
               onChange={(e) => setVisitDate(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
 
@@ -182,13 +183,13 @@ export default function VisitTypeSection({
           <div className="relative group">
             <User
               size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-[#1ed760]"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-th-accent"
             />
             <input
               placeholder={uiT('Doctor name (optional)', 'डॉक्टर का नाम (वैकल्पिक)')}
               value={visitDoctor}
               onChange={(e) => setVisitDoctor(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
 
@@ -196,13 +197,13 @@ export default function VisitTypeSection({
           <div className="relative group">
             <MessageSquare
               size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-[#1ed760]"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none transition-colors group-focus-within:text-th-accent"
             />
             <input
               placeholder={uiT('Remarks (optional)', 'टिप्पणी (वैकल्पिक)')}
               value={visitRemarks}
               onChange={(e) => setVisitRemarks(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-th-elevated text-th-text rounded-md text-sm placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
         </div>
