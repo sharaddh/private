@@ -43,6 +43,8 @@ interface DrawerForm {
   gender: string;
   city: string;
   address: string;
+  isAyushman: boolean;
+  abhaNumber: string;
 }
 
 const initialDrawer: DrawerForm = {
@@ -53,6 +55,8 @@ const initialDrawer: DrawerForm = {
   gender: '',
   city: '',
   address: '',
+  isAyushman: false,
+  abhaNumber: '',
 };
 
 const allDesktopMenu = [
@@ -121,7 +125,7 @@ const SearchResultItem = memo(function SearchResultItem({
           {customer.customerId ? <span>{String(customer.customerId)}</span> : null}
         </p>
       </div>
-      <div className="rounded-lg bg-th-elevated px-2 py-1 text-xs font-semibold uppercase tracking-wide text-th-secondary group-hover:bg-[#1ed760]/15 group-hover:text-[#1ed760] transition-all">
+      <div className="rounded-lg bg-th-elevated px-2 py-1 text-xs font-semibold uppercase tracking-wide text-th-secondary group-hover:bg-[#1ed760]/15 group-hover:text-th-accent transition-all">
         Open
       </div>
     </button>
@@ -170,6 +174,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [drawerError, setDrawerError] = useState('');
 
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSidebarRef = useRef<HTMLElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -196,12 +201,25 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [isAuthPage, navigate]);
 
   useEffect(() => {
+    if (mobileSidebarRef.current) mobileSidebarRef.current.inert = !mobileOpen;
+  }, [mobileOpen]);
+
+  useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  useEffect(() => {
+    if (!showAddDrawer) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowAddDrawer(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showAddDrawer]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -328,6 +346,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         ...(drawerForm.gender && { gender: drawerForm.gender }),
         ...(drawerForm.city.trim() && { city: drawerForm.city.trim() }),
         ...(drawerForm.address.trim() && { address: drawerForm.address.trim() }),
+        isAyushman: drawerForm.isAyushman,
+        ...(drawerForm.isAyushman && drawerForm.abhaNumber.trim()
+          ? { abhaNumber: drawerForm.abhaNumber.trim() }
+          : {}),
       });
       if (res.success) {
         invalidateCache('/api/customers?limit=1000');
@@ -361,6 +383,8 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {/* Mobile Sidebar Overlay */}
       <aside
+        ref={mobileSidebarRef}
+        aria-label="Mobile navigation"
         className={`${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden fixed z-30 h-full w-60 flex flex-col bg-th-surface border-r border-th-border transition-transform duration-300`}
       >
         <div className="flex items-center h-16 px-4 border-b border-th-border flex-shrink-0">
@@ -377,12 +401,15 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button
             onClick={() => setMobileOpen(false)}
             aria-label="Close mobile menu"
-            className="ml-auto p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary"
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg text-th-secondary transition-all duration-200 hover:bg-th-hover"
           >
             <X size={18} />
           </button>
         </div>
-        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
+        <nav
+          aria-label="Mobile navigation links"
+          className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none"
+        >
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -393,7 +420,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 ${
                   active
-                    ? 'bg-[#1ed760]/10 text-[#1ed760] font-semibold'
+                    ? 'bg-[#1ed760]/10 text-th-accent font-semibold'
                     : 'hover:bg-th-hover text-th-secondary hover:text-th-text'
                 }`}
               >
@@ -450,7 +477,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => setSidebarOpen(false)}
               aria-label="Collapse sidebar"
-              className="p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-th-secondary transition-all duration-200 hover:bg-th-hover"
             >
               <ChevronLeft size={16} />
             </button>
@@ -461,7 +488,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Expand sidebar"
-              className="p-1.5 rounded-lg transition-all duration-200 hover:bg-th-hover text-th-secondary"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-th-secondary transition-all duration-200 hover:bg-th-hover"
             >
               <Menu size={16} />
             </button>
@@ -469,7 +496,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         )}
 
         {/* Nav items */}
-        <nav className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
+        <nav
+          aria-label="Main navigation"
+          className="flex-1 py-2 px-1.5 flex flex-col gap-0.5 overflow-y-auto scrollbar-none"
+        >
           {desktopMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -480,7 +510,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 ${
                   active
-                    ? 'bg-[#1ed760]/10 text-[#1ed760] font-semibold'
+                    ? 'bg-[#1ed760]/10 text-th-accent font-semibold'
                     : 'hover:bg-th-hover text-th-secondary hover:text-th-text'
                 }`}
               >
@@ -526,14 +556,14 @@ export default function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open mobile menu"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:hidden"
             >
               <Menu size={20} />
             </button>
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open sidebar"
-              className="hidden h-9 w-9 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-lg text-th-secondary transition-colors hover:bg-th-hover lg:flex"
             >
               <PanelLeft size={20} />
             </button>
@@ -550,15 +580,15 @@ export default function Layout({ children }: { children: ReactNode }) {
             <div
               className={`group flex w-full items-center rounded-xl border bg-th-hover/50 transition-all duration-300 ease-out ${
                 searchOpen
-                  ? 'border-[#1ed760]/30 ring-4 ring-[#1ed760]/10 shadow-[0_8px_30px_rgba(30,215,96,0.15)]'
-                  : 'border-th-border hover:border-[#1ed760]/15 hover:shadow-sm'
+                  ? 'border-th-accent/30 ring-4 ring-[#1ed760]/10 shadow-[0_8px_30px_rgba(30,215,96,0.15)]'
+                  : 'border-th-border hover:border-th-accent/15 hover:shadow-sm'
               }`}
             >
               <div
                 className={`ml-3 mr-2 flex h-8 w-8 items-center justify-center transition-colors duration-300 ${
                   searchLoading || searchOpen
-                    ? 'text-[#1ed760]'
-                    : 'text-th-secondary group-hover:text-[#1ed760]'
+                    ? 'text-th-accent'
+                    : 'text-th-secondary group-hover:text-th-accent'
                 }`}
               >
                 {searchLoading ? (
@@ -576,7 +606,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 onFocus={() => {
                   if (searchQuery.trim()) setSearchOpen(true);
                 }}
-                className="w-full bg-transparent py-2 sm:py-2.5 pr-2 sm:pr-3 text-xs sm:text-sm font-medium text-th-text placeholder-th-secondary/60 outline-none"
+                className="w-full bg-transparent py-2.5 sm:py-3 pr-2 sm:pr-3 text-xs sm:text-sm font-medium text-th-text placeholder-th-secondary/60 outline-none"
                 aria-label="Search customers"
               />
               {searchQuery.trim() && (
@@ -584,7 +614,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={clearSearch}
                   aria-label="Clear search"
-                  className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-th-secondary transition-all hover:bg-th-card hover:text-th-text"
+                  className="mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-th-secondary transition-all hover:bg-th-card hover:text-th-text"
                 >
                   <X size={14} />
                 </button>
@@ -635,7 +665,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <div className="border-t border-th-border p-3 bg-th-elevated">
                   <button
                     onClick={goAddCustomer}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1ed760] px-4 py-2.5 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:brightness-110 hover:shadow-lg active:scale-[0.98]"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1ed760] px-4 py-3 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:brightness-110 hover:shadow-lg active:scale-[0.98]"
                   >
                     <UserPlus size={16} />
                     {uiT('Add New Customer', 'नया ग्राहक जोड़ें')}
@@ -649,7 +679,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center justify-end flex-shrink-0">
             {currentBranch && (
               <div className="hidden sm:flex items-center gap-2 rounded-lg bg-th-hover px-3 py-1.5 text-xs font-medium text-th-secondary">
-                <Building2 size={14} className="text-[#1ed760] flex-shrink-0" />
+                <Building2 size={14} className="text-th-accent flex-shrink-0" />
                 <span className="hidden max-w-[120px] truncate sm:inline-block">
                   {currentBranch.name}
                 </span>
@@ -665,7 +695,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Mobile bottom nav — frosted glass */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+      <nav aria-label="Quick navigation" className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
         <div className="border-t border-th-hover glass-nav">
           <div className="flex items-center justify-around h-[60px] px-1 pb-0.5">
             {mobileNav.map((item) => {
@@ -674,7 +704,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               return (
                 <Link key={item.path} to={item.path} className="nav-link flex-1 max-w-[72px] py-1">
                   <div
-                    className={`nav-link-icon ${active ? 'text-[#1ed760]' : 'text-th-secondary'}`}
+                    className={`nav-link-icon ${active ? 'text-th-accent' : 'text-th-secondary'}`}
                   >
                     <Icon
                       size={active ? 21 : 19}
@@ -682,7 +712,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     />
                   </div>
                   <span
-                    className={`nav-link-label ${active ? 'text-[#1ed760] font-semibold' : 'text-th-secondary font-normal'}`}
+                    className={`nav-link-label ${active ? 'text-th-accent font-semibold' : 'text-th-secondary font-normal'}`}
                   >
                     {trLabel(item.label)}
                   </span>
@@ -705,6 +735,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           />
           <div
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-customer-title"
             className="relative w-full max-w-lg mx-auto rounded-2xl max-h-[90vh] overflow-y-auto animate-scale-in bg-th-surface/95 backdrop-blur-xl"
             style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.28)' }}
           >
@@ -716,12 +749,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                 >
                   <UserPlus size={16} />
                 </div>
-                <h3 className="text-base font-semibold text-th-text">New Customer</h3>
+                <h2 id="add-customer-title" className="text-base font-semibold text-th-text">
+                  New Customer
+                </h2>
               </div>
               <button
                 onClick={() => setShowAddDrawer(false)}
                 aria-label="Close"
-                className="p-1.5 rounded-sm transition-colors hover:bg-th-hover text-th-secondary"
+                className="flex h-11 w-11 items-center justify-center rounded-sm text-th-secondary transition-colors hover:bg-th-hover"
               >
                 <X size={16} />
               </button>
@@ -729,21 +764,21 @@ export default function Layout({ children }: { children: ReactNode }) {
             <div className="p-6 space-y-4">
               {drawerError && (
                 <div
-                  className="px-4 py-3 rounded-sm text-sm"
-                  style={{
-                    backgroundColor: 'rgba(239,68,68,0.1)',
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    color: '#fca5a5',
-                  }}
+                  role="alert"
+                  className="px-4 py-3 rounded-sm text-sm border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300"
                 >
                   {drawerError}
                 </div>
               )}
               <div>
-                <label className="block text-sm mb-1.5 text-th-secondary">Full Name *</label>
+                <label htmlFor="drawer-name" className="block text-sm mb-1.5 text-th-secondary">
+                  Full Name *
+                </label>
                 <input
-                  className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                  style={{ border: '1px solid rgb(124,124,124)' }}
+                  id="drawer-name"
+                  name="name"
+                  autoComplete="name"
+                  className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                   value={drawerForm.name}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Enter customer name"
@@ -751,10 +786,16 @@ export default function Layout({ children }: { children: ReactNode }) {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1.5 text-th-secondary">Mobile *</label>
+                <label htmlFor="drawer-mobile" className="block text-sm mb-1.5 text-th-secondary">
+                  Mobile *
+                </label>
                 <input
-                  className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                  style={{ border: '1px solid rgb(124,124,124)' }}
+                  id="drawer-mobile"
+                  name="mobile"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                   value={drawerForm.mobile}
                   onChange={(e) =>
                     setDrawerForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, '') }))
@@ -762,12 +803,16 @@ export default function Layout({ children }: { children: ReactNode }) {
                   placeholder="Phone number"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm mb-1.5 text-th-secondary">Email</label>
+                  <label htmlFor="drawer-email" className="block text-sm mb-1.5 text-th-secondary">
+                    Email
+                  </label>
                   <input
-                    className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                    style={{ border: '1px solid rgb(124,124,124)' }}
+                    id="drawer-email"
+                    name="email"
+                    autoComplete="email"
+                    className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                     type="email"
                     value={drawerForm.email}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, email: e.target.value }))}
@@ -775,10 +820,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5 text-th-secondary">Age</label>
+                  <label htmlFor="drawer-age" className="block text-sm mb-1.5 text-th-secondary">
+                    Age
+                  </label>
                   <input
-                    className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                    style={{ border: '1px solid rgb(124,124,124)' }}
+                    id="drawer-age"
+                    name="age"
+                    className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                     type="number"
                     value={drawerForm.age}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, age: e.target.value }))}
@@ -786,10 +834,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5 text-th-secondary">Gender</label>
+                  <label htmlFor="drawer-gender" className="block text-sm mb-1.5 text-th-secondary">
+                    Gender
+                  </label>
                   <select
-                    className="w-full px-3 py-2 rounded-lg text-sm text-th-text focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                    style={{ border: '1px solid rgb(124,124,124)' }}
+                    id="drawer-gender"
+                    name="gender"
+                    className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                     value={drawerForm.gender}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, gender: e.target.value }))}
                   >
@@ -800,10 +851,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5 text-th-secondary">City</label>
+                  <label htmlFor="drawer-city" className="block text-sm mb-1.5 text-th-secondary">
+                    City
+                  </label>
                   <input
-                    className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
-                    style={{ border: '1px solid rgb(124,124,124)' }}
+                    id="drawer-city"
+                    name="city"
+                    autoComplete="address-level2"
+                    className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                     value={drawerForm.city}
                     onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
                     placeholder="City"
@@ -811,27 +866,76 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </div>
               </div>
               <div>
-                <label className="block text-sm mb-1.5 text-th-secondary">Address</label>
+                <label htmlFor="drawer-address" className="block text-sm mb-1.5 text-th-secondary">
+                  Address
+                </label>
                 <textarea
-                  className="w-full px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-1 focus:ring-[#1ed760] bg-th-hover"
+                  id="drawer-address"
+                  name="address"
+                  autoComplete="street-address"
+                  className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                   rows={2}
-                  style={{ border: '1px solid rgb(124,124,124)', resize: 'vertical' }}
+                  style={{ resize: 'vertical' }}
                   value={drawerForm.address}
                   onChange={(e) => setDrawerForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Address (optional)"
                 />
               </div>
+              <div className="rounded-lg border border-th-border bg-th-elevated p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-th-border text-th-accent focus:ring-th-accent/30"
+                    checked={drawerForm.isAyushman}
+                    onChange={(e) =>
+                      setDrawerForm((f) => ({ ...f, isAyushman: e.target.checked }))
+                    }
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-th-text">
+                      <UserPlus size={14} className="text-th-accent" aria-hidden="true" />
+                      {uiT('ABHA / Ayushman customer', 'ABHA / Ayushman customer')}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-th-secondary">
+                      {uiT(
+                        'Mark this customer as an Ayushman beneficiary to apply the 50% scheme on bills.',
+                        'Mark this customer as an Ayushman beneficiary to apply the 50% scheme on bills.'
+                      )}
+                    </span>
+                  </span>
+                </label>
+                {drawerForm.isAyushman && (
+                  <div className="mt-3">
+                    <label
+                      htmlFor="drawer-abha"
+                      className="mb-1.5 block text-sm text-th-secondary"
+                    >
+                      {uiT('ABHA Number', 'ABHA Number')}
+                    </label>
+                    <input
+                      id="drawer-abha"
+                      className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-surface focus:outline-none focus:ring-1 focus:ring-th-accent/30 tabular-nums"
+                      placeholder={uiT('14-digit ABHA number', '14-digit ABHA number')}
+                      inputMode="numeric"
+                      value={drawerForm.abhaNumber}
+                      onChange={(e) =>
+                        setDrawerForm((f) => ({ ...f, abhaNumber: e.target.value }))
+                      }
+                    />
+                  </div>
+                )}
+              </div>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowAddDrawer(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors hover:bg-th-hover text-th-secondary border border-th-muted"
+                  className="flex-1 min-h-11 px-4 py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-colors hover:bg-th-hover text-th-secondary border border-th-muted"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateCustomer}
                   disabled={drawerSaving}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-all active:scale-95"
+                  className="flex min-h-11 flex-1 items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-all active:scale-95"
                   style={{ backgroundColor: '#1ed760', color: '#121212' }}
                 >
                   {drawerSaving ? (
