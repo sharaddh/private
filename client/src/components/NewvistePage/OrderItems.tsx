@@ -71,6 +71,7 @@ function SectionCard({ icon, title, count, onAdd, onScan, children, emptyText }:
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onScan}
+              aria-label="Scan item"
               className="w-9 h-9 rounded-sm bg-th-elevated flex items-center justify-center text-th-text transition-colors"
             >
               <ScanLine size={16} />
@@ -133,7 +134,7 @@ function OrderFrames({
 
   return (
     <SectionCard
-      icon={<Eye size={20} className="text-[#1ed760]" />}
+      icon={<Eye size={20} className="text-th-accent" />}
       title={uiT('Frames', 'फ्रेम')}
       count={orderFrames.length}
       onAdd={() =>
@@ -169,7 +170,7 @@ function OrderFrames({
                   }}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                  className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
 
                 {suggestionsFor?.type === 'frame' &&
@@ -197,7 +198,7 @@ function OrderFrames({
                           }}
                           className="w-full text-left px-4 py-3 text-sm hover:bg-[#1ed760]/10 flex items-center gap-3 border-b border-th-elevated last:border-0 transition-colors"
                         >
-                          <Search size={14} className="text-[#1ed760]" />
+                          <Search size={14} className="text-th-accent" />
                           <span className="font-bold text-th-text">{s.sku}</span>
                           <span className="text-th-secondary text-xs">
                             {s.brand} {s.model}
@@ -225,7 +226,7 @@ function OrderFrames({
                   placeholder={uiT('Brand', 'ब्रांड')}
                   value={f.brand}
                   onChange={(e) => updateFrame(i, 'brand', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
               <div className="relative">
@@ -237,7 +238,7 @@ function OrderFrames({
                   placeholder={uiT('Model', 'मॉडल')}
                   value={f.model}
                   onChange={(e) => updateFrame(i, 'model', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
               <div className="relative">
@@ -249,7 +250,7 @@ function OrderFrames({
                   placeholder={uiT('Color', 'रंग')}
                   value={f.color}
                   onChange={(e) => updateFrame(i, 'color', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
               <div className="relative">
@@ -262,7 +263,7 @@ function OrderFrames({
                   value={f.price || ''}
                   onChange={(e) => updateFrame(i, 'price', Number(e.target.value))}
                   onWheel={(e) => (e.target as HTMLElement).blur()}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
             </div>
@@ -270,7 +271,8 @@ function OrderFrames({
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => removeFrame(i)}
-              className="w-8 h-8 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0 mt-1"
+              aria-label={`Remove frame ${f.brand || ''} ${f.model || ''}`.trim()}
+              className="w-9 h-9 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0 mt-1"
             >
               <X size={15} strokeWidth={2.5} />
             </motion.button>
@@ -302,7 +304,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
 
   return (
     <SectionCard
-      icon={<Layers size={20} className="text-[#1ed760]" />}
+      icon={<Layers size={20} className="text-th-accent" />}
       title={uiT('Lenses', 'लेंस')}
       count={orderLenses.length}
       onAdd={() =>
@@ -332,7 +334,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   placeholder="SKU"
                   value={l.sku}
                   onChange={(e) => updateLens(i, 'sku', e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -379,7 +381,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   placeholder={uiT('Brand', 'ब्रांड')}
                   value={l.brand}
                   onChange={(e) => updateLens(i, 'brand', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -392,7 +394,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   placeholder={uiT('Index (e.g. 1.61)', 'इंडेक्स (जैसे 1.61)')}
                   value={l.index}
                   onChange={(e) => updateLens(i, 'index', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -405,7 +407,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   placeholder={uiT('Coating', 'कोटिंग')}
                   value={l.coating}
                   onChange={(e) => updateLens(i, 'coating', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -419,7 +421,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   value={l.price || ''}
                   onChange={(e) => updateLens(i, 'price', Number(e.target.value))}
                   onWheel={(e) => (e.target as HTMLElement).blur()}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
             </div>
@@ -427,7 +429,8 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => removeLens(i)}
-              className="w-8 h-8 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0 mt-1"
+              aria-label={`Remove lens ${l.brand || ''}`.trim()}
+              className="w-9 h-9 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0 mt-1"
             >
               <X size={15} strokeWidth={2.5} />
             </motion.button>
@@ -456,7 +459,7 @@ function OrderAccessories({
   return (
     <div className="w-full">
       <SectionCard
-        icon={<Grid3X3 size={20} className="text-[#1ed760]" />}
+        icon={<Grid3X3 size={20} className="text-th-accent" />}
         title={uiT('Accessories', 'एक्सेसरीज़')}
         count={orderAccessories.length}
         onAdd={() => setOrderAccessories((prev) => [...prev, { name: '', price: 0 }])}
@@ -481,7 +484,7 @@ function OrderAccessories({
                     placeholder={uiT('Accessory Name', 'एक्सेसरी का नाम')}
                     value={a.name}
                     onChange={(e) => updateAccessory(i, 'name', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                    className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -494,13 +497,14 @@ function OrderAccessories({
                     value={a.price || ''}
                     onChange={(e) => updateAccessory(i, 'price', Number(e.target.value))}
                     onWheel={(e) => (e.target as HTMLElement).blur()}
-                    className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                    className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                   />
                 </div>
               </div>
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => removeAccessory(i)}
+                aria-label={`Remove accessory ${a.name || ''}`.trim()}
                 className="w-9 h-9 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0"
               >
                 <X size={16} strokeWidth={2.5} />
