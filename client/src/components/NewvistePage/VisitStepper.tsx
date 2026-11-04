@@ -57,7 +57,7 @@ export default function VisitStepper({ steps, currentIdx, setStep }: Props) {
                   onClick={() => {
                     if (completed || active) setStep(step.key);
                   }}
-                  className="relative z-10 flex flex-col items-center"
+                  className="relative z-10 flex min-w-11 flex-col items-center"
                 >
                   <motion.div
                     layout
@@ -139,7 +139,7 @@ export default function VisitStepper({ steps, currentIdx, setStep }: Props) {
                     transition-colors
 
                     ${
-                      completed ? 'text-[#1ed760]' : active ? 'text-[#1ed760]' : 'text-th-secondary'
+                      completed ? 'text-th-accent' : active ? 'text-th-accent' : 'text-th-secondary'
                     }
                   `}
                   >
