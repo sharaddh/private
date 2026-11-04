@@ -80,7 +80,7 @@ export default function BillingPanel({
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-              <FileText size={20} className="text-[#1ed760]" />
+              <FileText size={20} className="text-th-accent" />
             </div>
             <div>
               <h2 className="text-base font-bold text-th-text">{uiT('Bill Items', 'बिल आइटम')}</h2>
@@ -117,7 +117,7 @@ export default function BillingPanel({
               'Search inventory (SKU, brand, model)...',
               'इन्वेंटरी खोजें (SKU, ब्रांड, मॉडल)...'
             )}
-            className="w-full pl-9 pr-3 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+            className="w-full pl-9 pr-3 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
           />
           {isFocused && suggestions.length > 0 && (
             <div className="absolute left-0 right-0 top-full mt-1.5 bg-th-card rounded-md max-h-56 overflow-y-auto z-30 shadow-lg border border-th-border">
@@ -128,7 +128,7 @@ export default function BillingPanel({
                   onMouseDown={() => addInventoryItem(s)}
                   className="w-full text-left px-4 py-3 text-sm hover:bg-[#1ed760]/10 flex items-center gap-3 border-b border-th-elevated last:border-0 transition-colors"
                 >
-                  <Search size={14} className="text-[#1ed760]" />
+                  <Search size={14} className="text-th-accent" />
                   <span className="font-bold text-th-text">{s.sku}</span>
                   <span className="text-th-secondary text-xs">
                     {s.brand} {s.model}
@@ -172,7 +172,7 @@ export default function BillingPanel({
                       placeholder={uiT('Description', 'विवरण')}
                       value={item.description}
                       onChange={(e) => updateBillItem(i, 'description', e.target.value)}
-                      className="flex-1 px-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                      className="flex-1 px-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                     />
 
                     {/* Price Input */}
@@ -186,14 +186,15 @@ export default function BillingPanel({
                         value={item.price || ''}
                         onChange={(e) => updateBillItem(i, 'price', Number(e.target.value))}
                         onWheel={(e) => (e.target as HTMLElement).blur()}
-                        className="w-full pl-7 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                        className="w-full pl-7 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                       />
                     </div>
 
                     {/* Qty Input */}
-                    <div className="relative w-16">
+                    <div className="relative w-16 shrink-0">
                       <input
                         type="number"
+                        aria-label={uiT('Quantity', 'मात्रा')}
                         placeholder={uiT('Qty', 'मात्रा')}
                         value={item.qty || 1}
                         min="1"
@@ -212,7 +213,7 @@ export default function BillingPanel({
                           updateBillItem(i, 'qty', Math.max(1, clamped || 1));
                         }}
                         onWheel={(e) => (e.target as HTMLElement).blur()}
-                        className={`w-full px-2 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted text-center border focus:outline-none transition-all ${overStock ? 'border-[#e53935] focus:border-[#e53935] focus:ring-2 focus:ring-[#e53935]/20' : 'border-th-border focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'}`}
+                        className={`w-full px-2 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-muted text-center border focus:outline-none transition-all ${overStock ? 'border-[#e53935] focus:border-[#e53935] focus:ring-2 focus:ring-[#e53935]/20' : 'border-th-border focus:border-th-accent focus:ring-2 focus:ring-th-accent/20'}`}
                       />
                     </div>
 
@@ -225,7 +226,8 @@ export default function BillingPanel({
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => removeBillItem(i)}
-                      className="w-8 h-8 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0"
+                      aria-label={`Remove item ${item.description || ''}`.trim()}
+                      className="w-9 h-9 flex items-center justify-center rounded-md bg-[#e53935]/10 text-[#e53935] transition-colors flex-shrink-0"
                     >
                       <X size={15} strokeWidth={2.5} />
                     </motion.button>
@@ -263,7 +265,7 @@ export default function BillingPanel({
             key={totalAmount}
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-2xl font-bold text-[#1ed760] tabular-nums"
+            className="text-2xl font-bold text-th-accent tabular-nums"
           >
             ₹{totalAmount.toLocaleString()}
           </motion.span>
