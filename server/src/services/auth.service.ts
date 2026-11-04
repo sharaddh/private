@@ -4,6 +4,7 @@ import { Branch } from "../models/branch";
 import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../db/prisma";
+import { clearBranchCache } from "../models/db";
 
 interface RegisterData {
   username: string;
@@ -36,11 +37,21 @@ interface UpdateUserData {
   primaryBranchId?: string | null;
 }
 
+interface RegisterOwnerBranchData {
+  name: string;
+  code: string;
+  dbName?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+}
+
 interface RegisterOwnerData {
   username: string;
   password: string;
   name?: string;
   mobile?: string;
+  branch?: RegisterOwnerBranchData;
 }
 
 interface FormattedUser {
@@ -311,17 +322,132 @@ export async function registerOwner(
     throw new AppError(403, "Only owners can create new owners");
   }
 
+  let branchInput: RegisterOwnerBranchData | undefined;
+  if (data.branch) {
+    const name = data.branch.name?.trim();
+    const code = data.branch.code?.trim();
+    if (!name || !code) {
+      throw new AppError(400, "Branch name and code are required");
+    }
+
+    const existingBranch = await Branch.findFirst({ where: { code } });
+    if (existingBranch) {
+      throw new AppError(409, "Branch code already exists");
+    }
+
+    const slug = code
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    const dbName = data.branch.dbName?.trim() || `kmj_${slug || "branch"}`;
+
+    const existingDb = await Branch.findFirst({ where: { dbName } });
+    if (existingDb) {
+      throw new AppError(409, "Database name already exists");
+    }
+
+    branchInput = {
+      ...data.branch,
+      name,
+      code,
+      dbName,
+      address: data.branch.address || "",
+      phone: data.branch.phone || "",
+      email: data.branch.email || "",
+    };
+  }
+
   const passwordHash = await bcrypt.hash(data.password, 10);
-  const user = await User.create({
-    data: {
-      username: data.username,
-      passwordHash,
-      name: data.name || "",
-      mobile: data.mobile || "",
-      role: "owner",
-    },
-    include: { branches: true },
+  let createdBranchId = "";
+
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        username: data.username,
+        passwordHash,
+        name: data.name || "",
+        mobile: data.mobile || "",
+        role: "owner",
+      },
+    });
+
+    const branch = branchInput;
+    if (!branch) {
+      return tx.user.findUniqueOrThrow({
+        where: { id: created.id },
+        include: { branches: true },
+      });
+    }
+
+    const newBranch = await tx.branch.create({
+      data: {
+        name: branch.name,
+        code: branch.code,
+        dbName: branch.dbName!,
+        address: branch.address || "",
+        phone: branch.phone || "",
+        email: branch.email || "",
+        settings: {
+          shopName: branch.name,
+          shopAddress: branch.address || "",
+          shopPhone: branch.phone || "",
+          shopEmail: branch.email || "",
+          ownerName: data.name || "",
+          ownerPhone: data.mobile || "",
+        },
+      },
+    });
+    createdBranchId = newBranch.id;
+
+    const otherBranches = await tx.branch.findMany({
+      where: { id: { not: newBranch.id } },
+      select: { id: true },
+    });
+
+    await tx.user.update({
+      where: { id: created.id },
+      data: {
+        primaryBranchId: newBranch.id,
+        branches: { connect: [{ id: newBranch.id }, ...otherBranches] },
+      },
+    });
+
+    const otherOwners = await tx.user.findMany({
+      where: { role: "owner", id: { not: created.id } },
+      select: { id: true },
+    });
+    for (const owner of otherOwners) {
+      await tx.user.update({
+        where: { id: owner.id },
+        data: { branches: { connect: { id: newBranch.id } } },
+      });
+    }
+
+    return tx.user.findUniqueOrThrow({
+      where: { id: created.id },
+      include: { branches: true },
+    });
   });
+
+  if (createdBranchId && branchInput) {
+    try {
+      const settings = {
+        shopName: branchInput.name,
+        shopAddress: branchInput.address || "",
+        shopPhone: branchInput.phone || "",
+        shopEmail: branchInput.email || "",
+        adminWhatsApp: data.mobile || "",
+      };
+      await prisma.settings.upsert({
+        where: { branchId: createdBranchId },
+        create: { branchId: createdBranchId, ...settings },
+        update: settings,
+      });
+    } catch {
+      // Settings sync is non-fatal; the branch itself was created.
+    }
+    clearBranchCache();
+  }
 
   return formatUserWithBranches(user);
 }
