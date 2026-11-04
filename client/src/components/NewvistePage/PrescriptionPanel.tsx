@@ -38,7 +38,7 @@ function EyeRow({
                 onEdit?.();
                 onChange({ ...data, [f]: e.target.value });
               }}
-              className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
         ))}
@@ -116,7 +116,7 @@ export default function PrescriptionPanel({
         <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-              <Eye size={18} className="text-[#1ed760]" />
+              <Eye size={18} className="text-th-accent" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-th-text">
@@ -145,7 +145,7 @@ export default function PrescriptionPanel({
         <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-              <Eye size={18} className="text-[#1ed760]" />
+              <Eye size={18} className="text-th-accent" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-th-text">
@@ -186,7 +186,7 @@ export default function PrescriptionPanel({
                 autoEnable();
                 setPrescription((p) => ({ ...p, pd: e.target.value }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
           <div className="relative">
@@ -201,7 +201,7 @@ export default function PrescriptionPanel({
                 autoEnable();
                 setPrescription((p) => ({ ...p, problems: e.target.value }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
           <div className="relative">
@@ -216,7 +216,7 @@ export default function PrescriptionPanel({
                 autoEnable();
                 setPrescription((p) => ({ ...p, notes: e.target.value }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
         </div>
