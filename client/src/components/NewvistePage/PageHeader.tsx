@@ -38,6 +38,7 @@ export default function PageHeader({ customer, id, navigate, visitType, loading,
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate(`/customers/${id}`)}
+            aria-label="Back to customer"
             className="h-11 w-11 rounded-lg text-th-text flex items-center justify-center transition hover:bg-th-elevated"
           >
             <ArrowLeft size={18} />
@@ -68,13 +69,13 @@ export default function PageHeader({ customer, id, navigate, visitType, loading,
 
         <div className="flex items-center gap-3">
           {!loading && (
-            <span className="hidden md:flex items-center rounded-lg px-4 py-2 text-sm font-bold bg-[#1ed760]/10 text-[#1ed760] shadow-[0_0_0_1px_#1ed760]">
+            <span className="hidden md:flex items-center rounded-lg px-4 py-2 text-sm font-bold bg-[#1ed760]/10 text-th-accent shadow-[0_0_0_1px_#1ed760]">
               {VISIT_TYPE_LABELS[visitType]}
             </span>
           )}
 
           {saving && (
-            <div className="hidden lg:flex items-center gap-2 text-sm text-[#1ed760]">
+            <div className="hidden lg:flex items-center gap-2 text-sm text-th-accent">
               <Loader2 size={16} className="animate-spin" />
 
               {uiT('Saving...', 'सेव हो रहा है...')}
