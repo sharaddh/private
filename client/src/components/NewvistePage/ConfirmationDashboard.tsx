@@ -18,11 +18,11 @@ import { isSplitActive, nonZeroRows, type SplitRow } from '../../utils/splitAllo
 
 // Safe color mapping to prevent Tailwind purging dynamically created class names
 const COLOR_MAP: Record<string, { bg: string; text: string }> = {
-  primary: { bg: 'bg-[#1ed760]/10', text: 'text-[#1ed760]' },
-  blue: { bg: 'bg-[#1ed760]/10', text: 'text-[#1ed760]' },
-  emerald: { bg: 'bg-[#1ed760]/10', text: 'text-[#1ed760]' },
-  violet: { bg: 'bg-[#1ed760]/10', text: 'text-[#1ed760]' },
-  amber: { bg: 'bg-[#1ed760]/10', text: 'text-[#1ed760]' },
+  primary: { bg: 'bg-[#1ed760]/10', text: 'text-th-accent' },
+  blue: { bg: 'bg-[#1ed760]/10', text: 'text-th-accent' },
+  emerald: { bg: 'bg-[#1ed760]/10', text: 'text-th-accent' },
+  violet: { bg: 'bg-[#1ed760]/10', text: 'text-th-accent' },
+  amber: { bg: 'bg-[#1ed760]/10', text: 'text-th-accent' },
   rose: { bg: 'bg-[#e53935]/10', text: 'text-[#e53935]' },
   slate: { bg: 'bg-th-elevated', text: 'text-th-secondary' },
 };
@@ -283,7 +283,7 @@ export default function ConfirmationDashboard({
                 {orderFrames.map((f, i) => (
                   <div key={`f-${i}`} className="flex justify-between items-start gap-2">
                     <div>
-                      <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">
+                      <span className="text-[14px] font-bold text-th-warning uppercase tracking-wider block">
                         {uiT('Frame', 'फ्रेम')}
                       </span>
                       <p className="text-sm font-medium text-th-text">
@@ -304,7 +304,7 @@ export default function ConfirmationDashboard({
                     className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]"
                   >
                     <div>
-                      <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">
+                      <span className="text-[14px] font-bold text-th-warning uppercase tracking-wider block">
                         {uiT('Lens', 'लेंस')}
                       </span>
                       <p className="text-sm font-medium text-th-text">
@@ -325,7 +325,7 @@ export default function ConfirmationDashboard({
                     className="flex justify-between items-start gap-2 pt-2 border-t border-[#1f1f1f]"
                   >
                     <div>
-                      <span className="text-[14px] font-bold text-[#ff9500] uppercase tracking-wider block">
+                      <span className="text-[14px] font-bold text-th-warning uppercase tracking-wider block">
                         {uiT('Accessory', 'एक्सेसरी')}
                       </span>
                       <p className="text-sm font-medium text-th-text">{a.name}</p>
@@ -388,28 +388,28 @@ export default function ConfirmationDashboard({
                   key={`${row.mode}-${i}`}
                   className="flex justify-between text-sm"
                 >
-                  <span className="text-[#1ed760]">
+                  <span className="text-th-accent">
                     {uiT('Advance Paid', 'अग्रिम भुगतान')} ({row.mode})
                   </span>
-                  <span className="font-bold text-[#1ed760] tabular-nums">
+                  <span className="font-bold text-th-accent tabular-nums">
                     ₹{row.amount.toLocaleString()}
                   </span>
                 </div>
               ))
             ) : (
               <div className="flex justify-between text-sm">
-                <span className="text-[#1ed760]">{uiT('Advance Paid', 'अग्रिम भुगतान')}</span>
-                <span className="font-bold text-[#1ed760] tabular-nums">
+                <span className="text-th-accent">{uiT('Advance Paid', 'अग्रिम भुगतान')}</span>
+                <span className="font-bold text-th-accent tabular-nums">
                   ₹{advancePaid.toLocaleString()}
                 </span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className={`font-bold ${isFullyPaid ? 'text-[#1ed760]' : 'text-[#ff9500]'}`}>
+              <span className={`font-bold ${isFullyPaid ? 'text-th-accent' : 'text-th-warning'}`}>
                 {isFullyPaid ? uiT('Fully Paid', 'पूर्ण भुगतान') : uiT('Balance Due', 'शेष देय')}
               </span>
               <span
-                className={`font-black tabular-nums ${isFullyPaid ? 'text-[#1ed760]' : 'text-[#ff9500]'}`}
+                className={`font-black tabular-nums ${isFullyPaid ? 'text-th-accent' : 'text-th-warning'}`}
               >
                 ₹{balance.toLocaleString()}
               </span>
@@ -432,7 +432,7 @@ export default function ConfirmationDashboard({
                       {uiT('Expected Delivery', 'अपेक्षित डिलीवरी')}
                     </span>
                     <p className="text-sm font-bold text-th-text flex items-center gap-2">
-                      <CalendarDays size={15} className="text-[#1ed760]" />
+                      <CalendarDays size={15} className="text-th-accent" />
                       {formatDate(deliveryDate)}
                     </p>
                   </div>
@@ -443,7 +443,7 @@ export default function ConfirmationDashboard({
                       {uiT('Shipping Address', 'शिपिंग पता')}
                     </span>
                     <p className="text-sm font-medium text-th-text flex items-start gap-2">
-                      <MapPin size={15} className="text-[#1ed760] mt-0.5 shrink-0" />
+                      <MapPin size={15} className="text-th-accent mt-0.5 shrink-0" />
                       {deliveryAddress}
                     </p>
                   </div>
@@ -467,10 +467,10 @@ export default function ConfirmationDashboard({
           <CheckCircle size={20} className="text-black" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-[#1ed760]">
+          <h2 className="text-base font-bold text-th-accent">
             {uiT('Ready to Save', 'सेव करने के लिए तैयार')}
           </h2>
-          <p className="text-xs font-medium text-[#1ed760]/80">
+          <p className="text-xs font-medium text-th-accent/80">
             {uiT(
               'Please verify the details below before confirming the visit.',
               'कृपया यात्रा की पुष्टि करने से पहले नीचे दिए गए विवरण की जाँच करें।'
@@ -495,7 +495,7 @@ export default function ConfirmationDashboard({
           />
           <div className="min-w-0">
             <span className="text-sm font-bold text-th-text flex items-center gap-2">
-              <HeartPulse size={15} className="text-[#1ed760] shrink-0" />
+              <HeartPulse size={15} className="text-th-accent shrink-0" />
               {uiT('Ayushman specs', 'आयुष्मान चश्मा')}
             </span>
             <p className="text-xs text-th-secondary mt-0.5">
@@ -505,7 +505,7 @@ export default function ConfirmationDashboard({
               )}
             </p>
             {ayushmanSpecs && ayushmanDiscount > 0 && (
-              <p className="text-xs font-bold text-[#1ed760] mt-1 tabular-nums">
+              <p className="text-xs font-bold text-th-accent mt-1 tabular-nums">
                 {uiT('Ayushman 50%', 'आयुष्मान 50%')}: -₹
                 {ayushmanDiscount.toLocaleString('en-IN')}
               </p>
