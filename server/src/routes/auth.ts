@@ -4,6 +4,7 @@ import { validate } from "../middleware/validate";
 import { asyncHandler } from "../middleware/asyncHandler";
 import {
   registerSchema,
+  registerOwnerSchema,
   loginSchema,
   refreshSchema,
   updateMeSchema,
@@ -22,7 +23,7 @@ router.post(
 router.post(
   "/register-owner",
   optionalAuth,
-  validate(registerSchema, "body"),
+  validate(registerOwnerSchema, "body"),
   asyncHandler(authController.registerOwner)
 );
 router.post("/login", validate(loginSchema, "body"), asyncHandler(authController.login));
