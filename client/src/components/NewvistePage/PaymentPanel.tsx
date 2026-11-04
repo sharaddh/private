@@ -151,13 +151,13 @@ export default function PaymentPanel({
             <div className="flex bg-th-elevated rounded-md p-1 mb-4">
               <button
                 onClick={() => setDiscountType('percent')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${discountType === 'percent' ? 'bg-[#1ed760] text-black' : 'text-th-secondary hover:text-th-text'}`}
+                className={`flex min-h-9 flex-1 items-center justify-center py-2 text-xs font-bold rounded-md transition-all ${discountType === 'percent' ? 'bg-[#1ed760] text-black' : 'text-th-secondary hover:text-th-text'}`}
               >
                 {uiT('Percentage (%)', 'प्रतिशत (%)')}
               </button>
               <button
                 onClick={() => setDiscountType('amount')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${discountType === 'amount' ? 'bg-[#1ed760] text-black' : 'text-th-secondary hover:text-th-text'}`}
+                className={`flex min-h-9 flex-1 items-center justify-center py-2 text-xs font-bold rounded-md transition-all ${discountType === 'amount' ? 'bg-[#1ed760] text-black' : 'text-th-secondary hover:text-th-text'}`}
               >
                 {uiT('Flat Amount (₹)', 'निश्चित राशि (₹)')}
               </button>
@@ -181,7 +181,7 @@ export default function PaymentPanel({
                   else setDiscountAmount(val);
                 }}
                 onWheel={(e) => (e.target as HTMLElement).blur()}
-                className="w-full pl-9 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
               />
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function PaymentPanel({
           <div className="bg-th-surface rounded-lg shadow-lg p-5 h-full">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-                <CreditCard size={18} className="text-[#1ed760]" />
+                <CreditCard size={18} className="text-th-accent" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-th-text">{uiT('Payment', 'भुगतान')}</h2>
@@ -218,7 +218,7 @@ export default function PaymentPanel({
           <div className="bg-th-surface rounded-lg shadow-lg p-5">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-sm bg-[#1ed760]/10 flex items-center justify-center">
-              <Truck size={18} className="text-[#1ed760]" />
+              <Truck size={18} className="text-th-accent" />
             </div>
             <div>
               <h2 className="text-base font-bold text-th-text">
@@ -243,9 +243,10 @@ export default function PaymentPanel({
                 />
                 <input
                   type="date"
+                  aria-label="Delivery date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all cursor-pointer"
+                  className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all cursor-pointer"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -283,7 +284,7 @@ export default function PaymentPanel({
                 )}
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                className="w-full h-full min-h-[90px] pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all resize-none"
+                className="w-full h-full min-h-[90px] pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all resize-none"
               />
             </div>
           </div>
@@ -295,7 +296,7 @@ export default function PaymentPanel({
       <div className="lg:col-span-1">
         <div className="bg-th-surface rounded-lg p-6 sticky top-6 text-th-text shadow-lg">
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-            <Banknote className="text-[#1ed760]" />
+            <Banknote className="text-th-accent" />
             {uiT('Summary', 'सारांश')}
           </h3>
 
@@ -315,20 +316,20 @@ export default function PaymentPanel({
             {splitActive ? (
               nonZeroRows(rows).map((row, i) => (
                 <div key={`${row.mode}-${i}`} className="flex justify-between items-center text-sm">
-                  <span className="text-[#1ed760] font-medium">
+                  <span className="text-th-accent font-medium">
                     {uiT('Advance Paid', 'अग्रिम भुगतान')} ({row.mode})
                   </span>
-                  <span className="font-bold text-[#1ed760] tabular-nums">
+                  <span className="font-bold text-th-accent tabular-nums">
                     -₹{row.amount.toLocaleString()}
                   </span>
                 </div>
               ))
             ) : (
               <div className="flex justify-between items-center text-sm">
-                <span className="text-[#1ed760] font-medium">
+                <span className="text-th-accent font-medium">
                   {uiT('Advance Paid', 'अग्रिम भुगतान')} ({paymentMode})
                 </span>
-                <span className="font-bold text-[#1ed760]">-₹{advancePaid.toLocaleString()}</span>
+                <span className="font-bold text-th-accent">-₹{advancePaid.toLocaleString()}</span>
               </div>
             )}
           </div>
@@ -357,12 +358,12 @@ export default function PaymentPanel({
             }`}
           >
             <span
-              className={`text-sm font-bold ${isFullyPaid ? 'text-[#1ed760]' : 'text-[#ff9500]'}`}
+              className={`text-sm font-bold ${isFullyPaid ? 'text-th-accent' : 'text-th-warning'}`}
             >
               {isFullyPaid ? uiT('Fully Paid', 'पूर्ण भुगतान') : uiT('Balance Due', 'शेष देय')}
             </span>
             <span
-              className={`text-xl font-black tabular-nums tracking-tight ${isFullyPaid ? 'text-[#1ed760]' : 'text-[#ff9500]'}`}
+              className={`text-xl font-black tabular-nums tracking-tight ${isFullyPaid ? 'text-th-accent' : 'text-th-warning'}`}
             >
               ₹{pendingBalance.toLocaleString()}
             </span>
