@@ -8,6 +8,7 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
+    "predev": "prisma migrate deploy",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "generate": "prisma generate",
     "migrate:prod": "prisma migrate deploy",
