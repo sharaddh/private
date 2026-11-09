@@ -25,11 +25,11 @@ datasource db {
 // ===========================================================================
 
 model User {
-  id           String   @id @default(uuid()) @map("_id")
-  username     String   @unique
-  passwordHash String
-  name         String   @default("")
-  mobile       String   @default("")
+  id              String   @id @default(uuid()) @map("_id")
+  username        String   @unique
+  passwordHash    String
+  name            String   @default("")
+  mobile          String   @default("")
   role            String   @default("owner") // owner | staff
   branches        Branch[]
   primaryBranchId String?
@@ -59,55 +59,45 @@ model Branch {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  users User[]
+  users        User[]
   primaryUsers User[] @relation("UserPrimaryBranch")
 
-  customers              Customer[]
-  visits                 Visit[]
-  prescriptions          Prescription[]
-  orders                 Order[]
-  bills                  Bill[]
-  payments               Payment[]
-  inventory              Inventory[]
-  lensStock              LensStock[]
-  deliveries             Delivery[]
-  settingsRecords        Settings[]
-  todos                  Todo[]
-  inventoryWithdrawals   InventoryWithdrawal[]
-  shopCartItems          ShopCartItem[]
-  shopLensWithdrawals    ShopLensWithdrawal[]
-  brands                 Brand[]
-  inventoryProducts      InventoryProduct[]
-  inventoryVariants      InventoryVariant[]
-  inventoryLots          InventoryLot[]
-  inventoryMovements     InventoryMovement[]
-  racks                  Rack[]
-  inventoryCountSessions InventoryCountSession[]
-  inventoryCountEntries  InventoryCountEntry[]
-  inventoryWithdrawalsV2 InventoryWithdrawalV2[]
+  customers                  Customer[]
+  visits                     Visit[]
+  prescriptions              Prescription[]
+  orders                     Order[]
+  bills                      Bill[]
+  payments                   Payment[]
+  inventory                  Inventory[]
+  lensStock                  LensStock[]
+  deliveries                 Delivery[]
+  settingsRecords            Settings[]
+  todos                      Todo[]
+  inventoryWithdrawals       InventoryWithdrawal[]
+  shopCartItems              ShopCartItem[]
+  shopLensWithdrawals        ShopLensWithdrawal[]
+  brands                     Brand[]
+  inventoryProducts          InventoryProduct[]
+  inventoryVariants          InventoryVariant[]
+  inventoryLots              InventoryLot[]
+  inventoryMovements         InventoryMovement[]
+  racks                      Rack[]
+  inventoryCountSessions     InventoryCountSession[]
+  inventoryCountEntries      InventoryCountEntry[]
+  inventoryWithdrawalsV2     InventoryWithdrawalV2[]
+  whatsappPreferences        WhatsAppPreference[]
+  whatsappTemplates          WhatsAppTemplate[]
+  whatsappTriggers           WhatsAppTrigger[]
+  whatsappCampaigns          WhatsAppCampaign[]
+  whatsappCampaignRecipients WhatsAppCampaignRecipient[]
+  whatsappOutbox             WhatsAppOutbox[]
+  whatsappMessages           WhatsAppMessage[]
+  whatsappConsentAudits      WhatsAppConsentAudit[]
+  whatsappSetting            WhatsAppSetting?
+  whatsappReminderRules      WhatsAppReminderRule[]
+  whatsappReminders          WhatsAppReminder[]
 
   @@map("branches")
-}
-
-model Message {
-  id            String   @id @default(uuid()) @map("_id")
-  branchId      String
-  phone         String
-  direction     String // outbound | inbound
-  type          String // text | document | image | template
-  content       String   @default("")
-  filename      String   @default("")
-  mimetype      String   @default("")
-  metaMessageId String   @default("")
-  status        String   @default("pending") // pending | sent | delivered | read | failed
-  error         String   @default("")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  @@index([branchId, createdAt])
-  @@index([phone])
-  @@index([metaMessageId])
-  @@map("messages")
 }
 
 model Camera {
@@ -130,7 +120,7 @@ model Camera {
 // ===========================================================================
 
 model Customer {
-  id                 String   @id @default(uuid()) @map("_id")
+  id                 String    @id @default(uuid()) @map("_id")
   branchId           String
   customerId         String?
   name               String
@@ -142,24 +132,29 @@ model Customer {
   address            String?
   city               String?
   tags               String[]
-  totalVisits        Int      @default(0)
-  totalSpent         Float    @default(0)
-  pendingAmount      Float    @default(0)
+  totalVisits        Int       @default(0)
+  totalSpent         Float     @default(0)
+  pendingAmount      Float     @default(0)
   // Ayushman Bharat Scheme fields
-  isAyushman         Boolean  @default(false)
+  isAyushman         Boolean   @default(false)
   abhaNumber         String?
   ayushmanLastUsedAt DateTime?
   ayushmanUsedYear   Int?
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  branch        Branch         @relation(fields: [branchId], references: [id])
-  visits        Visit[]
-  prescriptions Prescription[]
-  orders        Order[]
-  bills         Bill[]
-  payments      Payment[]
-  deliveries    Delivery[]
+  branch                     Branch                      @relation(fields: [branchId], references: [id])
+  visits                     Visit[]
+  prescriptions              Prescription[]
+  orders                     Order[]
+  bills                      Bill[]
+  payments                   Payment[]
+  deliveries                 Delivery[]
+  whatsappPreference         WhatsAppPreference?
+  whatsappCampaignRecipients WhatsAppCampaignRecipient[]
+  whatsappMessages           WhatsAppMessage[]
+  whatsappConsentAudits      WhatsAppConsentAudit[]
+  whatsappReminders          WhatsAppReminder[]
 
   @@index([branchId, customerId])
   @@index([branchId, name])
@@ -275,32 +270,33 @@ model OrderStockItem {
 }
 
 model Bill {
-  id                 String   @id @default(uuid()) @map("_id")
-  branchId           String
-  billNumber         String
-  customerId         String
-  visitId            String?
-  orderId            String?
-  subtotal           Float    @default(0)
-  discount           Float    @default(0)
-  tax                Float    @default(0)
-  advancePaid        Float    @default(0)
-  pendingAmount      Float    @default(0)
-  totalAmount        Float    @default(0)
-  status             String   @default("Active") // Active | Cancelled
+  id               String   @id @default(uuid()) @map("_id")
+  branchId         String
+  billNumber       String
+  customerId       String
+  visitId          String?
+  orderId          String?
+  subtotal         Float    @default(0)
+  discount         Float    @default(0)
+  tax              Float    @default(0)
+  advancePaid      Float    @default(0)
+  pendingAmount    Float    @default(0)
+  totalAmount      Float    @default(0)
+  status           String   @default("Active") // Active | Cancelled
   // Ayushman Bharat Scheme fields
-  ayushmanApplied    Boolean  @default(false)
-  ayushmanDiscount   Float    @default(0)
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  ayushmanApplied  Boolean  @default(false)
+  ayushmanDiscount Float    @default(0)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  branch     Branch          @relation(fields: [branchId], references: [id])
-  customer   Customer        @relation(fields: [customerId], references: [id])
-  visit      Visit?          @relation(fields: [visitId], references: [id])
-  order      Order?          @relation(fields: [orderId], references: [id])
-  items      BillItem[]
-  stockItems BillStockItem[]
-  payments   Payment[]
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  customer          Customer           @relation(fields: [customerId], references: [id])
+  visit             Visit?             @relation(fields: [visitId], references: [id])
+  order             Order?             @relation(fields: [orderId], references: [id])
+  items             BillItem[]
+  stockItems        BillStockItem[]
+  payments          Payment[]
+  whatsappReminders WhatsAppReminder[]
 
   @@unique([branchId, billNumber])
   @@index([branchId, customerId, createdAt])
@@ -355,6 +351,327 @@ model Payment {
   @@index([branchId, paymentDate])
   @@index([branchId, billId])
   @@map("payments")
+}
+
+// ===========================================================================
+// WHATSAPP CLOUD API COMMUNICATIONS
+// ===========================================================================
+
+model WhatsAppPreference {
+  id                    String    @id @default(uuid()) @map("_id")
+  branchId              String
+  customerId            String    @unique
+  phoneE164             String?
+  phoneCountry          String?
+  phoneValidationStatus String    @default("unknown") // valid | invalid | unknown
+  consentStatus         String    @default("unknown") // unknown | opted_in | opted_out
+  transactionalConsent  Boolean   @default(false)
+  marketingConsent      Boolean   @default(false)
+  consentSource         String?
+  consentCapturedAt     DateTime?
+  consentEvidence       String?
+  optedOutAt            DateTime?
+  lastConsentUpdatedAt  DateTime?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@unique([branchId, customerId])
+  @@index([branchId, phoneE164])
+  @@index([branchId, consentStatus, marketingConsent])
+  @@index([branchId, phoneValidationStatus])
+  @@map("whatsapp_preferences")
+}
+
+model WhatsAppTemplate {
+  id               String    @id @default(uuid()) @map("_id")
+  branchId         String
+  eventKey         String
+  metaTemplateName String
+  languageCode     String    @default("en")
+  category         String    @default("utility") // utility | marketing
+  localStatus      String    @default("unconfigured")
+  headerType       String    @default("none") // none | document | text
+  bodyParamCount   Int       @default(0)
+  parameterMap     Json      @default("[]")
+  notes            String?
+  mappedBy         String?
+  mappedAt         DateTime?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  branch    Branch                 @relation(fields: [branchId], references: [id])
+  triggers  WhatsAppTrigger[]
+  campaigns WhatsAppCampaign[]
+  reminders WhatsAppReminderRule[]
+  messages  WhatsAppMessage[]
+
+  @@unique([branchId, eventKey, languageCode])
+  @@index([branchId, localStatus])
+  @@map("whatsapp_templates")
+}
+
+model WhatsAppTrigger {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  eventKey   String
+  category   String   @default("utility")
+  enabled    Boolean  @default(false)
+  templateId String?
+  conditions Json     @default("{}")
+  createdBy  String?
+  updatedBy  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch   Branch            @relation(fields: [branchId], references: [id])
+  template WhatsAppTemplate? @relation(fields: [templateId], references: [id])
+
+  @@unique([branchId, eventKey])
+  @@index([branchId, enabled])
+  @@map("whatsapp_triggers")
+}
+
+model WhatsAppCampaign {
+  id              String    @id @default(uuid()) @map("_id")
+  branchId        String
+  name            String
+  description     String?
+  purpose         String    @default("marketing") // marketing | utility
+  templateId      String
+  languageCode    String    @default("en")
+  parameterMap    Json      @default("[]")
+  audienceFilter  Json      @default("{}")
+  audienceMatched Int       @default(0)
+  eligibleCount   Int       @default(0)
+  skippedCount    Int       @default(0)
+  scheduledAt     DateTime?
+  timezone        String    @default("Asia/Kolkata")
+  expiresAt       DateTime?
+  status          String    @default("DRAFT")
+  createdBy       String?
+  startedAt       DateTime?
+  pausedAt        DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  branch     Branch                      @relation(fields: [branchId], references: [id])
+  template   WhatsAppTemplate            @relation(fields: [templateId], references: [id])
+  recipients WhatsAppCampaignRecipient[]
+  messages   WhatsAppMessage[]
+
+  @@index([branchId, status, scheduledAt])
+  @@index([branchId, createdAt])
+  @@map("whatsapp_campaigns")
+}
+
+model WhatsAppCampaignRecipient {
+  id                String    @id @default(uuid()) @map("_id")
+  branchId          String
+  campaignId        String
+  customerId        String
+  phoneE164         String
+  status            String    @default("pending")
+  providerMessageId String?
+  errorCode         String?
+  errorMessageSafe  String?
+  attempts          Int       @default(0)
+  idempotencyKey    String    @unique
+  skipReason        String?
+  lastErrorClass    String?
+  nextAttemptAt     DateTime?
+  submittedAt       DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  branch   Branch           @relation(fields: [branchId], references: [id])
+  campaign WhatsAppCampaign @relation(fields: [campaignId], references: [id])
+  customer Customer         @relation(fields: [customerId], references: [id])
+
+  @@unique([campaignId, customerId])
+  @@index([branchId, status])
+  @@index([campaignId, status])
+  @@index([providerMessageId])
+  @@map("whatsapp_campaign_recipients")
+}
+
+model WhatsAppOutbox {
+  id             String    @id @default(uuid()) @map("_id")
+  branchId       String
+  eventId        String    @unique
+  eventType      String
+  entityType     String
+  entityId       String
+  customerId     String
+  eventVersion   String?
+  occurredAt     DateTime
+  payloadVersion Int       @default(1)
+  payload        Json      @default("{}")
+  status         String    @default("pending") // pending | processing | completed | failed
+  attempts       Int       @default(0)
+  availableAt    DateTime  @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  lastError      String?
+  lastErrorClass String?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  branch   Branch            @relation(fields: [branchId], references: [id])
+  messages WhatsAppMessage[]
+
+  @@index([status, availableAt])
+  @@index([branchId, eventType, createdAt])
+  @@index([branchId, customerId, createdAt])
+  @@map("whatsapp_outbox")
+}
+
+model WhatsAppMessage {
+  id                String    @id @default(uuid()) @map("_id")
+  branchId          String
+  customerId        String?
+  outboxId          String?
+  campaignId        String?
+  templateId        String?
+  direction         String    @default("outbound") // outbound | inbound
+  messageType       String    @default("template")
+  category          String?
+  phoneE164         String
+  templateName      String?
+  languageCode      String?
+  contentPreview    String?
+  providerMessageId String?   @unique
+  providerStatus    String?
+  status            String    @default("submitted")
+  errorCode         String?
+  errorMessageSafe  String?
+  idempotencyKey    String    @unique
+  mediaId           String?
+  submittedAt       DateTime?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  branch   Branch            @relation(fields: [branchId], references: [id])
+  customer Customer?         @relation(fields: [customerId], references: [id])
+  outbox   WhatsAppOutbox?   @relation(fields: [outboxId], references: [id])
+  campaign WhatsAppCampaign? @relation(fields: [campaignId], references: [id])
+  template WhatsAppTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([branchId, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([branchId, customerId, createdAt])
+  @@index([branchId, campaignId])
+  @@index([providerMessageId])
+  @@map("whatsapp_messages")
+}
+
+model WhatsAppWebhookEvent {
+  id          String    @id @default(uuid()) @map("_id")
+  dedupeKey   String    @unique
+  eventType   String
+  payload     Json
+  status      String    @default("pending") // pending | processed | ignored | failed
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("whatsapp_webhook_events")
+}
+
+model WhatsAppConsentAudit {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  customerId String
+  action     String
+  fromStatus String?
+  toStatus   String?
+  source     String?
+  evidence   String?
+  actorId    String?
+  actorName  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([branchId, customerId, createdAt])
+  @@map("whatsapp_consent_audits")
+}
+
+model WhatsAppSetting {
+  id                  String   @id @default(uuid()) @map("_id")
+  branchId            String   @unique
+  sendEnabled         Boolean  @default(false)
+  campaignSendEnabled Boolean  @default(false)
+  killSwitch          Boolean  @default(false)
+  reminderEnabled     Boolean  @default(false)
+  retentionDays       Int      @default(180)
+  updatedBy           String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("whatsapp_settings")
+}
+
+model WhatsAppReminderRule {
+  id            String   @id @default(uuid()) @map("_id")
+  branchId      String
+  name          String
+  enabled       Boolean  @default(false)
+  daysAfterBill Int      @default(7)
+  templateId    String?
+  createdBy     String?
+  updatedBy     String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch    Branch             @relation(fields: [branchId], references: [id])
+  template  WhatsAppTemplate?  @relation(fields: [templateId], references: [id])
+  reminders WhatsAppReminder[]
+
+  @@unique([branchId, name])
+  @@index([branchId, enabled])
+  @@map("whatsapp_reminder_rules")
+}
+
+model WhatsAppReminder {
+  id         String   @id @default(uuid()) @map("_id")
+  branchId   String
+  ruleId     String
+  billId     String
+  customerId String
+  dueAt      DateTime
+  status     String   @default("pending") // pending | queued | cancelled | completed | skipped
+  outboxId   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  branch   Branch               @relation(fields: [branchId], references: [id])
+  rule     WhatsAppReminderRule @relation(fields: [ruleId], references: [id])
+  customer Customer             @relation(fields: [customerId], references: [id])
+  bill     Bill                 @relation(fields: [billId], references: [id])
+
+  @@unique([ruleId, billId])
+  @@index([branchId, status, dueAt])
+  @@index([billId, status])
+  @@map("whatsapp_reminders")
 }
 
 model Inventory {
@@ -929,20 +1246,20 @@ model WarehouseLensStock {
 }
 
 model WarehouseDemandList {
-  id        String   @id @default(uuid()) @map("_id")
-  status    String   @default("open")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String                @id @default(uuid()) @map("_id")
+  status    String                @default("open")
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
   sentAt    DateTime?
   closedAt  DateTime?
-  createdBy String   @default("")
+  createdBy String                @default("")
   items     WarehouseDemandItem[]
 
   @@map("warehouse_demand_lists")
 }
 
 model WarehouseDemandItem {
-  id       String  @id @default(uuid()) @map("_id")
+  id       String              @id @default(uuid()) @map("_id")
   listId   String
   coating  String
   lensType String
