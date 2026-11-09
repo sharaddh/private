@@ -7,7 +7,7 @@ export { inventoryService, type InventoryListParams } from './inventory.service'
 export { lensStockService, shopCartApi, warehouseCartApi } from './lensStock.service';
 export { dashboardService } from './dashboard.service';
 export { settingsService } from './settings.service';
-export { whatsappService } from './whatsapp.service';
+export { communicationsService } from './communications.service';
 export { withdrawalService } from './withdrawal.service';
 export {
   inventoryV2Service,
