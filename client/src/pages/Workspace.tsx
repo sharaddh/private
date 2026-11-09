@@ -5,13 +5,14 @@ import api from '../api';
 import {
   settingsService,
   visitService,
-  whatsappService,
 } from '../services';
 import { useToast } from '../context/ToastContext';
 import { useTranslate } from '../context/TranslateContext';
 import PageSkeleton from '../components/PageSkeleton';
 import Modal from '../components/Modal';
 import CameraScanner from '../components/CameraScanner';
+import SmartSuggestInput from '../components/smart/SmartSuggestInput';
+import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
 import {
   Activity,
   Eye,
@@ -41,7 +42,6 @@ import OrderItems from '../components/NewvistePage/OrderItems';
 import BillingPanel from '../components/NewvistePage/BillingPanel';
 import { formatRxBrief, cleanEyeSet } from '../utils/rx';
 import { todayStr, toDateKey } from '../utils/date';
-import { normalizeWhatsAppPhone } from '../utils/whatsapp';
 import PaymentPanel from '../components/NewvistePage/PaymentPanel';
 import {
   buildPaymentPayload,
@@ -52,7 +52,7 @@ import {
 } from '../utils/splitAllocation';
 import ConfirmationDashboard from '../components/NewvistePage/ConfirmationDashboard';
 import BottomNav from '../components/NewvistePage/BottomNav';
-import type { Customer, Order, ShopSettings, Prescription, InventoryItem } from '../types';
+import type { Customer, Order, Prescription, InventoryItem } from '../types';
 
 interface CustomerData {
   _id?: string;
@@ -130,16 +130,25 @@ interface CustomerSummary {
 export default function Workspace() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { t, uiT } = useTranslate();
+  const { uiT } = useTranslate();
 
   const phoneRef = useRef<HTMLInputElement>(null);
 
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
   const [loadingSettings, setLoadingSettings] = useState<boolean>(true);
 
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
   const [customerSummary, setCustomerSummary] = useState<CustomerSummary | null>(null);
   const [isNewCustomer, setIsNewCustomer] = useState<boolean>(false);
+  const {
+    options: customerNameSuggestions,
+    loading: customerNamesLoading,
+    reload: reloadCustomerNames,
+  } = useCustomerFieldSuggestions('name', isNewCustomer);
+  const {
+    options: citySuggestions,
+    loading: citiesLoading,
+    reload: reloadCities,
+  } = useCustomerFieldSuggestions('city', isNewCustomer);
   const [isDirectSell, setIsDirectSell] = useState<boolean>(false);
   const [showOverview, setShowOverview] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
@@ -199,10 +208,7 @@ export default function Workspace() {
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [scanModal, setScanModal] = useState<boolean>(false);
   const [cameraActive, setCameraActive] = useState<boolean>(false);
-  const [countdown, setCountdown] = useState<number>(0);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const savingRef = useRef<boolean>(false);
-  const greetingSent = useRef<boolean>(false);
 
   const isServiceType =
     visitType === 'service' || visitType === 'other' || visitType === 'direct_sell';
@@ -254,9 +260,6 @@ export default function Workspace() {
   ];
 
   useEffect(() => {
-    return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
   }, []);
 
   useEffect(() => {
@@ -267,10 +270,7 @@ export default function Workspace() {
 
   useEffect(() => {
     phoneRef.current?.focus();
-    settingsService.get().then((d) => {
-      if (d.success) setSettings(d.data ?? null);
-      setLoadingSettings(false);
-    });
+    settingsService.get().finally(() => setLoadingSettings(false));
   }, []);
 
   useEffect(() => {
@@ -790,27 +790,9 @@ export default function Workspace() {
         }
         toast.success('Visit created successfully!');
 
-        const customerMobile = selectedCustomer?.mobile || '';
-        const resData = res.data;
-        if (customerMobile && resData?.bill) {
-          greetingSent.current = false;
-          setCountdown(3);
-          countdownRef.current = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownRef.current!);
-                countdownRef.current = null;
-                savingRef.current = false;
-                sendGreeting(resData, selectedCustomer);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        } else {
-          savingRef.current = false;
-          navigate(`/customers/${custId}?visitId=${resData?.visit?._id || ''}`);
-        }
+        const resData = res.data as { visit?: { _id: string } | undefined };
+        savingRef.current = false;
+        navigate(`/customers/${custId}?visitId=${resData?.visit?._id || ''}`);
       } else {
         toast.error(res.message || 'Failed to save');
         setSaving(false);
@@ -821,33 +803,6 @@ export default function Workspace() {
     }
   }
 
-  async function sendGreeting(data: { visit?: { _id: string } }, cust: CustomerData | null) {
-    if (greetingSent.current) return;
-    greetingSent.current = true;
-    try {
-      const customerMobile = cust?.mobile || '';
-      const shopName = settings?.shopName || 'KMJ Optical';
-      const customerName = cust?.name || '';
-      const fullNum = normalizeWhatsAppPhone(customerMobile);
-      if (!fullNum) return;
-      const msg = t(
-        `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
-        `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
-      );
-      const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
-      if (!res.success || (res.data && !res.data.sent && !res.data.queued)) {
-        toast.info(
-          uiT(
-            'Greeting message could not be sent: ' + (res.message || 'WhatsApp not connected'),
-            'अभिवादन संदेश नहीं भेजा जा सका: ' + (res.message || 'WhatsApp कनेक्ट नहीं है')
-          )
-        );
-      }
-    } catch {
-      toast.info(uiT('Greeting message skipped', 'अभिवादन संदेश छोड़ दिया गया'));
-    }
-    navigate(`/customers/${cust?._id || ''}?visitId=${data?.visit?._id || ''}`);
-  }
 
   function handleSearchKeyDown(e: React.KeyboardEvent) {
     if (e.key !== 'Enter') return;
@@ -1117,12 +1072,14 @@ export default function Workspace() {
                 <label className="block text-xs font-medium text-th-secondary mb-1">
                   {uiT('Name', 'नाम')} *
                 </label>
-                <input
+                <SmartSuggestInput
                   className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
-                  placeholder={uiT('Full name', 'पूरा नाम')}
-                  aria-label={uiT('Full name', 'पूरा नाम')}
+                  placeholder={uiT('Full name', '����,��_ �"�_�r')}
+                  aria-label={uiT('Full name', '����,��_ �"�_�r')}
                   value={customerForm.name}
-                  onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                  onChange={(value) => setCustomerForm({ ...customerForm, name: value })}
+                  suggestions={customerNameSuggestions}
+                  loading={customerNamesLoading}
                 />
               </div>
               <div>
@@ -1187,12 +1144,16 @@ export default function Workspace() {
                 <label className="block text-xs font-medium text-th-secondary mb-1">
                   {uiT('City', 'शहर')}
                 </label>
-                <input
+                <SmartSuggestInput
                   className="w-full px-4 py-2.5 bg-th-elevated border border-th-border rounded-lg text-sm text-th-text placeholder-th-muted focus:outline-none focus:ring-2 focus:ring-th-accent/20 focus:border-th-accent transition-all"
-                  placeholder={uiT('City', 'शहर')}
-                  aria-label={uiT('City', 'शहर')}
+                  placeholder={uiT('City', '�1�')}
+                  aria-label={uiT('City', '�1�')}
                   value={customerForm.city || ''}
-                  onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })}
+                  onChange={(value) => setCustomerForm({ ...customerForm, city: value })}
+                  suggestions={citySuggestions}
+                  loading={citiesLoading}
+                  showOnEmpty
+                  maxSuggestions={12}
                 />
               </div>
               <div className="md:col-span-2">
@@ -1293,6 +1254,8 @@ export default function Workspace() {
                     setSelectedCustomer(newCust);
                     setIsNewCustomer(false);
                     setDeliveryAddress(newCust.address || '');
+                    void reloadCustomerNames();
+                    void reloadCities();
                     toast.success(uiT('Customer created!', 'ग्राहक बन गया!'));
                   } else {
                     toast.error(res.message || uiT('Failed to create customer', 'ग्राहक बनाने में विफल'));
@@ -1794,7 +1757,6 @@ export default function Workspace() {
           stepKeys={stepKeys}
           saveTransaction={saveTransaction}
           saving={saving}
-          countdown={countdown}
           canNext={!overStock}
           nextHint={
             overStock
@@ -1837,7 +1799,6 @@ export default function Workspace() {
         stepKeys={stepKeys}
         saveTransaction={saveTransaction}
         saving={saving}
-        countdown={countdown}
         canNext={!overStock}
         nextHint={
           overStock

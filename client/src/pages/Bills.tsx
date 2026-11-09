@@ -4,12 +4,11 @@ import PageSkeleton from '../components/PageSkeleton';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslate } from '../context/TranslateContext';
-import { Printer, MessageCircle, FileText as PdfIcon, Trash2 } from 'lucide-react';
+import { Printer, FileText as PdfIcon, Trash2 } from 'lucide-react';
 import { downloadBillPdf, generateBillPdf, generateThermalReceipt } from '../utils/pdf';
 import DateRangePicker from '../components/DateRangePicker';
 import { todayStr } from '../utils/date';
-import { billService, settingsService, whatsappService } from '../services';
-import { normalizeWhatsAppPhone } from '../utils/whatsapp';
+import { billService, settingsService } from '../services';
 import type { Bill, ShopSettings } from '../types';
 
 type ResolvedCustomer = { name?: string; mobile?: string; address?: string } | null;
@@ -84,69 +83,6 @@ export default function Bills() {
     }
   }
 
-  async function sendWhatsApp(bill: Bill) {
-    const customer = resolveCustomer(bill);
-    const num = customer?.mobile?.toString();
-    const fullNum = normalizeWhatsAppPhone(num || '');
-    if (!fullNum) {
-      toast.error('Customer has no mobile number');
-      return;
-    }
-    toast.info('Sending WhatsApp...');
-    const shop = settings?.shopName || 'KMJ Optical';
-
-    try {
-      const doc = generateBillPdf(bill, customer || {}, settings || {});
-      const base64 = doc.output('datauristring').split(',')[1];
-      const caption = t(
-        `*${shop}*\n\nHi ${customer?.name || ''},\nPlease find your bill attached.\n\nThank you!`,
-        `*${shop}*\n\nनमस्ते ${customer?.name || ''},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
-      );
-      const mediaRes = await whatsappService.sendMedia({
-        phone: fullNum,
-        base64,
-        filename: `Bill-${bill.billNumber || 'invoice'}.pdf`,
-        caption,
-        mimetype: 'application/pdf',
-      });
-      if (mediaRes.success && mediaRes.data?.sent) {
-        toast.success('Bill sent on WhatsApp');
-        return;
-      }
-      if (mediaRes.data?.queued) {
-        toast.info('WhatsApp not ready — will send when connected');
-        return;
-      }
-    } catch {
-      // fallback to text
-    }
-
-    const items = (bill.items || [])
-      .map(
-        (i) =>
-          `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-      )
-      .join('\n');
-
-    const billLabel = t('Bill', 'बिल');
-    const dateLabel = t('Date', 'तारीख');
-    const customerLabel = t('Customer', 'ग्राहक');
-    const mobileLabel = t('Mobile', 'मोबाइल');
-    const itemsLabel = t('Items', 'आइटम');
-    const subtotalLabel = t('Subtotal', 'उप-कुल');
-    const discountLabel = t('Discount', 'छूट');
-    const taxLabel = t('Tax', 'कर');
-    const totalLabel = t('Total', 'कुल');
-    const paidLabel = t('Paid', 'भुगतान');
-    const pendingLabel = t('Pending', 'बाकी');
-    const thankYou = t('Thank you!', 'धन्यवाद!');
-    const msg = `*${shop}* 🕶\n\n*${billLabel}:* ${bill.billNumber || ''}\n*${dateLabel}:* ${new Date().toLocaleDateString('en-IN')}\n\n*${customerLabel}:* ${customer?.name || ''}\n*${mobileLabel}:* ${customer?.mobile || ''}\n\n*${itemsLabel}:*\n${items}\n\n*${subtotalLabel}:* ₹${(bill.subtotal || 0).toFixed(0)}${bill.discount ? `\n*${discountLabel}:* -₹${bill.discount.toFixed(0)}` : ''}${bill.tax ? `\n*${taxLabel}:* +₹${bill.tax.toFixed(0)}` : ''}\n*${totalLabel}:* ₹${(bill.totalAmount || 0).toFixed(0)}\n*${paidLabel}:* ₹${(bill.advancePaid || 0).toFixed(0)}\n*${pendingLabel}:* ₹${(bill.pendingAmount || 0).toFixed(0)}\n\n${thankYou} 🙏`;
-    const textRes = await whatsappService.sendMessage({ phone: fullNum, message: msg });
-    if (textRes.data?.queued) toast.info('WhatsApp not ready — will send when connected');
-    else if (textRes.success && textRes.data?.sent) toast.success('Bill sent on WhatsApp');
-    else toast.error(textRes.message || 'WhatsApp send failed — check Settings > WhatsApp');
-  }
-
   if (loading) return <PageSkeleton page="bills" />;
 
   return (
@@ -204,14 +140,6 @@ export default function Bills() {
         searchPlaceholder={uiT('Search bills...', 'बिल खोजें...')}
         actions={(row: Bill) => (
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => sendWhatsApp(row)}
-              className="p-1.5 hover:bg-[#1ed760]/10 rounded-lg text-[#1ed760] active:scale-95 transition-transform duration-100"
-              title={uiT('WhatsApp', 'WhatsApp')}
-              aria-label="Send WhatsApp"
-            >
-              <MessageCircle size={15} />
-            </button>
             <button
               onClick={() => handleDownloadPdf(row)}
               className="p-1.5 hover:bg-[#e8115b]/10 rounded-lg text-[#e8115b] active:scale-95 transition-transform duration-100"

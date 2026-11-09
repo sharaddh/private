@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import CameraScanner from '../components/CameraScanner';
+import SmartSuggestInput from '../components/smart/SmartSuggestInput';
+import PowerSelect, { type PowerKind } from '../components/smart/PowerSelect';
+import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
 import { cleanEyeSet } from '../utils/rx';
 import { todayStr, toDateKey } from '../utils/date';
 import { useTranslate } from '../context/TranslateContext';
@@ -43,6 +46,15 @@ const PAYMENT_MODE_LABELS: Record<string, string> = {
   Insurance: 'बीमा',
 };
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+const POWER_FIELD_KIND: Record<string, PowerKind> = {
+  sph: 'sph',
+  cyl: 'cyl',
+  axis: 'axis',
+  prism: 'prism',
+  add: 'add',
+  h: 'prism',
+  v: 'prism',
+};
 const VISIT_TYPES = [
   { value: 'new', label: 'New Glasses' },
   { value: 'frame_change', label: 'Frame Change' },
@@ -75,6 +87,16 @@ export default function NewVisit() {
     age: undefined as number | undefined,
     gender: '',
   });
+  const {
+    options: customerNameSuggestions,
+    loading: customerNamesLoading,
+    reload: reloadCustomerNames,
+  } = useCustomerFieldSuggestions('name', isNewCustomer || !!selectedCustomer);
+  const {
+    options: citySuggestions,
+    loading: citiesLoading,
+    reload: reloadCities,
+  } = useCustomerFieldSuggestions('city', isNewCustomer || !!selectedCustomer);
   const [visitType, setVisitType] = useState('new');
   const [visitDate, setVisitDate] = useState(todayStr());
   const [visitDoctor, setVisitDoctor] = useState('');
@@ -493,6 +515,8 @@ export default function NewVisit() {
 
       const res = await api.post('/api/workspace/transaction', payload);
       if (res.success) {
+        void reloadCustomerNames();
+        void reloadCities();
         toast.success('Visit & order created successfully!');
         resetForm();
       } else {
@@ -629,11 +653,13 @@ export default function NewVisit() {
                     <label className="block text-sm font-medium text-th-secondary mb-1">
                       {uiT('Full Name *', 'पूरा नाम *')}
                     </label>
-                    <input
+                    <SmartSuggestInput
                       className="input-field"
-                      placeholder={uiT('Customer name', 'ग्राहक का नाम')}
+                      placeholder={uiT('Customer name', '�-��?��_�1� �_ �"�_�r')}
                       value={customerForm.name}
-                      onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                      onChange={(value) => setCustomerForm({ ...customerForm, name: value })}
+                      suggestions={customerNameSuggestions}
+                      loading={customerNamesLoading}
                     />
                   </div>
                   <div>
@@ -675,11 +701,15 @@ export default function NewVisit() {
                     <label className="block text-sm font-medium text-th-secondary mb-1">
                       {uiT('City', 'शहर')}
                     </label>
-                    <input
+                    <SmartSuggestInput
                       className="input-field"
-                      placeholder={uiT('City', 'शहर')}
+                      placeholder={uiT('City', '��1�')}
                       value={customerForm.city}
-                      onChange={(e) => setCustomerForm({ ...customerForm, city: e.target.value })}
+                      onChange={(value) => setCustomerForm({ ...customerForm, city: value })}
+                      suggestions={citySuggestions}
+                      loading={citiesLoading}
+                      showOnEmpty
+                      maxSuggestions={12}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -861,15 +891,17 @@ export default function NewVisit() {
                                       <span className="text-[14px] font-medium text-th-muted w-6 uppercase">
                                         {f}
                                       </span>
-                                      <input
+                                      <PowerSelect
+                                        kind={POWER_FIELD_KIND[f] ?? 'sph'}
                                         className="w-full text-xs py-1 px-1.5 rounded-md border border-th-border bg-th-surface"
-                                        value={(data[type] as any)?.[f] || ''}
-                                        onChange={(e) => {
+                                        value={String((data[type] as any)?.[f] ?? '')}
+                                        onChange={(value) => {
                                           const copy = { ...prescription };
                                           if (!copy[side][type]) copy[side][type] = {};
-                                          (copy[side][type] as any)[f] = e.target.value;
+                                          (copy[side][type] as any)[f] = value;
                                           setPrescription(copy);
                                         }}
+                                        ariaLabel={`${typeLabel} ${f}`}
                                       />
                                     </div>
                                   ))}
@@ -886,11 +918,13 @@ export default function NewVisit() {
                       <label className="block text-sm font-medium text-th-secondary mb-1">
                         {uiT('PD (Pupillary Distance)', 'PD (पुपिलरी डिस्टेंस)')}
                       </label>
-                      <input
+                      <PowerSelect
+                        kind="pd"
                         className="input-field"
                         placeholder="e.g. 62"
                         value={prescription.pd}
-                        onChange={(e) => setPrescription({ ...prescription, pd: e.target.value })}
+                        onChange={(value) => setPrescription({ ...prescription, pd: value })}
+                        ariaLabel="Pupillary distance"
                       />
                     </div>
                     <div>

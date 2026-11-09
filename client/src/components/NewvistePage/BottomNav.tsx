@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Save, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
 
 interface Props {
@@ -9,7 +9,6 @@ interface Props {
   stepKeys: string[];
   saveTransaction: () => void;
   saving: boolean;
-  countdown: number;
   canNext?: boolean;
   nextHint?: string;
 }
@@ -20,7 +19,6 @@ export default function BottomNav({
   stepKeys,
   saveTransaction,
   saving,
-  countdown,
   canNext = true,
   nextHint,
 }: Props) {
@@ -80,11 +78,6 @@ export default function BottomNav({
               <>
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 {uiT('Saving...', 'सेव हो रहा है...')}
-              </>
-            ) : countdown > 0 ? (
-              <>
-                <MessageCircle size={18} />
-                WhatsApp ({countdown})
               </>
             ) : (
               <>

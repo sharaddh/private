@@ -1,8 +1,16 @@
 import { motion } from 'framer-motion';
 import { Eye, Ruler, AlertTriangle, FileText } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
+import PowerSelect, { type PowerKind } from '../smart/PowerSelect';
 
-const FIELDS = ['sph', 'cyl', 'axis', 'va'];
+const FIELDS = ['sph', 'cyl', 'axis', 'va'] as const;
+
+const FIELD_KIND: Record<(typeof FIELDS)[number], PowerKind> = {
+  sph: 'sph',
+  cyl: 'cyl',
+  axis: 'axis',
+  va: 'va',
+};
 
 function EyeRow({
   label,
@@ -31,13 +39,13 @@ function EyeRow({
             <span className="sm:hidden text-[13px] font-semibold text-th-secondary uppercase text-center mt-1">
               {f}
             </span>
-            <input
+            <PowerSelect
+              kind={FIELD_KIND[f]}
+              value={String(data?.[f] ?? '')}
+              onChange={(value) => onChange({ ...data, [f]: value })}
+              onEdit={onEdit}
               placeholder="-"
-              value={data?.[f] || ''}
-              onChange={(e) => {
-                onEdit?.();
-                onChange({ ...data, [f]: e.target.value });
-              }}
+              ariaLabel={`${label} ${f.toUpperCase()}`}
               className="w-full text-center py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>
@@ -179,13 +187,13 @@ export default function PrescriptionPanel({
               size={16}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-th-secondary"
             />
-            <input
-              placeholder={uiT('Pupillary Distance (mm)', 'प्यूपिलरी दूरी (mm)')}
+            <PowerSelect
+              kind="pd"
               value={prescription.pd}
-              onChange={(e) => {
-                autoEnable();
-                setPrescription((p) => ({ ...p, pd: e.target.value }));
-              }}
+              onChange={(value) => setPrescription((p) => ({ ...p, pd: value }))}
+              onEdit={autoEnable}
+              placeholder={uiT('Pupillary Distance (mm)', '�݅�,����? (mm)')}
+              ariaLabel="Pupillary distance"
               className="w-full pl-10 pr-4 py-2.5 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
             />
           </div>

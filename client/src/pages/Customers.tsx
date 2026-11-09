@@ -4,7 +4,9 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { clearAllCache } from '../hooks/useCache';
 import { useDebounce } from '../hooks';
+import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
 import PageSkeleton from '../components/PageSkeleton';
+import SmartSuggestInput from '../components/smart/SmartSuggestInput';
 import ShineCard from '../components/ShineCard';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -108,6 +110,16 @@ export default function Customers(): React.JSX.Element {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const {
+    options: customerNameSuggestions,
+    loading: customerNamesLoading,
+    reload: reloadCustomerNames,
+  } = useCustomerFieldSuggestions('name', showForm);
+  const {
+    options: citySuggestions,
+    loading: citiesLoading,
+    reload: reloadCities,
+  } = useCustomerFieldSuggestions('city', showForm);
   const navigate = useNavigate();
   const { isStaff } = useAuth();
   const { uiT } = useTranslate();
@@ -293,6 +305,8 @@ export default function Customers(): React.JSX.Element {
         ? await customerService.update<Customer>(editing._id, payload)
         : await customerService.create<Customer>(payload);
       if (res.success) {
+        void reloadCustomerNames();
+        void reloadCities();
         setShowForm(false);
         if (!editing && res.data?._id) {
           navigate(`/customers/${res.data._id}`);
@@ -875,14 +889,14 @@ export default function Customers(): React.JSX.Element {
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
                         {uiT('Name', 'αñ¿αñ╛αñ«')} *
                       </label>
-                      <input
+                      <SmartSuggestInput
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
                         value={form.name}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setForm({ ...form, name: e.target.value })
-                        }
+                        onChange={(value) => setForm({ ...form, name: value })}
+                        suggestions={customerNameSuggestions}
+                        loading={customerNamesLoading}
                         required
-                        aria-label={uiT('Customer name', 'αñùαÑìαñ░αñ╛αñ╣αñò αñòαñ╛ αñ¿αñ╛αñ«')}
+                        aria-label={uiT('Customer name', 'ग्राहक का नाम')}
                       />
                     </div>
                     <div>
@@ -992,13 +1006,15 @@ export default function Customers(): React.JSX.Element {
                       <label className="block text-[15px] font-bold uppercase tracking-wider text-th-secondary mb-1">
                         {uiT('City', 'αñ╢αñ╣αñ░')}
                       </label>
-                      <input
+                      <SmartSuggestInput
                         className="w-full bg-th-hover text-th-text placeholder-[#a7a7a7] px-3 py-2.5 rounded-md text-sm outline-none focus:ring-1 focus:ring-[#1ed760] transition-shadow"
                         value={form.city}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setForm({ ...form, city: e.target.value })
-                        }
-                        aria-label={uiT('City', 'αñ╢αñ╣αñ░')}
+                        onChange={(value) => setForm({ ...form, city: value })}
+                        suggestions={citySuggestions}
+                        loading={citiesLoading}
+                        showOnEmpty
+                        maxSuggestions={12}
+                        aria-label={uiT('City', 'शहर')}
                       />
                     </div>
                   </div>

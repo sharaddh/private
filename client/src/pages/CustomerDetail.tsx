@@ -20,7 +20,6 @@ import {
   Plus,
   Save,
   X,
-  MessageCircle,
   User,
   ChevronRight,
   Clock,
@@ -32,8 +31,16 @@ import {
 } from 'lucide-react';
 import { compactRx } from '../utils/rx';
 import { toDateKey } from '../utils/date';
-import { normalizeWhatsAppPhone } from '../utils/whatsapp';
-import { whatsappService } from '../services';
+import PowerSelect, { type PowerKind } from '../components/smart/PowerSelect';
+import SmartSuggestInput from '../components/smart/SmartSuggestInput';
+import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
+
+const RX_FIELD_KIND: Record<'sph' | 'cyl' | 'axis' | 'va', PowerKind> = {
+  sph: 'sph',
+  cyl: 'cyl',
+  axis: 'axis',
+  va: 'va',
+};
 
 function getVisitId(value: unknown): string | null {
   if (!value) return null;
@@ -128,7 +135,7 @@ function EyeRow({ label, data }: { label: string; data: any }) {
 export default function CustomerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t, uiT } = useTranslate();
+  const { uiT } = useTranslate();
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const [customer, setCustomer] = useState<any>(null);
@@ -142,7 +149,7 @@ export default function CustomerDetail() {
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
+
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [editingVisit, setEditingVisit] = useState(false);
   const [editVisitForm, setEditVisitForm] = useState<any>({});
@@ -159,8 +166,14 @@ export default function CustomerDetail() {
   const [editingBill, setEditingBill] = useState(false);
   const [editBillForm, setEditBillForm] = useState<any>({});
   const [savingBill, setSavingBill] = useState(false);
-  const [sendingRx, setSendingRx] = useState(false);
-  const [sendingBill, setSendingBill] = useState(false);
+  const { options: nameSuggestions, reload: reloadNames } = useCustomerFieldSuggestions(
+    'name',
+    editing
+  );
+  const { options: citySuggestions, reload: reloadCities } = useCustomerFieldSuggestions(
+    'city',
+    editing
+  );
 
   const linkedPrescription = useMemo(() => {
     if (!selectedVisit) return null;
@@ -185,8 +198,7 @@ export default function CustomerDetail() {
       api.get<any[]>(`/api/prescriptions?customerId=${id}`),
       api.get<any[]>(`/api/bills?customerId=${id}`),
       api.get<any[]>(`/api/orders?customerId=${id}`),
-      api.get<any>('/api/settings'),
-    ]).then(([c, v, p, b, o, s]) => {
+    ]).then(([c, v, p, b, o]) => {
       if (c.success) {
         setCustomer(c.data);
         setEditForm(c.data);
@@ -197,7 +209,6 @@ export default function CustomerDetail() {
         setBills((b.data as any)?.data || ((Array.isArray(b.data) ? b.data : []) as any[]));
       if (o.success)
         setOrders((o.data as any)?.data || ((Array.isArray(o.data) ? o.data : []) as any[]));
-      if (s.success) setSettings(s.data);
     });
   }, [id]);
 
@@ -253,6 +264,8 @@ export default function CustomerDetail() {
       if (res.success) {
         setCustomer(res.data);
         setEditing(false);
+        void reloadNames();
+        void reloadCities();
         toast.success(uiT('Profile updated', 'प्रोफ़ाइल अपडेट हो गई'));
       } else {
         toast.error(res.message || uiT('Failed to save', 'सहेजने में विफल'));
@@ -378,65 +391,6 @@ export default function CustomerDetail() {
     setEditingRx(true);
   }
 
-  async function sendPrescriptionWhatsApp(rx?: any) {
-    const rxData = rx || linkedPrescription;
-    if (!customer?.mobile) {
-      toast.error(uiT('No mobile number', 'कोई मोबाइल नंबर नहीं'));
-      return;
-    }
-    if (!rxData) {
-      toast.error(uiT('No prescription data', 'कोई प्रिस्क्रिप्शन डेटा नहीं'));
-      return;
-    }
-    const fullNum = normalizeWhatsAppPhone(customer.mobile || '');
-    if (!fullNum) {
-      toast.error(uiT('Invalid mobile number', 'अमान्य मोबाइल नंबर'));
-      return;
-    }
-    const shop = settings?.shopName || 'KMJ Optical';
-    setSendingRx(true);
-    try {
-      const { generatePrescriptionPdf } = await import('../utils/pdf');
-      const doc = generatePrescriptionPdf(
-        rxData,
-        {
-          name: customer.name,
-          mobile: customer.mobile,
-          address: customer.address,
-          customerId: customer.customerId,
-        },
-        settings || {}
-      );
-      const base64 = doc.output('datauristring').split(',')[1];
-      const caption = t(
-        `*${shop}*\n\nHi ${customer.name || ''},\nPlease find your prescription attached.\n\nThank you!`,
-        `*${shop}*\n\nनमस्ते ${customer.name || ''},\nकृपया अपना प्रिस्क्रिप्शन संलग्न देखें।\n\nधन्यवाद!`
-      );
-      const res = await whatsappService.sendMedia({
-        phone: fullNum,
-        base64,
-        filename: `Prescription-${customer.customerId || 'rx'}.pdf`,
-        caption,
-        mimetype: 'application/pdf',
-      });
-      if (res.success && res.data?.sent) {
-        toast.success(uiT('Prescription sent', 'प्रिस्क्रिप्शन भेजा गया'));
-      } else if (res.data?.queued) {
-        toast.info(
-          uiT(
-            'WhatsApp not ready — will send when connected',
-            'WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा'
-          )
-        );
-      } else {
-        toast.error(res.message || uiT('Failed to send', 'भेजने में विफल'));
-      }
-    } catch (e: any) {
-      toast.error(e.message || uiT('Failed to send', 'भेजने में विफल'));
-    } finally {
-      setSendingRx(false);
-    }
-  }
 
   function cleanEyeEdit(eye: any) {
     const out: any = {};
@@ -634,78 +588,6 @@ export default function CustomerDetail() {
     }
   }
 
-  async function sendWhatsApp(phone: string, bill: any) {
-    const fullNum = normalizeWhatsAppPhone(phone || '');
-    if (!fullNum) {
-      toast.error(uiT('No mobile number', 'कोई मोबाइल नंबर नहीं'));
-      return;
-    }
-    const shop = settings?.shopName || 'KMJ Optical';
-    const custData = {
-      name: customer?.name,
-      mobile: customer?.mobile,
-      address: customer?.address,
-      customerId: customer?.customerId,
-    };
-    setSendingBill(true);
-    try {
-      if (bill) {
-        const { generateBillPdf } = await import('../utils/pdf');
-        const doc = generateBillPdf(bill, custData, settings || {});
-        const base64 = doc.output('datauristring').split(',')[1];
-        const caption = t(
-          `*${shop}*\n\nHi ${customer?.name || ''},\nPlease find your bill attached.\n\nThank you!`,
-          `*${shop}*\n\nनमस्ते ${customer?.name || ''},\nकृपया अपना बिल संलग्न देखें।\n\nधन्यवाद!`
-        );
-        const mediaRes = await whatsappService.sendMedia({
-          phone: fullNum,
-          base64,
-          filename: `Bill-${bill.billNumber || 'invoice'}.pdf`,
-          caption,
-          mimetype: 'application/pdf',
-        });
-        if (mediaRes.success && mediaRes.data?.sent) {
-          toast.success(uiT('Bill sent on WhatsApp', 'बिल व्हाट्सऐप पर भेजा गया'));
-          setSendingBill(false);
-          return;
-        }
-        if (mediaRes.data?.queued) {
-          toast.info(
-            uiT(
-              'WhatsApp not ready — will send when connected',
-              'WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा'
-            )
-          );
-          setSendingBill(false);
-          return;
-        }
-      }
-      const items = (bill?.items || [])
-        .map(
-          (i: any) =>
-            `${i.description} x${i.quantity || 1} = ₹${((i.quantity || 1) * (i.unitPrice || 0)).toFixed(0)}`
-        )
-        .join('\n');
-      const msg = `*${shop}* 🕶\n\n*Bill:* ${bill?.billNumber || ''}\n*Date:* ${new Date().toLocaleDateString('en-IN')}\n\n*Customer:* ${customer?.name || ''}\n*Mobile:* ${customer?.mobile || ''}\n\n*Items:*\n${items}\n\n*Total:* ₹${(bill?.totalAmount || 0).toFixed(0)}\n*Paid:* ₹${(bill?.advancePaid || 0).toFixed(0)}\n*Pending:* ₹${(bill?.pendingAmount || 0).toFixed(0)}\n\nThank you! 🙏`;
-      const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
-      if (res.success && res.data?.sent) {
-        toast.success(uiT('Bill sent on WhatsApp', 'बिल व्हाट्सऐप पर भेजा गया'));
-      } else if (res.data?.queued) {
-        toast.info(
-          uiT(
-            'WhatsApp not ready — will send when connected',
-            'WhatsApp तैयार नहीं — कनेक्ट होने पर भेजा जाएगा'
-          )
-        );
-      } else {
-        toast.error(res.message || uiT('Failed to send', 'भेजने में विफल'));
-      }
-    } catch (e: any) {
-      toast.error(e.message || uiT('Failed to send', 'भेजने में विफल'));
-    } finally {
-      setSendingBill(false);
-    }
-  }
 
   const tabs = [
     { key: 'overview', label: uiT('Overview', 'अवलोकन'), icon: User },
@@ -1428,18 +1310,6 @@ export default function CustomerDetail() {
                       })}
                     </p>
                     <span className="text-base text-th-secondary font-mono">{p._id.slice(-6)}</span>
-                    <button
-                      onClick={() => sendPrescriptionWhatsApp(p)}
-                      disabled={sendingRx}
-                      className="ml-auto flex items-center gap-1 text-base font-bold uppercase tracking-wider px-4 py-1.5 rounded-lg bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-colors disabled:opacity-50"
-                    >
-                      {sendingRx ? (
-                        <div className="animate-spin w-3 h-3 border-2 border-[#1ed760] border-t-transparent rounded-full" />
-                      ) : (
-                        <MessageCircle size={11} />
-                      )}{' '}
-                      {uiT('Send Rx', 'प्रिस्क्रिप्शन भेजें')}
-                    </button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="bg-th-elevated rounded-md p-3">
@@ -1632,21 +1502,6 @@ export default function CustomerDetail() {
                               ₹{b.pendingAmount.toLocaleString()} {uiT('due', 'बकाया')}
                             </p>
                           )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              sendWhatsApp(customer.mobile, b);
-                            }}
-                            disabled={sendingBill}
-                            className="mt-2 px-2.5 py-1 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-base font-medium hover:bg-[#1ed760]/20 transition-colors flex items-center gap-1 ml-auto disabled:opacity-50"
-                          >
-                            {sendingBill ? (
-                              <div className="animate-spin w-3 h-3 border-2 border-[#1ed760] border-t-transparent rounded-full" />
-                            ) : (
-                              <MessageCircle size={11} />
-                            )}{' '}
-                            WhatsApp
-                          </button>
                         </div>
                       </div>
                     </ShineCard>
@@ -1868,10 +1723,11 @@ export default function CustomerDetail() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className={labelCls}>{uiT('Name', 'नाम')} *</label>
-                    <input
+                    <SmartSuggestInput
                       className={inputCls}
+                      suggestions={nameSuggestions}
                       value={editForm.name || ''}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      onChange={(value) => setEditForm({ ...editForm, name: value })}
                     />
                   </div>
                   <div>
@@ -1951,10 +1807,12 @@ export default function CustomerDetail() {
                   </div>
                   <div>
                     <label className={labelCls}>{uiT('City', 'शहर')}</label>
-                    <input
+                    <SmartSuggestInput
                       className={inputCls}
+                      suggestions={citySuggestions}
                       value={editForm.city || ''}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                      onChange={(value) => setEditForm({ ...editForm, city: value })}
+                      showOnEmpty
                     />
                   </div>
                 </div>
@@ -2199,18 +2057,6 @@ export default function CustomerDetail() {
                           })}
                         </span>
                         <button
-                          onClick={() => sendPrescriptionWhatsApp(linkedPrescription)}
-                          disabled={sendingRx}
-                          className="flex items-center gap-1 text-base font-bold uppercase tracking-wider px-4 py-1.5 rounded-lg bg-[#1ed760]/10 text-[#1ed760] hover:bg-[#1ed760]/20 transition-colors disabled:opacity-50"
-                        >
-                          {sendingRx ? (
-                            <div className="animate-spin w-3 h-3 border-2 border-[#1ed760] border-t-transparent rounded-full" />
-                          ) : (
-                            <MessageCircle size={11} />
-                          )}{' '}
-                          {uiT('Send Rx', 'प्रिस्क्रिप्शन भेजें')}
-                        </button>
-                        <button
                           onClick={openRxEdit}
                           className="flex items-center gap-1 text-base font-bold uppercase tracking-wider px-4 py-1.5 rounded-lg bg-th-hover text-th-secondary hover:text-th-text transition-colors"
                         >
@@ -2237,17 +2083,19 @@ export default function CustomerDetail() {
                                   {sub.toUpperCase()}
                                 </span>
                                 {(['sph', 'cyl', 'axis', 'va'] as const).map((k) => (
-                                  <input
+                                  <PowerSelect
                                     key={k}
+                                    kind={RX_FIELD_KIND[k]}
                                     placeholder={k.toUpperCase()}
+                                    ariaLabel={`${eye} ${sub} ${k}`}
                                     className="w-16 bg-th-elevated text-th-text px-1.5 py-1 rounded text-base text-center outline-none focus:ring-1 focus:ring-[#1ed760]"
-                                    value={editRxForm[eye]?.[sub]?.[k] ?? ''}
-                                    onChange={(e) =>
+                                    value={String(editRxForm[eye]?.[sub]?.[k] ?? '')}
+                                    onChange={(value) =>
                                       setEditRxForm({
                                         ...editRxForm,
                                         [eye]: {
                                           ...editRxForm[eye],
-                                          [sub]: { ...editRxForm[eye]?.[sub], [k]: e.target.value },
+                                          [sub]: { ...editRxForm[eye]?.[sub], [k]: value },
                                         },
                                       })
                                     }
@@ -2261,10 +2109,12 @@ export default function CustomerDetail() {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className={labelCls}>PD</label>
-                          <input
+                          <PowerSelect
+                            kind="pd"
                             className={inputCls}
                             value={editRxForm.pd || ''}
-                            onChange={(e) => setEditRxForm({ ...editRxForm, pd: e.target.value })}
+                            onChange={(value) => setEditRxForm({ ...editRxForm, pd: value })}
+                            ariaLabel="Pupillary distance"
                           />
                         </div>
                         <div>
@@ -2982,20 +2832,6 @@ export default function CustomerDetail() {
                       </div>
                     </>
                   )}
-                  <div className="mt-3 pt-3 border-t border-th-border">
-                    <button
-                      onClick={() => sendWhatsApp(customer?.mobile, linkedBill)}
-                      disabled={sendingBill}
-                      className="px-3 py-2 bg-[#1ed760]/10 text-[#1ed760] rounded-lg text-base font-medium hover:bg-[#1ed760]/20 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {sendingBill ? (
-                        <div className="animate-spin w-3.5 h-3.5 border-2 border-[#1ed760] border-t-transparent rounded-full" />
-                      ) : (
-                        <MessageCircle size={13} />
-                      )}{' '}
-                      {uiT('Send on WhatsApp', 'व्हाट्सऐप पर भेजें')}
-                    </button>
-                  </div>
                 </div>
               )}
 

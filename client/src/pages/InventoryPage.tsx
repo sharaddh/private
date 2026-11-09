@@ -14,6 +14,7 @@ import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import CameraScanner from '../components/CameraScanner';
 import PageSkeleton from '../components/PageSkeleton';
+import PowerSelect from '../components/smart/PowerSelect';
 import QRCode from 'qrcode';
 import {
   Plus,
@@ -1377,14 +1378,13 @@ export default function InventoryPage() {
                       <label className="block text-xs font-medium text-th-secondary mb-1">
                         {uiT('Add Power', 'ऐड पावर')}
                       </label>
-                      <input
+                      <PowerSelect
+                        kind="add"
                         className="input-field"
                         value={form.addPower}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setForm({ ...form, addPower: e.target.value })
-                        }
+                        onChange={(value) => setForm({ ...form, addPower: value })}
                         placeholder="e.g. +2.00"
-                        aria-label={uiT('Add Power', 'ऐड पावर')}
+                        ariaLabel={uiT('Add Power', '�?� ��_��')}
                       />
                     </div>
                     {(['Right', 'Left'] as const).map((side) => {
@@ -1401,42 +1401,39 @@ export default function InventoryPage() {
                             <label className="block text-xs font-medium text-th-secondary mb-1">
                               {sideLabel} SPH
                             </label>
-                            <input
+                            <PowerSelect
+                              kind="sph"
                               className="input-field"
                               value={form[base.sph as keyof InventoryFormData] as string}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setForm({ ...form, [base.sph]: e.target.value })
-                              }
+                              onChange={(value) => setForm({ ...form, [base.sph]: value })}
                               placeholder="e.g. -2.50"
-                              aria-label={`${sideLabel} SPH`}
+                              ariaLabel={`${sideLabel} SPH`}
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-th-secondary mb-1">
                               {sideLabel} CYL
                             </label>
-                            <input
+                            <PowerSelect
+                              kind="cyl"
                               className="input-field"
                               value={form[base.cyl as keyof InventoryFormData] as string}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setForm({ ...form, [base.cyl]: e.target.value })
-                              }
+                              onChange={(value) => setForm({ ...form, [base.cyl]: value })}
                               placeholder="e.g. -0.75"
-                              aria-label={`${sideLabel} CYL`}
+                              ariaLabel={`${sideLabel} CYL`}
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-th-secondary mb-1">
                               {sideLabel} Axis
                             </label>
-                            <input
+                            <PowerSelect
+                              kind="axis"
                               className="input-field"
                               value={form[base.axis as keyof InventoryFormData] as string}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setForm({ ...form, [base.axis]: e.target.value })
-                              }
+                              onChange={(value) => setForm({ ...form, [base.axis]: value })}
                               placeholder="e.g. 180"
-                              aria-label={`${sideLabel} Axis`}
+                              ariaLabel={`${sideLabel} Axis`}
                             />
                           </div>
                         </React.Fragment>

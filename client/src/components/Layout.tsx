@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect, memo, type ReactNode } from '
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { get, post } from '../api';
 import { invalidateCache } from '../hooks/useCache';
+import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
+import SmartSuggestInput from './smart/SmartSuggestInput';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslate } from '../context/TranslateContext';
@@ -72,7 +74,7 @@ const allDesktopMenu = [
   { path: '/payments', label: 'Payments', icon: CreditCard, staff: false },
   { path: '/announcements', label: 'Announcements', icon: Megaphone, staff: false },
   { path: '/reports', label: 'Reports', icon: BarChart3, staff: false },
-  { path: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, staff: false },
+  { path: '/communications', label: 'Communications', icon: MessageCircle, staff: false },
   { path: '/cameras', label: 'Cameras', icon: Camera, staff: false },
   { path: '/settings', label: 'Settings', icon: Settings, staff: true },
 ];
@@ -172,6 +174,16 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [drawerForm, setDrawerForm] = useState<DrawerForm>(initialDrawer);
   const [drawerSaving, setDrawerSaving] = useState(false);
   const [drawerError, setDrawerError] = useState('');
+  const {
+    options: customerNameSuggestions,
+    loading: customerNamesLoading,
+    reload: reloadCustomerNames,
+  } = useCustomerFieldSuggestions('name', showAddDrawer);
+  const {
+    options: citySuggestions,
+    loading: citiesLoading,
+    reload: reloadCities,
+  } = useCustomerFieldSuggestions('city', showAddDrawer);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileSidebarRef = useRef<HTMLElement>(null);
@@ -352,7 +364,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           : {}),
       });
       if (res.success) {
-        invalidateCache('/api/customers?limit=1000');
+        invalidateCache('/api/customers');
+        void reloadCustomerNames();
+        void reloadCities();
         setShowAddDrawer(false);
         toast.success('Customer created successfully');
         navigate(`/customers/${res.data?._id}`);
@@ -364,7 +378,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     } finally {
       setDrawerSaving(false);
     }
-  }, [drawerForm, navigate, toast]);
+  }, [drawerForm, navigate, reloadCities, reloadCustomerNames, toast]);
 
   if (isAuthPage) return <>{children}</>;
 
@@ -774,13 +788,15 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <label htmlFor="drawer-name" className="block text-sm mb-1.5 text-th-secondary">
                   Full Name *
                 </label>
-                <input
+                <SmartSuggestInput
                   id="drawer-name"
                   name="name"
                   autoComplete="name"
                   className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                   value={drawerForm.name}
-                  onChange={(e) => setDrawerForm((f) => ({ ...f, name: e.target.value }))}
+                  onChange={(value) => setDrawerForm((f) => ({ ...f, name: value }))}
+                  suggestions={customerNameSuggestions}
+                  loading={customerNamesLoading}
                   placeholder="Enter customer name"
                   autoFocus
                 />
@@ -854,13 +870,17 @@ export default function Layout({ children }: { children: ReactNode }) {
                   <label htmlFor="drawer-city" className="block text-sm mb-1.5 text-th-secondary">
                     City
                   </label>
-                  <input
+                  <SmartSuggestInput
                     id="drawer-city"
                     name="city"
                     autoComplete="address-level2"
                     className="w-full min-h-11 px-3 py-2 rounded-lg text-sm text-th-text placeholder-th-muted border border-th-border-med bg-th-elevated focus:outline-none focus:ring-1 focus:ring-th-accent/30"
                     value={drawerForm.city}
-                    onChange={(e) => setDrawerForm((f) => ({ ...f, city: e.target.value }))}
+                    onChange={(value) => setDrawerForm((f) => ({ ...f, city: value }))}
+                    suggestions={citySuggestions}
+                    loading={citiesLoading}
+                    showOnEmpty
+                    maxSuggestions={12}
                     placeholder="City"
                   />
                 </div>

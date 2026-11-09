@@ -9,8 +9,6 @@ import Modal from '../components/Modal';
 import CameraScanner from '../components/CameraScanner';
 import { cleanEyeSet } from '../utils/rx';
 import { todayStr } from '../utils/date';
-import { normalizeWhatsAppPhone } from '../utils/whatsapp';
-import { whatsappService } from '../services';
 import {
   ScanLine,
   Eye,
@@ -41,10 +39,9 @@ export default function CustomerNewVisit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { t, uiT } = useTranslate();
+  const { uiT } = useTranslate();
 
   const [customer, setCustomer] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState('service');
@@ -100,10 +97,7 @@ export default function CustomerNewVisit() {
   const [isFocused, setIsFocused] = useState(false);
   const [scanModal, setScanModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const countdownRef = useRef<any>(null);
   const savingRef = useRef(false);
-  const greetingSent = useRef(false);
 
   const isServiceType = visitType === 'service' || visitType === 'other';
   const steps = [
@@ -149,12 +143,6 @@ export default function CustomerNewVisit() {
     },
   ];
 
-  useEffect(() => {
-    return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
-  }, []);
-
   // Redirect away from removed steps when visitType changes
   useEffect(() => {
     if (isServiceType && (step === 'prescription' || step === 'order')) {
@@ -165,12 +153,11 @@ export default function CustomerNewVisit() {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const [custRes, visitsRes, prescRes, ordersRes, settingsRes] = await Promise.all([
+      const [custRes, visitsRes, prescRes, ordersRes] = await Promise.all([
         api.get<any>(`/api/customers/${id}`),
         api.get<any[]>(`/api/visits?customerId=${id}`),
         api.get<any[]>(`/api/prescriptions?customerId=${id}`),
         api.get<any[]>(`/api/orders?customerId=${id}`),
-        api.get('/api/settings'),
       ]);
       if (custRes.success) {
         setCustomer(custRes.data);
@@ -222,7 +209,6 @@ export default function CustomerNewVisit() {
           }
         }
       }
-      if (settingsRes.success) setSettings(settingsRes.data);
       setLoading(false);
 
       try {
@@ -540,26 +526,9 @@ export default function CustomerNewVisit() {
         toast.success('Visit created successfully!');
         sessionStorage.removeItem(`visitDraft_${id}`);
 
-        const customerMobile = customer?.mobile || '';
         const resData = res.data as any;
-        if (customerMobile && resData?.bill) {
-          greetingSent.current = false;
-          setCountdown(3);
-          countdownRef.current = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownRef.current);
-                countdownRef.current = null;
-                sendGreeting(resData, customer);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        } else {
-          savingRef.current = false;
-          navigate(`/customers/${id}?visitId=${resData?.visit?._id || ''}`);
-        }
+        savingRef.current = false;
+        navigate(`/customers/${id}?visitId=${resData?.visit?._id || ''}`);
       } else {
         toast.error(res.message || 'Failed to save');
         setSaving(false);
@@ -568,34 +537,6 @@ export default function CustomerNewVisit() {
       toast.error(e.message || 'Something went wrong');
       setSaving(false);
     }
-  }
-
-  async function sendGreeting(data: any, cust: any) {
-    if (greetingSent.current) return;
-    greetingSent.current = true;
-    try {
-      const customerMobile = cust?.mobile || '';
-      const shopName = settings?.shopName || 'KMJ Optical';
-      const customerName = cust?.name || '';
-      const fullNum = normalizeWhatsAppPhone(customerMobile);
-      if (!fullNum) return;
-      const msg = t(
-        `*${shopName}* 🕶\n\nHello *${customerName}*,\n\nThank you for visiting us! Your order has been placed successfully.\n\nThank you! 🙏`,
-        `*${shopName}* 🕶\n\nनमस्ते *${customerName}*,\n\nहमसे मिलने के लिए धन्यवाद! आपका ऑर्डर सफलतापूर्वक हो गया है।\n\nधन्यवाद! 🙏`
-      );
-      const res = await whatsappService.sendMessage({ phone: fullNum, message: msg });
-      if (!res.success || (res.data && !res.data.sent && !res.data.queued)) {
-        toast.info(
-          uiT(
-            'Greeting message could not be sent: ' + (res.message || 'WhatsApp not connected'),
-            'अभिवादन संदेश नहीं भेजा जा सका: ' + (res.message || 'WhatsApp कनेक्ट नहीं है')
-          )
-        );
-      }
-    } catch {
-      toast.info(uiT('Greeting message skipped', 'अभिवादन संदेश छोड़ दिया गया'));
-    }
-    navigate(`/customers/${id}?visitId=${data?.visit?._id || ''}`);
   }
 
   function searchInventory(q: string, type: 'frame', idx: number) {
@@ -767,7 +708,6 @@ export default function CustomerNewVisit() {
         stepKeys={stepKeys}
         saveTransaction={saveTransaction}
         saving={saving}
-        countdown={countdown}
       />
 
       <Modal open={scanModal} onClose={() => setScanModal(false)} title="Scan Frame QR" size="sm">
