@@ -11,7 +11,6 @@ import {
   User,
   Shield,
   Upload,
-  MessageCircle,
   LogOut,
   Trash2,
   X,
@@ -64,7 +63,6 @@ interface Branch {
 }
 
 const ALL_SECTIONS: Section[] = [
-  { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={15} /> },
   { id: 'branches', label: 'Branches', icon: <Building2 size={15} /> },
   { id: 'staff', label: 'Staff', icon: <Shield size={15} /> },
   { id: 'account', label: 'Account', icon: <User size={15} /> },
@@ -76,8 +74,6 @@ export default function Settings() {
   const { lang, toggleLang, uiLang, toggleUiLang, uiT } = useTranslate();
   const toast = useToast();
   const navigate = useNavigate();
-  const [waStatus, setWaStatus] = useState<string>('checking');
-
   const [users, setUsers] = useState<(AppUser & { id?: string })[]>([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: '', password: '', name: '', mobile: '' });
@@ -111,7 +107,6 @@ export default function Settings() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const sectionLabelMap: Record<string, string> = {
-    whatsapp: 'WhatsApp',
     branches: uiT('Branches', 'शाखाएँ'),
     staff: uiT('Staff', 'स्टाफ'),
     account: uiT('Account', 'खाता'),
@@ -159,34 +154,6 @@ export default function Settings() {
       if (d.success) setAllBranches(d.data || []);
     } catch {}
   }
-
-  useEffect(() => {
-    let cancelled = false;
-    async function poll() {
-      while (!cancelled) {
-        try {
-          const res = await api.get<{ status?: string; error?: string; connectedPhone?: string }>(
-            '/api/whatsapp/status'
-          );
-          if (cancelled) return;
-          if (res.success) {
-            if (res.data?.status === 'connected') {
-              setWaStatus('connected');
-            } else if (res.data?.status === 'error') {
-              setWaStatus('error');
-            } else {
-              setWaStatus('disconnected');
-            }
-          }
-        } catch {}
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
-    poll();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (showAddStaff || showAddBranch || showLogoutConfirm) {
@@ -426,90 +393,6 @@ export default function Settings() {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-8"
             >
-              {/* ──────────────── WHATSAPP ──────────────── */}
-              {activeSection === 'whatsapp' && !isStaff && (
-                <div>
-                  <SectionCard
-                    icon={<MessageCircle size={16} />}
-                    title={uiT('WhatsApp Integration', 'WhatsApp इंटीग्रेशन')}
-                    subtitle={uiT(
-                      'Connect WhatsApp for automated messaging',
-                      'स्वचालित संदेशों के लिए WhatsApp कनेक्ट करें'
-                    )}
-                  >
-                    <div className="space-y-5">
-                      <div
-                        className={`rounded-sm border p-5 transition-all duration-500 ${
-                          waStatus === 'connected'
-                            ? 'bg-[#1ed760]/5 border-[#1ed760]/20'
-                            : waStatus === 'error'
-                              ? 'bg-[#e74c3c]/5 border-[#e74c3c]/20'
-                              : 'bg-th-elevated border-th-border'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2.5 h-2.5 rounded-full ${
-                                waStatus === 'connected'
-                                  ? 'bg-[#1ed760] animate-pulse'
-                                  : waStatus === 'error'
-                                    ? 'bg-[#e74c3c]'
-                                    : 'bg-th-muted'
-                              }`}
-                            />
-                            <span className="text-sm font-medium text-th-text">
-                              {waStatus === 'connected'
-                                ? uiT('Connected', 'कनेक्टेड')
-                                : waStatus === 'disconnected'
-                                  ? uiT('Not Configured', 'कॉन्फ़िगर नहीं')
-                                  : waStatus === 'error'
-                                    ? uiT('Configuration Error', 'कॉन्फ़िगरेशन त्रुटि')
-                                    : uiT('Checking...', 'जांच रहे हैं...')}
-                            </span>
-                          </div>
-                          {currentBranch?.settings?.ownerPhone && (
-                            <span className="text-xs font-medium text-th-secondary">
-                              {uiT('Admin Number:', 'एडमिन नंबर:')}{' '}
-                              {currentBranch?.settings?.ownerPhone}
-                            </span>
-                          )}
-                        </div>
-                        {waStatus === 'connected' && (
-                          <div className="flex items-center gap-2 text-[#1ed760]">
-                            <CheckCircle2 size={16} />
-                            <span className="text-xs font-medium">
-                              {uiT('WhatsApp Cloud API is active', 'WhatsApp क्लाउड API सक्रिय है')}
-                            </span>
-                          </div>
-                        )}
-                        {waStatus === 'disconnected' && (
-                          <p className="text-xs text-th-secondary">
-                            {uiT(
-                              'Set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env',
-                              '.env में WHATSAPP_ACCESS_TOKEN और WHATSAPP_PHONE_NUMBER_ID सेट करें'
-                            )}
-                          </p>
-                        )}
-                        {waStatus === 'error' && (
-                          <p className="text-xs text-red-500">
-                            {uiT(
-                              'Configuration error. Check your environment variables.',
-                              'कॉन्फ़िगरेशन त्रुटि। अपने एनवायरनमेंट वेरिएबल जांचें।'
-                            )}
-                          </p>
-                        )}
-                        {waStatus === 'checking' && (
-                          <p className="text-xs text-th-muted">
-                            {uiT('Checking configuration...', 'कॉन्फ़िगरेशन जांच रहे हैं...')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </SectionCard>
-                </div>
-              )}
-
               {/* ──────────────── BRANCHES ──────────────── */}
               {activeSection === 'branches' && !isStaff && (
                 <div>
