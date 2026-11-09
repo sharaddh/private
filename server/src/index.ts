@@ -5,8 +5,11 @@ import app from "./app";
 import { prisma } from "./db/prisma";
 import { initCache, destroyCache } from "./services/cache";
 import { logger } from "./utils/logger";
+import { getWhatsAppConfig } from "./whatsapp/config";
+import { startWhatsAppWorker } from "./whatsapp/worker";
 
 let server: ReturnType<typeof app.listen> | null = null;
+let stopWhatsAppWorker: (() => void) | null = null;
 
 async function connectDb(): Promise<void> {
   try {
@@ -44,6 +47,10 @@ async function startWorker(): Promise<void> {
     });
   });
 
+  if (getWhatsAppConfig().workerInline) {
+    stopWhatsAppWorker = startWhatsAppWorker();
+  }
+
   if (isProduction) {
     setInterval(
       () => {
@@ -71,6 +78,10 @@ async function runPrimary(): Promise<void> {
 
 async function gracefulShutdown(signal: string): Promise<void> {
   logger.info(`Received ${signal}. Starting graceful shutdown...`, { pid: process.pid });
+  if (stopWhatsAppWorker) {
+    stopWhatsAppWorker();
+    stopWhatsAppWorker = null;
+  }
   if (server) {
     server.close();
     server = null;
@@ -95,3 +106,4 @@ main().catch((err) => {
   logger.error("Failed to start server", { error: err.message, stack: err.stack });
   process.exit(1);
 });
+
