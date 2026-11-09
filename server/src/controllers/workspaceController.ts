@@ -1,17 +1,12 @@
 import { BranchRequest } from "../types";
 import { Response } from "express";
-import { executeTransaction, sendBillWhatsApp } from "../services/workspace.service";
+import { executeTransaction } from "../services/workspace.service";
 import { sendSuccess, sendCreated } from "../utils/response";
 import { invalidateCache } from "../middleware/cache";
 import * as todoService from "../services/todo.service";
 
 export async function transaction(req: BranchRequest, res: Response) {
   const data = await executeTransaction(req.body, req.branchId);
-  const bill = data.bill as any;
-  const customer = data.customer as any;
-  if (bill && customer) {
-    sendBillWhatsApp(bill, customer, req.branchId);
-  }
   await invalidateCache("/api/customers");
   await invalidateCache("/api/orders");
   await invalidateCache("/api/bills");

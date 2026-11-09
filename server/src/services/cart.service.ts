@@ -1,8 +1,6 @@
 import { prisma } from "../db/prisma";
-import { User } from "../models/user";
 import { AppError } from "../middleware/errorHandler";
 import { getPriceForPower } from "./lensStock.service";
-import { istDateKey } from "../utils/date";
 
 const CartItem = prisma.cartItem;
 const LensStock = prisma.warehouseLensStock;
@@ -408,44 +406,3 @@ export async function updateWithdrawal(
   return withId(updated);
 }
 
-export async function sendWithdrawalPdf(userId: string, id: string, phone?: string) {
-  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
-  if (!withdrawal) throw new AppError(404, "Withdrawal not found");
-
-  const { generateWithdrawalPdf } = await import("../utils/pdf");
-  const { whatsappManager } = await import("./whatsapp");
-  const { normalizePhone, isValidWhatsAppPhone } = await import("../utils/phone");
-
-  let targetPhone: string;
-  if (phone) {
-    targetPhone = phone;
-  } else {
-    const userDoc = await User.findUnique({ where: { id: withdrawal.userId }, select: { mobile: true } });
-    targetPhone = userDoc?.mobile || "";
-  }
-  const target = normalizePhone(targetPhone);
-  if (!target || !isValidWhatsAppPhone(target)) {
-    throw new AppError(400, "No valid WhatsApp number available for this withdrawal");
-  }
-
-  const pdfBuffer = generateWithdrawalPdf({
-    username: withdrawal.username,
-    withdrawnAt: withdrawal.withdrawnAt,
-    items: withdrawal.items,
-    totalQuantity: withdrawal.totalQuantity,
-    totalPrice: withdrawal.totalPrice,
-  });
-
-  const base64 = pdfBuffer.toString("base64");
-  const filename = `Lens_List_${istDateKey(withdrawal.withdrawnAt)}.pdf`;
-  const caption = `Lens list — ${withdrawal.username} · ${Math.round((withdrawal.totalQuantity / 2) * 2) / 2} pairs`;
-
-  const wa = whatsappManager.getInstance();
-  const result = await wa.sendMedia(target, base64, filename, "application/pdf", caption, true);
-
-  if (!result.ok && result.error) {
-    throw new AppError(500, result.error);
-  }
-
-  return { sent: true, phone: target, filename };
-}

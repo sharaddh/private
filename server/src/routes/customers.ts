@@ -27,6 +27,12 @@ router.post(
     await customerController.create(req, res);
   })
 );
+router.get(
+  "/suggestions",
+  authenticate,
+  cacheRoute(60),
+  asyncHandler(customerController.getSuggestions)
+);
 router.get("/summary/:id", authenticate, asyncHandler(customerController.getSummary));
 router.get("/:id", authenticate, asyncHandler(customerController.getById));
 router.put(

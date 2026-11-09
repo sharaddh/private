@@ -171,6 +171,38 @@ export async function listCustomers(
   ) as Promise<PaginatedResult<CustomerResult>>;
 }
 
+export interface CustomerSuggestionData {
+  names: string[];
+  cities: string[];
+}
+
+export async function getCustomerSuggestions(): Promise<CustomerSuggestionData> {
+  const [nameRows, cityRows] = await Promise.all([
+    Customer.findMany({
+      distinct: ["name"],
+      select: { name: true },
+      where: { name: { not: "" } },
+      orderBy: { name: "asc" },
+      take: 5000,
+    }),
+    Customer.findMany({
+      distinct: ["city"],
+      select: { city: true },
+      where: { city: { not: null } },
+      orderBy: { city: "asc" },
+      take: 2000,
+    }),
+  ]);
+
+  return {
+    names: nameRows.map((row) => row.name.trim()).filter(Boolean),
+    cities: cityRows
+      .map((row) => (row.city || "").trim())
+      .filter(Boolean)
+      .filter((city, index, list) => list.indexOf(city) === index),
+  };
+}
+
 export async function getCustomerById(id: string): Promise<CustomerResult> {
   const customer = await Customer.findUnique({ where: { id } });
   if (!customer) {

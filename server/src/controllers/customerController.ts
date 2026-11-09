@@ -17,6 +17,11 @@ export async function getAll(req: Request, res: Response) {
   sendSuccess(res, data);
 }
 
+export async function getSuggestions(_req: Request, res: Response) {
+  const data = await customerService.getCustomerSuggestions();
+  sendSuccess(res, data);
+}
+
 export async function getById(req: Request, res: Response) {
   const data = await customerService.getCustomerById(req.params.id);
   sendSuccess(res, data);

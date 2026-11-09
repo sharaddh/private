@@ -96,13 +96,3 @@ export async function deleteWithdrawal(req: AuthRequest, res: Response) {
   await cartService.deleteWithdrawal(req.user!.sub, req.params.id);
   sendSuccess(res, null, "Withdrawal deleted, stock restored");
 }
-
-export async function sendWithdrawalPdf(req: AuthRequest, res: Response) {
-  const { phone } = req.body || {};
-  const data = await cartService.sendWithdrawalPdf(
-    req.user!.sub,
-    req.params.id,
-    typeof phone === "string" ? phone : undefined
-  );
-  sendSuccess(res, data, "Lens list PDF sent on WhatsApp");
-}

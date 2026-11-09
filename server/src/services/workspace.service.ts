@@ -2,9 +2,6 @@ import { prisma } from "../db/prisma";
 import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import { normalizeSplits, recordPayments } from "./paymentSplits";
-import { generateBillPdf } from "../utils/pdf";
-import { normalizePhone } from "../utils/phone";
-import { logger } from "../utils/logger";
 import {
   decrementStockForOrder,
   assertStockAvailable,
@@ -194,7 +191,7 @@ export async function executeTransaction(
       if (normalized.usedSplits && advancePaid > totalAmount) {
         throw new AppError(
           400,
-          `Collected ₹${advancePaid} but the bill total is ₹${totalAmount}`
+          `Collected â‚¹${advancePaid} but the bill total is â‚¹${totalAmount}`
         );
       }
 
@@ -284,64 +281,3 @@ export async function executeTransaction(
   return result;
 }
 
-export function sendBillWhatsApp(bill: any, customer: any, branchId?: string): void {
-  if (!branchId || !customer?.mobile) return;
-
-  (async () => {
-    try {
-      const { whatsappManager } = await import("./whatsapp");
-      const wa = whatsappManager.getInstance(branchId);
-      const settings = await prisma.settings.findFirst({ orderBy: { updatedAt: "desc" } });
-      const pdfBuffer = generateBillPdf(
-        {
-          billNumber: bill.billNumber,
-          createdAt: bill.createdAt,
-          items: bill.items,
-          subtotal: bill.subtotal,
-          discount: bill.discount,
-          tax: (bill as any).tax,
-          advancePaid: bill.advancePaid,
-          pendingAmount: bill.pendingAmount,
-          totalAmount: bill.totalAmount,
-          status: bill.status,
-        },
-        {
-          name: customer.name,
-          mobile: customer.mobile,
-          address: customer.address,
-          customerId: customer.customerId,
-        },
-        {
-          shopName: (settings as any)?.shopName || "KMJ Optical",
-          shopAddress: (settings as any)?.shopAddress || "",
-          shopPhone: (settings as any)?.shopPhone || "",
-          shopEmail: (settings as any)?.shopEmail || "",
-          logo: (settings as any)?.logo || "",
-        }
-      );
-
-      const randomDelay = 3000 + Math.random() * 5000;
-      await new Promise((r) => setTimeout(r, randomDelay));
-
-      const message = `Hi ${customer.name}, your bill ${bill.billNumber} has been generated! Total: ₹${(bill.totalAmount || 0).toFixed(2)}.`;
-      const phone = normalizePhone(customer.mobile);
-      logger.info(
-        `WhatsApp [workspace]: sending to ***${phone.slice(-4)} for bill ${bill.billNumber} (delayed ${Math.round(randomDelay)}ms)`
-      );
-      const sent = await wa.sendMedia(
-        phone,
-        pdfBuffer.toString("base64"),
-        `${bill.billNumber}.pdf`,
-        "application/pdf",
-        message
-      );
-      if (!sent.ok)
-        logger.error(`WhatsApp [workspace]: bill ${bill.billNumber} send failed: ${sent.error}`);
-      else logger.info(`WhatsApp [workspace]: ${bill.billNumber} sent successfully`);
-    } catch (err: any) {
-      logger.error(
-        `WhatsApp [workspace]: bill ${bill.billNumber} fire-and-forget error: ${err?.message || err}`
-      );
-    }
-  })();
-}
