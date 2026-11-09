@@ -212,32 +212,6 @@ async function migrateGlobal(tx: Prisma.TransactionClient) {
     await tx.camera.createMany({ data: cameraRows, skipDuplicates: true });
     log("cameras", cameraRows.length);
   }
-
-  // messages (branchId is a plain string in Mongo)
-  const messages = await conn.collection("messages").find().toArray();
-  const messageRows = messages.map((m: any) => {
-    const id = hexOf(m._id);
-    const uuid = uuid5(`${DB}::messages::${id}`);
-    globalMap.set(id!, uuid);
-    return {
-      id: uuid,
-      branchId: str(m.branchId),
-      phone: str(m.phone),
-      direction: str(m.direction),
-      type: str(m.type),
-      content: str(m.content),
-      filename: str(m.filename),
-      mimetype: str(m.mimetype),
-      metaMessageId: str(m.metaMessageId),
-      status: str(m.status, "pending"),
-      error: str(m.error),
-      ...stamps(m),
-    };
-  });
-  if (messageRows.length) {
-    await tx.message.createMany({ data: messageRows, skipDuplicates: true });
-    log("messages", messageRows.length);
-  }
 }
 
 // ===========================================================================
