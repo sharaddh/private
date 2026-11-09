@@ -7,7 +7,7 @@ const staffPrefixes = [
   '/orders',
   '/bills',
   '/pickup',
-  '/whatsapp',
+  '/communications',
   '/workspace',
 ];
 

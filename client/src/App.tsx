@@ -28,7 +28,7 @@ const Pickup = lazyPage('Pickup', () => import('./pages/Pickup'));
 const Announcement = lazyPage('Announcement', () => import('./pages/Announcement'));
 const Reports = lazyPage('Reports', () => import('./pages/Reports'));
 const Settings = lazyPage('Settings', () => import('./pages/Settings'));
-const WhatsAppPage = lazyPage('WhatsApp', () => import('./pages/WhatsApp'));
+const CommunicationsPage = lazyPage('Communications', () => import('./pages/Communications'));
 const Cameras = lazyPage('Cameras', () => import('./pages/Cameras'));
 const Workspace = lazyPage('Workspace', () => import('./pages/Workspace'));
 const NewVisit = lazyPage('NewVisit', () => import('./pages/NewVisit'));
@@ -244,10 +244,10 @@ export default function App() {
             }
           />
           <Route
-            path="/whatsapp"
+            path="/communications"
             element={
               <SuspendedPage page="settings">
-                <WhatsAppPage />
+                <CommunicationsPage />
               </SuspendedPage>
             }
           />
