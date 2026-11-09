@@ -23,9 +23,9 @@ interface PdfBill {
 
 interface PdfCustomer {
   name?: string;
-  mobile?: string;
+  mobile?: string | null;
   address?: string;
-  customerId?: string;
+  customerId?: string | null;
 }
 
 interface PdfSettings {

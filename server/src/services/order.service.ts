@@ -15,6 +15,7 @@ import {
   type OrderStockRef,
 } from "./inventory.service";
 import { VALID_TRANSITIONS, VALID_CLASSIFICATIONS } from "../types";
+import { enqueueEventSafely, orderStatusEvent } from "../whatsapp/events";
 import type { PaginatedResult, OrderStatus } from "../types";
 
 interface CreateOrderData {
@@ -172,6 +173,14 @@ export async function createOrder(data: CreateOrderData): Promise<OrderResult> {
   });
 
   await decrementStockForOrder(order);
+  await enqueueEventSafely({
+    eventType: "ORDER_CREATED",
+    entityType: "order",
+    entityId: order.id,
+    customerId: order.customerId,
+    branchId: order.branchId,
+    payload: { status: order.status },
+  });
   return order as unknown as OrderResult;
 }
 
@@ -214,6 +223,19 @@ export async function updateOrder(orderId: string, updates: UpdateOrderData): Pr
     throw new AppError(404, "Order not found");
   }
   const order = await Order.update({ where: { id: orderId }, data: filtered as any });
+  if (order.status !== existing.status) {
+    const eventType = orderStatusEvent(order.status);
+    if (eventType) {
+      await enqueueEventSafely({
+        eventType,
+        entityType: "order",
+        entityId: order.id,
+        customerId: order.customerId,
+        branchId: order.branchId,
+        payload: { fromStatus: existing.status, toStatus: order.status },
+      });
+    }
+  }
   return order as unknown as OrderResult;
 }
 
@@ -399,6 +421,19 @@ export async function updateOrderStatus(
       await restoreStockForOrder(updatedOrder);
     } else if (oldStatus === "Cancelled" && statusData.status !== "Cancelled") {
       await decrementStockForOrder(updatedOrder);
+    }
+    if (updatedOrder.status !== oldStatus) {
+      const eventType = orderStatusEvent(updatedOrder.status);
+      if (eventType) {
+        await enqueueEventSafely({
+          eventType,
+          entityType: "order",
+          entityId: updatedOrder.id,
+          customerId: updatedOrder.customerId,
+          branchId: updatedOrder.branchId,
+          payload: { fromStatus: oldStatus, toStatus: updatedOrder.status },
+        });
+      }
     }
   }
 

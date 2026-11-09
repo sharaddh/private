@@ -4,6 +4,8 @@ import { Customer } from "../models/customer";
 import { paginateFind, prismaDateRange, parseDateRange } from "../utils/pagination";
 import { AppError } from "../middleware/errorHandler";
 import { requireBranchId } from "../utils/scope";
+import { enqueueEventSafely, paymentEventType } from "../whatsapp/events";
+import { cancelRemindersForBill } from "../whatsapp/reminders";
 import type { PaginatedResult } from "../types";
 import type { Prisma } from "@prisma/client";
 
@@ -81,6 +83,28 @@ export async function createPayment(data: CreatePaymentData): Promise<PaymentRes
     data: { pendingAmount: { decrement: data.amount } },
   });
 
+  let remainingPending: number | null = null;
+  if (data.billId) {
+    const bill = await Bill.findUnique({ where: { id: data.billId } });
+    remainingPending = bill?.pendingAmount ?? null;
+    if (bill && bill.pendingAmount <= 0) {
+      await cancelRemindersForBill(bill.id, "bill_settled");
+    }
+  }
+
+  await enqueueEventSafely({
+    eventType: paymentEventType(remainingPending ?? 0),
+    entityType: "payment",
+    entityId: payment.id,
+    customerId: data.customerId,
+    branchId: requireBranchId(),
+    payload: {
+      billId: data.billId,
+      paymentId: payment.id,
+      amount: data.amount,
+    },
+  });
+
   return payment as unknown as PaymentResult;
 }
 
@@ -128,6 +152,9 @@ export async function updatePayment(
         where: { id: bill.id },
         data: { advancePaid: newAdvancePaid, pendingAmount: newPendingAmount },
       });
+      if (newPendingAmount <= 0) {
+        await cancelRemindersForBill(bill.id, "bill_settled");
+      }
     }
 
     await Customer.update({

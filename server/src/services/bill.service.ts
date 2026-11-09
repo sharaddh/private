@@ -5,6 +5,8 @@ import { requireBranchId } from "../utils/scope";
 import { AppError } from "../middleware/errorHandler";
 import { restoreStockForOrder, decrementStockForOrder } from "./inventory.service";
 import { normalizeSplits, recordPayments, type PaymentSplit } from "./paymentSplits";
+import { enqueueEventSafely, paymentEventType } from "../whatsapp/events";
+import { cancelRemindersForBill, scheduleRemindersForBill } from "../whatsapp/reminders";
 import type { PaginatedResult } from "../types";
 
 interface BillItemInput {
@@ -219,6 +221,16 @@ export async function createBill(
     },
   });
 
+  await scheduleRemindersForBill(branchId, bill.id);
+  await enqueueEventSafely({
+    eventType: "INVOICE_GENERATED",
+    entityType: "invoice",
+    entityId: bill.id,
+    customerId: bill.customerId,
+    branchId,
+    payload: { billId: bill.id, billNumber: bill.billNumber },
+  });
+
   return bill as unknown as BillResult;
 }
 
@@ -307,6 +319,12 @@ export async function updateBill(billId: string, updates: UpdateBillData): Promi
     await prisma.customer.update({ where: { id: bill.customerId }, data: customerData });
   }
 
+  if (newStatus === "Cancelled" || pendingAmount <= 0) {
+    await cancelRemindersForBill(bill.id, newStatus === "Cancelled" ? "bill_cancelled" : "bill_settled");
+  } else if (oldStatus === "Cancelled" && newStatus !== "Cancelled") {
+    await scheduleRemindersForBill(bill.branchId, bill.id);
+  }
+
   return bill as unknown as BillResult;
 }
 
@@ -365,6 +383,25 @@ export async function collectBillPayment(
     return { payments: written.payments, bill: ub };
   });
 
+  if (newPending <= 0) {
+    await cancelRemindersForBill(bill.id, "bill_settled");
+  }
+  const firstPayment = payments[0] as { id?: string } | undefined;
+  if (firstPayment?.id) {
+    await enqueueEventSafely({
+      eventType: paymentEventType(newPending),
+      entityType: "payment",
+      entityId: firstPayment.id,
+      customerId: bill.customerId,
+      branchId: bill.branchId,
+      payload: {
+        billId: bill.id,
+        paymentId: firstPayment.id,
+        amount: collected,
+      },
+    });
+  }
+
   return { payment: payments[0], payments, bill: updatedBill };
 }
 
@@ -376,6 +413,8 @@ export async function deleteBill(billId: string): Promise<void> {
   if (!bill) {
     throw new AppError(404, "Bill not found");
   }
+
+  await cancelRemindersForBill(bill.id, "bill_deleted");
 
   await prisma.$transaction(async (tx) => {
     if (
