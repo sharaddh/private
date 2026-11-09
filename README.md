@@ -70,6 +70,20 @@ A comprehensive Enterprise Resource Planning (ERP) system designed for KMJ Optic
 - **Audit Trail** - Track system activities
 - **Multi-branch Support** - Manage multiple store locations
 - **Reporting** - Generate business reports and analytics
+- **WhatsApp Communications** - Transactional order/payment/invoice notifications and opt-in marketing campaigns through the Meta Cloud API, with a local mock provider, consent tracking, delivery logs, and owner-only controls
+
+## WhatsApp Communications
+
+The WhatsApp module is documented in [`docs/whatsapp/`](docs/whatsapp/):
+
+- [`ARCHITECTURE.md`](docs/whatsapp/ARCHITECTURE.md) - components, data flow, safety gates
+- [`IMPLEMENTATION.md`](docs/whatsapp/IMPLEMENTATION.md) - file map, API, event matrix
+- [`ENVIRONMENT.md`](docs/whatsapp/ENVIRONMENT.md) - configuration reference
+- [`OPERATIONS.md`](docs/whatsapp/OPERATIONS.md) - runbook and troubleshooting
+- [`META_SETUP_HANDOFF.md`](docs/whatsapp/META_SETUP_HANDOFF.md) - go-live checklist
+- [`meta-template-drafts.md`](docs/whatsapp/meta-template-drafts.md) - template copy to submit
+
+Live sending is disabled by default. Use `WHATSAPP_PROVIDER=mock` for local work.
 
 ## Quick Start
 
