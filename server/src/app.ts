@@ -20,9 +20,7 @@ import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestId } from "./middleware/requestId";
 import { createRateLimitStore } from "./middleware/rateLimitStore";
-import { verifyWebhook, handleWebhookVerification } from "./middleware/verifyWebhook";
-import { webhookHandler } from "./controllers/whatsapp.controller";
-import { asyncHandler } from "./middleware/asyncHandler";
+import webhooks from "./routes/webhooks";
 import { verifyToken } from "./utils/jwt";
 import { pinoLogger, logger } from "./utils/logger";
 import { resolveSpaRoute, isAssetPath } from "./utils/spaFallback";
@@ -78,17 +76,7 @@ app.use(
 );
 app.use(compression({ level: 6, threshold: 1024 }));
 
-app.get("/api/whatsapp/webhook", (req, res) => handleWebhookVerification(req, res));
-app.post(
-  "/api/whatsapp/webhook",
-  express.raw({ type: "application/json", limit: "1mb" }),
-  (req, _res, next) => {
-    req.rawBody = req.body as Buffer;
-    next();
-  },
-  verifyWebhook,
-  asyncHandler(webhookHandler)
-);
+app.use("/api/webhooks", webhooks);
 
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
