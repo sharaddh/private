@@ -11,6 +11,7 @@ import {
   User,
   Shield,
   Upload,
+  MessageCircle,
   LogOut,
   Trash2,
   X,
@@ -39,6 +40,10 @@ import type { Section } from './settings/SectionNav';
 import SectionCard from './settings/SectionCard';
 import { Input, Textarea, Select } from './settings/FormField';
 import ThemeToggle from './settings/ThemeToggle';
+import {
+  communicationsService,
+  type WhatsAppStatusPayload,
+} from '../services/communications.service';
 
 interface Branch {
   _id: string;
@@ -63,6 +68,7 @@ interface Branch {
 }
 
 const ALL_SECTIONS: Section[] = [
+  { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={15} /> },
   { id: 'branches', label: 'Branches', icon: <Building2 size={15} /> },
   { id: 'staff', label: 'Staff', icon: <Shield size={15} /> },
   { id: 'account', label: 'Account', icon: <User size={15} /> },
@@ -74,6 +80,9 @@ export default function Settings() {
   const { lang, toggleLang, uiLang, toggleUiLang, uiT } = useTranslate();
   const toast = useToast();
   const navigate = useNavigate();
+  const [waStatus, setWaStatus] = useState<WhatsAppStatusPayload | null>(null);
+  const [waError, setWaError] = useState('');
+  const [waLoading, setWaLoading] = useState(true);
   const [users, setUsers] = useState<(AppUser & { id?: string })[]>([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({ username: '', password: '', name: '', mobile: '' });
@@ -107,6 +116,7 @@ export default function Settings() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const sectionLabelMap: Record<string, string> = {
+    whatsapp: 'WhatsApp',
     branches: uiT('Branches', 'शाखाएँ'),
     staff: uiT('Staff', 'स्टाफ'),
     account: uiT('Account', 'खाता'),
@@ -136,6 +146,34 @@ export default function Settings() {
       });
     }
   }, [user]);
+
+  const loadWhatsAppStatus = useCallback(async () => {
+    setWaLoading(true);
+    setWaError('');
+    try {
+      const res = await communicationsService.getStatus();
+      if (res.success && res.data) {
+        setWaStatus(res.data);
+      } else {
+        setWaStatus(null);
+        setWaError(res.message || 'Unable to read WhatsApp status');
+      }
+    } catch (err) {
+      setWaStatus(null);
+      setWaError(err instanceof Error ? err.message : 'Unable to read WhatsApp status');
+    } finally {
+      setWaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user?.role === 'staff') {
+      setWaLoading(false);
+      return;
+    }
+    if (!currentBranch?._id) return;
+    void loadWhatsAppStatus();
+  }, [user?.role, currentBranch?._id, loadWhatsAppStatus]);
 
   useEffect(() => {
     if (user) {
@@ -364,6 +402,35 @@ export default function Settings() {
 
   const branchStaff = useMemo(() => getCurrentBranchStaff(), [getCurrentBranchStaff]);
 
+  const waNumberStatus = waStatus?.health?.status?.toUpperCase();
+  const waWebhookReady = Boolean(waStatus?.webhook?.appSecretSet && waStatus?.webhook?.verifyTokenSet);
+  const waNumberConnected = waNumberStatus === 'CONNECTED';
+  const waReady = Boolean(
+    waStatus?.providerConfigured &&
+      waWebhookReady &&
+      waNumberConnected &&
+      waStatus?.effectiveSendEnabled
+  );
+  const waProviderLabel =
+    waStatus?.provider === 'meta'
+      ? 'Meta Cloud API'
+      : waStatus?.provider === 'mock'
+        ? uiT('Mock / local', 'मॉक / लोकल')
+        : uiT('Unknown', 'अज्ञात');
+  const waStatusLabel = waLoading
+    ? uiT('Checking...', 'जाँच रहे हैं...')
+    : waError
+      ? uiT('Status unavailable', 'स्थिति उपलब्ध नहीं')
+      : waReady
+        ? uiT('Connected and working', 'कनेक्टेड और काम कर रहा है')
+        : !waStatus?.providerConfigured
+          ? uiT('Not configured', 'कॉन्फ़िगर नहीं है')
+          : !waNumberConnected
+            ? uiT('Number not connected', 'नंबर कनेक्ट नहीं है')
+            : !waStatus?.effectiveSendEnabled
+              ? uiT('Configured, sending paused', 'कॉन्फ़िगर है, भेजना रुका है')
+              : uiT('Needs attention', 'ध्यान देने की जरूरत है');
+
   return (
     <div className="max-w-5xl mx-auto">
       <SettingsHeader
@@ -393,6 +460,147 @@ export default function Settings() {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-8"
             >
+              {/* ──────────────── WHATSAPP ──────────────── */}
+              {activeSection === 'whatsapp' && !isStaff && (
+                <div className="space-y-4">
+                  <SectionCard
+                    icon={<MessageCircle size={16} />}
+                    title={uiT('WhatsApp Integration', 'WhatsApp इंटीग्रेशन')}
+                    subtitle={uiT(
+                      'Live status of your Meta WhatsApp connection',
+                      'आपके Meta WhatsApp कनेक्शन की लाइव स्थिति'
+                    )}
+                  >
+                    <div className="space-y-5">
+                      <div
+                        className={`rounded-sm border p-5 ${
+                          waLoading
+                            ? 'bg-th-elevated border-th-border'
+                            : waReady
+                              ? 'bg-[#1ed760]/5 border-[#1ed760]/20'
+                              : 'bg-[#e74c3c]/5 border-[#e74c3c]/20'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2.5 h-2.5 rounded-full ${
+                                waLoading
+                                  ? 'bg-th-muted'
+                                  : waReady
+                                    ? 'bg-[#1ed760] animate-pulse'
+                                    : 'bg-[#e74c3c]'
+                              }`}
+                            />
+                            <span className="text-sm font-medium text-th-text">
+                              {waStatusLabel}
+                            </span>
+                          </div>
+                          {waStatus?.health?.displayPhoneNumber && (
+                            <span className="text-xs font-medium text-th-secondary">
+                              {waStatus.health.displayPhoneNumber}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            {waStatus?.providerConfigured ? (
+                              <CheckCircle2 size={16} className="text-[#1ed760]" />
+                            ) : (
+                              <AlertCircle size={16} className="text-[#e74c3c]" />
+                            )}
+                            <span className="text-th-secondary">
+                              {uiT('Provider', 'प्रोवाइडर')}:{' '}
+                              <span className="text-th-text">
+                                {waProviderLabel}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            {waNumberConnected ? (
+                              <CheckCircle2 size={16} className="text-[#1ed760]" />
+                            ) : (
+                              <AlertCircle size={16} className="text-[#e74c3c]" />
+                            )}
+                            <span className="text-th-secondary">
+                              {uiT('Number', 'नंबर')}:{' '}
+                              <span className="text-th-text">
+                                {waNumberStatus || uiT('Unknown', 'अज्ञात')}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            {waWebhookReady ? (
+                              <CheckCircle2 size={16} className="text-[#1ed760]" />
+                            ) : (
+                              <AlertCircle size={16} className="text-[#e74c3c]" />
+                            )}
+                            <span className="text-th-secondary">
+                              {uiT('Webhook', 'वेबहुक')}:{' '}
+                              <span className="text-th-text">
+                                {waError
+                                  ? uiT('Unknown', 'अज्ञात')
+                                  : waWebhookReady
+                                    ? uiT('Verified', 'सत्यापित')
+                                    : uiT('Not ready', 'तैयार नहीं')}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            {waStatus?.effectiveSendEnabled ? (
+                              <CheckCircle2 size={16} className="text-[#1ed760]" />
+                            ) : (
+                              <AlertCircle size={16} className="text-[#e74c3c]" />
+                            )}
+                            <span className="text-th-secondary">
+                              {uiT('Sending', 'भेजना')}:{' '}
+                              <span className="text-th-text">
+                                {waError
+                                  ? uiT('Unknown', 'अज्ञात')
+                                  : waStatus?.effectiveSendEnabled
+                                    ? uiT('Enabled', 'सक्रिय')
+                                    : uiT('Paused', 'रुका हुआ')}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {!waLoading && waError && (
+                          <p className="mt-4 text-xs text-[#e74c3c]">
+                            {uiT('Could not load status', 'स्थिति लोड नहीं हो सकी')}: {waError}
+                          </p>
+                        )}
+
+                        {!waLoading && !waError && !waReady && waStatus?.queue?.lastError?.lastError && (
+                          <p className="mt-4 text-xs text-[#e74c3c]">
+                            {waStatus.queue.lastError.lastError}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => navigate('/communications')}
+                        >
+                          {uiT('Open Communications', 'Communications खोलें')}
+                          <ArrowRight size={16} />
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => void loadWhatsAppStatus()}
+                          disabled={waLoading}
+                        >
+                          <Loader2 size={16} className={waLoading ? 'animate-spin' : ''} />
+                          {uiT('Refresh status', 'स्थिति रीफ़्रेश करें')}
+                        </button>
+                      </div>
+                    </div>
+                  </SectionCard>
+                </div>
+              )}
+
               {/* ──────────────── BRANCHES ──────────────── */}
               {activeSection === 'branches' && !isStaff && (
                 <div>

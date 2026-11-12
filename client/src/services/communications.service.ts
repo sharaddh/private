@@ -25,14 +25,24 @@ export interface WhatsAppStatusPayload {
   };
   effectiveSendEnabled?: boolean;
   effectiveCampaignSendEnabled?: boolean;
-  health?: { status?: string; error?: string } | null;
+  health?: {
+    status?: string;
+    error?: string;
+    displayPhoneNumber?: string;
+    verifiedName?: string;
+    qualityRating?: string;
+  } | null;
   today?: { submitted?: number; delivered?: number; failed?: number };
   queue?: {
     pending?: number;
     failed?: number;
     lastError?: { lastError?: string; lastErrorClass?: string } | null;
   } | null;
-  webhook?: { publicUrlSet?: boolean; appSecretSet?: boolean } | null;
+  webhook?: {
+    publicUrlSet?: boolean;
+    appSecretSet?: boolean;
+    verifyTokenSet?: boolean;
+  } | null;
   worker?: {
     inline?: boolean;
     pollMs?: number;
@@ -305,7 +315,7 @@ export class CommunicationsService extends ApiService {
   }
 
   async getStatus(): Promise<ApiResponse<WhatsAppStatusPayload>> {
-    return api.get<WhatsAppStatusPayload>(`${this.basePath}/status`);
+    return api.get<WhatsAppStatusPayload>(`${this.basePath}/status?ts=${Date.now()}`);
   }
 
   async getAudit(): Promise<ApiResponse<Record<string, number>>> {
