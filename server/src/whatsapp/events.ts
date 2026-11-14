@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { logger } from "../utils/logger";
 import type { NotificationEventInput } from "./types";
+import { requestWhatsAppWorkerTick } from "./wake";
 
 type DbClient = typeof prisma | Prisma.TransactionClient;
 
@@ -58,7 +59,8 @@ export async function enqueueEvent(
 
 export async function enqueueEventSafely(input: NotificationEventInput): Promise<void> {
   try {
-    await enqueueEvent(input);
+    const result = await enqueueEvent(input);
+    if (result.created) requestWhatsAppWorkerTick();
   } catch (err) {
     logger.error("Failed to persist WhatsApp outbox event", {
       eventType: input.eventType,
