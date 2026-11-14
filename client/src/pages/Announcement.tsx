@@ -126,8 +126,8 @@ export default function Announcement() {
     checkStatus();
   }, [checkStatus]);
 
-  // Poll connection status every 30s, only while the tab is visible
-  useVisibilityPolling(checkStatus, 30000);
+  // Poll connection status every 60s, only while the tab is visible
+  useVisibilityPolling(checkStatus, 60000);
 
   useEffect(() => {
     let list = [...customers];

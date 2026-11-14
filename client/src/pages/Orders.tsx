@@ -189,7 +189,7 @@ export default function Orders() {
     setPage(1);
   }, [filter, showAll, startDate, endDate]);
 
-  useVisibilityPolling(refresh, 60000);
+  useVisibilityPolling(refresh, 120000);
 
   useEffect(() => {
     const onFocus = () => refresh();
