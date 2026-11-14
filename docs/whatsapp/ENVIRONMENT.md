@@ -32,7 +32,7 @@ enabled, and a kill switch. Every gate must be open before a send is attempted.
 | Variable | Default | Notes |
 | --- | --- | --- |
 | `WHATSAPP_WORKER_INLINE` | `false` | `true` runs the worker inside the API process; production should use a standalone worker. |
-| `WHATSAPP_WORKER_POLL_MS` | `5000` | Worker poll interval, 1000–60000 ms. |
+| `WHATSAPP_WORKER_POLL_MS` | `900000` | Fallback heartbeat only; work wakes the worker immediately. 30000-3600000 ms. |
 | `WHATSAPP_MAX_WORKER_CONCURRENCY` | `1` | Provider send concurrency, 1–20. Keep low for new numbers. |
 | `WHATSAPP_MAX_ATTEMPTS` | `5` | Maximum outbox attempts, 1–10. |
 | `WHATSAPP_QUEUE_NAME` | `whatsapp-notifications` | Informational queue name used in status output. |
@@ -60,6 +60,7 @@ WHATSAPP_PROVIDER=mock
 WHATSAPP_SEND_ENABLED=true
 WHATSAPP_CAMPAIGN_SEND_ENABLED=true
 WHATSAPP_WORKER_INLINE=false
+WHATSAPP_WORKER_POLL_MS=5000
 ```
 
 Then run the API (`npm run dev`) and a worker (`npm run worker:whatsapp`) in a second
@@ -89,8 +90,10 @@ See `META_SETUP_HANDOFF.md`.
 ## Neon recommendations
 
 - Use the pooled URL for the API and worker; use the unpooled URL for migrations.
-- Enable the worker window in production (for example 09:00–21:00 Asia/Kolkata) so
-  idle nightly polling does not keep the database active.
+- Enable the worker window in production (for example 09:00-21:00 Asia/Kolkata) so
+  the worker does not query the database at night.
+- The worker is event-driven: enqueues and campaign actions wake it immediately, with a
+  slow fallback heartbeat (`WHATSAPP_WORKER_POLL_MS`) so Neon can scale to zero.
 - Keep worker concurrency at `1` initially; raise it only after observing stable
   delivery and error rates.
 - Retention defaults to 180 days per branch and is configurable in the UI.
