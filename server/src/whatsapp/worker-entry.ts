@@ -1,12 +1,11 @@
-import { prisma } from "../db/prisma";
+import { connectDatabase, prisma } from "../db/prisma";
 import { logger } from "../utils/logger";
 import { initCache, destroyCache } from "../services/cache";
 import { REDIS_URL } from "../config";
 import { startWhatsAppWorker } from "./worker";
 
 async function main(): Promise<void> {
-  await prisma.$connect();
-  await prisma.$queryRaw`SELECT 1`;
+  await connectDatabase();
   if (REDIS_URL) {
     try {
       const redis = initCache(REDIS_URL);

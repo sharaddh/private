@@ -1,8 +1,8 @@
 import os from "os";
 import cluster from "cluster";
-import { PORT, REDIS_URL, NODE_ENV, ENABLE_CLUSTER, CLUSTER_WORKERS, isProduction } from "./config";
+import { PORT, REDIS_URL, NODE_ENV, ENABLE_CLUSTER, CLUSTER_WORKERS } from "./config";
 import app from "./app";
-import { prisma } from "./db/prisma";
+import { connectDatabase, prisma } from "./db/prisma";
 import { initCache, destroyCache } from "./services/cache";
 import { logger } from "./utils/logger";
 import { getWhatsAppConfig } from "./whatsapp/config";
@@ -10,17 +10,6 @@ import { startWhatsAppWorker } from "./whatsapp/worker";
 
 let server: ReturnType<typeof app.listen> | null = null;
 let stopWhatsAppWorker: (() => void) | null = null;
-
-async function connectDb(): Promise<void> {
-  try {
-    await prisma.$connect();
-    await prisma.$queryRaw`SELECT 1`;
-    logger.info("Postgres connection established");
-  } catch (err) {
-    logger.error("Postgres connection failed", { error: (err as Error).message });
-    process.exit(1);
-  }
-}
 
 async function initCacheIfConfigured(): Promise<void> {
   if (!REDIS_URL) return;
@@ -33,7 +22,7 @@ async function initCacheIfConfigured(): Promise<void> {
 }
 
 async function startWorker(): Promise<void> {
-  await connectDb();
+  await connectDatabase();
   await initCacheIfConfigured();
 
   server = app.listen(PORT, () => {
@@ -50,19 +39,10 @@ async function startWorker(): Promise<void> {
   if (getWhatsAppConfig().workerInline) {
     stopWhatsAppWorker = startWhatsAppWorker();
   }
-
-  if (isProduction) {
-    setInterval(
-      () => {
-        fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
-      },
-      10 * 60 * 1000
-    );
-  }
 }
 
 async function runPrimary(): Promise<void> {
-  await connectDb();
+  await connectDatabase();
 
   const workerCount = CLUSTER_WORKERS || os.cpus().length;
   logger.info(`Starting cluster with ${workerCount} workers`);
