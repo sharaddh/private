@@ -44,7 +44,7 @@ WhatsAppMessage  WhatsAppWebhookEvent
 | Consent | `server/src/whatsapp/consent.ts` | Normalize phones, derive status, enforce eligibility. |
 | Campaigns | `server/src/whatsapp/campaign.ts` | Audience preview, recipient materialization, throttled sends. |
 | Reminders | `server/src/whatsapp/reminders.ts` | Schedule and process balance-due reminders. |
-| Worker | `server/src/whatsapp/worker.ts`, `worker-entry.ts` | Polling loop for campaigns, reminders, outbox, webhooks, retention. |
+| Worker | `server/src/whatsapp/worker.ts`, `worker-entry.ts` | Event-driven loop (with slow fallback) for campaigns, reminders, outbox, webhooks, retention. |
 | API | `server/src/routes/communications.ts` | Owner-only configuration, templates, logs, consent, campaigns. |
 | UI | `client/src/pages/Communications.tsx` | Communications workspace tabs and controls. |
 
