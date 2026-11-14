@@ -55,7 +55,9 @@ export function getWhatsAppConfig(): WhatsAppConfig {
     campaignSendEnabled: boolEnv("WHATSAPP_CAMPAIGN_SEND_ENABLED"),
     maxWorkerConcurrency: intEnv("WHATSAPP_MAX_WORKER_CONCURRENCY", 1, 1, 20),
     queueName: env("WHATSAPP_QUEUE_NAME") || "whatsapp-notifications",
-    workerPollMs: intEnv("WHATSAPP_WORKER_POLL_MS", 5000, 1000, 60000),
+    // Fallback heartbeat only. Real work wakes the worker immediately via
+    // requestWhatsAppWorkerTick(), so this can be slow to let Neon suspend.
+    workerPollMs: intEnv("WHATSAPP_WORKER_POLL_MS", 15 * 60 * 1000, 30_000, 60 * 60 * 1000),
     workerInline: boolEnv("WHATSAPP_WORKER_INLINE"),
     maxAttempts: intEnv("WHATSAPP_MAX_ATTEMPTS", 5, 1, 10),
     workerWindowEnabled: boolEnv("WHATSAPP_WORKER_WINDOW_ENABLED"),
