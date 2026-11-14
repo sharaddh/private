@@ -8,8 +8,11 @@ import { processOutboxBatch } from "./outbox";
 import { processDueReminders } from "./reminders";
 import { purgeExpiredWhatsAppData, RETENTION_SWEEP_INTERVAL_MS } from "./retention";
 import { processPendingWebhookEvents } from "./webhook";
+import { onWhatsAppWorkerWake } from "./wake";
 
 const workerId = `${hostname()}-${process.pid}-${randomUUID().slice(0, 8)}`;
+const DRAIN_DELAY_MS = 1000;
+const WAKE_DELAY_MS = 250;
 
 let lastRetentionSweepAt = 0;
 
@@ -40,9 +43,10 @@ export async function runWhatsAppWorkerOnce(): Promise<{
   reminders: number;
   campaigns: number;
   campaignRecipients: number;
+  materialized: number;
 }> {
   const cfg = getWhatsAppConfig();
-  await materializeDueCampaigns();
+  const materialized = await materializeDueCampaigns();
   const webhooks = await processPendingWebhookEvents();
   const reminders = await processDueReminders();
   const outbox = await processOutboxBatch(workerId, cfg.maxWorkerConcurrency * 5);
@@ -55,17 +59,36 @@ export async function runWhatsAppWorkerOnce(): Promise<{
     campaigns += 1;
   }
 
-  return { outbox, webhooks, reminders, campaigns, campaignRecipients };
+  return { outbox, webhooks, reminders, campaigns, campaignRecipients, materialized };
 }
 
 export function startWhatsAppWorker(): () => void {
   const cfg = getWhatsAppConfig();
   let running = false;
   let stopped = false;
+  let pendingWake = false;
+  let scheduled: ReturnType<typeof setTimeout> | null = null;
   let windowState: boolean | null = null;
 
+  const scheduleTick = (delayMs: number) => {
+    if (stopped || scheduled) return;
+    scheduled = setTimeout(() => {
+      scheduled = null;
+      void tick();
+    }, delayMs);
+  };
+
+  const wake = () => {
+    if (stopped) return;
+    pendingWake = true;
+    if (!running) scheduleTick(WAKE_DELAY_MS);
+  };
+
   const tick = async () => {
-    if (running || stopped) return;
+    if (running || stopped) {
+      if (running) pendingWake = true;
+      return;
+    }
 
     const windowOpen = isWorkerWindowOpen(cfg);
     if (windowState !== windowOpen) {
@@ -83,8 +106,12 @@ export function startWhatsAppWorker(): () => void {
         }
       );
     }
-    if (!windowOpen) return;
+    if (!windowOpen) {
+      pendingWake = false;
+      return;
+    }
 
+    pendingWake = false;
     running = true;
     try {
       if (Date.now() - lastRetentionSweepAt >= RETENTION_SWEEP_INTERVAL_MS) {
@@ -100,9 +127,16 @@ export function startWhatsAppWorker(): () => void {
       }
 
       const result = await runWhatsAppWorkerOnce();
-      const workDone = Object.values(result).some((value) => value > 0);
+      const workDone =
+        result.outbox > 0 ||
+        result.webhooks > 0 ||
+        result.reminders > 0 ||
+        result.campaignRecipients > 0 ||
+        result.materialized > 0;
       if (workDone) {
         logger.info("WhatsApp worker processed work", { workerId, ...result });
+        // Keep draining a campaign/outbox burst, but only while work remains.
+        scheduleTick(DRAIN_DELAY_MS);
       }
     } catch (err) {
       logger.error("WhatsApp worker tick failed", {
@@ -111,24 +145,33 @@ export function startWhatsAppWorker(): () => void {
       });
     } finally {
       running = false;
+      if (pendingWake && !stopped && !scheduled) scheduleTick(WAKE_DELAY_MS);
     }
   };
 
   logger.info("WhatsApp worker started", {
     workerId,
     provider: cfg.provider,
-    pollMs: cfg.workerPollMs,
+    mode: "event-driven",
+    fallbackPollMs: cfg.workerPollMs,
     concurrency: cfg.maxWorkerConcurrency,
     sendEnabled: cfg.sendEnabled,
     campaignSendEnabled: cfg.campaignSendEnabled,
   });
 
+  const unregisterWake = onWhatsAppWorkerWake(wake);
   void tick();
   const timer = setInterval(() => void tick(), cfg.workerPollMs);
 
   const stop = () => {
     stopped = true;
+    pendingWake = false;
     clearInterval(timer);
+    if (scheduled) {
+      clearTimeout(scheduled);
+      scheduled = null;
+    }
+    unregisterWake();
     logger.info("WhatsApp worker stopped", { workerId });
   };
   process.once("SIGINT", stop);
