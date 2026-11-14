@@ -467,6 +467,7 @@ model WhatsAppCampaign {
 
   @@index([branchId, status, scheduledAt])
   @@index([branchId, createdAt])
+  @@index([status, scheduledAt])
   @@map("whatsapp_campaigns")
 }
 
@@ -530,6 +531,7 @@ model WhatsAppOutbox {
   messages WhatsAppMessage[]
 
   @@index([status, availableAt])
+  @@index([status, lockedAt])
   @@index([branchId, eventType, createdAt])
   @@index([branchId, customerId, createdAt])
   @@map("whatsapp_outbox")
@@ -590,6 +592,7 @@ model WhatsAppWebhookEvent {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
+  @@index([status, updatedAt])
   @@map("whatsapp_webhook_events")
 }
 
@@ -670,6 +673,7 @@ model WhatsAppReminder {
 
   @@unique([ruleId, billId])
   @@index([branchId, status, dueAt])
+  @@index([status, dueAt])
   @@index([billId, status])
   @@map("whatsapp_reminders")
 }
