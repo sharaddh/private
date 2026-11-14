@@ -5,12 +5,14 @@ import { AppError, errorHandler } from "./errorHandler";
 interface MockRes {
   status: (code: number) => MockRes;
   json: (body: unknown) => MockRes;
+  set: (name: string, value: string) => MockRes;
 }
 
 function mockRes(): MockRes {
   const res: Record<string, unknown> = {};
   res.status = vi.fn().mockReturnValue(res);
   res.json = vi.fn().mockReturnValue(res);
+  res.set = vi.fn().mockReturnValue(res);
   return res as unknown as MockRes;
 }
 
@@ -60,6 +62,24 @@ describe("errorHandler", () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ success: false, message: "Validation failed" })
+    );
+  });
+
+  it("returns 503 for transient database connection errors", () => {
+    const res = mockRes();
+    const err = Object.assign(new Error("Can't reach database server"), {
+      name: "PrismaClientInitializationError",
+      code: "P1001",
+    });
+    errorHandler(err, mockReq(), res as never, vi.fn());
+    expect(res.set).toHaveBeenCalledWith("Retry-After", "5");
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        code: "ERR_DB_UNAVAILABLE",
+        retryable: true,
+      })
     );
   });
 

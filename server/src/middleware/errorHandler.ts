@@ -107,6 +107,28 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     return;
   }
 
+  const prismaCode = (err as { code?: string }).code;
+  const transientDbError =
+    err.name === "PrismaClientInitializationError" ||
+    (typeof prismaCode === "string" &&
+      ["P1001", "P1002", "P1008", "P1017", "P2024"].includes(prismaCode));
+  if (transientDbError) {
+    logger.error("Database temporarily unavailable", {
+      message: err.message,
+      code: prismaCode,
+      path: req.originalUrl,
+      requestId,
+    });
+    res.set("Retry-After", "5");
+    res.status(503).json({
+      success: false,
+      code: "ERR_DB_UNAVAILABLE",
+      message: "Database is temporarily unavailable. Please retry.",
+      retryable: true,
+    });
+    return;
+  }
+
   logger.error("Unhandled error", {
     message: err.message,
     stack: err.stack,
