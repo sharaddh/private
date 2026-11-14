@@ -9,6 +9,7 @@ import { WhatsAppProviderError, toSafeErrorMessage } from "./provider";
 import { getApprovedTemplateForEvent, parseParameterMap, renderTemplatePreview } from "./templates";
 import { getWhatsAppConfig } from "./config";
 import { backoffDelayMs } from "./outbox";
+import { requestWhatsAppWorkerTick } from "./wake";
 
 export interface AudienceFilter {
   createdFrom?: string;
@@ -426,6 +427,7 @@ export async function startCampaignNow(branchId: string, id: string) {
     data: { status: "QUEUED", scheduledAt: new Date() },
   });
   await materializeCampaign(updated);
+  requestWhatsAppWorkerTick();
   return prisma.whatsAppCampaign.findUnique({ where: { id } });
 }
 
@@ -443,10 +445,12 @@ export async function resumeCampaign(branchId: string, id: string) {
   const campaign = await prisma.whatsAppCampaign.findFirst({ where: { id, branchId } });
   if (!campaign) throw new AppError(404, "Campaign not found");
   if (campaign.status !== "PAUSED") throw new AppError(400, "Only paused campaigns can resume");
-  return prisma.whatsAppCampaign.update({
+  const resumed = await prisma.whatsAppCampaign.update({
     where: { id },
     data: { status: "PROCESSING", pausedAt: null },
   });
+  requestWhatsAppWorkerTick();
+  return resumed;
 }
 
 export async function cancelCampaign(branchId: string, id: string) {
@@ -508,6 +512,7 @@ export async function retryCampaignFailures(branchId: string, id: string) {
       data: { status: "PROCESSING", completedAt: null, lastError: null },
     });
   });
+  requestWhatsAppWorkerTick();
   return { retried: retryable.length };
 }
 
