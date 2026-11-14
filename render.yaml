@@ -4,9 +4,11 @@ services:
     env: node
     buildCommand: npm ci --include=dev --production=false && npm run build -w client && npm run build -w warehouse && npm run build -w server
     startCommand: npm start
-    healthCheckPath: /api/ready
+    healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
         sync: false
       - key: JWT_SECRET
         sync: false
@@ -38,5 +40,17 @@ services:
         value: "false"
       - key: CLUSTER_WORKERS
         value: "0"
+      - key: WHATSAPP_WORKER_INLINE
+        value: "true"
+      - key: WHATSAPP_WORKER_POLL_MS
+        value: "900000"
+      - key: WHATSAPP_WORKER_WINDOW_ENABLED
+        value: "true"
+      - key: WHATSAPP_WORKER_WINDOW_START
+        value: "9"
+      - key: WHATSAPP_WORKER_WINDOW_END
+        value: "21"
+      - key: WHATSAPP_WORKER_TIMEZONE
+        value: Asia/Kolkata
     autoDeploy: true
     plan: free
