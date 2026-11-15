@@ -17,9 +17,7 @@ const audit_1 = require("./middleware/audit");
 const errorHandler_1 = require("./middleware/errorHandler");
 const requestId_1 = require("./middleware/requestId");
 const rateLimitStore_1 = require("./middleware/rateLimitStore");
-const verifyWebhook_1 = require("./middleware/verifyWebhook");
-const whatsapp_controller_1 = require("./controllers/whatsapp.controller");
-const asyncHandler_1 = require("./middleware/asyncHandler");
+const webhooks_1 = __importDefault(require("./routes/webhooks"));
 const jwt_1 = require("./utils/jwt");
 const logger_1 = require("./utils/logger");
 const spaFallback_1 = require("./utils/spaFallback");
@@ -65,11 +63,7 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 app.use((0, compression_1.default)({ level: 6, threshold: 1024 }));
-app.get("/api/whatsapp/webhook", (req, res) => (0, verifyWebhook_1.handleWebhookVerification)(req, res));
-app.post("/api/whatsapp/webhook", express_1.default.raw({ type: "application/json", limit: "1mb" }), (req, _res, next) => {
-    req.rawBody = req.body;
-    next();
-}, verifyWebhook_1.verifyWebhook, (0, asyncHandler_1.asyncHandler)(whatsapp_controller_1.webhookHandler));
+app.use("/api/webhooks", webhooks_1.default);
 app.use(express_1.default.json({ limit: "25mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "25mb" }));
 app.use(audit_1.audit);
