@@ -20,30 +20,31 @@ interface BranchData {
   ownerUsername?: string;
   ownerPassword?: string;
   logo?: string;
-  settings?: Record<string, string>;
+  settings?: Record<string, unknown>;
 }
 
 async function syncBranchShopSettings(branch: any) {
   try {
-    const s = (branch.settings || {}) as Record<string, string>;
+    const s = (branch.settings || {}) as Record<string, unknown>;
+    const text = (key: string) => (typeof s[key] === "string" ? (s[key] as string) : "");
     await prisma.settings.upsert({
       where: { branchId: branch.id },
       create: {
         branchId: branch.id,
-        shopName: s.shopName || branch.name || "",
-        shopAddress: s.shopAddress || branch.address || "",
-        shopPhone: s.shopPhone || branch.phone || "",
-        shopEmail: s.shopEmail || branch.email || "",
-        adminWhatsApp: s.ownerPhone || "",
-        logo: s.logo || "",
+        shopName: text("shopName") || branch.name || "",
+        shopAddress: text("shopAddress") || branch.address || "",
+        shopPhone: text("shopPhone") || branch.phone || "",
+        shopEmail: text("shopEmail") || branch.email || "",
+        adminWhatsApp: text("ownerPhone"),
+        logo: text("logo"),
       },
       update: {
-        shopName: s.shopName || branch.name || "",
-        shopAddress: s.shopAddress || branch.address || "",
-        shopPhone: s.shopPhone || branch.phone || "",
-        shopEmail: s.shopEmail || branch.email || "",
-        adminWhatsApp: s.ownerPhone || "",
-        logo: s.logo || "",
+        shopName: text("shopName") || branch.name || "",
+        shopAddress: text("shopAddress") || branch.address || "",
+        shopPhone: text("shopPhone") || branch.phone || "",
+        shopEmail: text("shopEmail") || branch.email || "",
+        adminWhatsApp: text("ownerPhone"),
+        logo: text("logo"),
       },
     });
   } catch (e: any) {
@@ -153,7 +154,13 @@ export async function createBranch(data: BranchData) {
 }
 
 export async function updateBranch(id: string, data: Record<string, unknown>) {
+  const incomingSettings =
+    data.settings && typeof data.settings === "object"
+      ? (data.settings as Record<string, unknown>)
+      : undefined;
+
   if (
+    incomingSettings ||
     data.ownerName ||
     data.ownerPhone ||
     data.ownerEmail ||
@@ -164,7 +171,7 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
     data.email
   ) {
     const existing = await Branch.findUnique({ where: { id }, select: { settings: true } });
-    const settings = { ...((existing?.settings as Record<string, string>) || {}) };
+    const settings = { ...((existing?.settings as Record<string, unknown>) || {}) };
     if (data.name) settings.shopName = data.name as string;
     if (data.address) settings.shopAddress = data.address as string;
     if (data.phone) settings.shopPhone = data.phone as string;
@@ -173,6 +180,7 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
     if (data.ownerPhone) settings.ownerPhone = data.ownerPhone as string;
     if (data.ownerEmail) settings.ownerEmail = data.ownerEmail as string;
     if (data.logo) settings.logo = data.logo as string;
+    if (incomingSettings) Object.assign(settings, incomingSettings);
     data.settings = settings;
   }
   const filtered: Record<string, unknown> = {};

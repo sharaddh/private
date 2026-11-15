@@ -20,6 +20,8 @@ import {
 import Modal from '../components/Modal';
 import CameraScanner from '../components/CameraScanner';
 import SmartSuggestInput from '../components/smart/SmartSuggestInput';
+import CatalogSelect from '../components/CatalogSelect';
+import { CATALOG_OPTION_HINDI, useFormCatalog } from '../hooks/useFormCatalog';
 import PowerSelect, { type PowerKind } from '../components/smart/PowerSelect';
 import { useCustomerFieldSuggestions } from '../hooks/useCustomerSuggestions';
 import { cleanEyeSet } from '../utils/rx';
@@ -67,6 +69,7 @@ const VISIT_TYPES = [
 export default function NewVisit() {
   const toast = useToast();
   const { uiT } = useTranslate();
+  const formCatalog = useFormCatalog();
   const [phoneSearch, setPhoneSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -1036,11 +1039,13 @@ export default function NewVisit() {
                           value={f.model}
                           onChange={(e) => updateFrame(i, 'model', e.target.value)}
                         />
-                        <input
-                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-20"
-                          placeholder="Color"
+                        <CatalogSelect
+                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-24"
+                          options={formCatalog.frameColors}
                           value={f.color}
+                          placeholder={uiT('Color', 'रंग')}
                           onChange={(e) => updateFrame(i, 'color', e.target.value)}
+                          aria-label={uiT('Frame color', 'फ्रेम का रंग')}
                         />
                         <input
                           type="number"
@@ -1100,33 +1105,28 @@ export default function NewVisit() {
                           onChange={(e) => updateLens(i, 'brand', e.target.value)}
                         />
                         <div className="flex gap-1 flex-wrap">
-                          {[
-                            { en: 'Single Vision', hi: 'सिंगल विज़न' },
-                            { en: 'Bifocal', hi: 'बाईफोकल' },
-                            { en: 'Progressive', hi: 'प्रोग्रेसिव' },
-                            { en: 'Blue Cut', hi: 'ब्लू कट' },
-                            { en: 'Photochromic', hi: 'फोटोक्रोमिक' },
-                            { en: 'Anti-Glare', hi: 'एंटी-ग्लेयर' },
-                          ].map((f) => (
+                          {formCatalog.lensFeatures.map((feature) => (
                             <button
-                              key={f.en}
+                              key={feature}
                               type="button"
-                              onClick={() => toggleFeature(i, f.en)}
+                              onClick={() => toggleFeature(i, feature)}
                               className={`text-[14px] px-2 py-0.5 rounded-full border transition-all ${
-                                l.features.includes(f.en)
+                                l.features.includes(feature)
                                   ? 'bg-[#1ed760]/10 border-[#1ed760] text-[#1ed760]'
                                   : 'bg-th-surface border-th-border text-th-secondary'
                               }`}
                             >
-                              {uiT(f.en, f.hi)}
+                              {uiT(feature, CATALOG_OPTION_HINDI[feature] ?? feature)}
                             </button>
                           ))}
                         </div>
-                        <input
-                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-16"
-                          placeholder="Index"
+                        <CatalogSelect
+                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-20"
+                          options={formCatalog.lensIndexes}
                           value={l.index}
+                          placeholder={uiT('Index', 'इंडेक्स')}
                           onChange={(e) => updateLens(i, 'index', e.target.value)}
+                          aria-label={uiT('Lens index', 'लेंस इंडेक्स')}
                         />
                         <input
                           type="number"
@@ -1135,11 +1135,13 @@ export default function NewVisit() {
                           value={l.price || ''}
                           onChange={(e) => updateLens(i, 'price', Number(e.target.value))}
                         />
-                        <input
-                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-20"
-                          placeholder="Coating"
+                        <CatalogSelect
+                          className="text-xs py-1.5 px-2 rounded-md border border-th-border bg-th-surface w-28"
+                          options={formCatalog.lensCoatings}
                           value={l.coating}
+                          placeholder={uiT('Coating', 'कोटिंग')}
                           onChange={(e) => updateLens(i, 'coating', e.target.value)}
+                          aria-label={uiT('Lens coating', 'लेंस कोटिंग')}
                         />
                         <button
                           onClick={() => removeLens(i)}
@@ -1166,11 +1168,13 @@ export default function NewVisit() {
                     </div>
                     {orderAccessories.map((a, i) => (
                       <div key={i} className="flex items-center gap-2 mb-1.5">
-                        <input
+                        <CatalogSelect
                           className="input-field flex-1 text-xs"
-                          placeholder="Name"
+                          options={formCatalog.accessoryNames}
                           value={a.name}
+                          placeholder={uiT('Name', 'नाम')}
                           onChange={(e) => updateAccessory(i, 'name', e.target.value)}
+                          aria-label={uiT('Accessory name', 'एक्सेसरी का नाम')}
                         />
                         <input
                           type="number"

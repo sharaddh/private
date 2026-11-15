@@ -32,6 +32,8 @@ import {
   EyeOff,
   Crown,
   Languages,
+  Layers,
+  Grid3X3,
 } from 'lucide-react';
 import type { User as AppUser } from '../types';
 import SettingsHeader from './settings/SettingsHeader';
@@ -40,6 +42,12 @@ import type { Section } from './settings/SectionNav';
 import SectionCard from './settings/SectionCard';
 import { Input, Textarea, Select } from './settings/FormField';
 import ThemeToggle from './settings/ThemeToggle';
+import StringListEditor from './settings/StringListEditor';
+import {
+  DEFAULT_FORM_CATALOG,
+  readFormCatalog,
+  type FormCatalog,
+} from '../hooks/useFormCatalog';
 import {
   communicationsService,
   type WhatsAppStatusPayload,
@@ -64,15 +72,37 @@ interface Branch {
     ownerName: string;
     ownerPhone: string;
     ownerEmail: string;
+    frameColors?: string[];
+    lensFeatures?: string[];
+    lensIndexes?: string[];
+    lensCoatings?: string[];
+    accessoryNames?: string[];
   };
 }
 
 const ALL_SECTIONS: Section[] = [
   { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={15} /> },
   { id: 'branches', label: 'Branches', icon: <Building2 size={15} /> },
+  { id: 'frames', label: 'Frames', icon: <Eye size={15} /> },
+  { id: 'lenses', label: 'Lenses', icon: <Layers size={15} /> },
+  { id: 'accessories', label: 'Accessories', icon: <Grid3X3 size={15} /> },
   { id: 'staff', label: 'Staff', icon: <Shield size={15} /> },
   { id: 'account', label: 'Account', icon: <User size={15} /> },
 ];
+
+function sanitizeOptions(values: string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of values) {
+    const value = raw.trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
 
 export default function Settings() {
   const { user, isStaff, setUser, setCurrentBranch, currentBranch, branches } = useAuth();
@@ -115,9 +145,14 @@ export default function Settings() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [catalogForm, setCatalogForm] = useState<FormCatalog>(DEFAULT_FORM_CATALOG);
+  const [catalogSaving, setCatalogSaving] = useState(false);
   const sectionLabelMap: Record<string, string> = {
     whatsapp: 'WhatsApp',
     branches: uiT('Branches', 'शाखाएँ'),
+    frames: uiT('Frames', 'फ्रेम'),
+    lenses: uiT('Lenses', 'लेंस'),
+    accessories: uiT('Accessories', 'एक्सेसरीज़'),
     staff: uiT('Staff', 'स्टाफ'),
     account: uiT('Account', 'खाता'),
   };
@@ -189,8 +224,37 @@ export default function Settings() {
   async function loadBranches() {
     try {
       const d = await api.get<Branch[]>('/api/branches');
-      if (d.success) setAllBranches(d.data || []);
+      if (d.success) {
+        const list = d.data || [];
+        setAllBranches(list);
+        const branch = list.find((item) => item._id === currentBranch?._id);
+        if (branch) setCatalogForm(readFormCatalog(branch.settings));
+      }
     } catch {}
+  }
+
+  async function handleSaveCatalog() {
+    if (!currentBranch?._id) {
+      toast.error('Select a branch first');
+      return;
+    }
+    const settings = {
+      frameColors: sanitizeOptions(catalogForm.frameColors),
+      lensFeatures: sanitizeOptions(catalogForm.lensFeatures),
+      lensIndexes: sanitizeOptions(catalogForm.lensIndexes),
+      lensCoatings: sanitizeOptions(catalogForm.lensCoatings),
+      accessoryNames: sanitizeOptions(catalogForm.accessoryNames),
+    };
+    setCatalogSaving(true);
+    const res = await api.put(`/api/branches/${currentBranch._id}`, { settings });
+    setCatalogSaving(false);
+    if (res.success) {
+      setCatalogForm(settings);
+      toast.success('Form options saved');
+      loadBranches();
+    } else {
+      toast.error(res.message || 'Failed to save form options');
+    }
   }
 
   useEffect(() => {
@@ -866,6 +930,141 @@ export default function Settings() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </SectionCard>
+                </div>
+              )}
+
+              {/* ──────────────── FRAMES ──────────────── */}
+              {activeSection === 'frames' && !isStaff && (
+                <div>
+                  <SectionCard
+                    icon={<Eye size={16} />}
+                    title={uiT('Frame Options', 'फ्रेम विकल्प')}
+                    subtitle={uiT(
+                      'Choose the colours available in the New Visit frame form',
+                      'नई विज़िट के फ्रेम फ़ॉर्म में उपलब्ध रंग चुनें'
+                    )}
+                  >
+                    <div className="space-y-5">
+                      <StringListEditor
+                        label={uiT('Frame Colours', 'फ्रेम रंग')}
+                        values={catalogForm.frameColors}
+                        onChange={(frameColors) =>
+                          setCatalogForm((prev) => ({ ...prev, frameColors }))
+                        }
+                        placeholder={uiT('e.g. Black', 'जैसे काला')}
+                        addLabel={uiT('Add colour', 'रंग जोड़ें')}
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary btn-sm"
+                        onClick={handleSaveCatalog}
+                        disabled={catalogSaving}
+                      >
+                        {catalogSaving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        {uiT('Save options', 'विकल्प सहेजें')}
+                      </button>
+                    </div>
+                  </SectionCard>
+                </div>
+              )}
+
+              {/* ──────────────── LENSES ──────────────── */}
+              {activeSection === 'lenses' && !isStaff && (
+                <div>
+                  <SectionCard
+                    icon={<Layers size={16} />}
+                    title={uiT('Lens Options', 'लेंस विकल्प')}
+                    subtitle={uiT(
+                      'Manage lens features, indexes and coatings shown in the visit form',
+                      'विज़िट फ़ॉर्म में दिखने वाले लेंस फीचर, इंडेक्स और कोटिंग प्रबंधित करें'
+                    )}
+                  >
+                    <div className="space-y-6">
+                      <StringListEditor
+                        label={uiT('Lens Features', 'लेंस फीचर')}
+                        values={catalogForm.lensFeatures}
+                        onChange={(lensFeatures) =>
+                          setCatalogForm((prev) => ({ ...prev, lensFeatures }))
+                        }
+                        placeholder={uiT('e.g. Progressive', 'जैसे प्रोग्रेसिव')}
+                        addLabel={uiT('Add feature', 'फीचर जोड़ें')}
+                      />
+                      <StringListEditor
+                        label={uiT('Lens Indexes', 'लेंस इंडेक्स')}
+                        values={catalogForm.lensIndexes}
+                        onChange={(lensIndexes) =>
+                          setCatalogForm((prev) => ({ ...prev, lensIndexes }))
+                        }
+                        placeholder={uiT('e.g. 1.61', 'जैसे 1.61')}
+                        addLabel={uiT('Add index', 'इंडेक्स जोड़ें')}
+                      />
+                      <StringListEditor
+                        label={uiT('Lens Coatings', 'लेंस कोटिंग')}
+                        values={catalogForm.lensCoatings}
+                        onChange={(lensCoatings) =>
+                          setCatalogForm((prev) => ({ ...prev, lensCoatings }))
+                        }
+                        placeholder={uiT('e.g. Anti-Glare', 'जैसे एंटी-ग्लेयर')}
+                        addLabel={uiT('Add coating', 'कोटिंग जोड़ें')}
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary btn-sm"
+                        onClick={handleSaveCatalog}
+                        disabled={catalogSaving}
+                      >
+                        {catalogSaving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        {uiT('Save options', 'विकल्प सहेजें')}
+                      </button>
+                    </div>
+                  </SectionCard>
+                </div>
+              )}
+
+              {/* ──────────────── ACCESSORIES ──────────────── */}
+              {activeSection === 'accessories' && !isStaff && (
+                <div>
+                  <SectionCard
+                    icon={<Grid3X3 size={16} />}
+                    title={uiT('Accessory Options', 'एक्सेसरी विकल्प')}
+                    subtitle={uiT(
+                      'Choose the accessories available in the visit form',
+                      'विज़िट फ़ॉर्म में उपलब्ध एक्सेसरीज़ चुनें'
+                    )}
+                  >
+                    <div className="space-y-5">
+                      <StringListEditor
+                        label={uiT('Accessory Names', 'एक्सेसरी नाम')}
+                        values={catalogForm.accessoryNames}
+                        onChange={(accessoryNames) =>
+                          setCatalogForm((prev) => ({ ...prev, accessoryNames }))
+                        }
+                        placeholder={uiT('e.g. Cleaning Cloth', 'जैसे क्लीनिंग कपड़ा')}
+                        addLabel={uiT('Add accessory', 'एक्सेसरी जोड़ें')}
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary btn-sm"
+                        onClick={handleSaveCatalog}
+                        disabled={catalogSaving}
+                      >
+                        {catalogSaving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        {uiT('Save options', 'विकल्प सहेजें')}
+                      </button>
                     </div>
                   </SectionCard>
                 </div>

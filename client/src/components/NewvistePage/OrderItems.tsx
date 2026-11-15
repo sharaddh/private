@@ -15,6 +15,12 @@ import {
   Layers,
 } from 'lucide-react';
 import { useTranslate } from '../../context/TranslateContext';
+import CatalogSelect from '../CatalogSelect';
+import {
+  CATALOG_OPTION_HINDI,
+  useFormCatalog,
+  type FormCatalog,
+} from '../../hooks/useFormCatalog';
 
 interface Frame {
   sku: string;
@@ -114,6 +120,7 @@ interface OrderFramesProps {
   isFocused: boolean;
   setIsFocused: (v: boolean) => void;
   setOrderFrames: (f: Frame[] | ((prev: Frame[]) => Frame[])) => void;
+  catalog: FormCatalog;
 }
 
 function OrderFrames({
@@ -129,6 +136,7 @@ function OrderFrames({
   isFocused,
   setIsFocused,
   setOrderFrames,
+  catalog,
 }: OrderFramesProps) {
   const { uiT } = useTranslate();
 
@@ -246,11 +254,13 @@ function OrderFrames({
                   size={13}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
                 />
-                <input
-                  placeholder={uiT('Color', 'रंग')}
+                <CatalogSelect
+                  options={catalog.frameColors}
                   value={f.color}
+                  placeholder={uiT('Color', 'रंग')}
                   onChange={(e) => updateFrame(i, 'color', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
+                  aria-label={uiT('Frame color', 'फ्रेम का रंग')}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
               <div className="relative">
@@ -288,19 +298,17 @@ interface OrderLensesProps {
   updateLens: (i: number, field: string, value: any) => void;
   removeLens: (i: number) => void;
   setOrderLenses: (l: Lens[] | ((prev: Lens[]) => Lens[])) => void;
+  catalog: FormCatalog;
 }
 
-function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: OrderLensesProps) {
+function OrderLenses({
+  orderLenses,
+  updateLens,
+  removeLens,
+  setOrderLenses,
+  catalog,
+}: OrderLensesProps) {
   const { uiT } = useTranslate();
-
-  const LENS_FEATURES = [
-    uiT('Single Vision', 'सिंगल विज़न'),
-    uiT('Bifocal', 'बाइफोकल'),
-    uiT('Progressive', 'प्रोग्रेसिव'),
-    uiT('Bluecut', 'ब्लूकट'),
-    uiT('Photochromic', 'फोटोक्रोमिक'),
-    uiT('Anti-Glare', 'एंटी-ग्लेयर'),
-  ];
 
   return (
     <SectionCard
@@ -347,7 +355,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {LENS_FEATURES.map((feature) => {
+                  {catalog.lensFeatures.map((feature) => {
                     const isSelected = l.features.includes(feature);
                     return (
                       <button
@@ -365,7 +373,7 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                             : 'bg-th-elevated text-th-secondary hover:bg-th-card'
                         }`}
                       >
-                        {feature}
+                        {uiT(feature, CATALOG_OPTION_HINDI[feature] ?? feature)}
                       </button>
                     );
                   })}
@@ -390,11 +398,13 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   size={13}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none"
                 />
-                <input
-                  placeholder={uiT('Index (e.g. 1.61)', 'इंडेक्स (जैसे 1.61)')}
+                <CatalogSelect
+                  options={catalog.lensIndexes}
                   value={l.index}
+                  placeholder={uiT('Index (e.g. 1.61)', 'इंडेक्स (जैसे 1.61)')}
                   onChange={(e) => updateLens(i, 'index', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
+                  aria-label={uiT('Lens index', 'लेंस इंडेक्स')}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -403,11 +413,13 @@ function OrderLenses({ orderLenses, updateLens, removeLens, setOrderLenses }: Or
                   size={13}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary pointer-events-none"
                 />
-                <input
-                  placeholder={uiT('Coating', 'कोटिंग')}
+                <CatalogSelect
+                  options={catalog.lensCoatings}
                   value={l.coating}
+                  placeholder={uiT('Coating', 'कोटिंग')}
                   onChange={(e) => updateLens(i, 'coating', e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
+                  aria-label={uiT('Lens coating', 'लेंस कोटिंग')}
+                  className="w-full pl-8 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-xs font-medium border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                 />
               </div>
 
@@ -446,6 +458,7 @@ interface OrderAccessoriesProps {
   updateAccessory: (i: number, field: string, value: any) => void;
   removeAccessory: (i: number) => void;
   setOrderAccessories: (a: Accessory[] | ((prev: Accessory[]) => Accessory[])) => void;
+  catalog: FormCatalog;
 }
 
 function OrderAccessories({
@@ -453,6 +466,7 @@ function OrderAccessories({
   updateAccessory,
   removeAccessory,
   setOrderAccessories,
+  catalog,
 }: OrderAccessoriesProps) {
   const { uiT } = useTranslate();
 
@@ -480,11 +494,13 @@ function OrderAccessories({
                     size={14}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-th-secondary"
                   />
-                  <input
-                    placeholder={uiT('Accessory Name', 'एक्सेसरी का नाम')}
+                  <CatalogSelect
+                    options={catalog.accessoryNames}
                     value={a.name}
+                    placeholder={uiT('Accessory Name', 'एक्सेसरी का नाम')}
                     onChange={(e) => updateAccessory(i, 'name', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium placeholder-th-secondary border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
+                    aria-label={uiT('Accessory name', 'एक्सेसरी का नाम')}
+                    className="w-full pl-9 pr-3 py-2 bg-th-elevated text-th-text rounded-md text-sm font-medium border border-th-border focus:outline-none focus:border-th-accent focus:ring-2 focus:ring-th-accent/20 transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -542,6 +558,8 @@ interface Props {
 }
 
 export default function OrderItems(props: Props) {
+  const catalog = useFormCatalog();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -550,11 +568,11 @@ export default function OrderItems(props: Props) {
       className="space-y-6"
     >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-        <OrderFrames {...props} />
-        <OrderLenses {...props} />
+        <OrderFrames {...props} catalog={catalog} />
+        <OrderLenses {...props} catalog={catalog} />
       </div>
 
-      <OrderAccessories {...props} />
+      <OrderAccessories {...props} catalog={catalog} />
     </motion.div>
   );
 }

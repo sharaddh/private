@@ -44,6 +44,11 @@ export interface BranchInfo {
     ownerName?: string;
     ownerPhone?: string;
     ownerEmail?: string;
+    frameColors?: string[];
+    lensFeatures?: string[];
+    lensIndexes?: string[];
+    lensCoatings?: string[];
+    accessoryNames?: string[];
   };
 }
 
