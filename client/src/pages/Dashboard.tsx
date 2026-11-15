@@ -131,16 +131,37 @@ function MetricCard({
   trend?: string;
   subtitle?: string;
 }) {
+  const trendIsDown = trend?.trim().startsWith('-') ?? false;
+
   return (
-    <ShineCard className="flex flex-col items-center text-center bg-th-surface rounded-xl px-2 sm:px-3 py-3 sm:py-4 h-full active:scale-95 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-default transition-all duration-200 group">
-      <div
-        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mb-1.5 sm:mb-2.5 transition-transform duration-200 group-hover:scale-110"
-        style={{ backgroundColor: `${color}15` }}
-      >
-        <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
+    <ShineCard className="flex flex-col bg-th-surface rounded-xl px-3 py-3 sm:px-4 sm:py-4 h-full active:scale-95 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-default transition-all duration-200 group">
+      <div className="flex items-start justify-between gap-2">
+        <div
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+          style={{ backgroundColor: `${color}15` }}
+        >
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color }} />
+        </div>
+        {trend && (
+          <span
+            className={`inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold px-1 sm:px-1.5 py-0.5 rounded-md whitespace-nowrap ${
+              trendIsDown ? 'text-[#ef4444] bg-[#ef4444]/10' : 'text-[#1ed760] bg-[#1ed760]/10'
+            }`}
+          >
+            {trendIsDown ? (
+              <TrendingDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+            ) : (
+              <TrendingUp className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+            )}
+            {trend}
+          </span>
+        )}
       </div>
+      <p className="text-[11px] sm:text-[12px] font-semibold text-th-secondary mt-2 sm:mt-2.5 leading-tight line-clamp-2 min-h-[2.2em]">
+        {label}
+      </p>
       <span
-        className="text-base sm:text-lg font-bold text-th-text tracking-tight leading-tight"
+        className="text-[17px] sm:text-xl font-bold text-th-text tracking-tight leading-none mt-1 tabular-nums"
         style={{ color }}
       >
         {typeof value === 'number' ? (
@@ -149,17 +170,8 @@ function MetricCard({
           value
         )}
       </span>
-      {trend && (
-        <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-[#1ed760] bg-[#1ed760]/10 px-1 sm:px-1.5 py-0.5 rounded-md mt-0.5 sm:mt-1 whitespace-nowrap">
-          <TrendingUp className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
-          {trend}
-        </span>
-      )}
-      <p className="text-[11px] sm:text-[12px] font-semibold text-th-secondary mt-1 sm:mt-1.5 leading-tight line-clamp-2">
-        {label}
-      </p>
       {subtitle && (
-        <p className="text-[10px] sm:text-[11px] text-th-muted mt-0.5 leading-tight line-clamp-1">
+        <p className="text-[10px] sm:text-[11px] text-th-muted mt-1 leading-tight line-clamp-1">
           {subtitle}
         </p>
       )}
@@ -893,7 +905,7 @@ export default function Dashboard() {
   const renderQuickActions = () => (
     <div>
       <SectionHeader title={uiT('Quick Actions', 'त्वरित कार्य')} />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3">
         <QuickActionCard
           icon={ShoppingCart}
           label={uiT('New Sale', 'नई बिक्री')}
@@ -972,7 +984,7 @@ export default function Dashboard() {
   const renderKPIs = () => (
     <div>
       <SectionHeader title={uiT('Key Metrics', 'मुख्य मापदंड')} />
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <MetricCard
           label={uiT("Today's Sales", 'आज की बिक्री')}
           value={`₹${(d.todaySales || 0).toLocaleString()}`}
@@ -1048,23 +1060,27 @@ export default function Dashboard() {
     const hasOrdersTrend = d.weeklyOrderTrend && d.weeklyOrderTrend.length > 0;
     const hasCategories = d.categoryBreakdown && d.categoryBreakdown.length > 0;
     const hasTodayPayments = d.todayPaymentModeSplit && d.todayPaymentModeSplit.length > 0;
+    const hasSalesVsCollection = hasSales && hasCollections;
+    const row2Count = [hasSalesVsCollection, hasPayments, hasTodayPayments].filter(Boolean).length;
+    const showRow1 = hasSales || hasOrders;
+    const showRow2 = row2Count > 0;
+    const showRow3 = hasOrdersTrend || hasCategories;
 
-    if (!hasSales && !hasOrders && !hasPayments) return null;
+    if (!showRow1 && !showRow2 && !showRow3) return null;
 
     return (
-      <div className="space-y-4 sm:space-y-5">
-        {/* Row 1: Sales Trend (large) + Order Status Donut */}
+      <div className="space-y-4 sm:space-y-6">
         {(hasSales || hasOrders) && (
           <div>
             <SectionHeader title={uiT('Analytics Overview', 'विश्लेषण अवलोकन')} />
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
               {hasSales && (
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 h-full min-w-0">
                   <SalesTrendChart data={d.dailySales || []} />
                 </div>
               )}
               {hasOrders && (
-                <div className={hasSales ? 'lg:col-span-2' : 'lg:col-span-5'}>
+                <div className={`h-full min-w-0 ${hasSales ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
                   <OrderStatusDonut data={d.orderStatusCounts || []} />
                 </div>
               )}
@@ -1072,11 +1088,18 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Row 2: Sales vs Collection + Payment Modes + Today's Payments */}
-        {(hasSales || hasPayments || hasTodayPayments) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {hasSales && hasCollections && (
-              <div className={hasPayments || hasTodayPayments ? '' : 'md:col-span-2'}>
+        {showRow2 && (
+          <div
+            className={`grid grid-cols-1 gap-4 sm:gap-5 ${
+              row2Count >= 3
+                ? 'md:grid-cols-2 lg:grid-cols-3'
+                : row2Count === 2
+                  ? 'md:grid-cols-2'
+                  : ''
+            }`}
+          >
+            {hasSalesVsCollection && (
+              <div className="h-full min-w-0">
                 <SalesVsCollectionChart
                   salesData={d.dailySales || []}
                   collectionData={d.dailyCollections || []}
@@ -1084,28 +1107,29 @@ export default function Dashboard() {
               </div>
             )}
             {hasPayments && (
-              <div className={hasSales && hasCollections ? '' : 'md:col-span-2'}>
+              <div className="h-full min-w-0">
                 <PaymentModeBarChart data={d.paymentModeSplit || []} />
               </div>
             )}
             {hasTodayPayments && (
-              <div className={hasSales && hasCollections ? '' : 'md:col-span-2'}>
+              <div
+                className={`h-full min-w-0 ${row2Count === 3 ? 'md:col-span-2 lg:col-span-1' : ''}`}
+              >
                 <TodayPaymentDonut data={d.todayPaymentModeSplit || []} />
               </div>
             )}
           </div>
         )}
 
-        {/* Row 3: Daily Orders + Inventory Category Breakdown */}
-        {(hasOrdersTrend || hasCategories) && (
+        {showRow3 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {hasOrdersTrend && (
-              <div className={hasCategories ? '' : 'md:col-span-2'}>
+              <div className={`h-full min-w-0 ${hasCategories ? '' : 'md:col-span-2'}`}>
                 <WeeklyOrdersChart data={d.weeklyOrderTrend || []} />
               </div>
             )}
             {hasCategories && (
-              <div className={hasOrdersTrend ? '' : 'md:col-span-2'}>
+              <div className={`h-full min-w-0 ${hasOrdersTrend ? '' : 'md:col-span-2'}`}>
                 <CategoryPieChart data={d.categoryBreakdown || []} />
               </div>
             )}
@@ -2117,7 +2141,7 @@ const custObj = typeof o.customer === 'object' ? o.customer : null;
 
   return (
     <div className="bg-th-base min-h-screen" role="main">
-      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 px-3 sm:px-4 md:px-6 py-3 sm:py-5 md:py-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-6 py-3 sm:py-5 md:py-6">
         <div className="section-animate">{renderHeader()}</div>
         {!isStaff && (
           <>

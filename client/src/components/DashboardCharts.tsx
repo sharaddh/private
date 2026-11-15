@@ -56,7 +56,7 @@ export function SalesTrendChart({
         : '0';
   const trendUp = chartTrend === 'N/A' ? true : Number(chartTrend) >= 0;
   return (
-    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -70,7 +70,7 @@ export function SalesTrendChart({
           {chartTrend === 'N/A' ? 'NEW' : `${trendUp ? '+' : ''}${chartTrend}%`}
         </span>
       </div>
-      <div className="h-52">
+      <div className="min-h-[12rem] flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
@@ -122,7 +122,7 @@ export function OrderStatusDonut({
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -133,8 +133,8 @@ export function OrderStatusDonut({
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-3 sm:gap-4">
-        <div className="h-28 w-28 sm:h-40 sm:w-40 flex-shrink-0">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+        <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -158,7 +158,7 @@ export function OrderStatusDonut({
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-1.5 sm:space-y-2">
+        <div className="w-full min-w-0 flex-1 space-y-2">
           {data.map((d, i) => (
             <div key={`${d.status}-${i}`} className="flex items-center gap-1.5 sm:gap-2">
               <span
@@ -195,7 +195,7 @@ export function PaymentModeBarChart({
   }));
 
   return (
-    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -204,7 +204,7 @@ export function PaymentModeBarChart({
           <p className="text-[12px] sm:text-[15px] text-th-secondary mt-0.5">This month</p>
         </div>
       </div>
-      <div className="h-48">
+      <div className="min-h-[12rem] flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
@@ -262,7 +262,7 @@ export function SalesVsCollectionChart({
   }));
 
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -281,7 +281,7 @@ export function SalesVsCollectionChart({
           <span className="text-[13px] text-th-secondary">Collection</span>
         </div>
       </div>
-      <div className="h-48">
+      <div className="min-h-[12rem] flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={merged} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
@@ -350,7 +350,7 @@ export function WeeklyOrdersChart({
   }));
 
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -359,7 +359,7 @@ export function WeeklyOrdersChart({
           <p className="text-[15px] text-th-secondary mt-0.5">Last 30 days</p>
         </div>
       </div>
-      <div className="h-48">
+      <div className="min-h-[12rem] flex-1 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
@@ -399,7 +399,7 @@ export function TodayPaymentDonut({
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.total, 0);
   return (
-    <div className="bg-th-surface rounded-xl p-3 sm:p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="text-[14px] sm:text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -410,8 +410,8 @@ export function TodayPaymentDonut({
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-3 sm:gap-4">
-        <div className="h-28 w-28 sm:h-40 sm:w-40 flex-shrink-0">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+        <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -438,7 +438,7 @@ export function TodayPaymentDonut({
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-1.5 sm:space-y-2">
+        <div className="w-full min-w-0 flex-1 space-y-2">
           {data.map((d, i) => (
             <div key={`${d.mode}-${i}`} className="flex items-center gap-1.5 sm:gap-2">
               <span
@@ -475,7 +475,7 @@ export function CategoryPieChart({
   const total = data.reduce((s, d) => s + d.count, 0);
 
   return (
-    <div className="bg-th-surface rounded-xl p-5 shadow-md h-full">
+    <div className="bg-th-surface rounded-xl p-4 sm:p-5 shadow-md h-full flex flex-col min-w-0">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[17px] font-bold text-th-text uppercase tracking-wider">
@@ -484,8 +484,8 @@ export function CategoryPieChart({
           <p className="text-[15px] text-th-secondary mt-0.5">{total} items</p>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="h-40 w-40 flex-shrink-0">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+        <div className="h-36 w-36 sm:h-40 sm:w-40 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -509,7 +509,7 @@ export function CategoryPieChart({
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-2">
+        <div className="w-full min-w-0 flex-1 space-y-2">
           {data.slice(0, 5).map((d, i) => (
             <div key={`${d.category}-${i}`} className="flex items-center gap-2">
               <span
