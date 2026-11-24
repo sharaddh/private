@@ -1,10 +1,14 @@
 import { Request, Response } from "express";
 import * as visitService from "../services/visit.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
 export async function list(req: Request, res: Response) {
   const { customerId } = req.query;
-  const data = await visitService.listVisits(customerId as string);
+  const data = await visitService.listVisits(
+    customerId as string,
+    listPageParamsFromQuery(req.query)
+  );
   sendSuccess(res, data);
 }
 

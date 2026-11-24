@@ -12,6 +12,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "generate": "prisma generate",
     "migrate:prod": "node ../scripts/prisma-migrate.mjs",
+    "db:copy": "node ../scripts/copy-postgres.mjs",
+    "db:copy:docker": "node ../scripts/copy-postgres.mjs --docker",
     "build": "prisma generate && tsc -p tsconfig.json && node ../scripts/ensure-web-builds.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",

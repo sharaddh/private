@@ -19,6 +19,7 @@ import routes from "./routes";
 import { audit } from "./middleware/audit";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestId } from "./middleware/requestId";
+import { requestMetrics } from "./middleware/requestMetrics";
 import { createRateLimitStore } from "./middleware/rateLimitStore";
 import webhooks from "./routes/webhooks";
 import { verifyToken } from "./utils/jwt";
@@ -52,22 +53,11 @@ if (NODE_ENV !== "test") {
   );
 }
 
-app.use((_req, res, next) => {
-  const start = Date.now();
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (duration > 1000) {
-      logger.warn("Slow request", {
-        method: _req.method,
-        url: _req.originalUrl,
-        durationMs: duration,
-      });
-    }
-  });
-  next();
-});
+app.use(requestMetrics);
 
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(
+  helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: "cross-origin" } })
+);
 app.use(
   cors({
     origin: CORS_ORIGINS,
@@ -263,15 +253,14 @@ app.use(errorHandler);
 
 export default app;
 
-
 // Security headers for production
-app.disable('x-powered-by');
-if (process.env.NODE_ENV === 'production') {
+app.disable("x-powered-by");
+if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
     next();
   });
 }

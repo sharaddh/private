@@ -1,5 +1,6 @@
 import { Prisma, prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const FogMark = prisma.fogMark;
 
@@ -13,8 +14,9 @@ function isNotFound(err: unknown) {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025";
 }
 
-export async function listFogMarks() {
-  const marks = await FogMark.findMany({ orderBy: { name: "asc" } });
+export async function listFogMarks(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  const marks = await FogMark.findMany({ orderBy: { name: "asc" }, take, skip });
   return marks.map(toMongoDoc);
 }
 

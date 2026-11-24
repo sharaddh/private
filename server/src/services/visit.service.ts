@@ -2,6 +2,7 @@ import { Visit } from "../models/visit";
 import { Customer } from "../models/customer";
 import { AppError } from "../middleware/errorHandler";
 import { requireBranchId } from "../utils/scope";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 interface VisitData {
   customerId?: string;
@@ -23,13 +24,15 @@ const UPDATE_WHITELIST = [
   "remarks",
 ] as const;
 
-export async function listVisits(customerId?: string, limit = 100) {
+export async function listVisits(customerId?: string, page: ListPageParams = {}) {
   const where: Record<string, unknown> = {};
   if (customerId) where.customerId = customerId;
+  const { take, skip } = boundedListArgs(page);
   return Visit.findMany({
     where,
     orderBy: { visitDate: "desc" },
-    take: Math.min(limit, 200),
+    take,
+    skip,
   });
 }
 
@@ -41,7 +44,18 @@ export async function getVisitById(id: string) {
 
 export async function createVisit(data: VisitData) {
   if (!data.customerId) throw new AppError(400, "Customer ID is required");
-  const visit = await Visit.create({ data: { customerId: data.customerId!, visitDate: data.visitDate, visitType: data.visitType, doctorName: data.doctorName, shop: data.shop, shopId: data.shopId, remarks: data.remarks, branchId: requireBranchId() } });
+  const visit = await Visit.create({
+    data: {
+      customerId: data.customerId!,
+      visitDate: data.visitDate,
+      visitType: data.visitType,
+      doctorName: data.doctorName,
+      shop: data.shop,
+      shopId: data.shopId,
+      remarks: data.remarks,
+      branchId: requireBranchId(),
+    },
+  });
   await Customer.update({
     where: { id: data.customerId },
     data: { totalVisits: { increment: 1 } },

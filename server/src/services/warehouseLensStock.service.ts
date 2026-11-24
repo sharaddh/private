@@ -1,5 +1,6 @@
 import { Prisma, prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const LensStock = prisma.warehouseLensStock;
 
@@ -13,8 +14,9 @@ function isNotFound(err: unknown) {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025";
 }
 
-export async function listLensStock() {
-  const items = await LensStock.findMany({ orderBy: { coating: "asc" } });
+export async function listLensStock(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  const items = await LensStock.findMany({ orderBy: { coating: "asc" }, take, skip });
   return items.map(toMongoDoc);
 }
 
@@ -88,8 +90,10 @@ export async function updateQuantity(
   const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
 
-  const q: Record<string, Record<string, number>> =
-    (item.quantities as Record<string, Record<string, number>>) || {};
+  const q: Record<string, Record<string, number>> = (item.quantities as Record<
+    string,
+    Record<string, number>
+  >) || {};
   if (!q[lensType]) q[lensType] = {};
   q[lensType][powerKey] = Math.max(0, Math.floor(quantity));
 
@@ -110,8 +114,10 @@ export async function bulkUpdateQuantities(
   const item = await LensStock.findUnique({ where: { id } });
   if (!item) throw new AppError(404, "Lens stock not found");
 
-  const q: Record<string, Record<string, number>> =
-    (item.quantities as Record<string, Record<string, number>>) || {};
+  const q: Record<string, Record<string, number>> = (item.quantities as Record<
+    string,
+    Record<string, number>
+  >) || {};
   if (!q[lensType]) q[lensType] = {};
 
   for (const [key, qty] of Object.entries(updates)) {

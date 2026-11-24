@@ -1,14 +1,15 @@
 import { Request, Response } from "express";
 import * as branchService from "../services/branch.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
-export async function listActive(_req: Request, res: Response) {
-  const data = await branchService.listActiveBranches();
+export async function listActive(req: Request, res: Response) {
+  const data = await branchService.listActiveBranches(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 
-export async function listAll(_req: Request, res: Response) {
-  const data = await branchService.listAllBranches();
+export async function listAll(req: Request, res: Response) {
+  const data = await branchService.listAllBranches(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 

@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { prisma } from "../db/prisma";
 import { logger } from "../utils/logger";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const RELAY_DIR = path.resolve(__dirname, "../../../relay-server");
 const STATE_DIR = path.join(RELAY_DIR, ".state");
@@ -52,8 +53,9 @@ function updateMediamtxConfig(cameras: Record<string, any>) {
   fs.writeFileSync(configPath, config);
 }
 
-export async function listCameras() {
-  return prisma.camera.findMany({ orderBy: { createdAt: "desc" } });
+export async function listCameras(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  return prisma.camera.findMany({ orderBy: { createdAt: "desc" }, take, skip });
 }
 
 export async function getCamera(id: string) {
@@ -168,13 +170,15 @@ async function startRelay(
     proc.on("exit", async (code) => {
       logger.info(`[dh-p2p:${cameraId}] Exited with code ${code}`);
       runningProcesses.delete(cameraId);
-      await prisma.camera.update({
-        where: { id: cameraId },
-        data: {
-          status: code === 0 ? "offline" : "error",
-          lastError: code === 0 ? "" : `Process exited with code ${code}`,
-        },
-      }).catch(() => {});
+      await prisma.camera
+        .update({
+          where: { id: cameraId },
+          data: {
+            status: code === 0 ? "offline" : "error",
+            lastError: code === 0 ? "" : `Process exited with code ${code}`,
+          },
+        })
+        .catch(() => {});
     });
 
     runningProcesses.set(cameraId, proc);
@@ -198,10 +202,12 @@ async function startRelay(
     );
   } catch (error: any) {
     logger.error(`[camera-relay] Failed to start relay for ${cameraId}: ${error.message}`);
-    await prisma.camera.update({
-      where: { id: cameraId },
-      data: { status: "error", lastError: error.message },
-    }).catch(() => {});
+    await prisma.camera
+      .update({
+        where: { id: cameraId },
+        data: { status: "error", lastError: error.message },
+      })
+      .catch(() => {});
   }
 }
 

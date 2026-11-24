@@ -1,6 +1,140 @@
-import { prisma } from "../db/prisma";
+import { prisma, Prisma } from "../db/prisma";
 import { requireBranchId } from "../utils/scope";
 import { istStartOfDay, istEndOfDay, istStartOfToday } from "../utils/date";
+
+const inventorySelect = {
+  id: true,
+  branchId: true,
+  sku: true,
+  category: true,
+  inventoryType: true,
+  brand: true,
+  model: true,
+  color: true,
+  size: true,
+  gender: true,
+  supplier: true,
+  quantity: true,
+  location: true,
+  purchasePrice: true,
+  sellingPrice: true,
+  description: true,
+  lensIndex: true,
+  lensCoating: true,
+  sphRight: true,
+  cylRight: true,
+  axisRight: true,
+  sphLeft: true,
+  cylLeft: true,
+  axisLeft: true,
+  addPower: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+type MonthlyRevenueRow = {
+  _id: string;
+  revenue: number;
+  collected: number;
+  pending: number;
+  count: number;
+};
+type MonthlyCollectionRow = { _id: string; total: number; count: number };
+type InventoryOverviewRow = {
+  totalItems: number;
+  totalQuantity: number;
+  totalValue: number;
+  totalPriceSum: number;
+};
+type InventoryGroupRow = {
+  _id: string;
+  count: number;
+  totalQuantity?: number;
+  totalValue: number;
+};
+type DeliveryDurationRow = { totalDiffMs: number; count: number };
+
+function monthlyRevenueRows(branchId: string, start: Date, end: Date) {
+  return prisma.$queryRaw<MonthlyRevenueRow[]>(Prisma.sql`
+    SELECT to_char((("created_at" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM') AS "_id",
+           COALESCE(SUM("totalAmount"), 0) AS "revenue",
+           COALESCE(SUM("advancePaid"), 0) AS "collected",
+           COALESCE(SUM("pendingAmount"), 0) AS "pending",
+           COUNT(*)::int AS "count"
+    FROM "bills"
+    WHERE "branchId" = ${branchId}
+      AND "status" = 'Active'
+      AND "created_at" >= ${start}
+      AND "created_at" <= ${end}
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+}
+
+function monthlyCollectionRows(branchId: string, start: Date, end: Date) {
+  return prisma.$queryRaw<MonthlyCollectionRow[]>(Prisma.sql`
+    SELECT to_char((("paymentDate" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM') AS "_id",
+           COALESCE(SUM("amount"), 0) AS "total",
+           COUNT(*)::int AS "count"
+    FROM "payments"
+    WHERE "branchId" = ${branchId}
+      AND "paymentDate" >= ${start}
+      AND "paymentDate" <= ${end}
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+}
+
+function inventoryOverviewRows(branchId: string, categoryFilter: Prisma.Sql) {
+  return prisma.$queryRaw<InventoryOverviewRow[]>(Prisma.sql`
+    SELECT COUNT(*)::int AS "totalItems",
+           COALESCE(SUM("quantity"), 0)::double precision AS "totalQuantity",
+           COALESCE(SUM("quantity" * "sellingPrice"), 0)::double precision AS "totalValue",
+           COALESCE(SUM("sellingPrice"), 0)::double precision AS "totalPriceSum"
+    FROM "inventory"
+    WHERE "branchId" = ${branchId}
+      ${categoryFilter}
+  `);
+}
+
+function inventoryCategoryRows(branchId: string, categoryFilter: Prisma.Sql) {
+  return prisma.$queryRaw<InventoryGroupRow[]>(Prisma.sql`
+    SELECT "category" AS "_id",
+           COUNT(*)::int AS "count",
+           COALESCE(SUM("quantity"), 0)::double precision AS "totalQuantity",
+           COALESCE(SUM("quantity" * "sellingPrice"), 0)::double precision AS "totalValue"
+    FROM "inventory"
+    WHERE "branchId" = ${branchId}
+      ${categoryFilter}
+    GROUP BY "category"
+  `);
+}
+
+function inventoryLocationRows(branchId: string, categoryFilter: Prisma.Sql) {
+  return prisma.$queryRaw<InventoryGroupRow[]>(Prisma.sql`
+    SELECT "location" AS "_id",
+           COUNT(*)::int AS "count",
+           COALESCE(SUM("quantity" * "sellingPrice"), 0)::double precision AS "totalValue"
+    FROM "inventory"
+    WHERE "branchId" = ${branchId}
+      ${categoryFilter}
+    GROUP BY "location"
+  `);
+}
+
+function deliveryDurationRows(branchId: string) {
+  return prisma.$queryRaw<DeliveryDurationRow[]>(Prisma.sql`
+    SELECT COALESCE(
+             SUM(EXTRACT(EPOCH FROM ("actualDeliveryDate" - "expectedDeliveryDate"))::double precision * 1000),
+             0
+           )::double precision AS "totalDiffMs",
+           COUNT(*)::int AS "count"
+    FROM "deliveries"
+    WHERE "branchId" = ${branchId}
+      AND "actualDeliveryDate" IS NOT NULL
+      AND "expectedDeliveryDate" IS NOT NULL
+  `);
+}
 
 export async function getRevenueReport(start?: string, end?: string) {
   const branchId = requireBranchId();
@@ -42,72 +176,27 @@ export async function getMonthlyReport() {
   const now = new Date();
   const year = now.getFullYear();
 
-  const [bills, payments] = await Promise.all([
-    prisma.bill.findMany({
-      where: {
-        branchId,
-        status: "Active",
-        createdAt: { gte: istStartOfDay(`${year}-01-01`), lte: now },
-      },
-      select: { createdAt: true, totalAmount: true, advancePaid: true, pendingAmount: true },
-    }),
-    prisma.payment.findMany({
-      where: {
-        branchId,
-        paymentDate: { gte: istStartOfDay(`${year}-01-01`), lte: now },
-      },
-      select: { paymentDate: true, amount: true },
-    }),
+  const [monthlyRevenue, monthlyCollection] = await Promise.all([
+    monthlyRevenueRows(branchId, istStartOfDay(`${year}-01-01`), now),
+    monthlyCollectionRows(branchId, istStartOfDay(`${year}-01-01`), now),
   ]);
 
-  const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
-
-  function monthKey(d: Date): string {
-    const ist = new Date(d.getTime() + IST_OFFSET_MS);
-    const y = ist.getUTCFullYear();
-    const m = String(ist.getUTCMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
-  }
-
-  const revenueMap = new Map<string, { revenue: number; collected: number; pending: number; count: number }>();
-  for (const b of bills) {
-    const key = monthKey(b.createdAt);
-    const entry = revenueMap.get(key) || { revenue: 0, collected: 0, pending: 0, count: 0 };
-    entry.revenue += b.totalAmount || 0;
-    entry.collected += b.advancePaid || 0;
-    entry.pending += b.pendingAmount || 0;
-    entry.count += 1;
-    revenueMap.set(key, entry);
-  }
-
-  const collectionMap = new Map<string, { total: number; count: number }>();
-  for (const p of payments) {
-    const key = monthKey(p.paymentDate);
-    const entry = collectionMap.get(key) || { total: 0, count: 0 };
-    entry.total += p.amount || 0;
-    entry.count += 1;
-    collectionMap.set(key, entry);
-  }
-
-  const monthlyRevenue = Array.from(revenueMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, val]) => ({
-      _id: key,
-      revenue: val.revenue,
-      collected: val.collected,
-      pending: val.pending,
-      count: val.count,
-    }));
-
-  const monthlyCollection = Array.from(collectionMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, val]) => ({
-      _id: key,
-      total: val.total,
-      count: val.count,
-    }));
-
-  return { monthlyRevenue, monthlyCollection };
+  return {
+    monthlyRevenue: monthlyRevenue
+      .slice()
+      .sort((a, b) => a._id.localeCompare(b._id))
+      .map((row) => ({
+        _id: row._id,
+        revenue: row.revenue,
+        collected: row.collected,
+        pending: row.pending,
+        count: row.count,
+      })),
+    monthlyCollection: monthlyCollection
+      .slice()
+      .sort((a, b) => a._id.localeCompare(b._id))
+      .map((row) => ({ _id: row._id, total: row.total, count: row.count })),
+  };
 }
 
 export async function getCustomerReport(filters?: {
@@ -125,9 +214,10 @@ export async function getCustomerReport(filters?: {
     match.createdAt = dateFilter;
   }
 
-  const todayMatch = filters?.startDate || filters?.endDate
-    ? match
-    : { branchId, createdAt: { gte: istStartOfToday() } };
+  const todayMatch =
+    filters?.startDate || filters?.endDate
+      ? match
+      : { branchId, createdAt: { gte: istStartOfToday() } };
 
   const [topCustomers, newCustomers, totalCustomers, cityBreakdown] = await Promise.all([
     prisma.customer.findMany({
@@ -154,75 +244,49 @@ export async function getInventoryReport(category?: string) {
   const branchId = requireBranchId();
   const match: Record<string, unknown> = { branchId };
   if (category) match.category = category;
+  const categoryFilter = category ? Prisma.sql`AND "category" = ${category}` : Prisma.sql``;
 
-  const [allItems, lowStockItems] = await Promise.all([
-    prisma.inventory.findMany({
-      where: match,
-      select: { category: true, location: true, quantity: true, sellingPrice: true },
-    }),
+  const [overviewRows, categoryRows, locationRows, lowStockItems] = await Promise.all([
+    inventoryOverviewRows(branchId, categoryFilter),
+    inventoryCategoryRows(branchId, categoryFilter),
+    inventoryLocationRows(branchId, categoryFilter),
     prisma.inventory.findMany({
       where: { quantity: { lte: 5 }, ...match },
       orderBy: { quantity: "asc" },
       take: 20,
+      select: inventorySelect,
     }),
   ]);
 
-  let totalItems = 0;
-  let totalQuantity = 0;
-  let totalValue = 0;
-  let totalPriceSum = 0;
-
-  const catMap = new Map<
-    string,
-    { count: number; totalQuantity: number; totalValue: number }
-  >();
-  const locMap = new Map<string, { count: number; totalValue: number }>();
-
-  for (const item of allItems) {
-    const qty = item.quantity || 0;
-    const price = item.sellingPrice || 0;
-    const value = qty * price;
-    totalItems += 1;
-    totalQuantity += qty;
-    totalValue += value;
-    totalPriceSum += price;
-
-    const cat = catMap.get(item.category) ?? {
-      count: 0,
-      totalQuantity: 0,
-      totalValue: 0,
-    };
-    cat.count += 1;
-    cat.totalQuantity += qty;
-    cat.totalValue += value;
-    catMap.set(item.category, cat);
-
-    const loc = locMap.get(item.location) ?? { count: 0, totalValue: 0 };
-    loc.count += 1;
-    loc.totalValue += value;
-    locMap.set(item.location, loc);
-  }
-
-  const avgSellingPrice = totalItems > 0 ? totalPriceSum / totalItems : 0;
-
-  const categoryBreakdown = Array.from(catMap.entries()).map(
-    ([category, data]) => ({ _id: category, ...data })
-  );
-  const valueByLocation = Array.from(locMap.entries()).map(
-    ([location, data]) => ({ _id: location, ...data })
-  );
+  const overview = overviewRows[0];
+  const avgSellingPrice =
+    overview.totalItems > 0 ? overview.totalPriceSum / overview.totalItems : 0;
 
   return {
-    overview: { totalItems, totalQuantity, totalValue, avgSellingPrice },
-    categoryBreakdown,
+    overview: {
+      totalItems: overview.totalItems,
+      totalQuantity: overview.totalQuantity,
+      totalValue: overview.totalValue,
+      avgSellingPrice,
+    },
+    categoryBreakdown: categoryRows.map((row) => ({
+      _id: row._id,
+      count: row.count,
+      totalQuantity: row.totalQuantity || 0,
+      totalValue: row.totalValue,
+    })),
     lowStockItems,
-    valueByLocation,
+    valueByLocation: locationRows.map((row) => ({
+      _id: row._id,
+      count: row.count,
+      totalValue: row.totalValue,
+    })),
   };
 }
 
 export async function getDeliveryReport() {
   const branchId = requireBranchId();
-  const [statusCounts, overdueDeliveries, deliveryData] = await Promise.all([
+  const [statusCounts, overdueDeliveries, deliveryDuration] = await Promise.all([
     prisma.delivery.groupBy({
       by: ["status"],
       where: { branchId },
@@ -242,23 +306,13 @@ export async function getDeliveryReport() {
       orderBy: { expectedDeliveryDate: "asc" },
       take: 20,
     }),
-    prisma.delivery.findMany({
-      where: {
-        branchId,
-        actualDeliveryDate: { not: null },
-        expectedDeliveryDate: { not: null },
-      },
-      select: { actualDeliveryDate: true, expectedDeliveryDate: true },
-    }),
+    deliveryDurationRows(branchId),
   ]);
 
+  const { totalDiffMs, count } = deliveryDuration[0];
   let avgDeliveryDays = 0;
-  if (deliveryData.length > 0) {
-    const totalDiffMs = deliveryData.reduce((sum, d) => {
-      const diff = d.actualDeliveryDate!.getTime() - d.expectedDeliveryDate!.getTime();
-      return sum + diff;
-    }, 0);
-    avgDeliveryDays = Math.round((totalDiffMs / (deliveryData.length * 1000 * 60 * 60 * 24)) * 10) / 10;
+  if (count > 0) {
+    avgDeliveryDays = Math.round((totalDiffMs / (count * 1000 * 60 * 60 * 24)) * 10) / 10;
   }
 
   return {

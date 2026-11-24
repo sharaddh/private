@@ -1,9 +1,11 @@
 import { Delivery } from "../models/delivery";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
-export async function listDeliveries(status?: string, limit = 100) {
+export async function listDeliveries(status?: string, page: ListPageParams = {}) {
   const where: Record<string, unknown> = {};
   if (status) where.status = status;
+  const { take, skip } = boundedListArgs(page);
   return Delivery.findMany({
     where,
     include: {
@@ -11,7 +13,8 @@ export async function listDeliveries(status?: string, limit = 100) {
       order: { select: { id: true, frame: true, lens: true, status: true } },
     },
     orderBy: { expectedDeliveryDate: "desc" },
-    take: Math.min(limit, 200),
+    take,
+    skip,
   });
 }
 
@@ -22,8 +25,15 @@ export async function getDeliveryById(id: string) {
       customer: { select: { id: true, name: true, mobile: true, email: true, address: true } },
       order: {
         select: {
-          id: true, frame: true, frameBrand: true, frameModel: true, frameColor: true,
-          lens: true, lensType: true, lensBrand: true, status: true,
+          id: true,
+          frame: true,
+          frameBrand: true,
+          frameModel: true,
+          frameColor: true,
+          lens: true,
+          lensType: true,
+          lensBrand: true,
+          status: true,
         },
       },
     },

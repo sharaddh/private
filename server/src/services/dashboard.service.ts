@@ -1,4 +1,4 @@
-import { prisma } from "../db/prisma";
+import { prisma, Prisma } from "../db/prisma";
 import { requireBranchId } from "../utils/scope";
 import {
   istDateKey,
@@ -9,6 +9,68 @@ import {
   istEndOfMonth,
   istDayOfWeek,
 } from "../utils/date";
+
+const RECENT_PREVIEW_LIMIT = 10;
+const DASHBOARD_PREVIEW_LIMIT = 20;
+const OPERATIONS_PREVIEW_LIMIT = 100;
+
+const orderSelect = {
+  id: true,
+  branchId: true,
+  customerId: true,
+  visitId: true,
+  frame: true,
+  frameBrand: true,
+  frameModel: true,
+  frameColor: true,
+  frameSize: true,
+  framePrice: true,
+  lens: true,
+  lensBrand: true,
+  lensType: true,
+  lensIndex: true,
+  lensPrice: true,
+  coating: true,
+  coatingPrice: true,
+  accessories: true,
+  quantity: true,
+  forwardedCount: true,
+  deliveryDate: true,
+  actualDeliveryDate: true,
+  status: true,
+  labAssigned: true,
+  labExpectedDate: true,
+  labRemarks: true,
+  reviewed: true,
+  classification: true,
+  rightLensStatus: true,
+  leftLensStatus: true,
+  createdAt: true,
+  updatedAt: true,
+  customer: { select: { name: true, mobile: true } },
+} as const;
+
+const prescriptionSelect = {
+  id: true,
+  branchId: true,
+  customerId: true,
+  visitId: true,
+  rightEye: true,
+  leftEye: true,
+  pd: true,
+  notes: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+type DayCountRow = { _id: string; count: number };
+type DayTotalRow = { _id: string; total: number };
+type DailySalesRow = DayTotalRow & { count: number };
+type PaymentModeGroup = {
+  paymentMode: string;
+  _sum: { amount: number | null };
+  _count: number;
+};
 
 function getDayRange(date?: Date): { start: Date; end: Date } {
   const d = date || new Date();
@@ -44,12 +106,76 @@ function calcTrend(
 
 function translatePaymentMode(mode: string): string {
   const map: Record<string, string> = {
-    "नकद": "Cash",
-    "कार्ड": "Card",
-    "बैंक": "Bank Transfer",
-    "बीमा": "Insurance",
+    नकद: "Cash",
+    कार्ड: "Card",
+    बैंक: "Bank Transfer",
+    बीमा: "Insurance",
   };
   return map[mode] || mode;
+}
+
+function dailySalesRows(branchId: string, start: Date, end: Date) {
+  return prisma.$queryRaw<DailySalesRow[]>(Prisma.sql`
+    SELECT to_char((("created_at" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM-DD') AS "_id",
+           COALESCE(SUM("totalAmount"), 0) AS "total",
+           COUNT(*)::int AS "count"
+    FROM "bills"
+    WHERE "branchId" = ${branchId}
+      AND "created_at" >= ${start}
+      AND "created_at" <= ${end}
+      AND "status" = 'Active'
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+}
+
+function dailyCollectionRows(branchId: string, start: Date, end: Date) {
+  return prisma.$queryRaw<DayTotalRow[]>(Prisma.sql`
+    SELECT to_char((("paymentDate" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM-DD') AS "_id",
+           COALESCE(SUM("amount"), 0) AS "total"
+    FROM "payments"
+    WHERE "branchId" = ${branchId}
+      AND "paymentDate" >= ${start}
+      AND "paymentDate" <= ${end}
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+}
+
+function weeklyOrderTrendRows(branchId: string, start: Date, end: Date) {
+  return prisma.$queryRaw<DayCountRow[]>(Prisma.sql`
+    SELECT to_char((("created_at" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM-DD') AS "_id",
+           COUNT(*)::int AS "count"
+    FROM "orders"
+    WHERE "branchId" = ${branchId}
+      AND "created_at" >= ${start}
+      AND "created_at" <= ${end}
+    GROUP BY 1
+    ORDER BY 1 ASC
+  `);
+}
+
+function paymentModeSplitRows(branchId: string, start: Date, end: Date) {
+  return prisma.payment.groupBy({
+    by: ["paymentMode"],
+    where: { branchId, paymentDate: { gte: start, lte: end } },
+    _sum: { amount: true },
+    _count: true,
+  });
+}
+
+function mapPaymentModeSplit(rows: PaymentModeGroup[]) {
+  const grouped = new Map<string, { total: number; count: number }>();
+  for (const row of rows) {
+    const mode = translatePaymentMode(row.paymentMode);
+    const existing = grouped.get(mode) || { total: 0, count: 0 };
+    existing.total += row._sum.amount || 0;
+    existing.count += row._count;
+    grouped.set(mode, existing);
+  }
+  return Array.from(grouped.entries())
+    .map(([mode, data]) => ({ mode, total: data.total, count: data.count }))
+    .sort((a, b) => b.total - a.total);
 }
 
 export async function getStats() {
@@ -80,11 +206,12 @@ export async function getStats() {
     newCustomersToday,
     lowStockItems,
     pendingBills,
+    pendingBillCount,
     recentOrders,
     todayDeliveries,
     pendingDeliveries,
     monthSalesPrevResult,
-    billsForDailySales,
+    dailySalesAgg,
     paymentsForModeSplit,
     orderStatusCounts,
     todayDeliveredOrders,
@@ -95,8 +222,8 @@ export async function getStats() {
     weekBillCount,
     monthBillCount,
     incompleteOrders,
-    ordersForDailyCounts,
-    paymentsForDailyCounts,
+    weeklyOrderTrend,
+    dailyCollectionAgg,
     inventoryForCategories,
     paymentsForTodayModeSplit,
   ] = await Promise.all([
@@ -129,102 +256,99 @@ export async function getStats() {
     prisma.bill.findMany({
       where: { branchId, status: "Active", pendingAmount: { gt: 0 } },
       orderBy: { createdAt: "desc" },
+      take: DASHBOARD_PREVIEW_LIMIT,
       select: {
         id: true,
         pendingAmount: true,
         customer: { select: { name: true, mobile: true } },
       },
     }),
+    prisma.bill.count({
+      where: { branchId, status: "Active", pendingAmount: { gt: 0 } },
+    }),
     prisma.order.findMany({
       where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } },
       orderBy: { createdAt: "desc" },
-      take: 10,
-      include: { customer: { select: { name: true, mobile: true } } },
+      take: RECENT_PREVIEW_LIMIT,
+      select: orderSelect,
     }),
     prisma.order.findMany({
       where: { branchId, status: "Ready", deliveryDate: { gte: dayStart, lte: dayEnd } },
       orderBy: [{ deliveryDate: "asc" }, { createdAt: "desc" }],
-      take: 10,
-      include: { customer: { select: { name: true, mobile: true } } },
+      take: RECENT_PREVIEW_LIMIT,
+      select: orderSelect,
     }),
     prisma.order.findMany({
       where: { branchId, status: { notIn: ["Delivered", "Cancelled"] } },
       orderBy: { createdAt: "desc" },
-      take: 100,
-      include: { customer: { select: { name: true, mobile: true } } },
+      take: OPERATIONS_PREVIEW_LIMIT,
+      select: orderSelect,
     }),
     prisma.bill.aggregate({
       where: { branchId, createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: "Active" },
       _sum: { totalAmount: true },
     }),
-    prisma.bill.findMany({
-      where: { branchId, createdAt: { gte: thirtyDaysAgo, lte: dayEnd }, status: "Active" },
-      select: { createdAt: true, totalAmount: true },
-    }),
-    prisma.payment.findMany({
-      where: { branchId, paymentDate: { gte: monthStart, lte: monthEnd } },
-      select: { paymentMode: true, amount: true },
-    }),
+    dailySalesRows(branchId, thirtyDaysAgo, dayEnd),
+    paymentModeSplitRows(branchId, monthStart, monthEnd),
     prisma.order.groupBy({ by: ["status"], where: { branchId }, _count: true }),
     prisma.order.findMany({
       where: { branchId, status: "Delivered", actualDeliveryDate: { gte: dayStart, lte: dayEnd } },
       orderBy: { actualDeliveryDate: "desc" },
-      include: { customer: { select: { name: true, mobile: true } } },
+      take: DASHBOARD_PREVIEW_LIMIT,
+      select: orderSelect,
     }),
     prisma.order.count({ where: { branchId, createdAt: { gte: dayStart, lte: dayEnd } } }),
     prisma.order.count({ where: { branchId, createdAt: { gte: weekStart, lte: weekEnd } } }),
     prisma.order.count({ where: { branchId, createdAt: { gte: monthStart, lte: monthEnd } } }),
-    prisma.bill.count({ where: { branchId, createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" } }),
-    prisma.bill.count({ where: { branchId, createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" } }),
-    prisma.bill.count({ where: { branchId, createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" } }),
+    prisma.bill.count({
+      where: { branchId, createdAt: { gte: dayStart, lte: dayEnd }, status: "Active" },
+    }),
+    prisma.bill.count({
+      where: { branchId, createdAt: { gte: weekStart, lte: weekEnd }, status: "Active" },
+    }),
+    prisma.bill.count({
+      where: { branchId, createdAt: { gte: monthStart, lte: monthEnd }, status: "Active" },
+    }),
     prisma.order.findMany({
       where: { branchId, status: "Draft" },
       orderBy: { createdAt: "desc" },
-      include: { customer: { select: { name: true, mobile: true } } },
+      take: DASHBOARD_PREVIEW_LIMIT,
+      select: orderSelect,
     }),
-    prisma.order.findMany({
-      where: { branchId, createdAt: { gte: thirtyDaysAgo, lte: dayEnd } },
-      select: { createdAt: true },
-    }),
-    prisma.payment.findMany({
-      where: { branchId, paymentDate: { gte: thirtyDaysAgo, lte: dayEnd } },
-      select: { paymentMode: true, amount: true, paymentDate: true },
-    }),
+    weeklyOrderTrendRows(branchId, thirtyDaysAgo, dayEnd),
+    dailyCollectionRows(branchId, thirtyDaysAgo, dayEnd),
     prisma.inventory.groupBy({
       by: ["category"],
       where: { branchId },
       _count: true,
     }),
-    prisma.payment.findMany({
-      where: { branchId, paymentDate: { gte: dayStart, lte: dayEnd } },
-      select: { paymentMode: true, amount: true },
-    }),
+    paymentModeSplitRows(branchId, dayStart, dayEnd),
   ]);
 
-  const recentOrderVisitIds = recentOrders
-    .map((o: any) => o.visitId)
-    .filter(Boolean) as string[];
-  const recentPrescriptions =
-    recentOrderVisitIds.length > 0
-      ? await prisma.prescription.findMany({ where: { branchId, visitId: { in: recentOrderVisitIds } } })
+  const displayedVisitIds = Array.from(
+    new Set(
+      [...recentOrders, ...incompleteOrders]
+        .map((order) => order.visitId)
+        .filter((visitId): visitId is string => Boolean(visitId))
+    )
+  );
+  const displayedPrescriptions =
+    displayedVisitIds.length > 0
+      ? await prisma.prescription.findMany({
+          where: { branchId, visitId: { in: displayedVisitIds } },
+          select: prescriptionSelect,
+          take: displayedVisitIds.length,
+        })
       : [];
-  const rxMap = new Map(recentPrescriptions.map((p) => [p.visitId!, p]));
-  const recentOrdersWithRx = recentOrders.map((o: any) => {
-    return { ...o, prescription: o.visitId ? rxMap.get(o.visitId) || null : null };
-  });
-
-  const incompleteOrderVisitIds = incompleteOrders
-    .map((o: any) => o.visitId)
-    .filter(Boolean) as string[];
-  const allVisitIds = [...new Set([...recentOrderVisitIds, ...incompleteOrderVisitIds])];
-  const allPrescriptions =
-    allVisitIds.length > 0
-      ? await prisma.prescription.findMany({ where: { branchId, visitId: { in: allVisitIds } } })
-      : [];
-  const fullRxMap = new Map(allPrescriptions.map((p) => [p.visitId!, p]));
-  const incompleteOrdersWithRx = incompleteOrders.map((o: any) => {
-    return { ...o, prescription: o.visitId ? fullRxMap.get(o.visitId) || null : null };
-  });
+  const rxMap = new Map(displayedPrescriptions.map((p) => [p.visitId!, p]));
+  const recentOrdersWithRx = recentOrders.map((order) => ({
+    ...order,
+    prescription: order.visitId ? rxMap.get(order.visitId) || null : null,
+  }));
+  const incompleteOrdersWithRx = incompleteOrders.map((order) => ({
+    ...order,
+    prescription: order.visitId ? rxMap.get(order.visitId) || null : null,
+  }));
 
   const todaySales = todaySalesResult._sum?.totalAmount || 0;
   const todayCollection = todayCollectionResult._sum?.amount || 0;
@@ -238,62 +362,10 @@ export async function getStats() {
       ? "0"
       : `${salesTrendObj.direction === "up" ? "" : "-"}${salesTrendObj.value}`;
 
-  const salesByDateGrouped = new Map<string, { total: number; count: number }>();
-  for (const bill of billsForDailySales) {
-    const key = istDateKey(bill.createdAt);
-    const existing = salesByDateGrouped.get(key) || { total: 0, count: 0 };
-    existing.total += bill.totalAmount;
-    existing.count += 1;
-    salesByDateGrouped.set(key, existing);
-  }
-  const dailySalesAgg = Array.from(salesByDateGrouped.entries())
-    .map(([id, data]) => ({ _id: id, ...data }))
-    .sort((a, b) => a._id.localeCompare(b._id));
-
-  function groupPaymentsByMode(
-    payments: Array<{ paymentMode: string; amount: number }>
-  ) {
-    const grouped = new Map<string, { total: number; count: number }>();
-    for (const p of payments) {
-      const mode = translatePaymentMode(p.paymentMode);
-      const existing = grouped.get(mode) || { total: 0, count: 0 };
-      existing.total += p.amount;
-      existing.count += 1;
-      grouped.set(mode, existing);
-    }
-    return Array.from(grouped.entries())
-      .map(([id, data]) => ({ _id: id, ...data }))
-      .sort((a, b) => b.total - a.total);
-  }
-
-  const paymentModeSplit = groupPaymentsByMode(paymentsForModeSplit);
-
   const mappedOrderStatusCounts = orderStatusCounts.map((d: any) => ({
     status: d.status,
     count: d._count,
   }));
-
-  const todayPaymentModeSplit = groupPaymentsByMode(paymentsForTodayModeSplit);
-
-  const ordersByDateGrouped = new Map<string, number>();
-  for (const order of ordersForDailyCounts) {
-    const key = istDateKey(order.createdAt);
-    ordersByDateGrouped.set(key, (ordersByDateGrouped.get(key) || 0) + 1);
-  }
-  const orderCounts = Array.from(ordersByDateGrouped.entries())
-    .map(([id, count]) => ({ _id: id, count }))
-    .sort((a, b) => a._id.localeCompare(b._id));
-
-  const weeklyOrderTrend = orderCounts;
-
-  const dailyCollectionByDate = new Map<string, number>();
-  for (const payment of paymentsForDailyCounts) {
-    const key = istDateKey(payment.paymentDate);
-    dailyCollectionByDate.set(key, (dailyCollectionByDate.get(key) || 0) + payment.amount);
-  }
-  const dailyCollectionAgg = Array.from(dailyCollectionByDate.entries())
-    .map(([id, total]) => ({ _id: id, total }))
-    .sort((a, b) => a._id.localeCompare(b._id));
 
   const categoryBreakdown = (
     inventoryForCategories as unknown as Array<{ category: string; _count: number }>
@@ -301,37 +373,23 @@ export async function getStats() {
     .map((row) => ({ category: row.category, count: row._count, totalValue: 0 }))
     .sort((a, b) => b.count - a.count);
 
-  const mappedDailySales = dailySalesAgg.map(
-    (d: { _id: string; total: number; count: number }) => ({ date: d._id, total: d.total })
-  );
-  const mappedDailyCollections = dailyCollectionAgg.map((d: { _id: string; total: number }) => ({
-    date: d._id,
-    total: d.total,
-  }));
-  const mappedWeeklyOrderTrend = weeklyOrderTrend.map((d: { _id: string; count: number }) => ({
-    date: d._id,
-    count: d.count,
-  }));
+  const mappedDailySales = dailySalesAgg
+    .slice()
+    .sort((a, b) => a._id.localeCompare(b._id))
+    .map((d) => ({ date: d._id, total: d.total }));
+  const mappedDailyCollections = dailyCollectionAgg
+    .slice()
+    .sort((a, b) => a._id.localeCompare(b._id))
+    .map((d) => ({ date: d._id, total: d.total }));
+  const mappedWeeklyOrderTrend = weeklyOrderTrend
+    .slice()
+    .sort((a, b) => a._id.localeCompare(b._id))
+    .map((d) => ({ date: d._id, count: d.count }));
   const mappedCategoryBreakdown = categoryBreakdown.map(
     (d: { category: string; count: number; totalValue: number }) => ({
       category: d.category,
       count: d.count,
       totalValue: d.totalValue,
-    })
-  );
-
-  const mappedPaymentModeSplit = paymentModeSplit.map(
-    (d: { _id: string; total: number; count: number }) => ({
-      mode: d._id,
-      total: d.total,
-      count: d.count,
-    })
-  );
-  const mappedTodayPaymentModeSplit = todayPaymentModeSplit.map(
-    (d: { _id: string; total: number; count: number }) => ({
-      mode: d._id,
-      total: d.total,
-      count: d.count,
     })
   );
 
@@ -352,14 +410,14 @@ export async function getStats() {
     readyDeliveries,
     newCustomersToday,
     lowStock: lowStockItems,
-    pendingPayments: pendingBills.length,
+    pendingPayments: pendingBillCount,
     recentOrders: recentOrdersWithRx,
     todayDeliveries,
     pendingDeliveries,
     pendingBills,
     incompleteOrders: incompleteOrdersWithRx,
     dailySales: mappedDailySales,
-    paymentModeSplit: mappedPaymentModeSplit,
+    paymentModeSplit: mapPaymentModeSplit(paymentsForModeSplit),
     orderStatusCounts: mappedOrderStatusCounts,
     salesTrend,
     todayDeliveredOrders,
@@ -372,6 +430,6 @@ export async function getStats() {
     dailyCollections: mappedDailyCollections,
     weeklyOrderTrend: mappedWeeklyOrderTrend,
     categoryBreakdown: mappedCategoryBreakdown,
-    todayPaymentModeSplit: mappedTodayPaymentModeSplit,
+    todayPaymentModeSplit: mapPaymentModeSplit(paymentsForTodayModeSplit),
   };
 }

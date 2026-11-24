@@ -2,6 +2,7 @@ import { connectDatabase, prisma } from "../db/prisma";
 import { logger } from "../utils/logger";
 import { initCache, destroyCache } from "../services/cache";
 import { REDIS_URL } from "../config";
+import { classifyError } from "./db-error";
 import { startWhatsAppWorker } from "./worker";
 
 async function main(): Promise<void> {
@@ -11,7 +12,12 @@ async function main(): Promise<void> {
       const redis = initCache(REDIS_URL);
       await redis.connect();
     } catch (err) {
-      logger.warn("Redis connection failed in WhatsApp worker", { error: (err as Error).message });
+      const error = classifyError(err);
+      logger.warn("Redis connection failed in WhatsApp worker", {
+        errorCode: error.errorCode,
+        errorName: error.errorName,
+        classification: error.classification,
+      });
     }
   }
   const stop = startWhatsAppWorker();
@@ -26,7 +32,12 @@ async function main(): Promise<void> {
   process.once("SIGTERM", () => void shutdown("SIGTERM"));
 }
 
-main().catch((err) => {
-  logger.error("Failed to start WhatsApp worker", { error: err.message, stack: err.stack });
+main().catch((err: unknown) => {
+  const error = classifyError(err);
+  logger.error("Failed to start WhatsApp worker", {
+    errorCode: error.errorCode,
+    errorName: error.errorName,
+    classification: error.classification,
+  });
   process.exit(1);
 });

@@ -1,6 +1,7 @@
 import { prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
 import { getPriceForPower } from "./lensStock.service";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const CartItem = prisma.cartItem;
 const LensStock = prisma.warehouseLensStock;
@@ -30,7 +31,10 @@ export async function getCartItems(userId: string) {
   const coatingToStock = new Map<string, any>();
   for (const item of items) {
     if (!coatingToStock.has(item.coating)) {
-      coatingToStock.set(item.coating, await LensStock.findFirst({ where: { coating: item.coating } }));
+      coatingToStock.set(
+        item.coating,
+        await LensStock.findFirst({ where: { coating: item.coating } })
+      );
     }
   }
   return items.map((item) =>
@@ -191,20 +195,25 @@ export async function withdrawCart(userId: string, username: string) {
   return { withdrawn: withdrawnItems.length, errors };
 }
 
-export async function getWithdrawals(userId: string) {
+export async function getWithdrawals(userId: string, page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
   const withdrawals = await Withdrawal.findMany({
     where: { userId },
     orderBy: { withdrawnAt: "desc" },
     include: { items: true },
+    take,
+    skip,
   });
   return attachAvailable(withdrawals);
 }
 
-export async function getAllWithdrawals() {
+export async function getAllWithdrawals(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page, 200);
   const withdrawals = await Withdrawal.findMany({
     orderBy: { withdrawnAt: "desc" },
-    take: 200,
     include: { items: true },
+    take,
+    skip,
   });
   return attachAvailable(withdrawals);
 }
@@ -226,7 +235,10 @@ async function attachAvailable(withdrawals: any[]) {
 }
 
 export async function deleteWithdrawal(userId: string, id: string) {
-  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
+  const withdrawal = await Withdrawal.findFirst({
+    where: { id, userId },
+    include: { items: true },
+  });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const coatingCache = new Map<string, any>();
@@ -270,7 +282,10 @@ export async function updateWithdrawal(
     fogMark?: string;
   }[]
 ) {
-  const withdrawal = await Withdrawal.findFirst({ where: { id, userId }, include: { items: true } });
+  const withdrawal = await Withdrawal.findFirst({
+    where: { id, userId },
+    include: { items: true },
+  });
   if (!withdrawal) throw new AppError(404, "Withdrawal not found");
 
   const normalized: {
@@ -405,4 +420,3 @@ export async function updateWithdrawal(
 
   return withId(updated);
 }
-

@@ -2,6 +2,7 @@ import { Prescription } from "../models/prescription";
 import { Customer } from "../models/customer";
 import { Visit } from "../models/visit";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 interface PrescriptionData {
   customerId?: string;
@@ -14,13 +15,15 @@ interface PrescriptionData {
 
 const UPDATE_WHITELIST = ["customerId", "visitId", "rightEye", "leftEye", "pd", "notes"] as const;
 
-export async function listPrescriptions(customerId?: string, limit = 100) {
+export async function listPrescriptions(customerId?: string, page: ListPageParams = {}) {
   const where: Record<string, unknown> = {};
   if (customerId) where.customerId = customerId;
+  const { take, skip } = boundedListArgs(page);
   return Prescription.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: Math.min(limit, 200),
+    take,
+    skip,
   });
 }
 

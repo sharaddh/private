@@ -4,6 +4,7 @@ import { executeTransaction } from "../services/workspace.service";
 import { sendSuccess, sendCreated } from "../utils/response";
 import { invalidateCache } from "../middleware/cache";
 import * as todoService from "../services/todo.service";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
 export async function transaction(req: BranchRequest, res: Response) {
   const data = await executeTransaction(req.body, req.branchId);
@@ -15,8 +16,8 @@ export async function transaction(req: BranchRequest, res: Response) {
   sendSuccess(res, data, "Transaction completed");
 }
 
-export async function listTodos(_req: BranchRequest, res: Response) {
-  const todos = await todoService.listTodos();
+export async function listTodos(req: BranchRequest, res: Response) {
+  const todos = await todoService.listTodos(listPageParamsFromQuery(req.query));
   sendSuccess(res, todos);
 }
 

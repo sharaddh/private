@@ -1,4 +1,14 @@
-type WakeListener = () => void;
+export type WhatsAppWorkerWakeReason =
+  | "startup"
+  | "fallback"
+  | "wake:event"
+  | "wake:campaign"
+  | "wake:webhook"
+  | "drain"
+  | "backoff"
+  | "retention";
+
+type WakeListener = (reason: WhatsAppWorkerWakeReason) => void;
 
 const listeners = new Set<WakeListener>();
 
@@ -9,15 +19,10 @@ export function onWhatsAppWorkerWake(listener: WakeListener): () => void {
   };
 }
 
-/**
- * Ask the in-process WhatsApp worker to run a tick soon. Used after a row is
- * enqueued (event, campaign start/resume, webhook) so polling is not needed to
- * make progress. Safe to call when no inline worker is running.
- */
-export function requestWhatsAppWorkerTick(): void {
+export function requestWhatsAppWorkerTick(reason: WhatsAppWorkerWakeReason): void {
   for (const listener of listeners) {
     try {
-      listener();
+      listener(reason);
     } catch {
       /* a bad listener must not break the request path */
     }

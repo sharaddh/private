@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../types";
 import * as authService from "../services/auth.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
 export async function register(req: AuthRequest, res: Response) {
   const data = await authService.registerUser(req.body, req.user?.role || "");
@@ -53,12 +54,18 @@ export async function updateUser(req: AuthRequest, res: Response) {
 }
 
 export async function listUsers(req: AuthRequest, res: Response) {
-  const data = await authService.listUsers(req.user?.role || "");
+  const data = await authService.listUsers(
+    req.user?.role || "",
+    listPageParamsFromQuery(req.query)
+  );
   sendSuccess(res, data);
 }
 
 export async function listWarehouseUsers(req: AuthRequest, res: Response) {
-  const data = await authService.listWarehouseUsers(req.user?.role || "");
+  const data = await authService.listWarehouseUsers(
+    req.user?.role || "",
+    listPageParamsFromQuery(req.query)
+  );
   sendSuccess(res, data);
 }
 

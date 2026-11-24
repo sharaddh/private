@@ -1,16 +1,11 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { DATABASE_URL } from "../config";
 import { logger } from "../utils/logger";
+import { getCtx } from "../utils/requestContext";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-/**
- * Neon hands out a pooled endpoint (`...-pooler...`) for Prisma. Without
- * `pgbouncer=true` Prisma uses prepared statements that transaction-mode
- * pooling cannot safely reuse, and without a small `connection_limit` one app
- * instance can exhaust the database's connection budget.
- */
-function optimizeDatabaseUrl(raw: string): string {
+function normalizeDatabaseUrl(raw: string): string {
   if (!raw) return raw;
   try {
     const url = new URL(raw);
@@ -36,17 +31,59 @@ function optimizeDatabaseUrl(raw: string): string {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: { db: { url: optimizeDatabaseUrl(DATABASE_URL) } },
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    datasources: { db: { url: normalizeDatabaseUrl(DATABASE_URL) } },
+    log: [
+      { emit: "event", level: "query" },
+      ...(process.env.NODE_ENV === "development"
+        ? (["warn", "error"] as const)
+        : (["error"] as const)),
+    ],
   });
+
+const queryInstrumentation = Symbol.for("kmj.prisma.queryInstrumentation");
+type InstrumentedPrismaClient = PrismaClient & { [queryInstrumentation]?: true };
+
+function normalizeLabel(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const label = value.replace(/[^A-Za-z0-9_.:-]/g, "").slice(0, 120);
+  return label || undefined;
+}
+
+function queryLabel(event: Prisma.QueryEvent): string {
+  const extended = event as Prisma.QueryEvent & { model?: unknown; action?: unknown };
+  const model = normalizeLabel(extended.model);
+  const action = normalizeLabel(extended.action);
+  if (model && action) return `${model}.${action}`;
+  if (action || model) return (action ?? model) as string;
+  return normalizeLabel(event.target) ?? "unknown";
+}
+
+function queryOrigin(): "api" | "whatsapp-worker" {
+  const lifecycle = process.env.npm_lifecycle_event ?? "";
+  const entry = process.argv[1] ?? "";
+  return /whatsapp/i.test(lifecycle) || /whatsapp/i.test(entry) ? "whatsapp-worker" : "api";
+}
+
+const instrumentedPrisma = prisma as InstrumentedPrismaClient;
+const queryEmitter = prisma as unknown as {
+  $on(event: "query", callback: (event: Prisma.QueryEvent) => void): void;
+};
+if (!instrumentedPrisma[queryInstrumentation]) {
+  const origin = queryOrigin();
+  queryEmitter.$on("query", (event) => {
+    logger.info("db.query", {
+      event: "db.query",
+      label: queryLabel(event),
+      duration_ms: event.duration,
+      request_id: getCtx()?.requestId,
+      origin,
+    });
+  });
+  instrumentedPrisma[queryInstrumentation] = true;
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Neon suspends idle computes. The first connection after a suspend can take
- * a few seconds, so a single failed connect should not crash the service and
- * trigger a Render restart loop.
- */
 export async function connectDatabase(attempts = 5): Promise<void> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {

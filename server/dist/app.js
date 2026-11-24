@@ -16,6 +16,7 @@ const routes_1 = __importDefault(require("./routes"));
 const audit_1 = require("./middleware/audit");
 const errorHandler_1 = require("./middleware/errorHandler");
 const requestId_1 = require("./middleware/requestId");
+const requestMetrics_1 = require("./middleware/requestMetrics");
 const rateLimitStore_1 = require("./middleware/rateLimitStore");
 const webhooks_1 = __importDefault(require("./routes/webhooks"));
 const jwt_1 = require("./utils/jwt");
@@ -43,21 +44,8 @@ if (config_1.NODE_ENV !== "test") {
         },
     }));
 }
-app.use((_req, res, next) => {
-    const start = Date.now();
-    res.on("finish", () => {
-        const duration = Date.now() - start;
-        if (duration > 1000) {
-            logger_1.logger.warn("Slow request", {
-                method: _req.method,
-                url: _req.originalUrl,
-                durationMs: duration,
-            });
-        }
-    });
-    next();
-});
-app.use((0, helmet_1.default)({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(requestMetrics_1.requestMetrics);
+app.use((0, helmet_1.default)({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use((0, cors_1.default)({
     origin: config_1.CORS_ORIGINS,
     credentials: true,
@@ -225,13 +213,13 @@ app.get("*", (req, res) => {
 app.use(errorHandler_1.errorHandler);
 exports.default = app;
 // Security headers for production
-app.disable('x-powered-by');
-if (process.env.NODE_ENV === 'production') {
+app.disable("x-powered-by");
+if (process.env.NODE_ENV === "production") {
     app.use((req, res, next) => {
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-        res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("X-Frame-Options", "SAMEORIGIN");
+        res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         next();
     });
 }

@@ -5,6 +5,7 @@ import { ShopLensWithdrawal } from "../models/shopLensWithdrawal";
 import { AppError } from "../middleware/errorHandler";
 import { requireBranchId } from "../utils/scope";
 import { getPriceForPower } from "./lensStock.service";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 function pairStr(v: number): string {
   return `${Math.round((v / 2) * 2) / 2}p`;
@@ -195,11 +196,13 @@ export async function withdrawCart(userId: string, username: string, note?: stri
   return { withdrawn: withdrawnItems.length, errors };
 }
 
-export async function getWithdrawals(userId: string) {
+export async function getWithdrawals(userId: string, page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
   const withdrawals = await ShopLensWithdrawal.findMany({
     where: { userId },
     orderBy: { withdrawnAt: "desc" },
-    take: 100,
+    take,
+    skip,
     include: { items: true },
   });
   return attachAvailable(withdrawals);
@@ -245,10 +248,7 @@ export async function deleteWithdrawal(userId: string, id: string) {
   for (const it of withdrawal.items || []) {
     if (!it.coating || !it.lensType || !it.powerKey || it.quantity <= 0) continue;
     if (!coatingCache.has(it.coating)) {
-      coatingCache.set(
-        it.coating,
-        await LensStock.findFirst({ where: { coating: it.coating } })
-      );
+      coatingCache.set(it.coating, await LensStock.findFirst({ where: { coating: it.coating } }));
     }
     const lensStock = coatingCache.get(it.coating);
     if (!lensStock) continue;

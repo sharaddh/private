@@ -1,6 +1,7 @@
 import { Response } from "express";
 import * as shopLensCartService from "../services/shopLensCart.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 import type { AuthRequest } from "../types";
 
 export async function getItems(req: AuthRequest, res: Response) {
@@ -62,7 +63,10 @@ export async function withdraw(req: AuthRequest, res: Response) {
 }
 
 export async function getWithdrawals(req: AuthRequest, res: Response) {
-  const data = await shopLensCartService.getWithdrawals(req.user!.sub);
+  const data = await shopLensCartService.getWithdrawals(
+    req.user!.sub,
+    listPageParamsFromQuery(req.query)
+  );
   sendSuccess(res, data);
 }
 

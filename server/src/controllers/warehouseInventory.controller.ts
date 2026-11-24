@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as warehouseInventoryService from "../services/warehouseInventory.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
 export async function getStats(_req: Request, res: Response) {
   const data = await warehouseInventoryService.getStats();
@@ -9,7 +10,10 @@ export async function getStats(_req: Request, res: Response) {
 
 export async function list(req: Request, res: Response) {
   const { search } = req.query;
-  const data = await warehouseInventoryService.listInventory({ search: search as string });
+  const data = await warehouseInventoryService.listInventory({
+    search: search as string,
+    ...listPageParamsFromQuery(req.query),
+  });
   sendSuccess(res, data);
 }
 

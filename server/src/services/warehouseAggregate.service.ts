@@ -26,9 +26,7 @@ function withBranch(row: Record<string, any>, branch: BranchInfo, branchId = bra
 
 const WAREHOUSE_BRANCH: BranchInfo = { id: "main", name: "Warehouse", code: "WH" };
 
-function inventorySearchWhere(
-  query?: { search?: string }
-): Prisma.InventoryWhereInput {
+function inventorySearchWhere(query?: { search?: string }): Prisma.InventoryWhereInput {
   const s = query?.search?.trim();
   if (!s) return {};
   return {
@@ -102,10 +100,7 @@ export async function getAllBranchStats() {
   const lowStockItems: AnyAgg[] = [];
 
   function calcValue(items: { quantity: number | null; sellingPrice: number | null }[]) {
-    return items.reduce(
-      (s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0),
-      0
-    );
+    return items.reduce((s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
   }
 
   await Promise.all(
@@ -213,7 +208,11 @@ export async function getAllBranchStats() {
     prisma.user.count(),
     prisma.withdrawal.count(),
     prisma.withdrawal.findMany({ select: { totalQuantity: true } }),
-    prisma.withdrawal.findMany({ orderBy: { withdrawnAt: "desc" }, take: 10, include: { items: true } }),
+    prisma.withdrawal.findMany({
+      orderBy: { withdrawnAt: "desc" },
+      take: 10,
+      include: { items: true },
+    }),
   ]);
   const totalWithdrawnItems = allWithdrawals.reduce((s, w) => s + (w.totalQuantity || 0), 0);
 
@@ -243,6 +242,7 @@ export async function getAllBranchLensStock() {
         const items = await prisma.lensStock.findMany({
           where: { branchId: branch.id },
           orderBy: { coating: "asc" },
+          take: 500,
         });
         for (const item of items) {
           allItems.push(withBranch(item, branch));
@@ -256,7 +256,10 @@ export async function getAllBranchLensStock() {
   );
 
   try {
-    const items = await prisma.warehouseLensStock.findMany({ orderBy: { coating: "asc" } });
+    const items = await prisma.warehouseLensStock.findMany({
+      orderBy: { coating: "asc" },
+      take: 500,
+    });
     for (const item of items) {
       allItems.push(withBranch(item, WAREHOUSE_BRANCH, "main"));
     }

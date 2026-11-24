@@ -24,8 +24,8 @@ function currentBranchId(): string {
   }
 }
 
-function scopedKey(key: string): string {
-  return `${currentBranchId()}:${key}`;
+function scopedKey(key: string, branchId = currentBranchId()): string {
+  return `${branchId || 'default'}:${key}`;
 }
 
 function isExpired(entry: CacheEntry<unknown>, customTtl?: number): boolean {
@@ -100,8 +100,8 @@ export function getCacheSnapshot<T>(
   return { data: entry.data, exists: true, expired: isExpired(entry, customTtl) };
 }
 
-export function setCache<T>(key: string, data: T, ttl?: number): void {
-  store.set(scopedKey(key), { data, timestamp: Date.now(), ttl, promise: null });
+export function setCache<T>(key: string, data: T, ttl?: number, branchId?: string): void {
+  store.set(scopedKey(key, branchId), { data, timestamp: Date.now(), ttl, promise: null });
   persist();
 }
 

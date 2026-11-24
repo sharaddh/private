@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 
 export interface RequestContext {
+  requestId?: string;
   branchId?: string;
   branchName?: string;
 }

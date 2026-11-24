@@ -5,6 +5,7 @@ import { User } from "../models/user";
 import { clearBranchCache } from "../models/db";
 import { AppError } from "../middleware/errorHandler";
 import { logger } from "../utils/logger";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 interface BranchData {
   name?: string;
@@ -63,16 +64,20 @@ const UPDATE_WHITELIST = [
   "settings",
 ] as const;
 
-export async function listActiveBranches() {
+export async function listActiveBranches(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
   return Branch.findMany({
     where: { isActive: true },
     select: { name: true, code: true, address: true, phone: true, email: true, isActive: true },
     orderBy: { name: "asc" },
+    take,
+    skip,
   });
 }
 
-export async function listAllBranches() {
-  return Branch.findMany({ orderBy: { name: "asc" } });
+export async function listAllBranches(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  return Branch.findMany({ orderBy: { name: "asc" }, take, skip });
 }
 
 export async function getBranchById(id: string) {
@@ -144,9 +149,14 @@ export async function createBranch(data: BranchData) {
     });
   }
 
-  const otherOwners = await prisma.user.findMany({ where: { role: "owner", id: { not: newOwner.id } } });
+  const otherOwners = await prisma.user.findMany({
+    where: { role: "owner", id: { not: newOwner.id } },
+  });
   for (const owner of otherOwners) {
-    await prisma.user.update({ where: { id: owner.id }, data: { branches: { connect: { id: branch.id } } } });
+    await prisma.user.update({
+      where: { id: owner.id },
+      data: { branches: { connect: { id: branch.id } } },
+    });
   }
 
   clearBranchCache();
@@ -191,11 +201,15 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
   }
 
   if (filtered.code) {
-    const existing = await Branch.findFirst({ where: { code: filtered.code as string, id: { not: id } } });
+    const existing = await Branch.findFirst({
+      where: { code: filtered.code as string, id: { not: id } },
+    });
     if (existing) throw new AppError(409, "Branch code already exists");
   }
   if (filtered.dbName) {
-    const existing = await Branch.findFirst({ where: { dbName: filtered.dbName as string, id: { not: id } } });
+    const existing = await Branch.findFirst({
+      where: { dbName: filtered.dbName as string, id: { not: id } },
+    });
     if (existing) throw new AppError(409, "Database name already exists");
   }
 
@@ -214,7 +228,10 @@ export async function updateBranch(id: string, data: Record<string, unknown>) {
         where: { username: data.ownerUsername as string, id: { not: branchOwner.id } },
       });
       if (existing) throw new AppError(409, "Owner username already exists");
-      await User.update({ where: { id: branchOwner.id }, data: { username: data.ownerUsername as string } });
+      await User.update({
+        where: { id: branchOwner.id },
+        data: { username: data.ownerUsername as string },
+      });
     }
   }
   if (data.ownerPassword) {

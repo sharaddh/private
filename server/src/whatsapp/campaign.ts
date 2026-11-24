@@ -98,7 +98,10 @@ function buildCustomerWhere(branchId: string, filter: AudienceFilter): Prisma.Cu
   return where;
 }
 
-async function loadCandidates(branchId: string, filter: AudienceFilter): Promise<AudienceCandidate[]> {
+async function loadCandidates(
+  branchId: string,
+  filter: AudienceFilter
+): Promise<AudienceCandidate[]> {
   const customers = await prisma.customer.findMany({
     where: buildCustomerWhere(branchId, filter),
     select: {
@@ -153,7 +156,12 @@ export interface AudienceResult {
   matched: number;
   eligible: number;
   skipped: number;
-  recipients: Array<{ customerId: string; phone: string; status: "pending" | "skipped"; skipReason?: string }>;
+  recipients: Array<{
+    customerId: string;
+    phone: string;
+    status: "pending" | "skipped";
+    skipReason?: string;
+  }>;
   skipCounts: Record<string, number>;
   sample: Array<{ customerId: string; customerName: string; phoneMasked: string }>;
   samplesForRender: Array<{
@@ -189,7 +197,8 @@ export async function buildAudience(
     else if (duplicates.has(phone)) skipReason = "duplicate_phone";
     else if (!pref || pref.consentStatus === "unknown") skipReason = "unknown_consent";
     else if (pref.consentStatus === "opted_out") skipReason = "opted_out";
-    else if (category === "marketing" && !pref.marketingConsent) skipReason = "marketing_consent_missing";
+    else if (category === "marketing" && !pref.marketingConsent)
+      skipReason = "marketing_consent_missing";
     else if (category === "utility" && !pref.transactionalConsent) {
       skipReason = "transactional_consent_missing";
     }
@@ -263,10 +272,7 @@ export async function createCampaign(
     throw new AppError(400, "Only templates confirmed approved in Meta can be used");
   }
   if (template.category !== input.purpose) {
-    throw new AppError(
-      400,
-      `Use a ${input.purpose} template for a ${input.purpose} campaign`
-    );
+    throw new AppError(400, `Use a ${input.purpose} template for a ${input.purpose} campaign`);
   }
 
   return prisma.whatsAppCampaign.create({
@@ -427,7 +433,7 @@ export async function startCampaignNow(branchId: string, id: string) {
     data: { status: "QUEUED", scheduledAt: new Date() },
   });
   await materializeCampaign(updated);
-  requestWhatsAppWorkerTick();
+  requestWhatsAppWorkerTick("wake:campaign");
   return prisma.whatsAppCampaign.findUnique({ where: { id } });
 }
 
@@ -436,7 +442,8 @@ export async function pauseCampaign(branchId: string, id: string) {
     where: { id, branchId, status: { in: ["SCHEDULED", "QUEUED", "PROCESSING"] } },
     data: { status: "PAUSED", pausedAt: new Date() },
   });
-  if (updated.count === 0) throw new AppError(400, "Campaign cannot be paused in its current state");
+  if (updated.count === 0)
+    throw new AppError(400, "Campaign cannot be paused in its current state");
   return prisma.whatsAppCampaign.findFirst({ where: { id, branchId } });
 }
 
@@ -449,7 +456,7 @@ export async function resumeCampaign(branchId: string, id: string) {
     where: { id },
     data: { status: "PROCESSING", pausedAt: null },
   });
-  requestWhatsAppWorkerTick();
+  requestWhatsAppWorkerTick("wake:campaign");
   return resumed;
 }
 
@@ -512,7 +519,7 @@ export async function retryCampaignFailures(branchId: string, id: string) {
       data: { status: "PROCESSING", completedAt: null, lastError: null },
     });
   });
-  requestWhatsAppWorkerTick();
+  requestWhatsAppWorkerTick("wake:campaign");
   return { retried: retryable.length };
 }
 
@@ -568,9 +575,10 @@ export async function getCampaignAnalytics(branchId: string, id: string) {
     where: { campaignId: id },
     _count: true,
   });
-  const counts = Object.fromEntries(
-    grouped.map((row) => [row.status, row._count])
-  ) as Record<string, number>;
+  const counts = Object.fromEntries(grouped.map((row) => [row.status, row._count])) as Record<
+    string,
+    number
+  >;
   const skipReasons = await prisma.whatsAppCampaignRecipient.groupBy({
     by: ["skipReason"],
     where: { campaignId: id, status: "skipped", skipReason: { not: null } },
@@ -946,9 +954,7 @@ export async function processCampaignRecipients(branchId: string, limit = 10) {
             data: {
               status: canRetry ? "pending" : "failed",
               attempts,
-              nextAttemptAt: canRetry
-                ? new Date(Date.now() + backoffDelayMs(attempts))
-                : null,
+              nextAttemptAt: canRetry ? new Date(Date.now() + backoffDelayMs(attempts)) : null,
               errorCode: err.providerCode || err.classification,
               errorMessageSafe: toSafeErrorMessage(err),
               lastErrorClass: err.classification,

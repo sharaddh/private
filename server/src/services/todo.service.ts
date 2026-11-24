@@ -1,6 +1,7 @@
 import { Todo } from "../models/todo";
 import { AppError } from "../middleware/errorHandler";
 import { requireBranchId } from "../utils/scope";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 interface TodoData {
   task?: string;
@@ -8,13 +9,16 @@ interface TodoData {
   notes?: string;
 }
 
-export async function listTodos() {
-  return Todo.findMany({ orderBy: { createdAt: "desc" } });
+export async function listTodos(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  return Todo.findMany({ orderBy: { createdAt: "desc" }, take, skip });
 }
 
 export async function createTodo(data: TodoData) {
   if (!data.task?.trim()) throw new AppError(400, "Task is required");
-  return Todo.create({ data: { task: data.task.trim(), notes: data.notes, branchId: requireBranchId() } });
+  return Todo.create({
+    data: { task: data.task.trim(), notes: data.notes, branchId: requireBranchId() },
+  });
 }
 
 export async function updateTodo(id: string, data: TodoData) {

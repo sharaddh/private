@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import { ctx, getCtx } from "../utils/requestContext";
 
 const REQUEST_ID_HEADER = "x-request-id";
 
@@ -8,5 +9,5 @@ export function requestId(req: Request, res: Response, next: NextFunction): void
   const id = (existing && existing.trim()) || crypto.randomUUID();
   req.headers[REQUEST_ID_HEADER] = id;
   res.setHeader(REQUEST_ID_HEADER, id);
-  next();
+  ctx.run({ ...getCtx(), requestId: id }, () => next());
 }

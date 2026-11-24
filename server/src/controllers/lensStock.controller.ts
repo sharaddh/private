@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import * as lensStockService from "../services/lensStock.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
-export async function list(_req: Request, res: Response) {
-  const data = await lensStockService.listLensStock();
+export async function list(req: Request, res: Response) {
+  const data = await lensStockService.listLensStock(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 

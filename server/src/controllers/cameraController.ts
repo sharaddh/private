@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import * as cameraService from "../services/camera.service";
 import { sendSuccess, sendCreated, sendError, sendNotFound } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
-export async function list(_req: Request, res: Response) {
-  const cameras = await cameraService.listCameras();
+export async function list(req: Request, res: Response) {
+  const cameras = await cameraService.listCameras(listPageParamsFromQuery(req.query));
   sendSuccess(res, cameras);
 }
 

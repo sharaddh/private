@@ -19,9 +19,7 @@ function getBranchId(): string {
   return branchId;
 }
 
-export async function ensureBrand(
-  nameOrId: string
-): Promise<{ id: string; name: string } | null> {
+export async function ensureBrand(nameOrId: string): Promise<{ id: string; name: string } | null> {
   const raw = cleanBrandName(nameOrId);
   if (!raw) return null;
 
@@ -40,17 +38,15 @@ export async function ensureBrand(
   return { id: created.id, name: created.name };
 }
 
-export async function findOrCreateProduct(
-  input: {
-    brandId: string;
-    brandName: string;
-    category?: string;
-    inventoryType?: string;
-    model: string;
-    gender?: string;
-    description?: string;
-  }
-) {
+export async function findOrCreateProduct(input: {
+  brandId: string;
+  brandName: string;
+  category?: string;
+  inventoryType?: string;
+  model: string;
+  gender?: string;
+  description?: string;
+}) {
   const model = String(input.model || "").trim();
   if (!model) throw new AppError(400, "Model is required");
   const category =
@@ -94,11 +90,13 @@ export async function listBrands(threshold: number = 5) {
   const brands = await prisma.brand.findMany({
     where: { active: true, branchId },
     orderBy: { name: "asc" },
+    take: 500,
   });
 
   const variants = await prisma.inventoryVariant.findMany({
     where: { active: true, branchId, brandId: { not: null } },
     select: { brandId: true, stockQuantity: true },
+    take: 5000,
   });
 
   const summaryMap = new Map<string, { variants: number; units: number; lowStock: number }>();
@@ -141,7 +139,8 @@ export async function getBrandSummary(brandId: string) {
   ]);
 
   const categories: Record<string, number> = {};
-  for (const p of products) if (p.category) categories[p.category] = (categories[p.category] || 0) + 1;
+  for (const p of products)
+    if (p.category) categories[p.category] = (categories[p.category] || 0) + 1;
 
   return {
     brand,
@@ -233,6 +232,7 @@ export async function getProductById(id: string) {
   const variants = await prisma.inventoryVariant.findMany({
     where: { productId: id, active: true },
     orderBy: { color: "asc" },
+    take: 500,
   });
   return { ...product, variants };
 }
@@ -276,10 +276,16 @@ export async function updateProduct(id: string, input: Record<string, unknown>) 
     if (key in input) updateData[key] = input[key];
   }
   if (input.model !== undefined) {
-    await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { model: String(input.model) } });
+    await prisma.inventoryVariant.updateMany({
+      where: { productId: id },
+      data: { model: String(input.model) },
+    });
   }
   if (input.category !== undefined) {
-    await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { category: String(input.category) } });
+    await prisma.inventoryVariant.updateMany({
+      where: { productId: id },
+      data: { category: String(input.category) },
+    });
   }
   return prisma.inventoryProduct.update({ where: { id }, data: updateData });
 }
@@ -288,7 +294,10 @@ export async function archiveProduct(id: string) {
   const product = await prisma.inventoryProduct.findUnique({ where: { id } });
   if (!product) throw new AppError(404, "Product not found");
 
-  const hasVariants = await prisma.inventoryVariant.findFirst({ where: { productId: id }, select: { id: true } });
+  const hasVariants = await prisma.inventoryVariant.findFirst({
+    where: { productId: id },
+    select: { id: true },
+  });
   if (hasVariants) {
     await prisma.inventoryProduct.update({ where: { id }, data: { active: false } });
     await prisma.inventoryVariant.updateMany({ where: { productId: id }, data: { active: false } });
@@ -376,10 +385,21 @@ export async function getVariantById(id: string) {
   if (!variant) throw new AppError(404, "Variant not found");
 
   const [product, lots, rack, recentMovements] = await Promise.all([
-    variant.productId ? prisma.inventoryProduct.findUnique({ where: { id: variant.productId } }) : null,
+    variant.productId
+      ? prisma.inventoryProduct.findUnique({ where: { id: variant.productId } })
+      : null,
     prisma.inventoryLot.findMany({ where: { variantId: id }, orderBy: { createdAt: "asc" } }),
-    variant.rackId ? prisma.rack.findUnique({ where: { id: variant.rackId }, select: { code: true, name: true } }) : null,
-    prisma.inventoryMovement.findMany({ where: { variantId: id }, orderBy: { createdAt: "desc" }, take: 20 }),
+    variant.rackId
+      ? prisma.rack.findUnique({
+          where: { id: variant.rackId },
+          select: { code: true, name: true },
+        })
+      : null,
+    prisma.inventoryMovement.findMany({
+      where: { variantId: id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
   ]);
 
   return { variant, product, rack, lots, recentMovements };
@@ -407,7 +427,12 @@ export async function createVariant(input: Record<string, unknown>) {
   });
 
   const rackLabel = input.rackId
-    ? (await prisma.rack.findUnique({ where: { id: String(input.rackId) }, select: { code: true } }))?.code || ""
+    ? (
+        await prisma.rack.findUnique({
+          where: { id: String(input.rackId) },
+          select: { code: true },
+        })
+      )?.code || ""
     : "";
 
   const branchId = getBranchId();
@@ -480,7 +505,10 @@ export async function updateVariant(id: string, input: Record<string, unknown>) 
     if (newRackId && variant.rackId !== newRackId) {
       const oldRackId = variant.rackId;
       const oldRackLabel = variant.rackLabel;
-      const newRack = await prisma.rack.findUnique({ where: { id: newRackId }, select: { code: true } });
+      const newRack = await prisma.rack.findUnique({
+        where: { id: newRackId },
+        select: { code: true },
+      });
       const newRackLabel = newRack?.code || "";
       updateData.rackId = newRackId;
       updateData.rackLabel = newRackLabel;
@@ -516,7 +544,10 @@ export async function archiveVariant(id: string) {
   const variant = await prisma.inventoryVariant.findUnique({ where: { id } });
   if (!variant) throw new AppError(404, "Variant not found");
 
-  const hasMovements = await prisma.inventoryMovement.findFirst({ where: { variantId: id }, select: { id: true } });
+  const hasMovements = await prisma.inventoryMovement.findFirst({
+    where: { variantId: id },
+    select: { id: true },
+  });
   if (hasMovements) {
     await prisma.inventoryVariant.update({ where: { id }, data: { active: false } });
     return { ...variant, active: false };
@@ -535,11 +566,13 @@ export async function listRacks() {
   const racks = await prisma.rack.findMany({
     where: { active: true, branchId },
     orderBy: { section: "asc" },
+    take: 500,
   });
 
   const variants = await prisma.inventoryVariant.findMany({
     where: { active: true, branchId, rackId: { not: null } },
     select: { rackId: true, stockQuantity: true },
+    take: 5000,
   });
 
   const summaryMap = new Map<string, { variants: number; units: number }>();
@@ -633,6 +666,7 @@ export async function getRackItems(rackId: string) {
   const items = await prisma.inventoryVariant.findMany({
     where: { rackId, active: true },
     orderBy: [{ brandName: "asc" }, { model: "asc" }, { color: "asc" }],
+    take: 500,
   });
   return { rack, items };
 }
@@ -645,27 +679,32 @@ export async function getDashboard(threshold: number = 5) {
   const t = Math.max(threshold, 0);
   const branchId = getBranchId();
 
-  const [
-    products,
-    variants,
-    stockAgg,
-    lowStock,
-    outOfStock,
-    brands,
-    recentMovements,
-  ] = await Promise.all([
-    prisma.inventoryProduct.count({ where: { active: true, branchId } }),
-    prisma.inventoryVariant.count({ where: { active: true, branchId } }),
-    prisma.inventoryVariant.aggregate({ where: { active: true, branchId }, _sum: { stockQuantity: true } }),
-    prisma.inventoryVariant.count({ where: { active: true, branchId, stockQuantity: { gt: 0, lte: t } } }),
-    prisma.inventoryVariant.count({ where: { active: true, branchId, stockQuantity: 0 } }),
-    prisma.brand.count({ where: { active: true, branchId } }),
-    prisma.inventoryMovement.findMany({ where: { branchId }, orderBy: { createdAt: "desc" }, take: 15 }),
-  ]);
+  const [products, variants, stockAgg, lowStock, outOfStock, brands, recentMovements] =
+    await Promise.all([
+      prisma.inventoryProduct.count({ where: { active: true, branchId } }),
+      prisma.inventoryVariant.count({ where: { active: true, branchId } }),
+      prisma.inventoryVariant.aggregate({
+        where: { active: true, branchId },
+        _sum: { stockQuantity: true },
+      }),
+      prisma.inventoryVariant.count({
+        where: { active: true, branchId, stockQuantity: { gt: 0, lte: t } },
+      }),
+      prisma.inventoryVariant.count({ where: { active: true, branchId, stockQuantity: 0 } }),
+      prisma.brand.count({ where: { active: true, branchId } }),
+      prisma.inventoryMovement.findMany({
+        where: { branchId },
+        orderBy: { createdAt: "desc" },
+        take: 15,
+      }),
+    ]);
 
   const stockUnits = stockAgg._sum.stockQuantity || 0;
 
-  const lots = await prisma.inventoryLot.findMany({ where: { branchId }, select: { quantity: true, purchasePrice: true } });
+  const lots = await prisma.inventoryLot.findMany({
+    where: { branchId },
+    select: { quantity: true, purchasePrice: true },
+  });
   const inventoryCost = lots.reduce((sum, l) => sum + l.quantity * l.purchasePrice, 0);
 
   const activeVariants = await prisma.inventoryVariant.findMany({

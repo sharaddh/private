@@ -1,5 +1,6 @@
 import { Prisma, prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const Inventory = prisma.warehouseInventory;
 
@@ -56,10 +57,7 @@ export async function getStats() {
     Inventory.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
   ]);
 
-  const totalValue = allForValue.reduce(
-    (s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0),
-    0
-  );
+  const totalValue = allForValue.reduce((s, i) => s + (i.quantity || 0) * (i.sellingPrice || 0), 0);
 
   return {
     totalItems,
@@ -70,7 +68,7 @@ export async function getStats() {
   };
 }
 
-export async function listInventory(query?: { search?: string }) {
+export async function listInventory(query?: { search?: string } & ListPageParams) {
   const where: Prisma.WarehouseInventoryWhereInput = {};
   const s = query?.search?.trim();
   if (s) {
@@ -82,10 +80,12 @@ export async function listInventory(query?: { search?: string }) {
       { supplier: { contains: s, mode: "insensitive" } },
     ];
   }
+  const { take, skip } = boundedListArgs(query ?? {}, 200);
   const items = await Inventory.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take,
+    skip,
   });
   return items.map(toMongoDoc);
 }

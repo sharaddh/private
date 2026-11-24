@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { logger } from "../utils/logger";
 import { getWhatsAppConfig } from "../whatsapp/config";
+import { requestWhatsAppWorkerTick } from "../whatsapp/wake";
 import {
-  processPendingWebhookEvents,
   recordWebhookPayload,
   verifyMetaSignature,
   verifyWebhookChallenge,
@@ -57,14 +57,10 @@ export async function receiveWebhook(req: Request, res: Response): Promise<void>
 
   try {
     const result = await recordWebhookPayload(payload);
-    res.status(200).json({ success: true, received: result.received, duplicates: result.duplicates });
-    setImmediate(() => {
-      void processPendingWebhookEvents().catch((err) => {
-        logger.error("Background WhatsApp webhook processing failed", {
-          error: (err as Error).message,
-        });
-      });
-    });
+    res
+      .status(200)
+      .json({ success: true, received: result.received, duplicates: result.duplicates });
+    requestWhatsAppWorkerTick("wake:webhook");
   } catch (err) {
     logger.error("Failed to persist WhatsApp webhook", { error: (err as Error).message });
     res.status(500).json({ success: false, message: "Webhook processing failed" });

@@ -112,14 +112,15 @@ function clearTokens(): void {
 
 const inflightRequests = new Map<string, Promise<unknown>>();
 
-function getInflightKey(method: string, path: string): string | null {
-  if (method !== 'GET') return null;
-  return `${method}:${path}`;
+function getInflightKey(method: string, path: string, signal?: AbortSignal | null): string | null {
+  if (method !== 'GET' || signal) return null;
+  return `${method}:${getToken() || ''}:${path}`;
 }
 
 async function request<T = unknown>(
   path: string,
-  init: RequestOptions = {}
+  init: RequestOptions = {},
+  bypassInflight = false
 ): Promise<ApiResponse<T>> {
   const { timeout = 15000, retries = 1, signal: externalSignal, ...fetchInit } = init;
   const method = (fetchInit.method || 'GET').toUpperCase();
@@ -129,7 +130,7 @@ async function request<T = unknown>(
     path.includes('/auth/register-owner') ||
     path.includes('/auth/refresh');
 
-  const inflightKey = getInflightKey(method, path);
+  const inflightKey = bypassInflight ? null : getInflightKey(method, path, externalSignal);
   if (inflightKey && inflightRequests.has(inflightKey)) {
     return inflightRequests.get(inflightKey) as Promise<ApiResponse<T>>;
   }
@@ -180,7 +181,7 @@ async function request<T = unknown>(
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         if (retries > 0) {
-          return request<T>(path, { ...init, retries: retries - 1 });
+          return request<T>(path, { ...init, retries: retries - 1 }, true);
         }
         return { success: false, message: 'Request timed out' };
       }
@@ -196,7 +197,10 @@ async function request<T = unknown>(
   const promise = execute();
   if (inflightKey) {
     inflightRequests.set(inflightKey, promise);
-    promise.finally(() => inflightRequests.delete(inflightKey));
+    const cleanup = () => {
+      if (inflightRequests.get(inflightKey) === promise) inflightRequests.delete(inflightKey);
+    };
+    void promise.then(cleanup, cleanup);
   }
 
   return promise;

@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { z } from "zod";
+import { logger } from "../utils/logger";
 import { AppError, errorHandler } from "./errorHandler";
+
+vi.mock("../utils/logger", () => ({
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), audit: vi.fn() },
+}));
 
 interface MockRes {
   status: (code: number) => MockRes;
@@ -23,6 +28,7 @@ function mockReq() {
 describe("errorHandler", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("responds with AppError status and message", () => {
@@ -81,6 +87,16 @@ describe("errorHandler", () => {
         retryable: true,
       })
     );
+    const logMeta = vi
+      .mocked(logger.error)
+      .mock.calls.find(([message]) => message === "Database temporarily unavailable")?.[1] as
+      Record<string, unknown> | undefined;
+    expect(logMeta).toMatchObject({
+      errorCode: "P1001",
+      errorName: "PrismaClientInitializationError",
+      classification: "transient_db",
+    });
+    expect(logMeta).not.toHaveProperty("message");
   });
 
   it("handles mongoose duplicate key errors as 409", () => {

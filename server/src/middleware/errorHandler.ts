@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { classifyError } from "../whatsapp/db-error";
 import { logger } from "../utils/logger";
 
 export class AppError extends Error {
@@ -107,15 +108,12 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     return;
   }
 
-  const prismaCode = (err as { code?: string }).code;
-  const transientDbError =
-    err.name === "PrismaClientInitializationError" ||
-    (typeof prismaCode === "string" &&
-      ["P1001", "P1002", "P1008", "P1017", "P2024"].includes(prismaCode));
-  if (transientDbError) {
+  const { errorCode, errorName, classification } = classifyError(err);
+  if (classification === "transient_db") {
     logger.error("Database temporarily unavailable", {
-      message: err.message,
-      code: prismaCode,
+      errorCode,
+      errorName,
+      classification,
       path: req.originalUrl,
       requestId,
     });

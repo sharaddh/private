@@ -5,6 +5,41 @@ export const CACHE_PREFIX = "route:";
 const DEFAULT_TTL = 60;
 const SCAN_COUNT = 100;
 
+type CacheMetricKind = "HIT" | "MISS" | "BYPASS" | "INVALIDATION" | "ERROR";
+type CacheMetricDetail = "explicit" | "dashboard" | "get" | "set" | "del" | "scan";
+
+const CACHE_METRIC_KINDS: CacheMetricKind[] = ["HIT", "MISS", "BYPASS", "INVALIDATION", "ERROR"];
+const CACHE_METRIC_DETAILS: CacheMetricDetail[] = [
+  "explicit",
+  "dashboard",
+  "get",
+  "set",
+  "del",
+  "scan",
+];
+const cacheCounters: Record<CacheMetricKind, number> = {
+  HIT: 0,
+  MISS: 0,
+  BYPASS: 0,
+  INVALIDATION: 0,
+  ERROR: 0,
+};
+
+export function recordCacheMetric(kind: CacheMetricKind, detail?: CacheMetricDetail): void {
+  if (!CACHE_METRIC_KINDS.includes(kind)) return;
+  const safeDetail = detail && CACHE_METRIC_DETAILS.includes(detail) ? detail : undefined;
+  cacheCounters[kind] += 1;
+  logger.info("cache.metric", {
+    event: "cache.metric",
+    kind,
+    ...(safeDetail ? { detail: safeDetail } : {}),
+  });
+}
+
+export function getCacheMetrics(): Readonly<Record<CacheMetricKind, number>> {
+  return { ...cacheCounters };
+}
+
 let client: Redis | null = null;
 let connected = false;
 
@@ -70,7 +105,7 @@ async function scanKeys(pattern: string): Promise<string[]> {
       keys.push(...result[1]);
     } while (cursor !== "0");
   } catch {
-    /* scan failure is non-fatal */
+    recordCacheMetric("ERROR", "scan");
   }
   return keys;
 }
@@ -82,6 +117,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
     if (!raw) return null;
     return JSON.parse(raw) as T;
   } catch {
+    recordCacheMetric("ERROR", "get");
     return null;
   }
 }
@@ -92,7 +128,7 @@ export async function cacheSet(key: string, data: unknown, ttl = DEFAULT_TTL): P
   try {
     await client!.setex(prefixed(key), ttl, value);
   } catch {
-    /* set failure is non-fatal */
+    recordCacheMetric("ERROR", "set");
   }
 }
 
@@ -111,7 +147,7 @@ export async function cacheDel(pattern: string): Promise<void> {
       await pipeline.exec();
     }
   } catch {
-    /* del failure is non-fatal */
+    recordCacheMetric("ERROR", "del");
   }
 }
 

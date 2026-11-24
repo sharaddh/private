@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import * as todoService from "../services/todo.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 
-export async function getAll(_req: Request, res: Response) {
-  const data = await todoService.listTodos();
+export async function getAll(req: Request, res: Response) {
+  const data = await todoService.listTodos(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 

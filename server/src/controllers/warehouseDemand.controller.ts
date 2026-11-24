@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import { sendSuccess, sendCreated } from "../utils/response";
 import { createDemandSchema, updateDemandSchema } from "../validators/warehouseDemand.validator";
 import * as warehouseDemandService from "../services/warehouseDemand.service";
+import { listPageParamsFromQuery } from "../services/listBounds";
 import type { AuthRequest } from "../types";
 
 export async function list(req: Request, res: Response) {
   const status = typeof req.query.status === "string" ? req.query.status : undefined;
-  const data = await warehouseDemandService.listDemands(status);
+  const data = await warehouseDemandService.listDemands(status, listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 

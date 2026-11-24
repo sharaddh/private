@@ -1,6 +1,7 @@
 import { Response } from "express";
 import * as cartService from "../services/cart.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 import type { AuthRequest } from "../types";
 
 export async function getItems(req: AuthRequest, res: Response) {
@@ -67,12 +68,12 @@ export async function withdraw(req: AuthRequest, res: Response) {
 }
 
 export async function getMyWithdrawals(req: AuthRequest, res: Response) {
-  const data = await cartService.getWithdrawals(req.user!.sub);
+  const data = await cartService.getWithdrawals(req.user!.sub, listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 
-export async function getAllWithdrawals(_req: AuthRequest, res: Response) {
-  const data = await cartService.getAllWithdrawals();
+export async function getAllWithdrawals(req: AuthRequest, res: Response) {
+  const data = await cartService.getAllWithdrawals(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 

@@ -5,6 +5,7 @@ import { signAccess, signRefresh, verifyToken } from "../utils/jwt";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../db/prisma";
 import { clearBranchCache } from "../models/db";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 interface RegisterData {
   username: string;
@@ -163,7 +164,8 @@ export async function registerUser(
   const userBranches =
     finalRole === "staff" && data.branchId ? [data.branchId] : data.branches || [];
 
-  const primaryBranchId = data.primaryBranchId ?? (finalRole === "staff" ? data.branchId : undefined);
+  const primaryBranchId =
+    data.primaryBranchId ?? (finalRole === "staff" ? data.branchId : undefined);
 
   const user = await User.create({
     data: {
@@ -173,7 +175,8 @@ export async function registerUser(
       mobile: data.mobile || "",
       role: finalRole,
       primaryBranchId,
-      branches: userBranches.length > 0 ? { connect: userBranches.map((id) => ({ id })) } : undefined,
+      branches:
+        userBranches.length > 0 ? { connect: userBranches.map((id) => ({ id })) } : undefined,
     },
     include: { branches: true },
   });
@@ -550,20 +553,29 @@ export async function updateUser(
   return formatUserWithBranches(user);
 }
 
-export async function listUsers(requestorRole: string): Promise<FormattedUser[]> {
+export async function listUsers(
+  requestorRole: string,
+  page: ListPageParams = {}
+): Promise<FormattedUser[]> {
   if (requestorRole !== "owner") {
     throw new AppError(403, "Only admin can list users");
   }
 
+  const { take, skip } = boundedListArgs(page);
   const users = await User.findMany({
     orderBy: { createdAt: "desc" },
     include: { branches: true },
+    take,
+    skip,
   });
 
   return Promise.all(users.map((u) => formatUserWithBranches(u)));
 }
 
-export async function listWarehouseUsers(requestorRole: string): Promise<
+export async function listWarehouseUsers(
+  requestorRole: string,
+  page: ListPageParams = {}
+): Promise<
   Array<{
     id: string;
     username: string;
@@ -577,9 +589,12 @@ export async function listWarehouseUsers(requestorRole: string): Promise<
     throw new AppError(403, "Access denied");
   }
 
+  const { take, skip } = boundedListArgs(page);
   const users = await User.findMany({
     where: { role: "owner" },
     orderBy: { createdAt: "desc" },
+    take,
+    skip,
   });
 
   return users.map((u) => ({
@@ -632,7 +647,9 @@ export async function deleteUser(
     });
     const shopWithdrawalIds = shopWithdrawals.map((w) => w.id);
     if (shopWithdrawalIds.length) {
-      await tx.shopLensWithdrawalItem.deleteMany({ where: { withdrawalId: { in: shopWithdrawalIds } } });
+      await tx.shopLensWithdrawalItem.deleteMany({
+        where: { withdrawalId: { in: shopWithdrawalIds } },
+      });
     }
     await tx.shopLensWithdrawal.deleteMany({ where: { userId: targetId } });
 

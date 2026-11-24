@@ -1,5 +1,6 @@
 import { prisma } from "../db/prisma";
 import { AppError } from "../middleware/errorHandler";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 const DemandList = prisma.warehouseDemandList;
 
@@ -16,13 +17,15 @@ export interface DemandItemInput {
   qty: number;
 }
 
-export async function listDemands(status?: string) {
-  const where =
-    status === "open" || status === "sent" || status === "closed" ? { status } : {};
+export async function listDemands(status?: string, page: ListPageParams = {}) {
+  const where = status === "open" || status === "sent" || status === "closed" ? { status } : {};
+  const { take, skip } = boundedListArgs(page);
   return DemandList.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: ITEMS_INCLUDE,
+    take,
+    skip,
   });
 }
 

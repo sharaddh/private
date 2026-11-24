@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { optionalAuth } from "../middleware/auth";
 import { branchScope } from "../middleware/branch";
 import { isConnected as redisConnected } from "../services/cache";
 import { prisma } from "../db/prisma";
@@ -62,6 +63,8 @@ router.get("/ready", async (_req, res) => {
     });
   }
 });
+
+router.use(optionalAuth);
 
 router.use("/branches", branches);
 router.use("/auth", auth);

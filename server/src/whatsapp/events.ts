@@ -60,7 +60,7 @@ export async function enqueueEvent(
 export async function enqueueEventSafely(input: NotificationEventInput): Promise<void> {
   try {
     const result = await enqueueEvent(input);
-    if (result.created) requestWhatsAppWorkerTick();
+    if (result.created) requestWhatsAppWorkerTick("wake:event");
   } catch (err) {
     logger.error("Failed to persist WhatsApp outbox event", {
       eventType: input.eventType,

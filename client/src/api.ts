@@ -19,6 +19,8 @@ const TOKEN_KEYS = {
 
 const BRANCH_KEY = 'currentBranchId';
 
+const inflightGetRequests = new Map<string, Promise<ApiResponse<unknown>>>();
+
 interface RequestOptions extends RequestInit {
   signal?: AbortSignal;
 }
@@ -39,6 +41,11 @@ function getBranchId(): string | null {
   } catch {
     return null;
   }
+}
+
+function getInflightKey(path: string): string | null {
+  if (AUTH_PATHS.some((p) => path.includes(p))) return null;
+  return `${getBranchId() || 'default'}:${getToken() || ''}:${path}`;
 }
 
 function buildHeaders(isJson = true): Record<string, string> {
@@ -116,7 +123,7 @@ function clearTokens(): void {
   }
 }
 
-function refreshInBackground(path: string, init: RequestInit): void {
+function refreshInBackground(path: string, init: RequestInit, cacheBranchId: string): void {
   void (async () => {
     try {
       const clean: RequestInit = { ...init, signal: undefined };
@@ -126,7 +133,7 @@ function refreshInBackground(path: string, init: RequestInit): void {
       const text = await res.text();
       const payload = text ? JSON.parse(text) : {};
       if (payload?.success && payload.data !== undefined) {
-        setCache(path, payload.data, GET_CACHE_TTL);
+        setCache(path, payload.data, GET_CACHE_TTL, cacheBranchId);
       }
     } catch {
       /* background refresh failure is non-fatal */
@@ -137,7 +144,8 @@ function refreshInBackground(path: string, init: RequestInit): void {
 async function request<T = unknown>(
   path: string,
   init: RequestOptions = {},
-  retries = 2
+  retries = 2,
+  cacheBranchId = getBranchId() || 'default'
 ): Promise<ApiResponse<T>> {
   const isLoginPath = AUTH_PATHS.some((p) => path.includes(p));
   const isGet = !init.method || init.method.toUpperCase() === 'GET';
@@ -149,7 +157,7 @@ async function request<T = unknown>(
       if (!snap.expired) {
         return { success: true, data: snap.data as T };
       }
-      void refreshInBackground(path, init);
+      void refreshInBackground(path, init, cacheBranchId);
       return { success: true, data: snap.data as T };
     }
   }
@@ -160,7 +168,7 @@ async function request<T = unknown>(
   } catch {
     if (retries > 0 && !init.signal?.aborted) {
       await new Promise((r) => setTimeout(r, 1000));
-      return request<T>(path, init, retries - 1);
+      return request<T>(path, init, retries - 1, cacheBranchId);
     }
     return { success: false, message: 'Network error. Please check your connection.' };
   }
@@ -211,7 +219,7 @@ async function request<T = unknown>(
     payload.success &&
     payload.data !== undefined
   ) {
-    setCache(path, payload.data, GET_CACHE_TTL);
+    setCache(path, payload.data, GET_CACHE_TTL, cacheBranchId);
   }
   return payload;
 }
@@ -229,8 +237,21 @@ export function createCancelableGet<T = unknown>(
   return { promise, abort: () => controller.abort() };
 }
 
-export async function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
-  return request<T>(path, { headers: buildHeaders(false) });
+export function get<T = unknown>(path: string): Promise<ApiResponse<T>> {
+  const key = getInflightKey(path);
+  if (!key) return request<T>(path, { headers: buildHeaders(false) });
+
+  const existing = inflightGetRequests.get(key);
+  if (existing) return existing as Promise<ApiResponse<T>>;
+
+  const cacheBranchId = getBranchId() || 'default';
+  const promise = request<T>(path, { headers: buildHeaders(false) }, 2, cacheBranchId);
+  inflightGetRequests.set(key, promise);
+  const cleanup = () => {
+    if (inflightGetRequests.get(key) === promise) inflightGetRequests.delete(key);
+  };
+  void promise.then(cleanup, cleanup);
+  return promise;
 }
 
 export async function post<T = unknown>(path: string, body: unknown): Promise<ApiResponse<T>> {

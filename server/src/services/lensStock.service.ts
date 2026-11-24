@@ -1,6 +1,7 @@
 import { LensStock } from "../models/lensStock";
 import { AppError } from "../middleware/errorHandler";
 import { requireBranchId } from "../utils/scope";
+import { boundedListArgs, type ListPageParams } from "./listBounds";
 
 export function getPriceForPower(
   item: { price?: number; priceNeg?: number; pricePos?: number } | null | undefined,
@@ -13,8 +14,9 @@ export function getPriceForPower(
   return item.pricePos ?? item.price ?? 0;
 }
 
-export async function listLensStock() {
-  return LensStock.findMany({ orderBy: { coating: "asc" } });
+export async function listLensStock(page: ListPageParams = {}) {
+  const { take, skip } = boundedListArgs(page);
+  return LensStock.findMany({ orderBy: { coating: "asc" }, take, skip });
 }
 
 export async function getLensStockById(id: string) {

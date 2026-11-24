@@ -1,10 +1,11 @@
 import { Response } from "express";
 import * as fogMarkService from "../services/fogMark.service";
 import { sendSuccess, sendCreated } from "../utils/response";
+import { listPageParamsFromQuery } from "../services/listBounds";
 import type { AuthRequest } from "../types";
 
-export async function list(_req: AuthRequest, res: Response) {
-  const data = await fogMarkService.listFogMarks();
+export async function list(req: AuthRequest, res: Response) {
+  const data = await fogMarkService.listFogMarks(listPageParamsFromQuery(req.query));
   sendSuccess(res, data);
 }
 
